@@ -252,16 +252,24 @@ export const DocumentExplorer: React.FC<
   // Edges/Labels do), so bake the dim into the per-node color array —
   // the document and concept meshes themselves recede along with the
   // edges. Same pattern Force Graph uses.
+  //
+  // Dim = fade toward THIS scene's background (see the dim note in
+  // ForceGraph). The Doc Explorer Canvas is transparent over the
+  // wrapper's bg-gray-900/50, so that wrapper colour IS the scene
+  // background — fade toward it, not toward black. This is what makes
+  // the indigo/amber palette recede by the same *perceived* amount as
+  // Force Graph's lime palette under the shared DIM_MODEL value.
   const nodeColors = useMemo(() => {
     const tmp = new THREE.Color();
+    const bg = new THREE.Color(theme === 'dark' ? '#111827' : '#f9fafb');
     return engineData.nodes.map((n) => {
       const type = nodeType(n.id) ?? 'extended-concept';
       const base = COLORS[type];
       if (!dimState || dimState.activeIds.has(n.id)) return base;
-      tmp.set(base).multiplyScalar(dimState.alpha);
+      tmp.set(base).lerp(bg, 1 - dimState.alpha);
       return `rgb(${Math.round(tmp.r * 255)},${Math.round(tmp.g * 255)},${Math.round(tmp.b * 255)})`;
     });
-  }, [engineData, nodeType, dimState]);
+  }, [engineData, nodeType, dimState, theme]);
 
   // Labels render in a colour distinct from the node mesh so text isn't
   // masked by the disc next to it. White-ish reads against any node

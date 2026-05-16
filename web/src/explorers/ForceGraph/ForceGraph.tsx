@@ -296,16 +296,26 @@ export const ForceGraph: React.FC<
   // gradient Edges) automatically dim without engine-level changes. Edges/
   // Arrows in edge-type mode and the labels handle their own dimming via
   // the activeIds prop.
+  //
+  // Dim = fade toward THIS scene's background, not scale toward black.
+  // Linear multiply is luminance-dependent: a bright palette (lime)
+  // barely changes at 0.6 while a dark one (indigo/amber) collapses
+  // into the bg and vanishes — that's why the same alpha looked weak
+  // here and brutal in Document Explorer. Lerp-to-bg is hue/luminance-
+  // independent: every color loses the same fraction of its contrast
+  // against the background, so the perceived recede is uniform across
+  // palettes and explorers.
   const nodeColors = useMemo(() => {
     if (!dimState) return baseNodeColors;
     const tmp = new THREE.Color();
+    const bg = new THREE.Color(canvasBg);
     return baseNodeColors.map((c, i) => {
       const id = filteredData?.nodes?.[i]?.id;
       if (id && dimState.activeIds.has(id)) return c;
-      tmp.set(c).multiplyScalar(dimState.alpha);
+      tmp.set(c).lerp(bg, 1 - dimState.alpha);
       return `#${tmp.getHexString()}`;
     });
-  }, [baseNodeColors, dimState, filteredData]);
+  }, [baseNodeColors, dimState, filteredData, canvasBg]);
 
   // Synthesize the GraphData shape the shared Legend component expects.
   // Legend reads `nodes[*].{group,color}` and `links[*].{category,color}`;
