@@ -191,37 +191,56 @@ export const DocumentExplorer: React.FC<
   // wins — same convention as Force Graph.
   // ---------------------------------------------------------------------------
 
-  // Concept set for the currently-focused document (document plus all
-  // its concepts). Only documents can be focused; concepts use hover
-  // for inspection.
-  const focusActiveIds = useMemo<Set<string> | null>(() => {
-    if (!focusedDocumentId || !data) return null;
-    const doc = data.documents.find((d) => d.id === focusedDocumentId);
-    if (!doc) return null;
-    const set = new Set<string>(doc.conceptIds);
-    set.add(focusedDocumentId);
-    return set;
-  }, [focusedDocumentId, data]);
-
-  // Hovered node + its immediate neighbors over the *visible* edges only.
-  // engineData.edges also carries the invisible document→concept
-  // clustering scaffold (kept for the force sim, collapsed in render).
-  // Traversing that would light up a node's entire clustering hairball
-  // — nearly the whole graph — so the dim would land on almost nothing.
-  // Following only visible edges makes the lit neighborhood match what
-  // the user can actually see connected, matching Force Graph's feel.
-  const hoverActiveIds = useMemo<Set<string> | null>(() => {
-    if (!hoveredId) return null;
-    const set = new Set<string>([hoveredId]);
+  // Document Explorer overlays two graphs: concept↔concept relationship
+  // edges (visible) and document↔concept membership (the invisible
+  // clustering scaffold). A node's meaningful neighborhood reads BOTH,
+  // via the typed structural fields rather than the edge list — the
+  // visibility flag is a render concern and muddles membership. Edge-
+  // list traversal alone fails at the extremes: a document's edges are
+  // all invisible (visible-only → zero neighbors → whole graph dims),
+  // and concept↔concept links are sparse by design.
+  //
+  // Asymmetric by type:
+  //   - document → the document and all its concepts (a document *is*
+  //     its concepts; this is the visual cluster made literal)
+  //   - concept  → the concept, the documents it belongs to (one hop up
+  //     the scaffold via `documentIds`), and any visible concept
+  //     relationship neighbors
+  //
+  // Focus and hover light the SAME neighborhood; only the dim strength
+  // differs (focus aggressive, hover subtle) — same convention as
+  // Force Graph, where focus and hover also share the 1-hop set.
+  const neighborhoodOf = useCallback((id: string): Set<string> => {
+    const set = new Set<string>([id]);
+    if (!data) return set;
+    if (nodeType(id) === 'document') {
+      const doc = data.documents.find((d) => d.id === id);
+      if (doc) for (const cid of doc.conceptIds) set.add(cid);
+      return set;
+    }
+    const src = sourceById.get(id);
+    if (src) for (const did of src.documentIds) set.add(did);
     const { edges, edgeVisible } = engineData;
     for (let i = 0; i < edges.length; i++) {
       if (!edgeVisible[i]) continue;
       const e = edges[i];
-      if (e.from === hoveredId) set.add(e.to);
-      else if (e.to === hoveredId) set.add(e.from);
+      if (e.from === id) set.add(e.to);
+      else if (e.to === id) set.add(e.from);
     }
     return set;
-  }, [hoveredId, engineData]);
+  }, [data, nodeType, sourceById, engineData]);
+
+  // Only documents can be focused (via right-click → "Focus on
+  // document"); concepts use hover for inspection.
+  const focusActiveIds = useMemo<Set<string> | null>(() => {
+    if (!focusedDocumentId || !data) return null;
+    return neighborhoodOf(focusedDocumentId);
+  }, [focusedDocumentId, data, neighborhoodOf]);
+
+  const hoverActiveIds = useMemo<Set<string> | null>(() => {
+    if (!hoveredId) return null;
+    return neighborhoodOf(hoveredId);
+  }, [hoveredId, neighborhoodOf]);
 
   const dimState = useMemo<{ activeIds: Set<string>; alpha: number } | undefined>(() => {
     if (focusActiveIds) return { activeIds: focusActiveIds, alpha: DIM_MODEL.focus };
