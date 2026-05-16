@@ -167,6 +167,15 @@ interface GraphStore {
   filters: GraphFilters;
   setFilters: (filters: Partial<GraphFilters>) => void;
   resetFilters: () => void;
+  /** Distinct relationship types / ontologies present in the loaded
+   *  data. Published by the active explorer from the SAME engine data
+   *  the filter compares against, so the option strings match the
+   *  filter exactly (the raw→engine transform normalizes empties to
+   *  'Unknown'/'Unknown' — deriving options from raw data would
+   *  silently mismatch). Lets the universal filter UI offer choices
+   *  without receiving graph data as a prop. */
+  filterOptions: { relationshipTypes: string[]; ontologies: string[] };
+  setFilterOptions: (options: { relationshipTypes: string[]; ontologies: string[] }) => void;
   toggleEdgeCategoryVisibility: (category: string) => void;
   setAllEdgeCategoriesVisible: (categories: string[], visible: boolean) => void;
 
@@ -268,6 +277,11 @@ const defaultFilters: GraphFilters = {
   visibleEdgeCategories: new Set(), // Start with all visible (empty set = show all)
 };
 
+const defaultFilterOptions = {
+  relationshipTypes: [] as string[],
+  ontologies: [] as string[],
+};
+
 const defaultUISettings: UISettings = {
   showLabels: true,
   showLegend: true,
@@ -363,6 +377,9 @@ export const useGraphStore = create<GraphStore>()(
       filters: { ...state.filters, ...newFilters },
     })),
   resetFilters: () => set({ filters: defaultFilters }),
+
+  filterOptions: defaultFilterOptions,
+  setFilterOptions: (filterOptions) => set({ filterOptions }),
 
   // Toggle edge category visibility
   toggleEdgeCategoryVisibility: (category) =>
