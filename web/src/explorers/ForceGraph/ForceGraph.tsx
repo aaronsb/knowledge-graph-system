@@ -13,7 +13,7 @@
  * disabled.
  */
 
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import * as THREE from 'three';
 import { Flame } from 'lucide-react';
@@ -79,6 +79,9 @@ export const ForceGraph: React.FC<
   // filtered data. Reading them via individual selectors keeps zustand's
   // shallow equality from re-rendering on unrelated store updates.
   const minConfidence = useGraphStore((s) => s.filters.minConfidence);
+  const relationshipTypes = useGraphStore((s) => s.filters.relationshipTypes);
+  const ontologies = useGraphStore((s) => s.filters.ontologies);
+  const setFilterOptions = useGraphStore((s) => s.setFilterOptions);
   const appliedTheme = useThemeStore((s) => s.appliedTheme);
   const canvasBg = explorerTheme.canvas3D[appliedTheme];
   const {
@@ -190,21 +193,54 @@ export const ForceGraph: React.FC<
     [vocabStore]
   );
 
-  // Apply shared-store filters. Both are universal — every explorer
-  // reads from the same store fields, so a filter set in one place
-  // applies everywhere. Empty / zero means "show all".
+  // Publish the distinct relationship types / ontologies from the
+  // engine data (the SAME strings the filter compares against) so the
+  // universal filter UI can offer them without taking graph data as a
+  // prop. Deriving from raw API data instead would mismatch — the
+  // raw→engine transform maps empty ontology to 'Unknown'. Each option
+  // carries the colour the graph renders it in so the selector swatch
+  // matches the screen: relationship type → category colour (the
+  // canonical/default edge colouring, mirroring the edgeColors 'type'
+  // branch); ontology → the ontology palette colour.
+  useEffect(() => {
+    const rels = [...new Set((data?.edges ?? []).map((e) => e.type))]
+      .filter(Boolean)
+      .sort()
+      .map((value) => ({
+        value,
+        color: getCategoryColor(vocabStore.getCategory(value) || undefined),
+      }));
+    const onts = [...new Set((data?.nodes ?? []).map((n) => n.category))]
+      .filter(Boolean)
+      .sort()
+      .map((value) => ({ value, color: palette(value) }));
+    setFilterOptions({ relationshipTypes: rels, ontologies: onts });
+  }, [data, setFilterOptions, vocabStore, palette]);
+
+  // Apply shared-store filters. All universal — every explorer reads
+  // the same store fields, so a filter set in one place applies
+  // everywhere. Empty / zero means "show all". The ontology filter
+  // drops nodes; edges orphaned by that removal are dropped too.
   const filteredData = useMemo(() => {
     if (!data) return data;
     const hasCatFilter = visibleEdgeCategories.size > 0;
     const hasConfFilter = minConfidence > 0;
-    if (!hasCatFilter && !hasConfFilter) return data;
+    const hasRelFilter = relationshipTypes.length > 0;
+    const hasOntFilter = ontologies.length > 0;
+    if (!hasCatFilter && !hasConfFilter && !hasRelFilter && !hasOntFilter) return data;
+    const relSet = hasRelFilter ? new Set(relationshipTypes) : null;
+    const ontSet = hasOntFilter ? new Set(ontologies) : null;
+    const nodes = ontSet ? data.nodes.filter((n) => ontSet.has(n.category)) : data.nodes;
+    const keptIds = ontSet ? new Set(nodes.map((n) => n.id)) : null;
     const edges = data.edges.filter((e) => {
       if (hasCatFilter && !visibleEdgeCategories.has(edgeCategory(e))) return false;
       if (hasConfFilter && (e.weight ?? 1) < minConfidence) return false;
+      if (relSet && !relSet.has(e.type)) return false;
+      if (keptIds && (!keptIds.has(e.from) || !keptIds.has(e.to))) return false;
       return true;
     });
-    return { ...data, edges };
-  }, [data, visibleEdgeCategories, minConfidence, edgeCategory]);
+    return { ...data, nodes, edges };
+  }, [data, visibleEdgeCategories, minConfidence, relationshipTypes, ontologies, edgeCategory]);
 
   // Per-edge colors driven by edgeColorBy. Parallel to filteredData.edges
   // by index. Undefined means "use endpoint gradient" — the engine's

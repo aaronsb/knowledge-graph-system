@@ -16,7 +16,7 @@ import type { SettingsPanelProps } from '../../types/explorer';
 import type { ForceGraphSettings } from './types';
 import { SLIDER_RANGES } from './types';
 import { simBackend } from './scene/useSim';
-import { useGraphStore } from '../../store/graphStore';
+import { useGraphStore, type FilterOption } from '../../store/graphStore';
 
 type Section = 'physics' | 'visual' | 'interaction' | 'filters';
 
@@ -28,6 +28,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps<ForceGraphSettings>> = (
   // Filters live in the shared store, not in per-plugin settings, so they
   // apply universally across every explorer that consumes rawGraphData.
   const minConfidence = useGraphStore((s) => s.filters.minConfidence);
+  const selectedRelationshipTypes = useGraphStore((s) => s.filters.relationshipTypes);
+  const selectedOntologies = useGraphStore((s) => s.filters.ontologies);
+  const filterOptions = useGraphStore((s) => s.filterOptions);
   const setFilters = useGraphStore((s) => s.setFilters);
 
   const toggle = (section: Section) =>
@@ -79,6 +82,79 @@ export const SettingsPanel: React.FC<SettingsPanelProps<ForceGraphSettings>> = (
       value={value}
       onChange={(e) => onInput(parseFloat(e.target.value))}
     />
+  );
+
+  // Multi-select checkbox list for the universal relationship-type /
+  // ontology filters. Empty selection = show all (matches the store
+  // convention used by minConfidence/visibleEdgeCategories). Each row
+  // carries the colour the graph renders that value in — without it,
+  // 50 same-looking rows are unreadable. select all / none keep large
+  // type lists usable.
+  const checkboxList = (
+    label: string,
+    options: FilterOption[],
+    selected: string[],
+    onChange: (next: string[]) => void
+  ) => (
+    <div className="pt-1">
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-[11px] font-medium text-foreground">{label}</span>
+        {options.length > 0 && (
+          <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+            <button
+              type="button"
+              className="hover:text-foreground transition-colors"
+              onClick={() => onChange(options.map((o) => o.value))}
+            >
+              all
+            </button>
+            <span>/</span>
+            <button
+              type="button"
+              className="hover:text-foreground transition-colors"
+              onClick={() => onChange([])}
+            >
+              none
+            </button>
+          </span>
+        )}
+      </div>
+      {options.length === 0 ? (
+        <span className="text-[10px] text-muted-foreground">None in current data</span>
+      ) : (
+        <div className="flex flex-col gap-1 max-h-40 overflow-y-auto pr-1">
+          {options.map((opt) => {
+            const checked = selected.includes(opt.value);
+            return (
+              <label
+                key={opt.value}
+                className="flex items-center gap-1.5 text-[11px] cursor-pointer"
+              >
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={() =>
+                    onChange(
+                      checked
+                        ? selected.filter((s) => s !== opt.value)
+                        : [...selected, opt.value]
+                    )
+                  }
+                  style={{ accentColor: opt.color }}
+                />
+                <span
+                  className="inline-block w-2.5 h-2.5 rounded-full shrink-0 border border-border"
+                  style={{ background: opt.color }}
+                />
+                <span className="truncate" style={{ color: opt.color }}>
+                  {opt.value}
+                </span>
+              </label>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 
   const toggle_ = (value: boolean, onInput: (v: boolean) => void) => (
@@ -298,9 +374,22 @@ export const SettingsPanel: React.FC<SettingsPanelProps<ForceGraphSettings>> = (
               minConfidence.toFixed(2),
               slider(minConfidence, 0, 1, 0.01, (v) => setFilters({ minConfidence: v }))
             )}
+            {checkboxList(
+              'Relationship types',
+              filterOptions.relationshipTypes,
+              selectedRelationshipTypes,
+              (next) => setFilters({ relationshipTypes: next })
+            )}
+            {checkboxList(
+              'Ontologies',
+              filterOptions.ontologies,
+              selectedOntologies,
+              (next) => setFilters({ ontologies: next })
+            )}
             <p className="text-[10px] text-muted-foreground">
-              Filters edges by confidence (weight). Applies to every explorer
-              that reads from the shared graph data.
+              Min confidence filters edges by weight; relationship-type and
+              ontology selections narrow to the checked values (empty = show
+              all). All apply to every explorer reading the shared graph data.
             </p>
           </div>
         )}
