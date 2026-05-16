@@ -38,6 +38,6 @@ export type DimTier = 'hover' | 'focus';
  *  arrows, and plane opacity for node / edge labels. One value drives
  *  all of them so the dim reads consistently. */
 export const DIM_MODEL: Record<DimTier, number> = {
-  hover: 0.9,
+  hover: 0.6,
   focus: 0.1,
 };
