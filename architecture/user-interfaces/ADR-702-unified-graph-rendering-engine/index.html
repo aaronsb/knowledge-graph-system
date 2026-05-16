@@ -8490,6 +8490,56 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#amendment-phase-4-executed-as-full-adoption-2026-05-15" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Amendment: Phase 4 executed as full adoption (2026-05-15)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Amendment: Phase 4 executed as full adoption (2026-05-15)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-the-scope-changed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why the scope changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-the-original-intent-still-buys" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What the original intent still buys
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#status-of-the-a-la-carte-hedge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Status of the à-la-carte hedge
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -10331,6 +10381,56 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#amendment-phase-4-executed-as-full-adoption-2026-05-15" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Amendment: Phase 4 executed as full adoption (2026-05-15)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Amendment: Phase 4 executed as full adoption (2026-05-15)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-the-scope-changed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why the scope changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-the-original-intent-still-buys" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What the original intent still buys
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#status-of-the-a-la-carte-hedge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Status of the à-la-carte hedge
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -10728,6 +10828,16 @@ specific engine traits à la carte — the palette helper, the signal contract
 for widgets, the <code>CaretMarker</code> pattern, the distance-culled <code>&lt;Html&gt;</code> label
 approach — while keeping its custom scene composition. This phase is
 optional and opportunistic; no commitment to complete migration.</p>
+<blockquote>
+<p><strong>Amendment (2026-05-15): executed as full adoption.</strong> Phase 4 was
+implemented more aggressively than scoped above — Document Explorer
+now consumes the full engine <code>&lt;Scene&gt;</code> path, and its custom d3 scene
+composition was retired, rather than cherry-picking traits à la
+carte. The decision's <em>intent</em> (preserve Document Explorer's distinct
+experience) is honored at the UX layer, not the rendering layer. See
+"Amendment: Phase 4 executed as full adoption" at the end of this
+document for rationale.</p>
+</blockquote>
 <hr />
 <h2 id="alternatives-considered">Alternatives Considered</h2>
 <h3 id="keep-d3-for-2d-only-replace-3d">Keep d3 for 2D, only replace 3D</h3>
@@ -10912,6 +11022,49 @@ contract and add a few fields to the per-instance attribute layout for
 edges. Phase 1 implementation will need to cover all four from day one
 because kg's existing 3D explorer already exhibits all four properties —
 losing them in V2 would block cutover.</p>
+<hr />
+<h2 id="amendment-phase-4-executed-as-full-adoption-2026-05-15">Amendment: Phase 4 executed as full adoption (2026-05-15)</h2>
+<p>Phase 4 was scoped above as <em>optional, opportunistic, à-la-carte</em>: the
+Document Explorer would borrow individual engine traits while keeping
+its own d3 scene composition, with "no commitment to complete
+migration." It was instead implemented as <strong>full engine adoption</strong>
+(PR #368): the Document Explorer's standalone d3 force implementation
+was retired and the component now renders through the same engine
+<code>&lt;Scene&gt;</code> path as the Force Graph plugin.</p>
+<h3 id="why-the-scope-changed">Why the scope changed</h3>
+<p>Once Phases 1–3 landed, the cost/benefit inverted relative to what was
+assumed when this ADR was written:</p>
+<ul>
+<li><strong>The engine boundary held cleanly.</strong> Every trait the Document
+  Explorer needed (per-node geometry classes, render-collapsed
+  clustering edges, label color/offset overrides, the shared dim
+  model) was expressible as additive, opt-in engine props with
+  Force-Graph-preserving defaults. The "keep custom composition"
+  hedge existed to avoid contorting the engine; that risk did not
+  materialize.</li>
+<li><strong>Unification compounds.</strong> With both explorers on one <code>&lt;Scene&gt;</code>,
+  engine work lands in both at once. Concrete instance from this
+  cycle: harmonizing hover/focus dimming (and the later
+  lerp-toward-background fix) was a single shared <code>dimModel.ts</code> change
+  consumed identically by both — impossible without shared rendering.</li>
+<li><strong>2D/3D projection for free.</strong> Full adoption gave the Document
+  Explorer the projection toggle with no bespoke work, which the
+  à-la-carte path would not have.</li>
+</ul>
+<h3 id="what-the-original-intent-still-buys">What the original intent still buys</h3>
+<p>ADR-085's concern — the Document Explorer has "a specific radial
+layout and its own interaction model" — is preserved, but at the
+<strong>UX layer rather than the rendering layer</strong>: distinct node glyphs
+(document vs. concept), its own color scheme, document viewer, sidebar,
+and a structural (not edge-derived) hover/focus neighborhood model.
+The engine renders; the Document Explorer still decides what its
+experience is. "Keep it distinct" was honored; "keep it on a separate
+rendering stack" was not, and that is the deliberate change recorded
+here.</p>
+<h3 id="status-of-the-a-la-carte-hedge">Status of the à-la-carte hedge</h3>
+<p>Withdrawn. Phase 4 is no longer "optional and opportunistic" — it is
+done, as full adoption. No engine-divergent Document Explorer stack
+remains to migrate later.</p>
 
 
 
