@@ -54,8 +54,6 @@ const NODE_CLASS_BY_TYPE: Record<DocNodeType, 'document' | 'concept'> = {
   'extended-concept': 'concept',
 };
 
-const DOUBLE_CLICK_MS = 300;
-
 // ---------------------------------------------------------------------------
 // Workspace-only props (passed by DocumentExplorerWorkspace, not by the
 // generic ExplorerView mount path)
