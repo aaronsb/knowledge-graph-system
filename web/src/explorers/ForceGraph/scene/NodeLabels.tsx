@@ -25,8 +25,12 @@ const MAX_LABELS = 120;
 /** Base label height in world units. Multiplied by the caller's
  *  sizeMultiplier prop to compute the actual mesh scale. */
 const BASE_LABEL_HEIGHT_WORLD = 1.0;
-/** Vertical offset above the node (world up before billboard rotation). */
-const LABEL_OFFSET_ABOVE = 1.4;
+/** Default vertical offset, in world units before billboard rotation.
+ *  Positive lifts the label above the node, negative drops it below.
+ *  The plugin can override via `labelOffsetY` — Document Explorer
+ *  places labels below so they don't visually merge with the larger
+ *  document glyphs. */
+const DEFAULT_LABEL_OFFSET_Y = 1.4;
 /** Canvas font size for text rendering (high-res for crisp scaling). */
 const TEXT_FONT_PX = 32;
 const TEXT_PADDING_PX = 8;
@@ -67,8 +71,14 @@ function makeLabelTexture(text: string, color: string): CachedTexture {
 export interface NodeLabelsProps {
   nodes: EngineNode[];
   positionsRef: React.MutableRefObject<Float32Array | null>;
-  /** Per-node colors, parallel to `nodes` by index. */
+  /** Per-node colors, parallel to `nodes` by index. Used when
+   *  `labelColors` is not provided. */
   colors: string[];
+  /** Optional per-node label color override (parallel to `nodes`).
+   *  Lets the plugin paint labels in a palette distinct from the node
+   *  mesh — Document Explorer needs whitish labels against amber nodes
+   *  so the text isn't masked by the mesh colour underneath. */
+  labelColors?: string[];
   hiddenIds?: Set<string>;
   /** Labels past this world-space distance from the camera are unmounted.
    *  In 2D the distance is computed in the XY plane only — the camera's
@@ -81,22 +91,45 @@ export interface NodeLabelsProps {
   projection?: Projection;
   /** Multiplier on the base label world-space height. Default 1. */
   sizeMultiplier?: number;
+  /** Signed Y offset in world units. The sign controls direction
+   *  (positive = above, negative = below). When `nodeScales` is also
+   *  provided, the offset becomes scale-aware: the label sits at
+   *  `sign(labelOffsetY) * radius + labelOffsetY` so it always clears
+   *  the node's surface by that constant padding regardless of how the
+   *  node is scaled. When `nodeScales` is omitted (current Force Graph
+   *  default), it falls back to a flat absolute offset. Default 1.4. */
+  labelOffsetY?: number;
+  /** Per-node base scale (parallel to `nodes`). When provided, label
+   *  positioning becomes radius-aware — see `labelOffsetY`. The plugin
+   *  should pass the same array it gives `<Nodes>` so labels track the
+   *  actual rendered node radius. */
+  nodeScales?: Float32Array;
+  /** Global node-size multiplier — same prop `<Nodes>` consumes. Used
+   *  alongside `nodeScales` when computing scale-aware label offsets. */
+  nodeSize?: number;
+  /** Plane opacity for labels of nodes outside `activeIds`. Resolved
+   *  from the active dim tier by the consumer (see dimModel). Default 1
+   *  (no dim) — a caller that wires `activeIds` but forgets this should
+   *  fail visibly, not silently land on an old magic number. */
+  dimLabelOpacity?: number;
 }
-
-/** Dim opacity applied to labels for nodes outside activeIds. */
-const DIM_LABEL_OPACITY = 0.15;
 
 /** Persistent billboarded node labels with distance culling.  @verified e05014ea */
 export function NodeLabels({
   nodes,
   positionsRef,
   colors,
+  labelColors,
   hiddenIds,
   visibilityRadius = 250,
   enabled = true,
   activeIds,
   projection = '3D',
   sizeMultiplier = 1,
+  labelOffsetY = DEFAULT_LABEL_OFFSET_Y,
+  nodeScales,
+  nodeSize = 1,
+  dimLabelOpacity = 1,
 }: NodeLabelsProps) {
   const camera = useThree((state) => state.camera);
 
@@ -137,7 +170,7 @@ export function NodeLabels({
       const idx = visibleIndices[slot];
       const node = nodes[idx];
       if (!node) continue;
-      const color = colors[idx] ?? '#d7d7e0';
+      const color = labelColors?.[idx] ?? colors[idx] ?? '#d7d7e0';
       const key = `${node.label}|${color}`;
       let entry = textureCache.current.get(key);
       if (!entry) {
@@ -149,7 +182,7 @@ export function NodeLabels({
       const dimmed = hasActive && !activeIds!.has(node.id);
       if (mat) {
         mat.map = entry.texture;
-        mat.opacity = dimmed ? DIM_LABEL_OPACITY : 1;
+        mat.opacity = dimmed ? dimLabelOpacity : 1;
         mat.needsUpdate = true;
       }
       if (mesh) {
@@ -157,7 +190,7 @@ export function NodeLabels({
         mesh.scale.set(entry.aspect * h, h, 1);
       }
     }
-  }, [visibleIndices, nodes, colors, enabled, activeIds, sizeMultiplier]);
+  }, [visibleIndices, nodes, colors, labelColors, enabled, activeIds, sizeMultiplier, dimLabelOpacity]);
 
   const scratch = useMemo(
     () => ({
@@ -197,11 +230,23 @@ export function NodeLabels({
       const a = idx * 3;
       scratch.pos.set(positions[a], positions[a + 1], positions[a + 2]);
 
-      // Offset above the node along world-up. Once the mesh faces the
-      // camera (via lookAt) this stays "above" from the viewer's POV
-      // because lookAt rotates around the node, not around world-up.
+      // Offset along world-up before billboard rotation. Once the mesh
+      // faces the camera this stays "above"/"below" from the viewer's
+      // POV because the rotation is around the node, not around world-up.
+      //
+      // When the plugin passes `nodeScales`, the offset clears the node's
+      // surface by `|labelOffsetY|` regardless of how the node is scaled
+      // (e.g. Document Explorer's documents are ~6× concept radius — a
+      // fixed offset would sit inside them). When `nodeScales` is absent
+      // the engine falls back to the flat absolute offset (Force Graph).
       scratch.labelPos.copy(scratch.pos);
-      scratch.labelPos.y += LABEL_OFFSET_ABOVE;
+      if (nodeScales) {
+        const radius = (nodeScales[idx] ?? 1) * nodeSize;
+        const sign = labelOffsetY >= 0 ? 1 : -1;
+        scratch.labelPos.y += sign * radius + labelOffsetY;
+      } else {
+        scratch.labelPos.y += labelOffsetY;
+      }
 
       // Screen-aligned billboard: normal points at the camera, "up" locked
       // to the camera's world-up so text stays horizontal in the viewport

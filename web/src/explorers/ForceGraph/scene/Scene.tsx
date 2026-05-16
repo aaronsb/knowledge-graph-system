@@ -7,7 +7,7 @@
  * (pan + zoom, no rotation).
  */
 
-import { useEffect, useImperativeHandle } from 'react';
+import { useEffect, useImperativeHandle, useMemo, type ReactElement } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from '@react-three/drei';
 import type { EngineNode, EngineEdge, Projection } from '../types';
@@ -34,8 +34,23 @@ export interface SceneProps {
   /** Per-node colors, parallel to `nodes` by index. Caller computes from
    *  whatever dimension (ontology/degree/centrality/...) they choose. */
   colors: string[];
+  /** Optional per-node class key (parallel to `nodes`). When provided
+   *  with `geometryByClass`, the engine renders one InstancedMesh per
+   *  class — Document Explorer uses this to render document nodes as
+   *  larger squared glyphs alongside concept dots. */
+  nodeClasses?: string[];
+  /** Geometry element per class key, used when `nodeClasses` is set. */
+  geometryByClass?: Record<string, ReactElement>;
+  /** Optional per-node base scale override (parallel to `nodes`). When
+   *  provided, replaces the engine's degree-based default scale.
+   *  Drives node mesh size AND scale-aware label offsets uniformly. */
+  nodeScales?: Float32Array;
   /** Optional edge-type palette; when provided, edges and arrows color by type. */
   edgeColors?: string[];
+  /** Optional per-edge render visibility (parallel to `edges`). When
+   *  `false`, the edge is kept in the physics sim but rendered collapsed
+   *  to a point. Used by Document Explorer for invisible clustering hints. */
+  edgeVisible?: boolean[];
   hiddenIds?: Set<string>;
   pinnedIds?: Set<string>;
   highlightedIds?: Set<string>;
@@ -45,6 +60,11 @@ export interface SceneProps {
   /** Dim multiplier applied to non-active edges/arrows in edge-type mode.
    *  Node colors arrive pre-dimmed via the `colors` prop. */
   dimAlpha?: number;
+  /** Plane opacity for out-of-set node/edge labels. Resolved from the
+   *  active dim tier by the consumer (see dimModel). Default 1 (no dim).
+   *  Pairs with `dimAlpha`: alpha dims the figures, this dims their
+   *  text, and the dim model keeps the two coupled per tier. */
+  dimLabelOpacity?: number;
   nodeSize?: number;
   edgeOpacity?: number;
   linkWidth?: number;
@@ -52,6 +72,12 @@ export interface SceneProps {
   nodeLabelSize?: number;
   /** Multiplier on the base world-space edge-label height. Default 1. */
   edgeLabelSize?: number;
+  /** Optional per-node label color override (parallel to `nodes`). When
+   *  omitted, labels use the node's mesh color (Force Graph default). */
+  labelColors?: string[];
+  /** Signed Y offset for node labels in world units. Default +1.4
+   *  (above); negative drops below — used by Document Explorer. */
+  nodeLabelOffsetY?: number;
   showArrows?: boolean;
   showEdgeLabels?: boolean;
   showNodeLabels?: boolean;
@@ -80,17 +106,24 @@ export function Scene({
   nodes,
   edges,
   colors,
+  nodeClasses,
+  geometryByClass,
+  nodeScales,
   edgeColors,
+  edgeVisible,
   hiddenIds,
   pinnedIds,
   highlightedIds,
   activeIds,
   dimAlpha = 1,
+  dimLabelOpacity = 1,
   nodeSize,
   edgeOpacity,
   linkWidth,
   nodeLabelSize = 1,
   edgeLabelSize = 1,
+  labelColors,
+  nodeLabelOffsetY,
   showArrows = true,
   showEdgeLabels = true,
   showNodeLabels = true,
@@ -116,6 +149,20 @@ export function Scene({
     pinnedIds,
     dimensions: projection === '2D' ? 2 : 3,
   });
+
+  // Resolve per-node base scales here so Nodes and NodeLabels see the
+  // same numbers — the plugin's override wins if provided, otherwise
+  // the engine derives from degree. Sharing one resolved array is what
+  // lets label positioning be scale-aware for every explorer (the
+  // alternative is each consumer re-deriving and silently disagreeing).
+  const resolvedNodeScales = useMemo(() => {
+    if (nodeScales) return nodeScales;
+    const out = new Float32Array(nodes.length);
+    for (let i = 0; i < nodes.length; i++) {
+      out[i] = 0.8 + Math.sqrt(nodes[i].degree || 1) * 0.3;
+    }
+    return out;
+  }, [nodes, nodeScales]);
   const drag = useDragHandler({
     nodes,
     positionsRef: sim.positionsRef,
@@ -144,6 +191,7 @@ export function Scene({
         positionsRef={sim.positionsRef}
         colors={colors}
         edgeColors={edgeColors}
+        edgeVisible={edgeVisible}
         hiddenIds={hiddenIds}
         opacity={edgeOpacity}
         linkWidth={linkWidth}
@@ -166,6 +214,9 @@ export function Scene({
         nodes={nodes}
         positionsRef={sim.positionsRef}
         colors={colors}
+        nodeClasses={nodeClasses}
+        geometryByClass={geometryByClass}
+        nodeScales={resolvedNodeScales}
         hiddenIds={hiddenIds}
         highlightedIds={highlightedIds}
         nodeSize={nodeSize}
@@ -188,17 +239,23 @@ export function Scene({
         activeIds={activeIds}
         projection={projection}
         sizeMultiplier={edgeLabelSize}
+        dimLabelOpacity={dimLabelOpacity}
       />
       <NodeLabels
         nodes={nodes}
         positionsRef={sim.positionsRef}
         colors={colors}
+        labelColors={labelColors}
         hiddenIds={hiddenIds}
         enabled={showNodeLabels}
         visibilityRadius={labelVisibilityRadius}
         activeIds={activeIds}
         projection={projection}
         sizeMultiplier={nodeLabelSize}
+        labelOffsetY={nodeLabelOffsetY}
+        nodeScales={resolvedNodeScales}
+        nodeSize={nodeSize}
+        dimLabelOpacity={dimLabelOpacity}
       />
       {activeNodeInfos.map((info) => (
         <NodeInfoOverlay

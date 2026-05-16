@@ -1,7 +1,7 @@
 ---
 status: Proposed
 date: 2026-04-20
-updated: 2026-04-20
+updated: 2026-05-15
 deciders:
   - aaronsb
   - claude
@@ -387,6 +387,15 @@ for widgets, the `CaretMarker` pattern, the distance-culled `<Html>` label
 approach — while keeping its custom scene composition. This phase is
 optional and opportunistic; no commitment to complete migration.
 
+> **Amendment (2026-05-15): executed as full adoption.** Phase 4 was
+> implemented more aggressively than scoped above — Document Explorer
+> now consumes the full engine `<Scene>` path, and its custom d3 scene
+> composition was retired, rather than cherry-picking traits à la
+> carte. The decision's *intent* (preserve Document Explorer's distinct
+> experience) is honored at the UX layer, not the rendering layer. See
+> "Amendment: Phase 4 executed as full adoption" at the end of this
+> document for rationale.
+
 ---
 
 ## Alternatives Considered
@@ -585,4 +594,55 @@ contract and add a few fields to the per-instance attribute layout for
 edges. Phase 1 implementation will need to cover all four from day one
 because kg's existing 3D explorer already exhibits all four properties —
 losing them in V2 would block cutover.
+
+---
+
+## Amendment: Phase 4 executed as full adoption (2026-05-15)
+
+Phase 4 was scoped above as *optional, opportunistic, à-la-carte*: the
+Document Explorer would borrow individual engine traits while keeping
+its own d3 scene composition, with "no commitment to complete
+migration." It was instead implemented as **full engine adoption**
+(PR #368): the Document Explorer's standalone d3 force implementation
+was retired and the component now renders through the same engine
+`<Scene>` path as the Force Graph plugin.
+
+### Why the scope changed
+
+Once Phases 1–3 landed, the cost/benefit inverted relative to what was
+assumed when this ADR was written:
+
+- **The engine boundary held cleanly.** Every trait the Document
+  Explorer needed (per-node geometry classes, render-collapsed
+  clustering edges, label color/offset overrides, the shared dim
+  model) was expressible as additive, opt-in engine props with
+  Force-Graph-preserving defaults. The "keep custom composition"
+  hedge existed to avoid contorting the engine; that risk did not
+  materialize.
+- **Unification compounds.** With both explorers on one `<Scene>`,
+  engine work lands in both at once. Concrete instance from this
+  cycle: harmonizing hover/focus dimming (and the later
+  lerp-toward-background fix) was a single shared `dimModel.ts` change
+  consumed identically by both — impossible without shared rendering.
+- **2D/3D projection for free.** Full adoption gave the Document
+  Explorer the projection toggle with no bespoke work, which the
+  à-la-carte path would not have.
+
+### What the original intent still buys
+
+ADR-085's concern — the Document Explorer has "a specific radial
+layout and its own interaction model" — is preserved, but at the
+**UX layer rather than the rendering layer**: distinct node glyphs
+(document vs. concept), its own color scheme, document viewer, sidebar,
+and a structural (not edge-derived) hover/focus neighborhood model.
+The engine renders; the Document Explorer still decides what its
+experience is. "Keep it distinct" was honored; "keep it on a separate
+rendering stack" was not, and that is the deliberate change recorded
+here.
+
+### Status of the à-la-carte hedge
+
+Withdrawn. Phase 4 is no longer "optional and opportunistic" — it is
+done, as full adoption. No engine-divergent Document Explorer stack
+remains to migrate later.
 

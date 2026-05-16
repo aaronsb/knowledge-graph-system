@@ -1,550 +1,520 @@
 /**
  * Document Explorer — Multi-Document Concept Graph
  *
- * Force-directed graph showing concepts from multiple documents.
- * Documents are "celebrity" hub nodes; concepts cluster around them.
+ * Renders on the unified r3f engine (ADR-702) — same `<Scene>` as the
+ * Force Graph explorer, but with two visual classes (documents as larger
+ * boxed glyphs, concepts as smaller dots) and Document Explorer's own
+ * palette + focus model. The engine handles physics, projection (2D/3D),
+ * drag, hover/select, and labels; this plugin owns colors, scales,
+ * geometry-per-class, focus-state, and the legend/info overlays.
  *
- * Physics model:
- * - Initial load → simulation runs → settles → stops. Done.
- * - Drag moves a node manually (no physics). Connected links follow.
- * - "Reheat" button → one-shot simulation restart → settles → stops.
- * - Pan, zoom, click, focus, settings changes — never restart physics.
- *
- * Callback refs prevent the simulation from restarting when parent re-renders.
+ * Workspace-only props (`focusedDocumentId`, `onFocusChange`,
+ * `onViewDocument`, plus the deferred passage rings) preserve the
+ * existing mount contract — DocumentExplorerWorkspace bypasses the
+ * registry and constructs this component directly, so the plugin entry
+ * point in `index.ts` is informational only.
  */
 
-import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
-import * as d3 from 'd3';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
+import { Canvas } from '@react-three/fiber';
+import * as THREE from 'three';
 import { RotateCcw } from 'lucide-react';
 import type { ExplorerProps } from '../../types/explorer';
 import type {
   DocumentExplorerSettings,
   DocumentExplorerData,
   DocNodeType,
+  PassageQuery,
 } from './types';
 import { useThemeStore } from '../../store/themeStore';
-import {
-  NodeInfoBox,
-  StatsPanel,
-  PanelStack,
-  LABEL_FONTS,
-} from '../common';
+import { StatsPanel, PanelStack } from '../common';
+import { Scene } from '../ForceGraph/scene/Scene';
+import { DIM_MODEL } from '../ForceGraph/scene/dimModel';
+import type { EngineNode, EngineEdge } from '../ForceGraph/types';
+import type { ForceSimHandle } from '../ForceGraph/scene/useForceSim';
+import type { NodeInfoData } from '../ForceGraph/scene/NodeInfoOverlay';
+import { ContextMenu, type ContextMenuItem } from '../../components/shared/ContextMenu';
+import { FileText, Eye, EyeOff, Crosshair } from 'lucide-react';
 
 // ---------------------------------------------------------------------------
-// Colors
+// Visual constants
 // ---------------------------------------------------------------------------
 
-const COLORS: Record<DocNodeType, { fill: string; stroke: string }> = {
-  'document':         { fill: '#f59e0b', stroke: '#fbbf24' },
-  'query-concept':    { fill: '#d97706', stroke: '#fcd34d' },
-  'extended-concept': { fill: '#6366f1', stroke: '#818cf8' },
+/** Fill colors per node type — same hues as the d3 implementation that
+ *  preceded this port so saved screenshots and muscle memory carry over. */
+const COLORS: Record<DocNodeType, string> = {
+  'document':         '#f59e0b',
+  'query-concept':    '#d97706',
+  'extended-concept': '#6366f1',
 };
 
-const DIMMED_OPACITY = 0.08;
+const NODE_CLASS_BY_TYPE: Record<DocNodeType, 'document' | 'concept'> = {
+  'document':         'document',
+  'query-concept':    'concept',
+  'extended-concept': 'concept',
+};
 
 // ---------------------------------------------------------------------------
-// Force simulation types
-// ---------------------------------------------------------------------------
-
-interface SimNode extends d3.SimulationNodeDatum {
-  id: string;
-  label: string;
-  type: DocNodeType;
-  documentIds: string[];
-  size: number;
-}
-
-interface SimLink extends d3.SimulationLinkDatum<SimNode> {
-  type: string;
-  visible: boolean;
-}
-
-// ---------------------------------------------------------------------------
-// Extended props (workspace passes focus state)
+// Workspace-only props (passed by DocumentExplorerWorkspace, not by the
+// generic ExplorerView mount path)
 // ---------------------------------------------------------------------------
 
 interface DocumentExplorerExtraProps {
   focusedDocumentId?: string | null;
   onFocusChange?: (docId: string | null) => void;
   onViewDocument?: (docId: string) => void;
-  /** Passage search rings — Map<nodeId, Array<{ color, hitCount, maxHitCount, bestSimilarity }>> */
+  /** Passage search rings. Carried through for API stability; rendering
+   *  is deferred to a follow-up after the engine port lands. */
   passageRings?: Map<string, Array<{ color: string; hitCount: number; maxHitCount: number; bestSimilarity: number }>>;
-  /** Color → query text lookup for labeling rings in info dialogs. */
+  /** Color → query text lookup. Carried through alongside `passageRings`. */
   queryColorLabels?: Map<string, string>;
+  /** Active passage queries — carried through with `passageRings`. */
+  passageQueries?: PassageQuery[];
 }
 
+/** Document Explorer entry — engine-backed multi-document concept graph.  @verified */
 export const DocumentExplorer: React.FC<
   ExplorerProps<DocumentExplorerData, DocumentExplorerSettings> & DocumentExplorerExtraProps
-> = ({ data, settings, onNodeClick, className, focusedDocumentId, onFocusChange, onViewDocument, passageRings, queryColorLabels }) => {
-  const svgRef = useRef<SVGSVGElement>(null);
-  const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
-  const [hoveredNode, setHoveredNode] = useState<string | null>(null);
-  const [selectedConceptId, setSelectedConceptId] = useState<string | null>(null);
-  const [zoomTransform, setZoomTransform] = useState({ x: 0, y: 0, k: 1 });
-  const simulationRef = useRef<d3.Simulation<SimNode, SimLink> | null>(null);
-
-  // Physics status indicator
-  const [physicsActive, setPhysicsActive] = useState(true);
-
-  // Refs for SVG selections (used by drag handler and settings effects)
-  const linkElementsRef = useRef<d3.Selection<SVGLineElement, SimLink, SVGGElement, unknown> | null>(null);
-  const nodeElementsRef = useRef<d3.Selection<SVGGElement, SimNode, SVGGElement, unknown> | null>(null);
-
-  // -----------------------------------------------------------------------
-  // Callback refs — keep current without causing simulation restarts.
-  // The simulation effect reads these via .current, so it doesn't depend
-  // on the callback identity and won't restart when parent re-renders.
-  // -----------------------------------------------------------------------
-  const onNodeClickRef = useRef(onNodeClick);
-  const onFocusChangeRef = useRef(onFocusChange);
-  const onViewDocumentRef = useRef(onViewDocument);
-  const settingsRef = useRef(settings);
-
-  useEffect(() => { onNodeClickRef.current = onNodeClick; }, [onNodeClick]);
-  useEffect(() => { onFocusChangeRef.current = onFocusChange; }, [onFocusChange]);
-  useEffect(() => { onViewDocumentRef.current = onViewDocument; }, [onViewDocument]);
-  useEffect(() => { settingsRef.current = settings; }, [settings]);
-
+> = ({
+  data,
+  settings,
+  className,
+  focusedDocumentId,
+  onFocusChange,
+  onViewDocument,
+}) => {
   const { appliedTheme: theme } = useThemeStore();
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  // Spinner reflects an explicit Reheat — the engine sim is always
+  // running (GPU/CPU), so a "settled" state isn't a real signal. Default
+  // off; Reheat flips it on for a short window.
+  const [physicsActive, setPhysicsActive] = useState(false);
 
-  // Focused document's concept set (for dimming)
-  const focusedConceptSet = useMemo(() => {
-    if (!focusedDocumentId || !data) return null;
-    const doc = data.documents.find(d => d.id === focusedDocumentId);
-    if (!doc) return null;
-    return new Set(doc.conceptIds);
-  }, [focusedDocumentId, data]);
+  // Engine-style info cards: one per pinned concept, rendered in-scene
+  // via the same `NodeInfoOverlay` Force Graph uses. Documents bypass
+  // this — clicking a document opens the viewer instead.
+  const [activeNodeInfos, setActiveNodeInfos] = useState<NodeInfoData[]>([]);
 
-  // Build simulation data — depends only on data, NOT settings.
-  // Settings-driven sizes are computed at render time via settingsRef so
-  // changing a slider never restarts the simulation.
-  const { simNodes, simLinks } = useMemo(() => {
-    if (!data) return { simNodes: [] as SimNode[], simLinks: [] as SimLink[] };
+  // Sim handle bridges the inside-Canvas hook to the Reheat button outside
+  // the Canvas tree.
+  const simHandleRef = useRef<ForceSimHandle | null>(null);
 
-    const simNodes: SimNode[] = data.nodes.map(n => ({
+  // ---------------------------------------------------------------------------
+  // Engine data — transform DocumentExplorer shape → EngineNode[]/EngineEdge[]
+  // ---------------------------------------------------------------------------
+
+  const engineData = useMemo(() => {
+    if (!data) return { nodes: [] as EngineNode[], edges: [] as EngineEdge[], edgeVisible: [] as boolean[] };
+
+    // Pre-compute degree from visible edges so concept nodes scale subtly
+    // by connectivity. Document nodes use a constant scale set below.
+    const degree = new Map<string, number>();
+    for (const link of data.links) {
+      if (!link.visible) continue;
+      degree.set(link.source, (degree.get(link.source) ?? 0) + 1);
+      degree.set(link.target, (degree.get(link.target) ?? 0) + 1);
+    }
+
+    const nodes: EngineNode[] = data.nodes.map((n) => ({
       id: n.id,
       label: n.label,
-      type: n.type,
-      documentIds: n.documentIds,
-      size: n.size,  // base size — render-time scaling applied separately
+      category: n.type,
+      degree: degree.get(n.id) ?? 0,
     }));
 
-    const nodeIds = new Set(simNodes.map(n => n.id));
+    const nodeIds = new Set(nodes.map((n) => n.id));
+    // All links land in the engine — both visible relationship edges
+    // (concept↔concept) and invisible clustering hints (document→concept).
+    // The engine sim uses the full set for force computation; rendering
+    // checks `edgeVisible` and collapses invisible edges to a point.
+    // Without this, concept dots drift away from their parent documents
+    // (concepts of one doc rarely link directly to each other in data).
+    const edges: EngineEdge[] = [];
+    const edgeVisible: boolean[] = [];
+    for (const l of data.links) {
+      if (!nodeIds.has(l.source) || !nodeIds.has(l.target)) continue;
+      edges.push({ from: l.source, to: l.target, type: l.type });
+      edgeVisible.push(l.visible);
+    }
 
-    const simLinks: SimLink[] = data.links
-      .filter(l => nodeIds.has(l.source) && nodeIds.has(l.target))
-      .map(l => ({
-        source: l.source,
-        target: l.target,
-        type: l.type,
-        visible: l.visible,
-      }));
-
-    return { simNodes, simLinks };
+    return { nodes, edges, edgeVisible };
   }, [data]);
 
-  // Visible stats (exclude clustering links)
-  const visibleLinkCount = useMemo(
-    () => simLinks.filter(l => l.visible).length,
-    [simLinks]
+  // Index nodes by id for fast lookups during click / NodeInfoBox prep.
+  const nodesById = useMemo(() => {
+    const map = new Map<string, EngineNode>();
+    for (const n of engineData.nodes) map.set(n.id, n);
+    return map;
+  }, [engineData]);
+
+  // Map id → DocGraphNode (the source row carries `type` and `documentIds`).
+  const sourceById = useMemo(() => {
+    const map = new Map<string, DocumentExplorerData['nodes'][number]>();
+    for (const n of data?.nodes ?? []) map.set(n.id, n);
+    return map;
+  }, [data]);
+
+  const nodeType = useCallback(
+    (id: string): DocNodeType | null => sourceById.get(id)?.type ?? null,
+    [sourceById],
   );
 
-  // Track container dimensions
-  useEffect(() => {
-    if (!svgRef.current) return;
-    const container = svgRef.current.parentElement;
-    if (!container) return;
+  // ---------------------------------------------------------------------------
+  // Per-node visuals: colors, geometry classes, scales
+  // ---------------------------------------------------------------------------
 
-    const updateDimensions = () => {
-      const rect = container.getBoundingClientRect();
-      setDimensions({ width: rect.width, height: rect.height });
-    };
+  const nodeClasses = useMemo(() => {
+    return engineData.nodes.map((n) => {
+      const type = nodeType(n.id) ?? 'extended-concept';
+      return NODE_CLASS_BY_TYPE[type];
+    });
+  }, [engineData, nodeType]);
 
-    updateDimensions();
-    const observer = new ResizeObserver(updateDimensions);
-    observer.observe(container);
-    return () => observer.disconnect();
-  }, []);
+  // Both documents and concepts render as the same icosahedron geometry —
+  // the d3 implementation drew documents as larger circles too (with a
+  // small white file-glyph overlay; that overlay is the only detail
+  // dropped on the engine port). Size + color do the visual distinction.
+  // `geometryByClass` is wired so this stays single-source if we want to
+  // re-add a glyph (textured plane / instanced sprite) on documents later.
+  const geometryByClass = useMemo(() => ({
+    document: <icosahedronGeometry args={[1, 2]} />,
+    concept: <icosahedronGeometry args={[1, 1]} />,
+  }), []);
 
-  // Is a node visible in focus mode?
-  const isNodeInFocus = useCallback((node: SimNode): boolean => {
-    if (!focusedConceptSet) return true;
-    if (node.id === focusedDocumentId) return true;
-    if (node.type === 'document') return false;
-    return focusedConceptSet.has(node.id);
-  }, [focusedConceptSet, focusedDocumentId]);
+  // ---------------------------------------------------------------------------
+  // Dim state — hover and focus drive the same engine `activeIds` /
+  // `dimAlpha` machinery the Force Graph uses. Focus is persistent
+  // (right-click → "Focus on document") and dims more aggressively;
+  // hover is transient and dims subtly. When both are active, focus
+  // wins — same convention as Force Graph.
+  // ---------------------------------------------------------------------------
 
-  // Is a link visible in focus mode?
-  const isLinkInFocus = useCallback((link: SimLink): boolean => {
-    if (!focusedConceptSet) return true;
-    const sourceId = (link.source as SimNode).id ?? link.source;
-    const targetId = (link.target as SimNode).id ?? link.target;
-    const sInFocus = sourceId === focusedDocumentId || focusedConceptSet.has(sourceId as string);
-    const tInFocus = targetId === focusedDocumentId || focusedConceptSet.has(targetId as string);
-    return sInFocus && tInFocus;
-  }, [focusedConceptSet, focusedDocumentId]);
-
-  // Shared tick renderer — updates SVG positions from node data
-  const renderPositions = useCallback(() => {
-    linkElementsRef.current
-      ?.attr('x1', d => (d.source as SimNode).x || 0)
-      .attr('y1', d => (d.source as SimNode).y || 0)
-      .attr('x2', d => (d.target as SimNode).x || 0)
-      .attr('y2', d => (d.target as SimNode).y || 0);
-
-    nodeElementsRef.current
-      ?.attr('transform', d => `translate(${d.x || 0},${d.y || 0})`);
-  }, []);
-
-  // -----------------------------------------------------------------------
-  // Main D3 rendering + force simulation
+  // Document Explorer overlays two graphs: concept↔concept relationship
+  // edges (visible) and document↔concept membership (the invisible
+  // clustering scaffold). A node's meaningful neighborhood reads BOTH,
+  // via the typed structural fields rather than the edge list — the
+  // visibility flag is a render concern and muddles membership. Edge-
+  // list traversal alone fails at the extremes: a document's edges are
+  // all invisible (visible-only → zero neighbors → whole graph dims),
+  // and concept↔concept links are sparse by design.
   //
-  // Dependencies: simNodes, simLinks, dimensions, theme.
-  // NOT: settings (ref), callbacks (refs). This prevents restarts from
-  // settings changes, focus changes, or parent re-renders.
-  // -----------------------------------------------------------------------
-  useEffect(() => {
-    if (!svgRef.current || simNodes.length === 0) return;
+  // Asymmetric by type:
+  //   - document → the document and all its concepts (a document *is*
+  //     its concepts; this is the visual cluster made literal)
+  //   - concept  → the concept, the documents it belongs to (one hop up
+  //     the scaffold via `documentIds`), and any visible concept
+  //     relationship neighbors
+  //
+  // Focus and hover light the SAME neighborhood; only the dim strength
+  // differs (focus aggressive, hover subtle) — same convention as
+  // Force Graph, where focus and hover also share the 1-hop set.
+  const neighborhoodOf = useCallback((id: string): Set<string> => {
+    const set = new Set<string>([id]);
+    if (!data) return set;
+    if (nodeType(id) === 'document') {
+      const doc = data.documents.find((d) => d.id === id);
+      if (doc) for (const cid of doc.conceptIds) set.add(cid);
+      return set;
+    }
+    const src = sourceById.get(id);
+    if (src) for (const did of src.documentIds) set.add(did);
+    const { edges, edgeVisible } = engineData;
+    for (let i = 0; i < edges.length; i++) {
+      if (!edgeVisible[i]) continue;
+      const e = edges[i];
+      if (e.from === id) set.add(e.to);
+      else if (e.to === id) set.add(e.from);
+    }
+    return set;
+  }, [data, nodeType, sourceById, engineData]);
 
-    const svg = d3.select(svgRef.current);
-    const { width, height } = dimensions;
+  // Only documents can be focused (via right-click → "Focus on
+  // document"); concepts use hover for inspection.
+  const focusActiveIds = useMemo<Set<string> | null>(() => {
+    if (!focusedDocumentId || !data) return null;
+    return neighborhoodOf(focusedDocumentId);
+  }, [focusedDocumentId, data, neighborhoodOf]);
 
-    svg.selectAll('*').remove();
-    setPhysicsActive(true);
+  const hoverActiveIds = useMemo<Set<string> | null>(() => {
+    if (!hoveredId) return null;
+    return neighborhoodOf(hoveredId);
+  }, [hoveredId, neighborhoodOf]);
 
-    const g = svg.append('g').attr('class', 'main-group');
+  const dimState = useMemo<{ activeIds: Set<string>; alpha: number } | undefined>(() => {
+    if (focusActiveIds) return { activeIds: focusActiveIds, alpha: DIM_MODEL.focus };
+    if (hoverActiveIds) return { activeIds: hoverActiveIds, alpha: DIM_MODEL.hover };
+    return undefined;
+  }, [focusActiveIds, hoverActiveIds]);
 
-    // Zoom/pan — never touches physics
-    const zoom = d3.zoom<SVGSVGElement, unknown>()
-      .scaleExtent([0.05, 4])
-      .on('zoom', (event) => {
-        g.attr('transform', event.transform.toString());
-        setZoomTransform({ x: event.transform.x, y: event.transform.y, k: event.transform.k });
-      });
-
-    svg.call(zoom);
-
-    // Click background to clear focus (no physics disturbance)
-    svg.on('click', () => {
-      onFocusChangeRef.current?.(null);
-      setSelectedConceptId(null);
+  // Engine `<Nodes>` doesn't read activeIds/dimAlpha directly (only
+  // Edges/Labels do), so bake the dim into the per-node color array —
+  // the document and concept meshes themselves recede along with the
+  // edges. Same pattern Force Graph uses.
+  //
+  // Dim = fade toward THIS scene's background (see the dim note in
+  // ForceGraph). The Doc Explorer Canvas is transparent over the
+  // wrapper's bg-gray-900/50, so that wrapper colour IS the scene
+  // background — fade toward it, not toward black. This is what makes
+  // the indigo/amber palette recede by the same *perceived* amount as
+  // Force Graph's lime palette under the shared DIM_MODEL value.
+  const nodeColors = useMemo(() => {
+    const tmp = new THREE.Color();
+    const bg = new THREE.Color(theme === 'dark' ? '#111827' : '#f9fafb');
+    return engineData.nodes.map((n) => {
+      const type = nodeType(n.id) ?? 'extended-concept';
+      const base = COLORS[type];
+      if (!dimState || dimState.activeIds.has(n.id)) return base;
+      tmp.set(base).lerp(bg, 1 - dimState.alpha);
+      return `rgb(${Math.round(tmp.r * 255)},${Math.round(tmp.g * 255)},${Math.round(tmp.b * 255)})`;
     });
+  }, [engineData, nodeType, dimState, theme]);
 
-    // Concept edges (only visible ones rendered)
-    const linkGroup = g.append('g').attr('class', 'links');
-    const linkElements = linkGroup.selectAll<SVGLineElement, SimLink>('line')
-      .data(simLinks.filter(l => l.visible))
-      .join('line')
-      .attr('stroke', theme === 'dark' ? 'rgba(107, 114, 128, 0.35)' : 'rgba(85, 85, 85, 0.25)')
-      .attr('stroke-width', 0.8)
-      .attr('display', settingsRef.current.visual.showEdges ? null : 'none');
+  // Labels render in a colour distinct from the node mesh so text isn't
+  // masked by the disc next to it. White-ish reads against any node
+  // colour (the engine paints a dark stroke under the text). Dim is
+  // intentionally NOT baked here — the engine dims out-of-set labels via
+  // opacity on its single activeIds path (same as Force Graph). Baking
+  // the alpha in too would double-dim and is what made Document Explorer
+  // read harsher than Force Graph on hover.
+  const LABEL_COLOR = '#e5e7eb';
+  const labelColors = useMemo(
+    () => engineData.nodes.map(() => LABEL_COLOR),
+    [engineData],
+  );
 
-    linkElementsRef.current = linkElements;
+  // Per-node base scale. Documents use a large constant (documentSize
+  // setting is in pixel-space in the original; here it controls relative
+  // scale — documents land at ~6-12x a concept dot). Concept scales follow
+  // the engine's degree-based default; we replicate it explicitly so
+  // documents/concepts use one consistent formula.
+  const nodeScales = useMemo(() => {
+    const out = new Float32Array(engineData.nodes.length);
+    const docScale = (settings?.layout?.documentSize ?? 24) / 4; // pixel → world unit
+    for (let i = 0; i < engineData.nodes.length; i++) {
+      const n = engineData.nodes[i];
+      const type = nodeType(n.id) ?? 'extended-concept';
+      if (type === 'document') {
+        out[i] = docScale;
+      } else {
+        // Concept dots — mirror the engine default so concepts read at
+        // their natural size regardless of how documentSize is set.
+        out[i] = 0.8 + Math.sqrt(n.degree || 1) * 0.3;
+      }
+    }
+    return out;
+  }, [engineData, settings?.layout?.documentSize, nodeType]);
 
-    // Nodes
-    const nodeGroup = g.append('g').attr('class', 'nodes');
-    const nodeElements = nodeGroup.selectAll<SVGGElement, SimNode>('g')
-      .data(simNodes)
-      .join('g')
-      .style('cursor', 'pointer')
-      .on('mouseenter', (_event: MouseEvent, d: SimNode) => {
-        if (settingsRef.current.interaction.highlightOnHover) setHoveredNode(d.id);
-      })
-      .on('mouseleave', () => setHoveredNode(null))
-      .on('click', (event: MouseEvent, d: SimNode) => {
-        event.stopPropagation();
-        if (d.type === 'document') {
-          onFocusChangeRef.current?.(d.id);
-          onNodeClickRef.current?.(d.id);
-        } else {
-          setSelectedConceptId(d.id);
-        }
-      })
-      .on('dblclick', (event: MouseEvent, d: SimNode) => {
-        event.stopPropagation();
-        if (d.type === 'document') {
-          onViewDocumentRef.current?.(d.id);
-        }
+  // ---------------------------------------------------------------------------
+  // Interaction handlers — left-click is pure inspection (no graph
+  // mutation, no focus toggle); right-click drives the context menu
+  // where focus and graph-mutating actions live. Mirrors Force Graph.
+  //
+  // - Click on a document: opens the document viewer.
+  // - Click on a concept: toggles its in-scene `NodeInfoOverlay`.
+  // - Hover: dims non-neighbours (subtle, transient).
+  // - Right-click: opens the context menu. Document menu offers
+  //   View / Focus / Unfocus; concept menu offers Unfocus (when a
+  //   document is focused) — graph mutations don't fit this explorer
+  //   since the dataset is built from a saved query plus document
+  //   hydration, not a generic exploration.
+  // ---------------------------------------------------------------------------
+
+  const handleSelect = useCallback((id: string | null) => {
+    if (!id) return;
+    const type = nodeType(id);
+    if (type === 'document') {
+      onViewDocument?.(id);
+      return;
+    }
+    // Concept — toggle the in-scene info overlay.
+    const node = nodesById.get(id);
+    if (!node) return;
+    setActiveNodeInfos((prev) => {
+      if (prev.some((i) => i.nodeId === id)) {
+        return prev.filter((i) => i.nodeId !== id);
+      }
+      return [
+        ...prev,
+        { nodeId: id, label: node.label, group: type ?? undefined, degree: node.degree },
+      ];
+    });
+  }, [nodeType, nodesById, onViewDocument]);
+
+  const handleDismissNodeInfo = useCallback(
+    (nodeId: string) => setActiveNodeInfos((prev) => prev.filter((i) => i.nodeId !== nodeId)),
+    [],
+  );
+
+  const handleHover = useCallback((id: string | null) => {
+    if (settings?.interaction?.highlightOnHover === false) {
+      setHoveredId(null);
+      return;
+    }
+    setHoveredId(id);
+  }, [settings?.interaction?.highlightOnHover]);
+
+  // ---------------------------------------------------------------------------
+  // Right-click context menu
+  // ---------------------------------------------------------------------------
+
+  const [contextMenu, setContextMenu] = useState<{
+    x: number;
+    y: number;
+    nodeId: string | null;
+    nodeLabel: string | null;
+  } | null>(null);
+
+  // Set when a node-mesh right-click consumes the event so the
+  // background div's onContextMenu doesn't ALSO open a menu (mirrors
+  // Force Graph's pattern).
+  const nodeContextConsumedRef = useRef(false);
+
+  const handleNodeContextMenu = useCallback(
+    (id: string, event: PointerEvent) => {
+      nodeContextConsumedRef.current = true;
+      const label = nodesById.get(id)?.label ?? id;
+      setContextMenu({ x: event.clientX, y: event.clientY, nodeId: id, nodeLabel: label });
+    },
+    [nodesById],
+  );
+
+  const handleBackgroundContextMenu = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      if (nodeContextConsumedRef.current) {
+        nodeContextConsumedRef.current = false;
+        return;
+      }
+      // Background menu — only useful when something is focused, to
+      // offer Unfocus. Otherwise dismiss silently so right-click on
+      // empty canvas doesn't surprise the user.
+      if (!focusedDocumentId) return;
+      setContextMenu({ x: event.clientX, y: event.clientY, nodeId: null, nodeLabel: null });
+    },
+    [focusedDocumentId],
+  );
+
+  const contextMenuItems = useMemo<ContextMenuItem[]>(() => {
+    if (!contextMenu) return [];
+    const items: ContextMenuItem[] = [];
+    const type = contextMenu.nodeId ? nodeType(contextMenu.nodeId) : null;
+    if (type === 'document') {
+      items.push({
+        label: 'View document',
+        icon: FileText,
+        onClick: () => onViewDocument?.(contextMenu.nodeId!),
       });
-
-    nodeElementsRef.current = nodeElements;
-
-    // Render-time size helper — reads settings from ref, never triggers simulation restart
-    const renderSize = (d: SimNode) => {
-      const s = settingsRef.current;
-      return d.type === 'document' ? s.layout.documentSize : d.size * s.visual.nodeSize;
-    };
-
-    // Node circles
-    nodeElements.append('circle')
-      .attr('r', (d: SimNode) => renderSize(d))
-      .attr('fill', (d: SimNode) => COLORS[d.type].fill)
-      .attr('stroke', (d: SimNode) => COLORS[d.type].stroke)
-      .attr('stroke-width', (d: SimNode) => d.type === 'document' ? 3 : 1.5)
-      .attr('opacity', (d: SimNode) => d.type === 'document' ? 0.95 : 0.8);
-
-    // Document icon (file shape)
-    nodeElements.filter((d: SimNode) => d.type === 'document')
-      .append('path')
-      .attr('d', (d: SimNode) => {
-        const s = renderSize(d) * 0.45;
-        return `M${-s / 2},${-s / 2} L${s / 3},${-s / 2} L${s / 2},${-s / 3} L${s / 2},${s / 2} L${-s / 2},${s / 2} Z`;
-      })
-      .attr('fill', '#fff')
-      .attr('opacity', 0.9);
-
-    // Labels
-    nodeElements.append('text')
-      .text((d: SimNode) => d.label)
-      .attr('dy', (d: SimNode) => renderSize(d) + 12)
-      .attr('text-anchor', 'middle')
-      .attr('font-family', LABEL_FONTS.family)
-      .attr('font-size', (d: SimNode) => {
-        if (d.type === 'document') return '11px';
-        return d.type === 'query-concept' ? '9px' : '8px';
-      })
-      .attr('font-weight', (d: SimNode) => d.type === 'document' ? '600' : '400')
-      .attr('fill', (d: SimNode) => {
-        if (d.type === 'document') return theme === 'dark' ? '#fbbf24' : '#d97706';
-        return theme === 'dark' ? '#d1d5db' : '#4b5563';
-      })
-      .attr('pointer-events', 'none')
-      .attr('display', settingsRef.current.visual.showLabels ? null : 'none')
-      .style('text-shadow', theme === 'dark'
-        ? '0 1px 0 #000, 0 -1px 0 #000, 1px 0 0 #000, -1px 0 0 #000'
-        : '0 1px 0 #fff, 0 -1px 0 #fff, 1px 0 0 #fff, -1px 0 0 #fff'
-      );
-
-    // -----------------------------------------------------------------------
-    // Force simulation — runs once on load, then stops.
-    // -----------------------------------------------------------------------
-    const simulation = d3.forceSimulation<SimNode, SimLink>(simNodes)
-      .alpha(1)
-      .alphaDecay(0.015)
-      .alphaMin(0.008)
-      .alphaTarget(0)
-      .force('link',
-        d3.forceLink<SimNode, SimLink>(simLinks)
-          .id(d => d.id)
-          .distance((l) => (l as SimLink).visible ? 100 : 25)
-          .strength((l) => (l as SimLink).visible ? 0.2 : 0.15)
-      )
-      .force('charge', d3.forceManyBody<SimNode>().strength((d) => {
-        if (d.type === 'document') return -500;
-        if (d.type === 'query-concept') return -120;
-        return -80;
-      }))
-      .force('center', d3.forceCenter(width / 2, height / 2).strength(0.05))
-      .force('collision', d3.forceCollide<SimNode>().radius((d) => {
-        const sz = renderSize(d);
-        if (d.type === 'document') return sz + 20;
-        return sz + 4;
-      }));
-
-    simulationRef.current = simulation;
-
-    simulation.on('tick', renderPositions);
-    simulation.on('end', () => setPhysicsActive(false));
-
-    // -----------------------------------------------------------------------
-    // Drag — purely manual. No physics restart. Ever.
-    // -----------------------------------------------------------------------
-    const drag = d3.drag<SVGGElement, SimNode>()
-      .on('start', (_event, d) => {
-        d.fx = d.x;
-        d.fy = d.y;
-      })
-      .on('drag', (event, d) => {
-        d.x = d.fx = event.x;
-        d.y = d.fy = event.y;
-        renderPositions();
-      })
-      .on('end', (_event, d) => {
-        d.x = d.fx!;
-        d.y = d.fy!;
-        // Only release fixed position if simulation is stopped.
-        // If sim is still running (e.g. after reheat), keep pinned to avoid drift.
-        const sim = simulationRef.current;
-        if (!sim || sim.alpha() < sim.alphaMin()) {
-          d.fx = null;
-          d.fy = null;
-        }
+      if (focusedDocumentId === contextMenu.nodeId) {
+        items.push({
+          label: 'Unfocus',
+          icon: EyeOff,
+          onClick: () => onFocusChange?.(null),
+        });
+      } else {
+        items.push({
+          label: 'Focus on document',
+          icon: Crosshair,
+          onClick: () => onFocusChange?.(contextMenu.nodeId!),
+        });
+      }
+    } else if (type === 'query-concept' || type === 'extended-concept') {
+      // Concepts — the only menu entry that makes sense right now is
+      // unfocus when something is focused. A "Focus on concept" item
+      // would need a concept-level dim model we don't have yet.
+      if (focusedDocumentId) {
+        items.push({
+          label: 'Unfocus',
+          icon: EyeOff,
+          onClick: () => onFocusChange?.(null),
+        });
+      }
+    } else {
+      // Background — only opens when something is focused (see
+      // handleBackgroundContextMenu).
+      items.push({
+        label: 'Unfocus',
+        icon: Eye,
+        onClick: () => onFocusChange?.(null),
       });
+    }
+    return items;
+  }, [contextMenu, nodeType, focusedDocumentId, onFocusChange, onViewDocument]);
 
-    nodeElements.call(drag);
-
-    return () => {
-      simulation.stop();
-      linkElementsRef.current = null;
-      nodeElementsRef.current = null;
-    };
-    // Only restart simulation when data or dimensions actually change.
-    // Callbacks and settings are accessed via refs — never trigger restarts.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [simNodes, simLinks, dimensions, theme, renderPositions]);
-
-  // Reheat — one-shot energy injection from current positions
   const handleReheat = useCallback(() => {
-    const sim = simulationRef.current;
-    if (!sim) return;
-    sim.alpha(0.5).restart();
+    simHandleRef.current?.reheat();
+    // The engine doesn't yet expose a settle-end callback, so the spinner
+    // is a fixed-duration visual hint rather than a real signal that the
+    // layout has actually quieted. ~2.5s matches typical convergence in
+    // practice on the engine's GPU sim; the rendering is correct
+    // regardless of whether the spinner is on or off.
     setPhysicsActive(true);
+    window.setTimeout(() => setPhysicsActive(false), 2500);
   }, []);
 
-  // -----------------------------------------------------------------------
-  // Settings-driven visual updates (no simulation restart)
-  // -----------------------------------------------------------------------
-  useEffect(() => {
-    linkElementsRef.current
-      ?.attr('display', settings.visual.showEdges ? null : 'none');
-  }, [settings.visual.showEdges]);
+  // ---------------------------------------------------------------------------
+  // Render
+  // ---------------------------------------------------------------------------
 
-  useEffect(() => {
-    if (!svgRef.current) return;
-    d3.select(svgRef.current).selectAll<SVGTextElement, SimNode>('g.nodes g text')
-      .attr('display', settings.visual.showLabels ? null : 'none');
-  }, [settings.visual.showLabels]);
-
-  // Update node sizes when settings change (no simulation restart)
-  useEffect(() => {
-    if (!svgRef.current) return;
-    const renderSize = (d: SimNode) =>
-      d.type === 'document' ? settings.layout.documentSize : d.size * settings.visual.nodeSize;
-
-    d3.select(svgRef.current).selectAll<SVGCircleElement, SimNode>('g.nodes g circle:not(.query-ring)')
-      .attr('r', renderSize);
-    d3.select(svgRef.current).selectAll<SVGTextElement, SimNode>('g.nodes g text')
-      .attr('dy', (d: SimNode) => renderSize(d) + 12);
-    d3.select(svgRef.current).selectAll<SVGPathElement, SimNode>('g.nodes g path')
-      .attr('d', (d: SimNode) => {
-        const s = renderSize(d) * 0.45;
-        return `M${-s / 2},${-s / 2} L${s / 3},${-s / 2} L${s / 2},${-s / 3} L${s / 2},${s / 2} L${-s / 2},${s / 2} Z`;
-      });
-  }, [settings.layout.documentSize, settings.visual.nodeSize]);
-
-  // -----------------------------------------------------------------------
-  // Passage search rings — concentric colored rings around matching nodes.
-  // Rings are children of node <g> groups so they inherit transform position.
-  // -----------------------------------------------------------------------
-  useEffect(() => {
-    if (!svgRef.current) return;
-    const svg = d3.select(svgRef.current);
-
-    // Clear existing rings
-    svg.selectAll('.query-ring').remove();
-
-    if (!passageRings || passageRings.size === 0) return;
-
-    const renderSize = (d: SimNode) => {
-      const s = settingsRef.current;
-      return d.type === 'document' ? s.layout.documentSize : d.size * s.visual.nodeSize;
-    };
-
-    // Scale ring spacing proportionally to the node size multiplier
-    const sizeScale = settingsRef.current.visual.nodeSize;
-
-    svg.selectAll<SVGGElement, SimNode>('g.nodes g').each(function(d) {
-      const rings = passageRings.get(d.id);
-      if (!rings) return;
-
-      const g = d3.select(this);
-      const baseR = renderSize(d);
-      const ringWidth = 3 * sizeScale;
-      const gap = 2 * sizeScale;
-
-      rings.forEach((ring, i) => {
-        // Thickness encodes hit frequency: min 1.5px (1 hit) → max 5px (max hits)
-        const MIN_WIDTH = 1.5 * sizeScale;
-        const MAX_WIDTH = 5 * sizeScale;
-        const t = ring.maxHitCount > 1
-          ? (ring.hitCount - 1) / (ring.maxHitCount - 1)  // 0..1 normalized
-          : 0;
-        const strokeWidth = MIN_WIDTH + t * (MAX_WIDTH - MIN_WIDTH);
-
-        const r = baseR + gap + (i * (ringWidth + 1));
-        g.insert('circle', ':first-child')
-          .attr('class', 'query-ring')
-          .attr('r', r)
-          .attr('fill', 'none')
-          .attr('stroke', ring.color)
-          .attr('stroke-width', strokeWidth)
-          .attr('stroke-opacity', 0.75);
-      });
-    });
-  }, [passageRings, settings]);
-
-  // Focus mode: update opacity when focusedDocumentId changes
-  useEffect(() => {
-    if (!svgRef.current) return;
-    const svg = d3.select(svgRef.current);
-
-    svg.selectAll<SVGGElement, SimNode>('g.nodes g')
-      .attr('opacity', (d: SimNode) => isNodeInFocus(d) ? 1 : DIMMED_OPACITY);
-
-    svg.selectAll<SVGLineElement, SimLink>('g.links line')
-      .attr('opacity', (d: SimLink) => isLinkInFocus(d) ? 0.6 : DIMMED_OPACITY);
-  }, [focusedDocumentId, focusedConceptSet, isNodeInFocus, isLinkInFocus]);
-
-  // Hover highlighting
-  useEffect(() => {
-    if (!svgRef.current) return;
-    const svg = d3.select(svgRef.current);
-    svg.selectAll<SVGCircleElement, SimNode>('g.nodes g circle:not(.query-ring)')
-      .attr('stroke-width', (d: SimNode) => {
-        if (d.id === hoveredNode || d.id === selectedConceptId) return 3;
-        return d.type === 'document' ? 3 : 1.5;
-      })
-      .attr('stroke', (d: SimNode) => {
-        if (d.id === hoveredNode || d.id === selectedConceptId) return '#fff';
-        return COLORS[d.type].stroke;
-      });
-  }, [hoveredNode, selectedConceptId]);
-
-  // Selected concept data for NodeInfoBox
-  const selectedNodeData = useMemo(() => {
-    if (!selectedConceptId) return null;
-    return simNodes.find(n => n.id === selectedConceptId);
-  }, [selectedConceptId, simNodes]);
-
-  // Query hit bar for the selected concept's NodeInfoBox
-  const selectedNodeQueryBar = useMemo(() => {
-    if (!selectedConceptId || !passageRings || !queryColorLabels) return undefined;
-    const rings = passageRings.get(selectedConceptId);
-    if (!rings || rings.length === 0) return undefined;
-
-    return (
-      <div className="flex border-b border-border">
-        {rings.map((ring) => (
-          <div
-            key={ring.color}
-            className="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 text-[0.625rem] font-medium"
-            style={{ backgroundColor: `${ring.color}25`, color: ring.color }}
-          >
-            <span className="truncate">{queryColorLabels.get(ring.color) || '?'}</span>
-            <span className="opacity-70">{ring.hitCount}</span>
-          </div>
-        ))}
-      </div>
-    );
-  }, [selectedConceptId, passageRings, queryColorLabels]);
+  const projection = settings?.projection ?? '3D';
+  const bgClass = theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50';
 
   return (
-    <div className={`relative w-full h-full overflow-hidden ${className || ''}`}>
-      <svg
-        ref={svgRef}
-        width={dimensions.width}
-        height={dimensions.height}
-        className={theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'}
-      />
-
-      <PanelStack side="right">
-        <StatsPanel
-          nodeCount={simNodes.length}
-          edgeCount={visibleLinkCount}
+    <div
+      className={`relative w-full h-full overflow-hidden ${bgClass} ${className || ''}`}
+      onContextMenu={handleBackgroundContextMenu}
+    >
+      {/* Canvas keys on projection so the camera dispatch in Scene gets a
+          fresh r3f tree (perspective vs orthographic can't be swapped
+          mid-mount without state confusion). */}
+      <Canvas
+        key={projection}
+        camera={
+          projection === '2D'
+            ? { position: [0, 0, 400], up: [0, 1, 0], near: 0.1, far: 5000 }
+            : { position: [0, 0, 400], up: [0, 1, 0], near: 0.1, far: 5000, fov: 50 }
+        }
+        orthographic={projection === '2D'}
+        frameloop="demand"
+      >
+        <Scene
+          nodes={engineData.nodes}
+          edges={engineData.edges}
+          edgeVisible={engineData.edgeVisible}
+          colors={nodeColors}
+          labelColors={labelColors}
+          nodeLabelOffsetY={-2.2}
+          nodeClasses={nodeClasses}
+          geometryByClass={geometryByClass}
+          nodeScales={nodeScales}
+          activeIds={dimState?.activeIds}
+          dimAlpha={dimState?.alpha ?? 1}
+          dimLabelOpacity={dimState?.alpha ?? 1}
+          showArrows={false}
+          showEdgeLabels={false}
+          showNodeLabels={settings?.visual?.showLabels !== false}
+          edgeOpacity={settings?.visual?.showEdges === false ? 0 : 0.45}
+          linkWidth={1}
+          nodeSize={settings?.visual?.nodeSize ?? 1}
+          enableDrag
+          enableZoom={settings?.interaction?.enableZoom !== false}
+          enablePan={settings?.interaction?.enablePan !== false}
+          hoveredId={hoveredId}
+          onSelect={handleSelect}
+          onHover={handleHover}
+          onContextMenu={handleNodeContextMenu}
+          activeNodeInfos={activeNodeInfos}
+          onDismissNodeInfo={handleDismissNodeInfo}
+          simHandleRef={simHandleRef}
+          projection={projection}
         />
+      </Canvas>
+
+      {/* Stats — top right */}
+      <PanelStack side="right">
+        <StatsPanel nodeCount={engineData.nodes.length} edgeCount={engineData.edges.length} />
       </PanelStack>
 
-      {/* Reheat button */}
+      {/* Reheat — top left */}
       <div className="absolute top-4 left-4">
         <button
           onClick={handleReheat}
@@ -561,44 +531,31 @@ export const DocumentExplorer: React.FC<
         </button>
       </div>
 
-      {/* Legend */}
+      {/* Legend — bottom left */}
       <div className="absolute bottom-4 left-4 bg-card/90 backdrop-blur-sm border border-border rounded-lg p-3 text-xs space-y-1.5">
         <div className="flex items-center gap-2">
-          <span className="inline-block w-3 h-3 rounded-full" style={{ background: COLORS.document.fill }} />
+          <span className="inline-block w-3 h-3 rounded-full" style={{ background: COLORS.document }} />
           <span>Document</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ background: COLORS['query-concept'].fill }} />
+          <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ background: COLORS['query-concept'] }} />
           <span>Query concept</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="inline-block w-2 h-2 rounded-full" style={{ background: COLORS['extended-concept'].fill }} />
+          <span className="inline-block w-2 h-2 rounded-full" style={{ background: COLORS['extended-concept'] }} />
           <span>Extended concept</span>
         </div>
       </div>
 
-      {/* NodeInfoBox for selected concept */}
-      {selectedNodeData && selectedNodeData.type !== 'document' && (
-        <NodeInfoBox
-          info={{
-            nodeId: selectedConceptId!,
-            label: selectedNodeData.label || 'Unknown',
-            group: selectedNodeData.type === 'query-concept' ? 'query match' : 'document extended',
-            degree: simLinks.filter(l =>
-              l.visible && (
-                ((l.source as SimNode).id === selectedConceptId) ||
-                ((l.target as SimNode).id === selectedConceptId)
-              )
-            ).length,
-            x: (selectedNodeData.x || 0) * zoomTransform.k + zoomTransform.x,
-            y: (selectedNodeData.y || 0) * zoomTransform.k + zoomTransform.y,
-          }}
-          onDismiss={() => setSelectedConceptId(null)}
-          headerExtra={selectedNodeQueryBar}
+      {/* Right-click context menu */}
+      {contextMenu && contextMenuItems.length > 0 && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          items={contextMenuItems}
+          onClose={() => setContextMenu(null)}
         />
       )}
     </div>
   );
 };
-
-export default DocumentExplorer;

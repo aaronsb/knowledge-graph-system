@@ -59,6 +59,13 @@ export interface EdgesProps {
    *  dimmed by dimAlpha. Drives hover/focus dim. */
   activeIds?: Set<string>;
   dimAlpha?: number;
+  /** Optional per-edge visibility flag, parallel to `edges` by index.
+   *  When `false`, the edge is kept in the physics sim (the engine's sim
+   *  consumes the same `edges` array) but is render-collapsed to a single
+   *  point. Document Explorer uses this for document→concept clustering
+   *  hints — they pull concepts toward their parent document without
+   *  drawing a visible line. Undefined = all visible. */
+  edgeVisible?: boolean[];
 }
 
 /** Indexed-line edge mesh — straight when no parallels, bezier otherwise.  @verified c17bbeb9 */
@@ -73,6 +80,7 @@ export function Edges({
   linkWidth = 1,
   activeIds,
   dimAlpha = 1,
+  edgeVisible,
 }: EdgesProps) {
   const lineRef = useRef<THREE.LineSegments>(null);
   const invalidate = useThree((state) => state.invalidate);
@@ -200,7 +208,7 @@ export function Edges({
     }
     colAttr.needsUpdate = true;
     invalidate();
-  }, [geometry, indexPairs, nodes, colors, edgeColors, originalIndices, segments, activeIds, dimAlpha, invalidate]);
+  }, [geometry, indexPairs, nodes, colors, edgeColors, originalIndices, segments, activeIds, dimAlpha, edgeVisible, invalidate]);
 
   useFrame(() => {
     const line = lineRef.current;
@@ -228,6 +236,19 @@ export function Edges({
       const si = indexPairs[i * 2];
       const ti = indexPairs[i * 2 + 1];
       const base = i * vertsPerEdge * 3;
+
+      // Edge marked invisible by the plugin — collapse to a point so it
+      // disappears visually while staying in the sim (for clustering).
+      if (edgeVisible && edgeVisible[originalIndices[i]] === false) {
+        const k3 = si * 3;
+        for (let v = 0; v < vertsPerEdge; v++) {
+          const off = base + v * 3;
+          arr[off] = positions[k3];
+          arr[off + 1] = positions[k3 + 1];
+          arr[off + 2] = positions[k3 + 2];
+        }
+        continue;
+      }
 
       if (hasHidden && (hiddenIds!.has(nodes[si].id) || hiddenIds!.has(nodes[ti].id))) {
         const keepIdx = hiddenIds!.has(nodes[si].id) ? ti : si;

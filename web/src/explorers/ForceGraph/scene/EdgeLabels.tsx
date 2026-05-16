@@ -86,6 +86,10 @@ export interface EdgeLabelsProps {
   projection?: Projection;
   /** Multiplier on the base label world-space height. Default 1. */
   sizeMultiplier?: number;
+  /** Plane opacity for labels whose endpoints aren't both in `activeIds`.
+   *  Resolved from the active dim tier by the consumer (see dimModel).
+   *  Default 1 (no dim). */
+  dimLabelOpacity?: number;
 }
 
 interface EdgeMeta {
@@ -100,9 +104,6 @@ interface EdgeMeta {
 }
 
 /** 3D plane-mesh edge labels with camera-facing roll.  @verified e05014ea */
-/** Dim opacity applied to labels whose endpoints aren't in activeIds. */
-const DIM_LABEL_OPACITY = 0.15;
-
 export function EdgeLabels({
   nodes,
   edges,
@@ -114,6 +115,7 @@ export function EdgeLabels({
   activeIds,
   projection = '3D',
   sizeMultiplier = 1,
+  dimLabelOpacity = 1,
 }: EdgeLabelsProps) {
   const camera = useThree((state) => state.camera);
 
@@ -197,7 +199,7 @@ export function EdgeLabels({
         (!activeIds!.has(nodes[meta.si].id) || !activeIds!.has(nodes[meta.ti].id));
       if (mat) {
         mat.map = entry.texture;
-        mat.opacity = dimmed ? DIM_LABEL_OPACITY : 1;
+        mat.opacity = dimmed ? dimLabelOpacity : 1;
         mat.needsUpdate = true;
       }
       if (mesh) {
@@ -205,7 +207,7 @@ export function EdgeLabels({
         mesh.scale.set(entry.aspect * h, h, 1);
       }
     }
-  }, [visibleIndices, edgeMeta, edgeColors, enabled, activeIds, nodes, sizeMultiplier]);
+  }, [visibleIndices, edgeMeta, edgeColors, enabled, activeIds, nodes, sizeMultiplier, dimLabelOpacity]);
 
   // Scratch vectors reused across the frame loop.
   const scratch = useMemo(
