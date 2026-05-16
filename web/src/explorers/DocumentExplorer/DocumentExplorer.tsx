@@ -106,7 +106,7 @@ export const DocumentExplorer: React.FC<
   // ---------------------------------------------------------------------------
 
   const engineData = useMemo(() => {
-    if (!data) return { nodes: [] as EngineNode[], edges: [] as EngineEdge[] };
+    if (!data) return { nodes: [] as EngineNode[], edges: [] as EngineEdge[], edgeVisible: [] as boolean[] };
 
     // Pre-compute degree from visible edges so concept nodes scale subtly
     // by connectivity. Document nodes use a constant scale set below.
@@ -203,12 +203,20 @@ export const DocumentExplorer: React.FC<
     return set;
   }, [focusedDocumentId, data]);
 
-  // Hovered node + its immediate edge neighbors. Matches Force Graph's
-  // hover-dim behaviour so muscle memory carries.
+  // Hovered node + its immediate neighbors over the *visible* edges only.
+  // engineData.edges also carries the invisible document→concept
+  // clustering scaffold (kept for the force sim, collapsed in render).
+  // Traversing that would light up a node's entire clustering hairball
+  // — nearly the whole graph — so the dim would land on almost nothing.
+  // Following only visible edges makes the lit neighborhood match what
+  // the user can actually see connected, matching Force Graph's feel.
   const hoverActiveIds = useMemo<Set<string> | null>(() => {
     if (!hoveredId) return null;
     const set = new Set<string>([hoveredId]);
-    for (const e of engineData.edges) {
+    const { edges, edgeVisible } = engineData;
+    for (let i = 0; i < edges.length; i++) {
+      if (!edgeVisible[i]) continue;
+      const e = edges[i];
       if (e.from === hoveredId) set.add(e.to);
       else if (e.to === hoveredId) set.add(e.from);
     }
