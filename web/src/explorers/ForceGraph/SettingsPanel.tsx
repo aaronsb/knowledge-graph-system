@@ -16,7 +16,7 @@ import type { SettingsPanelProps } from '../../types/explorer';
 import type { ForceGraphSettings } from './types';
 import { SLIDER_RANGES } from './types';
 import { simBackend } from './scene/useSim';
-import { useGraphStore } from '../../store/graphStore';
+import { useGraphStore, type FilterOption } from '../../store/graphStore';
 
 type Section = 'physics' | 'visual' | 'interaction' | 'filters';
 
@@ -86,24 +86,48 @@ export const SettingsPanel: React.FC<SettingsPanelProps<ForceGraphSettings>> = (
 
   // Multi-select checkbox list for the universal relationship-type /
   // ontology filters. Empty selection = show all (matches the store
-  // convention used by minConfidence/visibleEdgeCategories).
+  // convention used by minConfidence/visibleEdgeCategories). Each row
+  // carries the colour the graph renders that value in — without it,
+  // 50 same-looking rows are unreadable. select all / none keep large
+  // type lists usable.
   const checkboxList = (
     label: string,
-    options: string[],
+    options: FilterOption[],
     selected: string[],
     onChange: (next: string[]) => void
   ) => (
     <div className="pt-1">
-      <div className="text-[11px] font-medium text-foreground mb-1">{label}</div>
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-[11px] font-medium text-foreground">{label}</span>
+        {options.length > 0 && (
+          <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+            <button
+              type="button"
+              className="hover:text-foreground transition-colors"
+              onClick={() => onChange(options.map((o) => o.value))}
+            >
+              all
+            </button>
+            <span>/</span>
+            <button
+              type="button"
+              className="hover:text-foreground transition-colors"
+              onClick={() => onChange([])}
+            >
+              none
+            </button>
+          </span>
+        )}
+      </div>
       {options.length === 0 ? (
         <span className="text-[10px] text-muted-foreground">None in current data</span>
       ) : (
         <div className="flex flex-col gap-1 max-h-40 overflow-y-auto pr-1">
           {options.map((opt) => {
-            const checked = selected.includes(opt);
+            const checked = selected.includes(opt.value);
             return (
               <label
-                key={opt}
+                key={opt.value}
                 className="flex items-center gap-1.5 text-[11px] cursor-pointer"
               >
                 <input
@@ -112,12 +136,16 @@ export const SettingsPanel: React.FC<SettingsPanelProps<ForceGraphSettings>> = (
                   onChange={() =>
                     onChange(
                       checked
-                        ? selected.filter((s) => s !== opt)
-                        : [...selected, opt]
+                        ? selected.filter((s) => s !== opt.value)
+                        : [...selected, opt.value]
                     )
                   }
                 />
-                <span className="truncate">{opt}</span>
+                <span
+                  className="inline-block w-2.5 h-2.5 rounded-full shrink-0 border border-border"
+                  style={{ background: opt.color }}
+                />
+                <span className="truncate">{opt.value}</span>
               </label>
             );
           })}

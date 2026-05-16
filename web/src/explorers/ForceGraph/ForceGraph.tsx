@@ -197,16 +197,25 @@ export const ForceGraph: React.FC<
   // engine data (the SAME strings the filter compares against) so the
   // universal filter UI can offer them without taking graph data as a
   // prop. Deriving from raw API data instead would mismatch — the
-  // raw→engine transform maps empty ontology to 'Unknown'.
+  // raw→engine transform maps empty ontology to 'Unknown'. Each option
+  // carries the colour the graph renders it in so the selector swatch
+  // matches the screen: relationship type → category colour (the
+  // canonical/default edge colouring, mirroring the edgeColors 'type'
+  // branch); ontology → the ontology palette colour.
   useEffect(() => {
     const rels = [...new Set((data?.edges ?? []).map((e) => e.type))]
       .filter(Boolean)
-      .sort();
+      .sort()
+      .map((value) => ({
+        value,
+        color: getCategoryColor(vocabStore.getCategory(value) || undefined),
+      }));
     const onts = [...new Set((data?.nodes ?? []).map((n) => n.category))]
       .filter(Boolean)
-      .sort();
+      .sort()
+      .map((value) => ({ value, color: palette(value) }));
     setFilterOptions({ relationshipTypes: rels, ontologies: onts });
-  }, [data, setFilterOptions]);
+  }, [data, setFilterOptions, vocabStore, palette]);
 
   // Apply shared-store filters. All universal — every explorer reads
   // the same store fields, so a filter set in one place applies

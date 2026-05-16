@@ -29,6 +29,13 @@ interface GraphFilters {
   visibleEdgeCategories: Set<string>; // Track which edge categories are visible
 }
 
+/** A selectable filter value plus the colour the graph renders it in,
+ *  so the selector swatch matches what's on screen. */
+export interface FilterOption {
+  value: string;
+  color: string;
+}
+
 interface UISettings {
   showLabels: boolean;
   showLegend: boolean;
@@ -174,8 +181,8 @@ interface GraphStore {
    *  'Unknown'/'Unknown' — deriving options from raw data would
    *  silently mismatch). Lets the universal filter UI offer choices
    *  without receiving graph data as a prop. */
-  filterOptions: { relationshipTypes: string[]; ontologies: string[] };
-  setFilterOptions: (options: { relationshipTypes: string[]; ontologies: string[] }) => void;
+  filterOptions: { relationshipTypes: FilterOption[]; ontologies: FilterOption[] };
+  setFilterOptions: (options: { relationshipTypes: FilterOption[]; ontologies: FilterOption[] }) => void;
   toggleEdgeCategoryVisibility: (category: string) => void;
   setAllEdgeCategoriesVisible: (categories: string[], visible: boolean) => void;
 
@@ -278,8 +285,8 @@ const defaultFilters: GraphFilters = {
 };
 
 const defaultFilterOptions = {
-  relationshipTypes: [] as string[],
-  ontologies: [] as string[],
+  relationshipTypes: [] as FilterOption[],
+  ontologies: [] as FilterOption[],
 };
 
 const defaultUISettings: UISettings = {
