@@ -12,15 +12,20 @@
  *   - focus  — persistent, aggressive. Set via right-click "Focus on
  *              node/document". Wins over hover when both are active.
  *
- * Each tier is ONE node carrying every property it affects, so the
- * node mesh and its label can never drift apart: tune a tier in one
- * place and the dot and its text move together. (The previous flat
- * constants let label opacity and node alpha be set independently —
- * that's what made hover read harsher on labels than on dots.)
+ * One number per tier, applied uniformly to nodes, edges, AND their
+ * labels. Nodes/edges dim by color-multiply, labels by plane opacity —
+ * but on the dark scene background color-multiply toward black and
+ * opacity toward background are perceptually the same, so a single
+ * value reads as one consistent recede across all four element kinds.
+ *
+ * Deliberately NOT split per element kind: a per-kind knob is what let
+ * labels and dots drift to different strengths. If a tier needs to be
+ * gentler because labels vanish before dots do, raise the one number —
+ * that softens everything together, which is the point.
  *
  * The engine itself stays primitive — Scene/Nodes/Edges/labels take
  * plain numbers. This map is a consumer-side convenience; explorers
- * resolve a tier to its spec and feed the numbers in. A future
+ * resolve a tier to its alpha and feed the number in. A future
  * consumer with a different interaction vocabulary isn't forced to
  * adopt ours.
  *
@@ -29,16 +34,10 @@
 
 export type DimTier = 'hover' | 'focus';
 
-export interface DimSpec {
-  /** Color multiplier for out-of-set node meshes, edges, and arrows
-   *  (edges visually couple to their endpoints, so they share the
-   *  node figure rather than carrying a separate alpha). */
-  nodeAlpha: number;
-  /** Plane opacity for out-of-set node and edge labels. */
-  labelOpacity: number;
-}
-
-export const DIM_MODEL: Record<DimTier, DimSpec> = {
-  hover: { nodeAlpha: 0.9, labelOpacity: 0.9 },
-  focus: { nodeAlpha: 0.05, labelOpacity: 0.15 },
+/** Out-of-set alpha per tier: color multiplier for node meshes / edges /
+ *  arrows, and plane opacity for node / edge labels. One value drives
+ *  all of them so the dim reads consistently. */
+export const DIM_MODEL: Record<DimTier, number> = {
+  hover: 0.9,
+  focus: 0.1,
 };
