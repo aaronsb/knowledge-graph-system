@@ -9,6 +9,7 @@ import React from 'react';
 import type { SettingsPanelProps } from '../../types/explorer';
 import type { DocumentExplorerSettings } from './types';
 import { SLIDER_RANGES } from './types';
+import { VisualControls } from '../common';
 
 export const ProfilePanel: React.FC<SettingsPanelProps<DocumentExplorerSettings>> = ({
   settings,
@@ -22,9 +23,8 @@ export const ProfilePanel: React.FC<SettingsPanelProps<DocumentExplorerSettings>
     );
   }
 
-  const updateVisual = (key: keyof typeof settings.visual, value: boolean | number) => {
-    onChange({ ...settings, visual: { ...settings.visual, [key]: value } });
-  };
+  const updateVisual = (patch: Partial<DocumentExplorerSettings['visual']>) =>
+    onChange({ ...settings, visual: { ...settings.visual, ...patch } });
 
   const updateLayout = (key: keyof typeof settings.layout, value: number) => {
     onChange({ ...settings, layout: { ...settings.layout, [key]: value } });
@@ -62,39 +62,36 @@ export const ProfilePanel: React.FC<SettingsPanelProps<DocumentExplorerSettings>
           Visual
         </h4>
         <div className="space-y-3">
-          <label className="flex items-center justify-between text-sm">
-            <span>Show labels</span>
+          {/* Shared visual controls — same component Force Graph uses, so
+              the two explorers can't silently drift apart. */}
+          <VisualControls
+            showNodeLabels={settings.visual.showNodeLabels !== false}
+            nodeSize={settings.visual.nodeSize ?? 1}
+            lighting={settings.visual.lighting ?? 'flat'}
+            lightingFollowsProjection={
+              settings.visual.lightingFollowsProjection ?? false
+            }
+            nodeSizeRange={SLIDER_RANGES.visual.nodeSize}
+            onShowNodeLabels={(v) => updateVisual({ showNodeLabels: v })}
+            onNodeSize={(v) => updateVisual({ nodeSize: v })}
+            onLighting={(v) => updateVisual({ lighting: v })}
+            onLightingFollowsProjection={(v) =>
+              updateVisual({ lightingFollowsProjection: v })
+            }
+          />
+          {/* Document Explorer-specific: edge visibility toggle. */}
+          <label className="flex items-center gap-2 text-xs text-card-foreground">
+            <span className="flex-1 min-w-0 truncate">Show edges</span>
+            <span className="font-mono text-muted-foreground tabular-nums w-12 text-right text-[10px]">
+              {settings.visual.showEdges !== false ? 'on' : 'off'}
+            </span>
             <input
               type="checkbox"
-              checked={settings.visual.showLabels}
-              onChange={(e) => updateVisual('showLabels', e.target.checked)}
-              className="rounded"
+              className="ml-auto"
+              checked={settings.visual.showEdges !== false}
+              onChange={(e) => updateVisual({ showEdges: e.target.checked })}
             />
           </label>
-          <label className="flex items-center justify-between text-sm">
-            <span>Show edges</span>
-            <input
-              type="checkbox"
-              checked={settings.visual.showEdges}
-              onChange={(e) => updateVisual('showEdges', e.target.checked)}
-              className="rounded"
-            />
-          </label>
-          <div>
-            <div className="flex items-center justify-between text-sm mb-1">
-              <span>Node size</span>
-              <span className="text-xs text-muted-foreground">{settings.visual.nodeSize.toFixed(1)}x</span>
-            </div>
-            <input
-              type="range"
-              min={SLIDER_RANGES.visual.nodeSize.min}
-              max={SLIDER_RANGES.visual.nodeSize.max}
-              step={SLIDER_RANGES.visual.nodeSize.step}
-              value={settings.visual.nodeSize}
-              onChange={(e) => updateVisual('nodeSize', parseFloat(e.target.value))}
-              className="w-full h-1.5 rounded-lg appearance-none bg-border accent-amber-500"
-            />
-          </div>
         </div>
       </section>
 

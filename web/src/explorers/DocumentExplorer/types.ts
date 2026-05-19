@@ -18,9 +18,19 @@ export interface DocumentExplorerSettings {
    *  sim axis count from this value. */
   projection: Projection;
   visual: {
-    showLabels: boolean;
+    /** Renamed from showLabels for vocabulary parity with Force Graph
+     *  (its showLabels means *edge* labels; node labels are
+     *  showNodeLabels). Persisted blobs predating the rename simply
+     *  fall back to the default — all reads are `!== false`. */
+    showNodeLabels: boolean;
     showEdges: boolean;
     nodeSize: number;           // Base size multiplier
+    /** Parity with Force Graph. 'flat' = unlit two-tone (default);
+     *  'lit' = real Lambert with a camera-tracked key light. */
+    lighting: 'flat' | 'lit';
+    /** Parity with Force Graph. When true: 2D ⇒ flat, 3D ⇒ lit;
+     *  overrides `lighting`. Default false. */
+    lightingFollowsProjection: boolean;
   };
   layout: {
     documentSize: number;       // Document node base scale (relative to concept dots)
@@ -35,9 +45,11 @@ export interface DocumentExplorerSettings {
 export const DEFAULT_SETTINGS: DocumentExplorerSettings = {
   projection: '3D',
   visual: {
-    showLabels: true,
+    showNodeLabels: true,
     showEdges: true,
     nodeSize: 1.0,
+    lighting: 'flat',
+    lightingFollowsProjection: false,
   },
   layout: {
     documentSize: 24,

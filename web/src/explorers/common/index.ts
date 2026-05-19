@@ -8,6 +8,11 @@ export { EdgeInfoBox, type EdgeInfoBoxProps } from './EdgeInfoBox';
 export { StatsPanel, type StatsPanelProps } from './StatsPanel';
 export { Legend } from './Legend';
 export { PanelStack } from './PanelStack';
+export {
+  VisualControls,
+  type VisualControlsProps,
+  type VisualControlsValue,
+} from './VisualControls';
 export { formatGrounding, getRelationshipTextColor } from './utils';
 export { explorerTheme, type ExplorerTheme } from './styles';
 export {
