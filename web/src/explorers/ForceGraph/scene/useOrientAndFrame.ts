@@ -63,6 +63,18 @@ const DEFAULT_FILL = 0.2;
  */
 const DEFAULT_PULLBACK = 0.15;
 
+/**
+ * Overscan for the no-rotate fallback (2D ortho + near-spherical 3D),
+ * which frames by bounding *sphere*, not the depth-anchored formula.
+ * This is a plain multiplier on the exact sphere fit: 1 = graph exactly
+ * fits, <1 = closer / slight spill. NOTE this is deliberately NOT
+ * `fill`: `fill` is the depth-anchor *floor fraction* (~0.2) and means
+ * something different — using 0.2 as a sphere-fit multiplier would put
+ * the camera at 1/5 the fit distance (inside the cluster) / 5× ortho
+ * zoom. Separate constant, separate semantics.
+ */
+const FALLBACK_FILL = 0.8;
+
 export interface OrientAndFrameOptions {
   hiddenIds?: Set<string>;
   edges?: EngineEdge[];
@@ -231,7 +243,7 @@ export function useOrientAndFrame(
 
       if (camera instanceof THREE.OrthographicCamera) {
         const minPx = Math.min(size.width, size.height);
-        const zoom = minPx / (2 * radius * fill);
+        const zoom = minPx / (2 * radius * FALLBACK_FILL);
         startTween(
           {
             position: [center.x, center.y, camera.position.z],
@@ -247,7 +259,7 @@ export function useOrientAndFrame(
       const hFov = 2 * Math.atan(Math.tan(vFov / 2) * cam.aspect);
       const dist =
         Math.max(radius / Math.sin(vFov / 2), radius / Math.sin(hFov / 2)) *
-        fill;
+        FALLBACK_FILL;
       const dir = cam.position.clone();
       if (controls) dir.sub(controls.target);
       if (dir.lengthSq() < 1e-6) dir.set(0, 0, 1);
@@ -262,7 +274,7 @@ export function useOrientAndFrame(
         camera.zoom
       );
     },
-    [camera, controls, size, fill, startTween]
+    [camera, controls, size, startTween]
   );
 
   const run = useCallback(

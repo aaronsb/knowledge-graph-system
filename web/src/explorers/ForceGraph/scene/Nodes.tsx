@@ -323,7 +323,9 @@ function NodeClassMesh({
       onDragEnd?.(e);
     } else if (clickedId) {
       if (hiddenIds && hiddenIds.has(clickedId)) return;
-      const now = Date.now();
+      // Monotonic clock (matches the orient tween); Date.now() can jump
+      // backwards on an NTP step and falsely split/merge a click pair.
+      const now = performance.now();
       const prev = lastClickRef.current;
       if (
         onNodeDoubleClick &&
@@ -331,9 +333,12 @@ function NodeClassMesh({
         prev.id === clickedId &&
         now - prev.t < DOUBLE_CLICK_MS
       ) {
-        // Double-click: focus the camera on this node. Don't re-toggle
-        // selection (the first click already set it); consume the pair.
+        // Double-click: focus the camera on this node. The first click
+        // of the pair may have toggled selection either way; force the
+        // focused node selected so focus always leaves it highlighted
+        // (coherent regardless of its pre-click state). Consume the pair.
         lastClickRef.current = null;
+        if (selectedId !== clickedId) onSelect?.(clickedId);
         onNodeDoubleClick(clickedId);
       } else {
         // Single click — toggle selection; arm double-click detection.

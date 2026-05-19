@@ -33,6 +33,7 @@
 
 import { useEffect, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
+import type { EventDispatcher } from 'three';
 import type { EngineNode } from '../types';
 
 /**
@@ -55,6 +56,7 @@ const SETTLE_MS = 2000;
  */
 export function useFitCamera(orient: () => void, nodes: EngineNode[]): void {
   const invalidate = useThree((s) => s.invalidate);
+  const controls = useThree((s) => s.controls) as EventDispatcher | null;
 
   const armedRef = useRef(false);
   const firedRef = useRef(false);
@@ -74,6 +76,24 @@ export function useFitCamera(orient: () => void, nodes: EngineNode[]): void {
     }
     hadNodesRef.current = has;
   }, [nodes.length, invalidate]);
+
+  // If the user grabs the camera during the settle window, abandon the
+  // pending fit — firing it at t=2s anyway would yank the view out from
+  // under them (the same "sproing" this hook's header says it avoids,
+  // just on the first-load path). The orient tween has its own cancel;
+  // this guards the trigger that hasn't fired yet. firedRef doubles as
+  // "spent" so it never arms again this lifetime.
+  useEffect(() => {
+    if (!controls) return;
+    const abort = () => {
+      if (armedRef.current && !firedRef.current) {
+        armedRef.current = false;
+        firedRef.current = true;
+      }
+    };
+    controls.addEventListener('start', abort);
+    return () => controls.removeEventListener('start', abort);
+  }, [controls]);
 
   useFrame(() => {
     if (!armedRef.current || firedRef.current) return;
