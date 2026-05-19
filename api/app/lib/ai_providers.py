@@ -538,7 +538,18 @@ class OpenAIProvider(AIProvider):
                     "display_name": mid,
                     "category": category,
                     "context_length": None,
-                    "supports_vision": "4o" in mid or "gpt-4-turbo" in mid,
+                    # Vision-capable families: 4o, gpt-4-turbo, the o-series
+                    # reasoning models (o1/o3/o4 accept image input), gpt-5.
+                    # Known maintenance point: the o-series prefix list is a
+                    # bounded-staleness heuristic (a future o5/alias not
+                    # literally prefixed needs adding) — same accepted
+                    # ADR-800/801 trade-off; a missed flag degrades to the
+                    # warned literal, not a hard failure.
+                    "supports_vision": (
+                        "4o" in mid or "gpt-4-turbo" in mid
+                        or mid.startswith(("o1", "o3", "o4"))
+                        or "gpt-5" in mid
+                    ),
                     "supports_json_mode": not is_embedding and "o1" not in mid,
                     "supports_tool_use": not is_embedding and "o1" not in mid,
                     "supports_streaming": True,
