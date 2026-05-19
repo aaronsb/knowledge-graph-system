@@ -29,8 +29,17 @@ import type { EngineNode } from '../types';
 const STABLE_FRAMES = 5;
 /** Hard cap so a never-settling layout still gets framed (~10s at 60fps). */
 const MAX_FRAMES = 600;
-/** Padding so the cluster doesn't touch the viewport edges. */
-const MARGIN = 1.25;
+/**
+ * View-fill factor. We frame the cluster's bounding *sphere* (half the
+ * box diagonal), which over-estimates a typically-irregular force layout
+ * — fitting that sphere exactly already leaves the visible graph small
+ * with padding. The user wants the opposite: the graph filling the view
+ * and spilling ~15% past the edges. <1 is deliberate overscan; 0.7
+ * pulls the camera ~30% closer than a pure sphere-fit so the actual
+ * node spread fills the viewport and the outermost nodes/labels sit
+ * just outside it. Tunable to taste.
+ */
+const FILL = 0.7;
 
 const tmpMin = new THREE.Vector3();
 const tmpMax = new THREE.Vector3();
@@ -78,6 +87,11 @@ export function useFitCamera(
 
   useFrame(() => {
     if (!armedRef.current) return;
+    // Keep demand-frameloop pumping while we're waiting to fit. The sim
+    // stops invalidating once it quiesces; without this, settle/timeout
+    // could be reached after frames have already stopped and the fit
+    // would never fire. Cleared implicitly when we disarm below.
+    invalidate();
     const positions = positionsRef.current;
     const n = nodes.length;
     if (!positions || n === 0 || positions.length < n * 3) return;
@@ -119,16 +133,18 @@ export function useFitCamera(
     const settled = stableRef.current >= STABLE_FRAMES;
     const timedOut = framesRef.current >= MAX_FRAMES;
     if (!settled && !timedOut) return;
-    // Orbit/pan target must be re-pointed for the framing to read right;
-    // wait for drei's controls to mount unless we've hit the hard cap.
-    if (!controls && !timedOut) return;
+    // Orbit/pan target must be re-pointed for the framing to read right,
+    // so prefer waiting for drei's controls to mount — but only briefly
+    // (~2s). If they're still absent we fit anyway with a lookAt
+    // fallback rather than stall forever.
+    if (!controls && framesRef.current < 120 && !timedOut) return;
 
     if (camera instanceof THREE.OrthographicCamera) {
       // r3f's ortho frustum is the canvas in pixels; zoom = pixels per
       // world unit. Fit the sphere's diameter into the smaller viewport
       // axis with margin.
       const minPx = Math.min(size.width, size.height);
-      camera.zoom = minPx / (2 * radius * MARGIN);
+      camera.zoom = minPx / (2 * radius * FILL);
       camera.position.set(tmpCenter.x, tmpCenter.y, camera.position.z);
       camera.updateProjectionMatrix();
     } else if (camera instanceof THREE.PerspectiveCamera) {
@@ -136,7 +152,7 @@ export function useFitCamera(
       const hFov = 2 * Math.atan(Math.tan(vFov / 2) * camera.aspect);
       const dist =
         Math.max(radius / Math.sin(vFov / 2), radius / Math.sin(hFov / 2)) *
-        MARGIN;
+        FILL;
       // Preserve the current viewing direction; fall back to looking
       // down -Z if the camera and target coincide.
       tmpDir.copy(camera.position);
