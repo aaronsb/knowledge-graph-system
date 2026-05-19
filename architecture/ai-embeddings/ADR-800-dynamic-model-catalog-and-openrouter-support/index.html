@@ -16,7 +16,7 @@
         <link rel="prev" href="../ADR-070-polarity-axis-analysis/">
       
       
-        <link rel="next" href="../media-ADR-058/README_VISUALIZATIONS/">
+        <link rel="next" href="../ADR-801-uniform-provider-configuration-contract/">
       
       
         
@@ -5350,7 +5350,7 @@
     
   
   
-    <span class="md-status md-status--Draft"></span>
+    <span class="md-status md-status--Accepted"></span>
   
 
   
@@ -5375,7 +5375,7 @@
     
   
   
-    <span class="md-status md-status--Draft"></span>
+    <span class="md-status md-status--Accepted"></span>
   
 
   
@@ -5625,6 +5625,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#implementation-status-2026-05-19" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation status (2026-05-19)
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -5645,6 +5656,41 @@
   
   
   
+    <li class="md-nav__item">
+      <a href="../ADR-801-uniform-provider-configuration-contract/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-801: Uniform Provider Configuration Contract
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--Draft"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
     
     
     
@@ -5654,10 +5700,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9_3_12" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9_3_13" >
         
           
-          <label class="md-nav__link" for="__nav_9_3_12" id="__nav_9_3_12_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_9_3_13" id="__nav_9_3_13_label" tabindex="0">
             
   
   
@@ -5675,8 +5721,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_9_3_12_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_9_3_12">
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_9_3_13_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9_3_13">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -9982,6 +10028,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#implementation-status-2026-05-19" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation status (2026-05-19)
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -10213,6 +10270,25 @@
 <li>Catalog: <code>GET /api/v1/models</code> — returns full model list with pricing (no auth required, but rate-limited)</li>
 <li>Completions: <code>POST /api/v1/chat/completions</code> — OpenAI-compatible format</li>
 <li>Generation stats: <code>GET /api/v1/generation?id={id}</code> — token usage and cost for a specific request</li>
+</ul>
+<h3 id="implementation-status-2026-05-19">Implementation status (2026-05-19)</h3>
+<p>All migration-sequence items are complete. The decision is now fully
+implemented; status moved Draft → Accepted.</p>
+<ul>
+<li>Items 1–7 (schema, seed, <code>OpenRouterProvider</code>, <code>fetch_model_catalog</code>,
+  <code>configure.py models</code>, <code>/admin/models/catalog</code>, cost estimator) were
+  delivered earlier.</li>
+<li>Item 8 (web UI) is closed by this change: <code>SystemTab</code> no longer hardcodes
+  provider/model lists — it derives them from <code>/admin/models/catalog</code> and
+  <code>/admin/keys</code>, with per-provider cards that unify API-key management and
+  the active extraction selection.</li>
+<li>A residual gap is closed alongside item 8: <code>API_KEY_PROVIDERS</code> omitted
+  <code>openrouter</code>, so <code>POST/GET/DELETE /admin/keys</code> rejected or hid OpenRouter
+  keys even though the provider was fully implemented. <code>openrouter</code> is now
+  in <code>API_KEY_PROVIDERS</code> and <code>EXTRACTION_PROVIDERS</code>, with format/validation
+  branches in <code>admin.py</code> and <code>api_key_validator.py</code> (authenticated
+  <code>/api/v1/key</code> check). <code>GET /admin/keys</code> now enumerates the union of known
+  and actually-configured providers rather than the constant alone.</li>
 </ul>
 
 
