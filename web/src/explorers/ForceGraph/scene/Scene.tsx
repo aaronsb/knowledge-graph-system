@@ -277,6 +277,7 @@ export function Scene({
         nodeSize={nodeSize}
         selectedId={selectedId}
         onSelect={onSelect}
+        onNodeDoubleClick={orientAction.focus}
         onHover={onHover}
         onContextMenu={onContextMenu}
         onDragStart={enableDrag ? drag.onDragStart : undefined}
