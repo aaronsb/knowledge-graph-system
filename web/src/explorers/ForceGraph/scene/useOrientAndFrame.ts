@@ -135,21 +135,26 @@ export function useOrientAndFrame(
   // Translate a target pose into a tween from the camera's current pose.
   const startTween = useCallback(
     (pose: CameraPose, zoom: number) => {
+      // Deliberately DO NOT adopt pose.up (the cloud's mid axis). A force
+      // layout has no inherent orientation, so the user's mental model is
+      // "Y is up". Snapping camera.up to the PCA mid axis would (1) roll
+      // the view instantly at t=0 — the exact disorientation the tween
+      // exists to prevent — and (2) leave OrbitControls with a tilted
+      // orbit pole, so all later rotation feels off-gravity. Keeping
+      // world-Y up and letting lookAt resolve roll costs only a slightly
+      // conservative fit (a touch more spill), which is harmless.
+      // pose.up stays part of the geometric contract (and orientView's
+      // tests) as the broad-face up; the hook just doesn't apply it.
       if (!controls) {
         // No controls yet (early first-load) — snap; the tween loop has
         // nothing to lerp the target against. Rare; caller retries.
         camera.position.set(...pose.position);
-        camera.up.set(...pose.up);
         camera.lookAt(...pose.target);
         if (camera instanceof THREE.OrthographicCamera) camera.zoom = zoom;
         camera.updateProjectionMatrix();
         invalidate();
         return;
       }
-      // up changes the lookAt basis; tweening it fights the position
-      // lerp. Set it once up-front — the roll delta is small and the
-      // position/target ease carries the visible motion.
-      camera.up.set(...pose.up);
       tweenRef.current = {
         fromPos: camera.position.clone(),
         toPos: new THREE.Vector3(...pose.position),
