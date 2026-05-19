@@ -6,6 +6,7 @@ concept-lifetime endpoint in routes/concepts.py — both delegate to
 EpochFacade (`age_client.epochs`).
 """
 
+from datetime import datetime
 from typing import Optional
 import logging
 
@@ -29,13 +30,13 @@ async def list_epochs(
         None,
         description="Filter to a specific event kind (ingestion, reasoning, breathing, edit)",
     ),
-    since: Optional[str] = Query(
+    since: Optional[datetime] = Query(
         None,
-        description="ISO-8601 lower bound on occurred_at (UTC)",
+        description="ISO-8601 lower bound on occurred_at (UTC). FastAPI parses; malformed input → 422.",
     ),
-    until: Optional[str] = Query(
+    until: Optional[datetime] = Query(
         None,
-        description="ISO-8601 upper bound on occurred_at (UTC)",
+        description="ISO-8601 upper bound on occurred_at (UTC). FastAPI parses; malformed input → 422.",
     ),
     actor: Optional[str] = Query(
         None,
@@ -51,6 +52,13 @@ async def list_epochs(
     """
     Cursor-paginated read of `kg_api.graph_epochs`.
 
+    Cursor pagination (rather than the project's usual limit/offset) is
+    used here because `event_id` is strictly monotonic. Cursors are stable
+    under concurrent inserts — a new ingestion landing mid-pagination
+    cannot shift items between pages. For non-monotonic lists, the
+    project default of limit/offset remains correct; this endpoint
+    diverges for that specific reason.
+
     Events are returned most-recent-first. To page back through history,
     pass the previous response's `next_cursor` as `cursor`. When the
     response's `next_cursor` is null, no further pages exist for the
@@ -59,7 +67,8 @@ async def list_epochs(
     Filter semantics:
       - `kind` matches exact (no wildcards). Honest about the discriminator
         in ADR-203 §Decision: only some kinds make wall-clock semantically
-        meaningful.
+        meaningful; each event row carries `semantic_wallclock` so callers
+        can reason about that without duplicating the table.
       - `since`/`until` apply to `occurred_at` regardless of `kind`.
       - `actor` matches exact.
 

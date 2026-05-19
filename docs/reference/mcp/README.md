@@ -122,6 +122,8 @@ For multi-step workflows (search → connect → expand → filter), compose the
   - Default: `5`
 - `threshold` (`number`) - Similarity threshold for semantic mode (default: 0.5). Lower values find broader matches. The API enforces backend safety limits.
   - Default: `0.5`
+- `lifetime_limit` (`number`) - For action=lifetime: max Instances per page (default 200, hard cap 1000).
+- `lifetime_offset` (`number`) - For action=lifetime: number of Instances to skip. Use with has_more in the response to walk further pages.
 
 ---
 
@@ -542,8 +544,8 @@ For the per-concept re-evidence stream (which Concepts were touched in which epo
 
 - `kind` (`string`) - Filter to a specific event kind. Omit for all kinds.
   - Allowed values: `ingestion`, `reasoning`, `breathing`, `edit`
-- `since` (`string`) - ISO-8601 lower bound on occurred_at (UTC, e.g., "2026-05-01T00:00:00Z")
-- `until` (`string`) - ISO-8601 upper bound on occurred_at (UTC)
+- `since` (`string`) - ISO-8601 lower bound on occurred_at. The API parses with FastAPI's datetime parser; tolerant of common forms (with or without "Z", offsets accepted).
+- `until` (`string`) - ISO-8601 upper bound on occurred_at. Same parsing semantics as `since`.
 - `actor` (`string`) - Filter by exact actor string (user id, agent session id, system component)
 - `cursor` (`number`) - Pagination cursor — returns events with event_id < cursor. Omit for the first page.
 - `limit` (`number`) - Max events per page (1-500, default 50)

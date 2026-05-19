@@ -803,12 +803,21 @@ export class KnowledgeGraphClient {
 
   /**
    * Get the re-evidence stream for a concept, joined to graph_epochs.
-   * Each Instance carries event_id + occurred_at + kind + actor; pre-ADR-203
-   * Instances are tallied separately as pre_epoch_count.
+   * Each Instance carries event_id + occurred_at + kind + actor +
+   * semantic_wallclock; pre-ADR-203 Instances are tallied as
+   * pre_epoch_count.
+   *
+   * Paginated: anchor concepts can have thousands of Instances.
+   * `total_instances` in the response reflects the full chain size
+   * independent of paging.
    */
-  async getConceptLifetime(conceptId: string): Promise<ConceptLifetimeResponse> {
+  async getConceptLifetime(
+    conceptId: string,
+    params?: { limit?: number; offset?: number }
+  ): Promise<ConceptLifetimeResponse> {
     const response = await this.client.get(
-      `/concepts/${encodeURIComponent(conceptId)}/lifetime`
+      `/concepts/${encodeURIComponent(conceptId)}/lifetime`,
+      { params }
     );
     return response.data;
   }

@@ -1107,6 +1107,10 @@ export interface ConceptListCRUDResponse {
  * A single Instance in a concept's re-evidence stream, joined to its
  * graph_epochs event. event_id is null for pre-ADR-203 Instances —
  * those are surfaced separately as pre_epoch_count on the parent.
+ *
+ * `semantic_wallclock` mirrors graph_epoch_kinds.semantic_wallclock for
+ * this Instance's epoch (or null when no epoch). When false, treat
+ * `occurred_at` as forensic-only.
  */
 export interface ConceptLifetimeInstance {
   instance_id: string;
@@ -1116,35 +1120,49 @@ export interface ConceptLifetimeInstance {
   occurred_at: string | null;  // ISO-8601 UTC
   kind: string | null;
   actor: string | null;
+  semantic_wallclock: boolean | null;
 }
 
 /**
  * Ordered re-evidence stream for a single Concept (ADR-203).
- * Instances are sorted by event_id ascending; pre-epoch cohort trails.
+ *
+ * Paginated: anchor concepts can have thousands of Instances, so the
+ * response carries `total_instances` (full chain size), the current
+ * page in `instances`, plus `limit`/`offset`/`has_more` for paging.
+ * `distinct_epochs` and `pre_epoch_count` are scoped to the returned
+ * page; callers that need global counts should walk all pages or rely
+ * on `total_instances` alone.
  */
 export interface ConceptLifetimeResponse {
   concept_id: string;
   label: string | null;
   instances: ConceptLifetimeInstance[];
   total_instances: number;
+  returned_instances: number;
   distinct_epochs: number;
   pre_epoch_count: number;
+  limit: number;
+  offset: number;
+  has_more: boolean;
 }
 
 /**
  * One row of the graph epoch event log.
  *
- * `occurred_at` is always present (wall-clock), but semantically
- * meaningful primarily for `kind` values where it isn't forensic
- * (typically 'ingestion' / 'edit').
+ * `occurred_at` is always present (wall-clock). `semantic_wallclock`
+ * (from kg_api.graph_epoch_kinds) is the authoritative discriminator
+ * for whether the timestamp is semantically primary or forensic-only.
+ * Migration 064 made this a per-kind row in the database, replacing the
+ * formerly duplicated TS-side hardcoded set.
  */
 export interface EpochEvent {
   event_id: number;
   occurred_at: string;
-  kind: 'ingestion' | 'reasoning' | 'breathing' | 'edit' | string;
+  kind: string;
   actor: string | null;
   counter_after: number | null;
   metadata: Record<string, any>;
+  semantic_wallclock: boolean | null;
 }
 
 /**

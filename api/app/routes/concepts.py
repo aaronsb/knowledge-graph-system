@@ -287,6 +287,17 @@ async def delete_concept(
 )
 async def get_concept_lifetime(
     concept_id: str,
+    limit: int = Query(
+        200,
+        ge=1,
+        le=1000,
+        description="Maximum Instances to return in this page (default 200, hard cap 1000).",
+    ),
+    offset: int = Query(
+        0,
+        ge=0,
+        description="Number of Instances to skip — anchor concepts can have thousands; paginate to keep payloads bounded.",
+    ),
     current_user: UserInDB = Depends(require_permission("graph", "read"))
 ):
     """
@@ -294,16 +305,22 @@ async def get_concept_lifetime(
 
     Walks `(:Concept)-[:EVIDENCED_BY]->(:Instance)` and joins each Instance
     to its `graph_epochs` event row, so the returned chain carries
-    `event_id`, `occurred_at`, `kind`, and `actor` per Instance.
+    `event_id`, `occurred_at`, `kind`, `actor`, and `semantic_wallclock`
+    per Instance.
 
     Instances created before ADR-203 carry `NULL` event_id and are surfaced
-    as a `pre_epoch_count`; they appear at the tail of the chain.
+    as `pre_epoch_count`; they appear at the tail of the chain. The chain
+    is paginated because anchor concepts can have thousands of Instances —
+    the response carries `total_instances` (full chain size), `limit`,
+    `offset`, and `has_more` so callers can walk further pages.
 
     Requires `graph:read` permission.
     """
     age_client = get_age_client()
     try:
-        result = age_client.epochs.get_concept_lifetime(concept_id)
+        result = age_client.epochs.get_concept_lifetime(
+            concept_id, limit=limit, offset=offset
+        )
     except Exception as e:
         logger.error(f"get_concept_lifetime({concept_id}) failed: {e}")
         raise HTTPException(

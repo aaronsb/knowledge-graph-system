@@ -3,16 +3,20 @@
  *
  * Renders responses as compact markdown for token-efficient consumption
  * by agents. Visualizes the two-dimension model: logical-time ordering
- * via event_id, wall-clock time via occurred_at, kind as the
- * discriminator for whether wall-clock is semantically primary.
+ * via event_id, wall-clock via occurred_at, and the per-kind
+ * `semantic_wallclock` flag (sourced from the API, originally from the
+ * graph_epoch_kinds lookup table) as the discriminator for whether
+ * wall-clock is semantically primary.
+ *
+ * Previously this formatter hardcoded a `KINDS_WITH_WALLCLOCK` set —
+ * removed in the migration-064 round so kinds and their semantics live
+ * in one place (the database).
  */
 
 import type {
   ConceptLifetimeResponse,
   EpochListResponse,
 } from '../../types/index.js';
-
-const KINDS_WITH_WALLCLOCK = new Set(['ingestion', 'edit']);
 
 function formatTime(iso: string | null): string {
   if (!iso) return '—';
@@ -23,6 +27,13 @@ function formatTime(iso: string | null): string {
 function truncateQuote(quote: string, max = 120): string {
   if (quote.length <= max) return quote;
   return quote.slice(0, max - 1).trimEnd() + '…';
+}
+
+function forensicSuffix(semanticWallclock: boolean | null | undefined): string {
+  // null = no epoch row joined (e.g. pre-ADR-203 Instance). Treat as
+  // "no statement" and omit the suffix entirely.
+  if (semanticWallclock === null || semanticWallclock === undefined) return '';
+  return semanticWallclock ? '' : ' _(forensic)_';
 }
 
 /**
@@ -37,16 +48,24 @@ export function formatConceptLifetime(result: ConceptLifetimeResponse): string {
   lines.push(`# Concept Lifetime — ${result.label ?? '(unlabeled)'}`);
   lines.push('');
   lines.push(`Concept ID: \`${result.concept_id}\``);
-  lines.push(
-    `Total Instances: ${result.total_instances} · Distinct Epochs: ${result.distinct_epochs}` +
-      (result.pre_epoch_count > 0
-        ? ` · Pre-epoch cohort: ${result.pre_epoch_count}`
-        : '')
-  );
+  const summary = [
+    `Total Instances (full chain): ${result.total_instances}`,
+    `Returned this page: ${result.returned_instances}`,
+    `Distinct Epochs (page): ${result.distinct_epochs}`,
+  ];
+  if (result.pre_epoch_count > 0) {
+    summary.push(`Pre-epoch cohort (page): ${result.pre_epoch_count}`);
+  }
+  lines.push(summary.join(' · '));
+  lines.push(`Page: limit=${result.limit}, offset=${result.offset}${result.has_more ? ' — `has_more=true`' : ''}`);
   lines.push('');
 
-  if (result.total_instances === 0) {
-    lines.push('_No Instances recorded for this concept._');
+  if (result.returned_instances === 0) {
+    if (result.total_instances === 0) {
+      lines.push('_No Instances recorded for this concept._');
+    } else {
+      lines.push('_Offset is past the end of the chain — try a smaller offset._');
+    }
     return lines.join('\n');
   }
 
@@ -67,14 +86,14 @@ export function formatConceptLifetime(result: ConceptLifetimeResponse): string {
     const bucket = groups.get(key)!;
     if (key === null) {
       lines.push(`## Pre-epoch cohort (${bucket.length} instance${bucket.length === 1 ? '' : 's'})`);
-      lines.push('_Created before ADR-203 — no event metadata available._');
+      lines.push('_Created before ADR-203 (or `record_epoch` failed) — no event metadata available._');
     } else {
       const head = bucket[0];
       const kind = head.kind ?? '?';
       const wallclock = formatTime(head.occurred_at);
-      const wallclockMeaning = KINDS_WITH_WALLCLOCK.has(kind) ? '' : ' _(forensic)_';
+      const suffix = forensicSuffix(head.semantic_wallclock);
       lines.push(
-        `## Epoch ${key} · \`${kind}\` · ${wallclock}${wallclockMeaning}` +
+        `## Epoch ${key} · \`${kind}\` · ${wallclock}${suffix}` +
           (head.actor ? ` · actor: ${head.actor}` : '')
       );
     }
@@ -85,11 +104,21 @@ export function formatConceptLifetime(result: ConceptLifetimeResponse): string {
     lines.push('');
   }
 
+  if (result.has_more) {
+    lines.push(`---`);
+    lines.push(`Next page: pass \`lifetime_offset=${result.offset + result.returned_instances}\` to continue.`);
+  }
+
   return lines.join('\n').trimEnd();
 }
 
 /**
  * Epoch event log page — most-recent-first, with next_cursor hint.
+ *
+ * Each row's `_forensic_` suffix is driven by `semantic_wallclock` from
+ * the API (originally from kg_api.graph_epoch_kinds), not by a local
+ * hardcoded set — adding a new kind only requires inserting a row in
+ * the lookup table.
  */
 export function formatEpochList(result: EpochListResponse): string {
   const lines: string[] = [];
@@ -103,11 +132,11 @@ export function formatEpochList(result: EpochListResponse): string {
 
   for (const ev of result.events) {
     const wallclock = formatTime(ev.occurred_at);
-    const wallclockMeaning = KINDS_WITH_WALLCLOCK.has(ev.kind) ? '' : ' _(forensic)_';
+    const suffix = forensicSuffix(ev.semantic_wallclock);
     const actor = ev.actor ? ` · actor: ${ev.actor}` : '';
     const counter = ev.counter_after !== null ? ` · counter: ${ev.counter_after}` : '';
     lines.push(
-      `- **${ev.event_id}** \`${ev.kind}\` · ${wallclock}${wallclockMeaning}${actor}${counter}`
+      `- **${ev.event_id}** \`${ev.kind}\` · ${wallclock}${suffix}${actor}${counter}`
     );
     const metaKeys = Object.keys(ev.metadata || {});
     if (metaKeys.length > 0) {

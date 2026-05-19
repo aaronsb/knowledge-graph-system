@@ -42,5 +42,7 @@ For multi-step workflows (search → connect → expand → filter), compose the
   - Default: `5`
 - `threshold` (`number`) - Similarity threshold for semantic mode (default: 0.5). Lower values find broader matches. The API enforces backend safety limits.
   - Default: `0.5`
+- `lifetime_limit` (`number`) - For action=lifetime: max Instances per page (default 200, hard cap 1000).
+- `lifetime_offset` (`number`) - For action=lifetime: number of Instances to skip. Use with has_more in the response to walk further pages.
 
 ---

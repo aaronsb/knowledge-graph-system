@@ -532,6 +532,15 @@ For multi-step workflows (search → connect → expand → filter), compose the
               description: 'Similarity threshold for semantic mode (default: 0.5). Lower values find broader matches. The API enforces backend safety limits.',
               default: 0.5,
             },
+            // ADR-203: pagination for the lifetime action — anchor concepts can have thousands of Instances.
+            lifetime_limit: {
+              type: 'number',
+              description: 'For action=lifetime: max Instances per page (default 200, hard cap 1000).',
+            },
+            lifetime_offset: {
+              type: 'number',
+              description: 'For action=lifetime: number of Instances to skip. Use with has_more in the response to walk further pages.',
+            },
           },
           required: ['action'],
         },
@@ -1362,11 +1371,13 @@ For the per-concept re-evidence stream (which Concepts were touched in which epo
             },
             since: {
               type: 'string',
-              description: 'ISO-8601 lower bound on occurred_at (UTC, e.g., "2026-05-01T00:00:00Z")',
+              format: 'date-time',
+              description: 'ISO-8601 lower bound on occurred_at. The API parses with FastAPI\'s datetime parser; tolerant of common forms (with or without "Z", offsets accepted).',
             },
             until: {
               type: 'string',
-              description: 'ISO-8601 upper bound on occurred_at (UTC)',
+              format: 'date-time',
+              description: 'ISO-8601 upper bound on occurred_at. Same parsing semantics as `since`.',
             },
             actor: {
               type: 'string',
@@ -1787,7 +1798,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             if (!conceptId) {
               throw new Error('concept_id is required for lifetime');
             }
-            const result = await client.getConceptLifetime(conceptId);
+            const result = await client.getConceptLifetime(conceptId, {
+              limit: toolArgs.lifetime_limit as number | undefined,
+              offset: toolArgs.lifetime_offset as number | undefined,
+            });
             return {
               content: [{ type: 'text', text: formatConceptLifetime(result) }],
             };
