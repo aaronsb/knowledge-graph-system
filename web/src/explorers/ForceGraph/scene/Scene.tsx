@@ -7,7 +7,7 @@
  * (pan + zoom, no rotation).
  */
 
-import { useEffect, useImperativeHandle, useMemo, type ReactElement } from 'react';
+import { useImperativeHandle, useMemo, type ReactElement } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from '@react-three/drei';
 import type { EngineNode, EngineEdge, Projection } from '../types';
@@ -176,11 +176,13 @@ export function Scene({
   // the idiomatic way even though we pass a MutableRefObject ourselves.
   useImperativeHandle(simHandleRef, () => sim, [sim]);
 
-  useEffect(() => {
-    // Kick a frame when the data set changes so demand-mode picks up
-    // the reseeded buffers immediately rather than next user interaction.
-    sim.reheat();
-  }, [nodes.length]);
+  // Note: re-seeding and demand-mode kick on data change are now owned by
+  // the sim hook (useForceSim / useGpuForceSim). It carries surviving
+  // nodes' positions over and picks a gentle vs full reheat based on how
+  // much changed, then invalidate()s itself. The old unconditional
+  // sim.reheat() here slammed alpha to full on every poke — that was the
+  // whole-graph "sproing". The manual Reheat button still calls
+  // sim.reheat() for a deliberate full re-layout.
 
   return (
     <>
