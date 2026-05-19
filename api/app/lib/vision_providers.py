@@ -27,6 +27,64 @@ from io import BytesIO
 logger = logging.getLogger(__name__)
 
 
+# --- Catalog-driven vision model selection (ADR-801) -----------------------
+# Vision provider/model selection must come from the dynamic model catalog's
+# per-model supports_vision flag, not hardcoded lists — the same "no
+# hardcoded models" decision ADR-801 applies to extraction, applied here
+# where it had regressed. Resolution order: explicit param → catalog →
+# VISION_MODEL env (bootstrap) → hardcoded literal (last resort, warned).
+
+def _catalog_vision_models(provider: str) -> list[dict]:
+    """Enabled, vision-capable catalog rows for a provider, by sort_order.
+
+    Empty list when the catalog is unavailable or has no vision model for
+    the provider (e.g. its 'Get models' has not been run yet).
+    """
+    try:
+        from .model_catalog import list_catalog
+        from .age_client import AGEClient
+
+        client = AGEClient()
+        conn = client.pool.getconn()
+        try:
+            rows = list_catalog(conn, provider=provider, enabled_only=True)
+            return [r for r in rows if r.get("supports_vision")]
+        finally:
+            client.pool.putconn(conn)
+    except Exception:
+        return []
+
+
+def _catalog_vision_model_ids(provider: str) -> list[str]:
+    """Vision-capable model ids for a provider from the catalog."""
+    return [r["model_id"] for r in _catalog_vision_models(provider)]
+
+
+def _resolve_vision_model(provider: str, model: Optional[str], literal: str) -> str:
+    """Resolve the vision model: param → catalog → env → literal (warned).
+
+    The hardcoded literal is kept only as a last resort so deployments
+    whose vision catalog has not been refreshed yet still work; the
+    warning surfaces the gap without breaking them.
+    """
+    if model:
+        return model
+    rows = _catalog_vision_models(provider)
+    if rows:
+        for r in rows:
+            if r.get("is_default"):
+                return r["model_id"]
+        return rows[0]["model_id"]
+    env = os.getenv("VISION_MODEL")
+    if env:
+        return env
+    logger.warning(
+        f"No catalog vision model for '{provider}'; falling back to "
+        f"'{literal}'. Populate it via the provider's 'Get models' (ADR-801)."
+    )
+    return literal
+
+
 # Literal description prompt (validated in research, Nov 2025)
 # See docs/research/vision-testing/FINDINGS.md
 LITERAL_DESCRIPTION_PROMPT = """
@@ -193,7 +251,7 @@ class OpenAIVisionProvider(VisionProvider):
         logger.info(f"OpenAI Vision client configured with max_retries={max_retries}")
 
         # Configurable model with default
-        self.model = model or os.getenv("VISION_MODEL", "gpt-4o")
+        self.model = _resolve_vision_model("openai", model, "gpt-4o")
 
     def describe_image(self, image_bytes: bytes, prompt: Optional[str] = None) -> Dict[str, Any]:
         """
@@ -287,7 +345,7 @@ class OpenAIVisionProvider(VisionProvider):
 
     def list_available_models(self) -> list[str]:
         """List available vision models"""
-        return ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo"]
+        return _catalog_vision_model_ids("openai") or ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo"]
 
 
 class AnthropicVisionProvider(VisionProvider):
@@ -329,7 +387,7 @@ class AnthropicVisionProvider(VisionProvider):
         logger.info(f"Anthropic Vision client configured with max_retries={max_retries}")
 
         # Configurable model with default
-        self.model = model or os.getenv("VISION_MODEL", "claude-3-5-sonnet-20241022")
+        self.model = _resolve_vision_model("anthropic", model, "claude-3-5-sonnet-20241022")
 
     def describe_image(self, image_bytes: bytes, prompt: Optional[str] = None) -> Dict[str, Any]:
         """
@@ -427,7 +485,7 @@ class AnthropicVisionProvider(VisionProvider):
 
     def list_available_models(self) -> list[str]:
         """List available vision models"""
-        return [
+        return _catalog_vision_model_ids("anthropic") or [
             "claude-3-5-sonnet-20241022",
             "claude-3-opus-20240229",
             "claude-3-sonnet-20240229",
@@ -463,7 +521,7 @@ class OllamaVisionProvider(VisionProvider):
             model: Vision model name (defaults to VISION_MODEL env or granite-vision-3.3:2b)
         """
         self.base_url = base_url or os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-        self.model = model or os.getenv("VISION_MODEL", "granite-vision-3.3:2b")
+        self.model = _resolve_vision_model("ollama", model, "granite-vision-3.3:2b")
 
         logger.warning(
             f"Using Ollama Vision ({self.model}). Research shows inconsistent quality. "
@@ -549,7 +607,11 @@ class OllamaVisionProvider(VisionProvider):
             return False
 
     def list_available_models(self) -> list[str]:
-        """List available vision models from Ollama"""
+        """List vision models from the catalog (ADR-801); live Ollama query
+        as fallback when the catalog has no vision rows for ollama yet."""
+        catalog = _catalog_vision_model_ids("ollama")
+        if catalog:
+            return catalog
         import requests
         try:
             response = requests.get(f"{self.base_url}/api/tags", timeout=5.0)
