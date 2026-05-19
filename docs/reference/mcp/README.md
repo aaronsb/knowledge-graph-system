@@ -3,7 +3,7 @@
 > **Auto-Generated Documentation**
 > 
 > Generated from MCP server tool schemas.
-> Last updated: 2026-03-26
+> Last updated: 2026-05-19
 
 ---
 
@@ -28,6 +28,7 @@ These tools enable semantic search, concept exploration, and graph traversal dir
 - [`document`](#document) - Work with documents: list all, show content, or get concepts (ADR-084).
 - [`graph`](#graph) - Create, edit, delete, and list concepts and edges in the knowledge graph (ADR-089).
 - [`program`](#program) - Compose and execute GraphProgram queries against the knowledge graph (ADR-500).
+- [`epoch`](#epoch) - Read the graph epoch event log (ADR-203).
 
 ---
 
@@ -93,8 +94,8 @@ For multi-step workflows (search → connect → expand → filter), compose the
 
 **Parameters:**
 
-- `action` (`string`) **(required)** - Operation: "details" (get ALL evidence), "related" (explore neighborhood), "connect" (find paths), "add_evidence" (attach evidence text to a concept)
-  - Allowed values: `details`, `related`, `connect`, `add_evidence`
+- `action` (`string`) **(required)** - Operation: "details" (get ALL evidence), "related" (explore neighborhood), "connect" (find paths), "add_evidence" (attach evidence text to a concept), "lifetime" (ADR-203 re-evidence stream — ordered Instance chain with graph_epochs metadata, showing when the system came to know this concept)
+  - Allowed values: `details`, `related`, `connect`, `add_evidence`, `lifetime`
 - `concept_id` (`string`) - Concept ID (required for details, related, add_evidence)
 - `evidence_text` (`string`) - Evidence/rationale text to attach to a concept (required for add_evidence, min 10 chars)
 - `include_grounding` (`boolean`) - Include grounding_strength (default: true)
@@ -121,6 +122,8 @@ For multi-step workflows (search → connect → expand → filter), compose the
   - Default: `5`
 - `threshold` (`number`) - Similarity threshold for semantic mode (default: 0.5). Lower values find broader matches. The API enforces backend safety limits.
   - Default: `0.5`
+- `lifetime_limit` (`number`) - For action=lifetime: max Instances per page (default 200, hard cap 1000).
+- `lifetime_offset` (`number`) - For action=lifetime: number of Instances to skip. Use with has_more in the response to walk further pages.
 
 ---
 
@@ -520,5 +523,32 @@ Read the program/syntax resource for the complete language reference with more e
 - `search` (`string`) - Search text for list action (matches name and description)
 - `limit` (`number`) - Max results for list action (default: 20)
 - `deck` (`array`) - Array of program entries for chain action (max 10). Each entry needs program_id or program.
+
+---
+
+### epoch
+
+Read the graph epoch event log (ADR-203).
+
+Every mutation to the knowledge graph (ingestion job, agent reasoning, ontology breathing, manual edit) records a monotonic event with a wall-clock timestamp. This tool exposes that log so you can ask "when did the system come to know X?" or "what arrived in the graph during this window?" — without inventing causal edges between concepts.
+
+Two dimensions matter:
+  - event_id (logical time): always meaningful — strictly ordered, even for events whose wall-clock is forensic.
+  - occurred_at (wall-clock): semantically meaningful for kinds like 'ingestion' / 'edit'; treat as forensic-only for 'reasoning' / 'breathing'.
+
+Cursor-paginated. Pass the previous response's next_cursor as cursor to walk further back.
+
+For the per-concept re-evidence stream (which Concepts were touched in which epochs), use the concept tool's 'lifetime' action instead.
+
+**Parameters:**
+
+- `kind` (`string`) - Filter to a specific event kind. Omit for all kinds.
+  - Allowed values: `ingestion`, `reasoning`, `breathing`, `edit`
+- `since` (`string`) - ISO-8601 lower bound on occurred_at. The API parses with FastAPI's datetime parser; tolerant of common forms (with or without "Z", offsets accepted).
+- `until` (`string`) - ISO-8601 upper bound on occurred_at. Same parsing semantics as `since`.
+- `actor` (`string`) - Filter by exact actor string (user id, agent session id, system component)
+- `cursor` (`number`) - Pagination cursor — returns events with event_id < cursor. Omit for the first page.
+- `limit` (`number`) - Max events per page (1-500, default 50)
+  - Default: `50`
 
 ---

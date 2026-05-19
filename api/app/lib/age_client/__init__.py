@@ -42,6 +42,10 @@ class AGEClient(
     - OntologyScoringMixin: Ontology scoring, analytics, and annealing mutations
     - OntologyEdgesMixin: Inter-ontology edges and proposal execution primitives
     - VocabularyMixin: Relationship type config, CRUD, sync, merge, embeddings
+
+    Facades attached lazily via properties on QueryMixin:
+    - client.graph   → GraphFacade (topology + graph_accel)
+    - client.epochs  → EpochFacade (ADR-203 epoch event log read-side)
     """
     pass
 

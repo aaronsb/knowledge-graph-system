@@ -71,6 +71,9 @@ export {
 // Session context formatters
 export { formatSessionContext, formatSessionIngest } from './session.js';
 
+// Graph epoch event log formatters (ADR-203)
+export { formatConceptLifetime, formatEpochList } from './epoch.js';
+
 // Ontology formatters (ADR-200)
 export {
   formatOntologyList,

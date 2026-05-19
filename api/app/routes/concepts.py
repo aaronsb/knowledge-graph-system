@@ -281,6 +281,61 @@ async def delete_concept(
         )
 
 
+@router.get(
+    "/{concept_id}/lifetime",
+    summary="Get concept re-evidence timeline (ADR-203)",
+)
+async def get_concept_lifetime(
+    concept_id: str,
+    limit: int = Query(
+        200,
+        ge=1,
+        le=1000,
+        description="Maximum Instances to return in this page (default 200, hard cap 1000).",
+    ),
+    offset: int = Query(
+        0,
+        ge=0,
+        description="Number of Instances to skip — anchor concepts can have thousands; paginate to keep payloads bounded.",
+    ),
+    current_user: UserInDB = Depends(require_permission("graph", "read"))
+):
+    """
+    Return the ordered re-evidence stream for a single concept.
+
+    Walks `(:Concept)-[:EVIDENCED_BY]->(:Instance)` and joins each Instance
+    to its `graph_epochs` event row, so the returned chain carries
+    `event_id`, `occurred_at`, `kind`, `actor`, and `semantic_wallclock`
+    per Instance.
+
+    Instances created before ADR-203 carry `NULL` event_id and are surfaced
+    as `pre_epoch_count`; they appear at the tail of the chain. The chain
+    is paginated because anchor concepts can have thousands of Instances —
+    the response carries `total_instances` (full chain size), `limit`,
+    `offset`, and `has_more` so callers can walk further pages.
+
+    Requires `graph:read` permission.
+    """
+    age_client = get_age_client()
+    try:
+        result = age_client.epochs.get_concept_lifetime(
+            concept_id, limit=limit, offset=offset
+        )
+    except Exception as e:
+        logger.error(f"get_concept_lifetime({concept_id}) failed: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to get concept lifetime",
+        )
+
+    if result is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Concept not found: {concept_id}",
+        )
+    return result
+
+
 @router.post(
     "/{concept_id}/evidence",
     response_model=EvidenceResponse,

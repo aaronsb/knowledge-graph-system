@@ -43,7 +43,22 @@ class IngestionMixin:
         semantically meaningful for the rows attributable to this event.
 
         Returns None on failure — callers must treat that as "epoch
-        tagging disabled for this run" rather than fatal.
+        tagging disabled for this run" rather than fatal. The downstream
+        behavior is that Instances created during the run carry no
+        `created_at_event_id` property, indistinguishable in-graph from
+        pre-ADR-203 Instances and rolled into the lifetime response's
+        `pre_epoch_count`.
+
+        Observability: failures are logged at ERROR (not WARNING) so they
+        surface in operator dashboards rather than getting filtered. Any
+        non-zero rate of these in a post-ADR-203 install indicates a
+        schema / permission / connectivity problem with `kg_api.graph_epochs`
+        and should be investigated — silent failure here is acceptable
+        for a single ingestion job, but a steady-state failure rate
+        slowly grows an indistinguishable "failure cohort" that pollutes
+        the pre-ADR-203 reading.
+
+        Grep target: `record_epoch failed`.
         """
         try:
             conn = self.pool.getconn()
@@ -63,7 +78,13 @@ class IngestionMixin:
                 conn.commit()
                 self.pool.putconn(conn)
         except Exception as e:
-            logger.warning(f"record_epoch failed (kind={kind}): {e}")
+            # ERROR (not WARNING) — see docstring. Any non-zero rate of
+            # this in a healthy install indicates a real problem.
+            logger.error(
+                "record_epoch failed (kind=%s, actor=%s): %s",
+                kind, actor, e,
+                exc_info=True,
+            )
             return None
 
     def create_source_node(

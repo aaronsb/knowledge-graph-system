@@ -14,8 +14,8 @@ For multi-step workflows (search → connect → expand → filter), compose the
 
 **Parameters:**
 
-- `action` (`string`) **(required)** - Operation: "details" (get ALL evidence), "related" (explore neighborhood), "connect" (find paths), "add_evidence" (attach evidence text to a concept)
-  - Allowed values: `details`, `related`, `connect`, `add_evidence`
+- `action` (`string`) **(required)** - Operation: "details" (get ALL evidence), "related" (explore neighborhood), "connect" (find paths), "add_evidence" (attach evidence text to a concept), "lifetime" (ADR-203 re-evidence stream — ordered Instance chain with graph_epochs metadata, showing when the system came to know this concept)
+  - Allowed values: `details`, `related`, `connect`, `add_evidence`, `lifetime`
 - `concept_id` (`string`) - Concept ID (required for details, related, add_evidence)
 - `evidence_text` (`string`) - Evidence/rationale text to attach to a concept (required for add_evidence, min 10 chars)
 - `include_grounding` (`boolean`) - Include grounding_strength (default: true)
@@ -42,5 +42,7 @@ For multi-step workflows (search → connect → expand → filter), compose the
   - Default: `5`
 - `threshold` (`number`) - Similarity threshold for semantic mode (default: 0.5). Lower values find broader matches. The API enforces backend safety limits.
   - Default: `0.5`
+- `lifetime_limit` (`number`) - For action=lifetime: max Instances per page (default 200, hard cap 1000).
+- `lifetime_offset` (`number`) - For action=lifetime: number of Instances to skip. Use with has_more in the response to walk further pages.
 
 ---
