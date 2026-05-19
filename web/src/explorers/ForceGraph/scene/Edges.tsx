@@ -332,5 +332,22 @@ export function Edges({
     posAttr.needsUpdate = true;
   });
 
-  return <lineSegments ref={lineRef} geometry={geometry} material={material} />;
+  // frustumCulled=false: the position buffer is rewritten in place every
+  // frame (useFrame above) but geometry.boundingSphere is computed by
+  // THREE only once — lazily, from the all-zero initial buffer. The sim
+  // then moves the graph far from that frozen origin sphere, so when the
+  // camera wheels in close the narrow frustum no longer intersects the
+  // stale sphere and the entire batch gets culled (edges vanish up close,
+  // reappear when zoomed out). Recomputing the sphere per frame is a full
+  // extra vertex pass at 10k-edge scale for no gain — this is one draw
+  // call, so culling it only ever helps when every edge is off-screen.
+  // Opting out is the correct trade for CPU-animated batched geometry.
+  return (
+    <lineSegments
+      ref={lineRef}
+      geometry={geometry}
+      material={material}
+      frustumCulled={false}
+    />
+  );
 }
