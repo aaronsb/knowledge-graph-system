@@ -22,6 +22,7 @@ import { NodeInfoOverlay, type NodeInfoData } from './NodeInfoOverlay';
 import { useSim } from './useSim';
 import { useDragHandler } from './useDragHandler';
 import { useFitCamera } from './useFitCamera';
+import { useOrientAndFrame } from './useOrientAndFrame';
 import type { ForceSimHandle, ForceSimParams } from './useForceSim';
 
 // Stable references used when the plugin doesn't wire pinnedIds — hooks
@@ -203,10 +204,20 @@ export function Scene({
   // the idiomatic way even though we pass a MutableRefObject ourselves.
   useImperativeHandle(simHandleRef, () => sim, [sim]);
 
-  // Auto-frame the layout once it settles (and on every dataset change),
-  // so the graph fills the view instead of mounting tiny and off-centre.
-  // Shared here ⇒ Force Graph and Document Explorer both get it.
-  useFitCamera(sim.positionsRef, nodes, hiddenIds);
+  // The shared PCA tangent-orient action: rotate to the graph's broad
+  // face and ease in. Created here so both consumers share one instance
+  // and one tween loop — first-load fake-zoom-extents (useFitCamera) and
+  // (next) a double-click focus on a node. Shared Scene ⇒ Force Graph
+  // and Document Explorer both get it from one implementation.
+  const orientAction = useOrientAndFrame(sim.positionsRef, nodes, {
+    hiddenIds,
+    edges,
+    projection,
+  });
+
+  // Fit once on the graph's first appearance (only): wait for physics to
+  // settle, then fire the whole-graph orient as a "fake zoom-extents".
+  useFitCamera(orientAction.orient, nodes);
 
   // Note: re-seeding and demand-mode kick on data change are now owned by
   // the sim hook (useForceSim / useGpuForceSim). It carries surviving
