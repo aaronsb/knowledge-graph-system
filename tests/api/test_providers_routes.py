@@ -158,6 +158,15 @@ class TestProviderConfigRoundTrip:
                               headers=auth_headers_admin)
         assert resp.status_code == 400
 
+    def test_should_reject_malformed_id_on_save_symmetrically(
+            self, api_client, mock_oauth_validation, auth_headers_admin):
+        # POST must enforce the same id rule as GET — otherwise it writes
+        # a row the symmetric GET would 400 on (review should-fix #1).
+        resp = api_client.post(
+            "/admin/providers/BAD!!/config", headers=auth_headers_admin,
+            json={"model_name": "x"})
+        assert resp.status_code == 400
+
 
 # ===========================================================================
 # GET /admin/keys — AI key providers only

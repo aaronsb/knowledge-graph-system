@@ -702,6 +702,19 @@ async def list_providers(
     return {"providers": providers}
 
 
+def _validate_provider_id(provider: str) -> None:
+    """Reject obviously-malformed provider identifiers (ADR-800/801).
+
+    Shared by the per-provider config GET/POST and the key DELETE so the
+    contract is symmetric — a POST cannot write a row a GET would 400 on.
+    """
+    if not provider or not re.fullmatch(r"[a-z0-9._-]{1,50}", provider):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid provider identifier"
+        )
+
+
 class ProviderConfigRequest(BaseModel):
     """Per-provider config (#8) — saved without activating the provider."""
     base_url: Optional[str] = None
@@ -725,6 +738,7 @@ async def save_provider_config(
 
     **Authorization:** Requires `extraction_config:write` permission
     """
+    _validate_provider_id(provider)
     from ..lib.ai_extraction_config import save_extraction_config
 
     ok = save_extraction_config({
@@ -759,11 +773,7 @@ async def get_provider_config(
 
     **Authorization:** Requires `extraction_config:read` permission
     """
-    if not provider or not re.fullmatch(r"[a-z0-9._-]{1,50}", provider):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid provider identifier"
-        )
+    _validate_provider_id(provider)
 
     from ..lib.ai_extraction_config import load_provider_config
 
@@ -913,11 +923,7 @@ async def delete_api_key(
     # any provider that has a key (including ones configured via the CLI)
     # must be deletable. A non-configured provider falls through to 404
     # below. Reject only obviously malformed identifiers (ADR-800).
-    if not provider or not re.fullmatch(r"[a-z0-9._-]{1,50}", provider):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid provider identifier"
-        )
+    _validate_provider_id(provider)
 
     try:
         age_client = AGEClient()
