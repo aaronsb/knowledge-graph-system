@@ -12,10 +12,14 @@
  * the user grabs the controls. That all lives here.
  *
  * Decisions baked in (tasks #29/#30, user-confirmed):
- *  - Hybrid focus: orientation axes come from the whole visible graph
- *    (stable angle) while the framed extent is the clicked node's
- *    1-hop neighbourhood (tightens onto the region). The clicked node
- *    becomes the centred, nearest point with the bulk behind it.
+ *  - Focus = whole-graph, re-aimed (revised #29). Orientation axes AND
+ *    framing extent both come from the whole visible graph, so every
+ *    focus lands at the same comfortable zoom — the clicked node just
+ *    becomes the centred, nearest point with the bulk swung behind it.
+ *    The earlier "frame the clicked node's 1-hop neighbourhood" made
+ *    successive double-clicks creep closer (a tiny local extent, and
+ *    the still-relaxing sim contracting it further each click). The
+ *    1-hop adjacency that fed that is retained but unused — see #375.
  *  - Tweened for both: even first-load eases in (consistent motion),
  *    ~0.45s easeInOutCubic, cancellable on any controls interaction.
  *  - Near-spherical / 2D: no meaningful broad face → don't rotate, just
@@ -122,8 +126,19 @@ export function useOrientAndFrame(
     pullback = DEFAULT_PULLBACK,
   } = opts;
 
-  // 1-hop adjacency for Hybrid focus extents. Rebuilt only when the edge
-  // set changes; a focus click reads it without touching the sim.
+  // 1-hop adjacency map, intentionally RETAINED but not consumed.
+  //
+  // It originally fed the Hybrid focus extent; that was dropped (focus
+  // now frames the whole graph — see the header / #29 revision) because
+  // a per-click local extent crept closer each double-click. The map is
+  // kept built because it is the graph-traversal substrate for the
+  // planned "visual narration" feature (issue #375): pick a path through
+  // the graph, use the node positions as Catmull-Rom control points, and
+  // glide the camera along that spline node→node. Keeping it here, where
+  // that camera action will live, means the future work starts from a
+  // maintained base rather than re-deriving adjacency. Cheap: rebuilt
+  // only when `edges` changes.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const adjacency = useMemo(() => {
     const adj = new Map<string, Set<string>>();
     if (!edges) return adj;
@@ -257,26 +272,27 @@ export function useOrientAndFrame(
       const orientIdx = visibleIndices();
       if (orientIdx.length === 0) return;
 
-      // Extent set: focus → clicked node + its 1-hop neighbours (Hybrid);
-      // whole-graph → the visible set itself.
-      let extentIdx = orientIdx;
+      // Extent set is always the whole visible graph — focus reuses the
+      // exact same frame as a whole-graph orient (so the zoom level is
+      // identical every time, no creep) and only differs by aiming at
+      // the clicked node. focusPoint drives target + side; the rest of
+      // the pose is the stable whole-graph PCA.
+      const extentIdx = orientIdx;
       let focusPoint: Vec3T | undefined;
       if (focusNodeId) {
-        const idById = new Map<string, number>();
-        for (const i of orientIdx) idById.set(nodes[i].id, i);
-        const fi = idById.get(focusNodeId);
-        if (fi != null) {
+        let fi = -1;
+        for (const i of orientIdx) {
+          if (nodes[i].id === focusNodeId) {
+            fi = i;
+            break;
+          }
+        }
+        if (fi >= 0) {
           focusPoint = [
             positions[fi * 3],
             positions[fi * 3 + 1],
             positions[fi * 3 + 2],
           ];
-          const set = new Set<number>([fi]);
-          for (const nid of adjacency.get(focusNodeId) ?? []) {
-            const ni = idById.get(nid);
-            if (ni != null) set.add(ni);
-          }
-          extentIdx = [...set];
         }
       }
 
@@ -313,7 +329,6 @@ export function useOrientAndFrame(
     [
       positionsRef,
       nodes,
-      adjacency,
       visibleIndices,
       projection,
       camera,
