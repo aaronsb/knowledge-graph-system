@@ -995,6 +995,7 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
                           value={apiKeyForm!.key}
                           onChange={(e) => setApiKeyForm({ provider: name, key: e.target.value })}
                           placeholder="sk-..."
+                          autoComplete="new-password"
                           className="w-full px-3 py-2 pr-10 bg-background border border-border rounded text-foreground text-sm font-mono"
                         />
                         <button
@@ -1040,6 +1041,7 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
                         value={draft.base_url}
                         onChange={(e) => updateDraft(name, { base_url: e.target.value })}
                         placeholder={LOCAL_DEFAULT_BASE_URL[name] ?? 'http://host:port/v1'}
+                        autoComplete="off"
                         className="flex-1 px-3 py-1.5 bg-background border border-border rounded text-foreground text-sm font-mono"
                       />
                     </div>
@@ -1074,6 +1076,7 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
                         max="2"
                         value={draft.temperature}
                         onChange={(e) => updateDraft(name, { temperature: e.target.value })}
+                        autoComplete="off"
                         className="w-full px-2 py-1.5 bg-background border border-border rounded text-foreground text-sm"
                       />
                     </div>
@@ -1086,6 +1089,7 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
                         value={draft.max_tokens}
                         onChange={(e) => updateDraft(name, { max_tokens: e.target.value })}
                         placeholder="model default"
+                        autoComplete="off"
                         className="w-full px-2 py-1.5 bg-background border border-border rounded text-foreground text-sm"
                       />
                     </div>
