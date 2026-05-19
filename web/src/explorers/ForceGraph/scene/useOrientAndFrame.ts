@@ -49,12 +49,24 @@ const TWEEN_MS = 450;
  */
 const DEFAULT_FILL = 0.2;
 
+/**
+ * First-load closeness knob (the one that actually tunes it now). Added
+ * on top of the depth anchor as this fraction of the exact face-on fit:
+ * 0 = camera right at the cluster's near face (tightest — what the user
+ * first saw and found "a bit too close"); higher backs the camera off,
+ * uniformly across graph sizes. 0.15 ≈ "near face, eased back ~15% of a
+ * full fit". This is the value to tune for first-load zoom, not FILL.
+ */
+const DEFAULT_PULLBACK = 0.15;
+
 export interface OrientAndFrameOptions {
   hiddenIds?: Set<string>;
   edges?: EngineEdge[];
   projection?: Projection;
-  /** Overscan factor (<1 = closer / more spill). Defaults to DEFAULT_FILL. */
+  /** Viewport-aware minimum-distance floor. Defaults to DEFAULT_FILL. */
   fill?: number;
+  /** First-load pull-back margin (see DEFAULT_PULLBACK). */
+  pullback?: number;
 }
 
 /** The reusable camera action: whole-graph orient, or focus on a node.  @verified 726f5d45 */
@@ -102,7 +114,13 @@ export function useOrientAndFrame(
   const size = useThree((s) => s.size);
   const invalidate = useThree((s) => s.invalidate);
 
-  const { hiddenIds, edges, projection = '3D', fill = DEFAULT_FILL } = opts;
+  const {
+    hiddenIds,
+    edges,
+    projection = '3D',
+    fill = DEFAULT_FILL,
+    pullback = DEFAULT_PULLBACK,
+  } = opts;
 
   // 1-hop adjacency for Hybrid focus extents. Rebuilt only when the edge
   // set changes; a focus click reads it without touching the sim.
@@ -286,6 +304,7 @@ export function useOrientAndFrame(
         fovDeg: cam.fov,
         aspect: cam.aspect,
         fill,
+        pullback,
         currentOffset,
         focusPoint,
       });
@@ -299,6 +318,7 @@ export function useOrientAndFrame(
       projection,
       camera,
       fill,
+      pullback,
       frameAlongCurrentDir,
       startTween,
     ]

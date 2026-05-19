@@ -46,6 +46,16 @@ export interface OrientViewOptions {
    */
   fill?: number;
   /**
+   * Pull-back margin, as a fraction of the exact face-on fit, added on
+   * top of the depth anchor. This is the knob that actually tunes
+   * first-load closeness now that `fill` is only the floor: 0 = camera
+   * sits right at the cluster's near face (tightest), higher backs the
+   * camera off by that fraction of a full fit. Viewport-aware (scales
+   * with graph size + viewport), so one value behaves across datasets.
+   * Default DEFAULT_PULLBACK in useOrientAndFrame.
+   */
+  pullback?: number;
+  /**
    * The current camera position MINUS the box centre, in world space.
    * Used only on a non-focus orient (first-load / whole-graph): its
    * minor-axis component picks which side of the broad face the camera
@@ -111,6 +121,7 @@ export function orientedPerspectiveView(
   const { center, axes, bounds } = frame;
   const [major, mid, minor] = axes;
   const fill = opts.fill ?? 0.2;
+  const pullback = opts.pullback ?? 0;
 
   // Box centre in world space: orientation centroid + the extent box's
   // offset along each axis (the extent set need not be centred on it).
@@ -140,7 +151,10 @@ export function orientedPerspectiveView(
   // focal node's own surface. This is the tight "fills the viewport,
   // spills slightly" framing the user selected.
   const NEAR_GUARD = 1;
-  const depthAnchored = hMinor + NEAR_GUARD;
+  // Depth anchor + viewport-aware pull-back. pullback=0 ⇒ camera right
+  // at the near face (tightest); >0 backs off by that fraction of the
+  // exact face-on fit, so it eases out uniformly across graph sizes.
+  const depthAnchored = hMinor + NEAR_GUARD + exactFit * pullback;
   // Viewport-aware floor: a flat/tiny cluster has hMinor≈0, so the depth
   // anchor alone would drop the camera into the focal node. Never come
   // closer than `fill ×` the exact face-on fit — for a normal blobby

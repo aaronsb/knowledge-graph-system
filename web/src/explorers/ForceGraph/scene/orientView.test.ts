@@ -78,6 +78,22 @@ describe('orientedPerspectiveView', () => {
     expect(pose.position[2]).toBeCloseTo(41, 5);
   });
 
+  it('pullback eases the camera back by a fraction of the face-on fit', () => {
+    // Deep cluster so the depth anchor dominates. exactFit=10.
+    const tight = orientedPerspectiveView(frame(10, 10, 40), {
+      ...SQUARE,
+      fill: 0.2,
+    }); // pullback default 0 ⇒ 40 + 1
+    const eased = orientedPerspectiveView(frame(10, 10, 40), {
+      ...SQUARE,
+      fill: 0.2,
+      pullback: 0.2,
+    }); // + exactFit(10) × 0.2 = +2
+    expect(tight.position[2]).toBeCloseTo(41, 5);
+    expect(eased.position[2]).toBeCloseTo(43, 5);
+    expect(eased.position[2] - tight.position[2]).toBeCloseTo(2, 5);
+  });
+
   it('viewport floor catches a flat cluster instead of collapsing', () => {
     // Flat cluster (hMinor=0): depth anchor = 0+1 = 1 would drop the
     // camera into the focal node. exactFit=10, fill=0.2 ⇒ floor=2 wins,
