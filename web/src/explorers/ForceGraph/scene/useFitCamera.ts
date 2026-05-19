@@ -54,16 +54,26 @@ export function useFitCamera(
   const framesRef = useRef(0);
   const lastRadiusRef = useRef(-1);
   const stableRef = useRef(0);
+  // Whether the previous render had any nodes. We fit only on a 0→N
+  // transition: first appearance, or a fresh graph after the prior one
+  // was cleared (search/replace). Incremental growth (Add Adjacent),
+  // filters, and follow keep N>0 throughout, so they never re-arm —
+  // the camera stays where the user left it (a manual "Fit view" is the
+  // intended escape hatch). Re-fitting on every change would yank the
+  // view ~when the layout re-settles, the camera-side of the trap
+  // incremental physics (PR #371) fixed for the sim.
+  const hadNodesRef = useRef(false);
 
-  // Arm on every dataset change (count is the cheap proxy; a full swap of
-  // the same count still re-seeds and re-settles, so the radius-delta
-  // path will still converge and re-fit).
   useEffect(() => {
-    armedRef.current = true;
-    framesRef.current = 0;
-    lastRadiusRef.current = -1;
-    stableRef.current = 0;
-    invalidate();
+    const has = nodes.length > 0;
+    if (has && !hadNodesRef.current) {
+      armedRef.current = true;
+      framesRef.current = 0;
+      lastRadiusRef.current = -1;
+      stableRef.current = 0;
+      invalidate();
+    }
+    hadNodesRef.current = has;
   }, [nodes.length, invalidate]);
 
   useFrame(() => {
