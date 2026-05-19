@@ -135,6 +135,7 @@ _CLI, web, FUSE, MCP, visualization_
 | [ADR-085](./visualization/ADR-085-document-explorer.md) | Document Explorer with Radial Concept Visualization | Proposed |
 | [ADR-700](./user-interfaces/ADR-700-ontology-explorer.md) | Ontology Explorer | Draft |
 | [ADR-701](./user-interfaces/ADR-701-vocabulary-administration-interface.md) | Vocabulary Administration Interface | Draft |
+| [ADR-702](./user-interfaces/ADR-702-unified-graph-rendering-engine.md) | Unified Graph Rendering Engine | Proposed |
 
 ## AI/Embeddings
 _Providers, extraction, convergence, prompts_
@@ -151,7 +152,8 @@ _Providers, extraction, convergence, prompts_
 | [ADR-058](./ai-embeddings/ADR-058-polarity-axis-triangulation.md) | Polarity Axis Triangulation for Grounding Calculation | Accepted |
 | [ADR-068](./ai-embeddings/ADR-068-source-text-embeddings.md) | Source Text Embeddings for Grounding Truth Retrieval | Accepted |
 | [ADR-070](./ai-embeddings/ADR-070-polarity-axis-analysis.md) | Polarity Axis Analysis for Bidirectional Semantic Dimensions | Accepted |
-| [ADR-800](./ai-embeddings/ADR-800-dynamic-model-catalog-and-openrouter-support.md) | Dynamic Model Catalog and OpenRouter Support | Draft |
+| [ADR-800](./ai-embeddings/ADR-800-dynamic-model-catalog-and-openrouter-support.md) | Dynamic Model Catalog and OpenRouter Support | Accepted |
+| [ADR-801](./ai-embeddings/ADR-801-uniform-provider-configuration-contract.md) | Uniform Provider Configuration Contract | Draft |
 
 ## Meta/Process
 _Documentation, workflow, access models, ADR system_
