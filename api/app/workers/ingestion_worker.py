@@ -337,6 +337,26 @@ def run_ingestion_worker(
             logger.warning(f"Failed to ensure Ontology node for '{ontology}': {e}")
             # Non-fatal: s.document on Source nodes still works without Ontology node
 
+        # ADR-203: Record this ingestion as a graph epoch event so every
+        # Instance created during the run carries a stable event_id. On resume,
+        # a fresh event is recorded with resume metadata — honest record that
+        # the work spanned multiple sessions.
+        epoch_metadata = {
+            "job_id": job_id,
+            "ontology": ontology,
+        }
+        if is_resuming:
+            epoch_metadata["resumed_from_chunk"] = resume_from_chunk
+        event_id = age_client.record_epoch(
+            kind="ingestion",
+            actor=job_data.get("user_id") or job_data.get("username"),
+            metadata=epoch_metadata,
+        )
+        if event_id is not None:
+            logger.info(f"📍 Recorded graph epoch event_id={event_id} for this ingestion")
+        else:
+            logger.warning("⚠️  record_epoch returned None — Instances will be untagged")
+
         # Get existing concepts for context
         existing_concepts, has_empty_warnings = age_client.get_document_concepts(
             document_name=ontology,
@@ -389,7 +409,9 @@ def run_ingestion_worker(
                 text_embedding=None,  # Will be generated during concept extraction
                 # ADR-081: Pass source document storage metadata
                 garage_key=job_data.get("source_garage_key"),
-                content_hash=job_data.get("source_content_hash")
+                content_hash=job_data.get("source_content_hash"),
+                # ADR-203: Tag Instances created during this chunk with the job's epoch
+                event_id=event_id,
             )
 
             # Update progress with detailed stats AND save resume checkpoint

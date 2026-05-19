@@ -28,6 +28,44 @@ logger = logging.getLogger(__name__)
 class IngestionMixin:
     """Source, Concept, and Instance node CRUD with graph linking."""
 
+    def record_epoch(
+        self,
+        kind: str,
+        actor: Optional[str] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> Optional[int]:
+        """
+        Record a new graph-mutation epoch event and return its event_id.
+
+        ADR-203: Call at the start of an ingestion job (or other unit of
+        graph mutation) so the returned id can tag nodes created during
+        that unit of work. `kind` discriminates whether wall-clock is
+        semantically meaningful for the rows attributable to this event.
+
+        Returns None on failure — callers must treat that as "epoch
+        tagging disabled for this run" rather than fatal.
+        """
+        try:
+            conn = self.pool.getconn()
+            try:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        "SELECT kg_api.record_graph_epoch(%s::text, %s::text, %s::jsonb)",
+                        (
+                            kind,
+                            str(actor) if actor is not None else None,
+                            json.dumps(metadata or {}),
+                        ),
+                    )
+                    row = cur.fetchone()
+                    return row[0] if row else None
+            finally:
+                conn.commit()
+                self.pool.putconn(conn)
+        except Exception as e:
+            logger.warning(f"record_epoch failed (kind={kind}): {e}")
+            return None
+
     def create_source_node(
         self,
         source_id: str,
@@ -262,7 +300,8 @@ class IngestionMixin:
     def create_instance_node(
         self,
         instance_id: str,
-        quote: str
+        quote: str,
+        created_at_event_id: Optional[int] = None,
     ) -> Dict[str, Any]:
         """
         Create an Instance node in the graph.
@@ -270,6 +309,10 @@ class IngestionMixin:
         Args:
             instance_id: Unique identifier for the instance
             quote: Exact quote from the source text
+            created_at_event_id: ADR-203 graph_epochs event_id tagging this Instance
+                with the mutation event that produced it. None when epoch recording
+                failed or for legacy callers; downstream queries treat NULL as
+                pre-epoch cohort.
 
         Returns:
             Dictionary with created node properties
@@ -277,21 +320,37 @@ class IngestionMixin:
         Raises:
             Exception: If node creation fails
         """
-        query = """
-        CREATE (i:Instance {
-            instance_id: $instance_id,
-            quote: $quote
-        })
-        RETURN i
-        """
+        if created_at_event_id is not None:
+            query = """
+            CREATE (i:Instance {
+                instance_id: $instance_id,
+                quote: $quote,
+                created_at_event_id: $created_at_event_id
+            })
+            RETURN i
+            """
+            params = {
+                "instance_id": instance_id,
+                "quote": quote,
+                "created_at_event_id": created_at_event_id,
+            }
+        else:
+            query = """
+            CREATE (i:Instance {
+                instance_id: $instance_id,
+                quote: $quote
+            })
+            RETURN i
+            """
+            params = {
+                "instance_id": instance_id,
+                "quote": quote,
+            }
 
         try:
             results = self._execute_cypher(
                 query,
-                params={
-                    "instance_id": instance_id,
-                    "quote": quote
-                },
+                params=params,
                 fetch_one=True
             )
             if results:
