@@ -179,7 +179,9 @@ def process_chunk(
     text_embedding: Optional[List[float]] = None,
     # ADR-081: Source document lifecycle
     garage_key: Optional[str] = None,
-    content_hash: Optional[str] = None
+    content_hash: Optional[str] = None,
+    # ADR-203: Graph epoch event_id tagging Instances created during this job
+    event_id: Optional[int] = None,
 ) -> List[str]:
     """
     Process a single chunk: create source, extract concepts, create graph nodes.
@@ -463,7 +465,11 @@ def process_chunk(
             else:
                 # Create new instance
                 instance_id = f"{source_id}_inst_{uuid.uuid4().hex[:8]}"
-                age_client.create_instance_node(instance_id=instance_id, quote=quote)
+                age_client.create_instance_node(
+                    instance_id=instance_id,
+                    quote=quote,
+                    created_at_event_id=event_id,  # ADR-203
+                )
                 stats.instances_created += 1
 
             # Link instance to concept and source
