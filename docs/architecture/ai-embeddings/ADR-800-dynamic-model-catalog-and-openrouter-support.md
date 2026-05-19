@@ -1,6 +1,7 @@
 ---
-status: Draft
+status: Accepted
 date: 2026-03-15
+accepted: 2026-05-19
 deciders:
   - aaronsb
   - claude
@@ -229,3 +230,23 @@ Automatically route requests to the cheapest available provider when the same mo
 - Catalog: `GET /api/v1/models` — returns full model list with pricing (no auth required, but rate-limited)
 - Completions: `POST /api/v1/chat/completions` — OpenAI-compatible format
 - Generation stats: `GET /api/v1/generation?id={id}` — token usage and cost for a specific request
+
+### Implementation status (2026-05-19)
+
+All migration-sequence items are complete. The decision is now fully
+implemented; status moved Draft → Accepted.
+
+- Items 1–7 (schema, seed, `OpenRouterProvider`, `fetch_model_catalog`,
+  `configure.py models`, `/admin/models/catalog`, cost estimator) were
+  delivered earlier.
+- Item 8 (web UI) is closed by this change: `SystemTab` no longer hardcodes
+  provider/model lists — it derives them from `/admin/models/catalog` and
+  `/admin/keys`, with per-provider cards that unify API-key management and
+  the active extraction selection.
+- A residual gap is closed alongside item 8: `API_KEY_PROVIDERS` omitted
+  `openrouter`, so `POST/GET/DELETE /admin/keys` rejected or hid OpenRouter
+  keys even though the provider was fully implemented. `openrouter` is now
+  in `API_KEY_PROVIDERS` and `EXTRACTION_PROVIDERS`, with format/validation
+  branches in `admin.py` and `api_key_validator.py` (authenticated
+  `/api/v1/key` check). `GET /admin/keys` now enumerates the union of known
+  and actually-configured providers rather than the constant alone.
