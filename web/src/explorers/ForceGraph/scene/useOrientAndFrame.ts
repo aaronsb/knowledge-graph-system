@@ -37,8 +37,13 @@ import {
 
 /** Tween duration — long enough to track the swing, short enough not to drag. */
 const TWEEN_MS = 450;
-/** Default overscan: graph fills the view, ~15% spilling off (user's ideal). */
-const DEFAULT_FILL = 0.82;
+/**
+ * Default overscan: multiplier on the face-on fit distance. <1 pulls the
+ * camera closer so the graph overfills and spills past the edges (the
+ * user's stated ideal: graph fills the view, the outermost ~15% off
+ * screen). Lower = closer. This is the single first-load zoom knob.
+ */
+const DEFAULT_FILL = 0.65;
 
 export interface OrientAndFrameOptions {
   hiddenIds?: Set<string>;
