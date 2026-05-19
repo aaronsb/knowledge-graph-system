@@ -1120,3 +1120,22 @@ class QueryMixin:
             self._graph_facade = GraphFacade(self)
 
         return self._graph_facade
+
+    @property
+    def epochs(self):
+        """
+        Get the epoch event log facade (ADR-203).
+
+        Lazy-loads EpochFacade on first access. Provides per-concept
+        re-evidence stream queries and paginated event log access. The
+        write path (`record_epoch`) lives on IngestionMixin; this property
+        is the read-side surface.
+
+        Returns:
+            EpochFacade instance
+        """
+        if self._epoch_facade is None:
+            from api.app.lib.epoch_facade import EpochFacade
+            self._epoch_facade = EpochFacade(self)
+
+        return self._epoch_facade

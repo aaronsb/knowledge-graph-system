@@ -281,6 +281,44 @@ async def delete_concept(
         )
 
 
+@router.get(
+    "/{concept_id}/lifetime",
+    summary="Get concept re-evidence timeline (ADR-203)",
+)
+async def get_concept_lifetime(
+    concept_id: str,
+    current_user: UserInDB = Depends(require_permission("graph", "read"))
+):
+    """
+    Return the ordered re-evidence stream for a single concept.
+
+    Walks `(:Concept)-[:EVIDENCED_BY]->(:Instance)` and joins each Instance
+    to its `graph_epochs` event row, so the returned chain carries
+    `event_id`, `occurred_at`, `kind`, and `actor` per Instance.
+
+    Instances created before ADR-203 carry `NULL` event_id and are surfaced
+    as a `pre_epoch_count`; they appear at the tail of the chain.
+
+    Requires `graph:read` permission.
+    """
+    age_client = get_age_client()
+    try:
+        result = age_client.epochs.get_concept_lifetime(concept_id)
+    except Exception as e:
+        logger.error(f"get_concept_lifetime({concept_id}) failed: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to get concept lifetime",
+        )
+
+    if result is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Concept not found: {concept_id}",
+        )
+    return result
+
+
 @router.post(
     "/{concept_id}/evidence",
     response_model=EvidenceResponse,

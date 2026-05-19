@@ -92,6 +92,9 @@ class BaseMixin:
         # Lazy-loaded graph facade for accelerated traversal (ADR-201)
         self._graph_facade = None
 
+        # Lazy-loaded epoch facade for ADR-203 event log reads
+        self._epoch_facade = None
+
     def _setup_age(self, conn):
         """Load AGE extension and set search path."""
         with conn.cursor() as cur:
