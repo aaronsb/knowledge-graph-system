@@ -33,10 +33,16 @@ export interface OrientViewOptions {
   /** Viewport aspect (width / height). */
   aspect: number;
   /**
-   * Overscan factor (<1 = closer, graph spills past the edges). The user
-   * wants the graph to fill the view with ~15% spilling off-screen, so
-   * the default pulls the camera ~20% inside an exact fit. Tunable; this
-   * is the single knob that replaced the old useFitCamera FILL constant.
+   * Viewport-aware minimum-distance fraction (the safety *floor*, not the
+   * primary distance). The framing is depth-anchored: the camera stands
+   * at the cluster's near face (≈ its minor-axis half-depth), which is
+   * the tight, fills-the-viewport look the user picked. That term alone
+   * collapses to ~0 for a flat or tiny cluster (hMinor→0), dropping the
+   * camera into a node. `fill` is the guard: distance is never closer
+   * than `fill ×` the exact face-on fit, so a degenerate cluster still
+   * gets a viewport-sane frame while normal blobby graphs are unaffected
+   * (their depth anchor dominates the floor). Lower = the floor allows
+   * closer before it kicks in. Default DEFAULT_FILL in useOrientAndFrame.
    */
   fill?: number;
   /**
@@ -104,7 +110,7 @@ export function orientedPerspectiveView(
 ): CameraPose {
   const { center, axes, bounds } = frame;
   const [major, mid, minor] = axes;
-  const fill = opts.fill ?? 0.8;
+  const fill = opts.fill ?? 0.2;
 
   // Box centre in world space: orientation centroid + the extent box's
   // offset along each axis (the extent set need not be centred on it).
@@ -124,11 +130,23 @@ export function orientedPerspectiveView(
 
   const vFov = (opts.fovDeg * Math.PI) / 180;
   const hFov = 2 * Math.atan(Math.tan(vFov / 2) * opts.aspect);
-  // Distance at which the box just fits each screen axis; take the
-  // tighter (larger) so neither axis overflows, then apply overscan.
+  // Distance at which the box exactly fits each screen axis; the tighter
+  // (larger) of the two is an exact face-on fit.
   const fitV = hMid / Math.tan(vFov / 2);
   const fitH = hMajor / Math.tan(hFov / 2);
-  const dist = Math.max(fitV, fitH) * fill + hMinor;
+  const exactFit = Math.max(fitV, fitH);
+  // Depth-anchored: stand at the cluster's near face — its minor-axis
+  // half-depth, plus a small guard so the camera never sits on the
+  // focal node's own surface. This is the tight "fills the viewport,
+  // spills slightly" framing the user selected.
+  const NEAR_GUARD = 1;
+  const depthAnchored = hMinor + NEAR_GUARD;
+  // Viewport-aware floor: a flat/tiny cluster has hMinor≈0, so the depth
+  // anchor alone would drop the camera into the focal node. Never come
+  // closer than `fill ×` the exact face-on fit — for a normal blobby
+  // graph the depth anchor is larger and dominates (look unchanged);
+  // for a degenerate one the floor produces a sane frame instead.
+  const dist = Math.max(depthAnchored, exactFit * fill);
 
   // Side selection.
   //  - Focus (a node was clicked): put the camera on the side the node

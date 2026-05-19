@@ -67,20 +67,33 @@ describe('orientedPerspectiveView', () => {
     expect(pose.position[2]).toBeGreaterThan(0);
   });
 
-  it('fit distance = tighter screen axis × fill + minor half-depth', () => {
-    // hMajor=hMid=10 ⇒ fit=10 each; fill=1; hMinor=3 ⇒ dist=10+3.
-    const pose = orientedPerspectiveView(frame(10, 10, 3), SQUARE);
-    expect(pose.position[2]).toBeCloseTo(13, 5);
+  it('depth-anchored: a deep cluster stands at its near face (hMinor+guard)', () => {
+    // Deep cluster (hMinor=40), small floor (fill=0.2). exactFit=10 ⇒
+    // floor=2; depth anchor = 40 + NEAR_GUARD(1) = 41 dominates. This is
+    // the "fills the viewport, spills slightly" framing the user picked.
+    const pose = orientedPerspectiveView(frame(10, 10, 40), {
+      ...SQUARE,
+      fill: 0.2,
+    });
+    expect(pose.position[2]).toBeCloseTo(41, 5);
   });
 
-  it('overscan (fill<1) pulls the camera closer', () => {
-    const far = orientedPerspectiveView(frame(10, 10, 0), SQUARE).position[2];
-    const near = orientedPerspectiveView(frame(10, 10, 0), {
+  it('viewport floor catches a flat cluster instead of collapsing', () => {
+    // Flat cluster (hMinor=0): depth anchor = 0+1 = 1 would drop the
+    // camera into the focal node. exactFit=10, fill=0.2 ⇒ floor=2 wins,
+    // so the camera is held at a viewport-sane distance, not 1.
+    const flat = orientedPerspectiveView(frame(10, 10, 0), {
       ...SQUARE,
-      fill: 0.8,
-    }).position[2];
-    expect(near).toBeLessThan(far);
-    expect(near).toBeCloseTo(8, 5); // 10 * 0.8
+      fill: 0.2,
+    });
+    expect(flat.position[2]).toBeCloseTo(2, 5);
+    // And the floor scales with fill (it is `fill × exactFit`).
+    const tighter = orientedPerspectiveView(frame(10, 10, 0), {
+      ...SQUARE,
+      fill: 0.1,
+    });
+    expect(tighter.position[2]).toBeCloseTo(1, 5);
+    expect(tighter.position[2]).toBeLessThan(flat.position[2]);
   });
 
   it('non-focus: currentOffset picks the side the camera is already on', () => {

@@ -38,12 +38,16 @@ import {
 /** Tween duration — long enough to track the swing, short enough not to drag. */
 const TWEEN_MS = 450;
 /**
- * Default overscan: multiplier on the face-on fit distance. <1 pulls the
- * camera closer so the graph overfills and spills past the edges (the
- * user's stated ideal: graph fills the view, the outermost ~15% off
- * screen). Lower = closer. This is the single first-load zoom knob.
+ * Viewport-aware minimum-distance floor (see orientView's `fill` doc).
+ * The first-load framing is depth-anchored — the camera stands at the
+ * cluster's near face, which is the tight, fills-the-viewport look the
+ * user picked (it's what the old literal fill=0 produced, now made
+ * non-degenerate). This value only guards the pathological case: a flat
+ * or tiny cluster whose depth anchor → 0; then the camera is held at
+ * 0.2× the exact face-on fit instead of collapsing into a node. Normal
+ * graphs never hit the floor, so this knob doesn't affect their look.
  */
-const DEFAULT_FILL = 0;
+const DEFAULT_FILL = 0.2;
 
 export interface OrientAndFrameOptions {
   hiddenIds?: Set<string>;
