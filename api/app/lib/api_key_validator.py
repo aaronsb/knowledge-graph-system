@@ -12,78 +12,27 @@ from datetime import datetime
 logger = logging.getLogger(__name__)
 
 
+# Key validation lives in the connector layer (ADR-800). These thin wrappers
+# preserve the historical function names while delegating to the single
+# source of truth so there is exactly one place that knows how to
+# authenticate each provider, model-agnostically.
+
 def validate_openai_key(api_key: str) -> tuple[bool, Optional[str]]:
-    """
-    Validate OpenAI API key by making a minimal API call.
-
-    Args:
-        api_key: The OpenAI API key to validate
-
-    Returns:
-        Tuple of (is_valid, error_message)
-        - (True, None) if key is valid
-        - (False, error_message) if key is invalid
-    """
-    try:
-        import openai
-        client = openai.OpenAI(api_key=api_key)
-
-        # Make minimal API call (1 token)
-        client.chat.completions.create(
-            model="gpt-4o-mini",
-            max_tokens=1,
-            messages=[{"role": "user", "content": "test"}]
-        )
-
-        return (True, None)
-
-    except openai.AuthenticationError as e:
-        return (False, f"Authentication failed: {str(e)}")
-    except openai.PermissionDeniedError as e:
-        return (False, f"Permission denied: {str(e)}")
-    except openai.RateLimitError as e:
-        # Rate limit means the key is valid, just throttled
-        logger.warning(f"OpenAI rate limit hit during validation: {e}")
-        return (True, None)
-    except Exception as e:
-        return (False, f"Validation error: {str(e)}")
+    """Validate an OpenAI API key. Delegates to the connector layer."""
+    from .ai_providers import validate_provider_key
+    return validate_provider_key("openai", api_key)
 
 
 def validate_anthropic_key(api_key: str) -> tuple[bool, Optional[str]]:
-    """
-    Validate Anthropic API key by making a minimal API call.
+    """Validate an Anthropic API key. Delegates to the connector layer."""
+    from .ai_providers import validate_provider_key
+    return validate_provider_key("anthropic", api_key)
 
-    Args:
-        api_key: The Anthropic API key to validate
 
-    Returns:
-        Tuple of (is_valid, error_message)
-        - (True, None) if key is valid
-        - (False, error_message) if key is invalid
-    """
-    try:
-        import anthropic
-        client = anthropic.Anthropic(api_key=api_key)
-
-        # Make minimal API call (1 token)
-        client.messages.create(
-            model="claude-3-5-sonnet-20241022",
-            max_tokens=1,
-            messages=[{"role": "user", "content": "test"}]
-        )
-
-        return (True, None)
-
-    except anthropic.AuthenticationError as e:
-        return (False, f"Authentication failed: {str(e)}")
-    except anthropic.PermissionDeniedError as e:
-        return (False, f"Permission denied: {str(e)}")
-    except anthropic.RateLimitError as e:
-        # Rate limit means the key is valid, just throttled
-        logger.warning(f"Anthropic rate limit hit during validation: {e}")
-        return (True, None)
-    except Exception as e:
-        return (False, f"Validation error: {str(e)}")
+def validate_openrouter_key(api_key: str) -> tuple[bool, Optional[str]]:
+    """Validate an OpenRouter API key. Delegates to the connector layer."""
+    from .ai_providers import validate_provider_key
+    return validate_provider_key("openrouter", api_key)
 
 
 def validate_api_keys_at_startup() -> Dict[str, bool]:
@@ -141,6 +90,8 @@ def validate_api_keys_at_startup() -> Dict[str, bool]:
                         is_valid, error_msg = validate_openai_key(api_key)
                     elif provider == 'anthropic':
                         is_valid, error_msg = validate_anthropic_key(api_key)
+                    elif provider == 'openrouter':
+                        is_valid, error_msg = validate_openrouter_key(api_key)
                     elif provider == 'garage':
                         # Garage credentials are "access_key:secret_key" format
                         # No API validation available, just check format

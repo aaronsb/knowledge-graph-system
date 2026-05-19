@@ -902,14 +902,13 @@ class AnthropicProvider(AIProvider):
         return self.extraction_model
 
     def validate_api_key(self) -> bool:
-        """Validate Anthropic API key by making a simple API call"""
+        """Validate Anthropic API key model-agnostically (ADR-800).
+
+        Lists models rather than calling messages.create() with a specific
+        model — a stale extraction_model previously 404'd valid keys.
+        """
         try:
-            # Try to create a minimal message (lightweight check)
-            self.client.messages.create(
-                model=self.extraction_model,
-                max_tokens=10,
-                messages=[{"role": "user", "content": "test"}]
-            )
+            self.client.models.list(limit=1)
             return True
         except Exception as e:
             logger.error(f"Anthropic API key validation failed: {e}")
@@ -1796,6 +1795,153 @@ def get_embedding_provider() -> Optional[AIProvider]:
         return None
 
 
+class LlamaCppProvider(OpenAIProvider):
+    """llama.cpp local-server provider (OpenAI-compatible).
+
+    Talks to a llama.cpp ``llama-server`` via its OpenAI-compatible API
+    (default http://localhost:8080/v1). It is local, so no API key is
+    required — "validation" is a connectivity check. Concept extraction,
+    translation and vision logic are inherited from OpenAIProvider; only
+    construction, identity, validation and model enumeration differ. The
+    embedder stays separate (delegated), as with every reasoning provider.
+    """
+
+    DEFAULT_BASE_URL = "http://localhost:8080/v1"
+
+    def __init__(
+        self,
+        base_url: Optional[str] = None,
+        extraction_model: Optional[str] = None,
+        embedding_provider: Optional[AIProvider] = None,
+        max_tokens: Optional[int] = None,
+        temperature: Optional[float] = None,
+    ):
+        from openai import OpenAI
+
+        self.base_url = base_url or os.getenv("LLAMACPP_BASE_URL", self.DEFAULT_BASE_URL)
+        # llama.cpp ignores the key, but the OpenAI SDK requires a non-empty string.
+        self.api_key = "llama.cpp-local"
+        self.client = OpenAI(api_key=self.api_key, base_url=self.base_url, timeout=120.0)
+
+        self.extraction_model = extraction_model or os.getenv("LLAMACPP_EXTRACTION_MODEL", "")
+        self.max_tokens = max_tokens
+        self.temperature = 0.1 if temperature is None else temperature
+
+        # Embeddings are always a separate provider — never served from here.
+        self.embedding_provider = embedding_provider
+        self.embedding_model = ""
+        logger.info(f"llama.cpp client configured at {self.base_url}")
+
+    def get_provider_name(self) -> str:
+        return "llama.cpp"
+
+    def validate_api_key(self) -> bool:
+        """Connectivity check (local server, no key) — list models."""
+        try:
+            self.client.models.list()
+            return True
+        except Exception as e:
+            logger.error(f"llama.cpp connectivity check failed at {self.base_url}: {e}")
+            return False
+
+    def list_available_models(self) -> Dict[str, List[str]]:
+        try:
+            resp = self.client.models.list()
+            return {"extraction": [m.id for m in resp.data], "embedding": []}
+        except Exception:
+            return {"extraction": [], "embedding": []}
+
+    def fetch_model_catalog(self) -> List[Dict[str, Any]]:
+        """Enumerate models the running llama.cpp server actually exposes."""
+        entries: List[Dict[str, Any]] = []
+        try:
+            resp = self.client.models.list()
+            for m in resp.data:
+                entries.append({
+                    "provider": "llamacpp",
+                    "model_id": m.id,
+                    "display_name": m.id,
+                    "category": "extraction",
+                    "context_length": None,
+                    "max_completion_tokens": None,
+                    "supports_vision": False,
+                    "supports_json_mode": True,
+                    "supports_tool_use": False,
+                    "supports_streaming": True,
+                    "price_prompt_per_m": 0,
+                    "price_completion_per_m": 0,
+                    "price_cache_read_per_m": None,
+                    "upstream_provider": None,
+                    "raw_metadata": m.model_dump() if hasattr(m, "model_dump") else {},
+                })
+        except Exception as e:
+            logger.warning(f"Failed to fetch llama.cpp model catalog: {e}")
+        return entries
+
+
+def validate_provider_key(provider: str, api_key: str) -> tuple[bool, Optional[str]]:
+    """
+    Validate a candidate API key for a provider, model-agnostically (ADR-800).
+
+    This is the single source of truth for "does this key work" — the admin
+    key route and the startup validator both delegate here rather than
+    carrying their own (previously hardcoded-model) logic. Each branch uses
+    an authenticated endpoint that does NOT depend on a specific model name,
+    so a stale model can never fail a valid key.
+
+    Args:
+        provider: 'openai', 'anthropic', or 'openrouter'
+        api_key: The candidate key to test (not yet stored)
+
+    Returns:
+        (True, None) if the key authenticates, else (False, error_message).
+        Never raises.
+    """
+    try:
+        if provider == "openai":
+            from openai import OpenAI
+            OpenAI(api_key=api_key, timeout=30.0).models.list()
+            return (True, None)
+
+        if provider == "anthropic":
+            from anthropic import Anthropic
+            # Models API authenticates without a model name (SDK >= 0.40).
+            Anthropic(api_key=api_key, timeout=30.0).models.list(limit=1)
+            return (True, None)
+
+        if provider == "openrouter":
+            import requests
+            # OpenRouter's /models is unauthenticated; /key is the real
+            # authenticated check (zero token cost, 401 on a bad key).
+            resp = requests.get(
+                f"{OpenRouterProvider.OPENROUTER_BASE_URL}/key",
+                headers={"Authorization": f"Bearer {api_key}"},
+                timeout=10,
+            )
+            if resp.status_code == 200:
+                return (True, None)
+            if resp.status_code in (401, 403):
+                return (False, f"Authentication failed: HTTP {resp.status_code}")
+            if resp.status_code == 429:
+                logger.warning("OpenRouter rate limit hit during validation")
+                return (True, None)
+            return (False, f"Validation error: HTTP {resp.status_code}")
+
+        if provider == "llamacpp":
+            # Local server — no key. "Validation" is a connectivity check
+            # against the configured base_url (lists models).
+            ok = LlamaCppProvider().validate_api_key()
+            return (True, None) if ok else (
+                False,
+                f"Cannot reach llama.cpp server at {LlamaCppProvider().base_url}",
+            )
+
+        return (False, f"No validation available for provider '{provider}'")
+
+    except Exception as e:
+        return (False, f"Validation error: {str(e)}")
+
+
 def get_provider(provider_name: Optional[str] = None) -> AIProvider:
     """
     Factory function to get the configured AI provider (ADR-041).
@@ -1850,9 +1996,18 @@ def get_provider(provider_name: Optional[str] = None) -> AIProvider:
         logger.debug(f"[DEV MODE] Using .env configuration: provider={provider_name}")
     else:
         # Production mode: Load from database
-        from .ai_extraction_config import load_active_extraction_config
+        from .ai_extraction_config import load_active_extraction_config, load_provider_config
 
         config = load_active_extraction_config()
+
+        # #8: if a specific provider is requested and it isn't the active one,
+        # use THAT provider's saved config row (base_url / reasoning params)
+        # so "Get models" / refresh works for a configured-but-not-active
+        # provider instead of falling back to defaults (the localhost:8080 bug).
+        if provider_name and (not config or config.get('provider') != provider_name):
+            pc = load_provider_config(provider_name)
+            if pc:
+                config = pc
 
         if not config:
             raise RuntimeError(
@@ -1911,12 +2066,29 @@ def get_provider(provider_name: Optional[str] = None) -> AIProvider:
             embedding_provider=embedding_provider,
             max_tokens=max_tokens,
         )
+    elif provider_name == "llamacpp":
+        if is_development_mode():
+            base_url = os.getenv("LLAMACPP_BASE_URL", LlamaCppProvider.DEFAULT_BASE_URL)
+            temperature = float(os.getenv("LLAMACPP_TEMPERATURE", "0.1"))
+        else:
+            # DB is the source of truth for the API container — base_url and
+            # reasoning params come from the (per-provider) config, not env.
+            base_url = config.get('base_url') or LlamaCppProvider.DEFAULT_BASE_URL
+            temperature = config.get('temperature')
+            temperature = 0.1 if temperature is None else temperature
+        return LlamaCppProvider(
+            base_url=base_url,
+            extraction_model=extraction_model,
+            embedding_provider=embedding_provider,
+            max_tokens=max_tokens,
+            temperature=temperature,
+        )
     elif provider_name == "mock":
         from .mock_ai_provider import MockAIProvider
         mock_mode = os.getenv("MOCK_MODE", "default")
         return MockAIProvider(mode=mock_mode)
     else:
-        raise ValueError(f"Unknown AI provider: {provider_name}. Use 'openai', 'anthropic', 'ollama', 'openrouter', or 'mock'")
+        raise ValueError(f"Unknown AI provider: {provider_name}. Use 'openai', 'anthropic', 'ollama', 'openrouter', 'llamacpp', or 'mock'")
 
 
 # Model configurations for reference

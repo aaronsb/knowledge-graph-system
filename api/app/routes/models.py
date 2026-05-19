@@ -63,7 +63,7 @@ async def refresh_catalog(request: RefreshRequest):
     from ..lib.ai_providers import get_provider
 
     provider_name = request.provider.lower()
-    if provider_name not in ("openai", "anthropic", "ollama", "openrouter"):
+    if provider_name not in ("openai", "anthropic", "ollama", "openrouter", "llamacpp"):
         raise HTTPException(
             status_code=400,
             detail=f"Unknown provider: {provider_name}",

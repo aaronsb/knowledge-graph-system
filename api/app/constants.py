@@ -131,19 +131,29 @@ COGNITIVE_LEAP_LEVELS: Set[str] = {
 EXTRACTION_PROVIDERS: Set[str] = {
     "openai",      # OpenAI API (GPT-4o, etc.)
     "anthropic",   # Anthropic API (Claude Sonnet, etc.)
+    "openrouter",  # OpenRouter unified gateway to 200+ models (ADR-800)
     "ollama",      # Local inference via Ollama (ADR-042)
+    "llamacpp",    # Local inference via llama.cpp OpenAI-compatible server
     "vllm",        # Local inference via vLLM (ADR-042 Phase 4)
 }
 
-# Providers that require API keys
+# Providers that require API keys.
+#
+# NOTE: This is the set of cloud providers the system knows how to validate a
+# key format for and test on save. It is *not* the authoritative list the web
+# UI renders — the UI derives its provider list dynamically from configured
+# keys and the model catalog (ADR-800). Keep this in sync with the providers
+# handled in api_key_validator and the admin set_api_key test branches.
 API_KEY_PROVIDERS: Set[str] = {
     "openai",
     "anthropic",
+    "openrouter",  # ADR-800: single key, 200+ models via unified gateway
 }
 
 # Local inference providers (no API keys needed)
 LOCAL_PROVIDERS: Set[str] = {
     "ollama",
+    "llamacpp",
     "vllm",
 }
 

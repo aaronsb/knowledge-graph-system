@@ -91,6 +91,53 @@ def load_active_extraction_config() -> Optional[Dict[str, Any]]:
         return None
 
 
+def load_provider_config(provider: str) -> Optional[Dict[str, Any]]:
+    """
+    Load a specific provider's saved config row, regardless of whether it is
+    the active provider (#8 — DB-backed per-provider config).
+
+    Lets get_provider() resolve base_url / reasoning params for a provider
+    that is configured but not currently active (e.g. a catalog refresh /
+    "Get models" against a not-yet-activated local provider).
+    """
+    from .age_client import AGEClient
+
+    try:
+        client = AGEClient()
+        conn = client.pool.getconn()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT
+                        id, provider, model_name, supports_vision,
+                        supports_json_mode, max_tokens,
+                        created_at, updated_at, updated_by, active,
+                        base_url, temperature, top_p, gpu_layers, num_threads,
+                        thinking_mode, max_concurrent_requests, max_retries
+                    FROM kg_api.ai_extraction_config
+                    WHERE provider = %s
+                    LIMIT 1
+                """, (provider,))
+                row = cur.fetchone()
+                if not row:
+                    return None
+                return {
+                    "id": row[0], "provider": row[1], "model_name": row[2],
+                    "supports_vision": row[3], "supports_json_mode": row[4],
+                    "max_tokens": row[5], "created_at": row[6],
+                    "updated_at": row[7], "updated_by": row[8], "active": row[9],
+                    "base_url": row[10], "temperature": row[11], "top_p": row[12],
+                    "gpu_layers": row[13], "num_threads": row[14],
+                    "thinking_mode": row[15], "max_concurrent_requests": row[16],
+                    "max_retries": row[17],
+                }
+        finally:
+            client.pool.putconn(conn)
+    except Exception as e:
+        logger.error(f"Failed to load provider config for {provider}: {e}")
+        return None
+
+
 def save_extraction_config(config: Dict[str, Any], updated_by: str = "api") -> bool:
     """
     Save AI extraction configuration to the database.
@@ -116,18 +163,23 @@ def save_extraction_config(config: Dict[str, Any], updated_by: str = "api") -> b
         conn = client.pool.getconn()
 
         try:
+            # Per-provider upsert (migration 062: provider is UNIQUE).
+            # `activate` (default True — backward compat with callers that
+            # save+activate in one step) controls whether this provider
+            # becomes the single live one. activate=False persists the
+            # provider's config without changing which provider is active.
+            activate = config.get('active', True)
+
             with conn.cursor() as cur:
-                # Start transaction
                 cur.execute("BEGIN")
 
-                # Deactivate all existing configs
-                cur.execute("""
-                    UPDATE kg_api.ai_extraction_config
-                    SET active = FALSE
-                    WHERE active = TRUE
-                """)
+                if activate:
+                    cur.execute("""
+                        UPDATE kg_api.ai_extraction_config
+                        SET active = FALSE
+                        WHERE active = TRUE AND provider <> %s
+                    """, (config['provider'],))
 
-                # Insert new config as active
                 cur.execute("""
                     INSERT INTO kg_api.ai_extraction_config (
                         provider, model_name, supports_vision, supports_json_mode,
@@ -135,9 +187,26 @@ def save_extraction_config(config: Dict[str, Any], updated_by: str = "api") -> b
                         base_url, temperature, top_p, gpu_layers, num_threads,
                         thinking_mode, max_concurrent_requests, max_retries
                     ) VALUES (
-                        %s, %s, %s, %s, %s, %s, TRUE,
+                        %s, %s, %s, %s, %s, %s, %s,
                         %s, %s, %s, %s, %s, %s, %s, %s
                     )
+                    ON CONFLICT (provider) DO UPDATE SET
+                        model_name = EXCLUDED.model_name,
+                        supports_vision = EXCLUDED.supports_vision,
+                        supports_json_mode = EXCLUDED.supports_json_mode,
+                        max_tokens = EXCLUDED.max_tokens,
+                        updated_by = EXCLUDED.updated_by,
+                        active = CASE WHEN %s THEN TRUE
+                                      ELSE kg_api.ai_extraction_config.active END,
+                        base_url = EXCLUDED.base_url,
+                        temperature = EXCLUDED.temperature,
+                        top_p = EXCLUDED.top_p,
+                        gpu_layers = EXCLUDED.gpu_layers,
+                        num_threads = EXCLUDED.num_threads,
+                        thinking_mode = EXCLUDED.thinking_mode,
+                        max_concurrent_requests = EXCLUDED.max_concurrent_requests,
+                        max_retries = EXCLUDED.max_retries,
+                        updated_at = NOW()
                 """, (
                     config['provider'],
                     config['model_name'],
@@ -145,6 +214,7 @@ def save_extraction_config(config: Dict[str, Any], updated_by: str = "api") -> b
                     config.get('supports_json_mode', True),
                     config.get('max_tokens'),
                     updated_by,
+                    activate,
                     config.get('base_url'),
                     config.get('temperature'),
                     config.get('top_p'),
@@ -152,10 +222,10 @@ def save_extraction_config(config: Dict[str, Any], updated_by: str = "api") -> b
                     config.get('num_threads'),
                     config.get('thinking_mode', 'off'),
                     config.get('max_concurrent_requests'),
-                    config.get('max_retries')
+                    config.get('max_retries'),
+                    activate,
                 ))
 
-                # Commit transaction
                 cur.execute("COMMIT")
 
                 logger.info(f"✅ Saved AI extraction config: {config['provider']} / {config.get('model_name', 'N/A')}")
