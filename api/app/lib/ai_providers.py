@@ -922,32 +922,61 @@ class AnthropicProvider(AIProvider):
         return AVAILABLE_MODELS["anthropic"]
 
     def fetch_model_catalog(self) -> List[Dict[str, Any]]:
-        """Return hardcoded Anthropic model catalog with known pricing (ADR-800)."""
-        models = [
-            ("claude-sonnet-4-20250514", "Claude Sonnet 4", 200000, True, 3.00, 15.00),
-            ("claude-3-5-sonnet-20241022", "Claude 3.5 Sonnet", 200000, True, 3.00, 15.00),
-            ("claude-3-opus-20240229", "Claude 3 Opus", 200000, True, 15.00, 75.00),
-            ("claude-3-sonnet-20240229", "Claude 3 Sonnet", 200000, True, 3.00, 15.00),
-            ("claude-3-haiku-20240307", "Claude 3 Haiku", 200000, True, 0.25, 1.25),
-        ]
-        return [
-            {
-                "provider": "anthropic",
-                "model_id": mid,
-                "display_name": name,
-                "category": "extraction",
-                "context_length": ctx,
-                "supports_vision": vision,
-                "supports_json_mode": True,
-                "supports_tool_use": True,
-                "supports_streaming": True,
-                "price_prompt_per_m": prompt_cost,
-                "price_completion_per_m": comp_cost,
-                "upstream_provider": None,
-                "raw_metadata": None,
-            }
-            for mid, name, ctx, vision, prompt_cost, comp_cost in models
-        ]
+        """Fetch models from the Anthropic API and return catalog entries (ADR-800).
+
+        Enumerates live via the SDK's models.list() — the same dynamic
+        pattern OpenAIProvider uses — rather than a hardcoded list, so new
+        Claude generations (4.x and beyond) appear without a code change.
+        Hardcoded model lists are exactly the drift ADR-800 removes.
+        """
+        # Pricing (USD per 1M tokens) is not exposed by the API; key by a
+        # stable family prefix so dated model ids still match. Unknown models
+        # still surface (price None) — visibility beats omission.
+        known_pricing = {
+            "claude-opus-4": (15.00, 75.00),
+            "claude-sonnet-4": (3.00, 15.00),
+            "claude-haiku-4": (1.00, 5.00),
+            "claude-3-5-sonnet": (3.00, 15.00),
+            "claude-3-5-haiku": (0.80, 4.00),
+            "claude-3-opus": (15.00, 75.00),
+            "claude-3-sonnet": (3.00, 15.00),
+            "claude-3-haiku": (0.25, 1.25),
+        }
+
+        def _price(mid: str):
+            for prefix, p in known_pricing.items():
+                if mid.startswith(prefix):
+                    return p
+            return (None, None)
+
+        entries: List[Dict[str, Any]] = []
+        try:
+            models_response = self.client.models.list(limit=1000)
+            for model in models_response.data:
+                mid = model.id
+                prompt_cost, comp_cost = _price(mid)
+                entries.append({
+                    "provider": "anthropic",
+                    "model_id": mid,
+                    "display_name": getattr(model, "display_name", None) or mid,
+                    "category": "extraction",  # Anthropic serves no embeddings
+                    "context_length": 200000,
+                    "supports_vision": True,
+                    "supports_json_mode": True,
+                    "supports_tool_use": True,
+                    "supports_streaming": True,
+                    "price_prompt_per_m": prompt_cost,
+                    "price_completion_per_m": comp_cost,
+                    "upstream_provider": None,
+                    "raw_metadata": {
+                        "id": mid,
+                        "created_at": str(getattr(model, "created_at", "")) or None,
+                    },
+                })
+        except Exception as e:
+            logger.warning(f"Failed to fetch Anthropic model catalog: {e}")
+
+        return entries
 
 
 class OpenRouterProvider(AIProvider):
