@@ -39,6 +39,11 @@ def _catalog_vision_models(provider: str) -> list[dict]:
 
     Empty list when the catalog is unavailable or has no vision model for
     the provider (e.g. its 'Get models' has not been run yet).
+
+    A pooled checkout + one indexed SELECT per call. Callers are the
+    image-ingestion provider construction and the admin enumeration path
+    — NOT a per-image hot loop; memoization would only add catalog-change
+    invalidation complexity for no measured benefit at this frequency.
     """
     try:
         from .model_catalog import list_catalog
@@ -52,6 +57,14 @@ def _catalog_vision_models(provider: str) -> list[dict]:
         finally:
             client.pool.putconn(conn)
     except Exception:
+        # Deliberate degradation: a catalog/DB failure must fall through to
+        # env/literal, never break image ingestion (see _resolve_vision_model
+        # and test_catalog_lookup_swallows_db_errors_and_returns_empty). Log
+        # at debug so a *persistent* failure is diagnosable — the warned
+        # literal fallback is the user-visible signal.
+        logger.debug(
+            f"Vision catalog lookup failed for '{provider}'; "
+            f"degrading to env/literal", exc_info=True)
         return []
 
 
