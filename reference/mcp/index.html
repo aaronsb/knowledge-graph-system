@@ -4067,6 +4067,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#epoch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        epoch
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -4338,6 +4349,34 @@
     
   
     epistemic_status
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="tools/epoch/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    epoch
   
 
     
@@ -6337,6 +6376,41 @@
   
   
     <span class="md-status md-status--Proposed"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/database-schema/ADR-203-graph-epoch-event-log/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-203: Graph Epoch Event Log
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--Draft"></span>
   
 
   
@@ -9864,6 +9938,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#epoch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        epoch
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -9893,7 +9978,7 @@
 <blockquote>
 <p><strong>Auto-Generated Documentation</strong></p>
 <p>Generated from MCP server tool schemas.
-Last updated: 2026-03-26</p>
+Last updated: 2026-05-19</p>
 </blockquote>
 <hr />
 <h2 id="overview">Overview</h2>
@@ -9914,6 +9999,7 @@ These tools enable semantic search, concept exploration, and graph traversal dir
 <li><a href="#document"><code>document</code></a> - Work with documents: list all, show content, or get concepts (ADR-084).</li>
 <li><a href="#graph"><code>graph</code></a> - Create, edit, delete, and list concepts and edges in the knowledge graph (ADR-089).</li>
 <li><a href="#program"><code>program</code></a> - Compose and execute GraphProgram queries against the knowledge graph (ADR-500).</li>
+<li><a href="#epoch"><code>epoch</code></a> - Read the graph epoch event log (ADR-203).</li>
 </ul>
 <hr />
 <h3 id="search">search</h3>
@@ -9962,8 +10048,8 @@ These tools enable semantic search, concept exploration, and graph traversal dir
 <p>For multi-step workflows (search → connect → expand → filter), compose these into a GraphProgram instead of making individual calls. For example, seed from a search then expand via Cypher using $W_IDS to reference accumulated concept IDs. See the program tool and program/syntax resource for this and other composition patterns.</p>
 <p><strong>Parameters:</strong></p>
 <ul>
-<li><code>action</code> (<code>string</code>) <strong>(required)</strong> - Operation: "details" (get ALL evidence), "related" (explore neighborhood), "connect" (find paths), "add_evidence" (attach evidence text to a concept)</li>
-<li>Allowed values: <code>details</code>, <code>related</code>, <code>connect</code>, <code>add_evidence</code></li>
+<li><code>action</code> (<code>string</code>) <strong>(required)</strong> - Operation: "details" (get ALL evidence), "related" (explore neighborhood), "connect" (find paths), "add_evidence" (attach evidence text to a concept), "lifetime" (ADR-203 re-evidence stream — ordered Instance chain with graph_epochs metadata, showing when the system came to know this concept)</li>
+<li>Allowed values: <code>details</code>, <code>related</code>, <code>connect</code>, <code>add_evidence</code>, <code>lifetime</code></li>
 <li><code>concept_id</code> (<code>string</code>) - Concept ID (required for details, related, add_evidence)</li>
 <li><code>evidence_text</code> (<code>string</code>) - Evidence/rationale text to attach to a concept (required for add_evidence, min 10 chars)</li>
 <li><code>include_grounding</code> (<code>boolean</code>) - Include grounding_strength (default: true)</li>
@@ -9990,6 +10076,8 @@ These tools enable semantic search, concept exploration, and graph traversal dir
 <li>Default: <code>5</code></li>
 <li><code>threshold</code> (<code>number</code>) - Similarity threshold for semantic mode (default: 0.5). Lower values find broader matches. The API enforces backend safety limits.</li>
 <li>Default: <code>0.5</code></li>
+<li><code>lifetime_limit</code> (<code>number</code>) - For action=lifetime: max Instances per page (default 200, hard cap 1000).</li>
+<li><code>lifetime_offset</code> (<code>number</code>) - For action=lifetime: number of Instances to skip. Use with has_more in the response to walk further pages.</li>
 </ul>
 <hr />
 <h3 id="ontology">ontology</h3>
@@ -10324,6 +10412,26 @@ Each statement applies an operator to merge/filter results into a mutable Workin
 <li><code>search</code> (<code>string</code>) - Search text for list action (matches name and description)</li>
 <li><code>limit</code> (<code>number</code>) - Max results for list action (default: 20)</li>
 <li><code>deck</code> (<code>array</code>) - Array of program entries for chain action (max 10). Each entry needs program_id or program.</li>
+</ul>
+<hr />
+<h3 id="epoch">epoch</h3>
+<p>Read the graph epoch event log (ADR-203).</p>
+<p>Every mutation to the knowledge graph (ingestion job, agent reasoning, ontology breathing, manual edit) records a monotonic event with a wall-clock timestamp. This tool exposes that log so you can ask "when did the system come to know X?" or "what arrived in the graph during this window?" — without inventing causal edges between concepts.</p>
+<p>Two dimensions matter:
+  - event_id (logical time): always meaningful — strictly ordered, even for events whose wall-clock is forensic.
+  - occurred_at (wall-clock): semantically meaningful for kinds like 'ingestion' / 'edit'; treat as forensic-only for 'reasoning' / 'breathing'.</p>
+<p>Cursor-paginated. Pass the previous response's next_cursor as cursor to walk further back.</p>
+<p>For the per-concept re-evidence stream (which Concepts were touched in which epochs), use the concept tool's 'lifetime' action instead.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>kind</code> (<code>string</code>) - Filter to a specific event kind. Omit for all kinds.</li>
+<li>Allowed values: <code>ingestion</code>, <code>reasoning</code>, <code>breathing</code>, <code>edit</code></li>
+<li><code>since</code> (<code>string</code>) - ISO-8601 lower bound on occurred_at. The API parses with FastAPI's datetime parser; tolerant of common forms (with or without "Z", offsets accepted).</li>
+<li><code>until</code> (<code>string</code>) - ISO-8601 upper bound on occurred_at. Same parsing semantics as <code>since</code>.</li>
+<li><code>actor</code> (<code>string</code>) - Filter by exact actor string (user id, agent session id, system component)</li>
+<li><code>cursor</code> (<code>number</code>) - Pagination cursor — returns events with event_id &lt; cursor. Omit for the first page.</li>
+<li><code>limit</code> (<code>number</code>) - Max events per page (1-500, default 50)</li>
+<li>Default: <code>50</code></li>
 </ul>
 <hr />
 
