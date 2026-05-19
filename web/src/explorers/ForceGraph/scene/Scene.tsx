@@ -126,6 +126,12 @@ export interface SceneProps {
   /** Shading mode. false (default) = flat unlit two-tone; true = real
    *  Lambert lighting with a camera-tracked key light. */
   lit?: boolean;
+  /** First-load orient closeness (see useOrientAndFrame's pullback): 0 =
+   *  camera at the cluster's near face, higher backs off. Per-explorer
+   *  because node scale/layout differ — Document Explorer's large
+   *  document nodes need more pull-back than Force Graph. Omit ⇒ the
+   *  hook's Force-Graph-tuned default. */
+  orientPullback?: number;
 }
 
 /** Scene composition — physics + rendering + camera controls.  @verified c17bbeb9 */
@@ -170,6 +176,7 @@ export function Scene({
   simHandleRef,
   projection = '3D',
   lit = false,
+  orientPullback,
 }: SceneProps) {
   const sim = useSim(nodes, edges, {
     ...physics,
@@ -213,6 +220,7 @@ export function Scene({
     hiddenIds,
     edges,
     projection,
+    pullback: orientPullback,
   });
 
   // Fit once on the graph's first appearance (only): wait for physics to

@@ -501,6 +501,7 @@ export const DocumentExplorer: React.FC<
               ? (settings?.projection ?? '3D') === '3D'
               : (settings?.visual?.lighting ?? 'flat') === 'lit'
           }
+          orientPullback={0.45}
           enableDrag
           enableZoom={settings?.interaction?.enableZoom !== false}
           enablePan={settings?.interaction?.enablePan !== false}
