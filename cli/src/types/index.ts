@@ -1101,6 +1101,62 @@ export interface ConceptListCRUDResponse {
   limit: number;
 }
 
+// ========== Graph Epoch Event Log (ADR-203) ==========
+
+/**
+ * A single Instance in a concept's re-evidence stream, joined to its
+ * graph_epochs event. event_id is null for pre-ADR-203 Instances —
+ * those are surfaced separately as pre_epoch_count on the parent.
+ */
+export interface ConceptLifetimeInstance {
+  instance_id: string;
+  quote: string;
+  source_id: string | null;
+  event_id: number | null;
+  occurred_at: string | null;  // ISO-8601 UTC
+  kind: string | null;
+  actor: string | null;
+}
+
+/**
+ * Ordered re-evidence stream for a single Concept (ADR-203).
+ * Instances are sorted by event_id ascending; pre-epoch cohort trails.
+ */
+export interface ConceptLifetimeResponse {
+  concept_id: string;
+  label: string | null;
+  instances: ConceptLifetimeInstance[];
+  total_instances: number;
+  distinct_epochs: number;
+  pre_epoch_count: number;
+}
+
+/**
+ * One row of the graph epoch event log.
+ *
+ * `occurred_at` is always present (wall-clock), but semantically
+ * meaningful primarily for `kind` values where it isn't forensic
+ * (typically 'ingestion' / 'edit').
+ */
+export interface EpochEvent {
+  event_id: number;
+  occurred_at: string;
+  kind: 'ingestion' | 'reasoning' | 'breathing' | 'edit' | string;
+  actor: string | null;
+  counter_after: number | null;
+  metadata: Record<string, any>;
+}
+
+/**
+ * Cursor-paginated event log response. `next_cursor` is null when
+ * no further pages exist for the current filter set.
+ */
+export interface EpochListResponse {
+  events: EpochEvent[];
+  next_cursor: number | null;
+  limit: number;
+}
+
 // ========== Edge CRUD Types (ADR-089) ==========
 
 /**

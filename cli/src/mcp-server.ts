@@ -63,6 +63,9 @@ import {
   formatAnnealingCycleResult,
   formatSessionContext,
   formatSessionIngest,
+  // ADR-203: Graph epoch event log
+  formatConceptLifetime,
+  formatEpochList,
 } from './mcp/formatters/index.js';
 import {
   GraphOperationExecutor,
@@ -442,8 +445,8 @@ For multi-step workflows (search → connect → expand → filter), compose the
           properties: {
             action: {
               type: 'string',
-              enum: ['details', 'related', 'connect', 'add_evidence'],
-              description: 'Operation: "details" (get ALL evidence), "related" (explore neighborhood), "connect" (find paths), "add_evidence" (attach evidence text to a concept)',
+              enum: ['details', 'related', 'connect', 'add_evidence', 'lifetime'],
+              description: 'Operation: "details" (get ALL evidence), "related" (explore neighborhood), "connect" (find paths), "add_evidence" (attach evidence text to a concept), "lifetime" (ADR-203 re-evidence stream — ordered Instance chain with graph_epochs metadata, showing when the system came to know this concept)',
             },
             // For details, related, and add_evidence
             concept_id: {
@@ -1335,6 +1338,52 @@ Read the program/syntax resource for the complete language reference with more e
           required: ['text'],
         },
       },
+      // ADR-203: Graph epoch event log
+      {
+        name: 'epoch',
+        description: `Read the graph epoch event log (ADR-203).
+
+Every mutation to the knowledge graph (ingestion job, agent reasoning, ontology breathing, manual edit) records a monotonic event with a wall-clock timestamp. This tool exposes that log so you can ask "when did the system come to know X?" or "what arrived in the graph during this window?" — without inventing causal edges between concepts.
+
+Two dimensions matter:
+  - event_id (logical time): always meaningful — strictly ordered, even for events whose wall-clock is forensic.
+  - occurred_at (wall-clock): semantically meaningful for kinds like 'ingestion' / 'edit'; treat as forensic-only for 'reasoning' / 'breathing'.
+
+Cursor-paginated. Pass the previous response's next_cursor as cursor to walk further back.
+
+For the per-concept re-evidence stream (which Concepts were touched in which epochs), use the concept tool's 'lifetime' action instead.`,
+        inputSchema: {
+          type: 'object',
+          properties: {
+            kind: {
+              type: 'string',
+              enum: ['ingestion', 'reasoning', 'breathing', 'edit'],
+              description: 'Filter to a specific event kind. Omit for all kinds.',
+            },
+            since: {
+              type: 'string',
+              description: 'ISO-8601 lower bound on occurred_at (UTC, e.g., "2026-05-01T00:00:00Z")',
+            },
+            until: {
+              type: 'string',
+              description: 'ISO-8601 upper bound on occurred_at (UTC)',
+            },
+            actor: {
+              type: 'string',
+              description: 'Filter by exact actor string (user id, agent session id, system component)',
+            },
+            cursor: {
+              type: 'number',
+              description: 'Pagination cursor — returns events with event_id < cursor. Omit for the first page.',
+            },
+            limit: {
+              type: 'number',
+              description: 'Max events per page (1-500, default 50)',
+              default: 50,
+            },
+          },
+        },
+      },
     ],
   };
 });
@@ -1730,6 +1779,17 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
             return {
               content: [{ type: 'text', text: `Evidence added to concept ${result.concept_id}\n\nInstance: ${result.instance_id}\nSource: ${result.source_id}\nText: ${result.evidence_text}` }],
+            };
+          }
+
+          case 'lifetime': {
+            const conceptId = toolArgs.concept_id as string;
+            if (!conceptId) {
+              throw new Error('concept_id is required for lifetime');
+            }
+            const result = await client.getConceptLifetime(conceptId);
+            return {
+              content: [{ type: 'text', text: formatConceptLifetime(result) }],
             };
           }
 
@@ -3132,6 +3192,21 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
         return {
           content: [{ type: 'text', text: formatSessionIngest(result) }],
+        };
+      }
+
+      // ADR-203: Graph epoch event log
+      case 'epoch': {
+        const result = await client.listEpochs({
+          kind: toolArgs.kind as string | undefined,
+          since: toolArgs.since as string | undefined,
+          until: toolArgs.until as string | undefined,
+          actor: toolArgs.actor as string | undefined,
+          cursor: toolArgs.cursor as number | undefined,
+          limit: toolArgs.limit as number | undefined,
+        });
+        return {
+          content: [{ type: 'text', text: formatEpochList(result) }],
         };
       }
 

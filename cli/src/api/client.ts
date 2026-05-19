@@ -73,6 +73,9 @@ import {
   BatchCreateRequest,
   BatchCreateResponse,
   EvidenceResponse,
+  // ADR-203: Graph epoch event log
+  ConceptLifetimeResponse,
+  EpochListResponse,
 } from '../types';
 
 export class KnowledgeGraphClient {
@@ -794,6 +797,37 @@ export class KnowledgeGraphClient {
   async deleteConcept(conceptId: string, cascade?: boolean): Promise<void> {
     const params = cascade ? { cascade: true } : {};
     await this.client.delete(`/concepts/${encodeURIComponent(conceptId)}`, { params });
+  }
+
+  // ========== Epoch Lifetime / Event Log (ADR-203) ==========
+
+  /**
+   * Get the re-evidence stream for a concept, joined to graph_epochs.
+   * Each Instance carries event_id + occurred_at + kind + actor; pre-ADR-203
+   * Instances are tallied separately as pre_epoch_count.
+   */
+  async getConceptLifetime(conceptId: string): Promise<ConceptLifetimeResponse> {
+    const response = await this.client.get(
+      `/concepts/${encodeURIComponent(conceptId)}/lifetime`
+    );
+    return response.data;
+  }
+
+  /**
+   * Paginated read of the graph epoch event log (ADR-203).
+   * Cursor is the previous response's next_cursor (returns events with
+   * event_id < cursor in descending order).
+   */
+  async listEpochs(params?: {
+    kind?: string;
+    since?: string;
+    until?: string;
+    actor?: string;
+    cursor?: number;
+    limit?: number;
+  }): Promise<EpochListResponse> {
+    const response = await this.client.get('/epochs', { params });
+    return response.data;
   }
 
   // ========== Edge CRUD Methods (ADR-089) ==========
