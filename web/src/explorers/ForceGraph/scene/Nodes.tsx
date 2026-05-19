@@ -16,11 +16,18 @@
  * resolves to the global node id via a class-local index map.
  */
 
-import { useEffect, useMemo, useRef, type ReactElement } from 'react';
+import {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  type ReactElement,
+} from 'react';
 import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
 import type { DragHandlers } from './useDragHandler';
 import * as THREE from 'three';
 import type { EngineNode } from '../types';
+import { createFacetedNodeMaterial, ensureBarycentric } from './facetedMaterial';
 
 const DEFAULT_CLASS = '__default__';
 
@@ -62,13 +69,9 @@ export interface NodesProps {
 
 /** Instanced node meshes — one draw call per geometry class.  @verified c17bbeb9 */
 export function Nodes(props: NodesProps) {
-  const {
-    nodes,
-    nodeClasses,
-    geometryByClass,
-    nodeScales,
-    nodeSize = 1,
-  } = props;
+  // nodeSize is intentionally not destructured here — each NodeClassMesh
+  // reads it from the spread props and applies it per-frame.
+  const { nodes, nodeClasses, geometryByClass, nodeScales } = props;
 
   // Partition nodes by class. Single-class fallback keeps the default
   // path identical to the pre-multi-class behaviour.
@@ -106,6 +109,16 @@ export function Nodes(props: NodesProps) {
     return out;
   }, [nodes, nodeScales]);
 
+  // One shared faceted material backs every class mesh — it carries no
+  // per-instance state (colour is instanceColor, structure is the
+  // barycentric attribute), so a single instance is correct and cheapest.
+  // Deliberately NOT disposed on unmount: under React StrictMode the
+  // effect cleanup fires while useMemo keeps returning the same handle,
+  // so a dispose() here would hand every later render a dead material
+  // (black / failed program compile). One material lives for the app's
+  // lifetime — the standard pattern for a shared three material.
+  const material = useMemo(() => createFacetedNodeMaterial(), []);
+
   return (
     <>
       {partitions.map((partition) => (
@@ -115,6 +128,7 @@ export function Nodes(props: NodesProps) {
           indices={partition.indices}
           baseScales={baseScales}
           geometry={geometryByClass?.[partition.key]}
+          material={material}
           {...props}
         />
       ))}
@@ -128,6 +142,8 @@ interface NodeClassMeshProps extends NodesProps {
   indices: Uint32Array;
   baseScales: Float32Array;
   geometry?: ReactElement;
+  /** Shared faceted two-tone material (see facetedMaterial.ts). */
+  material: THREE.MeshBasicMaterial;
 }
 
 function NodeClassMesh({
@@ -135,6 +151,7 @@ function NodeClassMesh({
   indices,
   baseScales,
   geometry,
+  material,
   nodes,
   positionsRef,
   colors,
@@ -152,6 +169,31 @@ function NodeClassMesh({
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const invalidate = useThree((state) => state.invalidate);
   const count = indices.length;
+
+  // The faceted material's wireframe needs a per-triangle barycentric
+  // attribute on non-indexed geometry. r3f sets the JSX geometry
+  // declaratively; we swap in a non-indexed, annotated clone right after
+  // mount (layout effect = before first paint/raycast). The mesh remounts
+  // on the `${classKey}-${count}` key, so this re-runs with fresh
+  // geometry whenever the partition resizes. Idempotent via
+  // ensureBarycentric's own aBary guard.
+  useLayoutEffect(() => {
+    const mesh = meshRef.current;
+    if (!mesh) return;
+    const original = mesh.geometry;
+    const annotated = ensureBarycentric(original);
+    if (annotated === original) return;
+    mesh.geometry = annotated;
+    // Dispose the detached JSX geometry now (idempotent — r3f also
+    // disposes it on unmount; three's dispose just re-dispatches a
+    // harmless event). Do NOT dispose `annotated` in cleanup: under
+    // StrictMode the effect runs → cleanup → runs again against the
+    // SAME mesh, whose geometry is now `annotated` with aBary already
+    // present, so ensureBarycentric early-returns and the mesh would be
+    // left rendering a disposed geometry. Leaking one BufferGeometry per
+    // class unmount (rare, bounded) is the safe asymmetry.
+    original.dispose();
+  }, []);
 
   // Bounding-sphere refresh cadence — three.js InstancedMesh.raycast()
   // early-outs against the bounding sphere before testing instances.
@@ -303,11 +345,11 @@ function NodeClassMesh({
       onContextMenu={handleContextMenu}
     >
       {geometry ?? <icosahedronGeometry args={[1, 1]} />}
-      {/* vertexColors=false is intentional: per-instance colors come from
-          setColorAt/instanceColor, which three injects via the
-          USE_INSTANCING_COLOR shader chunk independent of the vertexColors
-          flag. Switching to a lit material silently breaks this. */}
-      <meshBasicMaterial vertexColors={false} />
+      {/* Shared faceted two-tone material (facetedMaterial.ts). It's a
+          patched MeshBasicMaterial so per-instance instanceColor still
+          works; the layout effect above swaps in the barycentric
+          geometry the material's wireframe needs. */}
+      <primitive object={material} attach="material" />
     </instancedMesh>
   );
 }

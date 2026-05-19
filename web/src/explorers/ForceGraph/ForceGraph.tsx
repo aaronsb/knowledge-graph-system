@@ -20,6 +20,7 @@ import { Flame } from 'lucide-react';
 import type { ExplorerProps } from '../../types/explorer';
 import type { ForceGraphData, ForceGraphSettings } from './types';
 import { Scene } from './scene/Scene';
+import { shapeFor, shapeGeometryByClass } from './scene/shapes';
 import type { NodeInfoData } from './scene/NodeInfoOverlay';
 import { simBackend } from './scene/useSim';
 import { DIM_MODEL } from './scene/dimModel';
@@ -351,6 +352,17 @@ export const ForceGraph: React.FC<
     });
   }, [baseNodeColors, dimState, filteredData, canvasBg]);
 
+  // Platonic-solid glyph encoding. Shape is derived from the same
+  // ontology string colour uses (per ADR-203's no-schema rendering step
+  // — shape becomes a second axis once the node-class facet exists).
+  // nodeClasses is parallel to the SAME node array Scene renders;
+  // geometryByClass is static (one unit solid per shape name).
+  const nodeShapeClasses = useMemo(
+    () => (filteredData?.nodes ?? []).map((n) => shapeFor(n.category)),
+    [filteredData]
+  );
+  const shapeGeometries = useMemo(() => shapeGeometryByClass(), []);
+
   // Synthesize the GraphData shape the shared Legend component expects.
   // Legend reads `nodes[*].{group,color}` and `links[*].{category,color}`;
   // EngineNode/EngineEdge don't carry computed colors (they're applied
@@ -472,6 +484,8 @@ export const ForceGraph: React.FC<
           nodes={filteredData?.nodes ?? []}
           edges={filteredData?.edges ?? []}
           colors={nodeColors}
+          nodeClasses={nodeShapeClasses}
+          geometryByClass={shapeGeometries}
           edgeColors={edgeColors}
           physics={{
             enabled: settings?.physics?.enabled ?? true,
