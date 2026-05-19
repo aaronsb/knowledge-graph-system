@@ -19,7 +19,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
-import { seedSpherePositions, defaultSeedRadius } from './positions';
+import { seedWithCarryover, defaultSeedRadius } from './positions';
 import type { EngineNode, EngineEdge } from '../types';
 
 /** Tunable simulation parameters; see DEFAULTS below for meaning.  @verified c17bbeb9 */
@@ -33,6 +33,12 @@ export interface PhysicsParams {
   alphaDecay: number;
   alphaMin: number;
   alphaInitial: number;
+  /** Reheat energy used when the node set changes but some nodes carried
+   *  over (incremental "poke"). Far below alphaInitial so the existing
+   *  layout barely moves while new nodes ease into place — this is what
+   *  stops the whole-graph "sproing" on every expand/filter. A fresh
+   *  graph (nothing carried) still uses the full alphaInitial. */
+  alphaIncremental: number;
   alphaSimmer: number;
   dampingSimmer: number;
   centerGravitySimmer: number;
@@ -55,6 +61,7 @@ const DEFAULTS: PhysicsParams = {
   alphaDecay: 0.0228,
   alphaMin: 0.001,
   alphaInitial: 1.0,
+  alphaIncremental: 0.3,
   alphaSimmer: 0.08,
   dampingSimmer: 0.70,
   centerGravitySimmer: 0.03,
@@ -103,6 +110,11 @@ export function useForceSim(
   const positionsRef = useRef<Float32Array | null>(null);
   const velocitiesRef = useRef<Float32Array | null>(null);
   const edgeIndicesRef = useRef<Uint32Array | null>(null);
+  // Node ids of the generation currently in positionsRef, index-aligned
+  // with it. Read at the next re-seed to carry surviving nodes' positions
+  // over. Never reset outside the seed step (a stale snapshot is harmless;
+  // a lost one re-explodes the graph).
+  const priorIdsRef = useRef<string[]>([]);
   const alphaRef = useRef(cfg.alphaInitial);
   const [alphaDisplay, setAlphaDisplay] = useState(cfg.alphaInitial);
   const dirtyRef = useRef(false);
@@ -112,15 +124,44 @@ export function useForceSim(
   // so the cycle phase begins at "cold" each time the user enters simmer mode.
   const simmerStartRef = useRef(0);
 
-  // Seed positions when node count changes. useMemo keeps the allocation
-  // out of the render commit phase; we don't actually consume its return.
+  // Re-seed when the node set changes (count OR identity — a filter can
+  // swap nodes without changing the count). useMemo keeps the allocation
+  // out of the render commit phase; we don't consume its return.
+  //
+  // Carry-over: positionsRef still holds the OUTGOING generation's layout
+  // here (we reassign it below), index-aligned with priorIdsRef. So we
+  // snapshot it as the prior buffer — surviving nodes keep their settled
+  // (and drag-adjusted) positions, only new nodes sphere-seed, and the
+  // start alpha is gentle unless this is a genuinely fresh graph.
   useMemo(() => {
-    positionsRef.current = seedSpherePositions(nodeCount, defaultSeedRadius(nodeCount));
+    const ids = nodes.map((n) => n.id);
+    const { positions, carriedCount } = seedWithCarryover(
+      ids,
+      priorIdsRef.current,
+      positionsRef.current,
+      defaultSeedRadius(nodeCount)
+    );
+    positionsRef.current = positions;
     velocitiesRef.current = new Float32Array(nodeCount * 3);
-    alphaRef.current = cfg.alphaInitial;
-    setAlphaDisplay(cfg.alphaInitial);
+    priorIdsRef.current = ids;
+    // Nothing carried ⇒ fresh graph ⇒ full reheat. Anything carried ⇒
+    // incremental poke ⇒ gentle reheat so the existing layout holds.
+    const startAlpha = carriedCount === 0 ? cfg.alphaInitial : cfg.alphaIncremental;
+    alphaRef.current = startAlpha;
+    setAlphaDisplay(startAlpha);
+    // A data change cancels simmer — otherwise the thermal cycle would
+    // fight the gentle re-settle of newly added nodes.
+    simmerRef.current = false;
     dirtyRef.current = true;
-  }, [nodeCount, cfg.alphaInitial]);
+  }, [nodes, nodeCount, cfg.alphaInitial, cfg.alphaIncremental]);
+
+  // Kick a frame after every node-set change so demand-mode picks up the
+  // re-seeded buffers immediately. Post-commit (effect, not render) so we
+  // don't invalidate mid-render; replaces Scene's old reheat-on-length
+  // effect, which slammed alpha to full on every poke.
+  useEffect(() => {
+    invalidate();
+  }, [nodes, invalidate]);
 
   // Rebuild the edge index array whenever nodes or edges change. The sim
   // loop walks this flat Uint32Array pair-wise for cache-friendly access.

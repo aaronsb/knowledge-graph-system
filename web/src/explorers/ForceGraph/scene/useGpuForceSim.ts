@@ -21,7 +21,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { GPUComputationRenderer } from 'three/examples/jsm/misc/GPUComputationRenderer.js';
-import { seedSpherePositions, defaultSeedRadius } from './positions';
+import { seedWithCarryover, defaultSeedRadius } from './positions';
 import { velShaderBody, posShaderBody } from './gpuShaders';
 import { buildNeighborCSR } from './neighborCsr';
 import type { EngineNode, EngineEdge } from '../types';
@@ -37,6 +37,7 @@ const DEFAULTS: PhysicsParams = {
   alphaDecay: 0.0228,
   alphaMin: 0.001,
   alphaInitial: 1.0,
+  alphaIncremental: 0.3,
   alphaSimmer: 0.08,
   dampingSimmer: 0.70,
   centerGravitySimmer: 0.03,
@@ -95,6 +96,11 @@ export function useGpuForceSim(
   const nodeCount = nodes.length;
 
   const positionsRef = useRef<Float32Array | null>(null);
+  // Node ids of the generation currently in positionsRef, index-aligned.
+  // Read at the next rebuild to carry surviving nodes' positions over.
+  // Never reset in the effect cleanup (cleanup runs before the new
+  // effect — clearing it there would lose the snapshot we need).
+  const priorIdsRef = useRef<string[]>([]);
   const dirtyRef = useRef(false);
   const alphaRef = useRef(cfg.alphaInitial);
   const [alphaDisplay, setAlphaDisplay] = useState(cfg.alphaInitial);
@@ -106,6 +112,7 @@ export function useGpuForceSim(
   useEffect(() => {
     if (nodeCount === 0) {
       positionsRef.current = new Float32Array(0);
+      priorIdsRef.current = [];
       gpuStateRef.current = null;
       return;
     }
@@ -115,10 +122,25 @@ export function useGpuForceSim(
     const texH = texSize;
     const totalTexels = texW * texH;
 
-    const seed = seedSpherePositions(nodeCount, defaultSeedRadius(nodeCount));
+    // Carry-over: positionsRef still holds the OUTGOING generation's last
+    // GPU readback (useFrame hasn't run for the new generation yet — this
+    // effect runs before the next frame), index-aligned with priorIdsRef.
+    // Surviving nodes keep their settled positions; only new nodes
+    // sphere-seed and ease in, instead of the whole graph re-exploding.
+    const ids = nodes.map((n) => n.id);
+    const { positions: seed, carriedCount } = seedWithCarryover(
+      ids,
+      priorIdsRef.current,
+      positionsRef.current,
+      defaultSeedRadius(nodeCount)
+    );
     const posOut = new Float32Array(nodeCount * 3);
     posOut.set(seed);
     positionsRef.current = posOut;
+    priorIdsRef.current = ids;
+    // Nothing carried ⇒ fresh graph ⇒ full reheat. Anything carried ⇒
+    // incremental poke ⇒ gentle reheat so the existing layout holds.
+    const startAlpha = carriedCount === 0 ? cfg.alphaInitial : cfg.alphaIncremental;
 
     const gpuCompute = new GPUComputationRenderer(texW, texH, gl);
     const posInit = gpuCompute.createTexture();
@@ -194,7 +216,7 @@ export function useGpuForceSim(
     gpuCompute.setVariableDependencies(posVar, [velVar, posVar]);
 
     const vU = velVar.material.uniforms;
-    vU.alpha = { value: cfg.alphaInitial };
+    vU.alpha = { value: startAlpha };
     vU.repulsion = { value: cfg.repulsion };
     vU.attraction = { value: cfg.attraction };
     vU.damping = { value: cfg.damping };
@@ -242,10 +264,16 @@ export function useGpuForceSim(
 
     const readbackBuf = new Float32Array(totalTexels * 4);
 
-    alphaRef.current = cfg.alphaInitial;
-    setAlphaDisplay(cfg.alphaInitial);
+    alphaRef.current = startAlpha;
+    setAlphaDisplay(startAlpha);
+    // A data change cancels simmer — otherwise the thermal cycle would
+    // fight the gentle re-settle of newly added nodes.
+    simmerRef.current = false;
     dirtyRef.current = true;
     frameCounterRef.current = 0;
+    // Kick a frame so demand-mode picks up the rebuilt state immediately
+    // (replaces Scene's old reheat-on-length effect).
+    invalidate();
 
     gpuStateRef.current = {
       gpuCompute,

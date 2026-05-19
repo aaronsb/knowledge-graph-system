@@ -38,7 +38,7 @@ import { useThemeStore } from '../../store/themeStore';
 /** ForceGraph — r3f Canvas + scene composition.  @verified c17bbeb9 */
 export const ForceGraph: React.FC<
   ExplorerProps<ForceGraphData, ForceGraphSettings>
-> = ({ data, settings, onSettingsChange, onNodeClick, onSendToReports, className }) => {
+> = ({ data, settings, onSettingsChange, onSendToReports, className }) => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [hiddenIds] = useState<Set<string>>(() => new Set());
@@ -72,8 +72,6 @@ export const ForceGraph: React.FC<
   const [focusedNode, setFocusedNode] = useState<string | null>(null);
   // Open node info panels — one per selected node, dismissable.
   const [activeNodeInfos, setActiveNodeInfos] = useState<NodeInfoData[]>([]);
-
-  const mergeRawGraphData = useGraphStore((s) => s.mergeRawGraphData);
   const visibleEdgeCategories = useGraphStore((s) => s.filters.visibleEdgeCategories);
   // Universal filters live in the store so every explorer sees the same
   // filtered data. Reading them via individual selectors keeps zustand's
@@ -179,10 +177,10 @@ export const ForceGraph: React.FC<
 
   const vocabStore = useVocabularyStore();
 
-  // Resolve an edge's category with a 3-level fallback (matches the chain
-  // used by the 2D explorer's transformForD3): vocabulary lookup →
-  // API-provided category → fallback. Keeping the chain in sync means the
-  // shared visibleEdgeCategories store stays consistent across explorers.
+  // Resolve an edge's category with a 3-level fallback: vocabulary lookup
+  // → API-provided category → fallback. Document Explorer resolves edge
+  // categories the same way; keeping the chain identical means the shared
+  // visibleEdgeCategories store stays consistent across both explorers.
   const edgeCategory = useCallback(
     (e: ForceGraphData['edges'][number]): string => {
       let cat = vocabStore.getCategory(e.type);
@@ -255,7 +253,7 @@ export const ForceGraph: React.FC<
     if (edgeColorBy === 'confidence') {
       return es.map((e) => {
         // weight ∈ [0,1] (set from API confidence). Hue 0=red, 120=green
-        // matches the d3 2D explorer's scale so cross-view comparison reads.
+        // — low confidence reads hot, high confidence cool.
         const w = typeof e.weight === 'number' ? e.weight : 0.5;
         const hue = Math.max(0, Math.min(1, w)) * 120;
         return `hsl(${hue}, 70%, 50%)`;
@@ -279,8 +277,8 @@ export const ForceGraph: React.FC<
   // Per-node colors. Engine consumes this as a string[] indexed by node
   // position; Legend consumes the same map shape via legendData below.
   // Computed against the filtered set so degree/centrality reflect what's
-  // currently visible — matches 2D's behavior except for centrality, which
-  // 2D computes against the unfiltered graph (deferred convergence).
+  // currently visible (degree/centrality recompute as filters narrow the
+  // graph, rather than staying pinned to the unfiltered topology).
   const nodeColorMap = useMemo(() => {
     const ns = filteredData?.nodes ?? [];
     const es = filteredData?.edges ?? [];
