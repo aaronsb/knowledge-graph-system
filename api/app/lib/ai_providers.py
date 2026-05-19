@@ -507,16 +507,26 @@ class OpenAIProvider(AIProvider):
             "text-embedding-ada-002": (0.10, None),
         }
 
+        # Denylist KNOWN non-extraction families rather than allowlisting a
+        # few chat ones — so new chat/reasoning families (o3, o4, gpt-5, …)
+        # appear with no code change (ADR-800: no hardcoded model drift).
+        # models.list() also returns audio/image/moderation/legacy-base
+        # models that cannot be used for concept extraction.
+        non_extraction = (
+            "whisper", "tts", "dall-e", "dalle", "moderation",
+            "image", "audio", "realtime", "transcribe",
+            "babbage", "davinci",
+        )
+
         entries = []
         try:
             models_response = self.client.models.list()
             for model in models_response.data:
                 mid = model.id
-                # Filter to models we care about
-                is_extraction = any(x in mid for x in ["gpt-4", "gpt-3.5", "o1"])
                 is_embedding = "embedding" in mid
-
-                if not is_extraction and not is_embedding:
+                # Embeddings are a real category; everything that isn't a
+                # known non-extraction model is treated as extraction-capable.
+                if not is_embedding and any(x in mid for x in non_extraction):
                     continue
 
                 category = "embedding" if is_embedding else "extraction"
