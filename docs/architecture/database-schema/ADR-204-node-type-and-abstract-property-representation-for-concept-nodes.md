@@ -7,7 +7,11 @@ deciders:
 related: [200]
 ---
 
-# ADR-203: Node Type and Abstract Property Representation for Concept Nodes
+# ADR-204: Node Type and Abstract Property Representation for Concept Nodes
+
+> **Renumbered from ADR-203** (was a draft slot reserved while this PR sat
+> open; ADR-203 is now occupied by the merged "Graph Epoch Event Log"
+> decision). No content change beyond the heading.
 
 ## Context
 

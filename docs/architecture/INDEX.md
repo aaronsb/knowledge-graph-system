@@ -47,7 +47,8 @@ _Apache AGE, migrations, schema design, PostgreSQL_
 | [ADR-200](./database-schema/ADR-200-annealing-ontologies-self-organizing-knowledge-graph-structure.md) | Annealing Ontologies — Self-Organizing Knowledge Graph Structure | Accepted |
 | [ADR-201](./database-schema/ADR-201-in-memory-graph-acceleration-extension.md) | In-Memory Graph Acceleration Extension | Draft |
 | [ADR-202](./database-schema/ADR-202-timestamp-timezone-normalization.md) | Timestamp Timezone Normalization | Proposed |
-| [ADR-203](./database-schema/ADR-203-node-type-and-abstract-property-representation-for-concept-nodes.md) | Node Type and Abstract Property Representation for Concept Nodes | Draft |
+| [ADR-203](./database-schema/ADR-203-graph-epoch-event-log.md) | Graph Epoch Event Log | Draft |
+| [ADR-204](./database-schema/ADR-204-node-type-and-abstract-property-representation-for-concept-nodes.md) | Node Type and Abstract Property Representation for Concept Nodes | Draft |
 
 ## Ingestion
 _Content processing, jobs, extraction, deduplication_
