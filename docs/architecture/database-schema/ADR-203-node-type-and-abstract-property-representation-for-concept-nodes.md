@@ -40,6 +40,22 @@ membership is the `ontology` string. There is no first-class notion of a
 node *type* discriminator, nor of typed *abstract properties* (facets) hung
 off a concept distinct from its evidence/edges.
 
+### Who consumes this — the decisive premise
+
+The principal consumer of the graph is **agents**, through the MCP server
+and programmatic APIs — not humans through the visualization. Agents
+discover, filter, and traverse by *querying*; the UI is a secondary,
+human-facing lens over the same data.
+
+This reorders everything below. A representation choice that costs
+**query power** costs the *primary* consumer; a choice that costs **UI
+legibility** costs only the secondary one. So the lozenge-label
+mitigation introduced later closes a *secondary* gap — it must not be
+read as offsetting any loss of query power, which is the expensive axis
+here. "Can an agent select all nodes of a kind, cheaply and
+unambiguously, without bespoke knowledge?" is the question that should
+dominate the decision.
+
 ### The tension with ADR-200
 
 ADR-200 deliberately **collapses the TBox/ABox distinction**: "a concept is
@@ -49,10 +65,14 @@ problem it dissolved. Introducing a hard `type` label on nodes risks
 re-importing exactly the rigidity ADR-200 removed — a new static
 classification layer that the emergent structure will not respect.
 
-So the real question is not "how do we add node types" but: **can the thing
-the user wants (visual + semantic distinction of entity kinds) be expressed
-as an additive, emergent, demotable *property* — consistent with ADR-200 —
-rather than a fundamental new node kind?**
+So the real question is a *dual* constraint, and both halves are
+load-bearing: **can entity distinction be additive / emergent / demotable
+(consistent with ADR-200) _while still giving agents label-grade query
+power_ over it?** A solution that satisfies only the first half (a clean
+emergent property an agent cannot cheaply select on) fails the primary
+consumer; one that satisfies only the second (a rigid label) fails
+ADR-200. The design must hit both — that is the bar, and what makes this
+a real decision rather than a rename.
 
 ## Decision
 
@@ -61,8 +81,20 @@ rather than a fundamental new node kind?**
 
 **Leading proposal:** Represent entity distinction as an optional, additive
 **abstract facet property** on `:Concept` (working name `node_class`), *not*
-as new Cypher node labels.
+as new Cypher node labels — **contingent on it delivering agent-grade query
+power**. If that contingency fails, this proposal fails (see the residual
+negative and the hybrid alternative); it is not accepted on ADR-200
+fidelity alone.
 
+- **Agent query power is a first-class requirement, not a hope.** The
+  property must be backed by an AGE index and exposed through an MCP
+  `node_class` filter so an agent selects a kind via a tool parameter
+  (the agent's normal interface), never by hand-writing a property
+  predicate or carrying bespoke knowledge. Raw-Cypher ergonomics
+  (`WHERE n.node_class = …` vs `MATCH (n:Kind)`) is the part this does
+  *not* fully recover — acceptable only if MCP-mediated selection covers
+  the real agent access patterns at scale. Resolving open question 4 is
+  therefore a *gate on this proposal*, not a detail.
 - The facet is a property, not a label — so it can emerge, change, and be
   demoted exactly like ontology membership under ADR-200. It does not create
   a TBox.
@@ -73,11 +105,11 @@ as new Cypher node labels.
   from `ontology` — a strict superset of the no-schema rendering PR, so that
   PR is not wasted work.
 - The facet value is surfaced as an **optional lozenge label** — a small
-  pill rendered beside the node, distinct from the basic name label, that
-  toggles on/off independently. Off by default for an uncluttered canvas;
-  on when the user is introspecting *what kinds of things* are present.
-  This is the legibility affordance a real Cypher label would otherwise
-  have given for free.
+  pill beside the node, distinct from the name label, toggling on/off
+  independently. Off by default for an uncluttered canvas; on when a human
+  is introspecting *what kinds of things* are present. This serves the
+  **secondary (human) consumer only** — it closes the UI-legibility gap, it
+  is explicitly *not* part of the agent query-power story above.
 - Genuinely non-concept entities (if any are ever needed — e.g. an external
   artifact that is categorically not a claim) remain the *only* candidates
   for a new node label, decided case-by-case in their own ADR, not
@@ -90,8 +122,12 @@ as new Cypher node labels.
    emergent annealing process like ADR-200's promotion/demotion?
 3. How does it interact with the ontology facet — orthogonal axes, or does
    one subsume the other?
-4. Does AGE property indexing make per-class query/partition cheap enough at
-   the InstancedMesh-per-class granularity the renderer wants?
+4. **(Gating)** Does AGE property indexing + an MCP `node_class` filter
+   give agents label-grade selectivity and cost — at graph scale, across
+   the access patterns agents actually use (filter, traverse-by-kind,
+   count) — such that not having `MATCH (n:Kind)` is genuinely a
+   non-issue for the primary consumer? If no, the leading proposal is
+   rejected in favour of the hybrid or the label alternative.
 
 ## Consequences
 
@@ -111,12 +147,16 @@ as new Cypher node labels.
 
 ### Negative
 
-- A property-based facet is weaker for **query/constraint** than a real
-  label: no native `MATCH (n:Type)`, and per-class rendering must filter on
-  a property with whatever AGE indexing cost that implies (open question
-  4). The lozenge-label affordance does *not* relieve this — it restores
-  human legibility, not query power; this is the genuine residual cost of
-  choosing a property over a label.
+- **The central risk, not a residual.** A property-based facet is weaker
+  for query/constraint than a real label (no native `MATCH (n:Type)`,
+  property-predicate + index instead). Because agents — the *primary*
+  consumer — discover and traverse by querying, this lands on the consumer
+  that matters most, which is why it gates the whole proposal (open
+  question 4). The lozenge-label affordance does *not* relieve it: that
+  serves the secondary human consumer. Mitigated only if MCP-mediated
+  selection + AGE indexing genuinely matches label-grade access; if the
+  graph grows to where agents need ad-hoc Cypher by kind, the property
+  approach is the wrong call and the hybrid/label alternative wins.
 - Yet another self-organizing axis to steward (open question 2/3) — risks
   the same maintenance burden ADR-200 calls out if ownership is unclear.
 
@@ -133,9 +173,21 @@ as new Cypher node labels.
 ## Alternatives Considered
 
 - **New Cypher node labels per type** (`:Concept` / `:Entity` / `:Property`
-  …). Strong for query, but reintroduces the rigid TBox ADR-200 dissolved
-  and forces migration semantics for every relabel. Rejected as the default;
-  reserved only for genuinely non-concept entities, case-by-case.
+  …). Strongest for the *primary* (agent) consumer: native `MATCH
+  (n:Kind)`, AGE stores each label as its own relation so selection and
+  counting are cheap and ergonomic with zero bespoke knowledge. The cost
+  is ADR-200 fidelity — a rigid TBox and relabel-migration semantics on
+  every change. Not rejected outright anymore: if open question 4 shows
+  property+MCP can't match this for agents, the consumer priority says
+  *labels win and ADR-200 must bend*, not the reverse.
+- **Hybrid: emergent property as source of truth, a derived label kept in
+  sync.** `node_class` stays the mutable/demotable property ADR-200 wants;
+  a projection process (the same annealing that promotes/demotes) writes a
+  matching Cypher label so agents get `MATCH (n:Kind)` while emergence
+  still owns the truth. Buys both halves of the dual constraint at the
+  price of a sync mechanism and relabel churn on change (bounded — ADR-200
+  promotion/demotion already mutates the graph). This is the natural
+  fallback if Q4 fails, and may deserve promotion to the leading proposal.
 - **No schema change — derive shape purely from the existing `ontology`
   string.** Zero risk, ships immediately, and is the recommended *first* PR.
   Rejected as the *end state* only because it conflates "which bucket" with
