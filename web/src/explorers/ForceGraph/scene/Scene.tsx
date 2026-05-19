@@ -21,6 +21,7 @@ import { CaretMarker, NodeLabel } from './Overlays';
 import { NodeInfoOverlay, type NodeInfoData } from './NodeInfoOverlay';
 import { useSim } from './useSim';
 import { useDragHandler } from './useDragHandler';
+import { useFitCamera } from './useFitCamera';
 import type { ForceSimHandle, ForceSimParams } from './useForceSim';
 
 // Stable references used when the plugin doesn't wire pinnedIds — hooks
@@ -201,6 +202,11 @@ export function Scene({
   // panel that lives in the plugin component). useImperativeHandle is
   // the idiomatic way even though we pass a MutableRefObject ourselves.
   useImperativeHandle(simHandleRef, () => sim, [sim]);
+
+  // Auto-frame the layout once it settles (and on every dataset change),
+  // so the graph fills the view instead of mounting tiny and off-centre.
+  // Shared here ⇒ Force Graph and Document Explorer both get it.
+  useFitCamera(sim.positionsRef, nodes, hiddenIds);
 
   // Note: re-seeding and demand-mode kick on data change are now owned by
   // the sim hook (useForceSim / useGpuForceSim). It carries surviving
