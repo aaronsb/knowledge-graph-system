@@ -12,6 +12,7 @@ Note: Database reset removed from API (too dangerous).
       Use ./scripts/setup/initialize-platform.sh option 0 instead.
 """
 
+import re
 import uuid
 import shutil
 import tempfile
@@ -41,7 +42,8 @@ from ..lib.backup_archive import stream_backup_archive, extract_backup_archive, 
 from ..lib.backup_integrity import check_backup_integrity
 from ..lib.age_client import AGEClient
 from ..lib.encrypted_keys import EncryptedKeyStore
-from ..constants import API_KEY_PROVIDERS
+from pydantic import BaseModel
+from ..constants import API_KEY_PROVIDERS, LOCAL_PROVIDERS, EXTRACTION_PROVIDERS
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 logger = logging.getLogger(__name__)
@@ -616,42 +618,16 @@ async def set_api_key(
             detail=f"Invalid provider. Must be one of: {valid_list}"
         )
 
-    # Validate key format
-    if provider == "anthropic":
-        if not api_key.startswith("sk-ant-"):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid Anthropic API key format (must start with 'sk-ant-')"
-            )
-    elif provider == "openai":
-        if not api_key.startswith("sk-"):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid OpenAI API key format (must start with 'sk-')"
-            )
+    # Test the key via the connector layer's single source of truth — no
+    # inline per-provider SDK calls, no hardcoded model names, no key-format
+    # prefix guessing. The connector authenticates model-agnostically (ADR-800).
+    from ..lib.ai_providers import validate_provider_key
 
-    # Test the key by making a minimal API call
-    try:
-        if provider == "anthropic":
-            import anthropic
-            client = anthropic.Anthropic(api_key=api_key)
-            client.messages.create(
-                model="claude-3-5-sonnet-20241022",
-                max_tokens=1,
-                messages=[{"role": "user", "content": "test"}]
-            )
-        else:  # openai
-            import openai
-            client = openai.OpenAI(api_key=api_key)
-            client.chat.completions.create(
-                model="gpt-4o-mini",
-                max_tokens=1,
-                messages=[{"role": "user", "content": "test"}]
-            )
-    except Exception as e:
+    is_valid, error_msg = validate_provider_key(provider, api_key)
+    if not is_valid:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"API key validation failed: {str(e)}"
+            detail=f"API key validation failed: {error_msg}"
         )
 
     # Store encrypted
@@ -688,6 +664,132 @@ async def set_api_key(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error storing API key"
         )
+
+
+@router.get("/providers")
+async def list_providers(
+    current_user: CurrentUser,
+    _: None = Depends(require_permission("api_keys", "read"))
+):
+    """
+    Canonical list of supported AI/reasoning providers (ADR-800).
+
+    This is the single source of truth the UI uses to render one provider
+    card each — derived from EXTRACTION_PROVIDERS with per-provider metadata
+    so the frontend hardcodes nothing:
+
+    - `requires_key`: provider needs an API key (cloud)
+    - `is_local`: local inference server, no key (connectivity-tested)
+
+    Providers without a wired connector (e.g. vllm — ADR-042 Phase 4) are
+    omitted so every card maps to something that actually works.
+
+    **Authorization:** Requires `api_keys:read` permission
+    """
+    # vllm is in EXTRACTION_PROVIDERS as a placeholder but has no connector
+    # in get_provider() yet — don't surface a card that can't function.
+    unimplemented = {"vllm"}
+
+    providers = [
+        {
+            "provider": name,
+            "requires_key": name in API_KEY_PROVIDERS,
+            "is_local": name in LOCAL_PROVIDERS,
+        }
+        for name in sorted(EXTRACTION_PROVIDERS)
+        if name not in unimplemented
+    ]
+    return {"providers": providers}
+
+
+def _validate_provider_id(provider: str) -> None:
+    """Reject obviously-malformed provider identifiers (ADR-800/801).
+
+    Shared by the per-provider config GET/POST and the key DELETE so the
+    contract is symmetric — a POST cannot write a row a GET would 400 on.
+    """
+    if not provider or not re.fullmatch(r"[a-z0-9._-]{1,50}", provider):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid provider identifier"
+        )
+
+
+class ProviderConfigRequest(BaseModel):
+    """Per-provider config (#8) — saved without activating the provider."""
+    base_url: Optional[str] = None
+    model_name: Optional[str] = None
+    temperature: Optional[float] = None
+    max_tokens: Optional[int] = None
+
+
+@router.post("/providers/{provider}/config")
+async def save_provider_config(
+    provider: str,
+    body: ProviderConfigRequest,
+    current_user: CurrentUser,
+    _: None = Depends(require_permission("extraction_config", "write"))
+):
+    """
+    Persist a provider's config (base_url, model, reasoning params) WITHOUT
+    activating it (#8 — DB-backed per-provider config decoupled from the
+    active pointer). Lets the UI configure an endpoint, then "Get models"
+    / activate against that saved base_url.
+
+    **Authorization:** Requires `extraction_config:write` permission
+    """
+    _validate_provider_id(provider)
+    from ..lib.ai_extraction_config import save_extraction_config
+
+    ok = save_extraction_config({
+        "provider": provider,
+        "model_name": body.model_name or "",
+        "base_url": body.base_url,
+        "temperature": body.temperature,
+        "max_tokens": body.max_tokens,
+        "active": False,
+    }, updated_by="web-admin")
+    if not ok:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to save config for provider '{provider}'"
+        )
+    return {"status": "success", "provider": provider}
+
+
+@router.get("/providers/{provider}/config")
+async def get_provider_config(
+    provider: str,
+    current_user: CurrentUser,
+    _: None = Depends(require_permission("extraction_config", "read"))
+):
+    """
+    Read a provider's saved config regardless of whether it is active
+    (#8 — DB-backed per-provider config). Symmetric to the POST: lets the
+    UI pre-populate each provider card (base_url, model, reasoning params)
+    with what is actually persisted, so the database is a two-way source
+    of truth rather than write-only. `config` is null when the provider
+    has no saved row yet.
+
+    **Authorization:** Requires `extraction_config:read` permission
+    """
+    _validate_provider_id(provider)
+
+    from ..lib.ai_extraction_config import load_provider_config
+
+    row = load_provider_config(provider)
+    if not row:
+        return {"provider": provider, "config": None}
+    return {
+        "provider": provider,
+        "config": {
+            "base_url": row.get("base_url"),
+            "model_name": row.get("model_name"),
+            "temperature": row.get("temperature"),
+            "max_tokens": row.get("max_tokens"),
+            "active": row.get("active"),
+        },
+    }
 
 
 @router.get("/keys")
@@ -750,9 +852,27 @@ async def list_api_keys(
                 logger.info(f"Encryption key not configured: {e}")
                 configured = []
 
-            # Return all possible providers, marking which are configured
-            all_providers = sorted(API_KEY_PROVIDERS)
+            # This endpoint lists *AI* provider keys only. A provider is an AI
+            # provider if the system knows how to validate it
+            # (API_KEY_PROVIDERS) or it appears in the model catalog. This
+            # surfaces arbitrarily-configured AI providers (e.g. openrouter
+            # via the CLI) without leaking non-AI key holders such as the
+            # `garage` storage credentials, which also live in
+            # system_api_keys but are not reasoning providers (ADR-800).
             configured_map = {p['provider']: p for p in configured}
+            try:
+                from ..lib.model_catalog import list_catalog
+                catalog_providers = {row['provider'] for row in list_catalog(conn)}
+            except Exception as e:
+                logger.warning(f"Could not load catalog providers: {e}")
+                catalog_providers = set()
+
+            # Key-requiring AI providers only: drop local providers (ollama,
+            # llamacpp — no key; they surface in the UI as local cards via
+            # the catalog) and non-AI key holders (garage).
+            ai_key_providers = (set(API_KEY_PROVIDERS) | catalog_providers) - set(LOCAL_PROVIDERS)
+            configured_ai = {p for p in configured_map if p in ai_key_providers}
+            all_providers = sorted(ai_key_providers | configured_ai)
 
             return [
                 {
@@ -799,13 +919,11 @@ async def delete_api_key(
 
     Returns success if key was deleted, 404 if key wasn't configured.
     """
-    # Validate provider
-    if provider not in API_KEY_PROVIDERS:
-        valid_list = ', '.join(f"'{p}'" for p in sorted(API_KEY_PROVIDERS))
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid provider. Must be one of: {valid_list}"
-        )
+    # Provider is a stored identifier, not restricted to API_KEY_PROVIDERS:
+    # any provider that has a key (including ones configured via the CLI)
+    # must be deletable. A non-configured provider falls through to 404
+    # below. Reject only obviously malformed identifiers (ADR-800).
+    _validate_provider_id(provider)
 
     try:
         age_client = AGEClient()

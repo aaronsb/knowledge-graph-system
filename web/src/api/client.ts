@@ -1123,7 +1123,13 @@ class APIClient {
     message: string;
     config: any;
   }> {
-    const response = await this.client.post('/admin/extraction/config', config);
+    // The API contract (UpdateExtractionConfigRequest) requires `model_name`,
+    // not `model` — send the contract field to avoid a 422.
+    const { model, ...rest } = config;
+    const response = await this.client.post('/admin/extraction/config', {
+      ...rest,
+      model_name: model,
+    });
     return response.data;
   }
 
@@ -1170,6 +1176,106 @@ class APIClient {
     message: string;
   }> {
     const response = await this.client.delete(`/admin/keys/${provider}`);
+    return response.data;
+  }
+
+  /**
+   * Canonical supported provider list with metadata (ADR-800).
+   * Single source of truth for which provider cards the UI renders.
+   */
+  async getProviders(): Promise<{
+    providers: Array<{
+      provider: string;
+      requires_key: boolean;
+      is_local: boolean;
+    }>;
+  }> {
+    const response = await this.client.get('/admin/providers');
+    return response.data;
+  }
+
+  /**
+   * List provider model catalog entries (ADR-800).
+   *
+   * The catalog is the runtime source of truth for which providers/models
+   * exist — the UI derives provider and model dropdowns from this rather
+   * than hardcoding them.
+   */
+  async getModelCatalog(params?: {
+    provider?: string;
+    category?: string;
+    enabledOnly?: boolean;
+  }): Promise<{
+    models: Array<{
+      id: number;
+      provider: string;
+      model_id: string;
+      display_name: string | null;
+      category: string;
+      enabled: boolean;
+      is_default: boolean;
+      sort_order: number;
+      upstream_provider: string | null;
+    }>;
+    count: number;
+  }> {
+    const query = new URLSearchParams();
+    if (params?.provider) query.append('provider', params.provider);
+    if (params?.category) query.append('category', params.category);
+    if (params?.enabledOnly) query.append('enabled_only', 'true');
+    const qs = query.toString();
+    const response = await this.client.get(`/admin/models/catalog${qs ? `?${qs}` : ''}`);
+    return response.data;
+  }
+
+  /**
+   * Refresh the model catalog for a provider from its upstream API (ADR-800).
+   */
+  async refreshModelCatalog(provider: string): Promise<{
+    provider: string;
+    message: string;
+    upserted: number;
+  }> {
+    const response = await this.client.post('/admin/models/catalog/refresh', { provider });
+    return response.data;
+  }
+
+  /**
+   * Read a provider's saved per-provider config (#8), whether or not it is
+   * the active provider. Lets each provider card pre-populate base_url /
+   * model / reasoning params from what is actually persisted in the DB —
+   * the database is the two-way source of truth, not write-only.
+   * `config` is null when the provider has no saved row yet.
+   */
+  async getProviderConfig(provider: string): Promise<{
+    provider: string;
+    config: {
+      base_url: string | null;
+      model_name: string | null;
+      temperature: number | null;
+      max_tokens: number | null;
+      active: boolean | null;
+    } | null;
+  }> {
+    const response = await this.client.get(`/admin/providers/${provider}/config`);
+    return response.data;
+  }
+
+  /**
+   * Persist a provider's config (base_url, model, reasoning params) WITHOUT
+   * activating it (#8). Backend COALESCEs omitted fields against the stored
+   * row, so a partial save never wipes the rest — send only what changed.
+   */
+  async saveProviderConfig(
+    provider: string,
+    config: {
+      base_url?: string;
+      model_name?: string;
+      temperature?: number;
+      max_tokens?: number;
+    }
+  ): Promise<{ status: string; provider: string }> {
+    const response = await this.client.post(`/admin/providers/${provider}/config`, config);
     return response.data;
   }
 

@@ -2,7 +2,7 @@
 pattern: \boperator\b|docker.*kg|container|\.sh.*(start|stop|restart|status)
 commands: operator\.sh|docker\s
 description: operator.sh lifecycle commands for managing knowledge graph containers, configuration, and secrets
-vocabulary: operator container docker start stop restart status init setup deploy upgrade teardown
+vocabulary: operator container docker start stop restart status init setup deploy upgrade teardown llamacpp ollama llama.cpp hot reload migrate migration base_url local inference vulkan rocm
 scope: agent, subagent
 ---
 # Operator Way
@@ -79,6 +79,42 @@ Or directly:
 ./operator.sh garage init        # Initialize Garage buckets
 ./operator.sh garage repair      # Repair Garage state
 ```
+
+## Local Inference Providers (llama.cpp / Ollama)
+
+A local inference server must join the API's docker network — it is
+reached **by service name**, not host loopback (the host firewall drops
+bridge→host traffic, so loopback is unreliable by construction). This is
+the same way the API reaches Postgres/Garage. See ADR-801.
+
+- The compose file lives in the **separate llama.cpp repo**, NOT this
+  repo: it is hardware/host-specific (GPU passthrough) and must never
+  become a persistent container definition here.
+- Join the externally-managed network: `networks: { kg: { external: true,
+  name: knowledge-graph-network } }`.
+- DB `base_url` for the provider = `http://kg-llamacpp:8080/v1`
+  (service name + port), set via the AI Providers UI or config.
+- **AMD GPUs:** use the Vulkan image (`ghcr.io/ggml-org/llama.cpp:
+  server-vulkan`), NOT ROCm — ROCm SIGSEGV crash-loops inside the
+  container. Needs only `/dev/dri`. `group_add` must use **numeric host
+  GIDs** (container `/etc/group` lacks `render`/`video`, so names don't
+  resolve) — re-check the host with `getent group render video`.
+
+Bring up / tear down the inference container from its own repo
+(`docker compose up -d` / `down`); KG only consumes it by URL.
+
+## Gotchas
+
+- **The `kg-api-dev` container does NOT hot-reload Python.** After any
+  edit under `api/`, run `./operator.sh restart api` before testing —
+  otherwise the old code is still serving. (`kg-web-dev` *does*
+  hot-reload via Vite; web edits need no restart.)
+- **Apply pending schema migrations:**
+  ```bash
+  docker exec kg-operator bash -lc '/workspace/operator/database/migrate-db.sh -y'
+  ```
+  `./operator.sh upgrade` also migrates; use the direct command in dev
+  when you only changed `schema/migrations/`.
 
 ## Teardown
 

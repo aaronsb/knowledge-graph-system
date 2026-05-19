@@ -23,12 +23,10 @@ import {
   BarChart3,
   Layers,
   Play,
-  Save,
   Trash2,
   TestTube,
   Eye,
   EyeOff,
-  ChevronDown,
 } from 'lucide-react';
 import { apiClient, API_BASE_URL } from '../../api/client';
 import { Section, StatusBadge } from './components';
@@ -37,6 +35,17 @@ import type { SystemStatus, EmbeddingConfig, ExtractionConfig, ApiKeyInfo, Sched
 interface SystemTabProps {
   onError: (error: string) => void;
 }
+
+// Sensible default endpoint for local providers (editable in the card —
+// this is a placeholder, not hardcoded behaviour). Docker-network service
+// name for llamacpp (ADR-800 networking finding); ollama's well-known port.
+const LOCAL_DEFAULT_BASE_URL: Record<string, string> = {
+  llamacpp: 'http://kg-llamacpp:8080/v1',
+  ollama: 'http://localhost:11434',
+};
+
+// Sane KG default sampling temperature for extraction reasoning.
+const DEFAULT_TEMPERATURE = '0.1';
 
 export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
   // Data states
@@ -50,14 +59,40 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
   const [embeddingConfigs, setEmbeddingConfigs] = useState<EmbeddingConfig[]>([]);
   const [extractionConfig, setExtractionConfig] = useState<ExtractionConfig | null>(null);
   const [apiKeys, setApiKeys] = useState<ApiKeyInfo[]>([]);
+  const [catalog, setCatalog] = useState<Array<{
+    id: number;
+    provider: string;
+    model_id: string;
+    display_name: string | null;
+    category: string;
+    enabled: boolean;
+    is_default: boolean;
+    sort_order: number;
+    upstream_provider: string | null;
+  }>>([]);
+  const [providers, setProviders] = useState<Array<{
+    provider: string;
+    requires_key: boolean;
+    is_local: boolean;
+  }>>([]);
+  const [refreshingCatalog, setRefreshingCatalog] = useState<string | null>(null);
+  // Per-provider editable draft (#8): base_url / model / reasoning params,
+  // hydrated from each provider's saved DB row so the card round-trips what
+  // is actually persisted. Same shape for every provider — uniform card.
+  const [providerDrafts, setProviderDrafts] = useState<Record<string, {
+    base_url: string;
+    model: string;
+    temperature: string;
+    max_tokens: string;
+  }>>({});
+  const [savingProvider, setSavingProvider] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshingCounters, setRefreshingCounters] = useState(false);
 
   // Interactive UI states
   const [activatingEmbedding, setActivatingEmbedding] = useState<number | null>(null);
   const [confirmActivate, setConfirmActivate] = useState<number | null>(null);
-  const [savingExtraction, setSavingExtraction] = useState(false);
-  const [extractionForm, setExtractionForm] = useState<{ provider: string; model: string } | null>(null);
+  const [settingExtraction, setSettingExtraction] = useState<string | null>(null);
   const [apiKeyForm, setApiKeyForm] = useState<{ provider: string; key: string } | null>(null);
   const [savingApiKey, setSavingApiKey] = useState(false);
   const [showApiKey, setShowApiKey] = useState<string | null>(null);
@@ -71,7 +106,7 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [status, stats, counters, scheduler, workers, embeddings, extraction, keys, apiInfo, dbEpoch] = await Promise.all([
+      const [status, stats, counters, scheduler, workers, embeddings, extraction, keys, apiInfo, dbEpoch, modelCatalog, supportedProviders] = await Promise.all([
         apiClient.getSystemStatus().catch(() => null),
         apiClient.getDatabaseStats().catch(() => null),
         apiClient.getDatabaseCounters().catch(() => null),
@@ -82,6 +117,8 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
         apiClient.listApiKeys().catch(() => []),
         apiClient.getApiInfo().catch(() => ({ epoch: 0, status: 'error' })),
         apiClient.getDatabaseEpoch().catch(() => 0),
+        apiClient.getModelCatalog().then(r => r.models).catch(() => []),
+        apiClient.getProviders().then(r => r.providers).catch(() => []),
       ]);
       setSystemStatus(status);
       setDbStats(stats);
@@ -93,6 +130,34 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
       setEmbeddingConfigs(embeddings);
       setExtractionConfig(extraction);
       setApiKeys(keys);
+      setCatalog(modelCatalog);
+      setProviders(supportedProviders);
+
+      // Hydrate each provider card's draft from its saved DB row so the
+      // card shows what is actually persisted (two-way source of truth, #8).
+      // Falls back to the local-provider default endpoint / sane temperature
+      // when there is no saved row yet.
+      const names = Array.from(new Set([
+        ...supportedProviders.map(p => p.provider),
+        ...(extraction?.provider ? [extraction.provider] : []),
+      ]));
+      const savedConfigs = await Promise.all(
+        names.map(n =>
+          apiClient.getProviderConfig(n)
+            .then(r => [n, r.config] as const)
+            .catch(() => [n, null] as const)
+        )
+      );
+      const drafts: Record<string, { base_url: string; model: string; temperature: string; max_tokens: string }> = {};
+      for (const [n, cfg] of savedConfigs) {
+        drafts[n] = {
+          base_url: cfg?.base_url ?? LOCAL_DEFAULT_BASE_URL[n] ?? '',
+          model: cfg?.model_name ?? '',
+          temperature: cfg?.temperature != null ? String(cfg.temperature) : DEFAULT_TEMPERATURE,
+          max_tokens: cfg?.max_tokens != null ? String(cfg.max_tokens) : '',
+        };
+      }
+      setProviderDrafts(drafts);
     } catch (err) {
       onError(err instanceof Error ? err.message : 'Failed to load system data');
     } finally {
@@ -130,27 +195,6 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
     }
   };
 
-  // Extraction config handler
-  const handleSaveExtraction = async () => {
-    if (!extractionForm) return;
-    setSavingExtraction(true);
-    try {
-      await apiClient.updateExtractionConfig({
-        provider: extractionForm.provider,
-        model: extractionForm.model,
-        updated_by: 'web-admin',
-      });
-      // Reload extraction config
-      const extraction = await apiClient.getExtractionConfig();
-      setExtractionConfig(extraction);
-      setExtractionForm(null);
-    } catch (err) {
-      onError(err instanceof Error ? err.message : 'Failed to save extraction config');
-    } finally {
-      setSavingExtraction(false);
-    }
-  };
-
   // API key handlers
   const handleSaveApiKey = async () => {
     if (!apiKeyForm) return;
@@ -182,16 +226,145 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
     }
   };
 
-  // Provider/model options
-  const extractionProviders = [
-    { provider: 'openai', models: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo'] },
-    { provider: 'anthropic', models: ['claude-sonnet-4-20250514', 'claude-3-5-sonnet-20241022', 'claude-3-haiku-20240307'] },
-    { provider: 'ollama', models: ['mistral', 'llama3.2', 'qwen2.5'] },
-    { provider: 'openrouter', models: ['(placeholder - not yet implemented)'] },
-    { provider: 'llama.cpp', models: ['(placeholder - not yet implemented)'] },
-  ];
+  // Provider/model options are derived from the runtime model catalog and the
+  // configured-keys list — never hardcoded (ADR-800). Operators populate the
+  // catalog via "Refresh" (or the CLI), and the UI reflects whatever is there.
+  const extractionProviders = React.useMemo(() => {
+    const byProvider = new Map<string, string[]>();
+    for (const m of catalog) {
+      if (m.category !== 'extraction') continue;
+      if (!byProvider.has(m.provider)) byProvider.set(m.provider, []);
+      byProvider.get(m.provider)!.push(m.model_id);
+    }
+    return Array.from(byProvider.entries()).map(([provider, models]) => ({ provider, models }));
+  }, [catalog]);
 
-  const apiKeyProviders = ['openai', 'anthropic', 'openrouter'];
+
+  // The canonical /admin/providers list drives which cards render — one per
+  // supported provider, local providers included even with an empty catalog
+  // so they can be enumerated/activated. Fall back to the active provider so
+  // a card always shows for whatever is currently in use.
+  const providerNames = React.useMemo(
+    () => Array.from(new Set([
+      ...providers.map(p => p.provider),
+      ...(extractionConfig?.provider ? [extractionConfig.provider] : []),
+    ])).sort(),
+    [providers, extractionConfig]
+  );
+
+  const providerMeta = React.useMemo(
+    () => new Map(providers.map(p => [p.provider, p])),
+    [providers]
+  );
+
+  // --- Uniform per-provider card handlers (#8) ------------------------------
+  // Every provider — cloud or local — uses the same shape: edit a draft,
+  // then Save / Get models / Set active. Only what each field means differs
+  // (key vs base_url), driven by /admin/providers metadata, not branches.
+
+  const blankDraft = { base_url: '', model: '', temperature: DEFAULT_TEMPERATURE, max_tokens: '' };
+
+  const updateDraft = (
+    provider: string,
+    patch: Partial<{ base_url: string; model: string; temperature: string; max_tokens: string }>
+  ) => {
+    setProviderDrafts(d => ({
+      ...d,
+      [provider]: { ...(d[provider] ?? blankDraft), ...patch },
+    }));
+  };
+
+  // Only send fields the user actually set — the backend COALESCEs omitted
+  // ones against the stored row, so a partial save never wipes the rest.
+  // base_url is only meaningful for local providers.
+  const buildPayload = (provider: string) => {
+    const d = providerDrafts[provider] ?? blankDraft;
+    const isLocal = !!providerMeta.get(provider)?.is_local;
+    const payload: { base_url?: string; model_name?: string; temperature?: number; max_tokens?: number } = {};
+    if (isLocal && d.base_url.trim()) payload.base_url = d.base_url.trim();
+    if (d.model) payload.model_name = d.model;
+    const t = Number(d.temperature);
+    if (d.temperature.trim() !== '' && !Number.isNaN(t)) payload.temperature = t;
+    const mt = Number(d.max_tokens);
+    if (d.max_tokens.trim() !== '' && Number.isInteger(mt) && mt > 0) payload.max_tokens = mt;
+    return payload;
+  };
+
+  // Re-hydrate one provider's draft from its persisted row (normalises what
+  // the server actually stored after a save).
+  const rehydrateDraft = async (provider: string) => {
+    try {
+      const { config } = await apiClient.getProviderConfig(provider);
+      setProviderDrafts(d => ({
+        ...d,
+        [provider]: {
+          base_url: config?.base_url ?? LOCAL_DEFAULT_BASE_URL[provider] ?? '',
+          model: config?.model_name ?? '',
+          temperature: config?.temperature != null ? String(config.temperature) : DEFAULT_TEMPERATURE,
+          max_tokens: config?.max_tokens != null ? String(config.max_tokens) : '',
+        },
+      }));
+    } catch {
+      /* non-fatal — keep the in-memory draft */
+    }
+  };
+
+  const handleSaveProviderConfig = async (provider: string) => {
+    setSavingProvider(provider);
+    try {
+      await apiClient.saveProviderConfig(provider, buildPayload(provider));
+      await rehydrateDraft(provider);
+      // Keep the active provider's read-only detail line in sync — it reads
+      // from extractionConfig, which the save may have just changed.
+      const extraction = await apiClient.getExtractionConfig();
+      setExtractionConfig(extraction);
+    } catch (err) {
+      onError(err instanceof Error ? err.message : `Failed to save ${provider} config`);
+    } finally {
+      setSavingProvider(null);
+    }
+  };
+
+  // "Get models" IS the connectivity test: persist the draft first (so the
+  // connector enumerates against the saved base_url for local providers),
+  // then refresh the catalog from the provider's API.
+  const handleGetModels = async (provider: string) => {
+    setRefreshingCatalog(provider);
+    try {
+      await apiClient.saveProviderConfig(provider, buildPayload(provider));
+      await apiClient.refreshModelCatalog(provider);
+      const { models } = await apiClient.getModelCatalog();
+      setCatalog(models);
+      await rehydrateDraft(provider);
+      // Active provider's detail line reads extractionConfig — refresh it in
+      // case the refreshed catalog changed what its active model resolves to.
+      const extraction = await apiClient.getExtractionConfig();
+      setExtractionConfig(extraction);
+    } catch (err) {
+      onError(err instanceof Error ? err.message : `Failed to get models for ${provider}`);
+    } finally {
+      setRefreshingCatalog(null);
+    }
+  };
+
+  // Persist the draft, then flip the active pointer to this provider+model.
+  // COALESCE on the backend means activation preserves the base_url /
+  // reasoning params just saved.
+  const handleActivate = async (provider: string) => {
+    const model = providerDrafts[provider]?.model;
+    if (!model) return;
+    setSettingExtraction(provider);
+    try {
+      await apiClient.saveProviderConfig(provider, buildPayload(provider));
+      await apiClient.updateExtractionConfig({ provider, model, updated_by: 'web-admin' });
+      const extraction = await apiClient.getExtractionConfig();
+      setExtractionConfig(extraction);
+    } catch (err) {
+      onError(err instanceof Error ? err.message : `Failed to set ${provider} active`);
+    } finally {
+      setSettingExtraction(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -694,293 +867,297 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
         )}
       </Section>
 
-      {/* Extraction Config Section */}
+      {/* AI Providers Section — unified per-provider cards (key + models +
+          active extraction selection). A key belongs to a provider, so key
+          management lives on the provider card rather than a separate section. */}
       <Section
-        title="AI Extraction"
+        title="AI Providers"
         icon={<BrainCircuit className="w-5 h-5" />}
       >
         <p className="text-sm text-muted-foreground mb-4">
-          LLM provider for concept extraction from documents.
+          One card per provider. Each card holds its API key (encrypted at rest,
+          validated on save), its catalog models, and whether it is the active
+          provider for concept extraction. Provider and model options are
+          derived from the model catalog — nothing is hardcoded.
         </p>
 
-        {/* Edit Form */}
-        {extractionForm ? (
-          <div className="p-4 bg-muted/50 rounded-lg border border-border mb-4">
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm text-muted-foreground mb-1">Provider</label>
-                  <select
-                    value={extractionForm.provider}
-                    onChange={(e) => {
-                      const provider = e.target.value;
-                      const models = extractionProviders.find(p => p.provider === provider)?.models || [];
-                      setExtractionForm({ provider, model: models[0] || '' });
-                    }}
-                    className="w-full px-3 py-2 bg-background border border-border rounded text-foreground text-sm"
-                  >
-                    {extractionProviders.map(p => (
-                      <option key={p.provider} value={p.provider}>
-                        {p.provider}
-                        {(p.provider === 'openrouter' || p.provider === 'llama.cpp') && ' (placeholder)'}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm text-muted-foreground mb-1">Model</label>
-                  <select
-                    value={extractionForm.model}
-                    onChange={(e) => setExtractionForm({ ...extractionForm, model: e.target.value })}
-                    className="w-full px-3 py-2 bg-background border border-border rounded text-foreground text-sm"
-                    disabled={extractionForm.provider === 'openrouter' || extractionForm.provider === 'llama.cpp'}
-                  >
-                    {extractionProviders.find(p => p.provider === extractionForm.provider)?.models.map(m => (
-                      <option key={m} value={m}>{m}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              {(extractionForm.provider === 'openrouter' || extractionForm.provider === 'llama.cpp') && (
-                <p className="text-xs text-status-warning">
-                  {extractionForm.provider} support is not yet implemented. This is a placeholder for future development.
-                </p>
-              )}
-              <div className="flex justify-end gap-2">
-                <button
-                  onClick={() => setExtractionForm(null)}
-                  className="px-3 py-1.5 text-sm bg-muted text-muted-foreground rounded hover:bg-muted/80"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSaveExtraction}
-                  disabled={savingExtraction || extractionForm.provider === 'openrouter' || extractionForm.provider === 'llama.cpp'}
-                  className="flex items-center gap-1 px-3 py-1.5 text-sm bg-primary text-primary-foreground rounded hover:bg-primary/80 disabled:opacity-50"
-                >
-                  {savingExtraction ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Save className="w-4 h-4" />
-                  )}
-                  Save
-                </button>
-              </div>
-            </div>
-          </div>
-        ) : extractionConfig ? (
-          <div className="p-4 bg-muted/50 rounded-lg border border-border">
-            <div className="flex items-start justify-between">
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm flex-1">
-                <div>
-                  <span className="text-muted-foreground">Provider:</span>
-                  <span className="ml-2 font-medium text-foreground capitalize">{extractionConfig.provider}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Model:</span>
-                  <span className="ml-2 font-mono text-foreground">{extractionConfig.model}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Max Tokens:</span>
-                  <span className="ml-2 text-foreground">{extractionConfig.max_tokens?.toLocaleString()}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Vision:</span>
-                  <span className={`ml-2 ${extractionConfig.supports_vision ? 'text-status-active' : 'text-muted-foreground'}`}>
-                    {extractionConfig.supports_vision ? 'Yes' : 'No'}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">JSON Mode:</span>
-                  <span className={`ml-2 ${extractionConfig.supports_json_mode ? 'text-status-active' : 'text-muted-foreground'}`}>
-                    {extractionConfig.supports_json_mode ? 'Yes' : 'No'}
-                  </span>
-                </div>
-                {extractionConfig.rate_limit_config && (
-                  <div>
-                    <span className="text-muted-foreground">Concurrency:</span>
-                    <span className="ml-2 text-foreground">
-                      {extractionConfig.rate_limit_config.max_concurrent_requests} / {extractionConfig.rate_limit_config.max_retries} retries
-                    </span>
-                  </div>
-                )}
-              </div>
-              <button
-                onClick={() => setExtractionForm({
-                  provider: extractionConfig.provider,
-                  model: extractionConfig.model,
-                })}
-                className="ml-4 p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"
-                title="Edit extraction config"
-              >
-                <ChevronDown className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="p-4 bg-muted/50 rounded-lg border border-border">
-            <p className="text-muted-foreground text-center py-2">
-              No extraction configuration found.
-            </p>
-            <div className="flex justify-center mt-2">
-              <button
-                onClick={() => setExtractionForm({ provider: 'openai', model: 'gpt-4o' })}
-                className="px-3 py-1.5 text-sm bg-primary text-primary-foreground rounded hover:bg-primary/80"
-              >
-                Configure
-              </button>
-            </div>
-          </div>
-        )}
-      </Section>
-
-      {/* API Keys Section */}
-      <Section
-        title="API Keys"
-        icon={<Key className="w-5 h-5" />}
-      >
-        <p className="text-sm text-muted-foreground mb-4">
-          API keys for AI providers (encrypted at rest). Keys are validated on save.
-        </p>
-
-        {/* Add Key Form */}
-        {apiKeyForm ? (
-          <div className="p-4 bg-muted/50 rounded-lg border border-border mb-4">
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm text-muted-foreground mb-1">Provider</label>
-                  <select
-                    value={apiKeyForm.provider}
-                    onChange={(e) => setApiKeyForm({ ...apiKeyForm, provider: e.target.value })}
-                    className="w-full px-3 py-2 bg-background border border-border rounded text-foreground text-sm"
-                  >
-                    {apiKeyProviders.map(p => (
-                      <option key={p} value={p}>{p}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm text-muted-foreground mb-1">API Key</label>
-                  <div className="relative">
-                    <input
-                      type={showApiKey === 'form' ? 'text' : 'password'}
-                      value={apiKeyForm.key}
-                      onChange={(e) => setApiKeyForm({ ...apiKeyForm, key: e.target.value })}
-                      placeholder="sk-..."
-                      className="w-full px-3 py-2 pr-10 bg-background border border-border rounded text-foreground text-sm font-mono"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowApiKey(showApiKey === 'form' ? null : 'form')}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground"
-                    >
-                      {showApiKey === 'form' ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                </div>
-              </div>
-              <div className="flex justify-end gap-2">
-                <button
-                  onClick={() => setApiKeyForm(null)}
-                  className="px-3 py-1.5 text-sm bg-muted text-muted-foreground rounded hover:bg-muted/80"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSaveApiKey}
-                  disabled={savingApiKey || !apiKeyForm.key}
-                  className="flex items-center gap-1 px-3 py-1.5 text-sm bg-primary text-primary-foreground rounded hover:bg-primary/80 disabled:opacity-50"
-                >
-                  {savingApiKey ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <>
-                      <TestTube className="w-4 h-4" />
-                      Test & Save
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="mb-4">
-            <button
-              onClick={() => setApiKeyForm({ provider: 'openai', key: '' })}
-              className="flex items-center gap-1 px-3 py-1.5 text-sm bg-primary text-primary-foreground rounded hover:bg-primary/80"
-            >
-              <Key className="w-4 h-4" />
-              Add API Key
-            </button>
-          </div>
-        )}
-
-        {/* Existing Keys */}
-        {apiKeys.length > 0 ? (
-          <div className="space-y-2">
-            {apiKeys.map((key) => (
-              <div
-                key={key.provider}
-                className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border border-border"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="font-medium text-foreground capitalize w-24">
-                    {key.provider}
-                  </span>
-                  {key.configured ? (
-                    <>
-                      {key.validation_status === 'valid' ? (
-                        <span className="flex items-center gap-1 text-status-active text-sm">
-                          <CheckCircle className="w-4 h-4" />
-                          Valid
-                        </span>
-                      ) : (
-                        <span className="flex items-center gap-1 text-status-warning text-sm">
-                          <AlertCircle className="w-4 h-4" />
-                          {key.validation_status ?? 'Unknown'}
-                        </span>
-                      )}
-                      {key.masked_key && (
-                        <span className="text-xs text-muted-foreground font-mono">
-                          {key.masked_key}
-                        </span>
-                      )}
-                    </>
-                  ) : (
-                    <span className="text-muted-foreground text-sm">
-                      Not configured
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  {key.last_validated_at && (
-                    <span className="text-xs text-muted-foreground">
-                      {new Date(key.last_validated_at).toLocaleDateString()}
-                    </span>
-                  )}
-                  {key.configured && (
-                    <button
-                      onClick={() => handleDeleteApiKey(key.provider)}
-                      disabled={deletingApiKey === key.provider}
-                      className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded transition-colors disabled:opacity-50"
-                      title="Delete API key"
-                    >
-                      {deletingApiKey === key.provider ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Trash2 className="w-4 h-4" />
-                      )}
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
+        {providerNames.length === 0 ? (
           <p className="text-muted-foreground text-center py-4">
-            No API keys configured.
+            No providers configured yet. Add an API key via the CLI, or once a
+            cloud provider key is set its models appear here after a refresh.
           </p>
+        ) : (
+          <div className="space-y-3">
+            {providerNames.map((name) => {
+              const keyInfo = apiKeys.find(k => k.provider === name);
+              const meta = providerMeta.get(name);
+              // Authoritative from /admin/providers; fall back to key presence
+              // only if metadata is somehow missing (e.g. active legacy provider).
+              const requiresKey = meta?.requires_key ?? (keyInfo !== undefined);
+              const models = extractionProviders.find(p => p.provider === name)?.models ?? [];
+              const isActive = extractionConfig?.provider === name;
+              const editingKey = apiKeyForm?.provider === name;
+              const keyUsable = !requiresKey || (!!keyInfo?.configured && keyInfo?.validation_status === 'valid');
+              const isLocal = !!meta?.is_local;
+              const draft = providerDrafts[name] ?? blankDraft;
+              // Activation is gated until the provider is genuinely usable:
+              // a valid key (if it needs one) AND an explicitly-picked model
+              // that exists in the catalog (i.e. "Get models" succeeded).
+              const modelChosen = !!draft.model && models.includes(draft.model);
+              const activatable = keyUsable && modelChosen;
+              const activateBlockReason = !keyUsable
+                ? 'Add a valid API key first'
+                : models.length === 0
+                  ? 'Get models first (tests connectivity & enumerates)'
+                  : !draft.model
+                    ? 'Pick a model first'
+                    : !models.includes(draft.model)
+                      ? 'Selected model is not in the catalog — Get models'
+                      : isActive
+                        ? `Re-apply ${name} config`
+                        : `Use ${name} for extraction`;
+
+              return (
+                <div
+                  key={name}
+                  className={`p-4 rounded-lg border ${isActive ? 'border-status-active bg-status-active/5' : 'border-border bg-muted/50'}`}
+                >
+                  {/* Header: provider + active state */}
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="font-medium text-foreground capitalize">{name}</span>
+                    {isActive && (
+                      <span className="flex items-center gap-1 text-status-active text-xs font-medium">
+                        <CheckCircle className="w-4 h-4" />
+                        Active for extraction
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Key row — only for providers that require a key */}
+                  {requiresKey && (
+                  <>
+                  <div className="flex items-center justify-between gap-3 text-sm mb-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <Key className="w-4 h-4 text-muted-foreground shrink-0" />
+                      {keyInfo?.configured ? (
+                        <>
+                          {keyInfo?.validation_status === 'valid' ? (
+                            <span className="flex items-center gap-1 text-status-active">
+                              <CheckCircle className="w-4 h-4" /> Valid
+                            </span>
+                          ) : (
+                            <span className="flex items-center gap-1 text-status-warning">
+                              <AlertCircle className="w-4 h-4" /> {keyInfo?.validation_status ?? 'Unknown'}
+                            </span>
+                          )}
+                          {keyInfo?.masked_key && (
+                            <span className="text-xs text-muted-foreground font-mono truncate">
+                              {keyInfo?.masked_key}
+                            </span>
+                          )}
+                        </>
+                      ) : (
+                        <span className="text-muted-foreground">No key configured</span>
+                      )}
+                    </div>
+                    {!editingKey && (
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          onClick={() => setApiKeyForm({ provider: name, key: '' })}
+                          className="px-2 py-1 text-xs bg-muted text-muted-foreground rounded hover:bg-muted/80"
+                        >
+                          {keyInfo?.configured ? 'Replace key' : 'Add key'}
+                        </button>
+                        {keyInfo?.configured && (
+                          <button
+                            onClick={() => handleDeleteApiKey(name)}
+                            disabled={deletingApiKey === name}
+                            className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded disabled:opacity-50"
+                            title="Delete API key"
+                          >
+                            {deletingApiKey === name ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Trash2 className="w-4 h-4" />
+                            )}
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Inline key form for this provider */}
+                  {editingKey && (
+                    <div className="mb-3 p-3 bg-background rounded border border-border space-y-3">
+                      <div className="relative">
+                        <input
+                          type={showApiKey === name ? 'text' : 'password'}
+                          value={apiKeyForm!.key}
+                          onChange={(e) => setApiKeyForm({ provider: name, key: e.target.value })}
+                          placeholder="sk-..."
+                          autoComplete="new-password"
+                          className="w-full px-3 py-2 pr-10 bg-background border border-border rounded text-foreground text-sm font-mono"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowApiKey(showApiKey === name ? null : name)}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground"
+                        >
+                          {showApiKey === name ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                      <div className="flex justify-end gap-2">
+                        <button
+                          onClick={() => setApiKeyForm(null)}
+                          className="px-3 py-1.5 text-sm bg-muted text-muted-foreground rounded hover:bg-muted/80"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={handleSaveApiKey}
+                          disabled={savingApiKey || !apiKeyForm!.key}
+                          className="flex items-center gap-1 px-3 py-1.5 text-sm bg-primary text-primary-foreground rounded hover:bg-primary/80 disabled:opacity-50"
+                        >
+                          {savingApiKey ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <><TestTube className="w-4 h-4" /> Test &amp; Save</>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  </>
+                  )}
+
+                  {/* Endpoint row — local providers only. Uniform card: this
+                      is the same slot the key occupies for cloud providers. */}
+                  {isLocal && (
+                    <div className="flex items-center gap-3 text-sm mb-3">
+                      <Server className="w-4 h-4 text-muted-foreground shrink-0" />
+                      <label className="text-muted-foreground shrink-0">Endpoint</label>
+                      <input
+                        type="text"
+                        value={draft.base_url}
+                        onChange={(e) => updateDraft(name, { base_url: e.target.value })}
+                        placeholder={LOCAL_DEFAULT_BASE_URL[name] ?? 'http://host:port/v1'}
+                        autoComplete="off"
+                        className="flex-1 px-3 py-1.5 bg-background border border-border rounded text-foreground text-sm font-mono"
+                      />
+                    </div>
+                  )}
+
+                  {/* Model + reasoning controls — identical for every provider */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+                    <div className="sm:col-span-3 flex items-center gap-2">
+                      <label className="text-sm text-muted-foreground shrink-0 w-24">Model</label>
+                      <select
+                        value={draft.model}
+                        onChange={(e) => updateDraft(name, { model: e.target.value })}
+                        className="flex-1 px-3 py-1.5 bg-background border border-border rounded text-foreground text-sm"
+                      >
+                        <option value="">
+                          {models.length === 0 ? 'No models — Get models first' : 'Select a model…'}
+                        </option>
+                        {draft.model && !models.includes(draft.model) && (
+                          <option value={draft.model}>{draft.model} (saved)</option>
+                        )}
+                        {models.map(m => (
+                          <option key={m} value={m}>{m}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <label className="text-sm text-muted-foreground shrink-0 w-24">Temp</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        max="2"
+                        value={draft.temperature}
+                        onChange={(e) => updateDraft(name, { temperature: e.target.value })}
+                        autoComplete="off"
+                        className="w-full px-2 py-1.5 bg-background border border-border rounded text-foreground text-sm"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2 sm:col-span-2">
+                      <label className="text-sm text-muted-foreground shrink-0 w-24">Max tokens</label>
+                      <input
+                        type="number"
+                        min="1"
+                        step="1"
+                        value={draft.max_tokens}
+                        onChange={(e) => updateDraft(name, { max_tokens: e.target.value })}
+                        placeholder="model default"
+                        autoComplete="off"
+                        className="w-full px-2 py-1.5 bg-background border border-border rounded text-foreground text-sm"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Actions — Save / Get models / Set active, side by side.
+                      "Get models" IS the connectivity test (it enumerates).
+                      "Set active" is gated until tested-valid + model picked. */}
+                  <div className="flex items-center justify-between gap-3 pt-3 border-t border-border">
+                    <span className="text-muted-foreground text-xs">
+                      {models.length} model{models.length === 1 ? '' : 's'} in catalog
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleSaveProviderConfig(name)}
+                        disabled={savingProvider !== null}
+                        title="Persist this provider's config without activating it"
+                        className="flex items-center gap-1 px-2.5 py-1 text-xs bg-muted text-muted-foreground rounded hover:bg-muted/80 disabled:opacity-50"
+                      >
+                        {savingProvider === name && <Loader2 className="w-3 h-3 animate-spin" />}
+                        Save
+                      </button>
+                      <button
+                        onClick={() => handleGetModels(name)}
+                        disabled={refreshingCatalog !== null}
+                        title="Save config, test connectivity, and enumerate models"
+                        className="flex items-center gap-1 px-2.5 py-1 text-xs bg-muted text-muted-foreground rounded hover:bg-muted/80 disabled:opacity-50"
+                      >
+                        {refreshingCatalog === name ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <RefreshCw className="w-3 h-3" />
+                        )}
+                        Get models
+                      </button>
+                      <button
+                        onClick={() => handleActivate(name)}
+                        disabled={settingExtraction !== null || !activatable}
+                        title={activateBlockReason}
+                        className="flex items-center gap-1 px-2.5 py-1 text-xs bg-primary text-primary-foreground rounded hover:bg-primary/80 disabled:opacity-50"
+                      >
+                        {settingExtraction === name ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <Play className="w-3 h-3" />
+                        )}
+                        {isActive ? 'Re-apply' : 'Set active'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Active provider: persisted capability detail (read-only) */}
+                  {isActive && extractionConfig && (
+                    <div className="mt-3 pt-3 border-t border-border flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                      <span>Max tokens: {extractionConfig.max_tokens?.toLocaleString() ?? '—'}</span>
+                      <span>Vision: {extractionConfig.supports_vision ? 'Yes' : 'No'}</span>
+                      <span>JSON mode: {extractionConfig.supports_json_mode ? 'Yes' : 'No'}</span>
+                      {extractionConfig.rate_limit_config && (
+                        <span>
+                          Concurrency: {extractionConfig.rate_limit_config.max_concurrent_requests} / {extractionConfig.rate_limit_config.max_retries} retries
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         )}
       </Section>
     </>
