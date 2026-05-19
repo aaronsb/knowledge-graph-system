@@ -43,7 +43,7 @@ const TWEEN_MS = 450;
  * user's stated ideal: graph fills the view, the outermost ~15% off
  * screen). Lower = closer. This is the single first-load zoom knob.
  */
-const DEFAULT_FILL = 0.2;
+const DEFAULT_FILL = 0;
 
 export interface OrientAndFrameOptions {
   hiddenIds?: Set<string>;
