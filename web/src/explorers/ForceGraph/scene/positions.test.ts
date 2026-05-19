@@ -51,6 +51,27 @@ describe('seedWithCarryover', () => {
     expect(cDist).toBeLessThanOrEqual(RADIUS + 1e-6);
   });
 
+  it('treats a full swap (prior exists, zero survivors) as fresh', () => {
+    // This is the discriminator the sim hooks key the gentle-vs-full
+    // reheat on: a prior generation existed, but the new node set
+    // shares nothing with it (e.g. a filter swap to a disjoint
+    // ontology). carriedCount must be 0 so the hook does a FULL reheat.
+    const priorIds = ['a', 'b'];
+    const priorPos = new Float32Array([1, 2, 3, 4, 5, 6]);
+    const r = seedWithCarryover(['x', 'y', 'z'], priorIds, priorPos, RADIUS);
+    expect(r.carriedCount).toBe(0);
+    expect(r.positions).toHaveLength(9);
+    for (let i = 0; i < 3; i++) {
+      const d = Math.hypot(
+        r.positions[i * 3],
+        r.positions[i * 3 + 1],
+        r.positions[i * 3 + 2]
+      );
+      expect(d).toBeGreaterThan(0);
+      expect(d).toBeLessThanOrEqual(RADIUS + 1e-6);
+    }
+  });
+
   it('falls back to a fresh seed when the prior buffer is undersized', () => {
     // priorIds claims 2 nodes but the buffer only has room for 1 — a
     // torn snapshot. Must not read out of bounds; treat as fresh.

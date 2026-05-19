@@ -36,7 +36,12 @@ export function seedSpherePositions(count: number, radius = 120): Float32Array {
 }
 
 /** Result of a carry-over seed: the buffer plus how many nodes kept
- *  their prior position (0 ⇒ nothing carried ⇒ treat as a fresh graph).
+ *  their prior position. carriedCount === 0 means *treat as a fresh
+ *  graph* (full reheat) — this intentionally covers not just "no prior
+ *  at all" but also "a prior existed yet nothing survived" (a full
+ *  filter swap, or the graph emptied then repopulated). Zero overlap is
+ *  a new layout by definition, so the gentle incremental reheat would
+ *  have nothing to preserve anyway.
  *  @verified f8ee93b9 */
 export interface CarryoverSeed {
   positions: Float32Array;
