@@ -27,7 +27,7 @@ import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
 import type { DragHandlers } from './useDragHandler';
 import * as THREE from 'three';
 import type { EngineNode } from '../types';
-import { createFacetedNodeMaterial, ensureBarycentric } from './facetedMaterial';
+import { createFacetedNodeMaterial, ensureFacetGeometry } from './facetedMaterial';
 
 const DEFAULT_CLASS = '__default__';
 
@@ -58,6 +58,10 @@ export interface NodesProps {
   hiddenIds?: Set<string>;
   highlightedIds?: Set<string>;
   nodeSize?: number;
+  /** Shading mode. false (default) = flat unlit two-tone (original
+   *  engine look); true = real Lambert lighting (needs a scene light,
+   *  which Scene adds camera-tracked). */
+  lit?: boolean;
   selectedId?: string | null;
   onSelect?: (id: string | null) => void;
   onHover?: (id: string | null) => void;
@@ -71,7 +75,7 @@ export interface NodesProps {
 export function Nodes(props: NodesProps) {
   // nodeSize is intentionally not destructured here — each NodeClassMesh
   // reads it from the spread props and applies it per-frame.
-  const { nodes, nodeClasses, geometryByClass, nodeScales } = props;
+  const { nodes, nodeClasses, geometryByClass, nodeScales, lit = false } = props;
 
   // Partition nodes by class. Single-class fallback keeps the default
   // path identical to the pre-multi-class behaviour.
@@ -112,12 +116,13 @@ export function Nodes(props: NodesProps) {
   // One shared faceted material backs every class mesh — it carries no
   // per-instance state (colour is instanceColor, structure is the
   // barycentric attribute), so a single instance is correct and cheapest.
-  // Deliberately NOT disposed on unmount: under React StrictMode the
-  // effect cleanup fires while useMemo keeps returning the same handle,
-  // so a dispose() here would hand every later render a dead material
-  // (black / failed program compile). One material lives for the app's
-  // lifetime — the standard pattern for a shared three material.
-  const material = useMemo(() => createFacetedNodeMaterial(), []);
+  // Re-created only when the shading mode flips (flat↔lit) — that's a
+  // different material class (Basic vs Lambert). Deliberately NOT disposed
+  // on unmount: under React StrictMode the effect cleanup fires while
+  // useMemo keeps returning the same handle, so a dispose() would hand
+  // every later render a dead material. One material per mode lives for
+  // the app's lifetime — the standard pattern for a shared three material.
+  const material = useMemo(() => createFacetedNodeMaterial(lit), [lit]);
 
   return (
     <>
@@ -142,8 +147,9 @@ interface NodeClassMeshProps extends NodesProps {
   indices: Uint32Array;
   baseScales: Float32Array;
   geometry?: ReactElement;
-  /** Shared faceted two-tone material (see facetedMaterial.ts). */
-  material: THREE.MeshBasicMaterial;
+  /** Shared faceted two-tone material (see facetedMaterial.ts) — Basic
+   *  in flat mode, Lambert in lit mode. */
+  material: THREE.MeshBasicMaterial | THREE.MeshLambertMaterial;
 }
 
 function NodeClassMesh({
@@ -170,18 +176,18 @@ function NodeClassMesh({
   const invalidate = useThree((state) => state.invalidate);
   const count = indices.length;
 
-  // The faceted material's wireframe needs a per-triangle barycentric
-  // attribute on non-indexed geometry. r3f sets the JSX geometry
-  // declaratively; we swap in a non-indexed, annotated clone right after
+  // The material's hard-edge wireframe + per-face normals need a
+  // non-indexed geometry carrying aBary/aEdgeHide. r3f sets the JSX
+  // geometry declaratively; we swap in the annotated clone right after
   // mount (layout effect = before first paint/raycast). The mesh remounts
   // on the `${classKey}-${count}` key, so this re-runs with fresh
   // geometry whenever the partition resizes. Idempotent via
-  // ensureBarycentric's own aBary guard.
+  // ensureFacetGeometry's own aBary guard.
   useLayoutEffect(() => {
     const mesh = meshRef.current;
     if (!mesh) return;
     const original = mesh.geometry;
-    const annotated = ensureBarycentric(original);
+    const annotated = ensureFacetGeometry(original);
     if (annotated === original) return;
     mesh.geometry = annotated;
     // Dispose the detached JSX geometry now (idempotent — r3f also
@@ -189,7 +195,7 @@ function NodeClassMesh({
     // harmless event). Do NOT dispose `annotated` in cleanup: under
     // StrictMode the effect runs → cleanup → runs again against the
     // SAME mesh, whose geometry is now `annotated` with aBary already
-    // present, so ensureBarycentric early-returns and the mesh would be
+    // present, so ensureFacetGeometry early-returns and the mesh would be
     // left rendering a disposed geometry. Leaking one BufferGeometry per
     // class unmount (rare, bounded) is the safe asymmetry.
     original.dispose();
@@ -344,11 +350,17 @@ function NodeClassMesh({
       onPointerUp={handlePointerUp}
       onContextMenu={handleContextMenu}
     >
-      {geometry ?? <icosahedronGeometry args={[1, 1]} />}
-      {/* Shared faceted two-tone material (facetedMaterial.ts). It's a
-          patched MeshBasicMaterial so per-instance instanceColor still
-          works; the layout effect above swaps in the barycentric
-          geometry the material's wireframe needs. */}
+      {/* Default (no per-class geometry) = a geodesic icosphere: a
+          detail-4 subdivided icosahedron. Its facet dihedrals are far
+          below the hard-edge threshold, so it carries no wireframe and
+          keeps its smooth interpolated normals — a clean round ball in
+          lit mode, a flat disc in flat mode. The hashed platonic solids
+          arrive via geometryByClass. */}
+      {geometry ?? <icosahedronGeometry args={[1, 4]} />}
+      {/* Shared faceted two-tone material (facetedMaterial.ts) — patched
+          Basic (flat) or Lambert (lit); both keep per-instance
+          instanceColor. The layout effect swaps in the annotated
+          geometry the material needs. */}
       <primitive object={material} attach="material" />
     </instancedMesh>
   );

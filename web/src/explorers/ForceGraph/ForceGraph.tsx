@@ -495,6 +495,11 @@ export const ForceGraph: React.FC<
             damping: settings?.physics?.damping,
           }}
           projection={settings?.projection ?? '3D'}
+          lit={
+            (settings?.visual?.lightingFollowsProjection ?? false)
+              ? (settings?.projection ?? '3D') === '3D'
+              : (settings?.visual?.lighting ?? 'flat') === 'lit'
+          }
           nodeSize={settings?.visual?.nodeSize ?? 1}
           edgeOpacity={0.7}
           linkWidth={settings?.visual?.linkWidth ?? 1}

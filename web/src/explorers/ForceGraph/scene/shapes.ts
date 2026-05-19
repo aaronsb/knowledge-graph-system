@@ -45,9 +45,11 @@ export function shapeFor(category: string | null | undefined): ShapeName {
   return SHAPE_NAMES[djb2(category || '') % SHAPE_NAMES.length];
 }
 
-/** Unit-radius geometry JSX for `geometryByClass`. Low subdivision on
- *  purpose: the faceted two-tone material wants visible edges, and the
- *  flat-ish facets are the point. Per-instance scale handles real size. */
+/** Unit-radius geometry JSX for `geometryByClass`. Subdivision 0 (no
+ *  detail): the hard-edge material masks coplanar sub-triangulation
+ *  anyway, so extra triangles only cost fill rate — detail 0 keeps each
+ *  solid at its true face count and crisp principal edges. Per-instance
+ *  scale handles real size. */
 export function shapeGeometry(name: ShapeName): ReactElement {
   switch (name) {
     case 'octahedron':
@@ -58,9 +60,7 @@ export function shapeGeometry(name: ShapeName): ReactElement {
       return createElement('dodecahedronGeometry', { args: [1, 0] });
     case 'icosahedron':
     default:
-      // args[1]=1 keeps it identical to the engine's prior default
-      // icosahedron (and Document Explorer's concept glyph).
-      return createElement('icosahedronGeometry', { args: [1, 1] });
+      return createElement('icosahedronGeometry', { args: [1, 0] });
   }
 }
 
