@@ -97,6 +97,17 @@ export interface ForceGraphSettings {
     nodeLabelSize: number;
     /** Multiplier on edge label world-space height. 1.0 = default size. */
     edgeLabelSize: number;
+    /** Node shading. 'flat' (default) = unlit two-tone, the original
+     *  look; 'lit' = real Lambert lighting with a camera-tracked key
+     *  light (faceted solids shade per-face, the icosphere reads round).
+     *  Ignored when `lightingFollowsProjection` is true. */
+    lighting: 'flat' | 'lit';
+    /** When true, shading is coupled to the camera projection: 2D ⇒
+     *  flat (reads as a clean 2D diagram), 3D ⇒ lit (shaded depth) —
+     *  same 3D geometry either way. Overrides `lighting`. Default false
+     *  so the flat-default / lit-opt-in behaviour is unchanged until a
+     *  user opts into the coupling. */
+    lightingFollowsProjection: boolean;
   };
 
   interaction: {
@@ -128,6 +139,8 @@ export const DEFAULT_SETTINGS: ForceGraphSettings = {
     linkWidth: 1.0,
     nodeLabelSize: 1.0,
     edgeLabelSize: 1.0,
+    lighting: 'flat',
+    lightingFollowsProjection: false,
   },
   interaction: {
     enableDrag: true,

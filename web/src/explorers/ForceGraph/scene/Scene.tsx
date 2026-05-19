@@ -7,8 +7,9 @@
  * (pan + zoom, no rotation).
  */
 
-import { useImperativeHandle, useMemo, type ReactElement } from 'react';
+import { useImperativeHandle, useMemo, useRef, type ReactElement } from 'react';
 import * as THREE from 'three';
+import { useFrame } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import type { EngineNode, EngineEdge, Projection } from '../types';
 import { Nodes } from './Nodes';
@@ -27,6 +28,27 @@ import type { ForceSimHandle, ForceSimParams } from './useForceSim';
 const EMPTY_SET: Set<string> = new Set();
 const NOOP_SET_SETTER: (s: Set<string>) => void = () => {};
 const EMPTY_INFOS: NodeInfoData[] = [];
+
+/**
+ * Directional key light pinned to the camera. Each frame it copies the
+ * camera position; its target stays at the world origin (the graph is
+ * roughly centred there), so the lit side always faces the viewer as
+ * they orbit — a static world-space light would look glued to one face
+ * when the graph rotates. Only meaningful for the lit (Lambert)
+ * material; rendered solely in lit mode so flat mode pays no per-frame
+ * cost. Paired with the scene's ambient so the far side isn't black.
+ */
+function CameraKeyLight() {
+  const lightRef = useRef<THREE.DirectionalLight>(null);
+  useFrame(({ camera }) => {
+    lightRef.current?.position.copy(camera.position);
+  });
+  // The light's default target sits at the world origin with an identity
+  // matrix, so direction = origin − cameraPos resolves correctly without
+  // a target.updateMatrixWorld() call. If a future change moves the
+  // target off origin, that update becomes required here.
+  return <directionalLight ref={lightRef} intensity={1.1} />;
+}
 
 export interface SceneProps {
   nodes: EngineNode[];
@@ -99,6 +121,9 @@ export interface SceneProps {
   /** Camera + sim projection. Drives camera-controls flavor, sim
    *  dimensionality, and drag-plane construction. Defaults '3D'. */
   projection?: Projection;
+  /** Shading mode. false (default) = flat unlit two-tone; true = real
+   *  Lambert lighting with a camera-tracked key light. */
+  lit?: boolean;
 }
 
 /** Scene composition — physics + rendering + camera controls.  @verified c17bbeb9 */
@@ -142,6 +167,7 @@ export function Scene({
   onDismissNodeInfo,
   simHandleRef,
   projection = '3D',
+  lit = false,
 }: SceneProps) {
   const sim = useSim(nodes, edges, {
     ...physics,
@@ -187,6 +213,7 @@ export function Scene({
   return (
     <>
       <ambientLight intensity={0.5} />
+      {lit && <CameraKeyLight />}
       <Edges
         nodes={nodes}
         edges={edges}
@@ -219,6 +246,7 @@ export function Scene({
         nodeClasses={nodeClasses}
         geometryByClass={geometryByClass}
         nodeScales={resolvedNodeScales}
+        lit={lit}
         hiddenIds={hiddenIds}
         highlightedIds={highlightedIds}
         nodeSize={nodeSize}
