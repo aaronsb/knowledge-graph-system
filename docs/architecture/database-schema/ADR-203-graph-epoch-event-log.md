@@ -67,7 +67,7 @@ CREATE INDEX idx_graph_epochs_kind        ON kg_api.graph_epochs(kind, occurred_
 
 A new `graph_epochs` row is recorded **once per logical unit of graph mutation**:
 
-- `kind='ingestion'` — one row per ingestion job, recorded at job *start*, so the assigned `event_id` is available to tag every Instance created during that job.
+- `kind='ingestion'` — one row per ingestion job *invocation*, recorded at job *start*, so the assigned `event_id` is available to tag every Instance created during that invocation. A resumed job records a fresh `event_id` with `metadata.resumed_from_chunk` indicating the split — this honestly preserves "the work spanned multiple sessions" rather than papering over it.
 - `kind='breathing'` — one row per ontology-breathing pass (cross-ref ADR-200).
 - `kind='edit'` — one row per explicit manual mutation.
 - `kind='reasoning'` — one row per agent reasoning session that mutates the graph.
@@ -97,7 +97,7 @@ In scope:
 - The `graph_epochs` table and its insertion contract.
 - Instance-level `created_at_event_id` tagging.
 - Recording an `ingestion` epoch at job start.
-- Test coverage proving re-evidenced Concepts have Instances spanning distinct event_ids.
+- Verification proving re-evidenced Concepts have Instances spanning distinct event_ids (manual end-to-end test via the `kg` CLI on landing; automated coverage deferred to a follow-up).
 
 Out of scope (deferred to follow-up issues):
 - API endpoints for re-evidence timeline queries.
