@@ -1240,6 +1240,45 @@ class APIClient {
     return response.data;
   }
 
+  /**
+   * Read a provider's saved per-provider config (#8), whether or not it is
+   * the active provider. Lets each provider card pre-populate base_url /
+   * model / reasoning params from what is actually persisted in the DB —
+   * the database is the two-way source of truth, not write-only.
+   * `config` is null when the provider has no saved row yet.
+   */
+  async getProviderConfig(provider: string): Promise<{
+    provider: string;
+    config: {
+      base_url: string | null;
+      model_name: string | null;
+      temperature: number | null;
+      max_tokens: number | null;
+      active: boolean | null;
+    } | null;
+  }> {
+    const response = await this.client.get(`/admin/providers/${provider}/config`);
+    return response.data;
+  }
+
+  /**
+   * Persist a provider's config (base_url, model, reasoning params) WITHOUT
+   * activating it (#8). Backend COALESCEs omitted fields against the stored
+   * row, so a partial save never wipes the rest — send only what changed.
+   */
+  async saveProviderConfig(
+    provider: string,
+    config: {
+      base_url?: string;
+      model_name?: string;
+      temperature?: number;
+      max_tokens?: number;
+    }
+  ): Promise<{ status: string; provider: string }> {
+    const response = await this.client.post(`/admin/providers/${provider}/config`, config);
+    return response.data;
+  }
+
   // ============================================================
   // RBAC MANAGEMENT (ADR-074)
   // ============================================================

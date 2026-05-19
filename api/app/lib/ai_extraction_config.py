@@ -140,17 +140,23 @@ def load_provider_config(provider: str) -> Optional[Dict[str, Any]]:
 
 def save_extraction_config(config: Dict[str, Any], updated_by: str = "api") -> bool:
     """
-    Save AI extraction configuration to the database.
+    Upsert one provider's AI extraction config (per-provider row, ADR-800 #8).
 
-    Deactivates any existing active config and creates a new one.
+    ON CONFLICT(provider): every optional field is COALESCEd against the
+    stored value, so omitted keys are LEFT ALONE rather than nulled — a
+    partial save (e.g. only base_url) never wipes the rest of the row.
+    `config['active']` (default True) controls the active pointer only:
+    True activates this provider and deactivates the others; False persists
+    config without touching which provider is active.
 
     Args:
-        config: Configuration dict with keys:
-            - provider: "openai" or "anthropic" (required)
-            - model_name: Model identifier (e.g., "gpt-4o", "claude-sonnet-4-20250514")
-            - supports_vision: True/False (optional)
-            - supports_json_mode: True/False (optional)
-            - max_tokens: Maximum token limit (optional)
+        config: Configuration dict. Only `provider` and `model_name` are
+            required (model_name may be "" to seed a not-yet-chosen row).
+            Any of supports_vision, supports_json_mode, max_tokens, base_url,
+            temperature, top_p, gpu_layers, num_threads, thinking_mode,
+            max_concurrent_requests, max_retries that are present are saved;
+            absent ones retain their stored value (or column default on a
+            brand-new row). `active`: bool — activate this provider or not.
         updated_by: User/admin who made the change
 
     Returns:
@@ -180,6 +186,20 @@ def save_extraction_config(config: Dict[str, Any], updated_by: str = "api") -> b
                         WHERE active = TRUE AND provider <> %s
                     """, (config['provider'],))
 
+                # Partial-save safety (#8): every optional field is COALESCEd
+                # against the stored value, so a caller that omits a field
+                # (Pydantic `exclude_none=True`, or the per-provider config
+                # endpoint sending only base_url) LEAVES IT ALONE rather than
+                # nulling it. This structurally prevents the "activate wipes
+                # base_url" / "save config wipes model" bug class for every
+                # present and future caller — the fix lives at this one layer,
+                # not threaded through each endpoint. Absent fields are passed
+                # as NULL so brand-new rows fall to column defaults
+                # (supports_* , thinking_mode='off', active=TRUE).
+                #
+                # model_name is special: '' is the new-row sentinel (NOT NULL
+                # column) but must never overwrite a real stored model — hence
+                # NULLIF(EXCLUDED.model_name, '').
                 cur.execute("""
                     INSERT INTO kg_api.ai_extraction_config (
                         provider, model_name, supports_vision, supports_json_mode,
@@ -191,27 +211,51 @@ def save_extraction_config(config: Dict[str, Any], updated_by: str = "api") -> b
                         %s, %s, %s, %s, %s, %s, %s, %s
                     )
                     ON CONFLICT (provider) DO UPDATE SET
-                        model_name = EXCLUDED.model_name,
-                        supports_vision = EXCLUDED.supports_vision,
-                        supports_json_mode = EXCLUDED.supports_json_mode,
-                        max_tokens = EXCLUDED.max_tokens,
+                        model_name = COALESCE(
+                            NULLIF(EXCLUDED.model_name, ''),
+                            kg_api.ai_extraction_config.model_name),
+                        supports_vision = COALESCE(
+                            EXCLUDED.supports_vision,
+                            kg_api.ai_extraction_config.supports_vision),
+                        supports_json_mode = COALESCE(
+                            EXCLUDED.supports_json_mode,
+                            kg_api.ai_extraction_config.supports_json_mode),
+                        max_tokens = COALESCE(
+                            EXCLUDED.max_tokens,
+                            kg_api.ai_extraction_config.max_tokens),
                         updated_by = EXCLUDED.updated_by,
                         active = CASE WHEN %s THEN TRUE
                                       ELSE kg_api.ai_extraction_config.active END,
-                        base_url = EXCLUDED.base_url,
-                        temperature = EXCLUDED.temperature,
-                        top_p = EXCLUDED.top_p,
-                        gpu_layers = EXCLUDED.gpu_layers,
-                        num_threads = EXCLUDED.num_threads,
-                        thinking_mode = EXCLUDED.thinking_mode,
-                        max_concurrent_requests = EXCLUDED.max_concurrent_requests,
-                        max_retries = EXCLUDED.max_retries,
+                        base_url = COALESCE(
+                            EXCLUDED.base_url,
+                            kg_api.ai_extraction_config.base_url),
+                        temperature = COALESCE(
+                            EXCLUDED.temperature,
+                            kg_api.ai_extraction_config.temperature),
+                        top_p = COALESCE(
+                            EXCLUDED.top_p,
+                            kg_api.ai_extraction_config.top_p),
+                        gpu_layers = COALESCE(
+                            EXCLUDED.gpu_layers,
+                            kg_api.ai_extraction_config.gpu_layers),
+                        num_threads = COALESCE(
+                            EXCLUDED.num_threads,
+                            kg_api.ai_extraction_config.num_threads),
+                        thinking_mode = COALESCE(
+                            EXCLUDED.thinking_mode,
+                            kg_api.ai_extraction_config.thinking_mode),
+                        max_concurrent_requests = COALESCE(
+                            EXCLUDED.max_concurrent_requests,
+                            kg_api.ai_extraction_config.max_concurrent_requests),
+                        max_retries = COALESCE(
+                            EXCLUDED.max_retries,
+                            kg_api.ai_extraction_config.max_retries),
                         updated_at = NOW()
                 """, (
                     config['provider'],
                     config['model_name'],
-                    config.get('supports_vision', False),
-                    config.get('supports_json_mode', True),
+                    config.get('supports_vision'),
+                    config.get('supports_json_mode'),
                     config.get('max_tokens'),
                     updated_by,
                     activate,
@@ -220,7 +264,7 @@ def save_extraction_config(config: Dict[str, Any], updated_by: str = "api") -> b
                     config.get('top_p'),
                     config.get('gpu_layers'),
                     config.get('num_threads'),
-                    config.get('thinking_mode', 'off'),
+                    config.get('thinking_mode'),
                     config.get('max_concurrent_requests'),
                     config.get('max_retries'),
                     activate,

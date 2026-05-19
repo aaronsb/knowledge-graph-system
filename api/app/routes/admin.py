@@ -743,6 +743,45 @@ async def save_provider_config(
     return {"status": "success", "provider": provider}
 
 
+@router.get("/providers/{provider}/config")
+async def get_provider_config(
+    provider: str,
+    current_user: CurrentUser,
+    _: None = Depends(require_permission("extraction_config", "read"))
+):
+    """
+    Read a provider's saved config regardless of whether it is active
+    (#8 — DB-backed per-provider config). Symmetric to the POST: lets the
+    UI pre-populate each provider card (base_url, model, reasoning params)
+    with what is actually persisted, so the database is a two-way source
+    of truth rather than write-only. `config` is null when the provider
+    has no saved row yet.
+
+    **Authorization:** Requires `extraction_config:read` permission
+    """
+    if not provider or not re.fullmatch(r"[a-z0-9._-]{1,50}", provider):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid provider identifier"
+        )
+
+    from ..lib.ai_extraction_config import load_provider_config
+
+    row = load_provider_config(provider)
+    if not row:
+        return {"provider": provider, "config": None}
+    return {
+        "provider": provider,
+        "config": {
+            "base_url": row.get("base_url"),
+            "model_name": row.get("model_name"),
+            "temperature": row.get("temperature"),
+            "max_tokens": row.get("max_tokens"),
+            "active": row.get("active"),
+        },
+    }
+
+
 @router.get("/keys")
 async def list_api_keys(
     current_user: CurrentUser,

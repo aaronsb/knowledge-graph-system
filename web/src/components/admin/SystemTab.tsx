@@ -36,6 +36,17 @@ interface SystemTabProps {
   onError: (error: string) => void;
 }
 
+// Sensible default endpoint for local providers (editable in the card —
+// this is a placeholder, not hardcoded behaviour). Docker-network service
+// name for llamacpp (ADR-800 networking finding); ollama's well-known port.
+const LOCAL_DEFAULT_BASE_URL: Record<string, string> = {
+  llamacpp: 'http://kg-llamacpp:8080/v1',
+  ollama: 'http://localhost:11434',
+};
+
+// Sane KG default sampling temperature for extraction reasoning.
+const DEFAULT_TEMPERATURE = '0.1';
+
 export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
   // Data states
   const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
@@ -65,6 +76,16 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
     is_local: boolean;
   }>>([]);
   const [refreshingCatalog, setRefreshingCatalog] = useState<string | null>(null);
+  // Per-provider editable draft (#8): base_url / model / reasoning params,
+  // hydrated from each provider's saved DB row so the card round-trips what
+  // is actually persisted. Same shape for every provider — uniform card.
+  const [providerDrafts, setProviderDrafts] = useState<Record<string, {
+    base_url: string;
+    model: string;
+    temperature: string;
+    max_tokens: string;
+  }>>({});
+  const [savingProvider, setSavingProvider] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshingCounters, setRefreshingCounters] = useState(false);
 
@@ -111,6 +132,32 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
       setApiKeys(keys);
       setCatalog(modelCatalog);
       setProviders(supportedProviders);
+
+      // Hydrate each provider card's draft from its saved DB row so the
+      // card shows what is actually persisted (two-way source of truth, #8).
+      // Falls back to the local-provider default endpoint / sane temperature
+      // when there is no saved row yet.
+      const names = Array.from(new Set([
+        ...supportedProviders.map(p => p.provider),
+        ...(extraction?.provider ? [extraction.provider] : []),
+      ]));
+      const savedConfigs = await Promise.all(
+        names.map(n =>
+          apiClient.getProviderConfig(n)
+            .then(r => [n, r.config] as const)
+            .catch(() => [n, null] as const)
+        )
+      );
+      const drafts: Record<string, { base_url: string; model: string; temperature: string; max_tokens: string }> = {};
+      for (const [n, cfg] of savedConfigs) {
+        drafts[n] = {
+          base_url: cfg?.base_url ?? LOCAL_DEFAULT_BASE_URL[n] ?? '',
+          model: cfg?.model_name ?? '',
+          temperature: cfg?.temperature != null ? String(cfg.temperature) : DEFAULT_TEMPERATURE,
+          max_tokens: cfg?.max_tokens != null ? String(cfg.max_tokens) : '',
+        };
+      }
+      setProviderDrafts(drafts);
     } catch (err) {
       onError(err instanceof Error ? err.message : 'Failed to load system data');
     } finally {
@@ -145,26 +192,6 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
       onError(err instanceof Error ? err.message : 'Failed to activate embedding profile');
     } finally {
       setActivatingEmbedding(null);
-    }
-  };
-
-  // Extraction config handler — set the active provider+model directly from
-  // a provider card (no separate form; a key belongs to a provider).
-  const handleSetExtraction = async (provider: string, model: string) => {
-    if (!model) return;
-    setSettingExtraction(provider);
-    try {
-      await apiClient.updateExtractionConfig({
-        provider,
-        model,
-        updated_by: 'web-admin',
-      });
-      const extraction = await apiClient.getExtractionConfig();
-      setExtractionConfig(extraction);
-    } catch (err) {
-      onError(err instanceof Error ? err.message : 'Failed to save extraction config');
-    } finally {
-      setSettingExtraction(null);
     }
   };
 
@@ -230,16 +257,104 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
     [providers]
   );
 
-  const handleRefreshCatalog = async (provider: string) => {
+  // --- Uniform per-provider card handlers (#8) ------------------------------
+  // Every provider — cloud or local — uses the same shape: edit a draft,
+  // then Save / Get models / Set active. Only what each field means differs
+  // (key vs base_url), driven by /admin/providers metadata, not branches.
+
+  const blankDraft = { base_url: '', model: '', temperature: DEFAULT_TEMPERATURE, max_tokens: '' };
+
+  const updateDraft = (
+    provider: string,
+    patch: Partial<{ base_url: string; model: string; temperature: string; max_tokens: string }>
+  ) => {
+    setProviderDrafts(d => ({
+      ...d,
+      [provider]: { ...(d[provider] ?? blankDraft), ...patch },
+    }));
+  };
+
+  // Only send fields the user actually set — the backend COALESCEs omitted
+  // ones against the stored row, so a partial save never wipes the rest.
+  // base_url is only meaningful for local providers.
+  const buildPayload = (provider: string) => {
+    const d = providerDrafts[provider] ?? blankDraft;
+    const isLocal = !!providerMeta.get(provider)?.is_local;
+    const payload: { base_url?: string; model_name?: string; temperature?: number; max_tokens?: number } = {};
+    if (isLocal && d.base_url.trim()) payload.base_url = d.base_url.trim();
+    if (d.model) payload.model_name = d.model;
+    const t = Number(d.temperature);
+    if (d.temperature.trim() !== '' && !Number.isNaN(t)) payload.temperature = t;
+    const mt = Number(d.max_tokens);
+    if (d.max_tokens.trim() !== '' && Number.isInteger(mt) && mt > 0) payload.max_tokens = mt;
+    return payload;
+  };
+
+  // Re-hydrate one provider's draft from its persisted row (normalises what
+  // the server actually stored after a save).
+  const rehydrateDraft = async (provider: string) => {
+    try {
+      const { config } = await apiClient.getProviderConfig(provider);
+      setProviderDrafts(d => ({
+        ...d,
+        [provider]: {
+          base_url: config?.base_url ?? LOCAL_DEFAULT_BASE_URL[provider] ?? '',
+          model: config?.model_name ?? '',
+          temperature: config?.temperature != null ? String(config.temperature) : DEFAULT_TEMPERATURE,
+          max_tokens: config?.max_tokens != null ? String(config.max_tokens) : '',
+        },
+      }));
+    } catch {
+      /* non-fatal — keep the in-memory draft */
+    }
+  };
+
+  const handleSaveProviderConfig = async (provider: string) => {
+    setSavingProvider(provider);
+    try {
+      await apiClient.saveProviderConfig(provider, buildPayload(provider));
+      await rehydrateDraft(provider);
+    } catch (err) {
+      onError(err instanceof Error ? err.message : `Failed to save ${provider} config`);
+    } finally {
+      setSavingProvider(null);
+    }
+  };
+
+  // "Get models" IS the connectivity test: persist the draft first (so the
+  // connector enumerates against the saved base_url for local providers),
+  // then refresh the catalog from the provider's API.
+  const handleGetModels = async (provider: string) => {
     setRefreshingCatalog(provider);
     try {
+      await apiClient.saveProviderConfig(provider, buildPayload(provider));
       await apiClient.refreshModelCatalog(provider);
       const { models } = await apiClient.getModelCatalog();
       setCatalog(models);
+      await rehydrateDraft(provider);
     } catch (err) {
-      onError(err instanceof Error ? err.message : `Failed to refresh ${provider} catalog`);
+      onError(err instanceof Error ? err.message : `Failed to get models for ${provider}`);
     } finally {
       setRefreshingCatalog(null);
+    }
+  };
+
+  // Persist the draft, then flip the active pointer to this provider+model.
+  // COALESCE on the backend means activation preserves the base_url /
+  // reasoning params just saved.
+  const handleActivate = async (provider: string) => {
+    const model = providerDrafts[provider]?.model;
+    if (!model) return;
+    setSettingExtraction(provider);
+    try {
+      await apiClient.saveProviderConfig(provider, buildPayload(provider));
+      await apiClient.updateExtractionConfig({ provider, model, updated_by: 'web-admin' });
+      const extraction = await apiClient.getExtractionConfig();
+      setExtractionConfig(extraction);
+    } catch (err) {
+      onError(err instanceof Error ? err.message : `Failed to set ${provider} active`);
+    } finally {
+      setSettingExtraction(null);
     }
   };
 
@@ -775,15 +890,24 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
               const isActive = extractionConfig?.provider === name;
               const editingKey = apiKeyForm?.provider === name;
               const keyUsable = !requiresKey || (!!keyInfo?.configured && keyInfo?.validation_status === 'valid');
-              // You can always add/edit/save a key, but a provider can only
-              // be made the active extraction provider once it is actually
-              // usable: a valid key (if it needs one) and models present.
-              const activatable = keyUsable && models.length > 0;
-              const activateBlockReason = models.length === 0
-                ? 'No models — refresh the catalog first'
-                : !keyUsable
-                  ? 'Add a valid API key first'
-                  : `Use ${name} for extraction`;
+              const isLocal = !!meta?.is_local;
+              const draft = providerDrafts[name] ?? blankDraft;
+              // Activation is gated until the provider is genuinely usable:
+              // a valid key (if it needs one) AND an explicitly-picked model
+              // that exists in the catalog (i.e. "Get models" succeeded).
+              const modelChosen = !!draft.model && models.includes(draft.model);
+              const activatable = keyUsable && modelChosen;
+              const activateBlockReason = !keyUsable
+                ? 'Add a valid API key first'
+                : models.length === 0
+                  ? 'Get models first (tests connectivity & enumerates)'
+                  : !draft.model
+                    ? 'Pick a model first'
+                    : !models.includes(draft.model)
+                      ? 'Selected model is not in the catalog — Get models'
+                      : isActive
+                        ? `Re-apply ${name} config`
+                        : `Use ${name} for extraction`;
 
               return (
                 <div
@@ -793,35 +917,21 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
                   {/* Header: provider + active state */}
                   <div className="flex items-center justify-between mb-3">
                     <span className="font-medium text-foreground capitalize">{name}</span>
-                    {isActive ? (
+                    {isActive && (
                       <span className="flex items-center gap-1 text-status-active text-xs font-medium">
                         <CheckCircle className="w-4 h-4" />
                         Active for extraction
                       </span>
-                    ) : (
-                      <button
-                        onClick={() => handleSetExtraction(name, models[0] ?? '')}
-                        disabled={settingExtraction !== null || !activatable}
-                        title={activateBlockReason}
-                        className="flex items-center gap-1 px-2.5 py-1 text-xs bg-primary text-primary-foreground rounded hover:bg-primary/80 disabled:opacity-50"
-                      >
-                        {settingExtraction === name ? (
-                          <Loader2 className="w-3 h-3 animate-spin" />
-                        ) : (
-                          <Play className="w-3 h-3" />
-                        )}
-                        Set active
-                      </button>
                     )}
                   </div>
 
-                  {/* Key row */}
+                  {/* Key row — only for providers that require a key */}
+                  {requiresKey && (
+                  <>
                   <div className="flex items-center justify-between gap-3 text-sm mb-3">
                     <div className="flex items-center gap-3 min-w-0">
                       <Key className="w-4 h-4 text-muted-foreground shrink-0" />
-                      {!requiresKey ? (
-                        <span className="text-muted-foreground">Local provider — no API key required</span>
-                      ) : keyInfo?.configured ? (
+                      {keyInfo?.configured ? (
                         <>
                           {keyInfo?.validation_status === 'valid' ? (
                             <span className="flex items-center gap-1 text-status-active">
@@ -842,7 +952,7 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
                         <span className="text-muted-foreground">No key configured</span>
                       )}
                     </div>
-                    {requiresKey && !editingKey && (
+                    {!editingKey && (
                       <div className="flex items-center gap-2 shrink-0">
                         <button
                           onClick={() => setApiKeyForm({ provider: name, key: '' })}
@@ -908,58 +1018,127 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
                       </div>
                     </div>
                   )}
+                  </>
+                  )}
 
-                  {/* Models row */}
-                  <div className="flex items-center justify-between gap-3 text-sm">
-                    <span className="text-muted-foreground">
-                      {models.length} extraction model{models.length === 1 ? '' : 's'} in catalog
-                    </span>
-                    <button
-                      onClick={() => handleRefreshCatalog(name)}
-                      disabled={refreshingCatalog !== null}
-                      className="flex items-center gap-1 px-2 py-1 text-xs bg-muted text-muted-foreground rounded hover:bg-muted/80 disabled:opacity-50"
-                      title={`Refresh ${name} model catalog`}
-                    >
-                      {refreshingCatalog === name ? (
-                        <Loader2 className="w-3 h-3 animate-spin" />
-                      ) : (
-                        <RefreshCw className="w-3 h-3" />
-                      )}
-                      Refresh
-                    </button>
+                  {/* Endpoint row — local providers only. Uniform card: this
+                      is the same slot the key occupies for cloud providers. */}
+                  {isLocal && (
+                    <div className="flex items-center gap-3 text-sm mb-3">
+                      <Server className="w-4 h-4 text-muted-foreground shrink-0" />
+                      <label className="text-muted-foreground shrink-0">Endpoint</label>
+                      <input
+                        type="text"
+                        value={draft.base_url}
+                        onChange={(e) => updateDraft(name, { base_url: e.target.value })}
+                        placeholder={LOCAL_DEFAULT_BASE_URL[name] ?? 'http://host:port/v1'}
+                        className="flex-1 px-3 py-1.5 bg-background border border-border rounded text-foreground text-sm font-mono"
+                      />
+                    </div>
+                  )}
+
+                  {/* Model + reasoning controls — identical for every provider */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+                    <div className="sm:col-span-3 flex items-center gap-2">
+                      <label className="text-sm text-muted-foreground shrink-0 w-24">Model</label>
+                      <select
+                        value={draft.model}
+                        onChange={(e) => updateDraft(name, { model: e.target.value })}
+                        className="flex-1 px-3 py-1.5 bg-background border border-border rounded text-foreground text-sm"
+                      >
+                        <option value="">
+                          {models.length === 0 ? 'No models — Get models first' : 'Select a model…'}
+                        </option>
+                        {draft.model && !models.includes(draft.model) && (
+                          <option value={draft.model}>{draft.model} (saved)</option>
+                        )}
+                        {models.map(m => (
+                          <option key={m} value={m}>{m}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <label className="text-sm text-muted-foreground shrink-0 w-24">Temp</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        max="2"
+                        value={draft.temperature}
+                        onChange={(e) => updateDraft(name, { temperature: e.target.value })}
+                        className="w-full px-2 py-1.5 bg-background border border-border rounded text-foreground text-sm"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2 sm:col-span-2">
+                      <label className="text-sm text-muted-foreground shrink-0 w-24">Max tokens</label>
+                      <input
+                        type="number"
+                        min="1"
+                        step="1"
+                        value={draft.max_tokens}
+                        onChange={(e) => updateDraft(name, { max_tokens: e.target.value })}
+                        placeholder="model default"
+                        className="w-full px-2 py-1.5 bg-background border border-border rounded text-foreground text-sm"
+                      />
+                    </div>
                   </div>
 
-                  {/* Active provider: model selector + config detail */}
-                  {isActive && (
-                    <div className="mt-3 pt-3 border-t border-border space-y-2">
-                      <div className="flex items-center gap-2">
-                        <label className="text-sm text-muted-foreground">Extraction model:</label>
-                        <select
-                          value={extractionConfig?.model ?? ''}
-                          onChange={(e) => handleSetExtraction(name, e.target.value)}
-                          disabled={settingExtraction !== null || models.length === 0}
-                          className="flex-1 px-3 py-1.5 bg-background border border-border rounded text-foreground text-sm"
-                        >
-                          {!models.includes(extractionConfig?.model ?? '') && extractionConfig?.model && (
-                            <option value={extractionConfig.model}>{extractionConfig.model} (current)</option>
-                          )}
-                          {models.map(m => (
-                            <option key={m} value={m}>{m}</option>
-                          ))}
-                        </select>
-                        {settingExtraction === name && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
-                      </div>
-                      {extractionConfig && (
-                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                          <span>Max tokens: {extractionConfig.max_tokens?.toLocaleString() ?? '—'}</span>
-                          <span>Vision: {extractionConfig.supports_vision ? 'Yes' : 'No'}</span>
-                          <span>JSON mode: {extractionConfig.supports_json_mode ? 'Yes' : 'No'}</span>
-                          {extractionConfig.rate_limit_config && (
-                            <span>
-                              Concurrency: {extractionConfig.rate_limit_config.max_concurrent_requests} / {extractionConfig.rate_limit_config.max_retries} retries
-                            </span>
-                          )}
-                        </div>
+                  {/* Actions — Save / Get models / Set active, side by side.
+                      "Get models" IS the connectivity test (it enumerates).
+                      "Set active" is gated until tested-valid + model picked. */}
+                  <div className="flex items-center justify-between gap-3 pt-3 border-t border-border">
+                    <span className="text-muted-foreground text-xs">
+                      {models.length} model{models.length === 1 ? '' : 's'} in catalog
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleSaveProviderConfig(name)}
+                        disabled={savingProvider !== null}
+                        title="Persist this provider's config without activating it"
+                        className="flex items-center gap-1 px-2.5 py-1 text-xs bg-muted text-muted-foreground rounded hover:bg-muted/80 disabled:opacity-50"
+                      >
+                        {savingProvider === name && <Loader2 className="w-3 h-3 animate-spin" />}
+                        Save
+                      </button>
+                      <button
+                        onClick={() => handleGetModels(name)}
+                        disabled={refreshingCatalog !== null}
+                        title="Save config, test connectivity, and enumerate models"
+                        className="flex items-center gap-1 px-2.5 py-1 text-xs bg-muted text-muted-foreground rounded hover:bg-muted/80 disabled:opacity-50"
+                      >
+                        {refreshingCatalog === name ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <RefreshCw className="w-3 h-3" />
+                        )}
+                        Get models
+                      </button>
+                      <button
+                        onClick={() => handleActivate(name)}
+                        disabled={settingExtraction !== null || !activatable}
+                        title={activateBlockReason}
+                        className="flex items-center gap-1 px-2.5 py-1 text-xs bg-primary text-primary-foreground rounded hover:bg-primary/80 disabled:opacity-50"
+                      >
+                        {settingExtraction === name ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <Play className="w-3 h-3" />
+                        )}
+                        {isActive ? 'Re-apply' : 'Set active'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Active provider: persisted capability detail (read-only) */}
+                  {isActive && extractionConfig && (
+                    <div className="mt-3 pt-3 border-t border-border flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                      <span>Max tokens: {extractionConfig.max_tokens?.toLocaleString() ?? '—'}</span>
+                      <span>Vision: {extractionConfig.supports_vision ? 'Yes' : 'No'}</span>
+                      <span>JSON mode: {extractionConfig.supports_json_mode ? 'Yes' : 'No'}</span>
+                      {extractionConfig.rate_limit_config && (
+                        <span>
+                          Concurrency: {extractionConfig.rate_limit_config.max_concurrent_requests} / {extractionConfig.rate_limit_config.max_retries} retries
+                        </span>
                       )}
                     </div>
                   )}
