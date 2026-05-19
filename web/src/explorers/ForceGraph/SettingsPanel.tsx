@@ -17,6 +17,7 @@ import type { ForceGraphSettings } from './types';
 import { SLIDER_RANGES } from './types';
 import { simBackend } from './scene/useSim';
 import { useGraphStore, type FilterOption } from '../../store/graphStore';
+import { VisualControls } from '../common';
 
 type Section = 'physics' | 'visual' | 'interaction' | 'filters';
 
@@ -271,11 +272,6 @@ export const SettingsPanel: React.FC<SettingsPanelProps<ForceGraphSettings>> = (
               settings.visual.showLabels ? 'on' : 'off',
               toggle_(settings.visual.showLabels, (v) => updateVisual({ showLabels: v }))
             )}
-            {row(
-              'Show node labels',
-              settings.visual.showNodeLabels ? 'on' : 'off',
-              toggle_(settings.visual.showNodeLabels, (v) => updateVisual({ showNodeLabels: v }))
-            )}
             <label className="flex items-center gap-2 text-xs text-card-foreground">
               <span className="flex-1 min-w-0 truncate">Node color</span>
               <select
@@ -305,48 +301,22 @@ export const SettingsPanel: React.FC<SettingsPanelProps<ForceGraphSettings>> = (
                 <option value="uniform">Uniform</option>
               </select>
             </label>
-            <label
-              className={`flex items-center gap-2 text-xs text-card-foreground ${
-                settings.visual.lightingFollowsProjection ? 'opacity-50' : ''
-              }`}
-            >
-              <span className="flex-1 min-w-0 truncate">
-                {settings.visual.lightingFollowsProjection
-                  ? 'Shading (follows view)'
-                  : 'Shading'}
-              </span>
-              <select
-                className="flex-[2] bg-card border border-border rounded px-1 py-0.5 text-xs"
-                value={settings.visual.lighting}
-                disabled={settings.visual.lightingFollowsProjection}
-                onChange={(e) =>
-                  updateVisual({
-                    lighting: e.target.value as ForceGraphSettings['visual']['lighting'],
-                  })
-                }
-              >
-                <option value="flat">Flat (two-tone)</option>
-                <option value="lit">Lit (3D light)</option>
-              </select>
-            </label>
-            {row(
-              'Shading follows view',
-              settings.visual.lightingFollowsProjection ? 'on' : 'off',
-              toggle_(settings.visual.lightingFollowsProjection, (v) =>
+            {/* Shared visual controls — node labels, shading, node size.
+                Force Graph-specific controls (colour-by, link width,
+                label sizes/radius) stay above/below. */}
+            <VisualControls
+              showNodeLabels={settings.visual.showNodeLabels}
+              nodeSize={settings.visual.nodeSize}
+              lighting={settings.visual.lighting}
+              lightingFollowsProjection={settings.visual.lightingFollowsProjection}
+              nodeSizeRange={SLIDER_RANGES.visual.nodeSize}
+              onShowNodeLabels={(v) => updateVisual({ showNodeLabels: v })}
+              onNodeSize={(v) => updateVisual({ nodeSize: v })}
+              onLighting={(v) => updateVisual({ lighting: v })}
+              onLightingFollowsProjection={(v) =>
                 updateVisual({ lightingFollowsProjection: v })
-              )
-            )}
-            {row(
-              'Node size',
-              settings.visual.nodeSize.toFixed(2),
-              slider(
-                settings.visual.nodeSize,
-                SLIDER_RANGES.visual.nodeSize.min,
-                SLIDER_RANGES.visual.nodeSize.max,
-                SLIDER_RANGES.visual.nodeSize.step,
-                (v) => updateVisual({ nodeSize: v })
-              )
-            )}
+              }
+            />
             {row(
               'Link width',
               settings.visual.linkWidth.toFixed(1),

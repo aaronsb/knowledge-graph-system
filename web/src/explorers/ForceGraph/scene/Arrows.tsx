@@ -236,6 +236,13 @@ export function Arrows({
       key={usableCount}
       ref={meshRef}
       args={[undefined, undefined, usableCount]}
+      // Same stale-bounds cull as Edges (see Edges.tsx): instances are
+      // placed via instanceMatrix each frame, but the cull volume stays
+      // the unit-cone geometry sphere at the origin (no InstancedMesh
+      // boundingSphere is maintained, and unlike Nodes there's no
+      // periodic refresh), so arrows get culled when the camera wheels
+      // in close. Opt out — one instanced draw call, nothing to gain.
+      frustumCulled={false}
     >
       {/* Unit cone — radius ARROW_RADIUS_RATIO, height 1. Per-instance
           scale multiplies by the computed arrow length. */}

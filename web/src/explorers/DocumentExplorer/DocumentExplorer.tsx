@@ -29,6 +29,7 @@ import type {
 import { useThemeStore } from '../../store/themeStore';
 import { StatsPanel, PanelStack } from '../common';
 import { Scene } from '../ForceGraph/scene/Scene';
+import { shapeGeometryByClass, type ShapeName } from '../ForceGraph/scene/shapes';
 import { DIM_MODEL } from '../ForceGraph/scene/dimModel';
 import type { EngineNode, EngineEdge } from '../ForceGraph/types';
 import type { ForceSimHandle } from '../ForceGraph/scene/useForceSim';
@@ -48,10 +49,14 @@ const COLORS: Record<DocNodeType, string> = {
   'extended-concept': '#6366f1',
 };
 
-const NODE_CLASS_BY_TYPE: Record<DocNodeType, 'document' | 'concept'> = {
-  'document':         'document',
-  'query-concept':    'concept',
-  'extended-concept': 'concept',
+// Document Explorer has *named* node types, so shape is a genuine second
+// axis here (unlike Force Graph, where it currently mirrors ontology).
+// A stable explicit map — NOT shapeFor()'s hash — so adding a future
+// type can't silently re-bucket the existing three.
+const TYPE_SHAPE: Record<DocNodeType, ShapeName> = {
+  'document':         'dodecahedron',
+  'query-concept':    'octahedron',
+  'extended-concept': 'tetrahedron',
 };
 
 // ---------------------------------------------------------------------------
@@ -166,20 +171,16 @@ export const DocumentExplorer: React.FC<
   const nodeClasses = useMemo(() => {
     return engineData.nodes.map((n) => {
       const type = nodeType(n.id) ?? 'extended-concept';
-      return NODE_CLASS_BY_TYPE[type];
+      return TYPE_SHAPE[type];
     });
   }, [engineData, nodeType]);
 
-  // Both documents and concepts render as the same icosahedron geometry —
-  // the d3 implementation drew documents as larger circles too (with a
-  // small white file-glyph overlay; that overlay is the only detail
-  // dropped on the engine port). Size + color do the visual distinction.
-  // `geometryByClass` is wired so this stays single-source if we want to
-  // re-add a glyph (textured plane / instanced sprite) on documents later.
-  const geometryByClass = useMemo(() => ({
-    document: <icosahedronGeometry args={[1, 2]} />,
-    concept: <icosahedronGeometry args={[1, 1]} />,
-  }), []);
+  // Platonic-solid glyph per node type (the shared engine partitions one
+  // InstancedMesh per class). Documents → dodecahedron, query-concepts →
+  // octahedron, extended-concepts → tetrahedron: shape now carries the
+  // node-type axis, with the faceted/lit material doing the rest. Size
+  // (documentSize) is still handled per-instance via nodeScales.
+  const geometryByClass = useMemo(() => shapeGeometryByClass(), []);
 
   // ---------------------------------------------------------------------------
   // Dim state — hover and focus drive the same engine `activeIds` /
@@ -491,10 +492,16 @@ export const DocumentExplorer: React.FC<
           dimLabelOpacity={dimState?.alpha ?? 1}
           showArrows={false}
           showEdgeLabels={false}
-          showNodeLabels={settings?.visual?.showLabels !== false}
+          showNodeLabels={settings?.visual?.showNodeLabels !== false}
           edgeOpacity={settings?.visual?.showEdges === false ? 0 : 0.45}
           linkWidth={1}
           nodeSize={settings?.visual?.nodeSize ?? 1}
+          lit={
+            (settings?.visual?.lightingFollowsProjection ?? false)
+              ? (settings?.projection ?? '3D') === '3D'
+              : (settings?.visual?.lighting ?? 'flat') === 'lit'
+          }
+          orientPullback={0.45}
           enableDrag
           enableZoom={settings?.interaction?.enableZoom !== false}
           enablePan={settings?.interaction?.enablePan !== false}

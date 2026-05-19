@@ -64,6 +64,10 @@ export interface NodesProps {
   lit?: boolean;
   selectedId?: string | null;
   onSelect?: (id: string | null) => void;
+  /** Left double-click on a node (two clicks <300ms, same node, not a
+   *  drag). Drives the orient-and-frame focus action. Independent of
+   *  onSelect — the double doesn't re-toggle selection. */
+  onNodeDoubleClick?: (id: string) => void;
   onHover?: (id: string | null) => void;
   onContextMenu?: (id: string, event: PointerEvent) => void;
   onDragStart?: DragHandlers['onDragStart'];
@@ -166,6 +170,7 @@ function NodeClassMesh({
   nodeSize = 1,
   selectedId,
   onSelect,
+  onNodeDoubleClick,
   onHover,
   onContextMenu,
   onDragStart,
@@ -263,6 +268,11 @@ function NodeClassMesh({
   // down and up still resolves as a click rather than a drag.
   const downRef = useRef<{ id: string; x: number; y: number; moved: boolean } | null>(null);
   const DRAG_THRESHOLD = 4;
+  // Last resolved single-click, for double-click detection: a second
+  // click on the same node within this window is a double-click (fires
+  // focus instead of re-toggling selection).
+  const lastClickRef = useRef<{ id: string; t: number } | null>(null);
+  const DOUBLE_CLICK_MS = 300;
 
   const localToNodeId = (local: number | null | undefined): string | null => {
     if (local == null) return null;
@@ -312,9 +322,28 @@ function NodeClassMesh({
       e.stopPropagation();
       onDragEnd?.(e);
     } else if (clickedId) {
-      // Treated as a click — toggle selection.
-      if (!hiddenIds || !hiddenIds.has(clickedId)) {
+      if (hiddenIds && hiddenIds.has(clickedId)) return;
+      // Monotonic clock (matches the orient tween); Date.now() can jump
+      // backwards on an NTP step and falsely split/merge a click pair.
+      const now = performance.now();
+      const prev = lastClickRef.current;
+      if (
+        onNodeDoubleClick &&
+        prev &&
+        prev.id === clickedId &&
+        now - prev.t < DOUBLE_CLICK_MS
+      ) {
+        // Double-click: focus the camera on this node. The first click
+        // of the pair may have toggled selection either way; force the
+        // focused node selected so focus always leaves it highlighted
+        // (coherent regardless of its pre-click state). Consume the pair.
+        lastClickRef.current = null;
+        if (selectedId !== clickedId) onSelect?.(clickedId);
+        onNodeDoubleClick(clickedId);
+      } else {
+        // Single click — toggle selection; arm double-click detection.
         onSelect?.(selectedId === clickedId ? null : clickedId);
+        lastClickRef.current = { id: clickedId, t: now };
       }
     }
   };

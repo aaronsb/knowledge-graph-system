@@ -1,0 +1,192 @@
+/**
+ * From a PCA frame to a camera pose — the pure half of orientAndFrame.
+ *
+ * pcaFrame answers "where is the cloud, which way does it face, how big
+ * is the part to frame". This turns that into a concrete perspective
+ * camera pose: a position, a look-at target, and an up vector that puts
+ * the broad face square to the screen and fills the viewport with the
+ * caller's intended overscan.
+ *
+ * Kept pure and three.js-free so it unit-tests in isolation (like
+ * pcaFrame / positions): the hook (useOrientAndFrame) owns the tween,
+ * useThree wiring, OrbitControls cancellation, and the 2D/degenerate
+ * fallbacks — this file owns only the geometry, which is the part with
+ * non-obvious math worth locking down with tests.
+ *
+ * @verified 726f5d45
+ */
+
+import type { PcaFrame, Vec3 } from './pcaFrame';
+
+/** A camera pose: where to stand, what to look at, which way is up.  @verified 726f5d45 */
+export interface CameraPose {
+  position: Vec3;
+  target: Vec3;
+  /** Up vector — the cloud's mid axis, so screen roll is deterministic. */
+  up: Vec3;
+}
+
+/** Inputs describing the viewport + the caller's framing intent.  @verified 726f5d45 */
+export interface OrientViewOptions {
+  /** Vertical field of view, degrees (THREE.PerspectiveCamera.fov). */
+  fovDeg: number;
+  /** Viewport aspect (width / height). */
+  aspect: number;
+  /**
+   * Viewport-aware minimum-distance fraction (the safety *floor*, not the
+   * primary distance). The framing is depth-anchored: the camera stands
+   * at the cluster's near face (≈ its minor-axis half-depth), which is
+   * the tight, fills-the-viewport look the user picked. That term alone
+   * collapses to ~0 for a flat or tiny cluster (hMinor→0), dropping the
+   * camera into a node. `fill` is the guard: distance is never closer
+   * than `fill ×` the exact face-on fit, so a degenerate cluster still
+   * gets a viewport-sane frame while normal blobby graphs are unaffected
+   * (their depth anchor dominates the floor). Lower = the floor allows
+   * closer before it kicks in. Default DEFAULT_FILL in useOrientAndFrame.
+   */
+  fill?: number;
+  /**
+   * Pull-back margin, as a fraction of the exact face-on fit, added on
+   * top of the depth anchor. This is the knob that actually tunes
+   * first-load closeness now that `fill` is only the floor: 0 = camera
+   * sits right at the cluster's near face (tightest), higher backs the
+   * camera off by that fraction of a full fit. Viewport-aware (scales
+   * with graph size + viewport), so one value behaves across datasets.
+   * Default DEFAULT_PULLBACK in useOrientAndFrame.
+   */
+  pullback?: number;
+  /**
+   * The current camera position MINUS the box centre, in world space.
+   * Used only on a non-focus orient (first-load / whole-graph): its
+   * minor-axis component picks which side of the broad face the camera
+   * lands on, so re-framing keeps the user roughly where they were.
+   * Omit (or zero) on first load → deterministic +minor.
+   */
+  currentOffset?: Vec3;
+  /**
+   * Focus mode (double-click a node). The clicked node's world position.
+   * When set it overrides `currentOffset` and changes the intent: the
+   * camera looks AT this node (it becomes the centred, nearest point)
+   * and the side is chosen so the *bulk of the graph orients behind it*
+   * — camera on the side the node is displaced toward, away from the
+   * orientation centroid. A near-centroid node (≈50/50 split) can't be
+   * "in front" of anything; we take the deterministic side and let the
+   * tween carry the user through the possibly-large swing without them
+   * getting lost (user's stated intent).
+   */
+  focusPoint?: Vec3;
+}
+
+const dot = (a: Vec3, b: Vec3) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+const add = (a: Vec3, b: Vec3): Vec3 => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
+const scale = (a: Vec3, s: number): Vec3 => [a[0] * s, a[1] * s, a[2] * s];
+
+/**
+ * Is the cloud too round for a meaningful broad face?
+ *
+ * When the largest and smallest variances are within `ratio` of each
+ * other the blob is roughly spherical: the eigenvectors are numerically
+ * unstable and Jacobi will hand back a basis that jitters between calls,
+ * so every first-load would orient differently. The hook uses this to
+ * fall back to a deterministic angle instead of a PCA one.
+ *
+ * @verified 726f5d45
+ */
+export function isNearSpherical(frame: PcaFrame, ratio = 1.5): boolean {
+  const [vMax, , vMin] = frame.variances;
+  if (vMax <= 1e-9) return true; // no spread at all → degenerate
+  if (vMin <= 1e-9) return false; // flat/linear → broad face is well-defined
+  return vMax / vMin < ratio;
+}
+
+/**
+ * Compute the perspective camera pose that frames the PCA extent box
+ * face-on with overscan.
+ *
+ * The camera looks along the minor axis (perpendicular to the broad
+ * face); `up` is the mid axis so screen roll is fixed; the major axis
+ * therefore runs across the screen horizontally. Distance is whichever
+ * of the horizontal/vertical fits is tighter, scaled by `fill`, plus the
+ * box's own minor-axis half-depth so it never clips the near side.
+ *
+ * Assumes the caller has already ruled out the near-spherical case
+ * (isNearSpherical) — here the axes are taken as meaningful.
+ *
+ * @verified 726f5d45
+ */
+export function orientedPerspectiveView(
+  frame: PcaFrame,
+  opts: OrientViewOptions
+): CameraPose {
+  const { center, axes, bounds } = frame;
+  const [major, mid, minor] = axes;
+  const fill = opts.fill ?? 0.2;
+  const pullback = opts.pullback ?? 0;
+
+  // Box centre in world space: orientation centroid + the extent box's
+  // offset along each axis (the extent set need not be centred on it).
+  const mid0 = (bounds.min[0] + bounds.max[0]) / 2;
+  const mid1 = (bounds.min[1] + bounds.max[1]) / 2;
+  const mid2 = (bounds.min[2] + bounds.max[2]) / 2;
+  const boxCenter = add(
+    center,
+    add(add(scale(major, mid0), scale(mid, mid1)), scale(minor, mid2))
+  );
+
+  // Half-extents along major (screen-horizontal), mid (screen-vertical),
+  // minor (toward camera). Floor so a single-node focus still frames.
+  const hMajor = Math.max((bounds.max[0] - bounds.min[0]) / 2, 0.5);
+  const hMid = Math.max((bounds.max[1] - bounds.min[1]) / 2, 0.5);
+  const hMinor = Math.max((bounds.max[2] - bounds.min[2]) / 2, 0);
+
+  const vFov = (opts.fovDeg * Math.PI) / 180;
+  const hFov = 2 * Math.atan(Math.tan(vFov / 2) * opts.aspect);
+  // Distance at which the box exactly fits each screen axis; the tighter
+  // (larger) of the two is an exact face-on fit.
+  const fitV = hMid / Math.tan(vFov / 2);
+  const fitH = hMajor / Math.tan(hFov / 2);
+  const exactFit = Math.max(fitV, fitH);
+  // Depth-anchored: stand at the cluster's near face — its minor-axis
+  // half-depth, plus a small guard so the camera never sits on the
+  // focal node's own surface. This is the tight "fills the viewport,
+  // spills slightly" framing the user selected.
+  const NEAR_GUARD = 1;
+  // Depth anchor + viewport-aware pull-back. pullback=0 ⇒ camera right
+  // at the near face (tightest); >0 backs off by that fraction of the
+  // exact face-on fit, so it eases out uniformly across graph sizes.
+  const depthAnchored = hMinor + NEAR_GUARD + exactFit * pullback;
+  // Viewport-aware floor: a flat/tiny cluster has hMinor≈0, so the depth
+  // anchor alone would drop the camera into the focal node. Never come
+  // closer than `fill ×` the exact face-on fit — for a normal blobby
+  // graph the depth anchor is larger and dominates (look unchanged);
+  // for a degenerate one the floor produces a sane frame instead.
+  const dist = Math.max(depthAnchored, exactFit * fill);
+
+  // Side selection.
+  //  - Focus (a node was clicked): put the camera on the side the node
+  //    is displaced toward relative to the orientation centroid, so the
+  //    node is nearest and the bulk falls behind it. dot ≈ 0 ⇒ the node
+  //    sits in the middle (≈50/50) ⇒ deterministic +side, tween covers
+  //    the swing.
+  //  - Otherwise: stay on whichever side the camera is already on
+  //    (default +minor on first load when no offset given).
+  let side: number;
+  if (opts.focusPoint) {
+    const fx = opts.focusPoint[0] - center[0];
+    const fy = opts.focusPoint[1] - center[1];
+    const fz = opts.focusPoint[2] - center[2];
+    side = fx * minor[0] + fy * minor[1] + fz * minor[2] < 0 ? -1 : 1;
+  } else {
+    side = opts.currentOffset && dot(opts.currentOffset, minor) < 0 ? -1 : 1;
+  }
+
+  // Focus looks AT the clicked node (centred, nearest); a whole-graph
+  // orient looks at the extent box centre.
+  const target = opts.focusPoint ?? boxCenter;
+
+  return {
+    position: add(target, scale(minor, side * dist)),
+    target,
+    up: mid,
+  };
+}
