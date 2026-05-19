@@ -37,9 +37,11 @@ const MAX_FRAMES = 600;
  * and spilling ~15% past the edges. <1 is deliberate overscan; 0.7
  * pulls the camera ~30% closer than a pure sphere-fit so the actual
  * node spread fills the viewport and the outermost nodes/labels sit
- * just outside it. Tunable to taste.
+ * just outside it. Tunable to taste — lower = closer. Provisional: the
+ * planned PCA tangent-orient action will compute the true projected
+ * extent and largely supersede this single-constant heuristic.
  */
-const FILL = 0.7;
+const FILL = 0.5;
 
 const tmpMin = new THREE.Vector3();
 const tmpMax = new THREE.Vector3();
