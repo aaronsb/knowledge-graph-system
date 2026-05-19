@@ -314,6 +314,10 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
     try {
       await apiClient.saveProviderConfig(provider, buildPayload(provider));
       await rehydrateDraft(provider);
+      // Keep the active provider's read-only detail line in sync — it reads
+      // from extractionConfig, which the save may have just changed.
+      const extraction = await apiClient.getExtractionConfig();
+      setExtractionConfig(extraction);
     } catch (err) {
       onError(err instanceof Error ? err.message : `Failed to save ${provider} config`);
     } finally {
@@ -332,6 +336,10 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
       const { models } = await apiClient.getModelCatalog();
       setCatalog(models);
       await rehydrateDraft(provider);
+      // Active provider's detail line reads extractionConfig — refresh it in
+      // case the refreshed catalog changed what its active model resolves to.
+      const extraction = await apiClient.getExtractionConfig();
+      setExtractionConfig(extraction);
     } catch (err) {
       onError(err instanceof Error ? err.message : `Failed to get models for ${provider}`);
     } finally {
