@@ -72,6 +72,12 @@ as new Cypher node labels.
 - The visualization derives the glyph from `node_class` when present, else
   from `ontology` — a strict superset of the no-schema rendering PR, so that
   PR is not wasted work.
+- The facet value is surfaced as an **optional lozenge label** — a small
+  pill rendered beside the node, distinct from the basic name label, that
+  toggles on/off independently. Off by default for an uncluttered canvas;
+  on when the user is introspecting *what kinds of things* are present.
+  This is the legibility affordance a real Cypher label would otherwise
+  have given for free.
 - Genuinely non-concept entities (if any are ever needed — e.g. an external
   artifact that is categorically not a claim) remain the *only* candidates
   for a new node label, decided case-by-case in their own ADR, not
@@ -97,12 +103,20 @@ as new Cypher node labels.
   unchanged until a facet is written.
 - The no-schema glyph-rendering PR remains valid as the fallback path; this
   only extends it.
+- Optional, toggleable lozenge labels recover the *human-legibility* a real
+  label would have provided — the facet is readable on demand — while
+  keeping the default canvas uncluttered. They double as an introspection
+  tool: flip them on to audit what `node_class` values the graph actually
+  carries, independent of the (lossy, 4-way) shape encoding.
 
 ### Negative
 
-- A property-based facet is weaker for query/constraint than a real label
-  (no native `MATCH (n:Type)`); per-class rendering must filter on a
-  property, with whatever AGE indexing cost that implies.
+- A property-based facet is weaker for **query/constraint** than a real
+  label: no native `MATCH (n:Type)`, and per-class rendering must filter on
+  a property with whatever AGE indexing cost that implies (open question
+  4). The lozenge-label affordance does *not* relieve this — it restores
+  human legibility, not query power; this is the genuine residual cost of
+  choosing a property over a label.
 - Yet another self-organizing axis to steward (open question 2/3) — risks
   the same maintenance burden ADR-200 calls out if ownership is unclear.
 
@@ -110,6 +124,9 @@ as new Cypher node labels.
 
 - The shape vocabulary is bounded by the renderer's solid family (4 today);
   the facet's cardinality and the glyph mapping must be designed together.
+  Shape collisions (many facet values, 4 solids) are tolerable precisely
+  because the lozenge label disambiguates exactly — shape is the
+  at-a-glance gestalt, the lozenge is the precise read.
 - Forces a decision on facet-write ownership that the system will need
   regardless of glyphs.
 
