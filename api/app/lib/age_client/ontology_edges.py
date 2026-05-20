@@ -97,7 +97,15 @@ class OntologyEdgesMixin:
 
         Used during promotion execution to find which sources to reassign.
         Follows any edge type between the anchor concept and its neighbor concepts,
-        then finds sources of those neighbors scoped to the given ontology.
+        then finds sources of those neighbors scoped to the given ontology — plus
+        the anchor's own sources.
+
+        Implemented as two fixed-length queries unioned in Python. The previous
+        single-query form combined a bound variable with an aggregate in one
+        WITH (`neighbor_sources + collect(...)`), which Apache AGE rejects
+        ("must be either part of an explicitly listed key or used inside an
+        aggregate function") — the error was swallowed and every promotion
+        silently reassigned zero sources.
 
         Args:
             concept_id: The anchor concept ID
@@ -106,21 +114,29 @@ class OntologyEdgesMixin:
         Returns:
             List of source_id strings
         """
-        query = """
+        # Anchor's own sources scoped to the ontology
+        anchor_query = """
+        MATCH (anchor:Concept {concept_id: $cid})-->(s:Source)-[:SCOPED_BY]->(o:Ontology {name: $ontology})
+        RETURN DISTINCT s.source_id as source_id
+        """
+        # Sources of the anchor's first-order concept neighbors
+        neighbor_query = """
         MATCH (anchor:Concept {concept_id: $cid})-[]-(neighbor:Concept)
         MATCH (neighbor)-->(s:Source)-[:SCOPED_BY]->(o:Ontology {name: $ontology})
-        WITH collect(DISTINCT s.source_id) as neighbor_sources
-        OPTIONAL MATCH (anchor2:Concept {concept_id: $cid})-->(s2:Source)-[:SCOPED_BY]->(o2:Ontology {name: $ontology})
-        WITH neighbor_sources + collect(DISTINCT s2.source_id) as all_sources
-        UNWIND all_sources as sid
-        RETURN DISTINCT sid as source_id
+        RETURN DISTINCT s.source_id as source_id
         """
+        params = {"cid": concept_id, "ontology": ontology_name}
+        source_ids: List[str] = []
+        seen = set()
         try:
-            rows = self._execute_cypher(
-                query,
-                params={"cid": concept_id, "ontology": ontology_name},
-            )
-            return [row["source_id"] for row in (rows or []) if row.get("source_id")]
+            for query in (anchor_query, neighbor_query):
+                rows = self._execute_cypher(query, params=params)
+                for row in (rows or []):
+                    sid = row.get("source_id")
+                    if sid and sid not in seen:
+                        seen.add(sid)
+                        source_ids.append(sid)
+            return source_ids
         except Exception as e:
             logger.error(
                 f"Failed to get first-order source IDs for "
