@@ -122,7 +122,7 @@ export function useOrientAndFrame(
 ): OrientAndFrame {
   const camera = useThree((s) => s.camera);
   const controls = useThree((s) => s.controls) as
-    | (THREE.EventDispatcher & {
+    | (THREE.EventDispatcher<{ start: object }> & {
         target: THREE.Vector3;
         update: () => void;
       })

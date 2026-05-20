@@ -6,7 +6,7 @@
  * (separate id/label, edge-type palette, directed arrows).
  */
 
-import type { APIGraphNode, APIGraphLink } from '../../types/graph';
+import type { RawGraphNode, RawGraphLink } from '../../utils/cypherResultMapper';
 import type { NodeColorMode } from '../common';
 
 export type { NodeColorMode };
@@ -23,8 +23,10 @@ export interface EngineNode {
   degree: number;
   /** Whether the engine should hold this node's position against the sim. */
   pinned?: boolean;
-  /** Full API payload passed through so widgets can read without re-fetch. */
-  source?: APIGraphNode;
+  /** Full raw-graph payload passed through so widgets can read without re-fetch.
+   *  This is the store's canonical RawGraphNode — what transformForEngine
+   *  actually receives — not the REST APIGraphNode. */
+  source?: RawGraphNode;
 }
 
 /** An edge as consumed by the unified rendering engine.  @verified c17bbeb9 */
@@ -37,8 +39,9 @@ export interface EngineEdge {
   type: string;
   /** Optional weight, may drive line thickness or arrow size. */
   weight?: number;
-  /** Full API payload passed through. */
-  source?: APIGraphLink;
+  /** Full raw-graph payload passed through — the store's canonical
+   *  RawGraphLink, not the REST APIGraphLink. */
+  source?: RawGraphLink;
 }
 
 /** Data shape the ForceGraph explorer plugin consumes.  @verified c17bbeb9 */

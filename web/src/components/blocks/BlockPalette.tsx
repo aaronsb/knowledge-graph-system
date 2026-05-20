@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { Search, Network, Filter, GitBranch, Circle, Hash, Play, Square, Merge, Split, Ban, Sparkles, Snowflake, HelpCircle, Shield, FileText } from 'lucide-react';
+import { Search, Network, Filter, GitBranch, Circle, Hash, Play, Square, Merge, Split, Ban, Sparkles, Snowflake, HelpCircle, Shield, FileText, type LucideIcon } from 'lucide-react';
 import type { BlockType } from '../../types/blocks';
 import { BlockHelpPopup } from './BlockHelpPopup';
 
@@ -15,7 +15,7 @@ interface BlockPaletteProps {
 
 interface PaletteBlock {
   type: BlockType;
-  icon: React.ElementType;
+  icon: LucideIcon;
   label: string;
   description: string;
   color: string;

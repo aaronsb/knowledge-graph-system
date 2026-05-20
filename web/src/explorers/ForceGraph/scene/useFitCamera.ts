@@ -56,7 +56,7 @@ const SETTLE_MS = 2000;
  */
 export function useFitCamera(orient: () => void, nodes: EngineNode[]): void {
   const invalidate = useThree((s) => s.invalidate);
-  const controls = useThree((s) => s.controls) as EventDispatcher | null;
+  const controls = useThree((s) => s.controls) as EventDispatcher<{ start: object }> | null;
 
   const armedRef = useRef(false);
   const firedRef = useRef(false);
