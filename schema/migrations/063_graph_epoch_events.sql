@@ -11,14 +11,14 @@
 --   occurred_at  - wall-clock axis (always present, semantically meaningful
 --                  only for kinds where it is — see `kind`)
 --   kind         - discriminator for whether wall-clock has meaning
---                  ('ingestion'/'edit' = yes; 'reasoning'/'breathing' = forensic only)
+--                  ('ingestion'/'edit' = yes; 'reasoning'/'annealing' = forensic only)
 --   actor        - user id, agent session id, system component
 --   counter_after- snapshot of graph_change_counter post-event (cross-ref to ADR-079)
 
 CREATE TABLE IF NOT EXISTS kg_api.graph_epochs (
     event_id      BIGSERIAL PRIMARY KEY,
     occurred_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    kind          TEXT NOT NULL CHECK (kind IN ('ingestion', 'reasoning', 'breathing', 'edit')),
+    kind          TEXT NOT NULL CHECK (kind IN ('ingestion', 'reasoning', 'annealing', 'edit')),
     actor         TEXT,
     counter_after BIGINT,
     metadata      JSONB NOT NULL DEFAULT '{}'::jsonb
@@ -37,7 +37,7 @@ COMMENT ON COLUMN kg_api.graph_epochs.event_id IS
     'Monotonic logical-time id. Foreign-keyed by Instance.created_at_event_id.';
 
 COMMENT ON COLUMN kg_api.graph_epochs.kind IS
-    'ingestion | reasoning | breathing | edit. Determines whether occurred_at is semantically meaningful for the rows attributable to this event.';
+    'ingestion | reasoning | annealing | edit. Determines whether occurred_at is semantically meaningful for the rows attributable to this event.';
 
 -- Helper: record a new epoch event and return its event_id.
 -- Called at the *start* of an ingestion job (or other mutation) so the

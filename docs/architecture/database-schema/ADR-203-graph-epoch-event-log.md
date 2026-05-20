@@ -29,7 +29,7 @@ Two consequences fall out of that definition:
 
 Issue #187 originally framed this as "no temporal ordering capability for concept evolution." The original proposal — `PRECEDED_BY` / `EVOLVED_INTO` relationship types inferred from ordering — conflates two things that should remain distinct:
 
-- **Logical time**: monotonic ordering of mutations to the graph. Always meaningful, including for activity that has no useful wall-clock (agent reasoning, ontology breathing, manual restructuring).
+- **Logical time**: monotonic ordering of mutations to the graph. Always meaningful, including for activity that has no useful wall-clock (agent reasoning, ontology annealing, manual restructuring).
 - **Wall-clock time**: when an event physically happened. Always present in absolute terms, but **semantically meaningful only for some kinds of events** — primarily external-corpus ingestion. An agent creating 200 concepts during a reasoning loop at 15:03 UTC doesn't make those concepts "from 15:03" in any useful sense.
 
 The system needs both, treated as orthogonal dimensions. It also needs the data structure that lets the per-concept *re-evidence stream* be walked honestly — without inventing causal edges the data cannot justify.
@@ -50,7 +50,7 @@ Introduce a dedicated **epoch event log** alongside the existing change counter,
 CREATE TABLE kg_api.graph_epochs (
     event_id     BIGSERIAL PRIMARY KEY,
     occurred_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    kind         TEXT NOT NULL,         -- 'ingestion' | 'reasoning' | 'breathing' | 'edit'
+    kind         TEXT NOT NULL,         -- 'ingestion' | 'reasoning' | 'annealing' | 'edit'
     actor        TEXT,                  -- user_id, agent session id, system component
     counter_after BIGINT,               -- graph_change_counter snapshot post-event (cross-ref)
     metadata     JSONB DEFAULT '{}'::jsonb
@@ -68,7 +68,7 @@ CREATE INDEX idx_graph_epochs_kind        ON kg_api.graph_epochs(kind, occurred_
 A new `graph_epochs` row is recorded **once per logical unit of graph mutation**:
 
 - `kind='ingestion'` — one row per ingestion job *invocation*, recorded at job *start*, so the assigned `event_id` is available to tag every Instance created during that invocation. A resumed job records a fresh `event_id` with `metadata.resumed_from_chunk` indicating the split — this honestly preserves "the work spanned multiple sessions" rather than papering over it.
-- `kind='breathing'` — one row per ontology-breathing pass (cross-ref ADR-200).
+- `kind='annealing'` — one row per ontology annealing pass (cross-ref ADR-200).
 - `kind='edit'` — one row per explicit manual mutation.
 - `kind='reasoning'` — one row per agent reasoning session that mutates the graph.
 
@@ -105,7 +105,7 @@ Out of scope (deferred to follow-up issues):
 - Analytics queries (anchor / hot / stale / acceleration signals).
 - Concept-level event_id columns.
 - Backfilling event_ids onto historical Instances.
-- Wiring up `kind='breathing'` / `'reasoning'` / `'edit'` events. These will land as those subsystems independently grow event awareness.
+- Wiring up `kind='annealing'` / `'reasoning'` / `'edit'` events. These will land as those subsystems independently grow event awareness.
 
 ## Consequences
 
@@ -132,7 +132,7 @@ Out of scope (deferred to follow-up issues):
 
 Stamp the wall-clock directly onto Concept and Instance properties — no event table.
 
-**Rejected.** Forces wall-clock onto every node, including ones created during agent reasoning or breathing where wall-clock is semantically noise. Conflates the two dimensions the design is trying to separate. Also makes it impossible to attribute multiple Instances to "the same ingestion job" without inventing a separate grouping mechanism.
+**Rejected.** Forces wall-clock onto every node, including ones created during agent reasoning or annealing where wall-clock is semantically noise. Conflates the two dimensions the design is trying to separate. Also makes it impossible to attribute multiple Instances to "the same ingestion job" without inventing a separate grouping mechanism.
 
 ### B. Reuse `graph_change_counter` as the event_id
 

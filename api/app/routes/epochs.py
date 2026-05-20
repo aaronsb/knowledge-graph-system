@@ -28,7 +28,7 @@ router = APIRouter(prefix="/epochs", tags=["epochs"])
 async def list_epochs(
     kind: Optional[str] = Query(
         None,
-        description="Filter to a specific event kind (ingestion, reasoning, breathing, edit)",
+        description="Filter to a specific event kind (ingestion, reasoning, annealing, edit)",
     ),
     since: Optional[datetime] = Query(
         None,
