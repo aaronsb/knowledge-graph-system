@@ -28,11 +28,11 @@ logger = logging.getLogger(__name__)
 
 
 # --- Catalog-driven vision model selection (ADR-801) -----------------------
-# Vision provider/model selection must come from the dynamic model catalog's
-# per-model supports_vision flag, not hardcoded lists — the same "no
-# hardcoded models" decision ADR-801 applies to extraction, applied here
-# where it had regressed. Resolution order: explicit param → catalog →
-# VISION_MODEL env (bootstrap) → hardcoded literal (last resort, warned).
+# Vision provider/model selection comes from the dynamic model catalog's
+# per-model supports_vision flag, not hardcoded lists. Resolution order:
+# explicit param → catalog → VISION_MODEL env → ValueError. No literal
+# fallback — a deployment without a populated catalog and no env override
+# is a configuration error the operator must fix.
 
 def _catalog_vision_models(provider: str) -> list[dict]:
     """Enabled, vision-capable catalog rows for a provider, by sort_order.
@@ -40,16 +40,15 @@ def _catalog_vision_models(provider: str) -> list[dict]:
     Empty list when the catalog is unavailable or has no vision model for
     the provider (e.g. its 'Get models' has not been run yet).
 
-    A pooled checkout + one indexed SELECT per call. Callers are the
-    image-ingestion provider construction and the admin enumeration path
-    — NOT a per-image hot loop; memoization would only add catalog-change
-    invalidation complexity for no measured benefit at this frequency.
+    Shares the module-level cached AGEClient with ai_providers' catalog
+    helpers (see ai_providers._get_catalog_age_client) so repeated calls
+    don't churn fresh connection pools.
     """
     try:
         from .model_catalog import list_catalog
-        from .age_client import AGEClient
+        from .ai_providers import _get_catalog_age_client
 
-        client = AGEClient()
+        client = _get_catalog_age_client()
         conn = client.pool.getconn()
         try:
             rows = list_catalog(conn, provider=provider, enabled_only=True)
@@ -58,13 +57,12 @@ def _catalog_vision_models(provider: str) -> list[dict]:
             client.pool.putconn(conn)
     except Exception:
         # Deliberate degradation: a catalog/DB failure must fall through to
-        # env/literal, never break image ingestion (see _resolve_vision_model
-        # and test_catalog_lookup_swallows_db_errors_and_returns_empty). Log
-        # at debug so a *persistent* failure is diagnosable — the warned
-        # literal fallback is the user-visible signal.
+        # env/error, never silently bind a stale model id. Log at debug so a
+        # *persistent* failure is diagnosable — the resolver's raise is the
+        # user-visible signal.
         logger.debug(
             f"Vision catalog lookup failed for '{provider}'; "
-            f"degrading to env/literal", exc_info=True)
+            f"degrading to env/error", exc_info=True)
         return []
 
 
@@ -457,7 +455,8 @@ class AnthropicVisionProvider(VisionProvider):
                 }
             ],
         }
-        if not self.model.startswith("claude-opus-4-7"):
+        from .ai_providers import _anthropic_drops_sampling_params
+        if not _anthropic_drops_sampling_params(self.model):
             request_kwargs["temperature"] = 0.1
 
         try:
@@ -555,7 +554,7 @@ class OllamaVisionProvider(VisionProvider):
 
         Args:
             base_url: Ollama API base URL (defaults to OLLAMA_BASE_URL env or http://localhost:11434)
-            model: Vision model name (defaults to VISION_MODEL env or granite-vision-3.3:2b)
+            model: Vision model id — resolved via catalog → VISION_MODEL env if omitted (ADR-801).
         """
         self.base_url = base_url or os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
         self.model = _resolve_vision_model("ollama", model)
