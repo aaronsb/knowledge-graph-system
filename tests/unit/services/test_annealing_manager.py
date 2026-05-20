@@ -24,10 +24,14 @@ def mock_client():
     # Default: ecological snapshot needs real dict from get_ontology_stats
     client.get_ontology_stats.return_value = {"concept_count": 10}
 
-    # Default: connection pool mock for _store_proposal
+    # Default: no anchored concepts / no open proposals (queue-dedup guards)
+    client._execute_cypher.return_value = []
+
+    # Default: connection pool mock for _store_proposal / _get_open_proposal_targets
     mock_conn = MagicMock()
     mock_cursor = MagicMock()
     mock_cursor.fetchone.return_value = (1,)
+    mock_cursor.fetchall.return_value = []
     mock_conn.cursor.return_value.__enter__ = MagicMock(return_value=mock_cursor)
     mock_conn.cursor.return_value.__exit__ = MagicMock(return_value=False)
     client.pool = MagicMock()
@@ -355,6 +359,82 @@ class TestStoreProposal:
         assert reviewed_by is None
         assert reviewed_at is None
         assert reviewer_notes is None
+
+
+@pytest.mark.unit
+class TestQueueDedup:
+    """Tests for the idempotency guards that stop the cycle re-proposing work."""
+
+    def test_get_open_proposal_targets_parses_rows(self, manager, mock_client):
+        """Open proposals split into promotion-anchor and demotion-ontology sets."""
+        cursor = (
+            mock_client.pool.getconn.return_value
+            .cursor.return_value.__enter__.return_value
+        )
+        cursor.fetchall.return_value = [
+            ("promotion", "primordial", "concept-1"),
+            ("promotion", "primordial", "concept-2"),
+            ("demotion", "weak-domain", None),
+        ]
+
+        open_promotions, open_demotions = manager._get_open_proposal_targets()
+
+        assert open_promotions == {"concept-1", "concept-2"}
+        assert open_demotions == {"weak-domain"}
+
+    def test_get_anchored_concept_ids_parses_rows(self, manager, mock_client):
+        """Anchored concept IDs are collected from ANCHORED_BY edges."""
+        mock_client._execute_cypher.return_value = [
+            {"concept_id": "anchor-1"},
+            {"concept_id": "anchor-2"},
+        ]
+
+        assert manager._get_anchored_concept_ids() == {"anchor-1", "anchor-2"}
+
+    def test_promotion_candidates_exclude_anchored_concepts(self, manager, mock_client):
+        """A concept that already anchors an ontology is not a promotion candidate."""
+        # c1 already anchors an ontology
+        mock_client._execute_cypher.return_value = [{"concept_id": "c1"}]
+        mock_client.get_concept_degree_ranking.return_value = [
+            {"concept_id": "c1", "label": "Already Promoted", "degree": 40, "description": ""},
+            {"concept_id": "c2", "label": "Fresh Concept", "degree": 30, "description": ""},
+        ]
+
+        result = manager._find_promotion_candidates(
+            [{"ontology": "primordial"}], min_degree=10
+        )
+
+        assert [c["concept_id"] for c in result] == ["c2"]
+
+    @pytest.mark.asyncio
+    async def test_cycle_skips_candidates_with_open_proposals(self, mock_client, mock_scorer):
+        """run_annealing_cycle skips candidates that already have an open proposal."""
+        manager = AnnealingManager(mock_client, mock_scorer, ai_provider=None)
+        mock_scorer.score_all_ontologies.return_value = [
+            {"ontology": "weak-a", "protection_score": 0.01},
+            {"ontology": "weak-b", "protection_score": 0.02},
+        ]
+        mock_scorer.recompute_all_centroids.return_value = 0
+        mock_client.get_ontology_node.return_value = {"lifecycle_state": "active"}
+        mock_client.get_concept_degree_ranking.return_value = []
+
+        # 'weak-a' already has an open demotion proposal in the queue
+        manager._get_open_proposal_targets = MagicMock(
+            return_value=(set(), {"weak-a"})
+        )
+
+        evaluated = []
+
+        async def fake_eval(candidate, epoch):
+            evaluated.append(candidate["ontology"])
+            return None
+
+        manager._evaluate_and_store_demotion = fake_eval
+
+        await manager.run_annealing_cycle(demotion_threshold=0.15)
+
+        assert "weak-a" not in evaluated  # deduped — already has an open proposal
+        assert "weak-b" in evaluated      # still evaluated
 
 
 # ==========================================================================
