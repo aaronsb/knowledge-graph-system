@@ -3,7 +3,7 @@
 from datetime import datetime
 from enum import Enum
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 
 class LifecycleState(str, Enum):
@@ -262,6 +262,29 @@ class AnnealingCycleResult(BaseModel):
     edges_deleted: int = 0
     cycle_epoch: int = 0
     dry_run: bool = False
+
+
+class AnnealingStatus(BaseModel):
+    """Health, configuration, and schedule of the annealing loop (ADR-703).
+
+    Read-only insight surface for the ontology lifecycle admin panel. The
+    annealing loop runs autonomously by default — this exposes enough state
+    for an operator to understand what it is doing without dropping to the CLI.
+    """
+    enabled: bool
+    automation_level: str
+    options: Dict[str, str]
+    schedule_cron: Optional[str] = None
+    schedule_enabled: bool = False
+    last_run: Optional[datetime] = None
+    last_success: Optional[datetime] = None
+    last_failure: Optional[datetime] = None
+    next_run: Optional[datetime] = None
+    current_epoch: int = 0
+    last_annealing_epoch: int = 0
+    epoch_interval: int = 5
+    ontology_count: int = 0
+    proposals_by_status: Dict[str, int] = {}
 
 
 # =========================================================================

@@ -138,6 +138,7 @@ _CLI, web, FUSE, MCP, visualization_
 | [ADR-700](./user-interfaces/ADR-700-ontology-explorer.md) | Ontology Explorer | Draft |
 | [ADR-701](./user-interfaces/ADR-701-vocabulary-administration-interface.md) | Vocabulary Administration Interface | Draft |
 | [ADR-702](./user-interfaces/ADR-702-unified-graph-rendering-engine.md) | Unified Graph Rendering Engine | Proposed |
+| [ADR-703](./user-interfaces/ADR-703-ontology-lifecycle-administration-interface.md) | Ontology Lifecycle Administration Interface | Draft |
 
 ## AI/Embeddings
 _Providers, extraction, convergence, prompts_
