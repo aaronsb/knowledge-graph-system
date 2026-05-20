@@ -10,7 +10,7 @@ by the annealing worker. In hitl mode, proposals wait for human review.
 
 import logging
 from datetime import datetime, timezone
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Set, Tuple
 
 from api.app.lib.ontology_scorer import OntologyScorer
 from api.app.lib.annealing_evaluator import (
@@ -144,6 +144,29 @@ class AnnealingManager:
                 },
             }
 
+        # 5b. Idempotency guard: the cycle is graph-driven and re-derives
+        # candidates every run. Without this it re-proposes work already in the
+        # queue, piling up duplicates (the original 'duplicate demotion batch').
+        # Skip candidates that already have an open proposal — pending /
+        # approved / executing. Terminal proposals do not block re-proposal, so
+        # the cycle still self-heals when an ontology is later deleted.
+        open_promotions, open_demotions = self._get_open_proposal_targets()
+        if open_promotions or open_demotions:
+            before = (len(demotion_candidates), len(promotion_candidates))
+            demotion_candidates = [
+                c for c in demotion_candidates
+                if c.get("ontology") not in open_demotions
+            ]
+            promotion_candidates = [
+                c for c in promotion_candidates
+                if c.get("concept_id") not in open_promotions
+            ]
+            logger.info(
+                f"Queue dedup: demotion {before[0]}→{len(demotion_candidates)}, "
+                f"promotion {before[1]}→{len(promotion_candidates)} "
+                f"(skipped candidates with open proposals)"
+            )
+
         # 6. Evaluate and store proposals
         proposal_ids = []
         remaining = max_proposals
@@ -226,6 +249,9 @@ class AnnealingManager:
         existing_ontology_names = {
             s["ontology"].lower() for s in all_scores
         }
+        # Concepts that already anchor an ontology have been promoted already —
+        # exclude them so the graph-driven cycle does not keep re-proposing them.
+        anchored_concept_ids = self._get_anchored_concept_ids()
 
         for scores in all_scores:
             name = scores.get("ontology", "")
@@ -237,6 +263,10 @@ class AnnealingManager:
             for concept in ranking:
                 degree = concept.get("degree", 0)
                 if degree < min_degree:
+                    continue
+
+                # Skip concepts that already anchor an ontology
+                if concept.get("concept_id") in anchored_concept_ids:
                     continue
 
                 # Skip if a concept with this label is already an ontology
@@ -255,6 +285,63 @@ class AnnealingManager:
         # Sort by degree descending (strongest first)
         candidates.sort(key=lambda c: c.get("degree", 0), reverse=True)
         return candidates
+
+    def _get_open_proposal_targets(self) -> Tuple[Set[str], Set[str]]:
+        """Targets that already have an open (non-terminal) proposal.
+
+        The annealing cycle is graph-driven — it re-derives candidates from the
+        graph every run. Without this guard it re-proposes work already queued,
+        piling up duplicates. 'Open' means pending / approved / executing;
+        terminal proposals (executed / failed / rejected / expired) do not
+        block re-proposal, so the cycle still self-heals if an ontology is
+        later deleted.
+
+        Returns:
+            (open_promotion_anchor_ids, open_demotion_ontology_names)
+        """
+        open_promotions: Set[str] = set()
+        open_demotions: Set[str] = set()
+        try:
+            conn = self.client.pool.getconn()
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        SELECT proposal_type, ontology_name, anchor_concept_id
+                        FROM kg_api.annealing_proposals
+                        WHERE status IN ('pending', 'approved', 'executing')
+                    """)
+                    rows = cur.fetchall()
+                conn.commit()
+            finally:
+                self.client.pool.putconn(conn)
+            for proposal_type, ontology_name, anchor_concept_id in rows:
+                if proposal_type == "promotion" and anchor_concept_id:
+                    open_promotions.add(anchor_concept_id)
+                elif proposal_type == "demotion" and ontology_name:
+                    open_demotions.add(ontology_name)
+        except Exception as e:
+            logger.error(f"Failed to read open proposals for dedup: {e}")
+        return open_promotions, open_demotions
+
+    def _get_anchored_concept_ids(self) -> Set[str]:
+        """Concept IDs that already anchor an ontology (have an ANCHORED_BY edge).
+
+        Such concepts have already been promoted; the graph-driven cycle would
+        otherwise keep re-proposing them for promotion. Deleting an ontology
+        removes its ANCHORED_BY edge, making the concept eligible again — so the
+        cycle self-heals.
+        """
+        try:
+            rows = self.client._execute_cypher(
+                "MATCH (:Ontology)-[:ANCHORED_BY]->(c:Concept) "
+                "RETURN c.concept_id AS concept_id"
+            )
+            return {
+                r["concept_id"] for r in (rows or []) if r.get("concept_id")
+            }
+        except Exception as e:
+            logger.error(f"Failed to read anchored concepts: {e}")
+            return set()
 
     # =========================================================================
     # LLM Evaluation + Proposal Storage
