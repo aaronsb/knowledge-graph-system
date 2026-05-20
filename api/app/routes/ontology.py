@@ -40,6 +40,7 @@ from ..models.ontology import (
     AnnealingProposalListResponse,
     AnnealingProposalReviewRequest,
     AnnealingCycleResult,
+    AnnealingStatus,
     OntologyEdge,
     OntologyEdgesResponse,
     OntologyEdgeCreateRequest,
@@ -568,6 +569,80 @@ async def trigger_annealing_cycle(
         cycle_epoch=0,
         dry_run=dry_run,
     )
+
+
+@router.get("/annealing/status", response_model=AnnealingStatus)
+async def get_annealing_status(current_user: CurrentUser = None):
+    """
+    Annealing loop health, configuration, and schedule (ADR-703).
+
+    Read-only insight surface for the ontology lifecycle admin panel. Surfaces
+    the durable configuration (`annealing_options`), the scheduled cron job,
+    epoch gating state, and a proposal status breakdown — enough for an
+    operator to understand what the autonomous loop is doing.
+    """
+    def _to_bool(v) -> bool:
+        return str(v).strip().lower() in ("true", "1", "yes", "on")
+
+    def _to_int(v, default: int = 0) -> int:
+        try:
+            return int(float(v))
+        except (ValueError, TypeError):
+            return default
+
+    client = get_age_client()
+    try:
+        current_epoch = client.get_current_epoch()
+        conn = client.pool.getconn()
+        try:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute("SELECT key, value FROM kg_api.annealing_options")
+                options = {r["key"]: r["value"] for r in cur.fetchall()}
+
+                cur.execute("""
+                    SELECT schedule_cron, enabled, last_run, last_success,
+                           last_failure, next_run
+                    FROM kg_api.scheduled_jobs
+                    WHERE name = 'ontology_annealing'
+                """)
+                job = cur.fetchone()
+
+                cur.execute("""
+                    SELECT metric_name, counter FROM public.graph_metrics
+                    WHERE metric_name IN ('last_annealing_epoch', 'ontology_count')
+                """)
+                metrics = {r["metric_name"]: r["counter"] for r in cur.fetchall()}
+
+                cur.execute("""
+                    SELECT status, count(*) AS n
+                    FROM kg_api.annealing_proposals
+                    GROUP BY status
+                """)
+                proposals_by_status = {r["status"]: r["n"] for r in cur.fetchall()}
+        finally:
+            client.pool.putconn(conn)
+
+        return AnnealingStatus(
+            enabled=_to_bool(options.get("enabled", "true")),
+            automation_level=options.get("automation_level", "autonomous"),
+            options=options,
+            schedule_cron=job["schedule_cron"] if job else None,
+            schedule_enabled=bool(job["enabled"]) if job else False,
+            last_run=job["last_run"] if job else None,
+            last_success=job["last_success"] if job else None,
+            last_failure=job["last_failure"] if job else None,
+            next_run=job["next_run"] if job else None,
+            current_epoch=current_epoch,
+            last_annealing_epoch=_to_int(metrics.get("last_annealing_epoch", 0)),
+            epoch_interval=_to_int(options.get("epoch_interval", 5), 5),
+            ontology_count=_to_int(metrics.get("ontology_count", 0)),
+            proposals_by_status=proposals_by_status,
+        )
+    except Exception as e:
+        logger.error(f"Failed to get annealing status: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        client.close()
 
 
 # =========================================================================

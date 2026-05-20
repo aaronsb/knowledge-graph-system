@@ -13,6 +13,7 @@ import {
   Key,
   Users,
   Activity,
+  Network,
   AlertCircle,
   Loader2,
   CheckCircle,
@@ -23,6 +24,7 @@ import { AccountTab } from './AccountTab';
 import { UsersTab } from './UsersTab';
 import { RolesTab } from './RolesTab';
 import { SystemTab } from './SystemTab';
+import { OntologyTab } from './OntologyTab';
 import type { TabType } from './types';
 
 export const AdminDashboard: React.FC = () => {
@@ -32,6 +34,7 @@ export const AdminDashboard: React.FC = () => {
   const canViewUsers = hasPermission('users', 'read');
   const canViewRoles = hasPermission('rbac', 'read');
   const canViewSystemStatus = hasPermission('admin', 'status');
+  const canViewOntology = hasPermission('ontologies', 'read');
 
   // Tab state
   const [activeTab, setActiveTab] = useState<TabType>('account');
@@ -122,6 +125,15 @@ export const AdminDashboard: React.FC = () => {
                 label="System"
               />
             )}
+            {/* Ontology lifecycle tab - requires ontologies:read permission (ADR-703) */}
+            {canViewOntology && (
+              <TabButton
+                active={activeTab === 'ontology'}
+                onClick={() => setActiveTab('ontology')}
+                icon={<Network className="w-4 h-4" />}
+                label="Ontology"
+              />
+            )}
           </div>
         </div>
       </div>
@@ -168,6 +180,10 @@ export const AdminDashboard: React.FC = () => {
 
           {activeTab === 'system' && canViewSystemStatus && (
             <SystemTab onError={setError} />
+          )}
+
+          {activeTab === 'ontology' && canViewOntology && (
+            <OntologyTab onError={setError} onSuccess={setSuccessMessage} />
           )}
         </div>
       </div>

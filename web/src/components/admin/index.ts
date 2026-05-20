@@ -9,5 +9,6 @@ export { AccountTab } from './AccountTab';
 export { UsersTab } from './UsersTab';
 export { RolesTab } from './RolesTab';
 export { SystemTab } from './SystemTab';
+export { OntologyTab } from './OntologyTab';
 export * from './components';
 export * from './types';
