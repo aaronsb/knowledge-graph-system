@@ -9697,16 +9697,16 @@
 </blockquote>
 <h3 id="epoch_1">epoch</h3>
 <p>Read the graph epoch event log (ADR-203).</p>
-<p>Every mutation to the knowledge graph (ingestion job, agent reasoning, ontology breathing, manual edit) records a monotonic event with a wall-clock timestamp. This tool exposes that log so you can ask "when did the system come to know X?" or "what arrived in the graph during this window?" — without inventing causal edges between concepts.</p>
+<p>Every mutation to the knowledge graph (ingestion job, agent reasoning, ontology annealing, manual edit) records a monotonic event with a wall-clock timestamp. This tool exposes that log so you can ask "when did the system come to know X?" or "what arrived in the graph during this window?" — without inventing causal edges between concepts.</p>
 <p>Two dimensions matter:
   - event_id (logical time): always meaningful — strictly ordered, even for events whose wall-clock is forensic.
-  - occurred_at (wall-clock): semantically meaningful for kinds like 'ingestion' / 'edit'; treat as forensic-only for 'reasoning' / 'breathing'.</p>
+  - occurred_at (wall-clock): semantically meaningful for kinds like 'ingestion' / 'edit'; treat as forensic-only for 'reasoning' / 'annealing'.</p>
 <p>Cursor-paginated. Pass the previous response's next_cursor as cursor to walk further back.</p>
 <p>For the per-concept re-evidence stream (which Concepts were touched in which epochs), use the concept tool's 'lifetime' action instead.</p>
 <p><strong>Parameters:</strong></p>
 <ul>
 <li><code>kind</code> (<code>string</code>) - Filter to a specific event kind. Omit for all kinds.</li>
-<li>Allowed values: <code>ingestion</code>, <code>reasoning</code>, <code>breathing</code>, <code>edit</code></li>
+<li>Allowed values: <code>ingestion</code>, <code>reasoning</code>, <code>annealing</code>, <code>edit</code></li>
 <li><code>since</code> (<code>string</code>) - ISO-8601 lower bound on occurred_at. The API parses with FastAPI's datetime parser; tolerant of common forms (with or without "Z", offsets accepted).</li>
 <li><code>until</code> (<code>string</code>) - ISO-8601 upper bound on occurred_at. Same parsing semantics as <code>since</code>.</li>
 <li><code>actor</code> (<code>string</code>) - Filter by exact actor string (user id, agent session id, system component)</li>

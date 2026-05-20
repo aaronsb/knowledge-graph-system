@@ -10131,7 +10131,7 @@
 </ol>
 <p>Issue #187 originally framed this as "no temporal ordering capability for concept evolution." The original proposal — <code>PRECEDED_BY</code> / <code>EVOLVED_INTO</code> relationship types inferred from ordering — conflates two things that should remain distinct:</p>
 <ul>
-<li><strong>Logical time</strong>: monotonic ordering of mutations to the graph. Always meaningful, including for activity that has no useful wall-clock (agent reasoning, ontology breathing, manual restructuring).</li>
+<li><strong>Logical time</strong>: monotonic ordering of mutations to the graph. Always meaningful, including for activity that has no useful wall-clock (agent reasoning, ontology annealing, manual restructuring).</li>
 <li><strong>Wall-clock time</strong>: when an event physically happened. Always present in absolute terms, but <strong>semantically meaningful only for some kinds of events</strong> — primarily external-corpus ingestion. An agent creating 200 concepts during a reasoning loop at 15:03 UTC doesn't make those concepts "from 15:03" in any useful sense.</li>
 </ul>
 <p>The system needs both, treated as orthogonal dimensions. It also needs the data structure that lets the per-concept <em>re-evidence stream</em> be walked honestly — without inventing causal edges the data cannot justify.</p>
@@ -10144,7 +10144,7 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">graph_epochs</span><span class="w"> </span><span class="p">(</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span><span class="n">event_id</span><span class="w">     </span><span class="n">BIGSERIAL</span><span class="w"> </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="p">,</span>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="n">occurred_at</span><span class="w">  </span><span class="n">TIMESTAMPTZ</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="n">NOW</span><span class="p">(),</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">    </span><span class="n">kind</span><span class="w">         </span><span class="nb">TEXT</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span><span class="w">         </span><span class="c1">-- &#39;ingestion&#39; | &#39;reasoning&#39; | &#39;breathing&#39; | &#39;edit&#39;</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">    </span><span class="n">kind</span><span class="w">         </span><span class="nb">TEXT</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span><span class="w">         </span><span class="c1">-- &#39;ingestion&#39; | &#39;reasoning&#39; | &#39;annealing&#39; | &#39;edit&#39;</span>
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">    </span><span class="n">actor</span><span class="w">        </span><span class="nb">TEXT</span><span class="p">,</span><span class="w">                  </span><span class="c1">-- user_id, agent session id, system component</span>
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">    </span><span class="n">counter_after</span><span class="w"> </span><span class="nb">BIGINT</span><span class="p">,</span><span class="w">               </span><span class="c1">-- graph_change_counter snapshot post-event (cross-ref)</span>
 <a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">    </span><span class="n">metadata</span><span class="w">     </span><span class="n">JSONB</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="s1">&#39;{}&#39;</span><span class="p">::</span><span class="n">jsonb</span>
@@ -10158,7 +10158,7 @@
 <p>A new <code>graph_epochs</code> row is recorded <strong>once per logical unit of graph mutation</strong>:</p>
 <ul>
 <li><code>kind='ingestion'</code> — one row per ingestion job <em>invocation</em>, recorded at job <em>start</em>, so the assigned <code>event_id</code> is available to tag every Instance created during that invocation. A resumed job records a fresh <code>event_id</code> with <code>metadata.resumed_from_chunk</code> indicating the split — this honestly preserves "the work spanned multiple sessions" rather than papering over it.</li>
-<li><code>kind='breathing'</code> — one row per ontology-breathing pass (cross-ref ADR-200).</li>
+<li><code>kind='annealing'</code> — one row per ontology annealing pass (cross-ref ADR-200).</li>
 <li><code>kind='edit'</code> — one row per explicit manual mutation.</li>
 <li><code>kind='reasoning'</code> — one row per agent reasoning session that mutates the graph.</li>
 </ul>
@@ -10186,7 +10186,7 @@
 - Analytics queries (anchor / hot / stale / acceleration signals).
 - Concept-level event_id columns.
 - Backfilling event_ids onto historical Instances.
-- Wiring up <code>kind='breathing'</code> / <code>'reasoning'</code> / <code>'edit'</code> events. These will land as those subsystems independently grow event awareness.</p>
+- Wiring up <code>kind='annealing'</code> / <code>'reasoning'</code> / <code>'edit'</code> events. These will land as those subsystems independently grow event awareness.</p>
 <h2 id="consequences">Consequences</h2>
 <h3 id="positive">Positive</h3>
 <ul>
@@ -10208,7 +10208,7 @@
 <h2 id="alternatives-considered">Alternatives Considered</h2>
 <h3 id="a-promote-created_at_epoch-to-timestamptz-on-every-node">A. Promote <code>created_at_epoch</code> to TIMESTAMPTZ on every node</h3>
 <p>Stamp the wall-clock directly onto Concept and Instance properties — no event table.</p>
-<p><strong>Rejected.</strong> Forces wall-clock onto every node, including ones created during agent reasoning or breathing where wall-clock is semantically noise. Conflates the two dimensions the design is trying to separate. Also makes it impossible to attribute multiple Instances to "the same ingestion job" without inventing a separate grouping mechanism.</p>
+<p><strong>Rejected.</strong> Forces wall-clock onto every node, including ones created during agent reasoning or annealing where wall-clock is semantically noise. Conflates the two dimensions the design is trying to separate. Also makes it impossible to attribute multiple Instances to "the same ingestion job" without inventing a separate grouping mechanism.</p>
 <h3 id="b-reuse-graph_change_counter-as-the-event_id">B. Reuse <code>graph_change_counter</code> as the event_id</h3>
 <p>Tie a timestamp table to existing counter values.</p>
 <p><strong>Rejected.</strong> The counter is a count checksum, not monotonic — values can recur (delete+add). The mapping <code>counter_value → wall_clock</code> is not a function, so it cannot serve as a join key.</p>
