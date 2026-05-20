@@ -28,11 +28,11 @@ logger = logging.getLogger(__name__)
 
 
 # --- Catalog-driven vision model selection (ADR-801) -----------------------
-# Vision provider/model selection must come from the dynamic model catalog's
-# per-model supports_vision flag, not hardcoded lists — the same "no
-# hardcoded models" decision ADR-801 applies to extraction, applied here
-# where it had regressed. Resolution order: explicit param → catalog →
-# VISION_MODEL env (bootstrap) → hardcoded literal (last resort, warned).
+# Vision provider/model selection comes from the dynamic model catalog's
+# per-model supports_vision flag, not hardcoded lists. Resolution order:
+# explicit param → catalog → VISION_MODEL env → ValueError. No literal
+# fallback — a deployment without a populated catalog and no env override
+# is a configuration error the operator must fix.
 
 def _catalog_vision_models(provider: str) -> list[dict]:
     """Enabled, vision-capable catalog rows for a provider, by sort_order.
@@ -40,16 +40,15 @@ def _catalog_vision_models(provider: str) -> list[dict]:
     Empty list when the catalog is unavailable or has no vision model for
     the provider (e.g. its 'Get models' has not been run yet).
 
-    A pooled checkout + one indexed SELECT per call. Callers are the
-    image-ingestion provider construction and the admin enumeration path
-    — NOT a per-image hot loop; memoization would only add catalog-change
-    invalidation complexity for no measured benefit at this frequency.
+    Shares the module-level cached AGEClient with ai_providers' catalog
+    helpers (see ai_providers._get_catalog_age_client) so repeated calls
+    don't churn fresh connection pools.
     """
     try:
         from .model_catalog import list_catalog
-        from .age_client import AGEClient
+        from .ai_providers import _get_catalog_age_client
 
-        client = AGEClient()
+        client = _get_catalog_age_client()
         conn = client.pool.getconn()
         try:
             rows = list_catalog(conn, provider=provider, enabled_only=True)
@@ -58,13 +57,12 @@ def _catalog_vision_models(provider: str) -> list[dict]:
             client.pool.putconn(conn)
     except Exception:
         # Deliberate degradation: a catalog/DB failure must fall through to
-        # env/literal, never break image ingestion (see _resolve_vision_model
-        # and test_catalog_lookup_swallows_db_errors_and_returns_empty). Log
-        # at debug so a *persistent* failure is diagnosable — the warned
-        # literal fallback is the user-visible signal.
+        # env/error, never silently bind a stale model id. Log at debug so a
+        # *persistent* failure is diagnosable — the resolver's raise is the
+        # user-visible signal.
         logger.debug(
             f"Vision catalog lookup failed for '{provider}'; "
-            f"degrading to env/literal", exc_info=True)
+            f"degrading to env/error", exc_info=True)
         return []
 
 
@@ -73,12 +71,14 @@ def _catalog_vision_model_ids(provider: str) -> list[str]:
     return [r["model_id"] for r in _catalog_vision_models(provider)]
 
 
-def _resolve_vision_model(provider: str, model: Optional[str], literal: str) -> str:
-    """Resolve the vision model: param → catalog → env → literal (warned).
+def _resolve_vision_model(provider: str, model: Optional[str] = None) -> str:
+    """Resolve the vision model: param → catalog → env → error.
 
-    The hardcoded literal is kept only as a last resort so deployments
-    whose vision catalog has not been refreshed yet still work; the
-    warning surfaces the gap without breaking them.
+    No hardcoded literal — the prior warned-fallback pinned stale model ids
+    (e.g. claude-3-5-sonnet-20241022, retired Oct 28, 2025) and pretended to
+    be functional code. Per ADR-800/801 and the no-hardcoded-models directive,
+    the catalog is the source of truth; a deployment without a populated
+    vision catalog and without a VISION_MODEL env override is misconfigured.
     """
     if model:
         return model
@@ -91,11 +91,11 @@ def _resolve_vision_model(provider: str, model: Optional[str], literal: str) -> 
     env = os.getenv("VISION_MODEL")
     if env:
         return env
-    logger.warning(
-        f"No catalog vision model for '{provider}'; falling back to "
-        f"'{literal}'. Populate it via the provider's 'Get models' (ADR-801)."
+    raise ValueError(
+        f"No vision model resolved for provider='{provider}'. Either populate "
+        "the vision catalog via the provider's 'Get models' admin action "
+        "(ADR-801), or set the VISION_MODEL environment variable."
     )
-    return literal
 
 
 # Literal description prompt (validated in research, Nov 2025)
@@ -263,8 +263,8 @@ class OpenAIVisionProvider(VisionProvider):
         )
         logger.info(f"OpenAI Vision client configured with max_retries={max_retries}")
 
-        # Configurable model with default
-        self.model = _resolve_vision_model("openai", model, "gpt-4o")
+        # Catalog-resolved — see _resolve_vision_model.
+        self.model = _resolve_vision_model("openai", model)
 
     def describe_image(self, image_bytes: bytes, prompt: Optional[str] = None) -> Dict[str, Any]:
         """
@@ -307,11 +307,18 @@ class OpenAIVisionProvider(VisionProvider):
                         ]
                     }
                 ],
-                max_tokens=4096,
+                max_tokens=8192,
                 temperature=0.1  # Low temperature for consistent literal descriptions
             )
 
-            description = response.choices[0].message.content
+            choice = response.choices[0]
+            if choice.finish_reason == "length":
+                raise Exception(
+                    f"OpenAI vision description truncated at max_tokens=8192 "
+                    f"(model={self.model}). Downstream concept extraction would "
+                    "receive partial text. Split the image or raise the cap."
+                )
+            description = choice.message.content
 
             # Extract token usage
             usage = response.usage
@@ -357,8 +364,8 @@ class OpenAIVisionProvider(VisionProvider):
             return False
 
     def list_available_models(self) -> list[str]:
-        """List available vision models"""
-        return _catalog_vision_model_ids("openai") or ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo"]
+        """List available OpenAI vision models from the catalog (ADR-801)."""
+        return _catalog_vision_model_ids("openai")
 
 
 class AnthropicVisionProvider(VisionProvider):
@@ -399,8 +406,8 @@ class AnthropicVisionProvider(VisionProvider):
         )
         logger.info(f"Anthropic Vision client configured with max_retries={max_retries}")
 
-        # Configurable model with default
-        self.model = _resolve_vision_model("anthropic", model, "claude-3-5-sonnet-20241022")
+        # Catalog-resolved — see _resolve_vision_model.
+        self.model = _resolve_vision_model("anthropic", model)
 
     def describe_image(self, image_bytes: bytes, prompt: Optional[str] = None) -> Dict[str, Any]:
         """
@@ -426,33 +433,54 @@ class AnthropicVisionProvider(VisionProvider):
         else:
             mime_type = 'image/jpeg'
 
-        try:
-            response = self.client.messages.create(
-                model=self.model,
-                max_tokens=4096,
-                temperature=0.1,  # Low temperature for consistent literal descriptions
-                messages=[
-                    {
-                        "role": "user",
-                        "content": [
-                            {
-                                "type": "image",
-                                "source": {
-                                    "type": "base64",
-                                    "media_type": mime_type,
-                                    "data": image_b64
-                                }
+        # Opus 4.7 removes sampling params; sending temperature 400s.
+        # Other Claude 4.x models still accept it for description consistency.
+        request_kwargs: Dict[str, Any] = {
+            "model": self.model,
+            "max_tokens": 8192,
+            "messages": [
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "image",
+                            "source": {
+                                "type": "base64",
+                                "media_type": mime_type,
+                                "data": image_b64,
                             },
-                            {
-                                "type": "text",
-                                "text": prompt
-                            }
-                        ]
-                    }
-                ]
-            )
+                        },
+                        {"type": "text", "text": prompt},
+                    ],
+                }
+            ],
+        }
+        from .ai_providers import _anthropic_drops_sampling_params
+        if not _anthropic_drops_sampling_params(self.model):
+            request_kwargs["temperature"] = 0.1
 
-            description = response.content[0].text
+        try:
+            response = self.client.messages.create(**request_kwargs)
+
+            if response.stop_reason == "max_tokens":
+                raise Exception(
+                    f"Anthropic vision description truncated at max_tokens=8192 "
+                    f"(model={self.model}). The image is dense enough that the "
+                    "literal description exceeds the cap — downstream concept "
+                    "extraction would receive partial text. Split the image or "
+                    "raise the cap."
+                )
+
+            text_block = next(
+                (b for b in response.content if getattr(b, "type", None) == "text"),
+                None,
+            )
+            if text_block is None:
+                raise Exception(
+                    f"Anthropic vision returned no text block "
+                    f"(stop_reason={response.stop_reason}, model={self.model})."
+                )
+            description = text_block.text
 
             # Extract token usage
             tokens = {
@@ -497,13 +525,8 @@ class AnthropicVisionProvider(VisionProvider):
             return False
 
     def list_available_models(self) -> list[str]:
-        """List available vision models"""
-        return _catalog_vision_model_ids("anthropic") or [
-            "claude-3-5-sonnet-20241022",
-            "claude-3-opus-20240229",
-            "claude-3-sonnet-20240229",
-            "claude-3-haiku-20240307"
-        ]
+        """List available Anthropic vision models from the catalog (ADR-801)."""
+        return _catalog_vision_model_ids("anthropic")
 
 
 class OllamaVisionProvider(VisionProvider):
@@ -531,10 +554,10 @@ class OllamaVisionProvider(VisionProvider):
 
         Args:
             base_url: Ollama API base URL (defaults to OLLAMA_BASE_URL env or http://localhost:11434)
-            model: Vision model name (defaults to VISION_MODEL env or granite-vision-3.3:2b)
+            model: Vision model id — resolved via catalog → VISION_MODEL env if omitted (ADR-801).
         """
         self.base_url = base_url or os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-        self.model = _resolve_vision_model("ollama", model, "granite-vision-3.3:2b")
+        self.model = _resolve_vision_model("ollama", model)
 
         logger.warning(
             f"Using Ollama Vision ({self.model}). Research shows inconsistent quality. "

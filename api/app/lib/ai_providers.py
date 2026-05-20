@@ -19,7 +19,85 @@ from .rate_limiter import exponential_backoff_retry
 logger = logging.getLogger(__name__)
 
 
-# Default prompt for image description (ADR-033 Phase 1)
+# Anthropic structured-output contract for concept extraction.
+#
+# Why: messages.create() with no enforcement returns prose that has to be JSON-scraped,
+# and silent max_tokens truncation looks like malformed JSON. Forced tool use returns
+# a parsed dict in tool_use.input and lets us detect truncation explicitly via stop_reason.
+EXTRACTION_TOOL_NAME = "record_extracted_concepts"
+
+EXTRACTION_TOOL_SCHEMA: Dict[str, Any] = {
+    "name": EXTRACTION_TOOL_NAME,
+    "description": "Record concepts, supporting instance quotes, and concept-to-concept relationships extracted from the provided text.",
+    "input_schema": {
+        "type": "object",
+        "additionalProperties": False,
+        "properties": {
+            "concepts": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "properties": {
+                        "concept_id": {"type": "string"},
+                        "label": {"type": "string"},
+                        "description": {"type": "string"},
+                        "search_terms": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "minItems": 1,
+                        },
+                    },
+                    "required": ["concept_id", "label", "description", "search_terms"],
+                },
+            },
+            "instances": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "properties": {
+                        "concept_id": {"type": "string"},
+                        "quote": {"type": "string"},
+                    },
+                    "required": ["concept_id", "quote"],
+                },
+            },
+            "relationships": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "properties": {
+                        "from_concept_id": {"type": "string"},
+                        "to_concept_id": {"type": "string"},
+                        "relationship_type": {"type": "string"},
+                        "direction_semantics": {
+                            "type": "string",
+                            "enum": ["outward", "inward", "bidirectional"],
+                        },
+                        "confidence": {
+                            "type": "number",
+                            "minimum": 0.0,
+                            "maximum": 1.0,
+                        },
+                    },
+                    "required": [
+                        "from_concept_id",
+                        "to_concept_id",
+                        "relationship_type",
+                        "direction_semantics",
+                        "confidence",
+                    ],
+                },
+            },
+        },
+        "required": ["concepts", "instances", "relationships"],
+    },
+}
+
+
+# Default prompt for image description (ADR-033 Phase 1).
 IMAGE_DESCRIPTION_PROMPT = """Analyze this image for knowledge extraction. Provide a detailed description:
 
 **Text Content:** Transcribe ALL visible text exactly as written (titles, headings, bullets, labels, annotations).
@@ -98,6 +176,122 @@ def _load_api_key(provider: str, explicit_key: Optional[str] = None, env_var: Op
     return None
 
 
+def _anthropic_drops_sampling_params(model_id: str) -> bool:
+    """True if the model rejects temperature/top_p/top_k (Opus 4.7 family).
+
+    Sending sampling params to one of these models 400s. New family prefixes
+    that adopt the same restriction should be added here so call sites don't
+    drift out of lockstep.
+    """
+    return model_id.startswith("claude-opus-4-7")
+
+
+# Module-level cached AGEClient for catalog lookups. Pre-PR, each catalog read
+# constructed a fresh AGEClient → ThreadedConnectionPool that never closed
+# (psycopg2 pools don't auto-close on __del__). With model resolution now on
+# every provider construction and every translate/describe path, that churn
+# became load-bearing — so cache the client across catalog reads.
+_catalog_age_client = None
+
+
+def _get_catalog_age_client():
+    """Lazily construct + memoize an AGEClient for catalog lookups."""
+    global _catalog_age_client
+    if _catalog_age_client is None:
+        from .age_client import AGEClient
+        _catalog_age_client = AGEClient()
+    return _catalog_age_client
+
+
+def _resolve_provider_model_id(
+    provider: str,
+    category: str,
+    override: Optional[str] = None,
+    env_var: Optional[str] = None,
+    require_tool_use: bool = False,
+    prefer_cheapest: bool = False,
+) -> str:
+    """Resolve a model id from override → catalog → env → error.
+
+    No hardcoded literals — per ADR-800/801, the provider model catalog is
+    the source of truth. If a deployment has not yet run the provider's
+    'Get models' admin action and no env override is set, this raises with
+    an actionable message rather than silently picking a stale literal that
+    may have been retired.
+
+    For category='vision', selection is by the per-row supports_vision flag
+    (consistent with vision_providers._resolve_vision_model). For other
+    categories ('extraction', 'embedding', …), selection is by the catalog's
+    category column.
+
+    require_tool_use:
+        Filter to rows where supports_tool_use is true (default True when the
+        column is absent — backward compat with catalogs that haven't been
+        backfilled). Required for extraction now that it uses forced tool_use.
+
+    prefer_cheapest:
+        Within the filtered set, return the row with the lowest
+        price_completion_per_m. Used by translate_to_prose so the cheap-model
+        intent that the hardcoded Haiku/mini fallbacks expressed survives the
+        move to catalog resolution.
+    """
+    if override:
+        return override
+
+    try:
+        from .model_catalog import list_catalog
+
+        client = _get_catalog_age_client()
+        conn = client.pool.getconn()
+        try:
+            rows = list_catalog(conn, provider=provider, enabled_only=True)
+            if category == "vision":
+                rows = [r for r in rows if r.get("supports_vision")]
+            else:
+                rows = [r for r in rows if r.get("category") == category]
+            if require_tool_use:
+                rows = [r for r in rows if r.get("supports_tool_use", True)]
+            if rows:
+                if prefer_cheapest:
+                    # Local providers (Ollama/llama.cpp) typically have None
+                    # pricing — push them to the end so a priced row wins, and
+                    # within them stay deterministic on model_id.
+                    rows = sorted(
+                        rows,
+                        key=lambda r: (
+                            r.get("price_completion_per_m") is None,
+                            r.get("price_completion_per_m") or 0.0,
+                            r.get("model_id", ""),
+                        ),
+                    )
+                    return rows[0]["model_id"]
+                for r in rows:
+                    if r.get("is_default"):
+                        return r["model_id"]
+                return rows[0]["model_id"]
+        finally:
+            client.pool.putconn(conn)
+    except Exception:
+        # Degrade to env / error — catalog/DB unavailability must not silently
+        # bind a retired model.
+        logger.debug(
+            f"{provider} catalog lookup failed for category='{category}'",
+            exc_info=True,
+        )
+
+    if env_var:
+        env_value = os.getenv(env_var)
+        if env_value:
+            return env_value
+
+    raise ValueError(
+        f"No {provider} model resolved for category='{category}'. "
+        "Either populate the provider model catalog via the admin 'Get models' "
+        f"action (ADR-800/801)"
+        + (f", or set the {env_var} environment variable." if env_var else ".")
+    )
+
+
 def _list_models_from_catalog(provider: str) -> Optional[Dict[str, List[str]]]:
     """
     Query the provider_model_catalog for enabled models (ADR-800).
@@ -106,9 +300,8 @@ def _list_models_from_catalog(provider: str) -> Optional[Dict[str, List[str]]]:
     """
     try:
         from .model_catalog import list_catalog
-        from .age_client import AGEClient
 
-        client = AGEClient()
+        client = _get_catalog_age_client()
         conn = client.pool.getconn()
         try:
             rows = list_catalog(conn, provider=provider, enabled_only=True)
@@ -254,12 +447,41 @@ class OpenAIProvider(AIProvider):
         )
         logger.info(f"OpenAI client configured with max_retries={max_retries}")
 
-        # Configurable models with defaults
-        self.extraction_model = extraction_model or os.getenv("OPENAI_EXTRACTION_MODEL", "gpt-4o")
-        self.embedding_model = embedding_model or os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-small")
+        # Catalog-driven model resolution (no hardcoded literals — ADR-800/801).
+        # Extraction is lazy because Anthropic/Ollama construct OpenAIProvider()
+        # purely for embeddings, and a missing extraction row should not block
+        # that path. Embedding is eager — the embedding-only path needs it now.
+        self._extraction_model_override = extraction_model
+        self._extraction_model_cache: Optional[str] = None
+        self.embedding_model = _resolve_provider_model_id(
+            "openai", "embedding",
+            override=embedding_model, env_var="OPENAI_EMBEDDING_MODEL",
+        )
 
         # Optional separate embedding provider (e.g., LocalEmbeddingProvider)
         self.embedding_provider = embedding_provider
+
+    @property
+    def extraction_model(self) -> str:
+        """Resolve the extraction model lazily on first access.
+
+        Anthropic/Ollama construct OpenAIProvider() purely for embeddings.
+        Resolving extraction in __init__ would make a missing extraction row
+        fail their embedding-only flow with a misleading error.
+        """
+        if self._extraction_model_cache is None:
+            self._extraction_model_cache = _resolve_provider_model_id(
+                "openai", "extraction",
+                override=self._extraction_model_override,
+                env_var="OPENAI_EXTRACTION_MODEL",
+            )
+        return self._extraction_model_cache
+
+    @extraction_model.setter
+    def extraction_model(self, value: str) -> None:
+        """Direct assignment used by LlamaCppProvider (subclass with different
+        resolution semantics) and by deliberate runtime overrides."""
+        self._extraction_model_cache = value
 
     def extract_concepts(
         self,
@@ -314,7 +536,7 @@ class OpenAIProvider(AIProvider):
             }
 
         except Exception as e:
-            raise Exception(f"OpenAI concept extraction failed: {e}")
+            raise Exception(f"OpenAI concept extraction failed: {e}") from e
 
     def _extract_json(self, text: str) -> Dict[str, Any]:
         """Extract JSON from response text (handles markdown code blocks and whitespace)"""
@@ -361,13 +583,17 @@ class OpenAIProvider(AIProvider):
 
     def translate_to_prose(self, prompt: str, code: str) -> Dict[str, Any]:
         """
-        Translate code/diagram to prose using gpt-4o-mini (cheap and fast).
+        Translate code/diagram to prose using the cheapest available OpenAI
+        extraction model (preserves the prior gpt-4o-mini cost intent without
+        hardcoding the model id).
 
-        Returns dict with 'text' (prose) and 'tokens' (usage info)
+        Returns dict with 'text' (prose) and 'tokens' (usage info).
         """
         try:
-            # Use mini model for cost-effective translation
-            translation_model = "gpt-4o-mini"
+            translation_model = _resolve_provider_model_id(
+                "openai", "extraction",
+                env_var="OPENAI_TRANSLATION_MODEL", prefer_cheapest=True,
+            )
 
             response = self.client.chat.completions.create(
                 model=translation_model,
@@ -392,7 +618,7 @@ class OpenAIProvider(AIProvider):
             }
 
         except Exception as e:
-            raise Exception(f"OpenAI code translation failed: {e}")
+            raise Exception(f"OpenAI code translation failed: {e}") from e
 
     def describe_image(self, image_data: bytes, prompt: str) -> Dict[str, Any]:
         """
@@ -406,8 +632,9 @@ class OpenAIProvider(AIProvider):
             # Encode image to base64
             image_base64 = base64.b64encode(image_data).decode('utf-8')
 
-            # Use gpt-4o which has vision capabilities
-            vision_model = "gpt-4o"
+            vision_model = _resolve_provider_model_id(
+                "openai", "vision", env_var="VISION_MODEL"
+            )
 
             response = self.client.chat.completions.create(
                 model=vision_model,
@@ -426,11 +653,18 @@ class OpenAIProvider(AIProvider):
                         ]
                     }
                 ],
-                max_tokens=2000,  # Allow detailed descriptions
+                max_tokens=8192,
                 temperature=0.3   # Lower for consistency
             )
 
-            description = response.choices[0].message.content.strip()
+            choice = response.choices[0]
+            if choice.finish_reason == "length":
+                raise Exception(
+                    f"OpenAI image description truncated at max_tokens=8192 "
+                    f"(model={vision_model}). Downstream concept extraction "
+                    "would receive partial text. Split the image or raise the cap."
+                )
+            description = choice.message.content.strip()
 
             # Extract token usage
             tokens = 0
@@ -443,7 +677,7 @@ class OpenAIProvider(AIProvider):
             }
 
         except Exception as e:
-            raise Exception(f"OpenAI image description failed: {e}")
+            raise Exception(f"OpenAI image description failed: {e}") from e
 
     def get_provider_name(self) -> str:
         return "OpenAI"
@@ -726,19 +960,27 @@ class AnthropicProvider(AIProvider):
         )
         logger.info(f"Anthropic client configured with max_retries={max_retries}")
 
-        # Configurable extraction model
-        self.extraction_model = extraction_model or os.getenv("ANTHROPIC_EXTRACTION_MODEL", "claude-sonnet-4-20250514")
+        # Configurable extraction model — resolved from override → catalog → env.
+        # No literal fallback (the bug class this fix removes), and require
+        # tool_use because extract_concepts uses forced tool_use now.
+        self.extraction_model = _resolve_provider_model_id(
+            "anthropic", "extraction",
+            override=extraction_model, env_var="ANTHROPIC_EXTRACTION_MODEL",
+            require_tool_use=True,
+        )
 
-        # Anthropic doesn't provide embeddings, delegate to another provider (OpenAI by default)
+        # Anthropic doesn't provide embeddings — delegate. OpenAIProvider
+        # resolves its own embedding model via the catalog (no literal here).
         self.embedding_provider = embedding_provider
         if not self.embedding_provider:
-            # Default to OpenAI for embeddings
             try:
-                self.embedding_provider = OpenAIProvider(
-                    embedding_model=os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-small")
-                )
+                self.embedding_provider = OpenAIProvider()
             except ValueError:
-                raise ValueError("Anthropic requires an embedding provider. Set OPENAI_API_KEY or provide embedding_provider.")
+                raise ValueError(
+                    "Anthropic requires an embedding provider. Set OPENAI_API_KEY, "
+                    "populate the OpenAI model catalog (ADR-800/801), or pass "
+                    "embedding_provider explicitly."
+                )
 
     def extract_concepts(
         self,
@@ -746,35 +988,63 @@ class AnthropicProvider(AIProvider):
         system_prompt: str,
         existing_concepts: Optional[List[Dict[str, Any]]] = None
     ) -> Dict[str, Any]:
-        """Extract concepts using Anthropic Claude models
+        """Extract concepts using Anthropic Claude models.
 
-        Returns dict with 'result' (extracted data) and 'tokens' (usage info)
+        Uses Anthropic's forced tool-use pattern: the model is required to call
+        the EXTRACTION_TOOL_NAME tool, and the parsed dict comes back in
+        tool_use.input — no JSON string scraping, no fence stripping. Silent
+        truncation (stop_reason == "max_tokens") is detected and raised
+        explicitly rather than yielding a partial parse downstream.
 
-        Note: system_prompt is already formatted by llm_extractor.py
+        Returns dict with 'result' (extracted data) and 'tokens' (usage info).
+
+        Note: system_prompt is already formatted by llm_extractor.py.
         """
 
+        # Opus 4.7 removes sampling params (temperature/top_p/top_k → 400).
+        # The configured extraction_model may be Opus 4.7 per the user's
+        # provider/model selection, so the request shape has to adapt.
+        request_kwargs: Dict[str, Any] = {
+            "model": self.extraction_model,
+            "max_tokens": 16384,
+            "system": system_prompt,
+            "tools": [EXTRACTION_TOOL_SCHEMA],
+            "tool_choice": {"type": "tool", "name": EXTRACTION_TOOL_NAME},
+            "messages": [
+                {"role": "user", "content": f"Text to analyze:\n\n{text}"}
+            ],
+        }
+        if not _anthropic_drops_sampling_params(self.extraction_model):
+            request_kwargs["temperature"] = 0.3
+
         try:
-            message = self.client.messages.create(
-                model=self.extraction_model,
-                max_tokens=4096,
-                temperature=0.3,  # Lower for consistency
-                system=system_prompt,  # Already formatted
-                messages=[
-                    {"role": "user", "content": f"Text to analyze:\n\n{text}"}
-                ]
+            message = self.client.messages.create(**request_kwargs)
+
+            if message.stop_reason == "max_tokens":
+                raise Exception(
+                    "Anthropic extraction truncated at max_tokens=16384. "
+                    "The chunk produced more concepts/instances/relationships "
+                    "than fit in one response — split the chunk or raise the cap."
+                )
+
+            tool_block = next(
+                (b for b in message.content if getattr(b, "type", None) == "tool_use"
+                 and getattr(b, "name", None) == EXTRACTION_TOOL_NAME),
+                None,
             )
+            if tool_block is None:
+                stop_reason = getattr(message, "stop_reason", "unknown")
+                raise Exception(
+                    f"Anthropic returned no tool_use block for {EXTRACTION_TOOL_NAME} "
+                    f"(stop_reason={stop_reason}). The model may have refused; "
+                    "check the system prompt and input text."
+                )
 
-            response_text = message.content[0].text
-
-            # Try to extract JSON from response
-            result = self._extract_json(response_text)
-
-            # Validate structure
+            result = dict(tool_block.input)
             result.setdefault("concepts", [])
             result.setdefault("instances", [])
             result.setdefault("relationships", [])
 
-            # Extract token usage from Anthropic response
             tokens = 0
             if hasattr(message, 'usage') and message.usage:
                 tokens = message.usage.input_tokens + message.usage.output_tokens
@@ -785,25 +1055,7 @@ class AnthropicProvider(AIProvider):
             }
 
         except Exception as e:
-            raise Exception(f"Anthropic concept extraction failed: {e}")
-
-    def _extract_json(self, text: str) -> Dict[str, Any]:
-        """Extract JSON from response text (handles markdown code blocks)"""
-        # Remove markdown code blocks if present
-        cleaned = text.strip()
-        if cleaned.startswith("```json"):
-            cleaned = cleaned[7:]
-        if cleaned.startswith("```"):
-            cleaned = cleaned[3:]
-        if cleaned.endswith("```"):
-            cleaned = cleaned[:-3]
-
-        cleaned = cleaned.strip()
-
-        try:
-            return json.loads(cleaned)
-        except json.JSONDecodeError as e:
-            raise Exception(f"Failed to parse JSON from Claude response: {e}\nResponse: {text}")
+            raise Exception(f"Anthropic concept extraction failed: {e}") from e
 
     def generate_embedding(self, text: str, purpose: Literal["query", "document"] = "document") -> List[float]:
         """Generate embedding using the configured embedding provider"""
@@ -811,25 +1063,46 @@ class AnthropicProvider(AIProvider):
 
     def translate_to_prose(self, prompt: str, code: str) -> Dict[str, Any]:
         """
-        Translate code/diagram to prose using Claude Haiku (fast and cheap).
+        Translate code/diagram to prose using the current cost-tier Claude model.
 
-        Returns dict with 'text' (prose) and 'tokens' (usage info)
+        The prior hardcoded "claude-3-haiku-20240307" retired Apr 19, 2026 and
+        would 404. Override via ANTHROPIC_TRANSLATION_MODEL for cost/quality
+        tuning.
+
+        Returns dict with 'text' (prose) and 'tokens' (usage info).
         """
         try:
-            # Use Haiku for cost-effective translation
-            translation_model = "claude-3-haiku-20240307"
-
-            message = self.client.messages.create(
-                model=translation_model,
-                max_tokens=1000,
-                temperature=0.5,  # Balanced: clear but not robotic
-                system="You are a technical writer who explains code and diagrams in clear, simple prose.",
-                messages=[
-                    {"role": "user", "content": f"{prompt}\n\n{code}"}
-                ]
+            # Translation reuses extraction-capable models; pick the cheapest
+            # (preserves the prior Haiku cost intent without hardcoding the id).
+            # Override via ANTHROPIC_TRANSLATION_MODEL for explicit selection.
+            translation_model = _resolve_provider_model_id(
+                "anthropic", "extraction",
+                env_var="ANTHROPIC_TRANSLATION_MODEL", prefer_cheapest=True,
             )
 
-            prose = message.content[0].text.strip()
+            request_kwargs: Dict[str, Any] = {
+                "model": translation_model,
+                "max_tokens": 1000,
+                "system": "You are a technical writer who explains code and diagrams in clear, simple prose.",
+                "messages": [
+                    {"role": "user", "content": f"{prompt}\n\n{code}"}
+                ],
+            }
+            if not _anthropic_drops_sampling_params(translation_model):
+                request_kwargs["temperature"] = 0.5
+
+            message = self.client.messages.create(**request_kwargs)
+
+            text_block = next(
+                (b for b in message.content if getattr(b, "type", None) == "text"),
+                None,
+            )
+            if text_block is None:
+                raise Exception(
+                    f"Anthropic translation returned no text block "
+                    f"(stop_reason={message.stop_reason}, model={translation_model})."
+                )
+            prose = text_block.text.strip()
 
             # Extract token usage
             tokens = 0
@@ -842,13 +1115,17 @@ class AnthropicProvider(AIProvider):
             }
 
         except Exception as e:
-            raise Exception(f"Anthropic code translation failed: {e}")
+            raise Exception(f"Anthropic code translation failed: {e}") from e
 
     def describe_image(self, image_data: bytes, prompt: str) -> Dict[str, Any]:
         """
-        Describe an image using Claude 3.5 Sonnet vision capabilities.
+        Describe an image using the configured Anthropic vision model.
 
-        Returns dict with 'text' (description) and 'tokens' (usage info)
+        The vision model resolves via catalog → VISION_MODEL env → ValueError
+        (no literal fallback). The prior hardcoded "claude-3-5-sonnet-20241022"
+        was retired Oct 28, 2025 and ignored any configured vision model.
+
+        Returns dict with 'text' (description) and 'tokens' (usage info).
         """
         import base64
 
@@ -865,14 +1142,15 @@ class AnthropicProvider(AIProvider):
             elif image_data[:4] == b'RIFF' and image_data[8:12] == b'WEBP':
                 image_type = "image/webp"
 
-            # Use latest Claude 3.5 Sonnet with vision
-            vision_model = "claude-3-5-sonnet-20241022"
+            vision_model = _resolve_provider_model_id(
+                "anthropic", "vision", env_var="VISION_MODEL"
+            )
 
-            message = self.client.messages.create(
-                model=vision_model,
-                max_tokens=2000,  # Allow detailed descriptions
-                temperature=0.3,  # Lower for consistency
-                messages=[{
+            # Opus 4.7 removes sampling params (temperature/top_p/top_k → 400).
+            request_kwargs: Dict[str, Any] = {
+                "model": vision_model,
+                "max_tokens": 8192,
+                "messages": [{
                     "role": "user",
                     "content": [
                         {
@@ -880,18 +1158,35 @@ class AnthropicProvider(AIProvider):
                             "source": {
                                 "type": "base64",
                                 "media_type": image_type,
-                                "data": image_base64
-                            }
+                                "data": image_base64,
+                            },
                         },
-                        {
-                            "type": "text",
-                            "text": prompt
-                        }
-                    ]
-                }]
-            )
+                        {"type": "text", "text": prompt},
+                    ],
+                }],
+            }
+            if not _anthropic_drops_sampling_params(vision_model):
+                request_kwargs["temperature"] = 0.3
 
-            description = message.content[0].text.strip()
+            message = self.client.messages.create(**request_kwargs)
+
+            if message.stop_reason == "max_tokens":
+                raise Exception(
+                    f"Anthropic image description truncated at max_tokens=8192 "
+                    f"(model={vision_model}). The downstream concept extraction "
+                    "would receive a partial description — split the image or raise the cap."
+                )
+
+            text_block = next(
+                (b for b in message.content if getattr(b, "type", None) == "text"),
+                None,
+            )
+            if text_block is None:
+                raise Exception(
+                    f"Anthropic image description returned no text block "
+                    f"(stop_reason={message.stop_reason}, model={vision_model})."
+                )
+            description = text_block.text.strip()
 
             # Extract token usage
             tokens = 0
@@ -904,7 +1199,7 @@ class AnthropicProvider(AIProvider):
             }
 
         except Exception as e:
-            raise Exception(f"Anthropic image description failed: {e}")
+            raise Exception(f"Anthropic image description failed: {e}") from e
 
     def get_provider_name(self) -> str:
         return "Anthropic"
@@ -1060,8 +1355,10 @@ class OpenRouterProvider(AIProvider):
         )
         logger.info(f"OpenRouter client configured with max_retries={max_retries}")
 
-        self.extraction_model = extraction_model or os.getenv(
-            "OPENROUTER_EXTRACTION_MODEL", "openai/gpt-4o"
+        # Catalog-driven model resolution (no hardcoded literals — ADR-800/801).
+        self.extraction_model = _resolve_provider_model_id(
+            "openrouter", "extraction",
+            override=extraction_model, env_var="OPENROUTER_EXTRACTION_MODEL",
         )
         self.max_tokens = max_tokens or 16384
         self.embedding_provider = embedding_provider
@@ -1107,7 +1404,7 @@ class OpenRouterProvider(AIProvider):
             return {"result": result, "tokens": tokens}
 
         except Exception as e:
-            raise Exception(f"OpenRouter concept extraction failed: {e}")
+            raise Exception(f"OpenRouter concept extraction failed: {e}") from e
 
     def _extract_json(self, text: str) -> Dict[str, Any]:
         """Extract JSON from response text (handles markdown code blocks)."""
@@ -1142,10 +1439,14 @@ class OpenRouterProvider(AIProvider):
         )
 
     def translate_to_prose(self, prompt: str, code: str) -> Dict[str, Any]:
-        """Translate code/diagram to prose using a cheap model via OpenRouter."""
+        """Translate code/diagram to prose via OpenRouter using the cheapest
+        available extraction model (preserves the prior gpt-4o-mini cost intent
+        without hardcoding the model id)."""
         try:
-            # Use a fast/cheap model for translation; fall back to extraction model
-            translation_model = "openai/gpt-4o-mini"
+            translation_model = _resolve_provider_model_id(
+                "openrouter", "extraction",
+                env_var="OPENROUTER_TRANSLATION_MODEL", prefer_cheapest=True,
+            )
 
             response = self.client.chat.completions.create(
                 model=translation_model,
@@ -1168,7 +1469,7 @@ class OpenRouterProvider(AIProvider):
             return {"text": prose, "tokens": tokens}
 
         except Exception as e:
-            raise Exception(f"OpenRouter code translation failed: {e}")
+            raise Exception(f"OpenRouter code translation failed: {e}") from e
 
     def describe_image(self, image_data: bytes, prompt: str) -> Dict[str, Any]:
         """Describe an image using a vision-capable model via OpenRouter."""
@@ -1206,11 +1507,18 @@ class OpenRouterProvider(AIProvider):
                         ],
                     }
                 ],
-                max_tokens=2000,
+                max_tokens=8192,
                 temperature=0.3,
             )
 
-            description = response.choices[0].message.content.strip()
+            choice = response.choices[0]
+            if choice.finish_reason == "length":
+                raise Exception(
+                    f"OpenRouter image description truncated at max_tokens=8192 "
+                    f"(model={vision_model}). Downstream concept extraction "
+                    "would receive partial text. Split the image or raise the cap."
+                )
+            description = choice.message.content.strip()
             tokens = 0
             if hasattr(response, "usage") and response.usage:
                 tokens = response.usage.total_tokens
@@ -1218,7 +1526,7 @@ class OpenRouterProvider(AIProvider):
             return {"text": description, "tokens": tokens}
 
         except Exception as e:
-            raise Exception(f"OpenRouter image description failed: {e}")
+            raise Exception(f"OpenRouter image description failed: {e}") from e
 
     def get_provider_name(self) -> str:
         return "OpenRouter"
@@ -1374,7 +1682,11 @@ class OllamaProvider(AIProvider):
         import requests
 
         self.base_url = base_url or os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-        self.extraction_model = extraction_model or os.getenv("OLLAMA_EXTRACTION_MODEL", "mistral:7b-instruct")
+        # Catalog-driven model resolution (no hardcoded literals — ADR-800/801).
+        self.extraction_model = _resolve_provider_model_id(
+            "ollama", "extraction",
+            override=extraction_model, env_var="OLLAMA_EXTRACTION_MODEL",
+        )
         self.temperature = temperature
         self.top_p = top_p
         self.thinking_mode = thinking_mode
@@ -1384,19 +1696,17 @@ class OllamaProvider(AIProvider):
         # Ollama doesn't provide embeddings - delegate to separate provider
         self.embedding_provider = embedding_provider
         if not self.embedding_provider:
-            # Default to OpenAI for embeddings (or will use local if configured)
+            # OpenAIProvider resolves its own embedding model via the catalog;
+            # ValueError covers both "no API key" and "no catalog model resolved".
             try:
-                self.embedding_provider = OpenAIProvider(
-                    embedding_model=os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-small")
-                )
+                self.embedding_provider = OpenAIProvider()
             except ValueError:
-                # Try local embeddings as fallback
                 try:
                     self.embedding_provider = LocalEmbeddingProvider()
                 except ValueError:
                     raise ValueError(
                         "Ollama requires an embedding provider. Either:\n"
-                        "  1. Set OPENAI_API_KEY for OpenAI embeddings\n"
+                        "  1. Set OPENAI_API_KEY and populate the OpenAI model catalog\n"
                         "  2. Configure local embeddings via: POST /admin/embedding/config"
                     )
 
@@ -1574,7 +1884,7 @@ class OllamaProvider(AIProvider):
                 f"Model '{self.extraction_model}' may be too large or system is overloaded."
             )
         except Exception as e:
-            raise Exception(f"Ollama concept extraction failed: {e}")
+            raise Exception(f"Ollama concept extraction failed: {e}") from e
 
     def _extract_json(self, text: str) -> Dict[str, Any]:
         """
@@ -1646,7 +1956,7 @@ class OllamaProvider(AIProvider):
             }
 
         except Exception as e:
-            raise Exception(f"Ollama code translation failed: {e}")
+            raise Exception(f"Ollama code translation failed: {e}") from e
 
     def describe_image(self, image_data: bytes, prompt: str) -> Dict[str, Any]:
         """
@@ -1702,7 +2012,7 @@ class OllamaProvider(AIProvider):
             }
 
         except Exception as e:
-            raise Exception(f"Ollama image description failed: {e}")
+            raise Exception(f"Ollama image description failed: {e}") from e
 
     def get_provider_name(self) -> str:
         return "Ollama (Local)"
@@ -1873,6 +2183,10 @@ class LlamaCppProvider(OpenAIProvider):
         self.api_key = "llama.cpp-local"
         self.client = OpenAI(api_key=self.api_key, base_url=self.base_url, timeout=120.0)
 
+        # llama.cpp serves exactly one loaded model and ignores the model_id
+        # in requests, so "" is the legitimate "no id" sentinel here — not a
+        # stale-model literal of the kind ADR-800/801 removes. Override with
+        # LLAMACPP_EXTRACTION_MODEL if your llama.cpp build cares.
         self.extraction_model = extraction_model or os.getenv("LLAMACPP_EXTRACTION_MODEL", "")
         self.max_tokens = max_tokens
         self.temperature = 0.1 if temperature is None else temperature
@@ -2012,12 +2326,15 @@ def get_provider(provider_name: Optional[str] = None) -> AIProvider:
 
         For OpenAI:
             OPENAI_API_KEY: Required
-            OPENAI_EXTRACTION_MODEL: Optional (default: "gpt-4o")
-            OPENAI_EMBEDDING_MODEL: Optional (default: "text-embedding-3-small")
+            OPENAI_EXTRACTION_MODEL: Optional override; otherwise resolved from
+                                    the provider model catalog (ADR-800/801)
+            OPENAI_EMBEDDING_MODEL: Optional override; otherwise resolved from
+                                    the catalog
 
         For Anthropic:
             ANTHROPIC_API_KEY: Required
-            ANTHROPIC_EXTRACTION_MODEL: Optional (default: "claude-sonnet-4-20250514")
+            ANTHROPIC_EXTRACTION_MODEL: Optional override; otherwise resolved
+                                       from the catalog
             OPENAI_API_KEY: Required for embeddings (or configure local via database)
 
         For Local Embeddings (ADR-039):
