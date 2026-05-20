@@ -1316,3 +1316,120 @@ class TestDeleteOntologyEdgeRoute:
             )
 
         assert response.status_code == 400
+
+
+# ==========================================================================
+# GET /ontology/annealing/status — Annealing loop health (ADR-703)
+# ==========================================================================
+
+def mock_annealing_status_client(
+    current_epoch=12,
+    options_rows=None,
+    job_row=None,
+    metrics_rows=None,
+    proposal_rows=None,
+):
+    """Mock AGEClient wired for GET /ontology/annealing/status.
+
+    The endpoint runs four queries in order: annealing_options (fetchall),
+    scheduled_jobs (fetchone), graph_metrics (fetchall), annealing_proposals
+    (fetchall) — so fetchall side-effects are [options, metrics, proposals].
+    """
+    client = mock_age_client(get_current_epoch=current_epoch)
+
+    cursor = MagicMock()
+    cursor.execute = MagicMock()
+    cursor.fetchall = MagicMock(side_effect=[
+        options_rows if options_rows is not None else [],
+        metrics_rows if metrics_rows is not None else [],
+        proposal_rows if proposal_rows is not None else [],
+    ])
+    cursor.fetchone = MagicMock(return_value=job_row)
+
+    conn = MagicMock()
+    conn.cursor.return_value.__enter__ = MagicMock(return_value=cursor)
+    conn.cursor.return_value.__exit__ = MagicMock(return_value=False)
+    client.pool.getconn.return_value = conn
+    return client
+
+
+@pytest.mark.unit
+class TestAnnealingStatusRoute:
+    """Tests for GET /ontology/annealing/status endpoint (ADR-703)."""
+
+    def test_status_returns_200(self, api_client, auth_headers_admin):
+        """Status returns loop health, schedule, and proposal breakdown."""
+        client = mock_annealing_status_client(
+            current_epoch=12,
+            options_rows=[
+                {"key": "automation_level", "value": "autonomous"},
+                {"key": "enabled", "value": "true"},
+                {"key": "epoch_interval", "value": "5"},
+            ],
+            job_row={
+                "schedule_cron": "30 */6 * * *",
+                "enabled": True,
+                "last_run": None,
+                "last_success": None,
+                "last_failure": None,
+                "next_run": None,
+            },
+            metrics_rows=[
+                {"metric_name": "last_annealing_epoch", "counter": 7},
+                {"metric_name": "ontology_count", "counter": 3},
+            ],
+            proposal_rows=[
+                {"status": "pending", "n": 2},
+                {"status": "executed", "n": 5},
+            ],
+        )
+
+        with patch('api.app.routes.ontology.get_age_client', return_value=client):
+            response = api_client.get(
+                "/ontology/annealing/status",
+                headers=auth_headers_admin,
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["automation_level"] == "autonomous"
+        assert data["enabled"] is True
+        assert data["current_epoch"] == 12
+        assert data["last_annealing_epoch"] == 7
+        assert data["epoch_interval"] == 5
+        assert data["ontology_count"] == 3
+        assert data["schedule_cron"] == "30 */6 * * *"
+        assert data["schedule_enabled"] is True
+        assert data["proposals_by_status"] == {"pending": 2, "executed": 5}
+        assert data["options"]["automation_level"] == "autonomous"
+
+    def test_status_defaults_when_empty(self, api_client, auth_headers_admin):
+        """With no config rows or scheduled job, the endpoint falls back to defaults."""
+        client = mock_annealing_status_client(
+            current_epoch=0,
+            options_rows=[],
+            job_row=None,
+            metrics_rows=[],
+            proposal_rows=[],
+        )
+
+        with patch('api.app.routes.ontology.get_age_client', return_value=client):
+            response = api_client.get(
+                "/ontology/annealing/status",
+                headers=auth_headers_admin,
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["enabled"] is True
+        assert data["automation_level"] == "autonomous"
+        assert data["epoch_interval"] == 5
+        assert data["schedule_cron"] is None
+        assert data["schedule_enabled"] is False
+        assert data["ontology_count"] == 0
+        assert data["proposals_by_status"] == {}
+
+    def test_status_requires_auth(self, api_client):
+        """Reading annealing status requires authentication."""
+        response = api_client.get("/ontology/annealing/status")
+        assert response.status_code == 401

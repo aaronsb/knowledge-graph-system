@@ -572,7 +572,10 @@ async def trigger_annealing_cycle(
 
 
 @router.get("/annealing/status", response_model=AnnealingStatus)
-async def get_annealing_status(current_user: CurrentUser = None):
+async def get_annealing_status(
+    current_user: CurrentUser,
+    _: None = Depends(require_permission("ontologies", "read")),
+):
     """
     Annealing loop health, configuration, and schedule (ADR-703).
 
@@ -580,6 +583,9 @@ async def get_annealing_status(current_user: CurrentUser = None):
     the durable configuration (`annealing_options`), the scheduled cron job,
     epoch gating state, and a proposal status breakdown — enough for an
     operator to understand what the autonomous loop is doing.
+
+    Requires `ontologies:read` (ADR-703 §6) — parity with the web tab, which
+    gates on the same capability.
     """
     def _to_bool(v) -> bool:
         return str(v).strip().lower() in ("true", "1", "yes", "on")
