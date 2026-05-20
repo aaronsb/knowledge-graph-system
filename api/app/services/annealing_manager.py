@@ -31,10 +31,20 @@ class AnnealingManager:
     human review endpoint (hitl mode).
     """
 
-    def __init__(self, age_client, scorer: OntologyScorer, ai_provider=None):
+    def __init__(
+        self,
+        age_client,
+        scorer: OntologyScorer,
+        ai_provider=None,
+        automation_level: str = "autonomous",
+    ):
         self.client = age_client
         self.scorer = scorer
         self.ai_provider = ai_provider
+        # In autonomous mode proposals are stored already 'approved' so there
+        # is no human-raceable 'pending' window — the annealing worker only
+        # dispatches their execution jobs. In hitl mode they are born 'pending'.
+        self.automation_level = automation_level
 
     async def run_annealing_cycle(
         self,
@@ -383,6 +393,14 @@ class AnnealingManager:
         suggested_description: Optional[str] = None,
     ) -> Optional[int]:
         """Store a proposal in the annealing_proposals table. Returns proposal ID."""
+        # Autonomous mode: born 'approved' (no human-raceable pending window).
+        # hitl mode: born 'pending', awaiting human review.
+        autonomous = self.automation_level == "autonomous"
+        status = "approved" if autonomous else "pending"
+        reviewed_by = "annealing_worker" if autonomous else None
+        reviewed_at = datetime.now(timezone.utc) if autonomous else None
+        reviewer_notes = "auto-approved (autonomous mode)" if autonomous else None
+
         try:
             conn = self.client.pool.getconn()
             try:
@@ -392,21 +410,24 @@ class AnnealingManager:
                         (proposal_type, ontology_name, anchor_concept_id,
                          target_ontology, reasoning, mass_score, coherence_score,
                          protection_score, created_at_epoch,
-                         suggested_name, suggested_description)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                         suggested_name, suggested_description,
+                         status, reviewed_by, reviewed_at, reviewer_notes)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                                %s, %s, %s, %s)
                         RETURNING id
                     """, (
                         proposal_type, ontology_name, anchor_concept_id,
                         target_ontology, reasoning, mass_score, coherence_score,
                         protection_score, epoch,
                         suggested_name, suggested_description,
+                        status, reviewed_by, reviewed_at, reviewer_notes,
                     ))
                     row = cur.fetchone()
                     conn.commit()
                     proposal_id = row[0] if row else None
                     logger.info(
                         f"Stored {proposal_type} proposal #{proposal_id} "
-                        f"for '{ontology_name}'"
+                        f"for '{ontology_name}' (status={status})"
                     )
                     return proposal_id
             finally:

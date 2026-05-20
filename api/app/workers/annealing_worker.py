@@ -11,7 +11,6 @@ human review via the API.
 
 import asyncio
 import logging
-from datetime import datetime, timezone
 from typing import Dict, Any, List
 
 from api.app.lib.age_client import AGEClient
@@ -49,6 +48,7 @@ def run_annealing_worker(
     derive_edges = job_data.get("derive_edges", True)
     overlap_threshold = job_data.get("overlap_threshold", 0.1)
     specializes_threshold = job_data.get("specializes_threshold", 0.3)
+    automation_level = job_data.get("automation_level", "autonomous")
 
     logger.info(
         f"Annealing worker starting (job {job_id}): "
@@ -72,7 +72,12 @@ def run_annealing_worker(
             ai_provider = None
             logger.info("No AI provider available — using score-based decisions")
 
-        manager = AnnealingManager(age_client, scorer, ai_provider=ai_provider)
+        manager = AnnealingManager(
+            age_client,
+            scorer,
+            ai_provider=ai_provider,
+            automation_level=automation_level,
+        )
 
         job_queue.update_job(job_id, {
             "progress": {"stage": "scoring", "percent": 10}
@@ -93,8 +98,9 @@ def run_annealing_worker(
             specializes_threshold=specializes_threshold,
         ))
 
-        # Auto-approve and dispatch proposals in autonomous mode
-        automation_level = job_data.get("automation_level", "autonomous")
+        # Autonomous mode: the manager already stored proposals as 'approved'
+        # (no human-raceable pending window) — dispatch their execution jobs.
+        # hitl proposals stay 'pending' for human review via the API.
         proposal_ids = result.get("proposal_ids", [])
 
         if automation_level == "autonomous" and not dry_run and proposal_ids:
@@ -106,13 +112,13 @@ def run_annealing_worker(
             job_queue.update_job(job_id, {
                 "progress": {"stage": "executing_proposals", "percent": 90}
             })
-            dispatched = _auto_approve_and_dispatch(
+            dispatched = _dispatch_approved_proposals(
                 proposal_ids, age_client, job_queue
             )
             result["auto_dispatched"] = dispatched
             logger.info(
                 f"Autonomous mode: dispatched {dispatched} of "
-                f"{len(proposal_ids)} proposals for execution"
+                f"{len(proposal_ids)} approved proposals for execution"
             )
         elif proposal_ids:
             logger.info(
@@ -141,15 +147,20 @@ def run_annealing_worker(
             age_client.close()
 
 
-def _auto_approve_and_dispatch(
+def _dispatch_approved_proposals(
     proposal_ids: List[int],
     age_client: AGEClient,
     job_queue,
 ) -> int:
-    """Auto-approve pending proposals and dispatch execution jobs.
+    """Dispatch execution jobs for auto-approved annealing proposals.
 
-    Follows the same execution path as the human review endpoint:
-    mark approved → enqueue proposal_execution job → dispatch async.
+    In autonomous mode the annealing manager stores proposals already
+    'approved' — there is no pending→approved transition to make here. This
+    enqueues one proposal_execution job per proposal, the same job the human
+    review endpoint dispatches on approval.
+
+    Guarded on status == 'approved' so a re-run cannot double-dispatch a
+    proposal that is already executing or executed.
 
     Returns the number of proposals dispatched.
     """
@@ -158,27 +169,22 @@ def _auto_approve_and_dispatch(
     try:
         for proposal_id in proposal_ids:
             try:
-                # Atomic approve — only if still pending (prevents double-dispatch)
                 with conn.cursor() as cur:
-                    cur.execute("""
-                        UPDATE kg_api.annealing_proposals
-                        SET status = 'approved',
-                            reviewed_by = 'annealing_worker',
-                            reviewed_at = %s,
-                            reviewer_notes = 'auto-approved (autonomous mode)'
-                        WHERE id = %s AND status = 'pending'
-                        RETURNING id
-                    """, (datetime.now(timezone.utc), proposal_id))
+                    cur.execute(
+                        "SELECT status FROM kg_api.annealing_proposals WHERE id = %s",
+                        (proposal_id,),
+                    )
                     row = cur.fetchone()
-                conn.commit()
+                conn.commit()  # close the read txn before returning conn to pool
 
-                if not row:
+                if not row or row[0] != "approved":
                     logger.warning(
-                        f"Proposal {proposal_id} not pending — skipping auto-approve"
+                        f"Proposal {proposal_id} not in 'approved' state "
+                        f"({row[0] if row else 'missing'}) — skipping dispatch"
                     )
                     continue
 
-                # Dispatch execution job
+                # Dispatch execution job (same job as the human review endpoint)
                 exec_job_id = job_queue.enqueue(
                     job_type="proposal_execution",
                     job_data={
@@ -194,12 +200,12 @@ def _auto_approve_and_dispatch(
                 dispatched += 1
 
                 logger.info(
-                    f"Auto-approved proposal {proposal_id}, "
-                    f"enqueued execution job {exec_job_id}"
+                    f"Dispatched execution job {exec_job_id} for "
+                    f"approved proposal {proposal_id}"
                 )
             except Exception as e:
                 logger.error(
-                    f"Failed to auto-approve/dispatch proposal {proposal_id}: {e}",
+                    f"Failed to dispatch proposal {proposal_id}: {e}",
                     exc_info=True,
                 )
     finally:

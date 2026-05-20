@@ -302,6 +302,60 @@ class TestStoreProposal:
 
         assert proposal_id is None
 
+    def test_autonomous_mode_stores_proposal_approved(self, mock_client, mock_scorer):
+        """In autonomous mode a proposal is born 'approved' — no pending window."""
+        manager = AnnealingManager(
+            mock_client, mock_scorer, ai_provider=None,
+            automation_level="autonomous",
+        )
+
+        manager._store_proposal(
+            proposal_type="promotion",
+            ontology_name="big-domain",
+            reasoning="natural nucleus",
+            epoch=20,
+            anchor_concept_id="c_abc123",
+        )
+
+        cursor = (
+            mock_client.pool.getconn.return_value
+            .cursor.return_value.__enter__.return_value
+        )
+        # INSERT params end with (status, reviewed_by, reviewed_at, reviewer_notes)
+        status, reviewed_by, reviewed_at, reviewer_notes = (
+            cursor.execute.call_args[0][1][-4:]
+        )
+        assert status == "approved"
+        assert reviewed_by == "annealing_worker"
+        assert reviewed_at is not None
+        assert "auto-approved" in reviewer_notes
+
+    def test_hitl_mode_stores_proposal_pending(self, mock_client, mock_scorer):
+        """In hitl mode a proposal is born 'pending', awaiting human review."""
+        manager = AnnealingManager(
+            mock_client, mock_scorer, ai_provider=None,
+            automation_level="hitl",
+        )
+
+        manager._store_proposal(
+            proposal_type="demotion",
+            ontology_name="weak-domain",
+            reasoning="too small",
+            epoch=20,
+        )
+
+        cursor = (
+            mock_client.pool.getconn.return_value
+            .cursor.return_value.__enter__.return_value
+        )
+        status, reviewed_by, reviewed_at, reviewer_notes = (
+            cursor.execute.call_args[0][1][-4:]
+        )
+        assert status == "pending"
+        assert reviewed_by is None
+        assert reviewed_at is None
+        assert reviewer_notes is None
+
 
 # ==========================================================================
 # ADR-200 Phase 5: Edge Derivation Integration
