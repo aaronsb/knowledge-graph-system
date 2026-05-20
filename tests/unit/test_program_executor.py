@@ -76,7 +76,7 @@ class TestSequentialExecution:
 
         call_count = [0]
 
-        def mock_dispatch(ctx, op):
+        def mock_dispatch(ctx, op, w=None):
             call_count[0] += 1
             return WorkingGraph(
                 nodes=[_node(f"n{call_count[0]}")],
@@ -105,7 +105,7 @@ class TestSequentialExecution:
         ]
         idx = [0]
 
-        def mock_dispatch(ctx, op):
+        def mock_dispatch(ctx, op, w=None):
             r = results[idx[0]]
             idx[0] += 1
             return r
@@ -134,7 +134,7 @@ class TestAssertAbort:
         ]
         idx = [0]
 
-        def mock_dispatch(ctx, op):
+        def mock_dispatch(ctx, op, w=None):
             r = results[idx[0]]
             idx[0] += 1
             return r
@@ -157,7 +157,7 @@ class TestAssertAbort:
             _cypher_stmt('!'),
         ])
 
-        def mock_dispatch(ctx, op):
+        def mock_dispatch(ctx, op, w=None):
             return WorkingGraph(nodes=[_node("a")], links=[])
 
         client = MagicMock()
@@ -189,7 +189,7 @@ class TestConditionalBranching:
 
         call_count = [0]
 
-        def mock_dispatch(ctx, op):
+        def mock_dispatch(ctx, op, w=None):
             call_count[0] += 1
             return WorkingGraph(nodes=[_node(f"n{call_count[0]}")], links=[])
 
@@ -217,7 +217,7 @@ class TestConditionalBranching:
             ),
         ])
 
-        def mock_dispatch(ctx, op):
+        def mock_dispatch(ctx, op, w=None):
             return WorkingGraph(nodes=[_node("from_else")], links=[])
 
         client = MagicMock()
@@ -239,7 +239,7 @@ class TestStepLog:
             _api_stmt('?'),
         ])
 
-        def mock_cypher(ctx, op):
+        def mock_cypher(ctx, op, w=None):
             return WorkingGraph(nodes=[_node("a")], links=[])
 
         def mock_api(ctx, op):
@@ -281,7 +281,7 @@ class TestErrorHandling:
 
         call_count = [0]
 
-        def mock_dispatch(ctx, op):
+        def mock_dispatch(ctx, op, w=None):
             call_count[0] += 1
             if call_count[0] == 2:
                 raise RuntimeError("Connection lost")
