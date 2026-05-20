@@ -530,11 +530,11 @@ Read the program/syntax resource for the complete language reference with more e
 
 Read the graph epoch event log (ADR-203).
 
-Every mutation to the knowledge graph (ingestion job, agent reasoning, ontology breathing, manual edit) records a monotonic event with a wall-clock timestamp. This tool exposes that log so you can ask "when did the system come to know X?" or "what arrived in the graph during this window?" — without inventing causal edges between concepts.
+Every mutation to the knowledge graph (ingestion job, agent reasoning, ontology annealing, manual edit) records a monotonic event with a wall-clock timestamp. This tool exposes that log so you can ask "when did the system come to know X?" or "what arrived in the graph during this window?" — without inventing causal edges between concepts.
 
 Two dimensions matter:
   - event_id (logical time): always meaningful — strictly ordered, even for events whose wall-clock is forensic.
-  - occurred_at (wall-clock): semantically meaningful for kinds like 'ingestion' / 'edit'; treat as forensic-only for 'reasoning' / 'breathing'.
+  - occurred_at (wall-clock): semantically meaningful for kinds like 'ingestion' / 'edit'; treat as forensic-only for 'reasoning' / 'annealing'.
 
 Cursor-paginated. Pass the previous response's next_cursor as cursor to walk further back.
 
@@ -543,7 +543,7 @@ For the per-concept re-evidence stream (which Concepts were touched in which epo
 **Parameters:**
 
 - `kind` (`string`) - Filter to a specific event kind. Omit for all kinds.
-  - Allowed values: `ingestion`, `reasoning`, `breathing`, `edit`
+  - Allowed values: `ingestion`, `reasoning`, `annealing`, `edit`
 - `since` (`string`) - ISO-8601 lower bound on occurred_at. The API parses with FastAPI's datetime parser; tolerant of common forms (with or without "Z", offsets accepted).
 - `until` (`string`) - ISO-8601 upper bound on occurred_at. Same parsing semantics as `since`.
 - `actor` (`string`) - Filter by exact actor string (user id, agent session id, system component)

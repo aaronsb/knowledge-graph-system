@@ -1,7 +1,7 @@
 -- Migration 064: Replace graph_epochs.kind CHECK constraint with a lookup table.
 --
 -- ADR-203 §Decision §1 introduced graph_epochs.kind with a hard-coded
--- CHECK constraint (`kind IN ('ingestion','reasoning','breathing','edit')`).
+-- CHECK constraint (`kind IN ('ingestion','reasoning','annealing','edit')`).
 -- The constraint was also duplicated, in spirit, by the formatter's
 -- `KINDS_WITH_WALLCLOCK` set in cli/src/mcp/formatters/epoch.ts — both
 -- need to stay in sync as the system grows new event kinds.
@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS kg_api.graph_epoch_kinds (
 );
 
 COMMENT ON TABLE kg_api.graph_epoch_kinds IS
-    'ADR-203: Discriminator for graph_epochs.kind. semantic_wallclock distinguishes events whose occurred_at is semantically primary (ingestion, edit) from those where it is forensic-only (reasoning, breathing).';
+    'ADR-203: Discriminator for graph_epochs.kind. semantic_wallclock distinguishes events whose occurred_at is semantically primary (ingestion, edit) from those where it is forensic-only (reasoning, annealing).';
 
 COMMENT ON COLUMN kg_api.graph_epoch_kinds.semantic_wallclock IS
     'When TRUE, occurred_at is the meaningful timestamp for downstream consumers. When FALSE, occurred_at is recorded for audit/forensics but should not drive time-based queries on the resulting graph state.';
@@ -36,7 +36,7 @@ INSERT INTO kg_api.graph_epoch_kinds (kind, semantic_wallclock, description) VAL
     ('ingestion',  TRUE,  'External corpus arrived via the ingestion pipeline.'),
     ('edit',       TRUE,  'Explicit manual mutation by an operator.'),
     ('reasoning',  FALSE, 'Agent-driven reasoning session mutated the graph internally.'),
-    ('breathing',  FALSE, 'Ontology annealing / breathing pass mutated the graph internally.')
+    ('annealing',  FALSE, 'Ontology annealing pass mutated the graph internally.')
 ON CONFLICT (kind) DO NOTHING;
 
 -- Drop the closed-set CHECK constraint added by migration 063.
