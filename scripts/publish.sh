@@ -23,6 +23,19 @@
 #   --dry-run              Preview without making changes
 #   --skip-build           Skip build step
 #
+# npm authentication (the `cli` command):
+#   A token from `npm login` STILL requires interactive browser 2FA to
+#   publish. That works in a real terminal but fails with EOTP when this
+#   script runs through a pipe — CI, `| tee`, or a coding agent — because
+#   there is no TTY for the browser handoff.
+#
+#   To publish non-interactively, create a classic *Automation* token
+#   (npmjs.com -> Access Tokens -> Generate New Token -> Classic Token ->
+#   Automation). Automation tokens bypass 2FA. Put it in ~/.npmrc:
+#       //registry.npmjs.org/:_authToken=npm_xxxxxxxxxxxxxxxxxxxx
+#
+#   Without an Automation token, run the publish yourself in a terminal:
+#       cd cli && npm publish --access public
 # ============================================================================
 
 set -e
@@ -772,8 +785,28 @@ cmd_cli() {
     echo ""
     if [ "$DRY_RUN" = "false" ]; then
         echo -e "${BLUE}→ Publishing to npm...${NC}"
-        npm publish --access public
-        echo -e "${GREEN}✓ Published @aaronsb/kg-cli@$CLI_VERSION${NC}"
+        # A plain `npm login` token needs interactive browser 2FA to
+        # publish — impossible without a TTY. Flag it up front so a
+        # non-interactive run (CI / agent) fails loud, not cryptic.
+        if [ ! -t 0 ]; then
+            echo -e "${DIM}  non-interactive shell: this needs an Automation token in${NC}"
+            echo -e "${DIM}  ~/.npmrc, or it will fail — a normal npm-login token cannot${NC}"
+            echo -e "${DIM}  clear browser 2FA here. See this script's header.${NC}"
+        fi
+        # `if` guards the call so set -e doesn't abort before the hint.
+        if npm publish --access public; then
+            echo -e "${GREEN}✓ Published @aaronsb/kg-cli@$CLI_VERSION${NC}"
+        else
+            echo ""
+            echo -e "${RED}✗ npm publish failed.${NC}"
+            echo -e "${YELLOW}If this was a 2FA / EOTP error, npm needs a human:${NC} a"
+            echo -e "  normal \`npm login\` token cannot publish from a script. Either —"
+            echo -e "    1. Run it yourself in a real terminal:"
+            echo -e "         ${BOLD}cd $PROJECT_ROOT/cli && npm publish --access public${NC}"
+            echo -e "    2. Or add a classic ${BOLD}Automation${NC} token to ~/.npmrc to"
+            echo -e "       publish unattended — see this script's header."
+            exit 1
+        fi
     fi
 }
 
