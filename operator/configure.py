@@ -281,6 +281,48 @@ class OperatorConfig:
         finally:
             conn.close()
 
+    def _validate_provider_key(self, provider, key):
+        """Validate a provider API key using its SDK directly.
+
+        Avoids constructing AIProvider classes during first-run setup, where
+        their __init__ requires environment that doesn't exist yet (e.g.
+        AnthropicProvider needs an OpenAI embedding provider; all of them
+        resolve an extraction model from the catalog which may be empty).
+        Each provider's validate_api_key() in ai_providers.py uses the same
+        "list models" pattern reproduced here.
+
+        Returns True on success, False if the SDK rejected the key as
+        unauthorized, None if the provider is unknown (caller stores without
+        validation). Non-auth errors (network, proxy, DNS) propagate so the
+        caller can surface the real cause instead of misleading the user
+        toward "your key is wrong" remediation.
+        """
+        if provider == "openai":
+            from openai import OpenAI, AuthenticationError
+            try:
+                OpenAI(api_key=key).models.list()
+                return True
+            except AuthenticationError:
+                return False
+        if provider == "anthropic":
+            from anthropic import Anthropic, AuthenticationError
+            try:
+                Anthropic(api_key=key).models.list(limit=1)
+                return True
+            except AuthenticationError:
+                return False
+        if provider == "openrouter":
+            from openai import OpenAI, AuthenticationError
+            try:
+                OpenAI(
+                    api_key=key,
+                    base_url="https://openrouter.ai/api/v1",
+                ).models.list()
+                return True
+            except AuthenticationError:
+                return False
+        return None
+
     def cmd_api_key(self, args):
         """Store encrypted API key"""
         provider = args.provider
@@ -293,52 +335,44 @@ class OperatorConfig:
         if not key:
             key = getpass.getpass(f"Enter API key for {provider}: ")
 
-        # Import required modules
+        # Import storage modules. Validation uses provider SDKs directly
+        # (below) rather than instantiating AIProvider classes, because the
+        # provider constructors require a fully-configured environment
+        # (embedding provider, model catalog) that doesn't exist yet during
+        # first-run setup — see ADR-800/801.
         try:
             from api.app.lib.encrypted_keys import EncryptedKeyStore
             from api.app.lib.age_client import AGEClient
-            from api.app.lib.ai_providers import OpenAIProvider, AnthropicProvider, OpenRouterProvider
         except ImportError as e:
             print(f"❌ Cannot import required modules: {e}")
             print("   Make sure PYTHONPATH includes api directory")
             return False
 
-        # Validate the API key before storing
         print(f"🔍 Validating {provider} API key...")
         try:
-            if provider.lower() == "openai":
-                validator = OpenAIProvider(api_key=key)
-            elif provider.lower() == "anthropic":
-                validator = AnthropicProvider(api_key=key)
-            elif provider.lower() == "openrouter":
-                validator = OpenRouterProvider(api_key=key)
-            else:
-                print(f"⚠️  Warning: Validation not implemented for provider '{provider}'")
-                print("   Key will be stored without validation.")
-                validator = None
-
-            if validator:
-                if not validator.validate_api_key():
-                    print(f"❌ API key validation failed for {provider}")
-                    print("   The key was rejected by the provider's API.")
-                    print("   Please check:")
-                    print("     1. Key is correct (no extra spaces or characters)")
-                    print("     2. Key has not been revoked")
-                    print("     3. Account is active and in good standing")
-                    return False
-                print(f"✅ API key validated successfully")
-
+            validated = self._validate_provider_key(provider.lower(), key)
         except ImportError as e:
-            print(f"❌ Failed to import provider module: {e}")
-            import traceback
-            traceback.print_exc()
+            print(f"❌ Failed to import provider SDK: {e}")
             return False
         except Exception as e:
-            print(f"❌ API key validation failed: {e}")
-            print("   Error details:")
-            import traceback
-            traceback.print_exc()
+            print(f"❌ Could not contact {provider} API: {e}")
+            print("   This is not a key-rejection error — check network")
+            print("   connectivity, proxy settings, and firewall, then retry.")
             return False
+
+        if validated is None:
+            print(f"⚠️  Warning: Validation not implemented for provider '{provider}'")
+            print("   Key will be stored without validation.")
+        elif not validated:
+            print(f"❌ API key validation failed for {provider}")
+            print("   The key was rejected by the provider's API.")
+            print("   Please check:")
+            print("     1. Key is correct (no extra spaces or characters)")
+            print("     2. Key has not been revoked")
+            print("     3. Account is active and in good standing")
+            return False
+        else:
+            print(f"✅ API key validated successfully")
 
         # Store the validated key
         try:
