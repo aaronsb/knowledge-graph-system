@@ -449,11 +449,34 @@ if [ -z "$FULL_MODEL_LIST" ]; then
     echo -e "${YELLOW}⚠${NC} Could not fetch models from catalog. Using provider default."
     echo ""
 else
-    # For OpenRouter (200+ models), filter to well-known reasoning models first.
-    # For OpenAI/Anthropic, the seed data is already a curated list.
-    if [ "$AI_PROVIDER" = "openrouter" ]; then
-        # Pattern match popular/capable reasoning models
-        MODEL_LIST=$(echo "$FULL_MODEL_LIST" | grep -iE '(gpt-4o|gpt-4\.5|gpt-5|claude.*sonnet|claude.*opus|claude.*haiku|gemini.*pro|gemini.*flash|llama.*70|llama.*405|qwen.*72|mistral.*large|deepseek.*chat|deepseek.*r1|command-r)')
+    # Curation regex per provider. Now that ADR-800/801 enumerates models
+    # live from each provider's API, OpenAI/Anthropic also return 30+ entries
+    # — the old assumption that their seed lists were already curated no
+    # longer holds. Default the picker to the latest production families and
+    # let the [0] toggle reveal the full catalog.
+    case "$AI_PROVIDER" in
+        openai)
+            CURATED_PATTERN='(gpt-4o|gpt-4\.5|gpt-5|o1|o3)'
+            ;;
+        anthropic)
+            CURATED_PATTERN='(claude-(sonnet|opus|haiku)-4|claude-3-5-(sonnet|haiku))'
+            ;;
+        openrouter)
+            CURATED_PATTERN='(gpt-4o|gpt-4\.5|gpt-5|claude.*sonnet|claude.*opus|claude.*haiku|gemini.*pro|gemini.*flash|llama.*70|llama.*405|qwen.*72|mistral.*large|deepseek.*chat|deepseek.*r1|command-r)'
+            ;;
+        *)
+            CURATED_PATTERN=""
+            ;;
+    esac
+
+    if [ -n "$CURATED_PATTERN" ]; then
+        MODEL_LIST=$(echo "$FULL_MODEL_LIST" | grep -iE "$CURATED_PATTERN")
+        # Empty curation (regex matched nothing) → fall back to the full list
+        # rather than showing an empty menu.
+        if [ -z "$MODEL_LIST" ]; then
+            MODEL_LIST="$FULL_MODEL_LIST"
+            CURATED_PATTERN=""
+        fi
     else
         MODEL_LIST="$FULL_MODEL_LIST"
     fi
@@ -525,7 +548,7 @@ else
 
         # Show options footer
         echo ""
-        if [ "$AI_PROVIDER" = "openrouter" ]; then
+        if [ -n "$CURATED_PATTERN" ]; then
             TOTAL_COUNT=$(echo "$FULL_MODEL_LIST" | wc -l)
             if [ "$SHOW_ALL" = true ]; then
                 echo -e "  ${YELLOW}[ 0]${NC} Show curated models only"
@@ -551,8 +574,8 @@ else
             MODEL_CHOICE=1
         fi
 
-        # Handle "show all / show curated" toggle
-        if [ "$MODEL_CHOICE" = "0" ] && [ "$AI_PROVIDER" = "openrouter" ]; then
+        # Handle "show all / show curated" toggle (any provider with curation)
+        if [ "$MODEL_CHOICE" = "0" ] && [ -n "$CURATED_PATTERN" ]; then
             if [ "$SHOW_ALL" = true ]; then
                 SHOW_ALL=false
             else
