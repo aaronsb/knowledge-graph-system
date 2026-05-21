@@ -343,9 +343,30 @@ fi
 docker exec kg-operator python /workspace/operator/configure.py admin --password "$ADMIN_PASSWORD"
 echo ""
 
-# Step 4: Configure AI provider (interactive selection)
+# Step 4: Configure local embedding profile (GPU_MODE-aware)
+# This runs BEFORE AI provider selection because the embedding model is
+# system-level infrastructure that the API container loads at startup. It
+# is also activated against the device chosen at the very start of the
+# wizard, so the user's GPU/CPU intent is honored end-to-end.
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${BOLD}Step 4/9: Choosing AI extraction provider${NC}"
+echo -e "${BOLD}Step 4/9: Configuring local embedding profile${NC}"
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo ""
+
+case "$GPU_MODE" in
+    mac)                 EMBEDDING_DEVICE="mps" ;;
+    nvidia)              EMBEDDING_DEVICE="cuda" ;;
+    amd|amd-host)        EMBEDDING_DEVICE="cuda" ;;  # PyTorch ROCm presents as cuda
+    cpu|*)               EMBEDDING_DEVICE="cpu" ;;
+esac
+
+echo "Activating local embeddings (nomic-ai/nomic-embed-text-v1.5) on device: ${EMBEDDING_DEVICE}"
+docker exec kg-operator python /workspace/operator/configure.py embedding --provider local --device "$EMBEDDING_DEVICE"
+echo ""
+
+# Step 5: Configure AI provider (interactive selection)
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${BOLD}Step 5/9: Choosing AI extraction provider${NC}"
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 echo "Choose your AI extraction provider:"
@@ -392,9 +413,9 @@ case "$REPLY" in
 esac
 echo ""
 
-# Step 5: Store API key (skip for Ollama)
+# Step 6: Store API key (skip for Ollama)
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${BOLD}Step 5/9: Validating API key${NC}"
+echo -e "${BOLD}Step 6/9: Validating API key${NC}"
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 
@@ -427,9 +448,9 @@ while [ "$API_KEY_STORED" = false ]; do
     fi
 done
 
-# Step 6: Refresh model catalog and select model
+# Step 7: Refresh model catalog and select model
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${BOLD}Step 6/9: Selecting extraction model${NC}"
+echo -e "${BOLD}Step 7/9: Selecting extraction model${NC}"
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 
@@ -623,15 +644,6 @@ else
         fi
     done
 fi
-echo ""
-
-# Step 7: Configure embeddings
-echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${BOLD}Step 7/9: Configuring embedding provider${NC}"
-echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo ""
-echo "Activating local embeddings (nomic-ai/nomic-embed-text-v1.5)..."
-docker exec kg-operator python /workspace/operator/configure.py embedding --provider local
 echo ""
 
 # Step 8: Configure Garage credentials
