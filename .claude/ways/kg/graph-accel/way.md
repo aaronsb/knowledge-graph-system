@@ -13,7 +13,7 @@ Rust pgrx PostgreSQL extension for in-memory graph acceleration.
 ## Architecture
 
 - **Core** (`graph-accel/core/`): Pure Rust graph algorithms (BFS, k-shortest, degree, subgraph). No pgrx dependency — testable with `cargo test`.
-- **Ext** (`graph-accel/ext/`): pgrx wrapper — SPI loading, GUC handling, thread-local state. Needs `cargo pgrx test pg17`.
+- **Ext** (`graph-accel/ext/`): pgrx wrapper — SPI loading, GUC handling, thread-local state. Needs `cargo pgrx test pg18`.
 - **State**: Per-backend (thread_local). Each PostgreSQL connection has its own in-memory graph copy.
 - **Generation**: Monotonic counter in `graph_accel.generation` table drives cache invalidation via `ensure_fresh()`.
 
@@ -24,13 +24,13 @@ Rust pgrx PostgreSQL extension for in-memory graph acceleration.
 ./graph-accel/tests/deploy-option0.sh        # Copy .so into running container
 ```
 
-Output: `dist/pg17/{amd64,arm64}/graph_accel.so`
+Output: `dist/pg18/{amd64,arm64}/graph_accel.so`
 
 ## Testing
 
 ```bash
 cd graph-accel && cargo test                 # Core unit tests (fast, no PG)
-cd graph-accel && cargo pgrx test pg17       # Full pgrx tests (needs PG)
+cd graph-accel && cargo pgrx test pg18       # Full pgrx tests (needs PG)
 ```
 
 ## Debugging with SQL

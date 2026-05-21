@@ -7,7 +7,7 @@
 # Requirements:
 #   - knowledge-graph-postgres container running with AGE graph loaded
 #   - graph_accel extension installed (Option 0 or later deployment)
-#   - PostgreSQL 17.x (psql output parsing assumes 17.x formatting)
+#   - PostgreSQL 18.x (psql output parsing assumes 18.x formatting)
 #   - bc (for floating-point speedup calculation)
 #
 # Notes:

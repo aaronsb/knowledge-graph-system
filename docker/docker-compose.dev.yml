@@ -7,13 +7,14 @@
 
 services:
   postgres:
-    # Dev mode: use tagged apache/age PG17 release, volume-mount extension artifacts from host build.
+    # Dev mode: use tagged apache/age PG18 release, volume-mount extension artifacts from host build.
     # Build with: ./graph-accel/build-in-container.sh
     # If dist/ files don't exist, postgres starts fine — extension is optional.
-    # Pinned to PG17 release tag (not :latest which may advance to PG18+).
-    image: apache/age:release_PG17_1.6.0
+    # Pinned to an explicit PG18 release tag (not :latest which may advance further).
+    image: apache/age:release_PG18_1.7.0
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      # PG18+: volume mounts at /var/lib/postgresql (version-specific PGDATA subdir)
+      - postgres_data:/var/lib/postgresql
       - ../schema/00_baseline.sql:/docker-entrypoint-initdb.d/10-baseline.sql
       - ../schema/11_graph_accel.sql:/docker-entrypoint-initdb.d/11-graph-accel.sql
       - postgres_import:/import

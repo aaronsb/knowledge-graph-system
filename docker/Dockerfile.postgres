@@ -17,7 +17,8 @@
 
 # Pin to the same base used by Dockerfile.build for ABI compatibility.
 # Update both files together when upgrading the base image.
-FROM apache/age@sha256:4ba7dd683fc83fcac0e603f76448f6afba0507cf4d7d21673cede0d6ff0265b2
+# apache/age:release_PG18_1.7.0 — PostgreSQL 18 + Apache AGE 1.7.0
+FROM apache/age@sha256:e7de1717e487dac7c1be93a1cd5360a2cf07ff4170342c2af2ac4713c21baf00
 
 ARG GIT_COMMIT=unknown
 ARG BUILD_DATE=unknown
@@ -29,10 +30,10 @@ LABEL org.opencontainers.image.source="https://github.com/aaronsb/knowledge-grap
 LABEL org.opencontainers.image.revision="${GIT_COMMIT}"
 LABEL org.opencontainers.image.created="${BUILD_DATE}"
 
-# graph_accel extension artifacts (per-architecture, pre-built for PG 17)
-COPY graph-accel/dist/pg17/${TARGETARCH}/graph_accel.so /usr/lib/postgresql/17/lib/
-COPY graph-accel/dist/pg17/${TARGETARCH}/graph_accel.control /usr/share/postgresql/17/extension/
-COPY graph-accel/dist/pg17/${TARGETARCH}/graph_accel--*.sql /usr/share/postgresql/17/extension/
+# graph_accel extension artifacts (per-architecture, pre-built for PG 18)
+COPY graph-accel/dist/pg18/${TARGETARCH}/graph_accel.so /usr/lib/postgresql/18/lib/
+COPY graph-accel/dist/pg18/${TARGETARCH}/graph_accel.control /usr/share/postgresql/18/extension/
+COPY graph-accel/dist/pg18/${TARGETARCH}/graph_accel--*.sql /usr/share/postgresql/18/extension/
 
 # Schema initialization (runs on first database creation only)
 # 00-create-extension-age.sql is provided by the apache/age base image

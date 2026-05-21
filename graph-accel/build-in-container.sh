@@ -4,9 +4,9 @@
 # container for guaranteed ABI compatibility.
 #
 # Produces per-architecture artifacts:
-#   graph-accel/dist/pg17/<arch>/graph_accel.so
-#   graph-accel/dist/pg17/<arch>/graph_accel.control
-#   graph-accel/dist/pg17/<arch>/graph_accel--<version>.sql
+#   graph-accel/dist/pg18/<arch>/graph_accel.so
+#   graph-accel/dist/pg18/<arch>/graph_accel.control
+#   graph-accel/dist/pg18/<arch>/graph_accel--<version>.sql
 #
 # These artifacts can be:
 #   1. Baked into kg-postgres Docker image (docker/Dockerfile.postgres)
@@ -77,11 +77,11 @@ build_for_platform() {
     echo ""
 
     # Clean previous artifacts for this arch
-    rm -rf "$DIST_DIR/pg17/$arch"
-    mkdir -p "$DIST_DIR/pg17/$arch"
+    rm -rf "$DIST_DIR/pg18/$arch"
+    mkdir -p "$DIST_DIR/pg18/$arch"
 
     # Build using Docker BuildKit --output to extract just the artifacts
-    # The 'artifacts' stage outputs to /pg17/<arch>/ via TARGETARCH
+    # The 'artifacts' stage outputs to /pg18/<arch>/ via TARGETARCH
     DOCKER_BUILDKIT=1 docker buildx build \
         -f "$DOCKERFILE" \
         --platform "$platform" \
@@ -93,19 +93,19 @@ build_for_platform() {
     # Verify artifacts
     echo ""
     echo "=== Build artifacts ($arch) ==="
-    ls -lh "$DIST_DIR/pg17/$arch/"
+    ls -lh "$DIST_DIR/pg18/$arch/"
 
     # Extract version from control file
     local version
-    version=$(grep 'default_version' "$DIST_DIR/pg17/$arch/graph_accel.control" | grep -oP "'\K[^']+")
+    version=$(grep 'default_version' "$DIST_DIR/pg18/$arch/graph_accel.control" | grep -oP "'\K[^']+")
     echo ""
     echo "  Extension version: $version"
-    echo "  Target: PostgreSQL 17 (apache/age) — $arch"
+    echo "  Target: PostgreSQL 18 (apache/age) — $arch"
 
     # Verify all three files exist
     local missing=0
     for f in graph_accel.so graph_accel.control "graph_accel--${version}.sql"; do
-        if [ ! -f "$DIST_DIR/pg17/$arch/$f" ]; then
+        if [ ! -f "$DIST_DIR/pg18/$arch/$f" ]; then
             echo "ERROR: Missing artifact: $f"
             missing=1
         fi
@@ -127,9 +127,9 @@ done
 
 echo ""
 if [ "$FAILED" -eq 0 ]; then
-    echo "BUILD: OK — artifacts ready in graph-accel/dist/pg17/"
+    echo "BUILD: OK — artifacts ready in graph-accel/dist/pg18/"
     for platform in "${PLATFORMS[@]}"; do
-        echo "  ${platform#linux/}/: $(ls "$DIST_DIR/pg17/${platform#linux/}/" | tr '\n' ' ')"
+        echo "  ${platform#linux/}/: $(ls "$DIST_DIR/pg18/${platform#linux/}/" | tr '\n' ' ')"
     done
 else
     echo "BUILD: FAILED — see errors above"

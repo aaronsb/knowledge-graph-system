@@ -214,7 +214,7 @@ cd cli && npm test
 
 # Rust (graph-accel) — run from graph-accel/
 cd graph-accel && cargo test                          # core unit tests
-cd graph-accel && cargo pgrx test pg17                # pgrx extension tests
+cd graph-accel && cargo pgrx test pg18                # pgrx extension tests
 ```
 
 The API tests run inside the container (`kg-api-dev`) because they need

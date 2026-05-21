@@ -16,14 +16,15 @@
 # ---------------------------------------------------------------------------
 # Pin to digest — the runtime image (Dockerfile.postgres) must match.
 # Update both files together when upgrading the base image.
-FROM apache/age@sha256:4ba7dd683fc83fcac0e603f76448f6afba0507cf4d7d21673cede0d6ff0265b2 AS builder
+# apache/age:release_PG18_1.7.0 — PostgreSQL 18 + Apache AGE 1.7.0
+FROM apache/age@sha256:e7de1717e487dac7c1be93a1cd5360a2cf07ff4170342c2af2ac4713c21baf00 AS builder
 
 # Build dependencies — Rust toolchain + PostgreSQL dev headers
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl ca-certificates \
     build-essential pkg-config \
     libssl-dev libclang-dev clang \
-    postgresql-server-dev-17 \
+    postgresql-server-dev-18 \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Rust (stable)
@@ -35,7 +36,7 @@ ENV PATH="/root/.cargo/bin:${PATH}"
 RUN cargo install cargo-pgrx --version =0.16.1 --locked
 
 # Initialize pgrx with the system pg_config (same PG as runtime)
-RUN cargo pgrx init --pg17=$(which pg_config)
+RUN cargo pgrx init --pg18=$(which pg_config)
 
 # Copy source
 WORKDIR /build
@@ -50,13 +51,13 @@ RUN cargo pgrx package --package graph-accel-ext --pg-config $(which pg_config)
 # Resolve the output paths (pgrx nests under pg_config install prefix)
 # Use find to locate artifacts reliably regardless of nesting structure
 RUN mkdir -p /artifacts && \
-    find target/release/graph_accel-pg17 -name "graph_accel.so" -exec cp {} /artifacts/ \; && \
-    find target/release/graph_accel-pg17 -name "graph_accel.control" -exec cp {} /artifacts/ \; && \
-    find target/release/graph_accel-pg17 -name "graph_accel--*.sql" -exec cp {} /artifacts/ \;
+    find target/release/graph_accel-pg18 -name "graph_accel.so" -exec cp {} /artifacts/ \; && \
+    find target/release/graph_accel-pg18 -name "graph_accel.control" -exec cp {} /artifacts/ \; && \
+    find target/release/graph_accel-pg18 -name "graph_accel--*.sql" -exec cp {} /artifacts/ \;
 
 # ---------------------------------------------------------------------------
 # Stage 2: Minimal output (per-architecture subdirectory)
 # ---------------------------------------------------------------------------
 FROM scratch AS artifacts
 ARG TARGETARCH
-COPY --from=builder /artifacts/ /pg17/${TARGETARCH}/
+COPY --from=builder /artifacts/ /pg18/${TARGETARCH}/

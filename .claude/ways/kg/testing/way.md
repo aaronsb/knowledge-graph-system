@@ -27,7 +27,7 @@ cd cli && npm test
 **Rust tests** (graph-accel core, runs from host):
 ```bash
 cd graph-accel && cargo test           # Core algorithms (fast, no PG)
-cd graph-accel && cargo pgrx test pg17 # pgrx extension tests (needs PG)
+cd graph-accel && cargo pgrx test pg18 # pgrx extension tests (needs PG)
 ```
 
 ## Test Structure

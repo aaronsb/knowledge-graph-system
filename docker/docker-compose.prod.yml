@@ -21,7 +21,8 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-admin}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
-      - /srv/docker/data/knowledge-graph/postgres:/var/lib/postgresql/data
+      # PG18+: bind-mount maps to /var/lib/postgresql (version-specific PGDATA subdir)
+      - /srv/docker/data/knowledge-graph/postgres:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-admin} -d ${POSTGRES_DB:-knowledge_graph}"]
       interval: 10s
