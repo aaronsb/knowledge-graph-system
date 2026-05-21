@@ -2,7 +2,7 @@
 # ============================================================================
 # operator.sh - Knowledge Graph Platform Manager (Thin Shim)
 # ============================================================================
-OPERATOR_VERSION="0.12.0"
+OPERATOR_VERSION="0.13.0"
 # ============================================================================
 #
 # Minimal host-side script that delegates to operator container.
