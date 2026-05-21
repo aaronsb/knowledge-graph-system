@@ -13,25 +13,25 @@
       
       
       
-        <link rel="prev" href="../../">
+        <link rel="prev" href="../ADR-204-node-type-and-abstract-property-representation-for-concept-nodes/">
       
       
-        <link rel="next" href="../config/">
+        <link rel="next" href="../../infrastructure/ADR-012-api-server-architecture/">
       
       
         
       
       
-      <link rel="icon" href="../../../../assets/images/favicon.png">
+      <link rel="icon" href="../../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
-        <title>kg admin - Knowledge Graph System</title>
+        <title>ADR-205: PostgreSQL 18 Migration - Knowledge Graph System</title>
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
       
       
 
@@ -50,7 +50,7 @@
       
     
     
-    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -68,7 +68,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#kg-admin" class="md-skip">
+        <a href="#adr-205-postgresql-18-migration" class="md-skip">
           Skip to content
         </a>
       
@@ -84,7 +84,7 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../../../.." title="Knowledge Graph System" class="md-header__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+    <a href="../../.." title="Knowledge Graph System" class="md-header__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -104,7 +104,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              kg admin
+              ADR-205: PostgreSQL 18 Migration
             
           </span>
         </div>
@@ -194,7 +194,7 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../../../.." title="Knowledge Graph System" class="md-nav__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+    <a href="../../.." title="Knowledge Graph System" class="md-nav__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -224,7 +224,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../.." class="md-nav__link">
+      <a href="../../.." class="md-nav__link">
         
   
   
@@ -298,7 +298,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../concepts/" class="md-nav__link">
+      <a href="../../../concepts/" class="md-nav__link">
         
   
   
@@ -326,7 +326,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../concepts/glossary/" class="md-nav__link">
+      <a href="../../../concepts/glossary/" class="md-nav__link">
         
   
   
@@ -354,7 +354,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../concepts/how-it-works/" class="md-nav__link">
+      <a href="../../../concepts/how-it-works/" class="md-nav__link">
         
   
   
@@ -436,7 +436,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../features/" class="md-nav__link">
+      <a href="../../../features/" class="md-nav__link">
         
   
   
@@ -464,7 +464,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../features/web-workstation/" class="md-nav__link">
+      <a href="../../../features/web-workstation/" class="md-nav__link">
         
   
   
@@ -492,7 +492,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../features/cli/" class="md-nav__link">
+      <a href="../../../features/cli/" class="md-nav__link">
         
   
   
@@ -520,7 +520,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../features/mcp-server/" class="md-nav__link">
+      <a href="../../../features/mcp-server/" class="md-nav__link">
         
   
   
@@ -548,7 +548,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../features/fuse-driver/" class="md-nav__link">
+      <a href="../../../features/fuse-driver/" class="md-nav__link">
         
   
   
@@ -576,7 +576,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../features/rest-api/" class="md-nav__link">
+      <a href="../../../features/rest-api/" class="md-nav__link">
         
   
   
@@ -658,7 +658,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/ASYNC-ARCHITECTURE/" class="md-nav__link">
+      <a href="../../../guides/ASYNC-ARCHITECTURE/" class="md-nav__link">
         
   
   
@@ -686,7 +686,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/CLI_DEVELOPMENT/" class="md-nav__link">
+      <a href="../../../guides/CLI_DEVELOPMENT/" class="md-nav__link">
         
   
   
@@ -714,7 +714,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/CONTAINER_IMAGES/" class="md-nav__link">
+      <a href="../../../guides/CONTAINER_IMAGES/" class="md-nav__link">
         
   
   
@@ -742,7 +742,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/CROSS_ONTOLOGY_LINKING/" class="md-nav__link">
+      <a href="../../../guides/CROSS_ONTOLOGY_LINKING/" class="md-nav__link">
         
   
   
@@ -770,7 +770,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/DEPLOYMENT/" class="md-nav__link">
+      <a href="../../../guides/DEPLOYMENT/" class="md-nav__link">
         
   
   
@@ -798,7 +798,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/DOCSTRING_COVERAGE/" class="md-nav__link">
+      <a href="../../../guides/DOCSTRING_COVERAGE/" class="md-nav__link">
         
   
   
@@ -826,7 +826,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/EPISTEMIC-STATUS-FILTERING/" class="md-nav__link">
+      <a href="../../../guides/EPISTEMIC-STATUS-FILTERING/" class="md-nav__link">
         
   
   
@@ -854,7 +854,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/FUSE_FILESYSTEM/" class="md-nav__link">
+      <a href="../../../guides/FUSE_FILESYSTEM/" class="md-nav__link">
         
   
   
@@ -882,7 +882,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/POLARITY_AXIS_ANALYSIS/" class="md-nav__link">
+      <a href="../../../guides/POLARITY_AXIS_ANALYSIS/" class="md-nav__link">
         
   
   
@@ -910,7 +910,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/QUERY_SAFETY_BASELINE/" class="md-nav__link">
+      <a href="../../../guides/QUERY_SAFETY_BASELINE/" class="md-nav__link">
         
   
   
@@ -938,7 +938,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/SAVED_QUERIES/" class="md-nav__link">
+      <a href="../../../guides/SAVED_QUERIES/" class="md-nav__link">
         
   
   
@@ -966,7 +966,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/SCHEDULED-JOBS/" class="md-nav__link">
+      <a href="../../../guides/SCHEDULED-JOBS/" class="md-nav__link">
         
   
   
@@ -994,7 +994,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/SEMANTIC_PATH_GRADIENTS/" class="md-nav__link">
+      <a href="../../../guides/SEMANTIC_PATH_GRADIENTS/" class="md-nav__link">
         
   
   
@@ -1022,7 +1022,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/VOCABULARY_LIFECYCLE/" class="md-nav__link">
+      <a href="../../../guides/VOCABULARY_LIFECYCLE/" class="md-nav__link">
         
   
   
@@ -1050,7 +1050,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/adr-045-046-migration-plan/" class="md-nav__link">
+      <a href="../../../guides/adr-045-046-migration-plan/" class="md-nav__link">
         
   
   
@@ -1078,7 +1078,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/adr-068-implementation-plan/" class="md-nav__link">
+      <a href="../../../guides/adr-068-implementation-plan/" class="md-nav__link">
         
   
   
@@ -1106,7 +1106,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/adr-074-implementation-checklist/" class="md-nav__link">
+      <a href="../../../guides/adr-074-implementation-checklist/" class="md-nav__link">
         
   
   
@@ -1134,7 +1134,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/exploring/" class="md-nav__link">
+      <a href="../../../guides/exploring/" class="md-nav__link">
         
   
   
@@ -1162,7 +1162,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/querying/" class="md-nav__link">
+      <a href="../../../guides/querying/" class="md-nav__link">
         
   
   
@@ -1190,7 +1190,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/understanding-grounding/" class="md-nav__link">
+      <a href="../../../guides/understanding-grounding/" class="md-nav__link">
         
   
   
@@ -1272,7 +1272,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/" class="md-nav__link">
+      <a href="../../../manual/" class="md-nav__link">
         
   
   
@@ -1347,7 +1347,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/00-introduction/01-WHAT_AND_WHY/" class="md-nav__link">
+      <a href="../../../manual/00-introduction/01-WHAT_AND_WHY/" class="md-nav__link">
         
   
   
@@ -1430,7 +1430,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/01-getting-started/02-CLI_USAGE/" class="md-nav__link">
+      <a href="../../../manual/01-getting-started/02-CLI_USAGE/" class="md-nav__link">
         
   
   
@@ -1458,7 +1458,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/01-getting-started/03-INGESTION/" class="md-nav__link">
+      <a href="../../../manual/01-getting-started/03-INGESTION/" class="md-nav__link">
         
   
   
@@ -1541,7 +1541,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/02-configuration/01-AI_PROVIDERS/" class="md-nav__link">
+      <a href="../../../manual/02-configuration/01-AI_PROVIDERS/" class="md-nav__link">
         
   
   
@@ -1569,7 +1569,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/02-configuration/02-EXTRACTION_CONFIGURATION/" class="md-nav__link">
+      <a href="../../../manual/02-configuration/02-EXTRACTION_CONFIGURATION/" class="md-nav__link">
         
   
   
@@ -1597,7 +1597,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/02-configuration/03-EMBEDDING_CONFIGURATION/" class="md-nav__link">
+      <a href="../../../manual/02-configuration/03-EMBEDDING_CONFIGURATION/" class="md-nav__link">
         
   
   
@@ -1625,7 +1625,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/02-configuration/04-SWITCHING_EXTRACTION_PROVIDERS/" class="md-nav__link">
+      <a href="../../../manual/02-configuration/04-SWITCHING_EXTRACTION_PROVIDERS/" class="md-nav__link">
         
   
   
@@ -1653,7 +1653,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/02-configuration/05-LOCAL_INFERENCE_IMPLEMENTATION/" class="md-nav__link">
+      <a href="../../../manual/02-configuration/05-LOCAL_INFERENCE_IMPLEMENTATION/" class="md-nav__link">
         
   
   
@@ -1681,7 +1681,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/02-configuration/06-EXTRACTION_QUALITY_COMPARISON/" class="md-nav__link">
+      <a href="../../../manual/02-configuration/06-EXTRACTION_QUALITY_COMPARISON/" class="md-nav__link">
         
   
   
@@ -1764,7 +1764,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/03-integration/01-MCP_SETUP/" class="md-nav__link">
+      <a href="../../../manual/03-integration/01-MCP_SETUP/" class="md-nav__link">
         
   
   
@@ -1792,7 +1792,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/03-integration/02-VOCABULARY_CONSOLIDATION/" class="md-nav__link">
+      <a href="../../../manual/03-integration/02-VOCABULARY_CONSOLIDATION/" class="md-nav__link">
         
   
   
@@ -1875,7 +1875,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/04-security-and-access/01-AUTHENTICATION/" class="md-nav__link">
+      <a href="../../../manual/04-security-and-access/01-AUTHENTICATION/" class="md-nav__link">
         
   
   
@@ -1903,7 +1903,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/04-security-and-access/02-RBAC/" class="md-nav__link">
+      <a href="../../../manual/04-security-and-access/02-RBAC/" class="md-nav__link">
         
   
   
@@ -1931,7 +1931,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/04-security-and-access/03-SECURITY/" class="md-nav__link">
+      <a href="../../../manual/04-security-and-access/03-SECURITY/" class="md-nav__link">
         
   
   
@@ -1959,7 +1959,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/04-security-and-access/04-PASSWORD_RECOVERY/" class="md-nav__link">
+      <a href="../../../manual/04-security-and-access/04-PASSWORD_RECOVERY/" class="md-nav__link">
         
   
   
@@ -2042,7 +2042,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/05-maintenance/01-BACKUP_RESTORE/" class="md-nav__link">
+      <a href="../../../manual/05-maintenance/01-BACKUP_RESTORE/" class="md-nav__link">
         
   
   
@@ -2070,7 +2070,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/05-maintenance/02-DATABASE_MIGRATIONS/" class="md-nav__link">
+      <a href="../../../manual/05-maintenance/02-DATABASE_MIGRATIONS/" class="md-nav__link">
         
   
   
@@ -2153,7 +2153,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/06-reference/01-SCHEMA_REFERENCE/" class="md-nav__link">
+      <a href="../../../manual/06-reference/01-SCHEMA_REFERENCE/" class="md-nav__link">
         
   
   
@@ -2181,7 +2181,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/06-reference/02-USE_CASES/" class="md-nav__link">
+      <a href="../../../manual/06-reference/02-USE_CASES/" class="md-nav__link">
         
   
   
@@ -2209,7 +2209,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/06-reference/03-EXAMPLES/" class="md-nav__link">
+      <a href="../../../manual/06-reference/03-EXAMPLES/" class="md-nav__link">
         
   
   
@@ -2237,7 +2237,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/06-reference/04-github_project_history/" class="md-nav__link">
+      <a href="../../../manual/06-reference/04-github_project_history/" class="md-nav__link">
         
   
   
@@ -2265,7 +2265,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/06-reference/05-CONCEPTS_AND_TERMINOLOGY/" class="md-nav__link">
+      <a href="../../../manual/06-reference/05-CONCEPTS_AND_TERMINOLOGY/" class="md-nav__link">
         
   
   
@@ -2293,7 +2293,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/06-reference/06-CONCEPT/" class="md-nav__link">
+      <a href="../../../manual/06-reference/06-CONCEPT/" class="md-nav__link">
         
   
   
@@ -2321,7 +2321,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/06-reference/07-ENRICHMENT_JOURNEY/" class="md-nav__link">
+      <a href="../../../manual/06-reference/07-ENRICHMENT_JOURNEY/" class="md-nav__link">
         
   
   
@@ -2349,7 +2349,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/06-reference/08-DISTRIBUTED_SHARDING_RESEARCH/" class="md-nav__link">
+      <a href="../../../manual/06-reference/08-DISTRIBUTED_SHARDING_RESEARCH/" class="md-nav__link">
         
   
   
@@ -2377,7 +2377,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/06-reference/09-CYPHER_PATTERNS/" class="md-nav__link">
+      <a href="../../../manual/06-reference/09-CYPHER_PATTERNS/" class="md-nav__link">
         
   
   
@@ -2405,7 +2405,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/06-reference/10-OPENCYPHER_QUERIES/" class="md-nav__link">
+      <a href="../../../manual/06-reference/10-OPENCYPHER_QUERIES/" class="md-nav__link">
         
   
   
@@ -2433,7 +2433,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/06-reference/11-LLM_EDGE_DISCOVERY_FLOW/" class="md-nav__link">
+      <a href="../../../manual/06-reference/11-LLM_EDGE_DISCOVERY_FLOW/" class="md-nav__link">
         
   
   
@@ -2523,7 +2523,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../deployment/macvlan-dedicated-ip/" class="md-nav__link">
+      <a href="../../../deployment/macvlan-dedicated-ip/" class="md-nav__link">
         
   
   
@@ -2605,7 +2605,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../operating/" class="md-nav__link">
+      <a href="../../../operating/" class="md-nav__link">
         
   
   
@@ -2633,7 +2633,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../operating/backup-restore/" class="md-nav__link">
+      <a href="../../../operating/backup-restore/" class="md-nav__link">
         
   
   
@@ -2661,7 +2661,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../operating/client-tools/" class="md-nav__link">
+      <a href="../../../operating/client-tools/" class="md-nav__link">
         
   
   
@@ -2689,7 +2689,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../operating/configuration/" class="md-nav__link">
+      <a href="../../../operating/configuration/" class="md-nav__link">
         
   
   
@@ -2717,7 +2717,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../operating/macvlan-headless-install/" class="md-nav__link">
+      <a href="../../../operating/macvlan-headless-install/" class="md-nav__link">
         
   
   
@@ -2745,7 +2745,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../operating/production/" class="md-nav__link">
+      <a href="../../../operating/production/" class="md-nav__link">
         
   
   
@@ -2773,7 +2773,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../operating/quick-start/" class="md-nav__link">
+      <a href="../../../operating/quick-start/" class="md-nav__link">
         
   
   
@@ -2801,7 +2801,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../operating/troubleshooting/" class="md-nav__link">
+      <a href="../../../operating/troubleshooting/" class="md-nav__link">
         
   
   
@@ -2829,7 +2829,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../operating/upgrading/" class="md-nav__link">
+      <a href="../../../operating/upgrading/" class="md-nav__link">
         
   
   
@@ -2861,20 +2861,18 @@
       
   
   
-    
   
   
-  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
         
           
           <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
@@ -2895,7 +2893,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_8">
             <span class="md-nav__icon md-icon"></span>
             
@@ -2913,7 +2911,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../" class="md-nav__link">
+      <a href="../../../reference/" class="md-nav__link">
         
   
   
@@ -2941,7 +2939,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../ARCHITECTURE_OVERVIEW/" class="md-nav__link">
+      <a href="../../../reference/ARCHITECTURE_OVERVIEW/" class="md-nav__link">
         
   
   
@@ -2969,7 +2967,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../OPERATOR_ARCHITECTURE/" class="md-nav__link">
+      <a href="../../../reference/OPERATOR_ARCHITECTURE/" class="md-nav__link">
         
   
   
@@ -2997,7 +2995,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../RECURSIVE_UPSERT_ARCHITECTURE/" class="md-nav__link">
+      <a href="../../../reference/RECURSIVE_UPSERT_ARCHITECTURE/" class="md-nav__link">
         
   
   
@@ -3025,7 +3023,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../STORAGE-ARCHITECTURE/" class="md-nav__link">
+      <a href="../../../reference/STORAGE-ARCHITECTURE/" class="md-nav__link">
         
   
   
@@ -3100,7 +3098,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../api/" class="md-nav__link">
+      <a href="../../../reference/api/" class="md-nav__link">
         
   
   
@@ -3128,7 +3126,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../api/ADMIN-ENDPOINTS/" class="md-nav__link">
+      <a href="../../../reference/api/ADMIN-ENDPOINTS/" class="md-nav__link">
         
   
   
@@ -3161,20 +3159,18 @@
                 
   
   
-    
   
   
-  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8_7" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8_7" >
         
           
           <label class="md-nav__link" for="__nav_8_7" id="__nav_8_7_label" tabindex="0">
@@ -3195,7 +3191,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_8_7_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_8_7_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_8_7">
             <span class="md-nav__icon md-icon"></span>
             
@@ -3213,7 +3209,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../" class="md-nav__link">
+      <a href="../../../reference/cli/" class="md-nav__link">
         
   
   
@@ -3238,20 +3234,18 @@
                 
   
   
-    
   
   
-  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8_7_2" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8_7_2" >
         
           
           <label class="md-nav__link" for="__nav_8_7_2" id="__nav_8_7_2_label" tabindex="0">
@@ -3272,7 +3266,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_8_7_2_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_8_7_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_8_7_2">
             <span class="md-nav__icon md-icon"></span>
             
@@ -3287,37 +3281,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    kg admin
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../../reference/cli/commands/admin/" class="md-nav__link">
         
   
   
@@ -3333,620 +3300,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#admin" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        admin
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="admin">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#status" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        status
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#backup" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        backup
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#list-backups" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        list-backups
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#restore" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        restore
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#scheduler" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        scheduler
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="scheduler">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#status_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        status
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#cleanup" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        cleanup
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#user" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        user
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="user">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#list" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        list
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#get" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        get
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#create" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        create
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#update" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        update
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#delete" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        delete
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#rbac" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        rbac
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="rbac">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#resource-resources-res" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        resource (resources, res)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="resource (resources, res)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#list_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        list
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#create_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        create
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#role-roles" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        role (roles)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="role (roles)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#list_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        list
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#show" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        show
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#create_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        create
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#delete_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        delete
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#permission-permissions-perm" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        permission (permissions, perm)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="permission (permissions, perm)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#list_3" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        list
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#grant" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        grant
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#revoke" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        revoke
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#assign" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        assign
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="assign">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#list_4" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        list
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#add" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        add
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#remove" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        remove
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#embedding" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        embedding
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="embedding">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#list_5" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        list
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#create_3" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        create
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#activate" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        activate
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#reload" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        reload
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#protect" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        protect
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#unprotect" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        unprotect
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#delete_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        delete
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#status_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        status
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#regenerate" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        regenerate
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#extraction" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        extraction
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="extraction">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#config" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        config
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#set" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        set
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#keys" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        keys
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="keys">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#list_6" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        list
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#set_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        set
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#delete_3" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        delete
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -3959,7 +3312,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../config/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/config/" class="md-nav__link">
         
   
   
@@ -3987,7 +3340,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../database/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/database/" class="md-nav__link">
         
   
   
@@ -4015,7 +3368,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../health/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/health/" class="md-nav__link">
         
   
   
@@ -4043,7 +3396,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ingest/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/ingest/" class="md-nav__link">
         
   
   
@@ -4071,7 +3424,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../job/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/job/" class="md-nav__link">
         
   
   
@@ -4099,7 +3452,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../login/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/login/" class="md-nav__link">
         
   
   
@@ -4127,7 +3480,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../logout/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/logout/" class="md-nav__link">
         
   
   
@@ -4155,7 +3508,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../oauth/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/oauth/" class="md-nav__link">
         
   
   
@@ -4183,7 +3536,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ontology/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/ontology/" class="md-nav__link">
         
   
   
@@ -4211,7 +3564,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../search/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/search/" class="md-nav__link">
         
   
   
@@ -4239,7 +3592,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../vocabulary/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/vocabulary/" class="md-nav__link">
         
   
   
@@ -4322,7 +3675,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../media/" class="md-nav__link">
+      <a href="../../../reference/cli/media/" class="md-nav__link">
         
   
   
@@ -4413,7 +3766,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../fuse/" class="md-nav__link">
+      <a href="../../../reference/fuse/" class="md-nav__link">
         
   
   
@@ -4496,7 +3849,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../mcp/" class="md-nav__link">
+      <a href="../../../reference/mcp/" class="md-nav__link">
         
   
   
@@ -4571,7 +3924,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../mcp/media/" class="md-nav__link">
+      <a href="../../../reference/mcp/media/" class="md-nav__link">
         
   
   
@@ -4654,7 +4007,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../mcp/tools/analyze_polarity_axis/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/analyze_polarity_axis/" class="md-nav__link">
         
   
   
@@ -4682,7 +4035,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../mcp/tools/artifact/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/artifact/" class="md-nav__link">
         
   
   
@@ -4710,7 +4063,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../mcp/tools/concept/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/concept/" class="md-nav__link">
         
   
   
@@ -4738,7 +4091,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../mcp/tools/document/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/document/" class="md-nav__link">
         
   
   
@@ -4766,7 +4119,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../mcp/tools/epistemic_status/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/epistemic_status/" class="md-nav__link">
         
   
   
@@ -4794,7 +4147,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../mcp/tools/epoch/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/epoch/" class="md-nav__link">
         
   
   
@@ -4822,7 +4175,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../mcp/tools/graph/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/graph/" class="md-nav__link">
         
   
   
@@ -4850,7 +4203,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../mcp/tools/ingest-directory/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/ingest-directory/" class="md-nav__link">
         
   
   
@@ -4878,7 +4231,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../mcp/tools/ingest-file/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/ingest-file/" class="md-nav__link">
         
   
   
@@ -4906,7 +4259,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../mcp/tools/ingest/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/ingest/" class="md-nav__link">
         
   
   
@@ -4934,7 +4287,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../mcp/tools/inspect-file/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/inspect-file/" class="md-nav__link">
         
   
   
@@ -4962,7 +4315,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../mcp/tools/job/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/job/" class="md-nav__link">
         
   
   
@@ -4990,7 +4343,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../mcp/tools/ontology/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/ontology/" class="md-nav__link">
         
   
   
@@ -5018,7 +4371,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../mcp/tools/program/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/program/" class="md-nav__link">
         
   
   
@@ -5046,7 +4399,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../mcp/tools/search/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/search/" class="md-nav__link">
         
   
   
@@ -5074,7 +4427,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../mcp/tools/session_context/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/session_context/" class="md-nav__link">
         
   
   
@@ -5102,7 +4455,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../mcp/tools/source/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/source/" class="md-nav__link">
         
   
   
@@ -5150,18 +4503,20 @@
       
   
   
+    
   
   
+  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" checked>
         
           
           <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
@@ -5182,7 +4537,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_9">
             <span class="md-nav__icon md-icon"></span>
             
@@ -5200,7 +4555,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/INDEX/" class="md-nav__link">
+      <a href="../../INDEX/" class="md-nav__link">
         
   
   
@@ -5275,7 +4630,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/access-workflow/ADR-001-multi-tier-agent-access/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-001-multi-tier-agent-access/" class="md-nav__link">
         
   
   
@@ -5310,7 +4665,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/access-workflow/ADR-002-node-fitness-scoring/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-002-node-fitness-scoring/" class="md-nav__link">
         
   
   
@@ -5345,7 +4700,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/access-workflow/ADR-003-semantic-tool-hints/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-003-semantic-tool-hints/" class="md-nav__link">
         
   
   
@@ -5380,7 +4735,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/access-workflow/ADR-004-pure-graph-design/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-004-pure-graph-design/" class="md-nav__link">
         
   
   
@@ -5415,7 +4770,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/access-workflow/ADR-005-source-text-tracking/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-005-source-text-tracking/" class="md-nav__link">
         
   
   
@@ -5450,7 +4805,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/access-workflow/ADR-006-staging-migration-workflows/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-006-staging-migration-workflows/" class="md-nav__link">
         
   
   
@@ -5485,7 +4840,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/access-workflow/ADR-038-official-project-apparel/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-038-official-project-apparel/" class="md-nav__link">
         
   
   
@@ -5520,7 +4875,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/access-workflow/ADR-087-documentation-strategy/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-087-documentation-strategy/" class="md-nav__link">
         
   
   
@@ -5555,7 +4910,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/access-workflow/ADR-900-adr-numbering-domain-system/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-900-adr-numbering-domain-system/" class="md-nav__link">
         
   
   
@@ -5645,7 +5000,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ai-embeddings/ADR-039-local-embedding-service/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-039-local-embedding-service/" class="md-nav__link">
         
   
   
@@ -5680,7 +5035,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ai-embeddings/ADR-041-ai-extraction-config/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-041-ai-extraction-config/" class="md-nav__link">
         
   
   
@@ -5715,7 +5070,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ai-embeddings/ADR-042-local-extraction-inference/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-042-local-extraction-inference/" class="md-nav__link">
         
   
   
@@ -5750,7 +5105,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ai-embeddings/ADR-043-single-node-resource-management/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-043-single-node-resource-management/" class="md-nav__link">
         
   
   
@@ -5785,7 +5140,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ai-embeddings/ADR-044-probabilistic-truth-convergence/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-044-probabilistic-truth-convergence/" class="md-nav__link">
         
   
   
@@ -5820,7 +5175,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ai-embeddings/ADR-045-unified-embedding-generation/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-045-unified-embedding-generation/" class="md-nav__link">
         
   
   
@@ -5855,7 +5210,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ai-embeddings/ADR-049-rate-limiting-and-concurrency/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-049-rate-limiting-and-concurrency/" class="md-nav__link">
         
   
   
@@ -5890,7 +5245,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ai-embeddings/ADR-058-polarity-axis-triangulation/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-058-polarity-axis-triangulation/" class="md-nav__link">
         
   
   
@@ -5925,7 +5280,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ai-embeddings/ADR-068-source-text-embeddings/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-068-source-text-embeddings/" class="md-nav__link">
         
   
   
@@ -5960,7 +5315,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ai-embeddings/ADR-070-polarity-axis-analysis/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-070-polarity-axis-analysis/" class="md-nav__link">
         
   
   
@@ -5995,7 +5350,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ai-embeddings/ADR-800-dynamic-model-catalog-and-openrouter-support/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-800-dynamic-model-catalog-and-openrouter-support/" class="md-nav__link">
         
   
   
@@ -6030,7 +5385,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ai-embeddings/ADR-801-uniform-provider-configuration-contract/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-801-uniform-provider-configuration-contract/" class="md-nav__link">
         
   
   
@@ -6112,7 +5467,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ai-embeddings/media-ADR-058/README_VISUALIZATIONS/" class="md-nav__link">
+      <a href="../../ai-embeddings/media-ADR-058/README_VISUALIZATIONS/" class="md-nav__link">
         
   
   
@@ -6203,7 +5558,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/authentication-security/ADR-017-sensitive-auth-verification/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-017-sensitive-auth-verification/" class="md-nav__link">
         
   
   
@@ -6238,7 +5593,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/authentication-security/ADR-027-user-management-api/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-027-user-management-api/" class="md-nav__link">
         
   
   
@@ -6273,7 +5628,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/authentication-security/ADR-028-dynamic-rbac-system/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-028-dynamic-rbac-system/" class="md-nav__link">
         
   
   
@@ -6308,7 +5663,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/authentication-security/ADR-031-encrypted-api-key-storage/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-031-encrypted-api-key-storage/" class="md-nav__link">
         
   
   
@@ -6343,7 +5698,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/authentication-security/ADR-054-oauth-client-management/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-054-oauth-client-management/" class="md-nav__link">
         
   
   
@@ -6378,7 +5733,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/authentication-security/ADR-060-endpoint-security-architecture/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-060-endpoint-security-architecture/" class="md-nav__link">
         
   
   
@@ -6413,7 +5768,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/authentication-security/ADR-062-mcp-file-ingestion-security/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-062-mcp-file-ingestion-security/" class="md-nav__link">
         
   
   
@@ -6448,7 +5803,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/authentication-security/ADR-074-platform-admin-role/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-074-platform-admin-role/" class="md-nav__link">
         
   
   
@@ -6483,7 +5838,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/authentication-security/ADR-082-user-scoping-artifact-ownership/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-082-user-scoping-artifact-ownership/" class="md-nav__link">
         
   
   
@@ -6523,18 +5878,20 @@
                 
   
   
+    
   
   
+  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9_5" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9_5" checked>
         
           
           <label class="md-nav__link" for="__nav_9_5" id="__nav_9_5_label" tabindex="0">
@@ -6555,7 +5912,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_9_5_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_9_5_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_9_5">
             <span class="md-nav__icon md-icon"></span>
             
@@ -6573,7 +5930,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/database-schema/ADR-016-apache-age-migration/" class="md-nav__link">
+      <a href="../ADR-016-apache-age-migration/" class="md-nav__link">
         
   
   
@@ -6608,7 +5965,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/database-schema/ADR-024-multi-schema-postgresql-architecture/" class="md-nav__link">
+      <a href="../ADR-024-multi-schema-postgresql-architecture/" class="md-nav__link">
         
   
   
@@ -6643,7 +6000,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/database-schema/ADR-040-database-schema-migrations/" class="md-nav__link">
+      <a href="../ADR-040-database-schema-migrations/" class="md-nav__link">
         
   
   
@@ -6678,7 +6035,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/database-schema/ADR-061-operator-pattern-lifecycle/" class="md-nav__link">
+      <a href="../ADR-061-operator-pattern-lifecycle/" class="md-nav__link">
         
   
   
@@ -6713,7 +6070,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/database-schema/ADR-200-annealing-ontologies-self-organizing-knowledge-graph-structure/" class="md-nav__link">
+      <a href="../ADR-200-annealing-ontologies-self-organizing-knowledge-graph-structure/" class="md-nav__link">
         
   
   
@@ -6748,7 +6105,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/database-schema/ADR-201-in-memory-graph-acceleration-extension/" class="md-nav__link">
+      <a href="../ADR-201-in-memory-graph-acceleration-extension/" class="md-nav__link">
         
   
   
@@ -6783,7 +6140,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/database-schema/ADR-202-timestamp-timezone-normalization/" class="md-nav__link">
+      <a href="../ADR-202-timestamp-timezone-normalization/" class="md-nav__link">
         
   
   
@@ -6818,7 +6175,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/database-schema/ADR-203-graph-epoch-event-log/" class="md-nav__link">
+      <a href="../ADR-203-graph-epoch-event-log/" class="md-nav__link">
         
   
   
@@ -6853,7 +6210,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/database-schema/ADR-204-node-type-and-abstract-property-representation-for-concept-nodes/" class="md-nav__link">
+      <a href="../ADR-204-node-type-and-abstract-property-representation-for-concept-nodes/" class="md-nav__link">
         
   
   
@@ -6885,10 +6242,44 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../../../architecture/database-schema/ADR-205-postgresql-18-migration/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-205: PostgreSQL 18 Migration
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--Draft"></span>
+  
+
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -6911,6 +6302,148 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Context">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#gate-1-platform-compatibility-passed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gate 1 — platform compatibility: passed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-data-directory-convention-change" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The data-directory convention change
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gate-2-data-migration-logical-dumprestore-does-not-carry-age-graphs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gate 2 — data migration: logical dump/restore does not carry AGE graphs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Consequences">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#positive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Positive
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#negative" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Negative
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#neutral" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Neutral
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#alternatives-considered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alternatives Considered
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -6978,7 +6511,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/infrastructure/ADR-012-api-server-architecture/" class="md-nav__link">
+      <a href="../../infrastructure/ADR-012-api-server-architecture/" class="md-nav__link">
         
   
   
@@ -7013,7 +6546,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/infrastructure/ADR-015-backup-restore-streaming/" class="md-nav__link">
+      <a href="../../infrastructure/ADR-015-backup-restore-streaming/" class="md-nav__link">
         
   
   
@@ -7048,7 +6581,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/infrastructure/ADR-018-server-sent-events-streaming/" class="md-nav__link">
+      <a href="../../infrastructure/ADR-018-server-sent-events-streaming/" class="md-nav__link">
         
   
   
@@ -7083,7 +6616,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/infrastructure/ADR-020-admin-module-architecture/" class="md-nav__link">
+      <a href="../../infrastructure/ADR-020-admin-module-architecture/" class="md-nav__link">
         
   
   
@@ -7118,7 +6651,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/infrastructure/ADR-021-live-man-switch-ai-safety/" class="md-nav__link">
+      <a href="../../infrastructure/ADR-021-live-man-switch-ai-safety/" class="md-nav__link">
         
   
   
@@ -7153,7 +6686,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/infrastructure/ADR-050-scheduled-jobs-system/" class="md-nav__link">
+      <a href="../../infrastructure/ADR-050-scheduled-jobs-system/" class="md-nav__link">
         
   
   
@@ -7188,7 +6721,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/infrastructure/ADR-055-cdn-serverless-deployment-model/" class="md-nav__link">
+      <a href="../../infrastructure/ADR-055-cdn-serverless-deployment-model/" class="md-nav__link">
         
   
   
@@ -7223,7 +6756,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/infrastructure/ADR-056-timezone-aware-datetime-utilities/" class="md-nav__link">
+      <a href="../../infrastructure/ADR-056-timezone-aware-datetime-utilities/" class="md-nav__link">
         
   
   
@@ -7258,7 +6791,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/infrastructure/ADR-079-projection-artifact-storage/" class="md-nav__link">
+      <a href="../../infrastructure/ADR-079-projection-artifact-storage/" class="md-nav__link">
         
   
   
@@ -7293,7 +6826,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/infrastructure/ADR-080-garage-service-architecture/" class="md-nav__link">
+      <a href="../../infrastructure/ADR-080-garage-service-architecture/" class="md-nav__link">
         
   
   
@@ -7328,7 +6861,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/infrastructure/ADR-083-artifact-persistence-pattern/" class="md-nav__link">
+      <a href="../../infrastructure/ADR-083-artifact-persistence-pattern/" class="md-nav__link">
         
   
   
@@ -7363,7 +6896,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/infrastructure/ADR-086-deployment-topology/" class="md-nav__link">
+      <a href="../../infrastructure/ADR-086-deployment-topology/" class="md-nav__link">
         
   
   
@@ -7398,7 +6931,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/infrastructure/ADR-088-semantic-election-protocol/" class="md-nav__link">
+      <a href="../../infrastructure/ADR-088-semantic-election-protocol/" class="md-nav__link">
         
   
   
@@ -7433,7 +6966,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/infrastructure/ADR-100-database-driven-job-dispatch/" class="md-nav__link">
+      <a href="../../infrastructure/ADR-100-database-driven-job-dispatch/" class="md-nav__link">
         
   
   
@@ -7523,7 +7056,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ingestion-content/ADR-014-job-approval-workflow/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-014-job-approval-workflow/" class="md-nav__link">
         
   
   
@@ -7558,7 +7091,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ingestion-content/ADR-023-markdown-structured-content-preprocessing/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-023-markdown-structured-content-preprocessing/" class="md-nav__link">
         
   
   
@@ -7593,7 +7126,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ingestion-content/ADR-033-multimodal-ingestion-configurable-prompts/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-033-multimodal-ingestion-configurable-prompts/" class="md-nav__link">
         
   
   
@@ -7628,7 +7161,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ingestion-content/ADR-037-human-guided-graph-editing/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-037-human-guided-graph-editing/" class="md-nav__link">
         
   
   
@@ -7663,7 +7196,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ingestion-content/ADR-051.1-graph-document-deduplication/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-051.1-graph-document-deduplication/" class="md-nav__link">
         
   
   
@@ -7698,7 +7231,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ingestion-content/ADR-051.2-api-changes/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-051.2-api-changes/" class="md-nav__link">
         
   
   
@@ -7733,7 +7266,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ingestion-content/ADR-057.1-multimodal-image-ingestion/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-057.1-multimodal-image-ingestion/" class="md-nav__link">
         
   
   
@@ -7768,7 +7301,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ingestion-content/ADR-057.2-appendix-single-vs-two-stage/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-057.2-appendix-single-vs-two-stage/" class="md-nav__link">
         
   
   
@@ -7803,7 +7336,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ingestion-content/ADR-072-concept-matching-strategies/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-072-concept-matching-strategies/" class="md-nav__link">
         
   
   
@@ -7838,7 +7371,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ingestion-content/ADR-081-source-document-lifecycle/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-081-source-document-lifecycle/" class="md-nav__link">
         
   
   
@@ -7873,7 +7406,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ingestion-content/ADR-089-deterministic-node-edge-creation/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-089-deterministic-node-edge-creation/" class="md-nav__link">
         
   
   
@@ -7963,7 +7496,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/query-search/ADR-030-concept-deduplication-validation/" class="md-nav__link">
+      <a href="../../query-search/ADR-030-concept-deduplication-validation/" class="md-nav__link">
         
   
   
@@ -7998,7 +7531,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/query-search/ADR-063-semantic-diversity-authenticity-signal/" class="md-nav__link">
+      <a href="../../query-search/ADR-063-semantic-diversity-authenticity-signal/" class="md-nav__link">
         
   
   
@@ -8033,7 +7566,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/query-search/ADR-066-published-query-endpoints/" class="md-nav__link">
+      <a href="../../query-search/ADR-066-published-query-endpoints/" class="md-nav__link">
         
   
   
@@ -8068,7 +7601,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/query-search/ADR-071-parallel-graph-queries/" class="md-nav__link">
+      <a href="../../query-search/ADR-071-parallel-graph-queries/" class="md-nav__link">
         
   
   
@@ -8103,7 +7636,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/query-search/ADR-071.1-parallel-implementation-findings/" class="md-nav__link">
+      <a href="../../query-search/ADR-071.1-parallel-implementation-findings/" class="md-nav__link">
         
   
   
@@ -8138,7 +7671,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/query-search/ADR-076-pathfinding-optimization/" class="md-nav__link">
+      <a href="../../query-search/ADR-076-pathfinding-optimization/" class="md-nav__link">
         
   
   
@@ -8173,7 +7706,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/query-search/ADR-076.1-pathfinding-baseline/" class="md-nav__link">
+      <a href="../../query-search/ADR-076.1-pathfinding-baseline/" class="md-nav__link">
         
   
   
@@ -8208,7 +7741,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/query-search/ADR-084-document-search/" class="md-nav__link">
+      <a href="../../query-search/ADR-084-document-search/" class="md-nav__link">
         
   
   
@@ -8243,7 +7776,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/query-search/ADR-500-graph-program-dsl-and-ast-architecture/" class="md-nav__link">
+      <a href="../../query-search/ADR-500-graph-program-dsl-and-ast-architecture/" class="md-nav__link">
         
   
   
@@ -8333,7 +7866,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/user-interfaces/ADR-011-cli-admin-separation/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-011-cli-admin-separation/" class="md-nav__link">
         
   
   
@@ -8368,7 +7901,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/user-interfaces/ADR-013-unified-typescript-client/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-013-unified-typescript-client/" class="md-nav__link">
         
   
   
@@ -8403,7 +7936,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/user-interfaces/ADR-019-type-based-table-formatting/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-019-type-based-table-formatting/" class="md-nav__link">
         
   
   
@@ -8438,7 +7971,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/user-interfaces/ADR-029-cli-theory-of-operation/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-029-cli-theory-of-operation/" class="md-nav__link">
         
   
   
@@ -8473,7 +8006,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/user-interfaces/ADR-034-graph-visualization-query-workbench/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-034-graph-visualization-query-workbench/" class="md-nav__link">
         
   
   
@@ -8508,7 +8041,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/user-interfaces/ADR-035-explorer-methods-uses-capabilities/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-035-explorer-methods-uses-capabilities/" class="md-nav__link">
         
   
   
@@ -8543,7 +8076,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/user-interfaces/ADR-036-universal-visual-query-builder/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-036-universal-visual-query-builder/" class="md-nav__link">
         
   
   
@@ -8578,7 +8111,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/user-interfaces/ADR-064-specialized-truth-convergence-visualizations/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-064-specialized-truth-convergence-visualizations/" class="md-nav__link">
         
   
   
@@ -8613,7 +8146,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/user-interfaces/ADR-067-web-app-workstation-architecture/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-067-web-app-workstation-architecture/" class="md-nav__link">
         
   
   
@@ -8648,7 +8181,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/user-interfaces/ADR-069-semantic-fuse-filesystem/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-069-semantic-fuse-filesystem/" class="md-nav__link">
         
   
   
@@ -8683,7 +8216,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/user-interfaces/ADR-069.1-fuse-implementation-specifics/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-069.1-fuse-implementation-specifics/" class="md-nav__link">
         
   
   
@@ -8718,7 +8251,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/user-interfaces/ADR-075-postmodern-theme/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-075-postmodern-theme/" class="md-nav__link">
         
   
   
@@ -8753,7 +8286,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/user-interfaces/ADR-700-ontology-explorer/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-700-ontology-explorer/" class="md-nav__link">
         
   
   
@@ -8788,7 +8321,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/user-interfaces/ADR-701-vocabulary-administration-interface/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-701-vocabulary-administration-interface/" class="md-nav__link">
         
   
   
@@ -8823,7 +8356,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/user-interfaces/ADR-702-unified-graph-rendering-engine/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-702-unified-graph-rendering-engine/" class="md-nav__link">
         
   
   
@@ -8858,7 +8391,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/user-interfaces/ADR-703-ontology-lifecycle-administration-interface/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-703-ontology-lifecycle-administration-interface/" class="md-nav__link">
         
   
   
@@ -8948,7 +8481,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/visualization/ADR-078-embedding-landscape-explorer/" class="md-nav__link">
+      <a href="../../visualization/ADR-078-embedding-landscape-explorer/" class="md-nav__link">
         
   
   
@@ -8983,7 +8516,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/visualization/ADR-085-document-explorer/" class="md-nav__link">
+      <a href="../../visualization/ADR-085-document-explorer/" class="md-nav__link">
         
   
   
@@ -9073,7 +8606,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/vocabulary-relationships/ADR-022-semantic-relationship-taxonomy/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-022-semantic-relationship-taxonomy/" class="md-nav__link">
         
   
   
@@ -9108,7 +8641,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/vocabulary-relationships/ADR-025-dynamic-relationship-vocabulary/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-025-dynamic-relationship-vocabulary/" class="md-nav__link">
         
   
   
@@ -9143,7 +8676,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/vocabulary-relationships/ADR-026-autonomous-vocabulary-curation/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-026-autonomous-vocabulary-curation/" class="md-nav__link">
         
   
   
@@ -9178,7 +8711,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/vocabulary-relationships/ADR-032.1-automatic-edge-vocabulary-expansion/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-032.1-automatic-edge-vocabulary-expansion/" class="md-nav__link">
         
   
   
@@ -9213,7 +8746,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/vocabulary-relationships/ADR-032.2-implementation-notes/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-032.2-implementation-notes/" class="md-nav__link">
         
   
   
@@ -9248,7 +8781,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/vocabulary-relationships/ADR-046-grounding-aware-vocabulary-management/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-046-grounding-aware-vocabulary-management/" class="md-nav__link">
         
   
   
@@ -9283,7 +8816,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/vocabulary-relationships/ADR-047-probabilistic-vocabulary-categorization/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-047-probabilistic-vocabulary-categorization/" class="md-nav__link">
         
   
   
@@ -9318,7 +8851,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/vocabulary-relationships/ADR-048-vocabulary-metadata-as-graph/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-048-vocabulary-metadata-as-graph/" class="md-nav__link">
         
   
   
@@ -9353,7 +8886,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/vocabulary-relationships/ADR-052-vocabulary-expansion-consolidation-cycle/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-052-vocabulary-expansion-consolidation-cycle/" class="md-nav__link">
         
   
   
@@ -9388,7 +8921,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/vocabulary-relationships/ADR-053-eager-vocabulary-categorization/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-053-eager-vocabulary-categorization/" class="md-nav__link">
         
   
   
@@ -9423,7 +8956,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/vocabulary-relationships/ADR-059-llm-determined-relationship-direction/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-059-llm-determined-relationship-direction/" class="md-nav__link">
         
   
   
@@ -9458,7 +8991,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/vocabulary-relationships/ADR-065-vocabulary-based-provenance-relationships/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-065-vocabulary-based-provenance-relationships/" class="md-nav__link">
         
   
   
@@ -9493,7 +9026,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/vocabulary-relationships/ADR-077-vocabulary-explorers/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-077-vocabulary-explorers/" class="md-nav__link">
         
   
   
@@ -9590,7 +9123,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../research/code-intelligence-platforms-comparison/" class="md-nav__link">
+      <a href="../../../research/code-intelligence-platforms-comparison/" class="md-nav__link">
         
   
   
@@ -9618,7 +9151,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../research/emergent-visual-relationships/" class="md-nav__link">
+      <a href="../../../research/emergent-visual-relationships/" class="md-nav__link">
         
   
   
@@ -9646,7 +9179,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../research/epistemic-confidence/" class="md-nav__link">
+      <a href="../../../research/epistemic-confidence/" class="md-nav__link">
         
   
   
@@ -9674,7 +9207,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../research/graph-object-platform-exploration/" class="md-nav__link">
+      <a href="../../../research/graph-object-platform-exploration/" class="md-nav__link">
         
   
   
@@ -9702,7 +9235,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../research/headless-install-analysis/" class="md-nav__link">
+      <a href="../../../research/headless-install-analysis/" class="md-nav__link">
         
   
   
@@ -9730,7 +9263,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../research/llm-knowledge-extraction-research-2024-2025/" class="md-nav__link">
+      <a href="../../../research/llm-knowledge-extraction-research-2024-2025/" class="md-nav__link">
         
   
   
@@ -9758,7 +9291,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../research/polarity-axis-findings/" class="md-nav__link">
+      <a href="../../../research/polarity-axis-findings/" class="md-nav__link">
         
   
   
@@ -9786,7 +9319,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../research/polarity-axis-visualization/" class="md-nav__link">
+      <a href="../../../research/polarity-axis-visualization/" class="md-nav__link">
         
   
   
@@ -9814,7 +9347,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../research/t-sne-viz/" class="md-nav__link">
+      <a href="../../../research/t-sne-viz/" class="md-nav__link">
         
   
   
@@ -9889,7 +9422,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../research/vision-testing/" class="md-nav__link">
+      <a href="../../../research/vision-testing/" class="md-nav__link">
         
   
   
@@ -9917,7 +9450,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../research/vision-testing/EMBEDDING_COMPARISON_REPORT/" class="md-nav__link">
+      <a href="../../../research/vision-testing/EMBEDDING_COMPARISON_REPORT/" class="md-nav__link">
         
   
   
@@ -9945,7 +9478,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../research/vision-testing/FINDINGS/" class="md-nav__link">
+      <a href="../../../research/vision-testing/FINDINGS/" class="md-nav__link">
         
   
   
@@ -9973,7 +9506,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../research/vision-testing/RESEARCH_SUMMARY/" class="md-nav__link">
+      <a href="../../../research/vision-testing/RESEARCH_SUMMARY/" class="md-nav__link">
         
   
   
@@ -10063,7 +9596,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../testing/ADR-200-PHASE-3A-EXERCISE-REPORT/" class="md-nav__link">
+      <a href="../../../testing/ADR-200-PHASE-3A-EXERCISE-REPORT/" class="md-nav__link">
         
   
   
@@ -10091,7 +9624,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../testing/API_AUTH_AUDIT_RESULTS/" class="md-nav__link">
+      <a href="../../../testing/API_AUTH_AUDIT_RESULTS/" class="md-nav__link">
         
   
   
@@ -10119,7 +9652,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../testing/API_AUTH_AUDIT_SUMMARY/" class="md-nav__link">
+      <a href="../../../testing/API_AUTH_AUDIT_SUMMARY/" class="md-nav__link">
         
   
   
@@ -10147,7 +9680,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../testing/API_AUTH_TESTING_RESEARCH/" class="md-nav__link">
+      <a href="../../../testing/API_AUTH_TESTING_RESEARCH/" class="md-nav__link">
         
   
   
@@ -10175,7 +9708,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../testing/INTEGRATION_TEST_NOTES/" class="md-nav__link">
+      <a href="../../../testing/INTEGRATION_TEST_NOTES/" class="md-nav__link">
         
   
   
@@ -10203,7 +9736,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../testing/INTEGRATION_TEST_PLAN/" class="md-nav__link">
+      <a href="../../../testing/INTEGRATION_TEST_PLAN/" class="md-nav__link">
         
   
   
@@ -10231,7 +9764,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../testing/SCHEMA_MIGRATION_TEST_REPORT/" class="md-nav__link">
+      <a href="../../../testing/SCHEMA_MIGRATION_TEST_REPORT/" class="md-nav__link">
         
   
   
@@ -10259,7 +9792,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../testing/TEST_COVERAGE/" class="md-nav__link">
+      <a href="../../../testing/TEST_COVERAGE/" class="md-nav__link">
         
   
   
@@ -10314,22 +9847,22 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#admin" class="md-nav__link">
+  <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
-        admin
+        Context
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="admin">
+    <nav class="md-nav" aria-label="Context">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#status" class="md-nav__link">
+  <a href="#gate-1-platform-compatibility-passed" class="md-nav__link">
     <span class="md-ellipsis">
       
-        status
+        Gate 1 — platform compatibility: passed
       
     </span>
   </a>
@@ -10337,10 +9870,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#backup" class="md-nav__link">
+  <a href="#the-data-directory-convention-change" class="md-nav__link">
     <span class="md-ellipsis">
       
-        backup
+        The data-directory convention change
       
     </span>
   </a>
@@ -10348,55 +9881,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#list-backups" class="md-nav__link">
+  <a href="#gate-2-data-migration-logical-dumprestore-does-not-carry-age-graphs" class="md-nav__link">
     <span class="md-ellipsis">
       
-        list-backups
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#restore" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        restore
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#scheduler" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        scheduler
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="scheduler">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#status_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        status
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#cleanup" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        cleanup
+        Gate 2 — data migration: logical dump/restore does not carry AGE graphs
       
     </span>
   </a>
@@ -10407,24 +9895,35 @@
     </nav>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#user" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#decision" class="md-nav__link">
     <span class="md-ellipsis">
       
-        user
+        Decision
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="user">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Consequences">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#list" class="md-nav__link">
+  <a href="#positive" class="md-nav__link">
     <span class="md-ellipsis">
       
-        list
+        Positive
       
     </span>
   </a>
@@ -10432,10 +9931,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#get" class="md-nav__link">
+  <a href="#negative" class="md-nav__link">
     <span class="md-ellipsis">
       
-        get
+        Negative
       
     </span>
   </a>
@@ -10443,32 +9942,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#create" class="md-nav__link">
+  <a href="#neutral" class="md-nav__link">
     <span class="md-ellipsis">
       
-        create
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#update" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        update
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#delete" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        delete
+        Neutral
       
     </span>
   </a>
@@ -10479,431 +9956,15 @@
     </nav>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#rbac" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#alternatives-considered" class="md-nav__link">
     <span class="md-ellipsis">
       
-        rbac
+        Alternatives Considered
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="rbac">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#resource-resources-res" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        resource (resources, res)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="resource (resources, res)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#list_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        list
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#create_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        create
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#role-roles" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        role (roles)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="role (roles)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#list_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        list
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#show" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        show
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#create_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        create
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#delete_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        delete
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#permission-permissions-perm" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        permission (permissions, perm)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="permission (permissions, perm)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#list_3" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        list
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#grant" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        grant
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#revoke" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        revoke
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#assign" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        assign
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="assign">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#list_4" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        list
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#add" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        add
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#remove" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        remove
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#embedding" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        embedding
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="embedding">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#list_5" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        list
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#create_3" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        create
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#activate" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        activate
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#reload" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        reload
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#protect" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        protect
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#unprotect" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        unprotect
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#delete_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        delete
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#status_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        status
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#regenerate" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        regenerate
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#extraction" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        extraction
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="extraction">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#config" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        config
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#set" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        set
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#keys" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        keys
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="keys">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#list_6" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        list
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#set_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        set
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#delete_3" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        delete
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -10927,1027 +9988,194 @@
   
 
 
-<h1 id="kg-admin">kg admin</h1>
-<blockquote>
-<p>Auto-generated</p>
-</blockquote>
-<h2 id="admin">admin</h2>
-<p>System administration and management - health monitoring, backup/restore, database operations, user/RBAC management, AI model configuration (requires authentication for destructive operations)</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kg<span class="w"> </span>admin<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
-</code></pre></div></p>
-<p><strong>Subcommands:</strong></p>
+<h1 id="adr-205-postgresql-18-migration">ADR-205: PostgreSQL 18 Migration</h1>
+<h2 id="context">Context</h2>
+<p>The platform's database is not PostgreSQL directly — it is the <code>apache/age</code>
+Docker image, which bundles a specific PostgreSQL version with the Apache AGE
+graph extension (ADR-016). Until now that image was pinned by digest to
+<code>apache/age:release_PG17_1.6.0</code> — PostgreSQL 17 + AGE 1.6.0.</p>
+<p>PostgreSQL 18 is now the general baseline, and the <code>apache/age</code> project ships
+<code>release_PG18_1.7.0</code> (PG 18.1 + AGE 1.7.0, multi-arch amd64/arm64, in the
+registry since February 2026). Staying on 17 means drifting further from the
+upstream baseline. Moving to 18 is therefore desirable — but the move is not a
+single-version bump:</p>
 <ul>
-<li><code>status</code> - Show comprehensive system health status (Docker containers, database connections, environment configuration, job scheduler)</li>
-<li><code>backup</code> - Create database backup (ADR-036) - full system or per-ontology, in restorable JSON or Gephi GEXF format</li>
-<li><code>list-backups</code> - List available backup files from configured directory</li>
-<li><code>restore</code> - Restore a database backup (requires authentication)</li>
-<li><code>scheduler</code> - Job scheduler management (ADR-014 job queue) - monitor worker status, cleanup stale jobs</li>
-<li><code>user</code> - User management commands (admin only)</li>
-<li><code>rbac</code> - Manage roles, permissions, and access control (ADR-028)</li>
-<li><code>embedding</code> - Manage embedding model configuration (ADR-039)</li>
-<li><code>extraction</code> - Manage AI extraction model configuration (ADR-041)</li>
-<li><code>keys</code> - Manage API keys for AI providers (ADR-031, ADR-041)</li>
+<li><strong>It is also an AGE bump</strong> (1.6.0 → 1.7.0). The <code>apache/age</code> image couples
+  the two; there is no way to take PG 18 without taking the AGE release built
+  for it. The <code>-rc0</code> suffix on AGE git tags is <em>not</em> a maturity signal —
+  every AGE release is tagged <code>-rc0</code> (the PG17/1.6.0 line we ran in production
+  carried the same suffix). <code>release_PG18_1.7.0</code> is a normal AGE release.</li>
+<li><strong>The Rust acceleration extension must be rebuilt.</strong> <code>graph_accel</code>
+  (ADR-201) is a pgrx extension whose <code>.so</code> is ABI-bound to the exact
+  PostgreSQL it was compiled against. PG 18 requires fresh artifacts.</li>
+<li><strong>PostgreSQL 18 changed the Docker data-directory convention.</strong> This is the
+  single most consequential discovery of the migration and is described below.</li>
 </ul>
-<hr />
-<h3 id="status">status</h3>
-<p>Show comprehensive system health status (Docker containers, database connections, environment configuration, job scheduler)</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kg<span class="w"> </span>status<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
-</code></pre></div></p>
-<h3 id="backup">backup</h3>
-<p>Create database backup (ADR-036) - full system or per-ontology, in restorable JSON or Gephi GEXF format</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kg<span class="w"> </span>backup<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
-</code></pre></div></p>
-<p><strong>Options:</strong></p>
+<p>A validation spike was run before committing to the move. It split into two
+gates: <strong>Gate 1 — does the platform run on PG 18 / AGE 1.7?</strong> and <strong>Gate 2 —
+can existing data be migrated across the major-version boundary?</strong></p>
+<h3 id="gate-1-platform-compatibility-passed">Gate 1 — platform compatibility: passed</h3>
 <table>
 <thead>
 <tr>
-<th>Option</th>
-<th>Description</th>
-<th>Default</th>
+<th>Check</th>
+<th>Result</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>--type &lt;type&gt;</code></td>
-<td>Backup type: "full" (entire graph) or "ontology" (single namespace)</td>
-<td>-</td>
+<td><code>apache/age:release_PG18_1.7.0</code> fresh init</td>
+<td>PG 18.1 + AGE 1.7.0; 60 migrations applied; schema v64</td>
 </tr>
 <tr>
-<td><code>--ontology &lt;name&gt;</code></td>
-<td>Ontology name (required if --type ontology)</td>
-<td>-</td>
+<td><code>graph_accel</code> Rust/pgrx extension</td>
+<td>Compiles against PG 18 (pgrx 0.16.1), installs, loads</td>
 </tr>
 <tr>
-<td><code>--output &lt;filename&gt;</code></td>
-<td>Custom output filename (auto-generated if not specified)</td>
-<td>-</td>
+<td><code>kg-postgres</code> baked image (<code>Dockerfile.postgres</code>)</td>
+<td>Builds clean</td>
 </tr>
 <tr>
-<td><code>--format &lt;format&gt;</code></td>
-<td>Export format: "json" (native, restorable) or "gexf" (Gephi visualization - not restorable)</td>
-<td><code>"json"</code></td>
+<td>API test suite (<code>pytest tests/unit tests/api</code>)</td>
+<td>882 passed; 3 failures, all explained by a freshly-wiped config DB (missing garage/OpenAI keys), none a PG 18 regression</td>
 </tr>
 </tbody>
 </table>
-<h3 id="list-backups">list-backups</h3>
-<p>List available backup files from configured directory</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kg<span class="w"> </span>list-backups<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
-</code></pre></div></p>
-<h3 id="restore">restore</h3>
-<p>Restore a database backup (requires authentication)</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kg<span class="w"> </span>restore<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
-</code></pre></div></p>
-<p><strong>Options:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>--file &lt;name&gt;</code></td>
-<td>Backup filename (from configured directory)</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>--path &lt;path&gt;</code></td>
-<td>Custom backup file path (overrides configured directory)</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>--merge</code></td>
-<td>Merge into existing ontology if it exists (default: error if ontology exists)</td>
-<td><code>false</code></td>
-</tr>
-<tr>
-<td><code>--deps &lt;action&gt;</code></td>
-<td>How to handle external dependencies: prune, stitch, defer</td>
-<td><code>"prune"</code></td>
-</tr>
-</tbody>
-</table>
-<h3 id="scheduler">scheduler</h3>
-<p>Job scheduler management (ADR-014 job queue) - monitor worker status, cleanup stale jobs</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>kg<span class="w"> </span>scheduler<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
-</code></pre></div></p>
-<p><strong>Subcommands:</strong></p>
+<p>The <code>graph_accel</code> <code>ext</code> crate uses only high-level pgrx APIs (<code>Spi</code>,
+<code>GucRegistry</code>) — no raw <code>pg_sys</code>, no executor hooks, no tuple-slot access — so
+PostgreSQL 18's internal C-API churn (the kind that required source patches in
+AGE itself) never reached our code. PG 18 compatibility for <code>graph_accel</code> is
+delegated entirely to pgrx 0.16.1, and the container build proved it.</p>
+<h3 id="the-data-directory-convention-change">The data-directory convention change</h3>
+<p>PostgreSQL 18's official Docker images store the cluster in a
+<strong>major-version-specific subdirectory</strong> (<code>PGDATA=/var/lib/postgresql/18/docker</code>)
+and expect the data volume mounted at <code>/var/lib/postgresql</code> — <strong>not</strong>
+<code>/var/lib/postgresql/data</code>, the path used by every pre-18 image. Mounting at
+the old path makes PG 18 refuse to start:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Error: in 18+, these Docker images are configured to store database data in a
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>format which is compatible with &quot;pg_ctlcluster&quot;... there appears to be
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>PostgreSQL data in /var/lib/postgresql/data (unused mount/volume)
+</code></pre></div>
+<p>This is a hard error for anyone upgrading, independent of AGE, and it affects
+bind-mount production installs as much as named-volume installs.</p>
+<h3 id="gate-2-data-migration-logical-dumprestore-does-not-carry-age-graphs">Gate 2 — data migration: logical dump/restore does not carry AGE graphs</h3>
+<p>A PostgreSQL major-version bump cannot be applied by swapping the container
+image — the new server will not start on an older cluster's data directory.
+The conventional cross-version path is a logical <code>pg_dump</code> / <code>pg_restore</code>, and
+the platform already ships that tooling (ADR-015). The spike tested it by
+dumping the live PG 17 graph (114 Concepts, 191 Instances, ~650 typed edges,
+108 source embeddings) and restoring into PG 18. It does <strong>not</strong> round-trip:</p>
+<ol>
+<li><code>pg_restore --clean</code> aborts — it emits <code>DROP TABLE</code> on AGE label tables,
+   which AGE rejects (<code>table "VocabType" is for label "VocabType"</code>). Restore
+   must target an empty database.</li>
+<li>Restoring into an empty database succeeds and node/edge <strong>counts</strong> come
+   back correct — but vertex/edge <strong>content</strong> is unretrievable:
+   <code>ERROR: graph with oid 16987 does not exist</code>.</li>
+</ol>
+<p>Root cause: AGE's graph identity <em>is</em> the backing schema's OID. On PG 17 the
+<code>knowledge_graph</code> schema had OID 16987, so <code>ag_graph.graphid</code> was 16987; after
+restore the schema has OID 18475, but <code>ag_graph.graphid</code> / <code>ag_label.graph</code>
+were dumped as the literal stale 16987. <code>pg_dump</code> never fixes up OIDs — only
+<code>pg_upgrade</code> and physical replication preserve them. <strong>This is an Apache AGE
+limitation, not a PostgreSQL 18 one</strong>: a PG 17 → PG 17 restore into a fresh
+cluster would fail identically.</p>
+<p>The spike also exposed two pre-existing bugs in the restore tooling,
+independent of PG 18 and tracked for separate fixes (issues #397, #398):</p>
 <ul>
-<li><code>status</code> - Show job scheduler status and configuration</li>
-<li><code>cleanup</code> - Manually trigger scheduler cleanup (cancels expired jobs, deletes old jobs)</li>
+<li><code>operator/database/restore-database.sh</code> pipes <code>pg_restore</code> through
+  <code>grep -v</code>, so the pipeline's exit code is <code>grep</code>'s, not <code>pg_restore</code>'s — it
+  reported <code>✓ Database restored successfully!</code> on a fully aborted restore.</li>
+<li><code>pg_restore --clean</code> against a database that already holds an AGE graph is
+  hazardous even for a same-version restore, for the label-table reason above.</li>
 </ul>
-<hr />
-<h4 id="status_1">status</h4>
-<p>Show job scheduler status and configuration</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>kg<span class="w"> </span>status<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
-</code></pre></div></p>
-<h4 id="cleanup">cleanup</h4>
-<p>Manually trigger scheduler cleanup (cancels expired jobs, deletes old jobs)</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>kg<span class="w"> </span>cleanup<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
-</code></pre></div></p>
-<h3 id="user">user</h3>
-<p>User management commands (admin only)</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>kg<span class="w"> </span>user<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
-</code></pre></div></p>
-<p><strong>Subcommands:</strong></p>
+<p>This project has no production data to preserve — the only live instance holds
+development data — so the practical move is a clean cut. But the <em>tooling</em> must
+still behave correctly for any operator who does have data.</p>
+<h2 id="decision">Decision</h2>
+<p><strong>Hard-cut the platform from PostgreSQL 17 / AGE 1.6.0 to PostgreSQL 18 /
+AGE 1.7.0.</strong> No parallel-version support is retained.</p>
+<ol>
+<li><strong>Base image</strong> — <code>docker/Dockerfile.postgres</code> and
+   <code>graph-accel/Dockerfile.build</code> pin <code>apache/age</code> by digest to
+   <code>release_PG18_1.7.0</code>
+   (<code>sha256:e7de1717e487dac7c1be93a1cd5360a2cf07ff4170342c2af2ac4713c21baf00</code>).
+   Dev compose pins the same release tag.</li>
+<li><strong>Data-directory mount</strong> — all compose files mount the postgres data volume
+   at <code>/var/lib/postgresql</code> (PG 18's version-subdirectory layout), replacing
+   the pre-18 <code>/var/lib/postgresql/data</code>.</li>
+<li><strong>graph_accel</strong> — the pgrx <code>ext</code> crate's default feature is <code>pg18</code>;
+   artifacts are rebuilt for PG 18 into <code>graph-accel/dist/pg18/{amd64,arm64}/</code>,
+   and <code>dist/pg17/</code> is removed. All build/deploy/publish references and the
+   <code>/usr/lib|share/postgresql/18/</code> install paths are cut to 18.</li>
+<li><strong>Operator safety gate</strong> — <code>operator.sh upgrade</code> (<code>cmd_upgrade</code>) gains
+   <code>check_pg_major_compatibility</code>: it compares the live cluster's
+   <code>PGDATA/PG_VERSION</code> against the target image's <code>PG_MAJOR</code> and, on a
+   mismatch, <strong>refuses the upgrade before any container is recreated</strong>. This
+   is the deliberate scope choice — <em>detect and refuse</em>, not <em>migrate</em>.</li>
+<li><strong>Major-version data migration is deferred.</strong> Because logical dump/restore
+   cannot carry an AGE graph across clusters, no automated major-version
+   migration path is shipped. An operator who must preserve a graph across a
+   PostgreSQL major version performs a deliberate, separate procedure
+   (<code>pg_upgrade</code>, which preserves OIDs, or rebuild-by-re-ingestion). The
+   operator gate above ensures they cannot do so accidentally.</li>
+</ol>
+<h2 id="consequences">Consequences</h2>
+<h3 id="positive">Positive</h3>
 <ul>
-<li><code>list</code> - List all users</li>
-<li><code>get</code> - Get user details by ID</li>
-<li><code>create</code> - Create new user</li>
-<li><code>update</code> - Update user details</li>
-<li><code>delete</code> - Delete user (requires re-authentication)</li>
+<li>The platform tracks the current PostgreSQL baseline (18.1) and the current
+  AGE release (1.7.0).</li>
+<li><code>operator.sh upgrade</code> can no longer silently destroy a cluster by swapping a
+  PG-major-incompatible image — it fails fast with an explanatory message
+  instead of a cryptic container crash loop.</li>
+<li>The data-directory mount is now correct for PG 18+, so future minor-version
+  image bumps within the 18 series are clean.</li>
+<li>The validation spike turned two latent restore-tooling bugs into tracked
+  work.</li>
 </ul>
-<hr />
-<h4 id="list">list</h4>
-<p>List all users</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>kg<span class="w"> </span>list<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
-</code></pre></div></p>
-<p><strong>Options:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>--role &lt;role&gt;</code></td>
-<td>Filter by role (read_only, contributor, curator, admin)</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>--skip &lt;n&gt;</code></td>
-<td>Skip first N users (pagination)</td>
-<td><code>"0"</code></td>
-</tr>
-<tr>
-<td><code>--limit &lt;n&gt;</code></td>
-<td>Limit results (default: 50)</td>
-<td><code>"50"</code></td>
-</tr>
-</tbody>
-</table>
-<h4 id="get">get</h4>
-<p>Get user details by ID</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>kg<span class="w"> </span>get<span class="w"> </span>&lt;user_id&gt;
-</code></pre></div></p>
-<p><strong>Arguments:</strong></p>
+<h3 id="negative">Negative</h3>
 <ul>
-<li><code>&lt;user_id&gt;</code> - Required</li>
+<li>There is no one-command path to migrate an existing graph across a
+  PostgreSQL major version. Operators with data must run a manual procedure.
+  This is an honest reflection of an AGE limitation rather than a regression
+  introduced here.</li>
+<li>The hard cut means a single supported PostgreSQL/AGE pair; targeting an
+  older AGE for any reason requires reverting the pins.</li>
+<li>A PG-major upgrade requires the data volume to be re-created at the new
+  mount path — the old <code>/var/lib/postgresql/data</code> volume cannot be reused
+  in place even by <code>pg_upgrade</code> without remapping.</li>
 </ul>
-<h4 id="create">create</h4>
-<p>Create new user</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>kg<span class="w"> </span>create<span class="w"> </span>&lt;username&gt;
-</code></pre></div></p>
-<p><strong>Arguments:</strong></p>
+<h3 id="neutral">Neutral</h3>
 <ul>
-<li><code>&lt;username&gt;</code> - Required</li>
+<li>Existing <code>apache/age</code> installs that copy <code>graph_accel</code> artifacts must use
+  the <code>dist/pg18/</code> files; the PG 17 artifacts are gone.</li>
+<li>Multi-arch <code>graph_accel</code> artifacts (amd64 + arm64) are committed so the
+  <code>kg-postgres</code> image can be published for both architectures.</li>
+<li><code>cargo pgrx test pg18</code> requires a host pgrx initialised for PG 18; the
+  canonical, ABI-correct build remains <code>build-in-container.sh</code>.</li>
 </ul>
-<p><strong>Options:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>--role &lt;role&gt;</code></td>
-<td>User role (read_only, contributor, curator, admin)</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>-p, --password &lt;password&gt;</code></td>
-<td>Password (prompts if not provided)</td>
-<td>-</td>
-</tr>
-</tbody>
-</table>
-<h4 id="update">update</h4>
-<p>Update user details</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>kg<span class="w"> </span>update<span class="w"> </span>&lt;user_id&gt;
-</code></pre></div></p>
-<p><strong>Arguments:</strong></p>
+<h2 id="alternatives-considered">Alternatives Considered</h2>
 <ul>
-<li><code>&lt;user_id&gt;</code> - Required</li>
-</ul>
-<p><strong>Options:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>--role &lt;role&gt;</code></td>
-<td>Change user role</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>-p, --password [password]</code></td>
-<td>Change password (prompts if no value provided)</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>--disable</code></td>
-<td>Disable user account</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>--enable</code></td>
-<td>Enable user account</td>
-<td>-</td>
-</tr>
-</tbody>
-</table>
-<h4 id="delete">delete</h4>
-<p>Delete user (requires re-authentication)</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>kg<span class="w"> </span>delete<span class="w"> </span>&lt;user_id&gt;
-</code></pre></div></p>
-<p><strong>Arguments:</strong></p>
-<ul>
-<li><code>&lt;user_id&gt;</code> - Required</li>
-</ul>
-<p><strong>Options:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>--yes</code></td>
-<td>Skip confirmation prompt</td>
-<td>-</td>
-</tr>
-</tbody>
-</table>
-<h3 id="rbac">rbac</h3>
-<p>Manage roles, permissions, and access control (ADR-028)</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>kg<span class="w"> </span>rbac<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
-</code></pre></div></p>
-<p><strong>Subcommands:</strong></p>
-<ul>
-<li><code>resource</code> (<code>resources</code>, <code>res</code>) - Manage resource types</li>
-<li><code>role</code> (<code>roles</code>) - Manage roles</li>
-<li><code>permission</code> (<code>permissions</code>, <code>perm</code>) - Manage permissions</li>
-<li><code>assign</code> - Assign roles to users</li>
-</ul>
-<hr />
-<h4 id="resource-resources-res">resource (resources, res)</h4>
-<p>Manage resource types</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>kg<span class="w"> </span>resource<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
-</code></pre></div></p>
-<p><strong>Subcommands:</strong></p>
-<ul>
-<li><code>list</code> - List all registered resource types</li>
-<li><code>create</code> - Register a new resource type</li>
-</ul>
-<hr />
-<h5 id="list_1">list</h5>
-<p>List all registered resource types</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>kg<span class="w"> </span>list<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
-</code></pre></div></p>
-<h5 id="create_1">create</h5>
-<p>Register a new resource type</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>kg<span class="w"> </span>create<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
-</code></pre></div></p>
-<p><strong>Options:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>-t, --type &lt;type&gt;</code></td>
-<td>Resource type name</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>-a, --actions &lt;actions...&gt;</code></td>
-<td>Available actions (space-separated)</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>-d, --description &lt;desc&gt;</code></td>
-<td>Resource description</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>-p, --parent &lt;parent&gt;</code></td>
-<td>Parent resource type</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>-s, --scoping</code></td>
-<td>Enable instance scoping</td>
-<td><code>false</code></td>
-</tr>
-</tbody>
-</table>
-<h4 id="role-roles">role (roles)</h4>
-<p>Manage roles</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>kg<span class="w"> </span>role<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
-</code></pre></div></p>
-<p><strong>Subcommands:</strong></p>
-<ul>
-<li><code>list</code> - List all roles</li>
-<li><code>show</code> - Show role details</li>
-<li><code>create</code> - Create a new role</li>
-<li><code>delete</code> - Delete a role</li>
-</ul>
-<hr />
-<h5 id="list_2">list</h5>
-<p>List all roles</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>kg<span class="w"> </span>list<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
-</code></pre></div></p>
-<p><strong>Options:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>--all</code></td>
-<td>Include inactive roles</td>
-<td><code>false</code></td>
-</tr>
-</tbody>
-</table>
-<h5 id="show">show</h5>
-<p>Show role details</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>kg<span class="w"> </span>show<span class="w"> </span>&lt;role&gt;
-</code></pre></div></p>
-<p><strong>Arguments:</strong></p>
-<ul>
-<li><code>&lt;role&gt;</code> - Required</li>
-</ul>
-<h5 id="create_2">create</h5>
-<p>Create a new role</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>kg<span class="w"> </span>create<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
-</code></pre></div></p>
-<p><strong>Options:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>-n, --name &lt;name&gt;</code></td>
-<td>Role name (e.g., data_scientist)</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>-d, --display &lt;display&gt;</code></td>
-<td>Display name</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>--description &lt;desc&gt;</code></td>
-<td>Role description</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>-p, --parent &lt;parent&gt;</code></td>
-<td>Parent role to inherit from</td>
-<td>-</td>
-</tr>
-</tbody>
-</table>
-<h5 id="delete_1">delete</h5>
-<p>Delete a role</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>kg<span class="w"> </span>delete<span class="w"> </span>&lt;role&gt;
-</code></pre></div></p>
-<p><strong>Arguments:</strong></p>
-<ul>
-<li><code>&lt;role&gt;</code> - Required</li>
-</ul>
-<p><strong>Options:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>--force</code></td>
-<td>Skip confirmation</td>
-<td><code>false</code></td>
-</tr>
-</tbody>
-</table>
-<h4 id="permission-permissions-perm">permission (permissions, perm)</h4>
-<p>Manage permissions</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>kg<span class="w"> </span>permission<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
-</code></pre></div></p>
-<p><strong>Subcommands:</strong></p>
-<ul>
-<li><code>list</code> - List permissions</li>
-<li><code>grant</code> - Grant a permission to a role</li>
-<li><code>revoke</code> - Revoke a permission (use permission ID from list)</li>
-</ul>
-<hr />
-<h5 id="list_3">list</h5>
-<p>List permissions</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>kg<span class="w"> </span>list<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
-</code></pre></div></p>
-<p><strong>Options:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>-r, --role &lt;role&gt;</code></td>
-<td>Filter by role name</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>-t, --resource-type &lt;type&gt;</code></td>
-<td>Filter by resource type</td>
-<td>-</td>
-</tr>
-</tbody>
-</table>
-<h5 id="grant">grant</h5>
-<p>Grant a permission to a role</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>kg<span class="w"> </span>grant<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
-</code></pre></div></p>
-<p><strong>Options:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>-r, --role &lt;role&gt;</code></td>
-<td>Role name</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>-t, --resource-type &lt;type&gt;</code></td>
-<td>Resource type</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>-a, --action &lt;action&gt;</code></td>
-<td>Action (read, write, delete, etc.)</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>-s, --scope &lt;scope&gt;</code></td>
-<td>Scope type (global, instance, filter)</td>
-<td><code>"global"</code></td>
-</tr>
-<tr>
-<td><code>--scope-id &lt;id&gt;</code></td>
-<td>Scope ID for instance scoping</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>--deny</code></td>
-<td>Create explicit deny (default is grant)</td>
-<td><code>false</code></td>
-</tr>
-</tbody>
-</table>
-<h5 id="revoke">revoke</h5>
-<p>Revoke a permission (use permission ID from list)</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>kg<span class="w"> </span>revoke<span class="w"> </span>&lt;permission-id&gt;
-</code></pre></div></p>
-<p><strong>Arguments:</strong></p>
-<ul>
-<li><code>&lt;permission-id&gt;</code> - Required</li>
-</ul>
-<h4 id="assign">assign</h4>
-<p>Assign roles to users</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>kg<span class="w"> </span>assign<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
-</code></pre></div></p>
-<p><strong>Subcommands:</strong></p>
-<ul>
-<li><code>list</code> - List role assignments for a user</li>
-<li><code>add</code> - Assign a role to a user</li>
-<li><code>remove</code> - Remove a role assignment (use assignment ID from list)</li>
-</ul>
-<hr />
-<h5 id="list_4">list</h5>
-<p>List role assignments for a user</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>kg<span class="w"> </span>list<span class="w"> </span>&lt;user-id&gt;
-</code></pre></div></p>
-<p><strong>Arguments:</strong></p>
-<ul>
-<li><code>&lt;user-id&gt;</code> - Required</li>
-</ul>
-<h5 id="add">add</h5>
-<p>Assign a role to a user</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>kg<span class="w"> </span>add<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
-</code></pre></div></p>
-<p><strong>Options:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>-u, --user-id &lt;id&gt;</code></td>
-<td>User ID</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>-r, --role &lt;role&gt;</code></td>
-<td>Role name</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>-s, --scope &lt;scope&gt;</code></td>
-<td>Scope type (global, workspace, ontology, etc.)</td>
-<td><code>"global"</code></td>
-</tr>
-<tr>
-<td><code>--scope-id &lt;id&gt;</code></td>
-<td>Scope ID (e.g., workspace ID)</td>
-<td>-</td>
-</tr>
-</tbody>
-</table>
-<h5 id="remove">remove</h5>
-<p>Remove a role assignment (use assignment ID from list)</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>kg<span class="w"> </span>remove<span class="w"> </span>&lt;assignment-id&gt;
-</code></pre></div></p>
-<p><strong>Arguments:</strong></p>
-<ul>
-<li><code>&lt;assignment-id&gt;</code> - Required</li>
-</ul>
-<h3 id="embedding">embedding</h3>
-<p>Manage embedding model configuration (ADR-039)</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>kg<span class="w"> </span>embedding<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
-</code></pre></div></p>
-<p><strong>Subcommands:</strong></p>
-<ul>
-<li><code>list</code> - List all embedding configurations</li>
-<li><code>create</code> - Create a new embedding configuration (inactive)</li>
-<li><code>activate</code> - Activate an embedding configuration (with automatic protection)</li>
-<li><code>reload</code> - Hot reload embedding model (zero-downtime)</li>
-<li><code>protect</code> - Enable protection flags on an embedding configuration</li>
-<li><code>unprotect</code> - Disable protection flags on an embedding configuration</li>
-<li><code>delete</code> - Delete an embedding configuration</li>
-<li><code>status</code> - Show comprehensive embedding coverage across all graph text entities with hash verification</li>
-<li><code>regenerate</code> - Regenerate vector embeddings for all graph text entities: concepts, sources, vocabulary (ADR-068 Phase 4) - useful after changing embedding model or repairing missing embeddings</li>
-</ul>
-<hr />
-<h4 id="list_5">list</h4>
-<p>List all embedding configurations</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a>kg<span class="w"> </span>list<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
-</code></pre></div></p>
-<h4 id="create_3">create</h4>
-<p>Create a new embedding configuration (inactive)</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a>kg<span class="w"> </span>create<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
-</code></pre></div></p>
-<p><strong>Options:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>--provider &lt;provider&gt;</code></td>
-<td>Provider: local or openai</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>--model &lt;model&gt;</code></td>
-<td>Model name</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>--dimensions &lt;dims&gt;</code></td>
-<td>Embedding dimensions</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>--precision &lt;precision&gt;</code></td>
-<td>Precision: float16, float32, int8</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>--device &lt;device&gt;</code></td>
-<td>Device: cpu, cuda, mps</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>--memory &lt;mb&gt;</code></td>
-<td>Max memory in MB</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>--threads &lt;n&gt;</code></td>
-<td>Number of threads</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>--batch-size &lt;n&gt;</code></td>
-<td>Batch size</td>
-<td>-</td>
-</tr>
-</tbody>
-</table>
-<h4 id="activate">activate</h4>
-<p>Activate an embedding configuration (with automatic protection)</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a>kg<span class="w"> </span>activate<span class="w"> </span>&lt;config-id&gt;
-</code></pre></div></p>
-<p><strong>Arguments:</strong></p>
-<ul>
-<li><code>&lt;config-id&gt;</code> - Configuration ID</li>
-</ul>
-<p><strong>Options:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>--force</code></td>
-<td>Force activation even with dimension mismatch (dangerous!)</td>
-<td>-</td>
-</tr>
-</tbody>
-</table>
-<h4 id="reload">reload</h4>
-<p>Hot reload embedding model (zero-downtime)</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a>kg<span class="w"> </span>reload<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
-</code></pre></div></p>
-<h4 id="protect">protect</h4>
-<p>Enable protection flags on an embedding configuration</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a>kg<span class="w"> </span>protect<span class="w"> </span>&lt;config-id&gt;
-</code></pre></div></p>
-<p><strong>Arguments:</strong></p>
-<ul>
-<li><code>&lt;config-id&gt;</code> - Configuration ID</li>
-</ul>
-<p><strong>Options:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>--delete</code></td>
-<td>Enable delete protection</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>--change</code></td>
-<td>Enable change protection</td>
-<td>-</td>
-</tr>
-</tbody>
-</table>
-<h4 id="unprotect">unprotect</h4>
-<p>Disable protection flags on an embedding configuration</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a>kg<span class="w"> </span>unprotect<span class="w"> </span>&lt;config-id&gt;
-</code></pre></div></p>
-<p><strong>Arguments:</strong></p>
-<ul>
-<li><code>&lt;config-id&gt;</code> - Configuration ID</li>
-</ul>
-<p><strong>Options:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>--delete</code></td>
-<td>Disable delete protection</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>--change</code></td>
-<td>Disable change protection</td>
-<td>-</td>
-</tr>
-</tbody>
-</table>
-<h4 id="delete_2">delete</h4>
-<p>Delete an embedding configuration</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a>kg<span class="w"> </span>delete<span class="w"> </span>&lt;config-id&gt;
-</code></pre></div></p>
-<p><strong>Arguments:</strong></p>
-<ul>
-<li><code>&lt;config-id&gt;</code> - Configuration ID</li>
-</ul>
-<h4 id="status_2">status</h4>
-<p>Show comprehensive embedding coverage across all graph text entities with hash verification</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a>kg<span class="w"> </span>status<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
-</code></pre></div></p>
-<p><strong>Options:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>--ontology &lt;name&gt;</code></td>
-<td>Limit status to specific ontology namespace</td>
-<td>-</td>
-</tr>
-</tbody>
-</table>
-<h4 id="regenerate">regenerate</h4>
-<p>Regenerate vector embeddings for all graph text entities: concepts, sources, vocabulary (ADR-068 Phase 4) - useful after changing embedding model or repairing missing embeddings</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a>kg<span class="w"> </span>regenerate<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
-</code></pre></div></p>
-<p><strong>Options:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>--type &lt;type&gt;</code></td>
-<td>Type of embeddings to regenerate: concept, source, vocabulary, all</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>--only-missing</code></td>
-<td>Only generate for entities without embeddings (skip existing) - applies to concept and source types</td>
-<td><code>false</code></td>
-</tr>
-<tr>
-<td><code>--only-incompatible</code></td>
-<td>Only regenerate embeddings with mismatched model/dimensions (for model migrations)</td>
-<td><code>false</code></td>
-</tr>
-<tr>
-<td><code>--ontology &lt;name&gt;</code></td>
-<td>Limit regeneration to specific ontology namespace - applies to concept and source types</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>--limit &lt;n&gt;</code></td>
-<td>Maximum number of entities to process (useful for testing/batching)</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>--status</code></td>
-<td>Show embedding status before regeneration (diagnostic mode)</td>
-<td><code>false</code></td>
-</tr>
-</tbody>
-</table>
-<h3 id="extraction">extraction</h3>
-<p>Manage AI extraction model configuration (ADR-041)</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a>kg<span class="w"> </span>extraction<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
-</code></pre></div></p>
-<p><strong>Subcommands:</strong></p>
-<ul>
-<li><code>config</code> - Show current AI extraction configuration</li>
-<li><code>set</code> - Update AI extraction configuration</li>
-</ul>
-<hr />
-<h4 id="config">config</h4>
-<p>Show current AI extraction configuration</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-42-1" name="__codelineno-42-1" href="#__codelineno-42-1"></a>kg<span class="w"> </span>config<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
-</code></pre></div></p>
-<h4 id="set">set</h4>
-<p>Update AI extraction configuration</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-43-1" name="__codelineno-43-1" href="#__codelineno-43-1"></a>kg<span class="w"> </span><span class="nb">set</span><span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
-</code></pre></div></p>
-<p><strong>Options:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>--provider &lt;provider&gt;</code></td>
-<td>Provider: openai, anthropic, ollama, or vllm</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>--model &lt;model&gt;</code></td>
-<td>Model name (e.g., gpt-4o, mistral:7b-instruct)</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>--vision</code></td>
-<td>Enable vision support</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>--no-vision</code></td>
-<td>Disable vision support</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>--json-mode</code></td>
-<td>Enable JSON mode</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>--no-json-mode</code></td>
-<td>Disable JSON mode</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>--max-tokens &lt;n&gt;</code></td>
-<td>Max tokens</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>--base-url &lt;url&gt;</code></td>
-<td>Base URL for local providers (e.g., http://localhost:11434)</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>--temperature &lt;n&gt;</code></td>
-<td>Sampling temperature 0.0-1.0 (default: 0.1)</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>--top-p &lt;n&gt;</code></td>
-<td>Nucleus sampling threshold 0.0-1.0 (default: 0.9)</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>--gpu-layers &lt;n&gt;</code></td>
-<td>GPU layers: -1=auto, 0=CPU only, &gt;0=specific count</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>--num-threads &lt;n&gt;</code></td>
-<td>CPU threads for inference (default: 4)</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>--thinking-mode &lt;mode&gt;</code></td>
-<td>Thinking mode: off, low, medium, high (Ollama 0.12.x+)</td>
-<td>-</td>
-</tr>
-</tbody>
-</table>
-<h3 id="keys">keys</h3>
-<p>Manage API keys for AI providers (ADR-031, ADR-041)</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-44-1" name="__codelineno-44-1" href="#__codelineno-44-1"></a>kg<span class="w"> </span>keys<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
-</code></pre></div></p>
-<p><strong>Subcommands:</strong></p>
-<ul>
-<li><code>list</code> - List API keys with validation status</li>
-<li><code>set</code> - Set API key for a provider (validates before storing)</li>
-<li><code>delete</code> - Delete API key for a provider</li>
-</ul>
-<hr />
-<h4 id="list_6">list</h4>
-<p>List API keys with validation status</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-45-1" name="__codelineno-45-1" href="#__codelineno-45-1"></a>kg<span class="w"> </span>list<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
-</code></pre></div></p>
-<h4 id="set_1">set</h4>
-<p>Set API key for a provider (validates before storing)</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-46-1" name="__codelineno-46-1" href="#__codelineno-46-1"></a>kg<span class="w"> </span><span class="nb">set</span><span class="w"> </span>&lt;provider&gt;
-</code></pre></div></p>
-<p><strong>Arguments:</strong></p>
-<ul>
-<li><code>&lt;provider&gt;</code> - Provider name (openai or anthropic)</li>
-</ul>
-<p><strong>Options:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>--key &lt;key&gt;</code></td>
-<td>API key (will prompt if not provided)</td>
-<td>-</td>
-</tr>
-</tbody>
-</table>
-<h4 id="delete_3">delete</h4>
-<p>Delete API key for a provider</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-47-1" name="__codelineno-47-1" href="#__codelineno-47-1"></a>kg<span class="w"> </span>delete<span class="w"> </span>&lt;provider&gt;
-</code></pre></div></p>
-<p><strong>Arguments:</strong></p>
-<ul>
-<li><code>&lt;provider&gt;</code> - Provider name (openai or anthropic)</li>
+<li><strong>Logical <code>pg_dump</code> / <code>pg_restore</code> as the migration vehicle.</strong> Rejected on
+  empirical evidence: the spike proved AGE graphs do not round-trip across
+  clusters (the OID-identity problem above). It remains valid only for
+  same-cluster backup/restore.</li>
+<li><strong><code>pg_upgrade</code> as a shipped, automated path.</strong> <code>pg_upgrade</code> preserves OIDs,
+  so it <em>would</em> carry an AGE graph intact — but it requires both PostgreSQL
+  major versions' binaries and the AGE <code>.so</code> for both majors present in one
+  image, and AGE's catalog-migration scripts make no <code>pg_upgrade</code> guarantees.
+  Too heavy to bake in for a platform with no production data to preserve;
+  left as a documented manual option.</li>
+<li><strong>Post-restore catalog fixup</strong> (rewriting <code>ag_graph.graphid</code> /
+  <code>ag_label.graph</code> from the stale OID to the new schema OID). Technically
+  possible but fragile — it requires dropping and re-adding the <code>fk_graph_oid</code>
+  constraint and is unverified surgery, not a blessed path.</li>
+<li><strong>Staying on PostgreSQL 17.</strong> Rejected — it accumulates drift from the
+  upstream baseline with no offsetting benefit; AGE 1.7.0 for PG 18 is a
+  normal release.</li>
+<li><strong>Parallel PG 17 / PG 18 support</strong> (multi-version <code>dist/</code>, dual base pins).
+  Rejected — the platform has a single deployment target; carrying two
+  versions multiplies build and CI surface for no consumer.</li>
 </ul>
 
 
@@ -11955,6 +10183,9 @@
 
 
 
+
+  
+  
 
 
 
@@ -11998,10 +10229,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../../../..", "features": [], "search": "../../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": [], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>
