@@ -291,29 +291,36 @@ class OperatorConfig:
         Each provider's validate_api_key() in ai_providers.py uses the same
         "list models" pattern reproduced here.
 
-        Returns True on success, False if the SDK rejected the key, None if
-        the provider is unknown (caller stores without validation).
+        Returns True on success, False if the SDK rejected the key as
+        unauthorized, None if the provider is unknown (caller stores without
+        validation). Non-auth errors (network, proxy, DNS) propagate so the
+        caller can surface the real cause instead of misleading the user
+        toward "your key is wrong" remediation.
         """
-        try:
-            if provider == "openai":
-                from openai import OpenAI
+        if provider == "openai":
+            from openai import OpenAI, AuthenticationError
+            try:
                 OpenAI(api_key=key).models.list()
                 return True
-            if provider == "anthropic":
-                from anthropic import Anthropic
+            except AuthenticationError:
+                return False
+        if provider == "anthropic":
+            from anthropic import Anthropic, AuthenticationError
+            try:
                 Anthropic(api_key=key).models.list(limit=1)
                 return True
-            if provider == "openrouter":
-                from openai import OpenAI
+            except AuthenticationError:
+                return False
+        if provider == "openrouter":
+            from openai import OpenAI, AuthenticationError
+            try:
                 OpenAI(
                     api_key=key,
                     base_url="https://openrouter.ai/api/v1",
                 ).models.list()
                 return True
-        except ImportError:
-            raise
-        except Exception:
-            return False
+            except AuthenticationError:
+                return False
         return None
 
     def cmd_api_key(self, args):
@@ -348,7 +355,9 @@ class OperatorConfig:
             print(f"❌ Failed to import provider SDK: {e}")
             return False
         except Exception as e:
-            print(f"❌ API key validation failed: {e}")
+            print(f"❌ Could not contact {provider} API: {e}")
+            print("   This is not a key-rejection error — check network")
+            print("   connectivity, proxy settings, and firewall, then retry.")
             return False
 
         if validated is None:
