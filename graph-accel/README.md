@@ -211,7 +211,7 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 cargo install cargo-pgrx --version 0.16.1 --locked
 
 # Initialize pgrx for your PostgreSQL version
-cargo pgrx init --pg17=download    # or point to your pg_config
+cargo pgrx init --pg18=download    # or point to your pg_config
 ```
 
 ### Build the extension
@@ -220,7 +220,7 @@ cargo pgrx init --pg17=download    # or point to your pg_config
 cd graph-accel
 
 # Development (runs a temporary Postgres instance)
-cargo pgrx run pg17
+cargo pgrx run pg18
 
 # Package for deployment
 cargo pgrx package --pg-config $(which pg_config)
@@ -245,10 +245,10 @@ cargo build --release -p graph-accel-bench
 
 ### Pre-built artifacts (recommended)
 
-Pre-built artifacts for `apache/age` (PostgreSQL 17, Debian trixie) are in `dist/pg17/`, organized by architecture:
+Pre-built artifacts for `apache/age` (PostgreSQL 18, Debian trixie) are in `dist/pg18/`, organized by architecture:
 
 ```
-dist/pg17/
+dist/pg18/
 ├── amd64/
 │   ├── graph_accel.so          # Shared library (x86-64)
 │   ├── graph_accel.control     # Extension metadata
@@ -263,12 +263,12 @@ Copy the three files matching your container's architecture into any `apache/age
 
 ```bash
 # Use amd64/ or arm64/ to match your container architecture
-docker cp dist/pg17/amd64/graph_accel.so \
-  my-container:/usr/lib/postgresql/17/lib/
-docker cp dist/pg17/amd64/graph_accel.control \
-  my-container:/usr/share/postgresql/17/extension/
-docker cp dist/pg17/amd64/graph_accel--0.5.0.sql \
-  my-container:/usr/share/postgresql/17/extension/
+docker cp dist/pg18/amd64/graph_accel.so \
+  my-container:/usr/lib/postgresql/18/lib/
+docker cp dist/pg18/amd64/graph_accel.control \
+  my-container:/usr/share/postgresql/18/extension/
+docker cp dist/pg18/amd64/graph_accel--0.5.0.sql \
+  my-container:/usr/share/postgresql/18/extension/
 
 docker exec my-container psql -U postgres -d mydb \
   -c "CREATE EXTENSION graph_accel;"
@@ -284,7 +284,7 @@ To rebuild for the current `apache/age` image (guarantees ABI compatibility):
 ./build-in-container.sh              # host arch only (fast)
 ./build-in-container.sh --all        # amd64 + arm64
 ./build-in-container.sh --platform linux/arm64  # specific arch
-# → produces dist/pg17/<arch>/{graph_accel.so, .control, .sql}
+# → produces dist/pg18/<arch>/{graph_accel.so, .control, .sql}
 ```
 
 This spins up a temporary Docker container with the `apache/age` base, installs the Rust toolchain + pgrx, compiles the extension, and extracts the artifacts. Docker layer caching makes rebuilds fast.
@@ -294,9 +294,9 @@ This spins up a temporary Docker container with the `apache/age` base, installs 
 ```dockerfile
 FROM apache/age
 ARG TARGETARCH
-COPY dist/pg17/${TARGETARCH}/graph_accel.so /usr/lib/postgresql/17/lib/
-COPY dist/pg17/${TARGETARCH}/graph_accel.control /usr/share/postgresql/17/extension/
-COPY dist/pg17/${TARGETARCH}/graph_accel--*.sql /usr/share/postgresql/17/extension/
+COPY dist/pg18/${TARGETARCH}/graph_accel.so /usr/lib/postgresql/18/lib/
+COPY dist/pg18/${TARGETARCH}/graph_accel.control /usr/share/postgresql/18/extension/
+COPY dist/pg18/${TARGETARCH}/graph_accel--*.sql /usr/share/postgresql/18/extension/
 ```
 
 ### Development deployment
@@ -319,7 +319,7 @@ graph-accel/
 ├── Cargo.toml          # Workspace: core, bench, ext
 ├── build-in-container.sh  # Build inside apache/age for ABI compatibility
 ├── Dockerfile.build    # Multi-stage Dockerfile for container builds
-├── dist/pg17/{amd64,arm64}/  # Pre-built artifacts for apache/age (PG 17)
+├── dist/pg18/{amd64,arm64}/  # Pre-built artifacts for apache/age (PG 18)
 ├── core/               # Pure Rust traversal engine
 │   └── src/
 │       ├── graph.rs    #   Adjacency list, node index, rel-type interning

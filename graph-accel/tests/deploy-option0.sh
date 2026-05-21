@@ -5,7 +5,7 @@
 # copies into the knowledge-graph-postgres container, and reinstalls the extension.
 #
 # Artifact sources (checked in order):
-#   1. graph-accel/dist/pg17/<arch>/  (from build-in-container.sh — ABI-compatible)
+#   1. graph-accel/dist/pg18/<arch>/  (from build-in-container.sh — ABI-compatible)
 #   2. cargo pgrx package output (from host Rust toolchain)
 #
 # Usage:
@@ -37,20 +37,20 @@ case "$CONTAINER_ARCH" in
     aarch64) DIST_ARCH="arm64" ;;
     *)       DIST_ARCH="amd64" ;;
 esac
-DIST_DIR="$ACCEL_DIR/dist/pg17/$DIST_ARCH"
+DIST_DIR="$ACCEL_DIR/dist/pg18/$DIST_ARCH"
 if [ -f "$DIST_DIR/graph_accel.so" ] && [ -f "$DIST_DIR/graph_accel.control" ] && ! $FORCE_HOST_BUILD; then
     # Use pre-built artifacts from build-in-container.sh
     VERSION=$(grep 'default_version' "$DIST_DIR/graph_accel.control" | grep -oP "'\K[^']+")
     SO_FILE="$DIST_DIR/graph_accel.so"
     CONTROL_FILE="$DIST_DIR/graph_accel.control"
     SQL_FILE="$DIST_DIR/graph_accel--${VERSION}.sql"
-    echo "--- Using pre-built artifacts from dist/pg17/$DIST_ARCH/ (v${VERSION}) ---"
+    echo "--- Using pre-built artifacts from dist/pg18/$DIST_ARCH/ (v${VERSION}) ---"
 else
     # Fall back to host cargo pgrx build
-    PG_CONFIG=$(find ~/.pgrx -name pg_config -path "*/17.*/pgrx-install/bin/*" 2>/dev/null | head -1)
+    PG_CONFIG=$(find ~/.pgrx -name pg_config -path "*/18.*/pgrx-install/bin/*" 2>/dev/null | head -1)
     if [ -z "$PG_CONFIG" ]; then
-        echo "ERROR: No dist/ artifacts and pg_config for PG 17 not found in ~/.pgrx/"
-        echo "Run: ./graph-accel/build-in-container.sh  (or: cargo pgrx init --pg17=download)"
+        echo "ERROR: No dist/ artifacts and pg_config for PG 18 not found in ~/.pgrx/"
+        echo "Run: ./graph-accel/build-in-container.sh  (or: cargo pgrx init --pg18=download)"
         exit 1
     fi
 
@@ -62,7 +62,7 @@ else
     fi
 
     # Find package directory (pgrx nests it under the full pgrx-install path)
-    PKGDIR=$(find "$ACCEL_DIR/target/release/graph_accel-pg17" -name "graph_accel.control" -printf '%h' -quit 2>/dev/null)
+    PKGDIR=$(find "$ACCEL_DIR/target/release/graph_accel-pg18" -name "graph_accel.control" -printf '%h' -quit 2>/dev/null)
     PKGDIR="${PKGDIR%/share/postgresql/extension}"
     if [ -z "$PKGDIR" ] || [ ! -d "$PKGDIR" ]; then
         echo "ERROR: Package directory not found. Run without --skip-build first."
@@ -83,9 +83,9 @@ fi
 echo "--- Deploying v${VERSION} into ${CONTAINER} ---"
 
 # Copy artifacts
-docker cp "$SO_FILE" "$CONTAINER:/usr/lib/postgresql/17/lib/"
-docker cp "$CONTROL_FILE" "$CONTAINER:/usr/share/postgresql/17/extension/"
-docker cp "$SQL_FILE" "$CONTAINER:/usr/share/postgresql/17/extension/"
+docker cp "$SO_FILE" "$CONTAINER:/usr/lib/postgresql/18/lib/"
+docker cp "$CONTROL_FILE" "$CONTAINER:/usr/share/postgresql/18/extension/"
+docker cp "$SQL_FILE" "$CONTAINER:/usr/share/postgresql/18/extension/"
 
 echo "  Copied .so, .control, SQL"
 

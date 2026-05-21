@@ -240,7 +240,8 @@ services:
       placement:
         constraints: [node.role == manager]
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      # PG18+: volume mounts at /var/lib/postgresql (version-specific PGDATA subdir)
+      - postgres_data:/var/lib/postgresql
     secrets:
       - postgres_password
     environment:

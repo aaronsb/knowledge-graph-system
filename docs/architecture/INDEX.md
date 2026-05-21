@@ -49,6 +49,7 @@ _Apache AGE, migrations, schema design, PostgreSQL_
 | [ADR-202](./database-schema/ADR-202-timestamp-timezone-normalization.md) | Timestamp Timezone Normalization | Proposed |
 | [ADR-203](./database-schema/ADR-203-graph-epoch-event-log.md) | Graph Epoch Event Log | Draft |
 | [ADR-204](./database-schema/ADR-204-node-type-and-abstract-property-representation-for-concept-nodes.md) | Node Type and Abstract Property Representation for Concept Nodes | Draft |
+| [ADR-205](./database-schema/ADR-205-postgresql-18-migration.md) | PostgreSQL 18 Migration | Draft |
 
 ## Ingestion
 _Content processing, jobs, extraction, deduplication_

@@ -225,6 +225,81 @@ cmd_stop() {
     echo -e "${GREEN}✓ Stopped${NC}"
 }
 
+# PostgreSQL major-version compatibility gate.
+# A major-version bump (e.g. 17 -> 18) cannot be applied by swapping the
+# container image — the new server refuses to start on an older cluster's data
+# directory. Apache AGE compounds this: graph identity is tied to schema OIDs
+# and does not survive a logical dump/restore across clusters (ADR-205). This
+# is a hard refuse — a major-version change aborts the upgrade before any
+# container is recreated. Major-version migration is a deliberate, separate
+# procedure with no automated path yet.
+check_pg_major_compatibility() {
+    echo -e "${BLUE}→ Checking PostgreSQL major version...${NC}"
+
+    local pg_container pg_image="" target_major="" data_major=""
+    pg_container=$(resolve_container postgres)
+
+    # Major version the new postgres image expects (PG_MAJOR env)
+    pg_image=$(run_compose config --format json 2>/dev/null | python3 -c \
+        'import sys,json; print(json.load(sys.stdin)["services"]["postgres"].get("image",""))' \
+        2>/dev/null)
+    [ -n "$pg_image" ] && target_major=$(docker inspect "$pg_image" \
+        --format '{{range .Config.Env}}{{println .}}{{end}}' 2>/dev/null \
+        | sed -n 's/^PG_MAJOR=//p' | tr -dc '0-9')
+
+    # Major version of the existing cluster's data directory (PG_VERSION).
+    # Read from the live container when running, otherwise straight from the
+    # data volume — a cold upgrade (platform stopped) is exactly when this
+    # gate matters most, so it must not silently skip there.
+    if docker ps --format '{{.Names}}' | grep -q "^${pg_container}$"; then
+        data_major=$(docker exec "$pg_container" \
+            sh -c 'cat "$PGDATA/PG_VERSION" 2>/dev/null' 2>/dev/null | tr -dc '0-9')
+    else
+        local pg_data_src
+        pg_data_src=$(docker inspect "$pg_container" --format \
+            '{{range .Mounts}}{{if eq .Destination "/var/lib/postgresql"}}{{.Source}}{{end}}{{if eq .Destination "/var/lib/postgresql/data"}}{{.Source}}{{end}}{{end}}' \
+            2>/dev/null)
+        if [ -n "$pg_data_src" ] && [ -n "$pg_image" ]; then
+            # PG_VERSION is at the volume root (pre-18) or <major>/docker/ (18+)
+            data_major=$(docker run --rm -v "${pg_data_src}:/v:ro" --entrypoint sh \
+                "$pg_image" -c \
+                'cat /v/PG_VERSION 2>/dev/null || cat /v/*/docker/PG_VERSION 2>/dev/null' \
+                2>/dev/null | tr -dc '0-9')
+        fi
+    fi
+
+    if [ -z "$data_major" ] || [ -z "$target_major" ]; then
+        echo -e "${YELLOW}  ⚠ Could not determine PG major (data: ${data_major:-?}, image: ${target_major:-?})${NC}"
+        echo -e "${YELLOW}    Verify the image and data directory agree before continuing.${NC}"
+        echo ""
+        return 0
+    fi
+
+    if [ "$data_major" = "$target_major" ]; then
+        echo -e "${GREEN}  ✓ PostgreSQL $data_major — no major-version change${NC}"
+        echo ""
+        return 0
+    fi
+
+    echo ""
+    echo -e "${RED}${BOLD}PostgreSQL major-version change detected — upgrade halted${NC}"
+    echo ""
+    echo -e "  Data directory: ${BOLD}PostgreSQL $data_major${NC}"
+    echo -e "  New image:      ${BOLD}PostgreSQL $target_major${NC}"
+    echo ""
+    echo -e "  A major-version bump cannot be applied by swapping the image —"
+    echo -e "  PostgreSQL $target_major will not start on a PostgreSQL $data_major data directory,"
+    echo -e "  and Apache AGE graphs do not survive a logical dump/restore across"
+    echo -e "  clusters (graph identity is OID-coupled)."
+    echo ""
+    echo -e "  Major-version migration is a deliberate, separate procedure."
+    echo -e "  Back up first, then see"
+    echo -e "  ${BLUE}docs/architecture/database-schema/ADR-205-postgresql-18-migration.md${NC}"
+    echo ""
+    echo -e "${RED}Upgrade aborted — no containers recreated, database untouched.${NC}"
+    exit 1
+}
+
 cmd_upgrade() {
     check_env
     load_config
@@ -276,6 +351,7 @@ cmd_upgrade() {
         else
             echo -e "${YELLOW}[DRY RUN] Would pull images, update infra, run migrations, restart application${NC}"
         fi
+        echo -e "${YELLOW}[DRY RUN] A PostgreSQL major-version change would be refused (see ADR-205)${NC}"
         return
     fi
 
@@ -295,6 +371,9 @@ cmd_upgrade() {
         run_compose pull
     fi
     echo ""
+
+    # Refuse a PostgreSQL major-version swap before touching any container
+    check_pg_major_compatibility
 
     # Stop app containers
     echo -e "${BLUE}→ Stopping application containers...${NC}"

@@ -670,15 +670,15 @@ cmd_images() {
                 image_name="kg-operator"
                 ;;
             postgres)
-                # Requires per-arch pre-built artifacts in graph-accel/dist/pg17/
-                if [ ! -d "./graph-accel/dist/pg17/amd64" ]; then
-                    echo -e "${YELLOW}⚠ graph-accel/dist/pg17/amd64/ missing${NC}"
+                # Requires per-arch pre-built artifacts in graph-accel/dist/pg18/
+                if [ ! -d "./graph-accel/dist/pg18/amd64" ]; then
+                    echo -e "${YELLOW}⚠ graph-accel/dist/pg18/amd64/ missing${NC}"
                     echo -e "  Build with: ${BLUE}./graph-accel/build-in-container.sh --all${NC}"
                     echo -e "  Skipping postgres target."
                     continue
                 fi
-                if [ "$target_multi_arch" = "true" ] && [ ! -d "./graph-accel/dist/pg17/arm64" ]; then
-                    echo -e "${YELLOW}⚠ Multi-arch requested but graph-accel/dist/pg17/arm64/ missing${NC}"
+                if [ "$target_multi_arch" = "true" ] && [ ! -d "./graph-accel/dist/pg18/arm64" ]; then
+                    echo -e "${YELLOW}⚠ Multi-arch requested but graph-accel/dist/pg18/arm64/ missing${NC}"
                     echo -e "  Build with: ${BLUE}./graph-accel/build-in-container.sh --all${NC}"
                     echo -e "  Building amd64 only."
                     target_multi_arch=false

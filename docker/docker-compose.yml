@@ -46,8 +46,11 @@ services:
       # Profiles: small (8GB), medium (16GB), large (32GB+)
 
     volumes:
-      # Data persistence (includes postgresql.auto.conf with ALTER SYSTEM settings)
-      - postgres_data:/var/lib/postgresql/data
+      # Data persistence (includes postgresql.auto.conf with ALTER SYSTEM settings).
+      # PG18+ images store the cluster in a version-specific subdirectory
+      # (PGDATA=/var/lib/postgresql/18/docker), so the volume mounts at
+      # /var/lib/postgresql — not /var/lib/postgresql/data (the pre-18 path).
+      - postgres_data:/var/lib/postgresql
 
       # Initialization script (run on first startup only)
       # Note: AGE image provides 00-create-extension-age.sql (runs first)
