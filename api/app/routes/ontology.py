@@ -1149,6 +1149,47 @@ async def delete_ontology(
         except Exception as e:
             logger.warning(f"Failed to delete Ontology node for '{ontology_name}': {e}")
 
+        # #402 Defect B2: Write a tombstone so any subsequent ingest job
+        # targeting this name is failed loudly instead of silently
+        # recreating it. The tombstone is the positive operator-intent
+        # signal that distinguishes "deliberately removed" from "annealing
+        # dissolved" (which intentionally does NOT write a tombstone, so
+        # operator-intent ingests can still recreate).
+        try:
+            conn = client.pool.getconn()
+            try:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        """
+                        INSERT INTO kg_api.ontology_tombstones
+                            (name, removed_by, reason)
+                        VALUES (%s, %s, %s)
+                        ON CONFLICT (name) DO UPDATE SET
+                            removed_at = NOW(),
+                            removed_by = EXCLUDED.removed_by,
+                            reason     = EXCLUDED.reason
+                        """,
+                        (
+                            ontology_name,
+                            getattr(current_user, "username", None) or "unknown",
+                            "operator-initiated delete via API",
+                        ),
+                    )
+                conn.commit()
+                logger.info(
+                    f"Recorded tombstone for ontology '{ontology_name}' "
+                    f"(by={getattr(current_user, 'username', 'unknown')})"
+                )
+            finally:
+                client.pool.putconn(conn)
+        except Exception as e:
+            # Tombstone is defense-in-depth — log loudly but do not abort
+            # the delete that already succeeded above.
+            logger.error(
+                f"Failed to record tombstone for '{ontology_name}': {e}",
+                exc_info=True,
+            )
+
         # Delete job records for this ontology to allow clean re-ingestion
         jobs_deleted = queue.delete_jobs_by_ontology(ontology_name)
         if jobs_deleted > 0:

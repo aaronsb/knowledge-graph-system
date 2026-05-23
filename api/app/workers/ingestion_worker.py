@@ -23,10 +23,14 @@ from api.app.lib.ai_providers import get_provider
 logger = logging.getLogger(__name__)
 
 
-# #402 Defect B1: Distinct error strings so the job-list API can show, and
-# tests / clients can match, the difference between "frozen lifecycle" and
-# "vanished between queue and execution". Defect B2 will add a third
-# distinct string for "operator deliberately removed" (tombstoned).
+# Distinct error strings so the job-list API can show, and tests / clients
+# can match, the three structurally different failure modes (#402 B1 + B2):
+#   * tombstoned    → operator deliberately removed, do not recreate
+#   * frozen        → exists but read-only
+#   * vanished      → missing without a tombstone (recovered via recreate,
+#                     so this string only appears on legacy/pre-B2 jobs
+#                     where ontology_existed_at_submit was True but the
+#                     tombstone path was not checked).
 ONTOLOGY_VANISHED_MID_FLIGHT_ERROR = (
     "target ontology '{name}' was removed between queue and execution "
     "(annealing dissolve, manual delete, or rename without job migration) "
@@ -36,6 +40,54 @@ ONTOLOGY_FROZEN_ERROR = (
     "Ontology '{name}' is frozen (read-only). Job rejected. "
     "Set lifecycle state to 'active' before ingesting."
 )
+ONTOLOGY_TOMBSTONED_ERROR = (
+    "target ontology '{name}' was deliberately removed by an operator "
+    "(tombstone present in kg_api.ontology_tombstones) — ingest job not "
+    "retried. Remove the tombstone explicitly to re-enable this name."
+)
+
+
+def _ontology_tombstone(age_client, name: str):
+    """Return the tombstone row for `name` or None if no tombstone exists.
+
+    The tombstone is the positive operator-intent signal that distinguishes
+    "deliberately removed" from "annealing dissolved" (#402 Defect B2).
+    Read-only — the operator-delete API writes; nothing else does.
+    """
+    try:
+        conn = age_client.pool.getconn()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT name, removed_at, removed_by, reason "
+                    "FROM kg_api.ontology_tombstones "
+                    "WHERE name = %s",
+                    (name,),
+                )
+                row = cur.fetchone()
+            conn.commit()
+            if not row:
+                return None
+            return {
+                "name": row[0],
+                "removed_at": row[1],
+                "removed_by": row[2],
+                "reason": row[3],
+            }
+        finally:
+            age_client.pool.putconn(conn)
+    except Exception as e:
+        # Tombstone lookup failure should not silently mask the race —
+        # log loudly and treat as "no tombstone" so the recreate path
+        # runs (the worst case is recreating an ontology the operator
+        # tombstoned, which is recoverable; the alternative is to fail
+        # every ingest when the tombstone table is unreachable, which is
+        # worse). Defect A's queue-veto still applies upstream.
+        logger.error(
+            f"Failed to read ontology tombstone for '{name}': {e}",
+            exc_info=True,
+        )
+        return None
 
 
 def _validate_target_ontology(
@@ -43,35 +95,51 @@ def _validate_target_ontology(
     ontology: str,
     existed_at_submit: bool,
     created_by: str = None,
+    job_id: str = None,
 ):
     """Resolve the ingestion target's Ontology node, failing loudly when
-    the operator's intent has been invalidated (#402 Defect B1).
+    the operator's intent has been deliberately countermanded (#402 B1+B2).
 
-    Returns the ontology node dict on success. Raises Exception (which the
-    job-queue exception handler translates to status='failed' with the
-    message stamped on the job's error column) when:
+    Returns the ontology node dict on success. Raises Exception when:
 
-    - The ontology existed at submit time but is gone now → operator-
-      visible data loss if we silently recreate. Uses
-      ONTOLOGY_VANISHED_MID_FLIGHT_ERROR so the failure is distinguishable
-      in logs and the job-list API.
-    - The ontology is frozen → existing ADR-200 Phase 2 behavior.
+    - Tombstone present (operator deliberately removed the ontology) →
+      ONTOLOGY_TOMBSTONED_ERROR. The job-queue exception handler maps
+      this to status='failed' with the message on the job's error column,
+      which the job-list API already surfaces.
+    - Frozen lifecycle → ONTOLOGY_FROZEN_ERROR.
 
-    The first-ever-ingest case (existed_at_submit is False and the node
-    is missing) creates the ontology — that IS the operator's intent.
+    When the ontology is missing and no tombstone is present, the queued
+    ingest is treated as positive operator intent that overrides whatever
+    background reorganization caused the disappearance — the worker
+    recreates the ontology and proceeds, with an auditable log line
+    naming the job and the actor.
     """
     ont_node = age_client.get_ontology_node(ontology)
 
     if ont_node is None:
-        if existed_at_submit:
-            raise Exception(
-                ONTOLOGY_VANISHED_MID_FLIGHT_ERROR.format(name=ontology)
+        tombstone = _ontology_tombstone(age_client, ontology)
+        if tombstone:
+            logger.warning(
+                f"Ingest job blocked by tombstone for '{ontology}' "
+                f"(removed_at={tombstone['removed_at']}, "
+                f"removed_by={tombstone['removed_by']}, "
+                f"reason={tombstone['reason']})"
             )
-        # First-ever ingest: create the ontology, that IS the operator intent.
+            raise Exception(ONTOLOGY_TOMBSTONED_ERROR.format(name=ontology))
+
+        # Operator-intent recreation (#402 Defect B2): a queued ingest is
+        # active operator intent; a missing ontology without a tombstone
+        # means a background process removed it without operator consent,
+        # so honor the ingest by recreating the namespace. Audit-log the
+        # event with job + actor for traceability.
         ont_node = age_client.ensure_ontology_exists(
             ontology, created_by=created_by
         )
-        logger.info(f"Ontology '{ontology}' created on first ingest")
+        logger.info(
+            f"Ontology '{ontology}' (re)created for ingest job "
+            f"job_id={job_id} actor={created_by} "
+            f"existed_at_submit={existed_at_submit}"
+        )
 
     if ont_node.get("lifecycle_state") == "frozen":
         raise Exception(ONTOLOGY_FROZEN_ERROR.format(name=ontology))
@@ -371,6 +439,7 @@ def run_ingestion_worker(
             ontology,
             existed_at_submit=job_data.get("ontology_existed_at_submit", True),
             created_by=job_data.get("username"),
+            job_id=job_id,
         )
 
         # Generate embedding for ontology node if missing (best-effort).
