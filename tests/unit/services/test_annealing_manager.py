@@ -187,8 +187,8 @@ class TestAnnealingCycleDryRun:
     async def test_dry_run_returns_candidates_without_proposals(self, manager, mock_scorer, mock_client):
         """Dry run returns candidate counts but generates no proposals."""
         mock_scorer.score_all_ontologies.return_value = [
-            {"ontology": "weak", "protection_score": 0.05},
-            {"ontology": "strong", "protection_score": 0.8},
+            {"ontology": "weak", "protection_score": 0.05, "concept_count": 10},
+            {"ontology": "strong", "protection_score": 0.8, "concept_count": 10},
         ]
         mock_scorer.recompute_all_centroids.return_value = 2
         mock_client.get_ontology_node.return_value = {"lifecycle_state": "active"}
@@ -206,7 +206,7 @@ class TestAnnealingCycleDryRun:
     async def test_dry_run_includes_candidate_details(self, manager, mock_scorer, mock_client):
         """Dry run includes detailed candidate information."""
         mock_scorer.score_all_ontologies.return_value = [
-            {"ontology": "weak", "protection_score": 0.05},
+            {"ontology": "weak", "protection_score": 0.05, "concept_count": 10},
         ]
         mock_scorer.recompute_all_centroids.return_value = 0
         mock_client.get_ontology_node.return_value = {"lifecycle_state": "active"}
@@ -245,7 +245,7 @@ class TestAnnealingCycleFull:
         """Proposals are capped at max_proposals."""
         # 5 demotion candidates but max_proposals=2
         mock_scorer.score_all_ontologies.return_value = [
-            {"ontology": f"weak-{i}", "protection_score": 0.01 * i}
+            {"ontology": f"weak-{i}", "protection_score": 0.01 * i, "concept_count": 10}
             for i in range(5)
         ]
         mock_scorer.recompute_all_centroids.return_value = 0
@@ -411,8 +411,8 @@ class TestQueueDedup:
         """run_annealing_cycle skips candidates that already have an open proposal."""
         manager = AnnealingManager(mock_client, mock_scorer, ai_provider=None)
         mock_scorer.score_all_ontologies.return_value = [
-            {"ontology": "weak-a", "protection_score": 0.01},
-            {"ontology": "weak-b", "protection_score": 0.02},
+            {"ontology": "weak-a", "protection_score": 0.01, "concept_count": 10},
+            {"ontology": "weak-b", "protection_score": 0.02, "concept_count": 10},
         ]
         mock_scorer.recompute_all_centroids.return_value = 0
         mock_client.get_ontology_node.return_value = {"lifecycle_state": "active"}
@@ -435,6 +435,117 @@ class TestQueueDedup:
 
         assert "weak-a" not in evaluated  # deduped — already has an open proposal
         assert "weak-b" in evaluated      # still evaluated
+
+
+# ==========================================================================
+# #402 Defect C: Per-ontology cadence floors (age / activity)
+# ==========================================================================
+
+
+@pytest.mark.unit
+class TestCadenceFloors:
+    """An ontology that is brand-new or near-empty must not be evaluated by
+    annealing (#402 Defect C). Its scores are dominated by per-concept noise
+    rather than ontology structure, so judging it wastes LLM calls and
+    widens the ingestion race window (#402 Defect A).
+    """
+
+    def test_demotion_skips_sparse_ontology(self, manager, mock_client):
+        """Ontology with concept_count below the activity floor is skipped."""
+        scores = [
+            {"ontology": "tiny", "protection_score": 0.01, "concept_count": 2},
+            {"ontology": "sized", "protection_score": 0.01, "concept_count": 8},
+        ]
+        mock_client.get_ontology_node.return_value = {
+            "lifecycle_state": "active",
+            "creation_epoch": 0,
+        }
+        mock_client.get_current_epoch.return_value = 100
+
+        result = manager._find_demotion_candidates(
+            scores,
+            threshold=0.15,
+            current_epoch=100,
+            min_age_epochs=0,
+            min_concept_count=5,
+        )
+
+        assert [c["ontology"] for c in result] == ["sized"]
+
+    def test_demotion_skips_too_young_ontology(self, manager, mock_client):
+        """Ontology younger than min_age_epochs is skipped."""
+        scores = [
+            {"ontology": "fresh", "protection_score": 0.01, "concept_count": 50},
+            {"ontology": "settled", "protection_score": 0.01, "concept_count": 50},
+        ]
+
+        def node_for(name):
+            return {
+                "fresh": {"lifecycle_state": "active", "creation_epoch": 99},
+                "settled": {"lifecycle_state": "active", "creation_epoch": 10},
+            }[name]
+
+        mock_client.get_ontology_node.side_effect = node_for
+
+        result = manager._find_demotion_candidates(
+            scores,
+            threshold=0.15,
+            current_epoch=100,  # delta: fresh=1, settled=90
+            min_age_epochs=3,
+            min_concept_count=0,
+        )
+
+        assert [c["ontology"] for c in result] == ["settled"]
+
+    def test_demotion_floors_disabled_when_zero(self, manager, mock_client):
+        """Floors at 0 must not block anything — preserves pre-floor behavior."""
+        scores = [
+            {"ontology": "tiny", "protection_score": 0.01, "concept_count": 1},
+        ]
+        mock_client.get_ontology_node.return_value = {
+            "lifecycle_state": "active",
+            "creation_epoch": 99,
+        }
+
+        result = manager._find_demotion_candidates(
+            scores,
+            threshold=0.15,
+            current_epoch=100,
+            min_age_epochs=0,
+            min_concept_count=0,
+        )
+
+        assert len(result) == 1
+
+    def test_promotion_respects_same_floors(self, manager, mock_client):
+        """Promotion candidates also gated by source-ontology age and activity:
+        high-degree concepts in a brand-new or sparse ontology have not yet
+        earned an evaluation as natural new nuclei.
+        """
+        scores = [
+            {"ontology": "tiny", "concept_count": 2},
+            {"ontology": "sized", "concept_count": 50},
+        ]
+        mock_client.get_ontology_node.return_value = {
+            "lifecycle_state": "active",
+            "creation_epoch": 0,
+        }
+        mock_client.get_concept_degree_ranking.return_value = [
+            {"concept_id": "c1", "label": "Anchor", "degree": 40, "description": ""},
+        ]
+        mock_client._execute_cypher.return_value = []  # no anchored concepts
+
+        result = manager._find_promotion_candidates(
+            scores,
+            min_degree=10,
+            current_epoch=100,
+            min_age_epochs=0,
+            min_concept_count=5,
+        )
+
+        # Only the candidate sourced from 'sized' should survive — 'tiny' is
+        # below the activity floor.
+        assert [c["ontology"] for c in result] == ["sized"]
 
 
 # ==========================================================================
@@ -502,8 +613,8 @@ class TestInflightIngestionVeto:
         """
         manager = AnnealingManager(mock_client, mock_scorer, ai_provider=None)
         mock_scorer.score_all_ontologies.return_value = [
-            {"ontology": "weak-a", "protection_score": 0.01},
-            {"ontology": "weak-b", "protection_score": 0.02},
+            {"ontology": "weak-a", "protection_score": 0.01, "concept_count": 10},
+            {"ontology": "weak-b", "protection_score": 0.02, "concept_count": 10},
         ]
         mock_scorer.recompute_all_centroids.return_value = 0
         mock_client.get_ontology_node.return_value = {"lifecycle_state": "active"}
@@ -550,7 +661,7 @@ class TestInflightIngestionVeto:
         """
         manager = AnnealingManager(mock_client, mock_scorer, ai_provider=None)
         mock_scorer.score_all_ontologies.return_value = [
-            {"ontology": "busy-ontology"},
+            {"ontology": "busy-ontology", "concept_count": 50},
         ]
         mock_scorer.recompute_all_centroids.return_value = 0
         mock_client.get_ontology_node.return_value = {"lifecycle_state": "active"}

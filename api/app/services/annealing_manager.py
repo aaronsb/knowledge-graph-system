@@ -55,6 +55,8 @@ class AnnealingManager:
         derive_edges: bool = True,
         overlap_threshold: float = 0.1,
         specializes_threshold: float = 0.3,
+        min_ontology_age_epochs: int = 3,
+        min_ontology_concept_count: int = 5,
     ) -> Dict[str, Any]:
         """
         Run a full annealing cycle.
@@ -111,13 +113,21 @@ class AnnealingManager:
 
         # 4. Identify demotion candidates
         demotion_candidates = self._find_demotion_candidates(
-            all_scores, demotion_threshold
+            all_scores,
+            demotion_threshold,
+            current_epoch=global_epoch,
+            min_age_epochs=min_ontology_age_epochs,
+            min_concept_count=min_ontology_concept_count,
         )
         logger.info(f"Found {len(demotion_candidates)} demotion candidates")
 
         # 5. Identify promotion candidates
         promotion_candidates = self._find_promotion_candidates(
-            all_scores, promotion_min_degree
+            all_scores,
+            promotion_min_degree,
+            current_epoch=global_epoch,
+            min_age_epochs=min_ontology_age_epochs,
+            min_concept_count=min_ontology_concept_count,
         )
         logger.info(f"Found {len(promotion_candidates)} promotion candidates")
 
@@ -248,9 +258,21 @@ class AnnealingManager:
     # =========================================================================
 
     def _find_demotion_candidates(
-        self, all_scores: List[Dict], threshold: float
+        self,
+        all_scores: List[Dict],
+        threshold: float,
+        current_epoch: int = 0,
+        min_age_epochs: int = 0,
+        min_concept_count: int = 0,
     ) -> List[Dict]:
-        """Find ontologies with protection below threshold, excluding pinned/frozen."""
+        """Find ontologies with protection below threshold, excluding pinned/frozen.
+
+        Per-ontology cadence floors (#402 Defect C) gate eligibility:
+        ontologies younger than min_age_epochs or holding fewer than
+        min_concept_count concepts are skipped — their scores are dominated
+        by per-concept noise rather than ontology structure, so evaluating
+        them wastes LLM calls and widens the ingestion race window.
+        """
         candidates = []
         for scores in all_scores:
             name = scores.get("ontology", "")
@@ -259,12 +281,32 @@ class AnnealingManager:
             if protection >= threshold:
                 continue
 
+            # Activity floor — ontology must have enough mass to be judged.
+            if scores.get("concept_count", 0) < min_concept_count:
+                logger.debug(
+                    f"Skipping demotion candidate '{name}': concept_count "
+                    f"{scores.get('concept_count', 0)} < floor {min_concept_count}"
+                )
+                continue
+
             # Check lifecycle — skip pinned/frozen
             node = self.client.get_ontology_node(name)
             if not node:
                 continue
             lifecycle = node.get("lifecycle_state", "active")
             if lifecycle in ("pinned", "frozen"):
+                continue
+
+            # Age floor — ontology must have existed for ≥ min_age_epochs.
+            # creation_epoch missing on legacy nodes is treated as 0 (oldest),
+            # so the floor never blocks pre-existing ontologies.
+            creation_epoch = node.get("creation_epoch", 0) or 0
+            age = current_epoch - creation_epoch
+            if min_age_epochs > 0 and age < min_age_epochs:
+                logger.debug(
+                    f"Skipping demotion candidate '{name}': age {age} "
+                    f"< floor {min_age_epochs} epochs"
+                )
                 continue
 
             candidates.append({
@@ -277,9 +319,20 @@ class AnnealingManager:
         return candidates
 
     def _find_promotion_candidates(
-        self, all_scores: List[Dict], min_degree: int
+        self,
+        all_scores: List[Dict],
+        min_degree: int,
+        current_epoch: int = 0,
+        min_age_epochs: int = 0,
+        min_concept_count: int = 0,
     ) -> List[Dict]:
-        """Find high-degree concepts that could become ontologies."""
+        """Find high-degree concepts that could become ontologies.
+
+        The cadence floors that gate demotion (#402 Defect C) also gate
+        promotion: a brand-new or near-empty source ontology has not
+        accumulated enough signal for its high-degree concepts to be
+        judged as natural new nuclei.
+        """
         candidates = []
         existing_ontology_names = {
             s["ontology"].lower() for s in all_scores
@@ -290,6 +343,17 @@ class AnnealingManager:
 
         for scores in all_scores:
             name = scores.get("ontology", "")
+
+            # Apply the same activity / age floors as demotion: a sparse or
+            # very young source ontology hasn't earned an evaluation yet.
+            if scores.get("concept_count", 0) < min_concept_count:
+                continue
+            if min_age_epochs > 0:
+                node = self.client.get_ontology_node(name)
+                creation_epoch = (node or {}).get("creation_epoch", 0) or 0
+                if current_epoch - creation_epoch < min_age_epochs:
+                    continue
+
             try:
                 ranking = self.client.get_concept_degree_ranking(name, limit=10)
             except Exception:

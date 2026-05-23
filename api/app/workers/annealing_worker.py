@@ -49,6 +49,8 @@ def run_annealing_worker(
     overlap_threshold = job_data.get("overlap_threshold", 0.1)
     specializes_threshold = job_data.get("specializes_threshold", 0.3)
     automation_level = job_data.get("automation_level", "autonomous")
+    min_ontology_age_epochs = job_data.get("min_ontology_age_epochs", 3)
+    min_ontology_concept_count = job_data.get("min_ontology_concept_count", 5)
 
     logger.info(
         f"Annealing worker starting (job {job_id}): "
@@ -96,6 +98,8 @@ def run_annealing_worker(
             derive_edges=derive_edges,
             overlap_threshold=overlap_threshold,
             specializes_threshold=specializes_threshold,
+            min_ontology_age_epochs=min_ontology_age_epochs,
+            min_ontology_concept_count=min_ontology_concept_count,
         ))
 
         # Autonomous mode: the manager already stored proposals as 'approved'
