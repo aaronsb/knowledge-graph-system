@@ -438,6 +438,148 @@ class TestQueueDedup:
 
 
 # ==========================================================================
+# #402 Defect A: Queue-aware veto for in-flight ingestion
+# ==========================================================================
+
+
+@pytest.mark.unit
+class TestInflightIngestionVeto:
+    """An annealing cycle must not demote an ontology that still has
+    in-flight ingestion work queued for it (#402 Defect A). Otherwise the
+    worker dissolves the target, the ingestion job dequeues with a missing
+    target, and the operator-submitted content silently never lands.
+    """
+
+    def test_get_inflight_ingestion_targets_groups_by_ontology(
+        self, manager, mock_client
+    ):
+        """Returned mapping groups non-terminal job ids per ontology name."""
+        cursor = (
+            mock_client.pool.getconn.return_value
+            .cursor.return_value.__enter__.return_value
+        )
+        cursor.fetchall.return_value = [
+            ("weak-a", "job_aaaaaaaaaaaa"),
+            ("weak-a", "job_bbbbbbbbbbbb"),
+            ("weak-b", "job_cccccccccccc"),
+        ]
+
+        targets = manager._get_inflight_ingestion_targets(
+            {"weak-a", "weak-b", "weak-c"}
+        )
+
+        assert targets == {
+            "weak-a": ["job_aaaaaaaaaaaa", "job_bbbbbbbbbbbb"],
+            "weak-b": ["job_cccccccccccc"],
+        }
+
+    def test_get_inflight_ingestion_targets_empty_input_short_circuits(
+        self, manager, mock_client
+    ):
+        """Empty candidate set skips the query entirely."""
+        targets = manager._get_inflight_ingestion_targets(set())
+        assert targets == {}
+        mock_client.pool.getconn.assert_not_called()
+
+    def test_get_inflight_ingestion_targets_swallows_errors(
+        self, manager, mock_client
+    ):
+        """A DB error returns an empty mapping rather than aborting the cycle."""
+        mock_client.pool.getconn.side_effect = Exception("connection refused")
+
+        targets = manager._get_inflight_ingestion_targets({"weak-a"})
+
+        assert targets == {}
+
+    @pytest.mark.asyncio
+    async def test_cycle_vetoes_demotion_with_inflight_ingestion(
+        self, mock_client, mock_scorer, caplog
+    ):
+        """The race: queue a job targeting X, then trigger a cycle that
+        would otherwise demote X. The candidate must be vetoed, no proposal
+        produced, and the veto must be observable in the cycle result and
+        in the log.
+        """
+        manager = AnnealingManager(mock_client, mock_scorer, ai_provider=None)
+        mock_scorer.score_all_ontologies.return_value = [
+            {"ontology": "weak-a", "protection_score": 0.01},
+            {"ontology": "weak-b", "protection_score": 0.02},
+        ]
+        mock_scorer.recompute_all_centroids.return_value = 0
+        mock_client.get_ontology_node.return_value = {"lifecycle_state": "active"}
+        mock_client.get_concept_degree_ranking.return_value = []
+
+        # weak-a has an in-flight ingestion job; weak-b does not.
+        manager._get_inflight_ingestion_targets = MagicMock(
+            return_value={"weak-a": ["job_inflight_1"]}
+        )
+
+        evaluated = []
+
+        async def fake_eval(candidate, epoch):
+            evaluated.append(candidate["ontology"])
+            return None
+
+        manager._evaluate_and_store_demotion = fake_eval
+
+        import logging
+        with caplog.at_level(logging.INFO):
+            result = await manager.run_annealing_cycle(demotion_threshold=0.15)
+
+        assert "weak-a" not in evaluated  # vetoed
+        assert "weak-b" in evaluated      # still evaluated
+
+        veto_log = [r for r in result["vetoed_for_inflight_ingestion"]
+                    if r["ontology"] == "weak-a"]
+        assert len(veto_log) == 1
+        assert veto_log[0]["blocking_job_count"] == 1
+        assert veto_log[0]["blocking_job_ids"] == ["job_inflight_1"]
+
+        assert any(
+            "Annealing veto" in rec.message and "weak-a" in rec.message
+            for rec in caplog.records
+        )
+
+    @pytest.mark.asyncio
+    async def test_cycle_does_not_veto_promotion_for_inflight_work(
+        self, mock_client, mock_scorer
+    ):
+        """Promotion creates a *new* ontology and does not modify the source
+        ontology in a way that invalidates queued ingest jobs against it. It
+        must not be vetoed by in-flight ingestion against the source.
+        """
+        manager = AnnealingManager(mock_client, mock_scorer, ai_provider=None)
+        mock_scorer.score_all_ontologies.return_value = [
+            {"ontology": "busy-ontology"},
+        ]
+        mock_scorer.recompute_all_centroids.return_value = 0
+        mock_client.get_ontology_node.return_value = {"lifecycle_state": "active"}
+        mock_client.get_concept_degree_ranking.return_value = [
+            {"concept_id": "c1", "label": "PostgreSQL", "degree": 30, "description": ""},
+        ]
+
+        inflight_spy = MagicMock(return_value={"busy-ontology": ["job_x"]})
+        manager._get_inflight_ingestion_targets = inflight_spy
+
+        evaluated = []
+
+        async def fake_promo(candidate, epoch):
+            evaluated.append(candidate["concept_id"])
+            return None
+
+        manager._evaluate_and_store_promotion = fake_promo
+
+        await manager.run_annealing_cycle()
+
+        # Promotion still evaluated despite in-flight work on the source ontology.
+        assert evaluated == ["c1"]
+        # Veto helper was not consulted with the promotion source — only
+        # demotion candidates feed it (there are none in this fixture, so it
+        # was never called).
+        inflight_spy.assert_not_called()
+
+
+# ==========================================================================
 # ADR-200 Phase 5: Edge Derivation Integration
 # ==========================================================================
 

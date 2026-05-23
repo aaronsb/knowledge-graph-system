@@ -167,6 +167,39 @@ class AnnealingManager:
                 f"(skipped candidates with open proposals)"
             )
 
+        # 5c. Queue-aware veto (#402, Defect A): annealing must not propose a
+        # mutation against an ontology that still has in-flight ingestion work
+        # queued for it. Without this guard the worker dissolves X, the
+        # ingestion job dequeues with target=X, and the operator-submitted
+        # content silently never lands. Promotions are not vetoed — they create
+        # a new ontology and do not modify the existing one in a way that
+        # invalidates queued ingest jobs against the source ontology.
+        vetoed_inflight: List[Dict[str, Any]] = []
+        if demotion_candidates:
+            candidate_names = {c.get("ontology") for c in demotion_candidates}
+            candidate_names.discard(None)
+            inflight = self._get_inflight_ingestion_targets(candidate_names)
+            if inflight:
+                kept: List[Dict] = []
+                for c in demotion_candidates:
+                    name = c.get("ontology")
+                    blocking = inflight.get(name) if name else None
+                    if blocking:
+                        vetoed_inflight.append({
+                            "ontology": name,
+                            "blocking_job_count": len(blocking),
+                            "blocking_job_ids": blocking,
+                        })
+                        logger.info(
+                            "Annealing veto: skipping demotion candidate "
+                            f"'{name}' — {len(blocking)} in-flight ingestion "
+                            f"job(s) target this ontology "
+                            f"(job_ids={blocking})"
+                        )
+                    else:
+                        kept.append(c)
+                demotion_candidates = kept
+
         # 6. Evaluate and store proposals
         proposal_ids = []
         remaining = max_proposals
@@ -192,7 +225,8 @@ class AnnealingManager:
         logger.info(
             f"Annealing cycle complete: {len(proposal_ids)} proposals, "
             f"{len(all_scores)} scored, {centroids_updated} centroids, "
-            f"{edge_result.get('edges_created', 0)} edges"
+            f"{edge_result.get('edges_created', 0)} edges, "
+            f"{len(vetoed_inflight)} vetoed (in-flight ingestion)"
         )
 
         return {
@@ -205,6 +239,7 @@ class AnnealingManager:
             "edges_created": edge_result.get("edges_created", 0),
             "edges_deleted": edge_result.get("edges_deleted", 0),
             "cycle_epoch": global_epoch,
+            "vetoed_for_inflight_ingestion": vetoed_inflight,
             "dry_run": False,
         }
 
@@ -322,6 +357,73 @@ class AnnealingManager:
         except Exception as e:
             logger.error(f"Failed to read open proposals for dedup: {e}")
         return open_promotions, open_demotions
+
+    # Non-terminal job statuses on kg_api.jobs. An ingestion job in any of
+    # these states still intends to write to its target ontology — annealing
+    # must not dissolve / merge / decompose that ontology out from under it
+    # (#402, Defect A). Terminal statuses (completed / failed / cancelled /
+    # expired) do not block.
+    _NON_TERMINAL_JOB_STATUSES: Tuple[str, ...] = (
+        "pending",
+        "awaiting_approval",
+        "approved",
+        "queued",
+        "running",
+        "processing",
+    )
+
+    # Job types that target an ontology with intent to write. Keep in sync
+    # with WORKER_REGISTRY in api/app/services/worker_registry.py.
+    _INGESTION_JOB_TYPES: Tuple[str, ...] = ("ingestion", "ingest_image")
+
+    def _get_inflight_ingestion_targets(
+        self, ontology_names: Set[str]
+    ) -> Dict[str, List[str]]:
+        """In-flight ingestion jobs grouped by target ontology name.
+
+        Returns a mapping `{ontology_name: [job_id, ...]}` covering only the
+        supplied names — empty for an ontology with no non-terminal ingestion
+        work, omitted entirely if nothing matches. Used by the queue-aware
+        veto in the annealing cycle (#402).
+
+        Reads from kg_api.jobs directly via the AGE client's pool, mirroring
+        how _get_open_proposal_targets reads kg_api.annealing_proposals — the
+        manager stays a self-contained consumer of the shared connection pool.
+        """
+        if not ontology_names:
+            return {}
+        targets: Dict[str, List[str]] = {}
+        try:
+            conn = self.client.pool.getconn()
+            try:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        """
+                        SELECT ontology, job_id
+                        FROM kg_api.jobs
+                        WHERE job_type = ANY(%s)
+                          AND status = ANY(%s)
+                          AND ontology = ANY(%s)
+                        """,
+                        (
+                            list(self._INGESTION_JOB_TYPES),
+                            list(self._NON_TERMINAL_JOB_STATUSES),
+                            list(ontology_names),
+                        ),
+                    )
+                    rows = cur.fetchall()
+                conn.commit()
+            finally:
+                self.client.pool.putconn(conn)
+            for ontology, job_id in rows:
+                if not ontology:
+                    continue
+                targets.setdefault(ontology, []).append(job_id)
+        except Exception as e:
+            logger.error(
+                f"Failed to read in-flight ingestion targets for veto: {e}"
+            )
+        return targets
 
     def _get_anchored_concept_ids(self) -> Set[str]:
         """Concept IDs that already anchor an ontology (have an ANCHORED_BY edge).
