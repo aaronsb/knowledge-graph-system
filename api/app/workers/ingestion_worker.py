@@ -23,6 +23,62 @@ from api.app.lib.ai_providers import get_provider
 logger = logging.getLogger(__name__)
 
 
+# #402 Defect B1: Distinct error strings so the job-list API can show, and
+# tests / clients can match, the difference between "frozen lifecycle" and
+# "vanished between queue and execution". Defect B2 will add a third
+# distinct string for "operator deliberately removed" (tombstoned).
+ONTOLOGY_VANISHED_MID_FLIGHT_ERROR = (
+    "target ontology '{name}' was removed between queue and execution "
+    "(annealing dissolve, manual delete, or rename without job migration) "
+    "— job not retried"
+)
+ONTOLOGY_FROZEN_ERROR = (
+    "Ontology '{name}' is frozen (read-only). Job rejected. "
+    "Set lifecycle state to 'active' before ingesting."
+)
+
+
+def _validate_target_ontology(
+    age_client,
+    ontology: str,
+    existed_at_submit: bool,
+    created_by: str = None,
+):
+    """Resolve the ingestion target's Ontology node, failing loudly when
+    the operator's intent has been invalidated (#402 Defect B1).
+
+    Returns the ontology node dict on success. Raises Exception (which the
+    job-queue exception handler translates to status='failed' with the
+    message stamped on the job's error column) when:
+
+    - The ontology existed at submit time but is gone now → operator-
+      visible data loss if we silently recreate. Uses
+      ONTOLOGY_VANISHED_MID_FLIGHT_ERROR so the failure is distinguishable
+      in logs and the job-list API.
+    - The ontology is frozen → existing ADR-200 Phase 2 behavior.
+
+    The first-ever-ingest case (existed_at_submit is False and the node
+    is missing) creates the ontology — that IS the operator's intent.
+    """
+    ont_node = age_client.get_ontology_node(ontology)
+
+    if ont_node is None:
+        if existed_at_submit:
+            raise Exception(
+                ONTOLOGY_VANISHED_MID_FLIGHT_ERROR.format(name=ontology)
+            )
+        # First-ever ingest: create the ontology, that IS the operator intent.
+        ont_node = age_client.ensure_ontology_exists(
+            ontology, created_by=created_by
+        )
+        logger.info(f"Ontology '{ontology}' created on first ingest")
+
+    if ont_node.get("lifecycle_state") == "frozen":
+        raise Exception(ONTOLOGY_FROZEN_ERROR.format(name=ontology))
+
+    return ont_node
+
+
 def run_ingestion_worker(
     job_data: Dict[str, Any],
     job_id: str,
@@ -310,32 +366,27 @@ def run_ingestion_worker(
         # Initialize AGE client
         age_client = AGEClient()
 
-        # ADR-200: Ensure Ontology node exists before creating Source nodes
-        try:
-            ont_node = age_client.ensure_ontology_exists(ontology, created_by=job_data.get("username"))
-            logger.debug(f"Ontology node ensured for '{ontology}'")
+        ont_node = _validate_target_ontology(
+            age_client,
+            ontology,
+            existed_at_submit=job_data.get("ontology_existed_at_submit", True),
+            created_by=job_data.get("username"),
+        )
 
-            # ADR-200 Phase 2: Defense-in-depth — reject if frozen between submission and execution
-            if ont_node and ont_node.get("lifecycle_state") == "frozen":
-                raise Exception(f"Ontology '{ontology}' is frozen (read-only). Job rejected. Set lifecycle state to 'active' before ingesting.")
-
-            # Generate embedding for ontology node if missing
-            if ont_node and not ont_node.get("embedding") and provider:
-                try:
-                    ont_text = ontology
-                    desc = ont_node.get("description")
-                    if desc:
-                        ont_text = f"{ontology}: {desc}"
-                    emb_result = provider.generate_embedding(ont_text)
-                    emb_vector = emb_result if isinstance(emb_result, list) else emb_result.get("embedding", [])
-                    if emb_vector:
-                        age_client.update_ontology_embedding(ontology, emb_vector)
-                        logger.info(f"Generated embedding for Ontology '{ontology}'")
-                except Exception as e:
-                    logger.debug(f"Skipped ontology embedding: {e}")
-        except Exception as e:
-            logger.warning(f"Failed to ensure Ontology node for '{ontology}': {e}")
-            # Non-fatal: s.document on Source nodes still works without Ontology node
+        # Generate embedding for ontology node if missing (best-effort).
+        if not ont_node.get("embedding") and provider:
+            try:
+                ont_text = ontology
+                desc = ont_node.get("description")
+                if desc:
+                    ont_text = f"{ontology}: {desc}"
+                emb_result = provider.generate_embedding(ont_text)
+                emb_vector = emb_result if isinstance(emb_result, list) else emb_result.get("embedding", [])
+                if emb_vector:
+                    age_client.update_ontology_embedding(ontology, emb_vector)
+                    logger.info(f"Generated embedding for Ontology '{ontology}'")
+            except Exception as e:
+                logger.debug(f"Skipped ontology embedding: {e}")
 
         # ADR-203: Record this ingestion as a graph epoch event so every
         # Instance created during the run carries a stable event_id. On resume,
