@@ -187,6 +187,7 @@ class OperatorConfig:
         """Configure embedding provider by activating a pre-configured profile"""
         profile_id = getattr(args, 'profile_id', None)
         provider_name = getattr(args, 'provider', None)
+        device = getattr(args, 'device', None)
 
         # If no profile_id or provider specified, list available profiles
         if profile_id is None and provider_name is None:
@@ -229,9 +230,21 @@ class OperatorConfig:
                 # Activate selected profile (use profile['id'] from query, not profile_id arg)
                 cur.execute("UPDATE kg_api.embedding_profile SET active = true WHERE id = %s", (profile['id'],))
 
+                # Optionally update the compute device on the activated profile.
+                # The wizard maps its GPU_MODE choice (mac/nvidia/amd/cpu) to a
+                # PyTorch device string here so the API container loads the
+                # model on the right accelerator at startup.
+                effective_device = profile['device']
+                if device:
+                    cur.execute(
+                        "UPDATE kg_api.embedding_profile SET device = %s WHERE id = %s",
+                        (device, profile['id']),
+                    )
+                    effective_device = device
+
                 conn.commit()
 
-                device_info = f" ({profile['device']})" if profile['device'] else ""
+                device_info = f" ({effective_device})" if effective_device else ""
                 print(f"✅ Activated: [{profile['id']}] {profile['provider']} / {profile['model_name']} ({profile['embedding_dimensions']} dims, {profile['precision']}){device_info}")
                 return True
 
@@ -322,6 +335,71 @@ class OperatorConfig:
             except AuthenticationError:
                 return False
         return None
+
+    def _fetch_catalog_via_sdk(self, provider):
+        """Fetch a provider's model catalog without instantiating the full
+        AIProvider class.
+
+        AnthropicProvider and OllamaProvider eagerly construct an OpenAI
+        embedding provider in __init__ when none is supplied — but the
+        operator container has no loaded EmbeddingModelManager (only the API
+        container initializes one at startup), so get_embedding_provider()
+        returns None and the eager fallback runs and fails. fetch_model_catalog
+        itself only needs self.client (or self.api_key for OpenRouter), so we
+        construct the SDK client directly and bypass __init__ via __new__,
+        reusing the existing fetch_model_catalog implementation rather than
+        duplicating per-provider pricing/feature dicts.
+        """
+        from api.app.lib.ai_providers import (
+            _load_api_key,
+            OpenAIProvider,
+            AnthropicProvider,
+            OpenRouterProvider,
+        )
+
+        if provider == "openai":
+            from openai import OpenAI
+            key = _load_api_key("openai", None, "OPENAI_API_KEY")
+            if not key:
+                raise RuntimeError(
+                    "OpenAI API key not configured. Store it first via "
+                    "`configure.py api-key openai`."
+                )
+            prov = OpenAIProvider.__new__(OpenAIProvider)
+            prov.client = OpenAI(api_key=key)
+            return prov.fetch_model_catalog()
+
+        if provider == "anthropic":
+            from anthropic import Anthropic
+            key = _load_api_key("anthropic", None, "ANTHROPIC_API_KEY")
+            if not key:
+                raise RuntimeError(
+                    "Anthropic API key not configured. Store it first via "
+                    "`configure.py api-key anthropic`."
+                )
+            prov = AnthropicProvider.__new__(AnthropicProvider)
+            prov.client = Anthropic(api_key=key)
+            return prov.fetch_model_catalog()
+
+        if provider == "openrouter":
+            from openai import OpenAI
+            key = _load_api_key("openrouter", None, "OPENROUTER_API_KEY")
+            if not key:
+                raise RuntimeError(
+                    "OpenRouter API key not configured. Store it first via "
+                    "`configure.py api-key openrouter`."
+                )
+            prov = OpenRouterProvider.__new__(OpenRouterProvider)
+            # OpenRouter's fetch_model_catalog uses self.api_key for the
+            # Authorization header and OPENROUTER_BASE_URL from the class.
+            prov.api_key = key
+            return prov.fetch_model_catalog()
+
+        # Other providers (ollama, llamacpp) — fall back to the original
+        # construction. They don't currently appear in the guided wizard, and
+        # their catalog refresh has different requirements (base_url, etc.).
+        from api.app.lib.ai_providers import get_provider
+        return get_provider(provider).fetch_model_catalog()
 
     def cmd_api_key(self, args):
         """Store encrypted API key"""
@@ -469,11 +547,9 @@ class OperatorConfig:
 
                 print(f"🔄 Fetching model catalog from {provider}...")
                 try:
-                    from api.app.lib.ai_providers import get_provider
                     from api.app.lib.model_catalog import upsert_catalog_entries
 
-                    prov = get_provider(provider)
-                    entries = prov.fetch_model_catalog()
+                    entries = self._fetch_catalog_via_sdk(provider.lower())
 
                     if not entries:
                         print(f"⚠️  No models returned from {provider}")
@@ -695,6 +771,7 @@ def main():
     embed_parser = subparsers.add_parser('embedding', help='List or activate embedding profile')
     embed_parser.add_argument('profile_id', nargs='?', type=int, help='Profile ID to activate (omit to list profiles)')
     embed_parser.add_argument('--provider', help='Select profile by provider name (local, openai)')
+    embed_parser.add_argument('--device', help='Set compute device on the activated profile (cpu, cuda, mps)')
 
     # api-key
     key_parser = subparsers.add_parser('api-key', help='Store encrypted API key')

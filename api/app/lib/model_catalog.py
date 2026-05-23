@@ -145,26 +145,26 @@ def set_model_default(conn, catalog_id: int) -> bool:
     """
     Set a model as the default for its provider+category.
 
-    Clears existing default for that provider+category first.
+    Clears existing default for that provider+category first. Uses a
+    subquery rather than fetchone() + tuple-unpack so the function works
+    regardless of the connection's cursor_factory — RealDictCursor returns
+    dict-like rows that silently yield column *names* on tuple unpacking.
     """
     with conn.cursor() as cur:
-        # Get the provider and category for this model
-        cur.execute(
-            "SELECT provider, category FROM kg_api.provider_model_catalog WHERE id = %s",
-            (catalog_id,),
-        )
-        row = cur.fetchone()
-        if not row:
-            return False
-
-        provider, category = row
-
-        # Clear existing default
+        # Clear any existing default that shares the new model's
+        # (provider, category), excluding the new model itself in case it
+        # is already the default (so this call is idempotent).
         cur.execute(
             """UPDATE kg_api.provider_model_catalog
                SET is_default = FALSE, updated_at = NOW()
-               WHERE provider = %s AND category = %s AND is_default = TRUE""",
-            (provider, category),
+               WHERE is_default = TRUE
+                 AND id <> %s
+                 AND (provider, category) = (
+                     SELECT provider, category
+                     FROM kg_api.provider_model_catalog
+                     WHERE id = %s
+                 )""",
+            (catalog_id, catalog_id),
         )
 
         # Set new default (also ensures enabled)
@@ -174,8 +174,9 @@ def set_model_default(conn, catalog_id: int) -> bool:
                WHERE id = %s""",
             (catalog_id,),
         )
+        updated = cur.rowcount > 0
         conn.commit()
-        return True
+        return updated
 
 
 def update_model_pricing(
