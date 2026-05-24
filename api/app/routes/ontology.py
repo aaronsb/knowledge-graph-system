@@ -1336,6 +1336,14 @@ async def rename_ontology(
                 logger.warning(f"Failed to rename Ontology node: {e}")
                 # Non-fatal: Source nodes are already renamed
 
+            # #402 PR-404 review-2 (finding A): operator-initiated rename
+            # establishes an ontology under new_name. Same invariant as
+            # create-clears-tombstone — clear any prior tombstone for the
+            # target name so subsequent ingests don't fail TOMBSTONED. The
+            # delete-then-rename recovery flow would otherwise be broken
+            # by the unconditional tombstone check.
+            _clear_ontology_tombstone(client, request.new_name)
+
             return OntologyRenameResponse(
                 old_name=ontology_name,
                 new_name=request.new_name,
@@ -1853,12 +1861,25 @@ async def dissolve_ontology(
             reason=f"operator-initiated dissolve via API (absorbed into '{request.target_ontology}')",
         )
 
-        result = client.dissolve_ontology(
-            name=ontology_name,
-            target_ontology=request.target_ontology,
-        )
+        try:
+            result = client.dissolve_ontology(
+                name=ontology_name,
+                target_ontology=request.target_ontology,
+            )
+        except Exception:
+            # #402 PR-404 review-2 (finding B): dissolve_ontology has
+            # failure modes beyond our route-level pre-flight (source
+            # listing, partial reassign, lifecycle TOCTOU). On any of
+            # those, the tombstone we just wrote refers to an ontology
+            # that still exists in the graph — clearing it avoids
+            # leaving the operator with a "dissolve failed AND future
+            # ingests fail TOMBSTONED" trap.
+            _clear_ontology_tombstone(client, ontology_name)
+            raise
 
         if not result.get("success"):
+            # Same stale-tombstone hazard on a structured failure result.
+            _clear_ontology_tombstone(client, ontology_name)
             error = result.get("error", "Unknown error")
             if "not found" in error:
                 raise HTTPException(status_code=404, detail=error)

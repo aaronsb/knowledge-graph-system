@@ -949,6 +949,90 @@ class TestDissolveRoute:
             for c in insert_calls
         )
 
+    def test_dissolve_failure_clears_tombstone(
+        self, api_client, auth_headers_admin
+    ):
+        """#402 PR-404 review-2 (finding B): when dissolve_ontology fails
+        after the route-level pre-flight (source listing, partial reassign,
+        lifecycle TOCTOU), the tombstone we wrote points to an ontology
+        that still exists. The route must clear it before raising so the
+        operator doesn't end up with 'dissolve failed AND future ingests
+        fail TOMBSTONED'."""
+        client = mock_age_client(
+            get_ontology_node={'name': 'old-onto', 'lifecycle_state': 'active'}
+        )
+        # Simulate the late-failure mode (source listing died in
+        # dissolve_ontology, returned a structured error).
+        client.dissolve_ontology = MagicMock(return_value={
+            'dissolved_ontology': 'old-onto',
+            'sources_reassigned': 0,
+            'ontology_node_deleted': False,
+            'reassignment_targets': [],
+            'success': False,
+            'error': 'Failed to list sources: connection reset',
+        })
+
+        with patch('api.app.routes.ontology.get_age_client', return_value=client):
+            response = api_client.post(
+                "/ontology/old-onto/dissolve",
+                json={"target_ontology": "target-onto"},
+                headers=auth_headers_admin,
+            )
+
+        assert response.status_code == 500
+        mock_cursor = (
+            client.pool.getconn.return_value.cursor.return_value.__enter__.return_value
+        )
+        # Both INSERT (pre-dissolve) and DELETE (rollback) must have run.
+        insert_calls = [
+            c for c in mock_cursor.execute.call_args_list
+            if "INSERT INTO kg_api.ontology_tombstones" in str(c)
+        ]
+        delete_calls = [
+            c for c in mock_cursor.execute.call_args_list
+            if "DELETE FROM kg_api.ontology_tombstones" in str(c)
+        ]
+        assert len(insert_calls) >= 1
+        assert len(delete_calls) >= 1, (
+            "dissolve failure must clear the stale tombstone"
+        )
+
+
+@pytest.mark.unit
+class TestRenameOntologyTombstone:
+    """#402 PR-404 review-2 (finding A): rename establishes an ontology
+    under new_name, same invariant as create-clears-tombstone. The
+    delete-then-rename recovery flow would otherwise be broken by the
+    unconditional tombstone check."""
+
+    def test_rename_clears_tombstone_for_new_name(
+        self, api_client, auth_headers_admin
+    ):
+        client = mock_age_client()
+        client.is_ontology_frozen = MagicMock(return_value=False)
+        client.rename_ontology = MagicMock(return_value={'sources_updated': 7})
+        client.rename_ontology_node = MagicMock(return_value=True)
+
+        with patch('api.app.routes.ontology.get_age_client', return_value=client):
+            response = api_client.post(
+                "/ontology/old-name/rename",
+                json={"new_name": "phoenix-name"},
+                headers=auth_headers_admin,
+            )
+
+        assert response.status_code == 200, response.text
+        mock_cursor = (
+            client.pool.getconn.return_value.cursor.return_value.__enter__.return_value
+        )
+        delete_calls = [
+            c for c in mock_cursor.execute.call_args_list
+            if "DELETE FROM kg_api.ontology_tombstones" in str(c)
+            and "phoenix-name" in str(c)
+        ]
+        assert len(delete_calls) >= 1, (
+            "rename must clear any prior tombstone for new_name"
+        )
+
 
 @pytest.mark.unit
 class TestDeleteOntologyTombstone:
