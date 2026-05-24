@@ -340,8 +340,19 @@ class JobAnalyzer:
         min_words = job_data.get("min_words", 800)
         max_words = job_data.get("max_words", 1500)
 
-        # Get models from job_data or environment
-        extraction_model = job_data.get("extraction_model") or os.getenv("OPENAI_EXTRACTION_MODEL", "gpt-4o")
+        # Get models: prefer per-job override, then the DB-backed active
+        # extraction config (same source the actual extraction code path
+        # uses), then env-var, then a hard-coded last-resort default.
+        # Without the active-config lookup, the cost-estimate label would
+        # show 'gpt-4o' even when extraction is actually running against
+        # a different configured provider (closes #406).
+        from api.app.lib.ai_extraction_config import load_active_extraction_config
+        active_extraction = load_active_extraction_config() or {}
+        extraction_model = (
+            job_data.get("extraction_model")
+            or active_extraction.get("model_name")
+            or os.getenv("OPENAI_EXTRACTION_MODEL", "gpt-4o")
+        )
         embedding_model = job_data.get("embedding_model") or os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-small")
 
         # Analyze file
