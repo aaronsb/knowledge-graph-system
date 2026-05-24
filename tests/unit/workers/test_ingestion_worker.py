@@ -1,8 +1,16 @@
-"""Unit tests for ingestion worker helpers (#402 Defects B1 + B2).
+"""Unit tests for ingestion worker helpers (#402 Defects B1 + B2 + PR-404 review).
 
 Focused on the target-ontology validation step that decides between
-"missing — recreate per operator intent", "missing but tombstoned — fail
-loudly", and "frozen — fail loudly".
+"first-ever ingest — create", "missing after existing — fail with
+VANISHED", "tombstoned — fail with TOMBSTONED", and "frozen — fail
+with FROZEN".
+
+PR-404 review revision: tombstone is now checked *unconditionally*
+(before reading the graph node) so the operator-delete route can write
+the tombstone before the graph delete without a worker dequeue in the
+intermediate window writing orphan content. The recreate branch
+narrowed to existed_at_submit=False (first-ever ingest); existed_at_
+submit=True + missing + no tombstone raises VANISHED as a real anomaly.
 """
 
 import pytest
@@ -63,28 +71,33 @@ class TestValidateTargetOntology:
         assert node["lifecycle_state"] == "active"
         age_client.ensure_ontology_exists.assert_not_called()
 
-    def test_missing_without_tombstone_triggers_recreate(self):
-        """A missing ontology with no tombstone is recreated — operator
-        intent (the queued ingest) overrides background dissolution."""
+    def test_missing_after_existing_raises_vanished(self):
+        """existed_at_submit=True + missing + no tombstone → VANISHED.
+
+        With the annealing veto (A) and proposal-executor re-check in
+        place, an in-flight ingest's target should not be dissolved.
+        Reaching this branch indicates a real anomaly (rename without
+        job migration, manual graph surgery, residual race) that an
+        operator should see rather than have silently recreated."""
         age_client = _make_age_client(tombstone_row=None)
         age_client.get_ontology_node.return_value = None
-        age_client.ensure_ontology_exists.return_value = {
-            "lifecycle_state": "active",
-            "embedding": [],
-        }
 
-        node = _validate_target_ontology(
-            age_client,
-            "dissolved-domain",
-            existed_at_submit=True,
-            created_by="alice",
-            job_id="job_abc",
-        )
+        with pytest.raises(Exception) as exc_info:
+            _validate_target_ontology(
+                age_client,
+                "vanished-domain",
+                existed_at_submit=True,
+                created_by="alice",
+                job_id="job_abc",
+            )
 
-        age_client.ensure_ontology_exists.assert_called_once_with(
-            "dissolved-domain", created_by="alice"
-        )
-        assert node["lifecycle_state"] == "active"
+        msg = str(exc_info.value)
+        assert "vanished-domain" in msg
+        assert "existed at job submit" in msg
+        # Distinct from tombstoned and frozen.
+        assert msg != ONTOLOGY_TOMBSTONED_ERROR.format(name="vanished-domain")
+        assert msg != ONTOLOGY_FROZEN_ERROR.format(name="vanished-domain")
+        age_client.ensure_ontology_exists.assert_not_called()
 
     def test_missing_with_tombstone_raises_distinct_error(self):
         """An operator-tombstoned ontology must not be silently recreated —
@@ -158,11 +171,64 @@ class TestValidateTargetOntology:
         assert "frozen (read-only)" in msg
         assert msg != ONTOLOGY_TOMBSTONED_ERROR.format(name="frozen-domain")
 
-    def test_tombstone_read_failure_falls_back_to_recreate(self):
-        """If the tombstone lookup itself fails (DB unreachable), the worker
-        treats the result as 'no tombstone' and recreates — failing every
-        ingest when the tombstone table is unreachable would be worse.
-        Defect A's queue-veto remains the upstream safety layer."""
+    def test_tombstone_present_with_live_node_still_raises(self):
+        """The unconditional tombstone check covers the window where the
+        operator-delete route has written the tombstone but not yet
+        committed the graph delete: ontology still exists, but operator
+        intent has been recorded. The worker fails TOMBSTONED rather
+        than racing to write into a graph the operator is removing."""
+        age_client = _make_age_client(
+            tombstone_row=(
+                "deleting-domain",
+                "2026-05-22 12:00:00",
+                "alice",
+                "operator-initiated delete via API",
+            )
+        )
+        age_client.get_ontology_node.return_value = {
+            "lifecycle_state": "active",
+            "embedding": [],
+        }
+
+        with pytest.raises(Exception) as exc_info:
+            _validate_target_ontology(
+                age_client,
+                "deleting-domain",
+                existed_at_submit=True,
+            )
+
+        msg = str(exc_info.value)
+        assert "deliberately removed" in msg
+        # Must not have even consulted the graph for lifecycle.
+        age_client.ensure_ontology_exists.assert_not_called()
+
+    def test_tombstone_read_failure_with_existed_at_submit_raises_vanished(self):
+        """If the tombstone lookup itself fails (DB unreachable) AND the
+        ontology was supposed to exist at submit but is missing, the
+        VANISHED path fires — failing loudly is the correct fallback when
+        we cannot positively rule out an operator delete. (Previously the
+        worker silently recreated; that was the over-tolerant behavior
+        the PR-404 review flagged.)"""
+        age_client = _make_age_client(raise_on_tombstone_read=True)
+        age_client.get_ontology_node.return_value = None
+
+        with pytest.raises(Exception) as exc_info:
+            _validate_target_ontology(
+                age_client,
+                "dissolved-domain",
+                existed_at_submit=True,
+                created_by="alice",
+            )
+
+        assert "existed at job submit" in str(exc_info.value)
+        age_client.ensure_ontology_exists.assert_not_called()
+
+    def test_tombstone_read_failure_on_first_ingest_still_creates(self):
+        """existed_at_submit=False is a positive intent signal that the
+        operator is establishing a new namespace. A tombstone-read DB
+        failure on this path falls through to create (the worst case is
+        creating an ontology over a stale tombstone we couldn't read; the
+        operator-recreate flow already needs to handle that case)."""
         age_client = _make_age_client(raise_on_tombstone_read=True)
         age_client.get_ontology_node.return_value = None
         age_client.ensure_ontology_exists.return_value = {
@@ -172,8 +238,8 @@ class TestValidateTargetOntology:
 
         node = _validate_target_ontology(
             age_client,
-            "dissolved-domain",
-            existed_at_submit=True,
+            "fresh-domain",
+            existed_at_submit=False,
             created_by="alice",
         )
 
