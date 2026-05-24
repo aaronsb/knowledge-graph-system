@@ -404,31 +404,61 @@ async def init_embedding_model_manager() -> Optional[EmbeddingModelManager]:
     if query_prefix or document_prefix:
         logger.info(f"  Task prefixes: query={query_prefix!r} document={document_prefix!r}")
 
-    try:
-        _model_manager = EmbeddingModelManager(
+    def _build_and_load(use_device: str) -> EmbeddingModelManager:
+        m = EmbeddingModelManager(
             model_name=model_name,
             precision=precision,
-            device=device,
+            device=use_device,
             loader=loader,
             model_revision=revision,
             trust_remote_code=trust_remote_code,
             query_prefix=query_prefix,
             document_prefix=document_prefix,
         )
-        _model_manager.load_model()
+        m.load_model()
+        return m
 
-        # Verify dimensions match config
-        actual_dims = _model_manager.get_dimensions()
-        expected_dims = config.get('text_dimensions', config.get('embedding_dimensions'))
-        if expected_dims and actual_dims != expected_dims:
-            logger.warning(f"Dimension mismatch: model has {actual_dims} dims, config specifies {expected_dims}")
-
-        logger.info(f"Local embedding model manager initialized")
-        return _model_manager
-
+    # Build into a local first; only publish to the module global once load_model()
+    # actually succeeded. Otherwise a failed load leaves _model_manager pointing
+    # at an EmbeddingModelManager with self.model is None, and every downstream
+    # caller raises "Embedding model not loaded. Call load_model() first." — the
+    # exact misdiagnosis described in issue #405.
+    manager: Optional[EmbeddingModelManager] = None
+    try:
+        manager = _build_and_load(device)
     except Exception as e:
-        logger.error(f"Failed to initialize embedding model manager: {e}")
-        raise
+        # ADR-101: when the requested accelerator is unusable (CUDA-built torch
+        # on AMD host, missing /dev/kfd for ROCm, MPS unavailable, etc.), retry
+        # once on CPU rather than leaving the platform silent-broken.
+        if device == 'cpu':
+            _model_manager = None
+            logger.error(f"Failed to initialize embedding model manager on CPU: {e}")
+            raise
+        logger.warning(
+            f"Local embedding model failed to load on device={device!r}: {e}"
+        )
+        logger.warning(
+            f"Falling back to CPU for local embedding model {model_name!r}. "
+            f"Re-run ./operator.sh init or `configure.py embedding --device <device>` "
+            f"once the accelerator is available."
+        )
+        try:
+            manager = _build_and_load('cpu')
+        except Exception as cpu_err:
+            _model_manager = None
+            logger.error(f"CPU fallback also failed: {cpu_err}")
+            raise
+
+    _model_manager = manager
+
+    # Verify dimensions match config
+    actual_dims = _model_manager.get_dimensions()
+    expected_dims = config.get('text_dimensions', config.get('embedding_dimensions'))
+    if expected_dims and actual_dims != expected_dims:
+        logger.warning(f"Dimension mismatch: model has {actual_dims} dims, config specifies {expected_dims}")
+
+    logger.info(f"Local embedding model manager initialized")
+    return _model_manager
 
 
 def get_embedding_model_manager() -> EmbeddingModelManager:
