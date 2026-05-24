@@ -98,6 +98,18 @@ def run_proposal_execution_worker(
                 f"Proposal {proposal_id} ({proposal['proposal_type']}) "
                 f"executed successfully"
             )
+        elif result.get("retry_later"):
+            # #402 PR-404 review (finding #2 / advisor): revert the claim
+            # so the proposal stays available for the next cycle. Without
+            # this, a queue-veto re-check would dead-end an approved
+            # proposal — the operator's approval is consumed by a
+            # transient queue state. Reverting to 'approved' makes the
+            # re-check a soft skip rather than a permanent failure.
+            _update_proposal_status(age_client, proposal_id, "approved")
+            logger.info(
+                f"Proposal {proposal_id} ({proposal['proposal_type']}) "
+                f"deferred: {result.get('error')}"
+            )
         else:
             _update_proposal_status(
                 age_client, proposal_id, "failed",
@@ -112,8 +124,15 @@ def run_proposal_execution_worker(
             "progress": {"stage": "complete", "percent": 100}
         })
 
+        if result.get("success"):
+            return_status = "completed"
+        elif result.get("retry_later"):
+            return_status = "deferred"
+        else:
+            return_status = "failed"
+
         return {
-            "status": "completed" if result.get("success") else "failed",
+            "status": return_status,
             "proposal_id": proposal_id,
             "proposal_type": proposal["proposal_type"],
             **result,
