@@ -16,7 +16,9 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# Code defaults — overridden by kg_api.annealing_options rows
+# Code defaults — overridden by kg_api.annealing_options rows.
+# Per-ontology cadence floors (min_ontology_age_epochs, min_ontology_concept_count)
+# are added by migration 065 for #402 Defect C.
 DEFAULTS = {
     "epoch_interval": 5,
     "demotion_threshold": 0.15,
@@ -24,6 +26,8 @@ DEFAULTS = {
     "max_proposals": 5,
     "enabled": True,
     "automation_level": "autonomous",
+    "min_ontology_age_epochs": 3,
+    "min_ontology_concept_count": 5,
 }
 
 
@@ -36,7 +40,13 @@ def _read_options(conn) -> Dict:
             for key, value in cur.fetchall():
                 if key in ("enabled", "derive_edges"):
                     options[key] = value.lower() in ("true", "1", "yes")
-                elif key in ("epoch_interval", "promotion_min_degree", "max_proposals"):
+                elif key in (
+                    "epoch_interval",
+                    "promotion_min_degree",
+                    "max_proposals",
+                    "min_ontology_age_epochs",
+                    "min_ontology_concept_count",
+                ):
                     options[key] = int(value)
                 elif key in ("demotion_threshold", "overlap_threshold", "specializes_threshold"):
                     options[key] = float(value)
@@ -144,6 +154,8 @@ class AnnealingLauncher(JobLauncher):
             "overlap_threshold": options.get("overlap_threshold", 0.1),
             "specializes_threshold": options.get("specializes_threshold", 0.3),
             "automation_level": options.get("automation_level", "autonomous"),
+            "min_ontology_age_epochs": options.get("min_ontology_age_epochs", 3),
+            "min_ontology_concept_count": options.get("min_ontology_concept_count", 5),
             "dry_run": False,
             "triggered_at_epoch": current_epoch,
             "description": f"Annealing cycle at epoch {current_epoch}",

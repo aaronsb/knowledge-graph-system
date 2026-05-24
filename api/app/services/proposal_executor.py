@@ -16,9 +16,23 @@ All execution primitives were built in Phases 3a/5. This module is plumbing.
 import json
 import logging
 import uuid
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
+
+
+# Mirrors AnnealingManager._NON_TERMINAL_JOB_STATUSES and _INGESTION_JOB_TYPES.
+# Kept in sync rather than imported to avoid a circular dep (the manager
+# already imports from this module's execution surface via the worker).
+_NON_TERMINAL_JOB_STATUSES = (
+    "pending",
+    "awaiting_approval",
+    "approved",
+    "queued",
+    "running",
+    "processing",
+)
+_INGESTION_JOB_TYPES = ("ingestion", "ingest_image")
 
 
 class ProposalExecutor:
@@ -169,8 +183,9 @@ class ProposalExecutor:
 
         Steps:
             1. Validate: ontology still exists, not pinned/frozen
-            2. Determine absorption target (cascading fallback)
-            3. dissolve_ontology() → reassign sources + remove node
+            2. Queue-aware veto re-check (#402 PR-404 finding #2)
+            3. Determine absorption target (cascading fallback)
+            4. dissolve_ontology() → reassign sources + remove node
 
         Args:
             proposal: Dict with proposal fields from annealing_proposals table
@@ -200,7 +215,41 @@ class ProposalExecutor:
                 "error": f"Ontology '{ontology_name}' is {lifecycle} — cannot demote",
             }
 
-        # 2. Determine absorption target
+        # 2. Queue-aware veto re-check (#402 PR-404 review, finding #2).
+        # AnnealingManager already vetoes candidates with in-flight ingestion
+        # at proposal *creation*, but in human-approval mode a proposal can
+        # sit for minutes-to-hours between creation and approval. A new
+        # ingest job enqueued in that window would otherwise be silently
+        # dissolved out from under the operator. Re-check now.
+        #
+        # Residual TOCTOU: this SELECT and the dissolve commit below are
+        # not atomic — a job enqueued between them slips through. Closing
+        # that fully needs an advisory lock on the ontology name (taken in
+        # both job-enqueue and dissolve). For now, the ingestion worker's
+        # unconditional tombstone check is the upstream-of-recreate
+        # backstop, and an existed_at_submit=True + missing target raises
+        # ONTOLOGY_VANISHED_MID_FLIGHT_ERROR rather than silently
+        # recreating — operators see the failure either way.
+        inflight = self._inflight_ingestion_jobs(ontology_name)
+        if inflight:
+            logger.warning(
+                f"Demotion execution vetoed for '{ontology_name}' — "
+                f"{len(inflight)} in-flight ingestion job(s) enqueued "
+                f"after proposal creation: {inflight}"
+            )
+            return {
+                "success": False,
+                "retry_later": True,
+                "error": (
+                    f"Demotion of '{ontology_name}' vetoed at execute time: "
+                    f"{len(inflight)} in-flight ingestion job(s) "
+                    f"({', '.join(inflight)}) — proposal will be retried "
+                    f"in a later cycle once the queue clears"
+                ),
+                "vetoed_for_inflight_ingestion": inflight,
+            }
+
+        # 3. Determine absorption target
         proposed_target = proposal.get("target_ontology")
         target = self._determine_absorption_target(ontology_name, proposed_target)
 
@@ -233,7 +282,7 @@ class ProposalExecutor:
                     "error": f"Absorption target '{target}' does not exist",
                 }
 
-        # 3. Dissolve — reassign sources + remove ontology node
+        # 4. Dissolve — reassign sources + remove ontology node
         result = self.client.dissolve_ontology(ontology_name, target)
 
         if not result.get("success"):
@@ -319,6 +368,47 @@ class ProposalExecutor:
 
         # 4. Last resort: primordial pool
         return self._get_primordial_pool_name()
+
+    def _inflight_ingestion_jobs(self, ontology_name: str) -> List[str]:
+        """Job IDs of non-terminal ingestion jobs targeting `ontology_name`.
+
+        Mirrors AnnealingManager._get_inflight_ingestion_targets for a single
+        ontology — used by execute_demotion to re-check the queue veto at
+        execute time (#402 PR-404 review, finding #2).
+
+        Returns an empty list on DB error so a transient failure doesn't
+        block legitimate demotions; the worker's unconditional tombstone
+        check + VANISHED raise remain the downstream backstop.
+        """
+        try:
+            conn = self.client.pool.getconn()
+            try:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        """
+                        SELECT job_id
+                        FROM kg_api.jobs
+                        WHERE job_type = ANY(%s)
+                          AND status = ANY(%s)
+                          AND ontology = %s
+                        """,
+                        (
+                            list(_INGESTION_JOB_TYPES),
+                            list(_NON_TERMINAL_JOB_STATUSES),
+                            ontology_name,
+                        ),
+                    )
+                    rows = cur.fetchall()
+                conn.commit()
+                return [row[0] for row in rows if row and row[0]]
+            finally:
+                self.client.pool.putconn(conn)
+        except Exception as e:
+            logger.error(
+                f"Failed to read in-flight ingestion targets for "
+                f"'{ontology_name}' veto re-check: {e}"
+            )
+            return []
 
     def _get_primordial_pool_name(self) -> str:
         """Read primordial pool name from annealing_options, default 'primordial'."""

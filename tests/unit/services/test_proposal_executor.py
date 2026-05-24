@@ -18,10 +18,14 @@ def mock_client():
     """Create a mock AGE client with default behaviors."""
     client = MagicMock()
 
-    # Default pool mock for _get_primordial_pool_name
+    # Default pool mock for _get_primordial_pool_name and
+    # _inflight_ingestion_jobs (PR-404 review, finding #2).
+    # fetchone() → ("primordial",) for the pool-name query.
+    # fetchall() → [] for the in-flight job query (no jobs by default).
     mock_conn = MagicMock()
     mock_cursor = MagicMock()
     mock_cursor.fetchone.return_value = ("primordial",)
+    mock_cursor.fetchall.return_value = []
     mock_conn.cursor.return_value.__enter__ = MagicMock(return_value=mock_cursor)
     mock_conn.cursor.return_value.__exit__ = MagicMock(return_value=False)
     client.pool = MagicMock()
@@ -253,6 +257,36 @@ class TestExecuteDemotion:
 
         assert result["success"] is False
         assert "frozen" in result["error"]
+
+    def test_demotion_vetoed_by_inflight_ingestion(self, executor, mock_client):
+        """#402 PR-404 finding #2: re-check the queue veto at execute time.
+
+        AnnealingManager vetoes at proposal creation. In human-approval
+        mode a proposal can sit between creation and approval; a new
+        ingest enqueued in that window would be silently dissolved out
+        from under the operator. The executor re-checks and refuses."""
+        mock_client.get_ontology_node.return_value = {
+            "name": "weak-ontology",
+            "lifecycle_state": "active",
+        }
+        # Override fetchall to return in-flight job IDs for this test.
+        mock_cursor = (
+            mock_client.pool.getconn.return_value.cursor.return_value.__enter__.return_value
+        )
+        mock_cursor.fetchall.return_value = [("job_late_1",), ("job_late_2",)]
+
+        result = executor.execute_demotion(_demotion_proposal())
+
+        assert result["success"] is False
+        # retry_later signals the worker to revert claim to 'approved' so
+        # the proposal isn't permanently failed by a transient queue state.
+        assert result["retry_later"] is True
+        assert "vetoed at execute time" in result["error"]
+        assert "job_late_1" in result["error"]
+        assert "job_late_2" in result["error"]
+        assert result["vetoed_for_inflight_ingestion"] == ["job_late_1", "job_late_2"]
+        # Critical: dissolve must NOT have been called.
+        mock_client.dissolve_ontology.assert_not_called()
 
 
 @pytest.mark.unit

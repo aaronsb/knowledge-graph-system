@@ -245,6 +245,13 @@ async def ingest_document(
                     content=duplicate_info
                 )
 
+        # #402 Defect B1: Record whether the target ontology existed at submit
+        # time. The worker uses this to distinguish "first ingest, create the
+        # ontology" from "ontology vanished between queue and execution"
+        # (annealing dissolve, manual delete) — silent recreate of a dissolved
+        # ontology would mask operator-visible data loss.
+        existed_at_submit = age_client.get_ontology_node(ontology) is not None
+
         # Prepare job data
         use_filename = filename or file.filename or "uploaded_document"
 
@@ -260,6 +267,7 @@ async def ingest_document(
             "content": base64.b64encode(content).decode('utf-8'),  # Base64 encode for JSON serialization
             "content_hash": content_hash,
             "ontology": ontology,
+            "ontology_existed_at_submit": existed_at_submit,
             "filename": use_filename,
             "user_id": current_user.id,  # Track job owner (user ID from kg_auth.users)
             "username": current_user.username,  # For Garage metadata (FUSE support)
@@ -389,6 +397,9 @@ async def ingest_text(
                     content=duplicate_info
                 )
 
+        # #402 Defect B1: see file-upload endpoint above for rationale.
+        existed_at_submit = age_client.get_ontology_node(ontology) is not None
+
         # Prepare job
         use_filename = filename or "text_input"
 
@@ -396,6 +407,7 @@ async def ingest_text(
             "content": base64.b64encode(content).decode('utf-8'),  # Base64 encode for JSON serialization
             "content_hash": content_hash,
             "ontology": ontology,
+            "ontology_existed_at_submit": existed_at_submit,
             "filename": use_filename,
             "user_id": current_user.id,  # Track job owner (user ID from kg_auth.users)
             "username": current_user.username,  # For Garage metadata (FUSE support)

@@ -126,6 +126,40 @@ class TestCreateOntologyRoute:
             )
         assert response.status_code == 422
 
+    def test_create_clears_existing_tombstone(self, api_client, auth_headers_admin):
+        """#402 PR-404 finding #6 (advisor): operator-initiated recreate is
+        positive intent that supersedes a prior tombstone. The create route
+        must clear the tombstone so subsequent ingests don't fail
+        TOMBSTONED indefinitely."""
+        client = mock_age_client(
+            create_ontology_node={
+                'ontology_id': 'ont_revived',
+                'name': 'Phoenix Domain',
+                'lifecycle_state': 'active',
+                'creation_epoch': 100,
+            }
+        )
+
+        with patch('api.app.routes.ontology.get_age_client', return_value=client):
+            with patch('api.app.lib.ai_providers.get_provider', return_value=None):
+                response = api_client.post(
+                    "/ontology/",
+                    json={"name": "Phoenix Domain"},
+                    headers=auth_headers_admin,
+                )
+
+        assert response.status_code == 201
+        mock_cursor = (
+            client.pool.getconn.return_value.cursor.return_value.__enter__.return_value
+        )
+        delete_calls = [
+            c for c in mock_cursor.execute.call_args_list
+            if "DELETE FROM kg_api.ontology_tombstones" in str(c)
+        ]
+        assert len(delete_calls) >= 1, (
+            "operator-initiated create must clear any prior tombstone"
+        )
+
 
 # ==========================================================================
 # GET /ontology/{name}/node — Graph node properties
@@ -810,7 +844,9 @@ class TestDissolveRoute:
 
     def test_dissolve_success(self, api_client, auth_headers_admin):
         """POST dissolve moves sources and removes node."""
-        client = mock_age_client()
+        client = mock_age_client(
+            get_ontology_node={'name': 'old-onto', 'lifecycle_state': 'active'}
+        )
         client.dissolve_ontology = MagicMock(return_value={
             'dissolved_ontology': 'old-onto',
             'sources_reassigned': 5,
@@ -834,15 +870,12 @@ class TestDissolveRoute:
 
     def test_dissolve_pinned_rejected(self, api_client, auth_headers_admin):
         """POST dissolve pinned ontology returns 403."""
-        client = mock_age_client()
-        client.dissolve_ontology = MagicMock(return_value={
-            'dissolved_ontology': 'pinned-onto',
-            'sources_reassigned': 0,
-            'ontology_node_deleted': False,
-            'reassignment_targets': [],
-            'success': False,
-            'error': "Ontology 'pinned-onto' is pinned — cannot dissolve",
-        })
+        # Pre-flight (#402 PR-404 review): pinned check happens in the route
+        # itself now so the tombstone is never written for a refused dissolve.
+        client = mock_age_client(
+            get_ontology_node={'name': 'pinned-onto', 'lifecycle_state': 'pinned'}
+        )
+        client.dissolve_ontology = MagicMock()
 
         with patch('api.app.routes.ontology.get_age_client', return_value=client):
             response = api_client.post(
@@ -852,18 +885,15 @@ class TestDissolveRoute:
             )
 
         assert response.status_code == 403
+        # Critical: dissolve_ontology must NOT be called.
+        client.dissolve_ontology.assert_not_called()
 
     def test_dissolve_not_found(self, api_client, auth_headers_admin):
         """POST dissolve nonexistent ontology returns 404."""
+        # Pre-flight: get_ontology_node returns None (default) → 404 before
+        # any tombstone write or dissolve call.
         client = mock_age_client()
-        client.dissolve_ontology = MagicMock(return_value={
-            'dissolved_ontology': 'ghost',
-            'sources_reassigned': 0,
-            'ontology_node_deleted': False,
-            'reassignment_targets': [],
-            'success': False,
-            'error': "Ontology 'ghost' not found",
-        })
+        client.dissolve_ontology = MagicMock()
 
         with patch('api.app.routes.ontology.get_age_client', return_value=client):
             response = api_client.post(
@@ -873,6 +903,194 @@ class TestDissolveRoute:
             )
 
         assert response.status_code == 404
+        client.dissolve_ontology.assert_not_called()
+
+    def test_dissolve_writes_tombstone_before_graph_mutation(
+        self, api_client, auth_headers_admin
+    ):
+        """#402 PR-404 finding #1: operator-initiated dissolve writes a
+        tombstone so a racing ingest fails TOMBSTONED rather than
+        silently recreating the dissolved name. Tombstone must be
+        recorded *before* dissolve_ontology runs."""
+        client = mock_age_client(
+            get_ontology_node={'name': 'old-onto', 'lifecycle_state': 'active'}
+        )
+        client.dissolve_ontology = MagicMock(return_value={
+            'dissolved_ontology': 'old-onto',
+            'sources_reassigned': 3,
+            'ontology_node_deleted': True,
+            'reassignment_targets': ['target-onto'],
+            'success': True,
+            'error': None,
+        })
+
+        with patch('api.app.routes.ontology.get_age_client', return_value=client):
+            response = api_client.post(
+                "/ontology/old-onto/dissolve",
+                json={"target_ontology": "target-onto"},
+                headers=auth_headers_admin,
+            )
+
+        assert response.status_code == 200
+        # Tombstone INSERT must have been executed on the pool.
+        mock_cursor = (
+            client.pool.getconn.return_value.cursor.return_value.__enter__.return_value
+        )
+        insert_calls = [
+            c for c in mock_cursor.execute.call_args_list
+            if "INSERT INTO kg_api.ontology_tombstones" in str(c)
+        ]
+        assert len(insert_calls) >= 1, (
+            "operator-initiated dissolve must write a tombstone"
+        )
+        # The tombstone reason should mention dissolve and the target.
+        assert any(
+            "dissolve" in str(c).lower() and "target-onto" in str(c)
+            for c in insert_calls
+        )
+
+    def test_dissolve_failure_clears_tombstone(
+        self, api_client, auth_headers_admin
+    ):
+        """#402 PR-404 review-2 (finding B): when dissolve_ontology fails
+        after the route-level pre-flight (source listing, partial reassign,
+        lifecycle TOCTOU), the tombstone we wrote points to an ontology
+        that still exists. The route must clear it before raising so the
+        operator doesn't end up with 'dissolve failed AND future ingests
+        fail TOMBSTONED'."""
+        client = mock_age_client(
+            get_ontology_node={'name': 'old-onto', 'lifecycle_state': 'active'}
+        )
+        # Simulate the late-failure mode (source listing died in
+        # dissolve_ontology, returned a structured error).
+        client.dissolve_ontology = MagicMock(return_value={
+            'dissolved_ontology': 'old-onto',
+            'sources_reassigned': 0,
+            'ontology_node_deleted': False,
+            'reassignment_targets': [],
+            'success': False,
+            'error': 'Failed to list sources: connection reset',
+        })
+
+        with patch('api.app.routes.ontology.get_age_client', return_value=client):
+            response = api_client.post(
+                "/ontology/old-onto/dissolve",
+                json={"target_ontology": "target-onto"},
+                headers=auth_headers_admin,
+            )
+
+        assert response.status_code == 500
+        mock_cursor = (
+            client.pool.getconn.return_value.cursor.return_value.__enter__.return_value
+        )
+        # Both INSERT (pre-dissolve) and DELETE (rollback) must have run.
+        insert_calls = [
+            c for c in mock_cursor.execute.call_args_list
+            if "INSERT INTO kg_api.ontology_tombstones" in str(c)
+        ]
+        delete_calls = [
+            c for c in mock_cursor.execute.call_args_list
+            if "DELETE FROM kg_api.ontology_tombstones" in str(c)
+        ]
+        assert len(insert_calls) >= 1
+        assert len(delete_calls) >= 1, (
+            "dissolve failure must clear the stale tombstone"
+        )
+
+
+@pytest.mark.unit
+class TestRenameOntologyTombstone:
+    """#402 PR-404 review-2 (finding A): rename establishes an ontology
+    under new_name, same invariant as create-clears-tombstone. The
+    delete-then-rename recovery flow would otherwise be broken by the
+    unconditional tombstone check."""
+
+    def test_rename_clears_tombstone_for_new_name(
+        self, api_client, auth_headers_admin
+    ):
+        client = mock_age_client()
+        client.is_ontology_frozen = MagicMock(return_value=False)
+        client.rename_ontology = MagicMock(return_value={'sources_updated': 7})
+        client.rename_ontology_node = MagicMock(return_value=True)
+
+        with patch('api.app.routes.ontology.get_age_client', return_value=client):
+            response = api_client.post(
+                "/ontology/old-name/rename",
+                json={"new_name": "phoenix-name"},
+                headers=auth_headers_admin,
+            )
+
+        assert response.status_code == 200, response.text
+        mock_cursor = (
+            client.pool.getconn.return_value.cursor.return_value.__enter__.return_value
+        )
+        delete_calls = [
+            c for c in mock_cursor.execute.call_args_list
+            if "DELETE FROM kg_api.ontology_tombstones" in str(c)
+            and "phoenix-name" in str(c)
+        ]
+        assert len(delete_calls) >= 1, (
+            "rename must clear any prior tombstone for new_name"
+        )
+
+
+@pytest.mark.unit
+class TestDeleteOntologyTombstone:
+    """#402 PR-404 finding #4 (advisor-revised): tombstone is written before
+    the graph delete *and* the worker checks tombstones unconditionally —
+    a worker dequeuing during the delete must fail TOMBSTONED rather than
+    write orphan content into a graph the operator is removing."""
+
+    def test_delete_writes_tombstone_before_delete_ontology_node(
+        self, api_client, auth_headers_admin
+    ):
+        """The tombstone INSERT must precede the call to delete_ontology_node
+        on the AGE client. Verified by patching the helper with a side
+        effect that asserts the graph delete has not happened yet."""
+        client = mock_age_client()
+        client.delete_ontology_node = MagicMock(return_value=True)
+        # All Garage cleanup paths are best-effort try/except — defaults are fine.
+
+        order = []
+
+        def record_tombstone(client_arg, name, removed_by, reason):
+            order.append(("tombstone", name))
+            # Critical: delete_ontology_node must not have been called yet.
+            assert client_arg.delete_ontology_node.call_count == 0, (
+                "tombstone must be recorded before delete_ontology_node"
+            )
+
+        def record_delete(name):
+            order.append(("delete_node", name))
+            return True
+
+        client.delete_ontology_node.side_effect = record_delete
+
+        with patch(
+            'api.app.routes.ontology._record_ontology_tombstone',
+            side_effect=record_tombstone,
+        ):
+            with patch(
+                'api.app.routes.ontology.get_age_client', return_value=client
+            ):
+                with patch(
+                    'api.app.services.job_queue.get_job_queue'
+                ) as mock_queue:
+                    mock_queue.return_value.delete_jobs_by_ontology = MagicMock(
+                        return_value=0
+                    )
+                    response = api_client.delete(
+                        "/ontology/doomed-onto?force=true",
+                        headers=auth_headers_admin,
+                    )
+
+        assert response.status_code == 200, response.text
+        # Both events ran, in the right order.
+        assert ("tombstone", "doomed-onto") in order
+        assert ("delete_node", "doomed-onto") in order
+        assert order.index(("tombstone", "doomed-onto")) < order.index(
+            ("delete_node", "doomed-onto")
+        )
 
 
 # ==========================================================================

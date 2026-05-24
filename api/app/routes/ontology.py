@@ -58,6 +58,91 @@ def get_age_client() -> AGEClient:
     return AGEClient()
 
 
+def _clear_ontology_tombstone(client, ontology_name: str) -> bool:
+    """Remove a tombstone for `ontology_name`, if present.
+
+    Called when an operator explicitly re-creates a previously removed
+    ontology — the recreate is positive operator intent that supersedes
+    the prior removal intent. Without this, the unconditional tombstone
+    check in the ingestion worker would fail every future ingest into
+    the recreated name (#402 PR-404 review, finding #6 / advisor flag).
+
+    Returns True if a tombstone was actually deleted, False if none
+    existed or the lookup failed. Errors are logged but not raised —
+    the create itself should still succeed.
+    """
+    try:
+        conn = client.pool.getconn()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "DELETE FROM kg_api.ontology_tombstones WHERE name = %s",
+                    (ontology_name,),
+                )
+                deleted = cur.rowcount > 0
+            conn.commit()
+            if deleted:
+                logger.info(
+                    f"Cleared tombstone for '{ontology_name}' on operator recreate"
+                )
+            return deleted
+        finally:
+            client.pool.putconn(conn)
+    except Exception as e:
+        logger.error(
+            f"Failed to clear tombstone for '{ontology_name}': {e}",
+            exc_info=True,
+        )
+        return False
+
+
+def _record_ontology_tombstone(client, ontology_name: str, removed_by: str, reason: str) -> None:
+    """Record a tombstone for an operator-initiated removal (#402 B2 + PR-404).
+
+    The tombstone is the positive operator-intent signal that distinguishes
+    "deliberately removed by an operator" from "dissolved by background
+    annealing" — the ingestion worker checks for it unconditionally (before
+    reading the graph node) so a tombstone written before the graph delete
+    fails the in-flight ingest with ONTOLOGY_TOMBSTONED_ERROR rather than
+    letting it write orphan content into a graph the operator is removing.
+
+    Annealing's own dissolve_ontology path does NOT call this; that's the
+    asymmetry B2 relies on (annealing dissolve is recoverable via recreate,
+    operator delete/dissolve is not).
+
+    Errors are logged but not raised — the tombstone is defense-in-depth on
+    top of the queue-aware veto (Defect A) and the proposal-executor re-check.
+    """
+    try:
+        conn = client.pool.getconn()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    INSERT INTO kg_api.ontology_tombstones
+                        (name, removed_by, reason)
+                    VALUES (%s, %s, %s)
+                    ON CONFLICT (name) DO UPDATE SET
+                        removed_at = NOW(),
+                        removed_by = EXCLUDED.removed_by,
+                        reason     = EXCLUDED.reason
+                    """,
+                    (ontology_name, removed_by, reason),
+                )
+            conn.commit()
+            logger.info(
+                f"Recorded tombstone for ontology '{ontology_name}' "
+                f"(by={removed_by}, reason={reason})"
+            )
+        finally:
+            client.pool.putconn(conn)
+    except Exception as e:
+        logger.error(
+            f"Failed to record tombstone for '{ontology_name}': {e}",
+            exc_info=True,
+        )
+
+
 @router.post("/", response_model=OntologyNodeResponse, status_code=201)
 async def create_ontology(
     request: OntologyCreateRequest,
@@ -109,6 +194,11 @@ async def create_ontology(
                 status_code=409,
                 detail=f"Ontology '{request.name}' already exists (has source data)"
             )
+
+        # #402 PR-404 review (finding #6 / advisor): operator-initiated
+        # recreate is positive intent that supersedes a prior tombstone.
+        # Clear it so subsequent ingests don't fail TOMBSTONED forever.
+        _clear_ontology_tombstone(client, request.name)
 
         # Get creation epoch
         creation_epoch = client.get_current_epoch()
@@ -1005,6 +1095,13 @@ async def delete_ontology(
 
     Example:
         DELETE /ontology/Test%20Ontology?force=true
+
+    Note (PR-404 review): a tombstone is recorded before any graph
+    mutation. With force=true on a name that never existed, this leaves
+    a tombstone that blocks future ingests into that name until the
+    operator either re-creates the ontology (clears the tombstone) or
+    deletes the row from kg_api.ontology_tombstones directly. The
+    error string operators see explains both recovery paths.
     """
     from ..services.job_queue import get_job_queue
 
@@ -1024,6 +1121,18 @@ async def delete_ontology(
                     status_code=404,
                     detail=f"Ontology '{ontology_name}' not found"
                 )
+
+        # #402 B2 + PR-404 review: write the tombstone *before* any graph
+        # mutation. The worker checks tombstones unconditionally, so any
+        # ingest dequeuing during the delete sees the operator's intent
+        # and fails ONTOLOGY_TOMBSTONED rather than racing into a graph
+        # that's about to be removed.
+        _record_ontology_tombstone(
+            client,
+            ontology_name,
+            removed_by=getattr(current_user, "username", None) or "unknown",
+            reason="operator-initiated delete via API",
+        )
 
         # ADR-057/ADR-081: Clean up ALL Garage objects before deleting sources
         # This includes: images, source documents, and projections
@@ -1142,7 +1251,9 @@ async def delete_ontology(
 
         orphaned_count = orphaned_result['orphaned_count'] if orphaned_result else 0
 
-        # ADR-200: Delete Ontology node and its edges (SCOPED_BY, etc)
+        # ADR-200: Delete Ontology node and its edges (SCOPED_BY, etc).
+        # Tombstone was written upstream so any racing ingest already
+        # fails TOMBSTONED before this commit lands.
         try:
             if client.delete_ontology_node(ontology_name):
                 logger.info(f"Deleted Ontology node for '{ontology_name}'")
@@ -1224,6 +1335,14 @@ async def rename_ontology(
             except Exception as e:
                 logger.warning(f"Failed to rename Ontology node: {e}")
                 # Non-fatal: Source nodes are already renamed
+
+            # #402 PR-404 review-2 (finding A): operator-initiated rename
+            # establishes an ontology under new_name. Same invariant as
+            # create-clears-tombstone — clear any prior tombstone for the
+            # target name so subsequent ingests don't fail TOMBSTONED. The
+            # delete-then-rename recovery flow would otherwise be broken
+            # by the unconditional tombstone check.
+            _clear_ontology_tombstone(client, request.new_name)
 
             return OntologyRenameResponse(
                 old_name=ontology_name,
@@ -1714,12 +1833,53 @@ async def dissolve_ontology(
     """
     client = get_age_client()
     try:
-        result = client.dissolve_ontology(
-            name=ontology_name,
-            target_ontology=request.target_ontology,
+        # #402 PR-404 review (finding #1): operator-initiated dissolve is
+        # the same data-loss class as operator-initiated delete — a racing
+        # ingest against the dissolved name would otherwise silently
+        # recreate it. Pre-flight check + tombstone + dissolve, in that
+        # order, so we don't write a tombstone for an ontology that
+        # dissolve_ontology will refuse (pinned/frozen/missing).
+        node = client.get_ontology_node(ontology_name)
+        if not node:
+            raise HTTPException(
+                status_code=404, detail=f"Ontology '{ontology_name}' not found"
+            )
+        lifecycle = node.get("lifecycle_state", "active")
+        if lifecycle in ("pinned", "frozen"):
+            raise HTTPException(
+                status_code=403,
+                detail=f"Ontology '{ontology_name}' is {lifecycle} — cannot dissolve",
+            )
+
+        # Record tombstone *before* the graph mutation. Annealing's
+        # dissolve path does not write a tombstone — that asymmetry is
+        # intentional and preserved.
+        _record_ontology_tombstone(
+            client,
+            ontology_name,
+            removed_by=getattr(current_user, "username", None) or "unknown",
+            reason=f"operator-initiated dissolve via API (absorbed into '{request.target_ontology}')",
         )
 
+        try:
+            result = client.dissolve_ontology(
+                name=ontology_name,
+                target_ontology=request.target_ontology,
+            )
+        except Exception:
+            # #402 PR-404 review-2 (finding B): dissolve_ontology has
+            # failure modes beyond our route-level pre-flight (source
+            # listing, partial reassign, lifecycle TOCTOU). On any of
+            # those, the tombstone we just wrote refers to an ontology
+            # that still exists in the graph — clearing it avoids
+            # leaving the operator with a "dissolve failed AND future
+            # ingests fail TOMBSTONED" trap.
+            _clear_ontology_tombstone(client, ontology_name)
+            raise
+
         if not result.get("success"):
+            # Same stale-tombstone hazard on a structured failure result.
+            _clear_ontology_tombstone(client, ontology_name)
             error = result.get("error", "Unknown error")
             if "not found" in error:
                 raise HTTPException(status_code=404, detail=error)

@@ -55,6 +55,8 @@ class AnnealingManager:
         derive_edges: bool = True,
         overlap_threshold: float = 0.1,
         specializes_threshold: float = 0.3,
+        min_ontology_age_epochs: int = 3,
+        min_ontology_concept_count: int = 5,
     ) -> Dict[str, Any]:
         """
         Run a full annealing cycle.
@@ -111,13 +113,21 @@ class AnnealingManager:
 
         # 4. Identify demotion candidates
         demotion_candidates = self._find_demotion_candidates(
-            all_scores, demotion_threshold
+            all_scores,
+            demotion_threshold,
+            current_epoch=global_epoch,
+            min_age_epochs=min_ontology_age_epochs,
+            min_concept_count=min_ontology_concept_count,
         )
         logger.info(f"Found {len(demotion_candidates)} demotion candidates")
 
         # 5. Identify promotion candidates
         promotion_candidates = self._find_promotion_candidates(
-            all_scores, promotion_min_degree
+            all_scores,
+            promotion_min_degree,
+            current_epoch=global_epoch,
+            min_age_epochs=min_ontology_age_epochs,
+            min_concept_count=min_ontology_concept_count,
         )
         logger.info(f"Found {len(promotion_candidates)} promotion candidates")
 
@@ -167,6 +177,39 @@ class AnnealingManager:
                 f"(skipped candidates with open proposals)"
             )
 
+        # 5c. Queue-aware veto (#402, Defect A): annealing must not propose a
+        # mutation against an ontology that still has in-flight ingestion work
+        # queued for it. Without this guard the worker dissolves X, the
+        # ingestion job dequeues with target=X, and the operator-submitted
+        # content silently never lands. Promotions are not vetoed — they create
+        # a new ontology and do not modify the existing one in a way that
+        # invalidates queued ingest jobs against the source ontology.
+        vetoed_inflight: List[Dict[str, Any]] = []
+        if demotion_candidates:
+            candidate_names = {c.get("ontology") for c in demotion_candidates}
+            candidate_names.discard(None)
+            inflight = self._get_inflight_ingestion_targets(candidate_names)
+            if inflight:
+                kept: List[Dict] = []
+                for c in demotion_candidates:
+                    name = c.get("ontology")
+                    blocking = inflight.get(name) if name else None
+                    if blocking:
+                        vetoed_inflight.append({
+                            "ontology": name,
+                            "blocking_job_count": len(blocking),
+                            "blocking_job_ids": blocking,
+                        })
+                        logger.info(
+                            "Annealing veto: skipping demotion candidate "
+                            f"'{name}' — {len(blocking)} in-flight ingestion "
+                            f"job(s) target this ontology "
+                            f"(job_ids={blocking})"
+                        )
+                    else:
+                        kept.append(c)
+                demotion_candidates = kept
+
         # 6. Evaluate and store proposals
         proposal_ids = []
         remaining = max_proposals
@@ -192,7 +235,8 @@ class AnnealingManager:
         logger.info(
             f"Annealing cycle complete: {len(proposal_ids)} proposals, "
             f"{len(all_scores)} scored, {centroids_updated} centroids, "
-            f"{edge_result.get('edges_created', 0)} edges"
+            f"{edge_result.get('edges_created', 0)} edges, "
+            f"{len(vetoed_inflight)} vetoed (in-flight ingestion)"
         )
 
         return {
@@ -205,6 +249,7 @@ class AnnealingManager:
             "edges_created": edge_result.get("edges_created", 0),
             "edges_deleted": edge_result.get("edges_deleted", 0),
             "cycle_epoch": global_epoch,
+            "vetoed_for_inflight_ingestion": vetoed_inflight,
             "dry_run": False,
         }
 
@@ -213,9 +258,21 @@ class AnnealingManager:
     # =========================================================================
 
     def _find_demotion_candidates(
-        self, all_scores: List[Dict], threshold: float
+        self,
+        all_scores: List[Dict],
+        threshold: float,
+        current_epoch: int = 0,
+        min_age_epochs: int = 0,
+        min_concept_count: int = 0,
     ) -> List[Dict]:
-        """Find ontologies with protection below threshold, excluding pinned/frozen."""
+        """Find ontologies with protection below threshold, excluding pinned/frozen.
+
+        Per-ontology cadence floors (#402 Defect C) gate eligibility:
+        ontologies younger than min_age_epochs or holding fewer than
+        min_concept_count concepts are skipped — their scores are dominated
+        by per-concept noise rather than ontology structure, so evaluating
+        them wastes LLM calls and widens the ingestion race window.
+        """
         candidates = []
         for scores in all_scores:
             name = scores.get("ontology", "")
@@ -224,12 +281,32 @@ class AnnealingManager:
             if protection >= threshold:
                 continue
 
+            # Activity floor — ontology must have enough mass to be judged.
+            if scores.get("concept_count", 0) < min_concept_count:
+                logger.debug(
+                    f"Skipping demotion candidate '{name}': concept_count "
+                    f"{scores.get('concept_count', 0)} < floor {min_concept_count}"
+                )
+                continue
+
             # Check lifecycle — skip pinned/frozen
             node = self.client.get_ontology_node(name)
             if not node:
                 continue
             lifecycle = node.get("lifecycle_state", "active")
             if lifecycle in ("pinned", "frozen"):
+                continue
+
+            # Age floor — ontology must have existed for ≥ min_age_epochs.
+            # creation_epoch missing on legacy nodes is treated as 0 (oldest),
+            # so the floor never blocks pre-existing ontologies.
+            creation_epoch = node.get("creation_epoch", 0) or 0
+            age = current_epoch - creation_epoch
+            if min_age_epochs > 0 and age < min_age_epochs:
+                logger.debug(
+                    f"Skipping demotion candidate '{name}': age {age} "
+                    f"< floor {min_age_epochs} epochs"
+                )
                 continue
 
             candidates.append({
@@ -242,9 +319,20 @@ class AnnealingManager:
         return candidates
 
     def _find_promotion_candidates(
-        self, all_scores: List[Dict], min_degree: int
+        self,
+        all_scores: List[Dict],
+        min_degree: int,
+        current_epoch: int = 0,
+        min_age_epochs: int = 0,
+        min_concept_count: int = 0,
     ) -> List[Dict]:
-        """Find high-degree concepts that could become ontologies."""
+        """Find high-degree concepts that could become ontologies.
+
+        The cadence floors that gate demotion (#402 Defect C) also gate
+        promotion: a brand-new or near-empty source ontology has not
+        accumulated enough signal for its high-degree concepts to be
+        judged as natural new nuclei.
+        """
         candidates = []
         existing_ontology_names = {
             s["ontology"].lower() for s in all_scores
@@ -255,6 +343,17 @@ class AnnealingManager:
 
         for scores in all_scores:
             name = scores.get("ontology", "")
+
+            # Apply the same activity / age floors as demotion: a sparse or
+            # very young source ontology hasn't earned an evaluation yet.
+            if scores.get("concept_count", 0) < min_concept_count:
+                continue
+            if min_age_epochs > 0:
+                node = self.client.get_ontology_node(name)
+                creation_epoch = (node or {}).get("creation_epoch", 0) or 0
+                if current_epoch - creation_epoch < min_age_epochs:
+                    continue
+
             try:
                 ranking = self.client.get_concept_degree_ranking(name, limit=10)
             except Exception:
@@ -322,6 +421,73 @@ class AnnealingManager:
         except Exception as e:
             logger.error(f"Failed to read open proposals for dedup: {e}")
         return open_promotions, open_demotions
+
+    # Non-terminal job statuses on kg_api.jobs. An ingestion job in any of
+    # these states still intends to write to its target ontology — annealing
+    # must not dissolve / merge / decompose that ontology out from under it
+    # (#402, Defect A). Terminal statuses (completed / failed / cancelled /
+    # expired) do not block.
+    _NON_TERMINAL_JOB_STATUSES: Tuple[str, ...] = (
+        "pending",
+        "awaiting_approval",
+        "approved",
+        "queued",
+        "running",
+        "processing",
+    )
+
+    # Job types that target an ontology with intent to write. Keep in sync
+    # with WORKER_REGISTRY in api/app/services/worker_registry.py.
+    _INGESTION_JOB_TYPES: Tuple[str, ...] = ("ingestion", "ingest_image")
+
+    def _get_inflight_ingestion_targets(
+        self, ontology_names: Set[str]
+    ) -> Dict[str, List[str]]:
+        """In-flight ingestion jobs grouped by target ontology name.
+
+        Returns a mapping `{ontology_name: [job_id, ...]}` covering only the
+        supplied names — empty for an ontology with no non-terminal ingestion
+        work, omitted entirely if nothing matches. Used by the queue-aware
+        veto in the annealing cycle (#402).
+
+        Reads from kg_api.jobs directly via the AGE client's pool, mirroring
+        how _get_open_proposal_targets reads kg_api.annealing_proposals — the
+        manager stays a self-contained consumer of the shared connection pool.
+        """
+        if not ontology_names:
+            return {}
+        targets: Dict[str, List[str]] = {}
+        try:
+            conn = self.client.pool.getconn()
+            try:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        """
+                        SELECT ontology, job_id
+                        FROM kg_api.jobs
+                        WHERE job_type = ANY(%s)
+                          AND status = ANY(%s)
+                          AND ontology = ANY(%s)
+                        """,
+                        (
+                            list(self._INGESTION_JOB_TYPES),
+                            list(self._NON_TERMINAL_JOB_STATUSES),
+                            list(ontology_names),
+                        ),
+                    )
+                    rows = cur.fetchall()
+                conn.commit()
+            finally:
+                self.client.pool.putconn(conn)
+            for ontology, job_id in rows:
+                if not ontology:
+                    continue
+                targets.setdefault(ontology, []).append(job_id)
+        except Exception as e:
+            logger.error(
+                f"Failed to read in-flight ingestion targets for veto: {e}"
+            )
+        return targets
 
     def _get_anchored_concept_ids(self) -> Set[str]:
         """Concept IDs that already anchor an ontology (have an ANCHORED_BY edge).

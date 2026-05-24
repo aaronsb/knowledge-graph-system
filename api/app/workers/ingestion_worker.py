@@ -23,6 +23,154 @@ from api.app.lib.ai_providers import get_provider
 logger = logging.getLogger(__name__)
 
 
+# Distinct error strings so the job-list API can show, and tests / clients
+# can match, the three structurally different failure modes (#402 B1 + B2):
+#   * tombstoned    → operator deliberately removed, do not recreate
+#   * frozen        → exists but read-only
+#   * vanished      → existed at submit, missing at execute, no tombstone:
+#                     A-veto + executor re-check should make this unreachable
+#                     under normal operation, so reaching it indicates a real
+#                     anomaly worth surfacing rather than silently recreating.
+ONTOLOGY_VANISHED_MID_FLIGHT_ERROR = (
+    "target ontology '{name}' existed at job submit but was missing at "
+    "execute, with no operator tombstone — annealing veto + proposal "
+    "re-check should make this unreachable, so the anomaly is surfaced "
+    "rather than silently recreated. Job not retried."
+)
+ONTOLOGY_FROZEN_ERROR = (
+    "Ontology '{name}' is frozen (read-only). Job rejected. "
+    "Set lifecycle state to 'active' before ingesting."
+)
+ONTOLOGY_TOMBSTONED_ERROR = (
+    "target ontology '{name}' was deliberately removed by an operator "
+    "(tombstone present in kg_api.ontology_tombstones) — ingest job not "
+    "retried. Remove the tombstone explicitly to re-enable this name."
+)
+
+
+def _ontology_tombstone(age_client, name: str):
+    """Return the tombstone row for `name` or None if no tombstone exists.
+
+    The tombstone is the positive operator-intent signal that distinguishes
+    "deliberately removed by an operator" from "dissolved by background
+    annealing" (#402 Defect B2). Read-only — the operator-delete and
+    operator-dissolve routes write; the create-ontology route clears;
+    nothing else touches it.
+
+    On DB read failure, returns None (treat as "no tombstone"). Combined
+    with the post-PR-404 layered defense, this fallback is still
+    acceptable:
+
+      * existed_at_submit=True + missing target: the worker raises
+        ONTOLOGY_VANISHED_MID_FLIGHT_ERROR before consulting the
+        tombstone-failed result for recreation — the operator-deleted
+        case still fails loudly, just with a slightly less specific
+        error string than TOMBSTONED.
+      * existed_at_submit=False + missing target: first-ever ingest into
+        a new name, recreate is correct. A residual risk exists if the
+        operator deleted the name *before* the ingest was submitted AND
+        the tombstone-read fails — in that narrow case the worker
+        silently recreates. The alternative (fail every first ingest
+        when the tombstone table is unreachable) is a worse operational
+        hazard.
+    """
+    try:
+        conn = age_client.pool.getconn()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT name, removed_at, removed_by, reason "
+                    "FROM kg_api.ontology_tombstones "
+                    "WHERE name = %s",
+                    (name,),
+                )
+                row = cur.fetchone()
+            conn.commit()
+            if not row:
+                return None
+            return {
+                "name": row[0],
+                "removed_at": row[1],
+                "removed_by": row[2],
+                "reason": row[3],
+            }
+        finally:
+            age_client.pool.putconn(conn)
+    except Exception as e:
+        logger.error(
+            f"Failed to read ontology tombstone for '{name}': {e}",
+            exc_info=True,
+        )
+        return None
+
+
+def _validate_target_ontology(
+    age_client,
+    ontology: str,
+    existed_at_submit: bool,
+    created_by: str = None,
+    job_id: str = None,
+):
+    """Resolve the ingestion target's Ontology node, failing loudly when
+    the operator's intent has been deliberately countermanded (#402 B1+B2).
+
+    Returns the ontology node dict on success. Raises Exception when:
+
+    - Tombstone present (operator deliberately removed the ontology) →
+      ONTOLOGY_TOMBSTONED_ERROR. Checked unconditionally (before reading
+      the graph node) so the operator-delete route can write the tombstone
+      *before* the graph delete; a worker dequeuing in the window where
+      both the node and the tombstone exist still fails loudly instead of
+      writing orphan content into a graph the operator is removing.
+    - Frozen lifecycle → ONTOLOGY_FROZEN_ERROR.
+    - Existed at submit + missing at execute + no tombstone →
+      ONTOLOGY_VANISHED_MID_FLIGHT_ERROR. With Defect A's queue veto and
+      the proposal-executor re-check in place, an annealing dissolve of a
+      queued target should not occur; reaching this branch indicates a
+      real anomaly (rename without job migration, manual graph surgery,
+      or a residual race window) that operators should see.
+
+    When the ontology is missing, no tombstone is present, AND the
+    ontology did NOT exist at submit (first-ever ingest into a new
+    name), the worker creates the ontology and proceeds, with an
+    auditable log line naming the job and the actor.
+    """
+    tombstone = _ontology_tombstone(age_client, ontology)
+    if tombstone:
+        logger.warning(
+            f"Ingest job blocked by tombstone for '{ontology}' "
+            f"(removed_at={tombstone['removed_at']}, "
+            f"removed_by={tombstone['removed_by']}, "
+            f"reason={tombstone['reason']})"
+        )
+        raise Exception(ONTOLOGY_TOMBSTONED_ERROR.format(name=ontology))
+
+    ont_node = age_client.get_ontology_node(ontology)
+
+    if ont_node is None:
+        if existed_at_submit:
+            raise Exception(
+                ONTOLOGY_VANISHED_MID_FLIGHT_ERROR.format(name=ontology)
+            )
+
+        # First-ever ingest into a brand-new name (existed_at_submit=False):
+        # creating the ontology IS the operator's intent. Audit-log the
+        # event with job + actor for traceability.
+        ont_node = age_client.ensure_ontology_exists(
+            ontology, created_by=created_by
+        )
+        logger.info(
+            f"Ontology '{ontology}' created for ingest job "
+            f"job_id={job_id} actor={created_by} "
+            f"existed_at_submit={existed_at_submit}"
+        )
+
+    if ont_node.get("lifecycle_state") == "frozen":
+        raise Exception(ONTOLOGY_FROZEN_ERROR.format(name=ontology))
+
+    return ont_node
+
+
 def run_ingestion_worker(
     job_data: Dict[str, Any],
     job_id: str,
@@ -310,32 +458,28 @@ def run_ingestion_worker(
         # Initialize AGE client
         age_client = AGEClient()
 
-        # ADR-200: Ensure Ontology node exists before creating Source nodes
-        try:
-            ont_node = age_client.ensure_ontology_exists(ontology, created_by=job_data.get("username"))
-            logger.debug(f"Ontology node ensured for '{ontology}'")
+        ont_node = _validate_target_ontology(
+            age_client,
+            ontology,
+            existed_at_submit=job_data.get("ontology_existed_at_submit", True),
+            created_by=job_data.get("username"),
+            job_id=job_id,
+        )
 
-            # ADR-200 Phase 2: Defense-in-depth — reject if frozen between submission and execution
-            if ont_node and ont_node.get("lifecycle_state") == "frozen":
-                raise Exception(f"Ontology '{ontology}' is frozen (read-only). Job rejected. Set lifecycle state to 'active' before ingesting.")
-
-            # Generate embedding for ontology node if missing
-            if ont_node and not ont_node.get("embedding") and provider:
-                try:
-                    ont_text = ontology
-                    desc = ont_node.get("description")
-                    if desc:
-                        ont_text = f"{ontology}: {desc}"
-                    emb_result = provider.generate_embedding(ont_text)
-                    emb_vector = emb_result if isinstance(emb_result, list) else emb_result.get("embedding", [])
-                    if emb_vector:
-                        age_client.update_ontology_embedding(ontology, emb_vector)
-                        logger.info(f"Generated embedding for Ontology '{ontology}'")
-                except Exception as e:
-                    logger.debug(f"Skipped ontology embedding: {e}")
-        except Exception as e:
-            logger.warning(f"Failed to ensure Ontology node for '{ontology}': {e}")
-            # Non-fatal: s.document on Source nodes still works without Ontology node
+        # Generate embedding for ontology node if missing (best-effort).
+        if not ont_node.get("embedding") and provider:
+            try:
+                ont_text = ontology
+                desc = ont_node.get("description")
+                if desc:
+                    ont_text = f"{ontology}: {desc}"
+                emb_result = provider.generate_embedding(ont_text)
+                emb_vector = emb_result if isinstance(emb_result, list) else emb_result.get("embedding", [])
+                if emb_vector:
+                    age_client.update_ontology_embedding(ontology, emb_vector)
+                    logger.info(f"Generated embedding for Ontology '{ontology}'")
+            except Exception as e:
+                logger.debug(f"Skipped ontology embedding: {e}")
 
         # ADR-203: Record this ingestion as a graph epoch event so every
         # Instance created during the run carries a stable event_id. On resume,
