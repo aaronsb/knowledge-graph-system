@@ -29,7 +29,7 @@ Find concepts by meaning, not keywords.
 kg search query "causes of inflation"
 
 # Get full concept details with evidence
-kg search details c_abc123
+kg search show c_abc123
 
 # Find related concepts (2 hops)
 kg search related c_abc123 --depth 2
@@ -50,8 +50,8 @@ Add documents to your knowledge graph.
 # Single file
 kg ingest file research-paper.pdf --ontology economics
 
-# Directory (recursive)
-kg ingest directory ./papers --ontology economics --recursive
+# Directory (recursive — requires --depth)
+kg ingest directory ./papers --ontology economics --recurse --depth all
 
 # Raw text
 kg ingest text "The Federal Reserve controls interest rates..." --ontology economics
@@ -76,7 +76,7 @@ kg document list --ontology economics
 kg document show doc_abc123
 
 # Access original source text
-kg source show src_abc123
+kg source get src_abc123
 ```
 
 ---
@@ -110,10 +110,9 @@ Analyze semantic dimensions.
 ```bash
 # Project concepts onto an axis
 kg polarity analyze --positive "modern" --negative "traditional"
-
-# List saved analyses
-kg polarity list
 ```
+
+Saved analyses are accessible via `kg artifact list` (polarity results are persisted as artifacts).
 
 **What you can do:** Discover where concepts fall on semantic spectrums, find concepts that balance opposing viewpoints.
 
@@ -160,14 +159,14 @@ kg job list --status pending
 # Watch job progress
 kg job status job_abc123 --watch
 
-# Approve pending jobs
-kg job approve job_abc123
+# Approve a pending job
+kg job approve job job_abc123
 
 # Cancel running job
 kg job cancel job_abc123
 
-# Clean up old jobs
-kg job cleanup --older-than 7d --status completed
+# Clean up old jobs (preview by default; add --confirm to delete)
+kg job cleanup --older-than 7d --status completed --confirm
 ```
 
 **What you can do:** Control when extraction happens, monitor costs, clean up completed work.
@@ -182,11 +181,11 @@ System administration.
 # Check system health
 kg admin status
 
-# Create backup
+# Create backup (full system or per-ontology)
 kg admin backup --type full
 
-# Restore from backup
-kg admin restore --file backup.sql
+# Restore from backup archive
+kg admin restore --file backup.tar.gz --confirm
 ```
 
 ---
@@ -202,7 +201,7 @@ kg login
 # Logout
 kg logout
 
-# Create MCP credentials
+# Create MCP credentials (alias for: kg oauth create --for mcp)
 kg oauth create-mcp
 
 # List OAuth clients
@@ -235,9 +234,9 @@ kg rm job job_abc123
 ### Batch Ingest
 
 ```bash
-# Ingest all PDFs, auto-approve
+# Ingest all PDFs (auto-approve is the default)
 for f in papers/*.pdf; do
-  kg ingest file "$f" --ontology research --auto-approve
+  kg ingest file "$f" --ontology research
 done
 ```
 
@@ -245,15 +244,15 @@ done
 
 ```bash
 # Search and pipe to jq
-kg search query "machine learning" --format json | jq '.concepts[].label'
+kg search query "machine learning" --json | jq '.concepts[].label'
 ```
 
 ### CI/CD Integration
 
 ```bash
-# Validate graph health in CI
-kg health --exit-code
-kg database stats --format json
+# Validate graph health in CI (exits non-zero on failure)
+kg health
+kg database stats
 ```
 
 ---
@@ -265,10 +264,10 @@ kg database stats --format json
 kg config get
 
 # Set auto-approval
-kg config set auto-approve true
+kg config set auto_approve true
 
 # Set API URL
-kg config set api-url http://localhost:8000
+kg config set api_url http://localhost:8000
 ```
 
-Config stored in `~/.config/kg-cli/config.json`.
+Config stored in `~/.config/kg/config.json`.
