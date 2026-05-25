@@ -100,6 +100,14 @@ Several existing systems provide infrastructure that directly supports this mode
 
 ## Decision
 
+> **Clarified 2026-05-25 (post-ADR-206):** Verb vocabulary and decision flow have been generalized by ADR-206. Quick mapping:
+> - "Promotion" → `CLEAVE` of any ontology (including primordial, which is what this ADR historically called promotion).
+> - "Demotion" → `DISSOLVE` with affinity routing as default. The per-source reassignment table in §8 is the executor's natural behavior; `force_primordial` is a defended override the LLM can pass when it has reason to declare a domain wholesale-dead.
+> - Dual `promotion_threshold`/`demotion_threshold` in §7 → single refractory function `P(epochs_since_change)` applied uniformly to every ontology. Hysteresis emerges from refractory recovery, not from twin thresholds.
+> - Primordial is just another ontology. It receives the same scoring, the same refractory protection, and the same `CLEAVE`-candidacy as any named ontology. Carve-outs: it cannot be the subject of `DISSOLVE`, `MERGE`, or `RENAME` (it is the floor and cannot be relocated below itself). Sub-ontology hierarchy emerges from `CLEAVE` applied to a named ontology — no separate pathway.
+>
+> The data model, lifecycle states, mass/coherence/exposure scoring, the self-correcting attractor argument, and the no-deletion-only-movement principle in this ADR remain authoritative. The 6-verb closed action menu (`CLEAVE`, `DISSOLVE`, `MERGE`, `RENAME`, `NO_ACTION`, `ESCALATE`) and the decision flow are authoritative in ADR-206. Sections below are unchanged in substance; only the verb vocabulary and the dual-threshold framing are recast.
+
 ### 1. Ontologies as Graph Nodes
 
 Introduce `:Ontology` nodes in the Apache AGE graph with the same core properties as concepts:
@@ -240,6 +248,8 @@ Where:
 **Stable vs Failed**: Both have high exposure. The difference is mass AND coherence. A stable ontology has high internal edge density and sharp boundaries. A failed ontology has its concepts more connected to other ontologies than to each other. The mass component of the protection function must include coherence (boundary sharpness, internal grounding) not just concept count.
 
 #### Hysteresis: Separate Promotion and Demotion Thresholds
+
+> *Superseded 2026-05-25 by ADR-206:* the dual-threshold framing below is replaced by a single refractory function `P(epochs_since_change)` applied uniformly to every ontology. Hysteresis emerges from the recovery shape of the refractory curve rather than from twin thresholds. The Bezier infrastructure called out here is the same shape used for the refractory curve.
 
 A concept hovering near the promotion threshold must not flicker between concept and ontology status across annealing cycles. The promotion threshold must be significantly higher than the demotion threshold, creating a **hysteresis band**:
 
@@ -668,6 +678,8 @@ target_ontology_count = f(total_concepts, desired_concepts_per_ontology)
 When the primordial pool grows too large relative to named ontologies, promotion pressure increases. When ontologies get too small, absorption pressure increases. The Bezier curve infrastructure from vocabulary aggressiveness profiles (ADR-046) drives this — same mechanism, different domain.
 
 #### Graduated Automation
+
+> *Superseded 2026-05-25 by ADR-206:* the HITL → AITL → Autonomous progression is replaced by a tiered escalation cascade (Sonnet → Opus → Human) configured per platform via `escalation_chain`. See ADR-206 §Phase 2. The "high-confidence threshold" below is now `golden_path_confidence`, and the "multiple consecutive cycles" safety bound is now `failure_cooldown_epochs` plus failure-aware prompt input.
 
 | Level | Behavior | Trigger |
 |-------|----------|---------|
