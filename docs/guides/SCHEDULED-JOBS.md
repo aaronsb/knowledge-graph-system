@@ -371,7 +371,7 @@ All scheduled jobs are designed to have minimal performance impact:
 **To change:**
 The threshold is currently hardcoded in `EpistemicRemeasurementLauncher.__init__()`. To adjust:
 
-1. Edit `api/api/launchers/epistemic_remeasurement.py`
+1. Edit `api/app/launchers/epistemic_remeasurement.py`
 2. Change `threshold` parameter in `__init__()` (default: 10)
 3. Restart API server
 
@@ -387,7 +387,7 @@ The threshold is currently hardcoded in `EpistemicRemeasurementLauncher.__init__
 - Don't consolidate when inactive < 10% of active
 
 **To change:**
-Edit `VocabConsolidationLauncher.check_conditions()` in `api/api/launchers/vocab_consolidation.py`.
+Edit `VocabConsolidationLauncher.check_conditions()` in `api/app/launchers/vocab_consolidation.py`.
 
 ---
 
