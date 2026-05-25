@@ -658,6 +658,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../guides/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guides
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../guides/ASYNC-ARCHITECTURE/" class="md-nav__link">
         
   
@@ -10601,7 +10629,7 @@
 <p>Find connections between concepts with various scoring strategies.</p>
 <blockquote>
 <p><strong>⚠️ Apache AGE Limitation:</strong> AGE does NOT support Neo4j's <code>shortestPath()</code> function.
-See <a href="https://github.com/apache/age/issues/2162">GitHub Issue #2162</a> and <a href="../../architecture/ADR-076-pathfinding-optimization.md">ADR-076</a>.
+See <a href="https://github.com/apache/age/issues/2162">GitHub Issue #2162</a> and <a href="../../../architecture/query-search/ADR-076-pathfinding-optimization/">ADR-076</a>.
 Use variable-length patterns with caution - they enumerate ALL paths and have exponential complexity.</p>
 </blockquote>
 <h3 id="1-all-paths-with-length-limit-use-with-caution">1. All Paths with Length Limit (Use with Caution)</h3>
@@ -10778,7 +10806,7 @@ Keep <code>max_hops</code> ≤ 4 to avoid exponential blowup.</p>
 <li>AGE does NOT support Neo4j's <code>shortestPath()</code> or <code>SHORTEST</code> keyword</li>
 <li>See <a href="https://github.com/apache/age/issues/2162">GitHub Issue #2162</a></li>
 <li>
-<p>Use application-level BFS for optimal pathfinding (see <a href="../../architecture/ADR-076-pathfinding-optimization.md">ADR-076</a>)</p>
+<p>Use application-level BFS for optimal pathfinding (see <a href="../../../architecture/query-search/ADR-076-pathfinding-optimization/">ADR-076</a>)</p>
 </li>
 <li>
 <p><strong>Variable-Length Path Performance:</strong></p>
@@ -10863,7 +10891,7 @@ Keep <code>max_hops</code> ≤ 4 to avoid exponential blowup.</p>
 <ul>
 <li><a href="https://age.apache.org/age-manual/master/intro/overview.html">Apache AGE Documentation</a></li>
 <li><a href="https://neo4j.com/docs/cypher-manual/current/">Cypher Query Language</a></li>
-<li><a href="../../architecture/ADR-016-apache-age-migration.md">AGE vs Neo4j Differences</a></li>
+<li><a href="../../../architecture/database-schema/ADR-016-apache-age-migration/">AGE vs Neo4j Differences</a></li>
 </ul>
 <hr />
 <p><strong>Last Updated:</strong> 2025-10-08

@@ -658,6 +658,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../guides/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guides
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../guides/ASYNC-ARCHITECTURE/" class="md-nav__link">
         
   
@@ -10764,7 +10792,7 @@ All queries use parameter binding to prevent Cypher injection, not f-string inte
 </tbody>
 </table>
 <p><strong>Critical Discovery:</strong> The 3x speedup comes from <strong>batched queries with IN clauses</strong>, NOT from parallelization. Parallelization adds overhead beyond 1-2 workers.</p>
-<p><strong>See <a href="ADR-071a-parallel-implementation-findings.md">ADR-071a: Parallel Implementation Findings</a> for detailed analysis.</strong></p>
+<p>The detailed analysis is the section above — the planned standalone "ADR-071a: Parallel Implementation Findings" was never split out from this ADR and the findings live inline here under <a href="#actual-performance-results-adr-071a">Actual Performance Results</a>.</p>
 <h2 id="configuration-management">Configuration Management</h2>
 <h3 id="database-first-following-adr-041049-pattern">Database-First (Following ADR-041/049 Pattern)</h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1">-- Migration: Add parallel query configuration</span>
@@ -10807,7 +10835,6 @@ All queries use parameter binding to prevent Cypher injection, not f-string inte
 <h2 id="related-adrs">Related ADRs</h2>
 <ul>
 <li><strong><a href="../../ai-embeddings/ADR-070-polarity-axis-analysis/">ADR-070: Polarity Axis Analysis</a></strong> - The feature that exposed this performance issue</li>
-<li><strong><a href="ADR-071a-parallel-implementation-findings.md">ADR-071a: Parallel Implementation Findings</a></strong> - Actual performance results and critical discoveries</li>
 <li><strong><a href="../../ai-embeddings/ADR-049-rate-limiting-and-concurrency/">ADR-049: Rate Limiting and Concurrency</a></strong> - Semaphore pattern for resource limiting</li>
 <li><strong><a href="../../vocabulary-relationships/ADR-048-vocabulary-metadata-as-graph/">ADR-048: GraphQueryFacade</a></strong> - Namespace-safe query interface</li>
 </ul>
