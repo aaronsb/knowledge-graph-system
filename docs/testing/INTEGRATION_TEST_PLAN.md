@@ -11,17 +11,20 @@
 ## Test Environment Setup
 
 ### Prerequisites
-- Docker and docker-compose installed
-- Python 3.11+ with venv
-- Node.js 18+ and npm
-- kg CLI installed globally (`cd client && ./install.sh`)
-- API keys configured (OpenAI or Anthropic)
+- Docker and docker compose installed
+- Python 3.11+ (only needed for local lint/utility scripts — the API runs in `kg-api-dev`)
+- Node.js 18+ and npm (for CLI/MCP)
+- kg CLI installed globally (`cd cli && npm run build && ./install.sh`)
+- API keys configured (OpenAI or Anthropic) via `./operator.sh shell`
 
 ### Clean Environment Checklist
-- [ ] Stop all running containers: `docker-compose down -v`
-- [ ] Remove volumes: `docker volume prune`
+- [ ] Stop the platform: `./operator.sh stop`
+- [ ] Wipe data (destructive): `./operator.sh reset` (or `kg admin reset`)
 - [ ] Clean API logs: `rm -f logs/api_*.log`
-- [ ] Fresh Python venv: `rm -rf venv && python3 -m venv venv`
+
+> Historical note: earlier revisions of this plan referenced `docker-compose down -v`
+> and a local Python venv. The platform is now fully containerized — use `operator.sh`
+> for lifecycle commands.
 
 ---
 
@@ -29,16 +32,20 @@
 
 ### 1.1 Database Initialization
 ```bash
-# Start fresh PostgreSQL + AGE
-docker-compose up -d
+# Start platform (PostgreSQL + AGE + API + Web + Garage)
+./operator.sh start
 
 # Wait for database ready
 docker logs knowledge-graph-postgres | grep "ready to accept connections"
 
-# Apply migrations
-./scripts/migrate-db.sh --dry-run  # Preview
-./scripts/migrate-db.sh -y         # Apply
+# Migrations are applied automatically on API startup.
+# To preview/upgrade explicitly:
+./operator.sh upgrade --dry-run    # Preview
+./operator.sh upgrade              # Apply
 ```
+
+> Historical note: `scripts/migrate-db.sh` is no longer present; migration runs
+> as part of the API container startup and `operator.sh upgrade`.
 
 **Verify:**
 - [ ] PostgreSQL container running
@@ -48,9 +55,10 @@ docker logs knowledge-graph-postgres | grep "ready to accept connections"
 
 ### 1.2 Schema Audit
 ```bash
-# List all tables
-docker exec knowledge-graph-postgres psql -U postgres -d knowledge_graph -c "\dt ag_catalog.*"
-docker exec knowledge-graph-postgres psql -U postgres -d knowledge_graph -c "\dt public.*"
+# List all tables (use POSTGRES_USER from .env — typically `admin`)
+docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -c "\dt ag_catalog.*"
+docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -c "\dt kg_api.*"
+docker exec knowledge-graph-postgres psql -U admin -d knowledge_graph -c "\dt kg_auth.*"
 ```
 
 **Expected Tables:**
@@ -68,16 +76,17 @@ docker exec knowledge-graph-postgres psql -U postgres -d knowledge_graph -c "\dt
 
 ### 1.3 API Server Startup
 ```bash
-# Configure AI provider
-./scripts/configure-ai.sh
+# Configure AI provider (interactive shell)
+./operator.sh shell
+# then inside the shell: configure.py ai-provider
 
-# Start API
-./scripts/start-api.sh
-
-# Check health
+# API is already running after `./operator.sh start` — check health
 kg health
 curl http://localhost:8000/health
 ```
+
+> Historical note: `scripts/configure-ai.sh` and `scripts/start-api.sh` no longer
+> exist. Use `operator.sh shell` (configuration) and `operator.sh start` (lifecycle).
 
 **Verify:**
 - [ ] API server starts without errors
