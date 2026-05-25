@@ -141,15 +141,20 @@ Check that everything is running:
 ./operator.sh status
 ```
 
-You should see all containers healthy:
+You should see all containers healthy. Names depend on install mode:
+
 ```
 Container Status:
-kg-postgres   Up (healthy)
-kg-garage     Up (healthy)
-kg-api        Up (healthy)
-kg-web        Up (healthy)
-kg-operator   Up
+knowledge-graph-postgres   Up (healthy)
+knowledge-graph-garage     Up (healthy)
+kg-api                     Up (healthy)
+kg-web                     Up (healthy)
+kg-operator                Up
 ```
+
+In `--container-prefix=kg` mode (production overlay) the infra containers are
+named `kg-postgres` and `kg-garage`. In development mode (default) the
+application containers are `kg-api-dev` and `kg-web-dev`.
 
 Access the system:
 - **Web UI**: https://your-hostname (or http://localhost:3000 for dev)
@@ -180,12 +185,21 @@ After installation, `operator.sh` is your primary tool:
 
 # Configuration
 ./operator.sh shell              # Enter configuration shell
-./operator.sh query 'SQL'        # Run database queries
+./operator.sh query 'SQL'        # Run SQL query against PostgreSQL
 
 # Maintenance
 ./operator.sh restart api        # Restart a service
 ./operator.sh teardown           # Remove containers (keeps data)
-./operator.sh teardown --full    # Complete reset
+./operator.sh teardown --full    # Complete reset (also removes volumes)
+```
+
+The most common configure subcommands also have shortcuts on `operator.sh`:
+
+```bash
+./operator.sh admin              # Manage admin user
+./operator.sh ai-provider openai # Change AI provider
+./operator.sh api-key openai     # Store API key
+./operator.sh embedding          # Configure embeddings
 ```
 
 Inside the configuration shell (`./operator.sh shell`):

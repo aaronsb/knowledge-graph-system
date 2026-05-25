@@ -72,6 +72,8 @@ curl -fsSL https://raw.githubusercontent.com/aaronsb/knowledge-graph-system/main
 | `--ssl-dns-key` | DNS provider API key |
 | `--ssl-dns-secret` | DNS provider API secret (if required) |
 | `--macvlan` | Use existing `kg-macvlan` network |
+| `--macvlan-ip IP` | Static IP on macvlan (recommended — avoids DHCP MAC drift) |
+| `--macvlan-mac MAC` | Optional MAC address for DHCP reservation |
 | `--gpu nvidia` | Enable NVIDIA GPU support (or `amd`, `cpu`) |
 | `--ai-provider openai` | AI extraction provider (`openai`, `anthropic`, `ollama`) |
 | `--ai-key` | API key for the AI provider |
@@ -97,9 +99,10 @@ curl -fsSL .../install.sh | bash -s -- \
 
 ## Post-Install: Set Static IP
 
-The installer generates a compose overlay that initially uses DHCP. For reliable operation, update it to use a static IP:
-
-Edit `~/knowledge-graph/docker-compose.ssl.yml`:
+If you did not pass `--macvlan-ip` during install, the generated compose
+overlay uses DHCP. For reliable operation, set a static IP — either pass
+`--macvlan-ip 192.168.1.82` to `install.sh` up front, or edit
+`~/knowledge-graph/docker-compose.ssl.yml` after install:
 
 ```yaml
 services:

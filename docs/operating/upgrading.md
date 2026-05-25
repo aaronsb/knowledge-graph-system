@@ -40,26 +40,32 @@ This command:
 ## Upgrade Options
 
 ```bash
-# See what would change without doing it
+# See what would change without doing it (--whatif also works)
 ./operator.sh upgrade --dry-run
 
-# Skip backup (faster, but risky)
+# Skip the pre-upgrade backup prompt (faster, but risky)
 ./operator.sh upgrade --no-backup
 
-# Upgrade to specific version
-./operator.sh upgrade --version 0.5.0
+# Skip the confirmation prompt
+./operator.sh upgrade -y
 ```
+
+To pin a specific version, edit the image tag in your compose file (see
+[Version Pinning](#version-pinning) below) and then run
+`./operator.sh update && ./operator.sh upgrade`.
 
 ## Before Upgrading
 
 1. **Check the changelog** for breaking changes
-2. **Backup your data:**
+2. **Backup your data** (runs `pg_dump` inside the operator container):
    ```bash
-   ./operator.sh backup
+   ./operator.sh shell
+   /workspace/operator/database/backup-database.sh -y
+   # backup is written to /project/backups/ on the host
    ```
-3. **Note your current version:**
+3. **Check your current versions:**
    ```bash
-   cat VERSION
+   ./operator.sh versions
    ```
 
 ## After Upgrading
@@ -89,9 +95,10 @@ If something goes wrong:
    ./operator.sh stop
    ```
 
-2. **Restore database:**
+2. **Restore database** (uses `pg_restore` inside the operator container):
    ```bash
-   ./operator.sh restore /path/to/backup.sql
+   ./operator.sh shell
+   /workspace/operator/database/restore-database.sh /project/backups/<file>.dump
    ```
 
 3. **Use previous image version:**
@@ -122,7 +129,7 @@ Database migrations run automatically during upgrade. If a migration fails:
 2. Run manually:
    ```bash
    ./operator.sh shell
-   python -m api.database.migrate
+   /workspace/operator/database/migrate-db.sh -y
    ```
 
 3. If stuck, restore from backup and report the issue.

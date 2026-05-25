@@ -62,9 +62,10 @@ See [MCP Reference](../reference/mcp/README.md) for tool documentation.
 Mount the knowledge graph as a filesystem.
 
 ```bash
-kg-fuse ~/Knowledge    # Mount at ~/Knowledge
-ls ~/Knowledge/        # Browse ontologies
-cat ~/Knowledge/query/your\ search  # Semantic queries
+kg-fuse init ~/Knowledge   # First-time setup at ~/Knowledge
+kg-fuse mount              # Start all configured mounts
+ls ~/Knowledge/            # Browse ontologies
+kg-fuse status             # Check what's running
 ```
 
 See [FUSE Guide](../guides/FUSE_FILESYSTEM.md) for details.
