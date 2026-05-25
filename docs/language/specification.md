@@ -150,10 +150,12 @@ within the API worker. They do **not** generate HTTP requests. The executor
 invokes the underlying service function directly (vector search, source search,
 epistemic status, etc.).
 
-### 2.7 ConditionalOp (Phase 2)
+### 2.7 ConditionalOp
 
-> **Status:** Phase 2. Defined here for forward compatibility. Implementations
-> SHOULD reject `ConditionalOp` until Phase 2 is active.
+> **Status:** Implemented. The Pydantic model, validator (V005, V007), and
+> executor (all six condition tests in `_evaluate_condition`) are live in
+> `api/app/{models,services}/program*.py`. The `else_` field on the
+> Python model uses `alias='else'` to map to the JSON `else` key.
 
 ```typescript
 interface ConditionalOp {
@@ -173,9 +175,10 @@ interface ConditionalOp {
 
 Nested conditionals are permitted up to a maximum depth (default: 3).
 
-### 2.8 Condition (Phase 2)
+### 2.8 Condition
 
-> **Status:** Phase 2.
+> **Status:** Implemented. All six tests below are evaluated by
+> `_evaluate_condition` in `api/app/services/program_executor.py`.
 
 ```typescript
 type Condition =
@@ -201,7 +204,12 @@ Conditions are pure predicates. They read W but never modify it.
 
 ### 2.9 ParamDeclaration (Phase 2)
 
-> **Status:** Phase 2.
+> **Status:** Partially implemented. The Pydantic model accepts `params`
+> declarations and `POST /programs/execute` accepts a `params` payload, but
+> the executor does **not** yet substitute `$name` references into queries.
+> Only the implicit `$W_IDS` binding (the current node IDs in W) is wired
+> through `program_dispatch.dispatch_cypher`. V004 (duplicate parameter
+> names) is enforced.
 
 ```typescript
 interface ParamDeclaration {
@@ -211,9 +219,9 @@ interface ParamDeclaration {
 }
 ```
 
-Parameters declared here can be referenced as `$name` in `CypherOp.query`
-strings and `ApiOp.params` values. They are resolved once at execution time
-before any statement runs.
+Parameters declared here are intended to be referenced as `$name` in
+`CypherOp.query` strings and `ApiOp.params` values, resolved once at
+execution time before any statement runs.
 
 ### 2.10 BlockAnnotation (Phase 3)
 
@@ -455,13 +463,14 @@ execution, no jumps, and no back-references.
 For each statement at index `i`:
 
 1. **Resolve parameters** -- substitute `$name` references in `CypherOp.query`
-   and `ApiOp.params` with provided or default values (Phase 2).
+   and `ApiOp.params` with provided or default values (Phase 2; not yet
+   implemented -- the executor currently only binds the implicit `$W_IDS`).
 2. **Evaluate condition** -- if `operation.type === 'conditional'`, evaluate
-   the condition against current W and select the `then` or `else` branch
-   (Phase 2).
+   the condition against current W and select the `then` or `else` branch.
 3. **Execute operation** -- dispatch on `operation.type`:
-   - `cypher`: Execute `query` against H via the query facade. Apply `limit`
-     if specified.
+   - `cypher`: Execute `query` against H via `AGEClient._execute_cypher`
+     (the executor does not currently route through `GraphQueryFacade` --
+     see security.md Layer 4). Apply `limit` if specified.
    - `api`: Call the internal service function for `endpoint` with `params`.
    - `conditional`: Execute the selected branch's statements recursively.
 4. **Map result** -- convert the raw query/API response to `WorkingGraph`
