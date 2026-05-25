@@ -621,7 +621,7 @@ Core functionality (API, CLI, MCP) provides complete access to polarity axis ana
 
 - **Feature Documentation:** [Polarity Axis Analysis](../features/polarity-axis-analysis/)
   - [Implementation Plan](../features/polarity-axis-analysis/IMPLEMENTATION_PLAN.md) - Complete technical roadmap
-  - [Experimental Findings](../features/polarity-axis-analysis/FINDINGS.md) - Validation results
+  - [Experimental Findings](../../research/vision-testing/FINDINGS.md) - Validation results
   - [Experimental Code](../features/polarity-axis-analysis/experimental_code/) - Validated prototypes
 - **Research papers:**
   - [Large Concept Models](https://arxiv.org/abs/2412.08821) - Meta AI, Dec 2024

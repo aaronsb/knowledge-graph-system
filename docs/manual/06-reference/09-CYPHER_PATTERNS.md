@@ -116,7 +116,7 @@ LIMIT 30
 Find connections between concepts with various scoring strategies.
 
 > **⚠️ Apache AGE Limitation:** AGE does NOT support Neo4j's `shortestPath()` function.
-> See [GitHub Issue #2162](https://github.com/apache/age/issues/2162) and [ADR-076](../../architecture/ADR-076-pathfinding-optimization.md).
+> See [GitHub Issue #2162](https://github.com/apache/age/issues/2162) and [ADR-076](../../architecture/query-search/ADR-076-pathfinding-optimization.md).
 > Use variable-length patterns with caution - they enumerate ALL paths and have exponential complexity.
 
 ### 1. All Paths with Length Limit (Use with Caution)
@@ -341,7 +341,7 @@ LIMIT 10
 3. **No `shortestPath()` Function:**
    - AGE does NOT support Neo4j's `shortestPath()` or `SHORTEST` keyword
    - See [GitHub Issue #2162](https://github.com/apache/age/issues/2162)
-   - Use application-level BFS for optimal pathfinding (see [ADR-076](../../architecture/ADR-076-pathfinding-optimization.md))
+   - Use application-level BFS for optimal pathfinding (see [ADR-076](../../architecture/query-search/ADR-076-pathfinding-optimization.md))
 
 4. **Variable-Length Path Performance:**
    - Patterns like `-[*1..N]-` enumerate ALL paths (exponential complexity)
@@ -430,7 +430,7 @@ def find_scored_path(
 
 - [Apache AGE Documentation](https://age.apache.org/age-manual/master/intro/overview.html)
 - [Cypher Query Language](https://neo4j.com/docs/cypher-manual/current/)
-- [AGE vs Neo4j Differences](../../architecture/ADR-016-apache-age-migration.md)
+- [AGE vs Neo4j Differences](../../architecture/database-schema/ADR-016-apache-age-migration.md)
 
 ---
 

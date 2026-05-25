@@ -457,7 +457,7 @@ Floyd-Warshall or similar O(n³) pre-computation is infeasible for 100K+ nodes (
 - [Apache AGE GitHub Issue #195 - Variable-length path performance](https://github.com/apache/age/issues/195)
 - [apache-age-dijkstra PyPI package](https://pypi.org/project/apache-age-dijkstra/)
 - [Bidirectional Search Algorithm](https://en.wikipedia.org/wiki/Bidirectional_search)
-- [ADR-016: Apache AGE Migration](./database-schema/ADR-016-apache-age-migration.md)
+- [ADR-016: Apache AGE Migration](../database-schema/ADR-016-apache-age-migration.md)
 
 ## Notes
 

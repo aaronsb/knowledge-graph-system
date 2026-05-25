@@ -72,9 +72,18 @@ class ScanReport:
             self.broken = []
 
 
+_SKIP_DIR_NAMES = {".venv", "venv", "node_modules", ".git", "__pycache__"}
+
+
 def _iter_markdown_files(root: Path) -> Iterable[Path]:
-    """Yield every .md file under ``root`` in deterministic order."""
-    yield from sorted(root.rglob("*.md"))
+    """Yield every .md file under ``root`` in deterministic order, skipping
+    vendored directories (``.venv``, ``node_modules``, etc.) whose markdown
+    files are dependency package metadata, not project documentation.
+    """
+    for path in sorted(root.rglob("*.md")):
+        if any(part in _SKIP_DIR_NAMES for part in path.parts):
+            continue
+        yield path
 
 
 def _extract_links(md_path: Path) -> Iterable[Tuple[int, str]]:

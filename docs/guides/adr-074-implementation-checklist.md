@@ -3,7 +3,7 @@
 **Status:** Accepted
 **Started:** 2025-12-09
 **Completed:** 2025-12-09
-**ADR:** [ADR-074: Platform Admin Role](./ADR-074-platform-admin-role.md)
+**ADR:** [ADR-074: Platform Admin Role](../architecture/authentication-security/ADR-074-platform-admin-role.md)
 
 ## Phase 1: Database Migration ✅ COMPLETE
 

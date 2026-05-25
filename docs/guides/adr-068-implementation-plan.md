@@ -9,7 +9,7 @@
 
 ## Quick Links
 
-- [ADR-068](../architecture/ADR-068-source-text-embeddings.md)
+- [ADR-068](../architecture/ai-embeddings/ADR-068-source-text-embeddings.md)
 - [Feature Branch](https://github.com/aaronsb/knowledge-graph-system/tree/feature/adr-068-source-embeddings)
 
 ---
@@ -562,7 +562,7 @@ The system was ingesting content and extracting concepts before source embedding
 
 ### Documents This Plan Tracks
 
-- [ADR-068: Source Text Embeddings](../architecture/ADR-068-source-text-embeddings.md)
+- [ADR-068: Source Text Embeddings](../architecture/ai-embeddings/ADR-068-source-text-embeddings.md)
 - Feature branch: `feature/adr-068-source-embeddings` (merged to main)
 - PR #151: ADR-068 Phase 4 - Unified Embedding Regeneration
 

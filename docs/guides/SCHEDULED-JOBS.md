@@ -393,8 +393,8 @@ Edit `VocabConsolidationLauncher.check_conditions()` in `api/api/launchers/vocab
 
 ## Related Documentation
 
-- **[ADR-050: Scheduled Jobs System](../architecture/ADR-050-scheduled-jobs-system.md)** - Technical architecture and design decisions
-- **[ADR-065: Vocabulary-Based Provenance](../architecture/ADR-065-vocabulary-based-provenance-relationships.md)** - Epistemic status measurement design
+- **[ADR-050: Scheduled Jobs System](../architecture/infrastructure/ADR-050-scheduled-jobs-system.md)** - Technical architecture and design decisions
+- **[ADR-065: Vocabulary-Based Provenance](../architecture/vocabulary-relationships/ADR-065-vocabulary-based-provenance-relationships.md)** - Epistemic status measurement design
 - **[ADR-200: Annealing Ontologies](../architecture/database-schema/ADR-200-annealing-ontologies-self-organizing-knowledge-graph-structure.md)** - Self-organizing graph structure design
 - **[Vocabulary Lifecycle Guide](./VOCABULARY_LIFECYCLE.md)** - Vocabulary consolidation flow and grounded LLM decisions
 - **[Epistemic Status Filtering Guide](./EPISTEMIC-STATUS-FILTERING.md)** - Using epistemic status in queries

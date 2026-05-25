@@ -221,6 +221,6 @@ The infrastructure (auth, RBAC, API, visualizer) exists to support the recursive
 
 Ready to try it? Start with [Quickstart](../../guides/QUICKSTART.md) to get running in 5 minutes.
 
-Want to understand the architecture? See [Architecture Overview](../../architecture/ARCHITECTURE_OVERVIEW.md) and [ADR-016: Apache AGE Migration](../../architecture/ADR-016-apache-age-migration.md).
+Want to understand the architecture? See [Architecture Overview](../../reference/ARCHITECTURE_OVERVIEW.md) and [ADR-016: Apache AGE Migration](../../architecture/database-schema/ADR-016-apache-age-migration.md).
 
-Curious about the recursive upsert pattern in depth? See [Recursive Upsert Architecture](../../architecture/RECURSIVE_UPSERT_ARCHITECTURE.md) (referenced in the knowledge graph) and [Enrichment Journey](../06-reference/07-ENRICHMENT_JOURNEY.md) for a real example.
+Curious about the recursive upsert pattern in depth? See [Recursive Upsert Architecture](../../reference/RECURSIVE_UPSERT_ARCHITECTURE.md) (referenced in the knowledge graph) and [Enrichment Journey](../06-reference/07-ENRICHMENT_JOURNEY.md) for a real example.

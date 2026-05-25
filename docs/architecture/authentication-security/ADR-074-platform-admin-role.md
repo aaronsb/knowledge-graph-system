@@ -574,6 +574,6 @@ Use database triggers to prevent deletion of platform_admin permissions.
 
 ## Related ADRs
 
-- [ADR-027: Authentication](./ADR-027-authentication.md) - User authentication
+- [ADR-027: Authentication](ADR-027-user-management-api.md) - User authentication
 - [ADR-028: Dynamic RBAC System](./ADR-028-dynamic-rbac-system.md) - Core RBAC implementation
-- [ADR-031: API Key Management](./ADR-031-api-key-management.md) - Encrypted API key storage
+- [ADR-031: API Key Management](ADR-031-encrypted-api-key-storage.md) - Encrypted API key storage

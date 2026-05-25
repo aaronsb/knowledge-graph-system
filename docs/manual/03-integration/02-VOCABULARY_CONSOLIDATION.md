@@ -1031,8 +1031,8 @@ RETURN c1, c2
 
 ## Related Documentation
 
-- [ADR-032: Automatic Edge Vocabulary Expansion](../../architecture/ADR-032-automatic-edge-vocabulary-expansion.md) - Architecture decision for vocabulary management
-- [ADR-025: Dynamic Relationship Vocabulary](../../architecture/ADR-025-dynamic-relationship-vocabulary.md) - Original vocabulary expansion design
+- [ADR-032: Automatic Edge Vocabulary Expansion](../../architecture/vocabulary-relationships/ADR-032.1-automatic-edge-vocabulary-expansion.md) - Architecture decision for vocabulary management
+- [ADR-025: Dynamic Relationship Vocabulary](../../architecture/vocabulary-relationships/ADR-025-dynamic-relationship-vocabulary.md) - Original vocabulary expansion design
 - [CLI Usage Guide](../01-getting-started/02-CLI_USAGE.md) - Full CLI command reference
 - [Schema Reference](../06-reference/01-SCHEMA_REFERENCE.md) - Database schema for relationship vocabulary
 

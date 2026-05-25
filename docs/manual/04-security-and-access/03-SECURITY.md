@@ -702,9 +702,9 @@ ag_catalog.system_api_keys
 
 ## Architecture References
 
-- **[ADR-031](../../architecture/ADR-031-encrypted-api-key-storage.md)** - Encrypted API key storage design
-- **[ADR-027](../../architecture/ADR-027-user-management-api.md)** - Authentication system
-- **[ADR-028](../../architecture/ADR-028-dynamic-rbac-system.md)** - Role-based access control
+- **[ADR-031](../../architecture/authentication-security/ADR-031-encrypted-api-key-storage.md)** - Encrypted API key storage design
+- **[ADR-027](../../architecture/authentication-security/ADR-027-user-management-api.md)** - Authentication system
+- **[ADR-028](../../architecture/authentication-security/ADR-028-dynamic-rbac-system.md)** - Role-based access control
 - **[01-AUTHENTICATION.md](01-AUTHENTICATION.md)** - User authentication guide
 
 ---

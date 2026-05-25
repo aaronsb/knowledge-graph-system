@@ -253,7 +253,7 @@ kg admin restore             → POST /admin/restore
 
 ## Related Documentation
 
-- [Authentication (ADR-027)](../../architecture/authentication-security/ADR-027-authentication.md)
-- [RBAC (ADR-028)](../../architecture/authentication-security/ADR-028-rbac.md)
-- [API Key Management (ADR-031)](../../architecture/authentication-security/ADR-031-api-key-management.md)
+- [Authentication (ADR-027)](../../architecture/authentication-security/ADR-027-user-management-api.md)
+- [RBAC (ADR-028)](../../architecture/authentication-security/ADR-028-dynamic-rbac-system.md)
+- [API Key Management (ADR-031)](../../architecture/authentication-security/ADR-031-encrypted-api-key-storage.md)
 - [Platform Admin Role (ADR-074)](../../architecture/authentication-security/ADR-074-platform-admin-role.md) - Fine-grained permission model

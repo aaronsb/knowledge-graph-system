@@ -574,8 +574,8 @@ tail -f ~/Library/Logs/Claude/mcp*.log
 
 ## Related Documentation
 
-- **ADR-054**: [OAuth 2.0 Unified Architecture](../../architecture/ADR-054-oauth-client-management.md)
-- **ADR-027**: [User Management API](../../architecture/ADR-027-user-management-api.md)
+- **ADR-054**: [OAuth 2.0 Unified Architecture](../../architecture/authentication-security/ADR-054-oauth-client-management.md)
+- **ADR-027**: [User Management API](../../architecture/authentication-security/ADR-027-user-management-api.md)
 - **Password Recovery**: [04-PASSWORD_RECOVERY.md](04-PASSWORD_RECOVERY.md)
 - **RBAC**: [02-RBAC.md](02-RBAC.md)
 

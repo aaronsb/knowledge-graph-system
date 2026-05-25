@@ -3,10 +3,10 @@
 **Purpose:** Guide for developers working on the `kg` TypeScript CLI client
 
 **Related ADRs:**
-- [ADR-027: User Management API](../architecture/ADR-027-user-management-api.md) - Server-side authentication
-- [ADR-029: CLI Theory of Operation](../architecture/ADR-029-cli-theory-of-operation.md) - Command structure
-- [ADR-031: Encrypted API Key Storage](../architecture/ADR-031-encrypted-api-key-storage.md) - API key management
-- [ADR-054: OAuth Client Management](../architecture/ADR-054-oauth-client-management.md) - OAuth flows
+- [ADR-027: User Management API](../architecture/authentication-security/ADR-027-user-management-api.md) - Server-side authentication
+- [ADR-029: CLI Theory of Operation](../architecture/user-interfaces/ADR-029-cli-theory-of-operation.md) - Command structure
+- [ADR-031: Encrypted API Key Storage](../architecture/authentication-security/ADR-031-encrypted-api-key-storage.md) - API key management
+- [ADR-054: OAuth Client Management](../architecture/authentication-security/ADR-054-oauth-client-management.md) - OAuth flows
 
 ---
 
