@@ -18,59 +18,87 @@ See [ADR-044](../architecture/ai-embeddings/ADR-044-probabilistic-truth-converge
 
 ## System Architecture
 
+The platform runs as five containers managed via `operator.sh` / the
+`kg-operator` container (see [OPERATOR_ARCHITECTURE.md](OPERATOR_ARCHITECTURE.md)):
+
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │                    Document Ingestion                         │
-│  .txt/.pdf files → API Server → Background Jobs → AGE        │
+│  .txt/.pdf/.md/.docx → API → Background Workers → AGE        │
 └──────────────────────────────────────────────────────────────┘
                             ↓
 ┌──────────────────────────────────────────────────────────────┐
-│                   FastAPI Server (Phase 1)                    │
-│  • REST endpoints (ingest, jobs)                              │
-│  • Job queue (in-memory + SQLite)                             │
+│                kg-api  (FastAPI, multi-worker)                │
+│  • REST endpoints (ingest, jobs, queries, ontology, ...)     │
+│  • Job queue (PostgreSQL — kg_api.ingestion_jobs, ADR-100)   │
 │  • Content deduplication (SHA-256)                            │
-│  • Placeholder auth (X-Client-ID, X-API-Key)                  │
+│  • OAuth 2.0 + JWT auth (ADR-054)                             │
 └──────────────────────────────────────────────────────────────┘
                             ↓
 ┌──────────────────────────────────────────────────────────────┐
-│         Apache AGE + PostgreSQL Graph Database                │
-│  • Concepts (nodes with vector embeddings)                    │
-│  • Instances (evidence quotes)                                │
-│  • Sources (document paragraphs)                              │
-│  • Relationships (IMPLIES, SUPPORTS, CONTRADICTS, etc.)       │
+│   kg-postgres  (PostgreSQL 18 + Apache AGE + graph_accel)     │
+│  • Apache AGE graph (Concepts, Instances, Sources, edges)     │
+│  • Relational schemas: kg_api, kg_auth, kg_logs               │
+│  • Artifact metadata (kg_api.artifacts) + saved queries       │
 └──────────────────────────────────────────────────────────────┘
                             ↓
-                    ┌───────┴───────────┐
-                    │                   │
-         ┌──────────▼─────┐  ┌──────────▼─────────┐
-         │  TypeScript    │  │  MCP Server        │
-         │  CLI (kg)      │  │  (Phase 2)         │
-         │  • Ingest      │  │  • Claude Desktop  │
-         │  • Jobs        │  │  • Same codebase   │
-         └────────────────┘  └────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│   kg-garage  (Garage S3, dxflrs/garage v1.0.0)                │
+│  • Original documents (sources/{ontology}/{hash}.{ext})       │
+│  • Original images (images/{ontology}/...)                    │
+│  • Large computed artifacts (>10KB)                           │
+└──────────────────────────────────────────────────────────────┘
+                            ↓
+              ┌─────────────┼─────────────────┐
+              ▼             ▼                 ▼
+       ┌────────────┐ ┌────────────┐ ┌──────────────────┐
+       │  kg-web    │ │ kg CLI     │ │  MCP Server      │
+       │ (React/    │ │ (TypeScript│ │  (TypeScript,    │
+       │  Vite, on  │ │ in cli/)   │ │  same cli/ pkg   │
+       │  nginx)    │ │ → REST API │ │  → REST API)     │
+       └────────────┘ └────────────┘ └──────────────────┘
+
+  ┌────────────────────────────────────────────────────────────┐
+  │  kg-operator  (Python + docker.io CLI, manages siblings    │
+  │  via mounted /var/run/docker.sock; runs configure.py and   │
+  │  migrate-db.sh on demand)                                  │
+  └────────────────────────────────────────────────────────────┘
 ```
 
 ## Core Components
 
 ### 1. API Server Layer (`api/app/`)
 
-**FastAPI REST Server** (Phase 1):
-- **Routes**: Ingestion (`POST /ingest`), job management (`GET/POST /jobs/*`)
-- **Services**: Job queue (abstract interface), content hasher (deduplication)
-- **Workers**: Background ingestion processing with progress updates
-- **Models**: Pydantic request/response schemas matching TypeScript client
-- **Middleware**: Placeholder authentication (X-Client-ID, X-API-Key headers)
+**FastAPI REST Server**:
+- **Routes** (`api/app/routes/`): ingestion, image ingestion, jobs, queries,
+  database, ontology, vocabulary, vocabulary_config, embedding, extraction,
+  oauth, admin, admin_workers, rbac, sources, projection, artifacts, grants,
+  query_definitions, documents, concepts, edges, graph, storage_admin,
+  programs, models, epochs, auth.
+- **Services** (`api/app/services/`): job queue, job scheduler, lane manager,
+  worker registry, batch, content hasher, vocabulary manager, embedding worker,
+  epistemic status service, program executor/validator/dispatch, audit,
+  diversity/confidence analyzers, etc.
+- **Workers** (`api/app/workers/`): Background ingestion + embedding workers
+  with progress updates persisted to PostgreSQL.
+- **Models** (`api/app/models/`): Pydantic request/response schemas.
+- **Middleware** (`api/app/middleware/`): OAuth 2.0 / JWT auth dependencies
+  (ADR-054). The legacy `X-Client-ID` / `X-API-Key` placeholder path remains
+  in `middleware/auth.py` but is gated by `AUTH_ENABLED` (default `false`)
+  and is not the production auth model.
 
 **Job Queue Pattern**:
 ```python
-# Abstract interface for Phase 1 → Phase 2 migration
+# Abstract interface
 class JobQueue(ABC):
     def enqueue(job_type, job_data) -> job_id
     def get_job(job_id) -> JobStatus
     def update_job(job_id, updates) -> None
 
-# Phase 1: InMemoryJobQueue (SQLite persistence)
-# Phase 2: RedisJobQueue (distributed workers)
+# Current implementation: PostgreSQLJobQueue
+# - Backed by kg_api.ingestion_jobs (schema/00_baseline.sql)
+# - Database-driven dispatch via worker_lanes + advisory locks (ADR-100)
+# - Replaces earlier SQLite-backed prototype
 ```
 
 **Content Deduplication**:
@@ -86,12 +114,28 @@ See [ADR-012](../architecture/infrastructure/ADR-012-api-server-architecture.md)
 Modular abstraction for LLM providers:
 
 **OpenAI Provider:**
-- Extraction: GPT-4o, GPT-4o-mini, o1-preview, o1-mini
+- Extraction: GPT-4o, GPT-4o-mini, GPT-4-turbo, o1-preview, o1-mini
 - Embeddings: text-embedding-3-small, text-embedding-3-large
 
 **Anthropic Provider:**
-- Extraction: Claude Sonnet 4.5, Claude 3.5 Sonnet, Claude 3 Opus
-- Embeddings: Delegates to OpenAI (Anthropic doesn't provide embeddings)
+- Extraction: Claude Sonnet 4 family, Claude 3.5 Sonnet, Claude 3.5 Haiku,
+  Claude 3 Opus, Claude 3 Sonnet, Claude 3 Haiku
+- Embeddings: Delegates to OpenAI / local provider (Anthropic doesn't provide
+  embeddings)
+
+**OpenRouter Provider:**
+- Routes namespaced model IDs (e.g. `openai/gpt-4o`, `anthropic/claude-sonnet-4`)
+  through a single endpoint.
+
+**Ollama Provider:**
+- Local inference (Mistral, Llama, Qwen, GPT-OSS reasoning models, etc.)
+- Honours configurable thinking-mode levels for reasoning models.
+
+**Local Embedding / llama.cpp Providers:**
+- `LocalEmbeddingProvider` runs sentence-transformer models in-process via
+  HuggingFace (cached in the `hf_cache` volume).
+- `LlamaCppProvider` reuses the OpenAI-compatible interface for a llama.cpp
+  server.
 
 ### 3. Ingestion Library (`api/app/lib/`)
 
@@ -116,25 +160,33 @@ Modular abstraction for LLM providers:
    - Update job progress (percent, concepts created)
 5. **Complete**: Worker writes final stats to job result
 
-### 4. Client Layer (`client/`)
+### 4. Client Layer (`cli/`)
 
-**Unified TypeScript Client** (CLI + MCP in one codebase):
+**Unified TypeScript Client** (CLI + MCP server in one codebase, `cli/`):
 
 **Shared Components**:
-- `src/types/` - TypeScript interfaces matching FastAPI Pydantic models
-- `src/api/client.ts` - HTTP client wrapping REST API endpoints
-- Configuration: Environment variables (`KG_API_URL`, `KG_CLIENT_ID`)
+- `cli/src/types/` - TypeScript interfaces matching FastAPI Pydantic models
+- `cli/src/api/` - HTTP client wrapping REST API endpoints
+- `cli/src/lib/` - Shared utilities (auth, config, formatting)
+- Configuration: environment variables (`KG_API_URL`, `KG_CLIENT_ID`, OAuth
+  client config) and the `kg config` CLI command
 
-**CLI Mode** (Phase 1 - Complete):
-- Commands: `kg health`, `kg ingest file/text`, `kg jobs status/list/cancel`
-- User experience: Color-coded output, progress spinners, duplicate detection
-- Installation: Wrapper script (`scripts/kg-cli.sh`), direct node, or npm link
+**CLI Mode** (`cli/src/cli/`):
+- Commands: `kg health`, `kg config`, `kg ingest`, `kg search`,
+  `kg database`, `kg ontology`, `kg vocabulary`, `kg admin`
+- User experience: color-coded output, progress spinners, OAuth login flow,
+  duplicate detection
+- Installation: `cd cli && npm run build && ./install.sh` (publishes to npm
+  via `publish.sh cli`)
 
-**MCP Server Mode** (Phase 2 - Future):
-- Entry point detects `MCP_SERVER_MODE=true` environment variable
-- Runs as MCP server for Claude Desktop/Code
-- Tools use same API client as CLI
-- Claude Desktop config: Node.js + environment variables
+**MCP Server Mode** (`cli/src/mcp/`, entry `cli/src/mcp-server.ts`):
+- Runs as a Model Context Protocol server for Claude Desktop / Claude Code
+- 19 tools across 6 categories (Search & Query, Database, Ontology, Job
+  Management, Ingestion, System) — see `docs/reference/mcp/`
+- Tools reuse the same REST client as the CLI
+
+**FUSE Driver** (`fuse/`, separately released to PyPI as `kg-fuse`): mounts
+the knowledge graph as a read-only filesystem for interactive exploration.
 
 See [ADR-013](../architecture/user-interfaces/ADR-013-unified-typescript-client.md) for detailed design.
 
@@ -189,32 +241,30 @@ See [ADR-013](../architecture/user-interfaces/ADR-013-unified-typescript-client.
 - `confidence` (float): LLM confidence score (0.0-1.0)
 - `category` (string): Semantic category for query filtering
 
-### 6. Legacy Query Interfaces
+### 6. Legacy Components (removed)
 
-**Legacy MCP Server (`mcp-server/`):**
-- Direct Apache AGE database access
-- Claude Desktop integration
-- Tools: search_concepts, get_concept_details, find_related_concepts, etc.
-- **Status**: Will migrate to unified TypeScript client (Phase 2)
-
-**Note**: The legacy Python CLI (`scripts/cli.py`) has been deprecated and removed in favor of the unified TypeScript client (`kg` command).
+The earlier standalone Python CLI (`scripts/cli.py`) and standalone Python MCP
+server (`mcp-server/`) referenced in older drafts have been removed. All
+client-side surface area is now provided by the unified TypeScript package in
+`cli/`, which serves both the `kg` CLI and the MCP server entry point.
 
 ## Data Flow
 
 ### Ingestion Flow (Current Architecture)
 
 ```
-Client (kg CLI)
+Client (kg CLI, web UI, or MCP)
   ↓ POST /ingest (file + ontology)
-API Server
+API Server (kg-api)
+  ├→ Authenticate (OAuth 2.0 / JWT, ADR-054)
   ├→ Calculate SHA-256 hash
+  ├→ Store original file in Garage (sources/{ontology}/{hash}.{ext})
   ├→ Check for duplicate (hash + ontology)
   │   ├→ Duplicate found: return existing job result
   │   └→ No duplicate: continue
-  ├→ Create job in SQLite
-  ├→ Enqueue to in-memory queue
+  ├→ Insert job into kg_api.ingestion_jobs (PostgreSQL)
   ├→ Return job_id immediately
-  └→ Background worker starts
+  └→ Background worker (lane dispatcher) claims the job via advisory lock
 
 Background Worker
   ↓ Parse & chunk document
@@ -228,16 +278,18 @@ Chunks with context overlap
   │
   ├→ Generate embeddings (OpenAI)
   │
-  ├→ Match existing concepts (vector search)
+  ├→ Match existing concepts (two-tier vector search, see
+  │   RECURSIVE_UPSERT_ARCHITECTURE.md)
   │   ├→ similarity ≥ 0.85: use existing
+  │   ├→ similarity ≥ 0.75 with label boost: use existing
   │   └→ else: create new
   │
   ├→ Upsert to Apache AGE
   │   ├→ CREATE/UPDATE concepts
-  │   ├→ CREATE instances
-  │   └→ CREATE relationships
+  │   ├→ CREATE instances (deduped by quote+source)
+  │   └→ CREATE relationships (canonical types via vocabulary, ADR-032)
   │
-  └→ Update job progress (SQLite)
+  └→ Update job progress (PostgreSQL)
       └→ percent, chunks_processed, concepts_created
 
 Client polls GET /jobs/{job_id}
@@ -266,44 +318,37 @@ Return structured results
 
 ## Configuration
 
-### Environment Variables
+### Two-tier configuration model
 
-**API Server** (`.env`):
+1. **Infrastructure secrets** live in `.env` (generated by
+   `./operator.sh init`, never edited by hand). Required keys include
+   `ENCRYPTION_KEY` (Fernet, used to encrypt application config),
+   `OAUTH_SIGNING_KEY`, `POSTGRES_PASSWORD`, `INTERNAL_KEY_SERVICE_SECRET`,
+   and `GARAGE_RPC_SECRET`. Database connection vars (`POSTGRES_HOST`,
+   `POSTGRES_PORT`, `POSTGRES_DB`, `POSTGRES_USER`) and Garage endpoint
+   (`GARAGE_S3_ENDPOINT`) are also resolved from `.env`.
+2. **Application config** (AI provider, model selections, encrypted API keys,
+   admin password, rate limits, etc.) is stored in PostgreSQL and managed
+   through the operator container:
+   ```
+   ./operator.sh shell                    # interactive shell
+   ./operator.sh ai-provider              # configure extraction provider
+   ./operator.sh embedding                # configure embedding provider
+   ./operator.sh api-key                  # store/rotate encrypted API keys
+   ./operator.sh admin                    # admin user management
+   ```
+
+### TypeScript client (CLI + MCP)
+
 ```bash
-# AI Provider Selection
-AI_PROVIDER=openai  # or "anthropic"
-
-# OpenAI
-OPENAI_API_KEY=sk-...
-OPENAI_EXTRACTION_MODEL=gpt-4o
-OPENAI_EMBEDDING_MODEL=text-embedding-3-small
-
-# Anthropic (optional)
-ANTHROPIC_API_KEY=sk-ant-...
-ANTHROPIC_EXTRACTION_MODEL=claude-sonnet-4-20250514
-
-# PostgreSQL + Apache AGE
-POSTGRES_HOST=localhost
-POSTGRES_PORT=5432
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=password
-POSTGRES_DB=knowledge_graph
-
-# Authentication (Phase 1: disabled)
-AUTH_ENABLED=false
-AUTH_REQUIRE_CLIENT_ID=false
-AUTH_API_KEYS=  # Comma-separated keys for Phase 2
-```
-
-**TypeScript Client**:
-```bash
-# API connection
+# REST API endpoint
 KG_API_URL=http://localhost:8000
-KG_CLIENT_ID=my-client
-KG_API_KEY=  # Optional, for Phase 2
 
-# Mode selection (CLI vs MCP)
-MCP_SERVER_MODE=false  # or "true" for MCP server mode
+# OAuth client identity (managed by `kg config` / login flow)
+KG_CLIENT_ID=...
+
+# MCP server mode is selected by the entry point (cli/src/mcp-server.ts);
+# the CLI itself is launched via the `kg` binary in the same package.
 ```
 
 ## Concept Matching Algorithm
@@ -326,24 +371,25 @@ Multi-stage matching to prevent duplicates:
 
 ## Scalability Considerations
 
-### Phase 1 (Current)
-- **API Server**: Single FastAPI instance with BackgroundTasks
-- **Job Queue**: In-memory dict + SQLite persistence
-- **Database**: Single PostgreSQL + Apache AGE instance
-- **Limitations**: No distributed workers, no multi-instance API
-
-### Phase 2 (Planned)
-- **Job Queue**: Redis-based distributed queue
-- **Workers**: Separate worker processes (can scale horizontally)
-- **API Server**: Multiple instances behind load balancer
-- **Real-time Updates**: WebSocket/SSE for job progress
-- **Authentication**: Full API key validation and rate limiting
+### Current
+- **API Server**: FastAPI under uvicorn with multiple workers (default `--workers 2`
+  in dev; see `docker-compose.dev.yml`). A single PostgreSQL advisory lock
+  elects one worker as the dispatch leader (ADR-100).
+- **Job Queue**: `PostgreSQLJobQueue` backed by `kg_api.ingestion_jobs` with
+  database-driven dispatch via `kg_api.worker_lanes` and skip-locked claim
+  queries (ADR-100).
+- **Database**: Single PostgreSQL 18 instance with Apache AGE + the
+  `graph_accel` extension (ADR-201).
+- **Object storage**: Single Garage v1.0.0 node (cooperative governance,
+  S3-compatible).
+- **Authentication**: OAuth 2.0 + JWT (ADR-054); RBAC with user/group
+  permissions (ADR-082).
 
 ### Future Enhancements
+- Multi-node Garage cluster for HA storage
 - PostgreSQL replication for HA
-- Apache AGE performance optimization
-- Dedicated vector database (pgvector, Pinecone, Weaviate)
-- Incremental updates (avoid re-processing)
+- pgvector adoption for native vector similarity (ADR-072)
+- HNSW indexing to replace the current full-scan match path (ADR-055)
 - Caching layer for query results
 
 ## Security

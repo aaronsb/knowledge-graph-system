@@ -33,8 +33,10 @@ operator.sh (thin shim on HOST, ~200 lines)
 kg-operator container (has ALL logic)
     │
     ├─► docker.io CLI (controls sibling containers via socket)
+    ├─► docker compose v2 plugin (for compose operations)
     ├─► postgresql-client (psql for migrations)
     ├─► /workspace/operator/lib/*.sh scripts
+    ├─► /workspace/operator/database/*.sh (migrate, backup, restore)
     └─► /workspace/operator/configure.py
 ```
 
@@ -57,21 +59,25 @@ kg-operator container (has ALL logic)
 
 | Command | Runs On | Uses | Description |
 |---------|---------|------|-------------|
-| `init` | Host | `lib/guided-init.sh` | Interactive setup (dev mode) |
-| `start` | Host | `lib/start-infra.sh`, `lib/start-app.sh` | Start platform |
-| `stop` | Host | `lib/stop.sh` | Stop platform |
-| `restart` | Host | stop + start | Restart platform |
-| `upgrade` | Host | `lib/upgrade.sh` | Pull images, migrate, restart |
-| `update` | Host | docker compose pull | Pull images only |
-| `status` | Host | docker compose ps | Show container status |
-| `logs` | Host | docker compose logs | View logs |
-| `shell` | Container | docker exec | Enter operator container |
-| `teardown` | Host | `lib/teardown.sh` | Remove platform |
-| `recert` | Host | acme.sh | Renew SSL certificates |
-| `admin` | Container | configure.py | Admin user management |
-| `ai-provider` | Container | configure.py | Configure AI extraction |
-| `embedding` | Container | configure.py | Configure embeddings |
-| `api-key` | Container | configure.py | Manage API keys |
+| `init` | Host | `lib/guided-init.sh` or `lib/headless-init.sh` | Interactive / headless setup (repo mode only) |
+| `start` | Host | `cmd_start_infra` + container `database/migrate-db.sh` | Start platform (infra + migrations + app) |
+| `stop` | Host | docker compose stop | Stop platform or specific service (`--keep-infra` available) |
+| `restart` | Host | docker compose restart | Restart a service (or `all`) |
+| `upgrade` | Host | inline upgrade flow + `check_pg_major_compatibility` | Pull/build, migrate, restart with PG major-version safety gate |
+| `update` | Host | docker compose pull / build | Pull (or build, in local mode) images only |
+| `status` | Host | docker ps | Show container status |
+| `versions` | Host | OCI labels + GHCR API | Show running/local/remote image versions |
+| `logs` | Host | docker compose logs | View logs (default service: api) |
+| `shell` | Container | `docker exec -it kg-operator /bin/bash` | Enter operator container |
+| `teardown` | Host | docker compose down (`--full` adds `-v`) | Remove containers (optionally volumes) |
+| `recert` | Container | `operator/lib/recert.sh` | Renew SSL certificates |
+| `admin` | Container | configure.py admin | Admin user management |
+| `ai-provider` | Container | configure.py ai-provider | Configure AI extraction |
+| `embedding` | Container | configure.py embedding | Configure embeddings |
+| `api-key` | Container | configure.py api-key | Manage API keys |
+| `query` / `pg` | Host | docker compose exec postgres psql | Run an SQL query against PostgreSQL |
+| `garage` | Container | `operator/lib/garage-manager.sh` | Manage Garage storage (status, init, repair) |
+| `self-update` | Host | `docker cp` + `docker pull` | Update operator.sh from container + pull latest operator image |
 
 ### Execution Locations
 
@@ -96,29 +102,39 @@ kg-operator container (has ALL logic)
 │  ┌────────────────────────────────────────────────────────────┐ │
 │  │                    kg-operator CONTAINER                    │ │
 │  │                                                             │ │
-│  │   configure.py ─── Direct database/API access               │ │
-│  │   /app/operator/lib/*.sh ─── Baked into image               │ │
+│  │   /workspace/operator/configure.py ── Database config       │ │
+│  │   /workspace/operator/lib/*.sh ─────── Helper scripts       │ │
+│  │   /workspace/operator/database/*.sh ── Migrations/backups   │ │
+│  │   /etc/kg/operator.sh ──────────────── Trusted shim copy    │ │
 │  │                                                             │ │
+│  │   WORKDIR is /workspace. In dev mode the host repo is       │ │
+│  │   bind-mounted to /workspace; in standalone mode the same   │ │
+│  │   paths are baked into the image (no separate /app/         │ │
+│  │   prefix).                                                  │ │
 │  └────────────────────────────────────────────────────────────┘ │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
 ## Issues with Current Architecture
 
-### 1. Script Duplication
-- `operator/lib/*.sh` exists in both:
+### 1. Script Duplication (standalone installs)
+- In **standalone** installs, `operator/lib/*.sh` exists in two places:
   - Host filesystem (downloaded by install.sh)
   - Operator container image (baked in at build)
-- Must keep both in sync
+- They must be kept in sync.
+- In **dev** installs the host repo is bind-mounted to `/workspace`, so the
+  container sees the same files as the host and there is no duplication.
 
 ### 2. Permission Problems
 - install.sh downloads scripts via curl (no execute bit)
 - Fixed by adding chmod, but fragile
 
 ### 3. Mixed Execution Model
-- Some commands run on host, some in container
-- Confusing mental model
-- Host scripts need docker socket access
+- Some commands run on host (start/stop/restart/upgrade/teardown/update/status/
+  versions/logs/query), others in container (admin/ai-provider/embedding/
+  api-key/garage/recert/shell).
+- Host scripts need Docker socket access via the local Docker CLI; container
+  scripts use the mounted `/var/run/docker.sock` to manage sibling containers.
 
 ## Proposed Architecture (Future)
 
@@ -197,11 +213,30 @@ knowledge-graph/
 
 ### Baked into kg-operator Container Image
 ```
-/app/
+/workspace/                          # WORKDIR (also bind-mounted in dev mode)
 ├── operator/
 │   ├── configure.py
-│   └── lib/*.sh
-└── schema/
-    ├── 00_baseline.sql
-    └── migrations/*.sql
+│   ├── lib/*.sh                     # common, start-*, stop, upgrade, teardown,
+│   │                                # garage-manager, guided-init, headless-init,
+│   │                                # init-secrets, image-tag, operator-help
+│   └── database/                    # migrate-db.sh, backup-database.sh,
+│                                    # restore-database.sh
+├── api/app/lib/                     # Subset of API libs imported by configure.py
+├── schema/
+│   ├── 00_baseline.sql
+│   ├── 11_graph_accel.sql
+│   ├── migrations/*.sql             # Forward migrations (numbered)
+│   └── migrations-warm/*.sql        # Warm-cluster migrations
+└── scripts/development/             # Diagnostics for shell sessions
+
+/etc/kg/
+└── operator.sh                      # Trusted copy for self-update extraction
 ```
+
+### File path note: `/app/` vs `/workspace/`
+
+The operator container's `WORKDIR` is `/workspace`. Earlier drafts of this
+document referenced `/app/operator/...`; that path does not exist in the
+shipping image. All operator code (scripts, configure.py, database tools) lives
+under `/workspace/operator/`, which is what `operator.sh` invokes via
+`docker exec kg-operator ...`.

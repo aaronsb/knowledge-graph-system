@@ -83,21 +83,34 @@ IF extracted concept_id exists in graph:
 This happens when the LLM has seen similar text before and predicts an existing `concept_id`. We trust the LLM's judgment here.
 
 ### Stage 2: Vector Similarity Search (Primary)
+
+The current code (`api/app/lib/ingestion.py`, `api/app/lib/age_client/query.py`)
+uses **two-tier matching** to avoid duplicates when the same concept is
+described differently:
+
 ```
-1. Embed new concept: label + search_terms → 1536-dim vector
+1. Embed new concept: label + description + search_terms → embedding vector
+   (dimensionality depends on the configured embedding model — 1536 for
+   text-embedding-3-small, 768 for nomic-style local models, etc.)
 2. Cosine similarity against ALL existing concept embeddings
-3. IF max_similarity > 0.85:
-    → Use existing concept (semantic match)
-    → Confidence: similarity_score
+   (vector_search() called with threshold=0.75 to catch label-boosted matches)
+3. Decide a match:
+   a. similarity ≥ 0.85                        → match (strict tier)
+   b. 0.75 ≤ similarity < 0.85 AND labels
+      are identical or one contains the other  → match (label-boosted tier)
+   c. otherwise                                 → no match, create new
 ```
 
 This is the **core of the pattern**. Vector similarity captures semantic equivalence:
 - "linear scanning system" matches "sequential attention mechanism"
 - "human-directed evolution" matches "genetic self-modification"
 
-The threshold (0.85) balances:
+The strict threshold (0.85) balances:
 - **Higher threshold (>0.90):** Fewer merges, more duplicates, safer
 - **Lower threshold (<0.80):** More merges, potential false positives, aggressive
+
+The label-boosted tier (0.75) catches paraphrased descriptions of an
+identically-named concept that the strict threshold would otherwise miss.
 
 ### Stage 3: Create New Concept
 ```
