@@ -184,9 +184,10 @@ echo -e "  ${GREEN}[2] Linux / Windows WSL2 with NVIDIA GPU${NC}"
 echo "      • Auto-detects NVIDIA GPU (CUDA acceleration if available)"
 echo "      • Falls back to CPU if no NVIDIA GPU found"
 echo ""
-echo -e "  ${GREEN}[3] Linux with AMD GPU (ROCm wheels)${NC}"
-echo "      • Downloads PyTorch ROCm 6.x wheels"
-echo "      • For systems with ROCm 6.x installed"
+echo -e "  ${GREEN}[3] Linux with AMD GPU (ROCm 6.x — preview)${NC}"
+echo "      • Pre-built ROCm 6.x wheel image not yet published (ADR-101)"
+echo "      • Falls back to CPU embeddings via :latest until variant ships"
+echo "      • For ROCm 7.x hosts choose [4] instead"
 echo ""
 echo -e "  ${GREEN}[4] Linux with AMD GPU (host ROCm)${NC}"
 echo "      • Uses host's ROCm and PyTorch installation"
@@ -308,15 +309,11 @@ if [ "$GPU_MODE" = "auto" ]; then
     GPU_MODE=$(detect_nvidia_gpu)
 fi
 
-# ADR-101: derive kg-api image tag from GPU_MODE so the GHCR overlay pulls
-# the matching variant (rocm60/rocm61/rocm72-host). common.sh's
-# load_operator_config also derives this, but persisting it here makes the
-# choice visible in .operator.conf and survives env-resets.
-case "$GPU_MODE" in
-    amd)        KG_API_IMAGE_TAG="${ROCM_VERSION:-rocm60}" ;;
-    amd-host)   KG_API_IMAGE_TAG="rocm72-host" ;;
-    *)          KG_API_IMAGE_TAG="latest" ;;
-esac
+# ADR-101: derive kg-api image tag via the shared helper. Persisting the
+# resolved tag in .operator.conf below makes the choice visible to operators
+# and survives env resets.
+source "$SCRIPT_DIR/image-tag.sh"
+KG_API_IMAGE_TAG=$(derive_kg_api_image_tag "$GPU_MODE" "$ROCM_VERSION")
 
 echo -e "${BLUE}→${NC} Saving platform configuration..."
 cat > "$PROJECT_ROOT/.operator.conf" << EOF

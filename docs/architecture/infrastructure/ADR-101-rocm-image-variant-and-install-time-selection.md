@@ -137,8 +137,9 @@ default). A new target group, `api-rocm`, publishes the three ROCm variants
 in one invocation:
 
 ```bash
-./publish.sh images api-rocm                  # all three ROCm variants
-./publish.sh images api-rocm --variants rocm60   # subset
+./publish.sh images-rocm                      # default-variants only (rocm72-host)
+./publish.sh images-rocm rocm60 --force       # opt into a deferred wheel variant
+./publish.sh images-rocm rocm72-host rocm60 --force  # explicit subset
 ```
 
 ROCm variants build locally only (consistent with the CLAUDE.md

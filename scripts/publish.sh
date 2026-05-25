@@ -764,7 +764,9 @@ cmd_images() {
 # from PyTorch's ROCm index OR AMD's official rocm/pytorch base image.
 #
 # Variants — only the ones with a confirmed tester ship by default. The
-# others can be enabled via --variants rocm60,rocm61. See ADR-101.
+# deferred variants (rocm60, rocm61) require explicit invocation:
+#   ./publish.sh images-rocm rocm60 --force
+# See ADR-101.
 #
 #   rocm60      api/Dockerfile + PYTORCH_VARIANT=rocm60        ROCm 6.0 wheels
 #   rocm61      api/Dockerfile + PYTORCH_VARIANT=rocm61        ROCm 6.1 wheels

@@ -65,17 +65,15 @@ load_config() {
         IMAGE_SOURCE="${IMAGE_SOURCE:-ghcr}"
     fi
 
-    # ADR-101: derive kg-api image tag from GPU_MODE so the GHCR overlay pulls
-    # the matching ROCm variant. Mirrored from operator/lib/common.sh's
-    # load_operator_config so the top-level operator.sh entry-point exports
-    # the tag too — without this, docker-compose substitutes :latest and AMD
-    # users silently land on the CUDA-bundled image (the #405 failure mode).
+    # ADR-101: derive kg-api image tag via the shared helper. The mapping
+    # used to live inline here AND in operator/lib/common.sh's
+    # load_operator_config AND in operator/lib/guided-init.sh — the
+    # triplication drifted (commit c448f098 fixed one of the gaps after
+    # the bug had silently shipped). Now there is one definition.
     if [ -z "$KG_API_IMAGE_TAG" ]; then
-        case "$GPU_MODE" in
-            amd)         KG_API_IMAGE_TAG="${ROCM_VERSION:-rocm60}" ;;
-            amd-host)    KG_API_IMAGE_TAG="rocm72-host" ;;
-            *)           KG_API_IMAGE_TAG="latest" ;;
-        esac
+        # shellcheck source=operator/lib/image-tag.sh
+        source "$SCRIPT_DIR/operator/lib/image-tag.sh"
+        KG_API_IMAGE_TAG=$(derive_kg_api_image_tag "$GPU_MODE" "$ROCM_VERSION")
     fi
     export KG_API_IMAGE_TAG
 }

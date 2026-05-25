@@ -216,8 +216,16 @@ async def startup_event():
         else:
             logger.info("📍 Visual embeddings: disabled (text-only profile or API-based)")
     except Exception as e:
-        logger.warning(f"⚠️  Failed to initialize visual embedding generator: {e}")
-        logger.info("   Visual embedding features may be limited")
+        # ADR-101: parity with the text-embedding honesty fix at line 199.
+        # "Features may be limited" obscured the actual state — the profile
+        # asks for visual embeddings, the load failed, so every image ingest
+        # will raise. State that, instead of softening.
+        logger.error(f"❌ Failed to initialize visual embedding generator: {e}")
+        logger.error(
+            "   Visual embedding profile is active but the generator could not load. "
+            "Image ingestion will fail until this is resolved. "
+            "Fix: switch to a text-only profile, or repair the visual model configuration."
+        )
 
     # ADR-041: Validate API keys at startup (non-blocking)
     try:
