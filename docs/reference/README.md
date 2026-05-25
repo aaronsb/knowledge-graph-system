@@ -30,15 +30,20 @@ All MCP tool documentation is auto-generated from the tool schemas, ensuring acc
 ### [REST API](api/)
 Interactive OpenAPI/Swagger documentation for the Knowledge Graph HTTP API.
 
-**Coverage:** All REST endpoints organized by tag
-- Authentication - User registration, login, API keys
-- Ingestion - Document submission and processing
-- Jobs - Async job management and monitoring
-- Queries - Graph exploration and concept search
-- Ontology - Knowledge domain organization
-- Vocabulary - Relationship type management
-- Admin - System administration
-- RBAC - Role-based access control
+**Coverage:** All REST endpoints organized by tag (see `openapi.json` for the
+authoritative list). Current top-level tags:
+- health - Liveness/readiness probes
+- authentication - OAuth 2.0 login, tokens, API keys (ADR-054)
+- ingestion - Document submission and processing
+- jobs - Async job management and monitoring
+- queries - Graph exploration and concept search
+- database - Database introspection and admin
+- ontology - Knowledge domain organization
+- vocabulary - Relationship type management
+- embedding - Embedding configuration and inspection
+- extraction - Extraction configuration
+- admin - System administration
+- rbac - Role-based access control
 
 API documentation uses industry-standard Swagger UI for interactive exploration, testing, and schema browsing.
 

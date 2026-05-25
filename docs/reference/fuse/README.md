@@ -70,7 +70,7 @@ Close the HTTP client.
 
 Subcommand implementations for kg-fuse CLI.
 
-Commands: init, mount, unmount, status, config, repair, update.
+Commands: init, mount, unmount, status, config, reset, repair, update.
 
 ### `cmd_status(args: Namespace)`
 
@@ -91,6 +91,10 @@ Unmount one or all FUSE filesystems.
 ### `cmd_config(args: Namespace)`
 
 Show current configuration with masked secrets.
+
+### `cmd_reset(args: Namespace)`
+
+Restart the FUSE driver via systemd (systemd mode) or kill+refork (daemon mode).
 
 ### `cmd_repair(args: Namespace)`
 
@@ -651,6 +655,7 @@ Usage:
     kg-fuse unmount                  # Unmount all
     kg-fuse status                   # Same as bare kg-fuse
     kg-fuse config                   # Show configuration
+    kg-fuse reset                    # Restart the FUSE driver
     kg-fuse repair                   # Fix orphaned mounts
     kg-fuse update                   # Self-update via pipx
 
