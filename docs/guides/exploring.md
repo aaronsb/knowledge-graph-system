@@ -89,8 +89,8 @@ Returns concepts directly connected, grouped by relationship type:
 ### Filter by Relationship Type
 
 ```bash
-kg search related <concept-id> --type SUPPORTS
-kg search related <concept-id> --type CONTRADICTS
+kg search related <concept-id> --types SUPPORTS
+kg search related <concept-id> --types CONTRADICTS
 ```
 
 ### Explore Deeper
@@ -162,10 +162,12 @@ The evidence section shows which sources support and which contradict.
 ### Filter by Epistemic Status
 
 ```bash
-kg vocabulary list --status CONTESTED
+kg vocab epistemic-status list --status MIXED_GROUNDING
 ```
 
-Shows relationship types that have mixed evidence across the graph.
+Shows relationship types that have mixed evidence across the graph. Valid
+statuses: `WELL_GROUNDED`, `MIXED_GROUNDING`, `WEAK_GROUNDING`,
+`POORLY_GROUNDED`, `CONTRADICTED`, `HISTORICAL`, `INSUFFICIENT_DATA`.
 
 ## Exploring by Source
 
