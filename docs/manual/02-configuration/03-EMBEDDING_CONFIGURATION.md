@@ -187,43 +187,50 @@ Delete embedding config 2? (yes/no): yes
 
 ### Configuration Management
 
-#### View Active Config
-```bash
-kg admin embedding config
-```
+The full list of `kg admin embedding` subcommands: `list`, `create`, `export`, `activate`, `reload`, `protect`, `unprotect`, `delete`, `status`, `regenerate`.
 
-Returns public summary (provider, model, dimensions).
-
-#### List All Configs
+#### List All Profiles
 ```bash
 kg admin embedding list
 ```
 
-Shows all configurations with protection status and active indicator.
+Shows all profiles with protection status and active indicator.
 
-#### Set Configuration
+#### Create a New Profile
 ```bash
-kg admin embedding set [OPTIONS]
+kg admin embedding create [OPTIONS]
 ```
 
-**Options:**
-- `--provider <provider>` - Provider: `local` or `openai` (required)
-- `--model <model>` - Model name (required for local provider)
-- `--dimensions <dims>` - Embedding dimensions (auto-detected for known models)
+**Common options:**
+- `--provider <provider>` - Text provider: `local` or `openai` (shorthand for `--text-provider`)
+- `--model <model>` - Text model name (shorthand for `--text-model`)
+- `--dimensions <dims>` - Text embedding dimensions (shorthand for `--text-dimensions`)
 - `--precision <precision>` - Precision: `float16`, `float32` (local only)
 - `--device <device>` - Device: `cpu`, `cuda`, `mps` (local only)
 - `--memory <mb>` - Max memory in MB (local only)
 - `--threads <n>` - Number of threads (local only)
 - `--batch-size <n>` - Batch size (local only)
+- `--multimodal` - Profile handles both text and image embeddings
+- `--from-json <file>` - Import a profile definition from a JSON file
+
+Additional `--text-*` / `--image-*` flags let you configure text and image legs independently for multimodal profiles.
+
+#### Activate a Profile
+```bash
+kg admin embedding activate <profile-id>
+```
+
+Switches the active embedding profile. Use `--force` to override dimension-mismatch safety.
 
 **Examples:**
 
 ```bash
-# OpenAI configuration
-kg admin embedding set --provider openai
+# Create + activate an OpenAI profile
+kg admin embedding create --provider openai --model text-embedding-3-small --dimensions 1536
+kg admin embedding activate <new-id>
 
-# Local configuration (full)
-kg admin embedding set \
+# Local profile (full)
+kg admin embedding create \
   --provider local \
   --model "nomic-ai/nomic-embed-text-v1.5" \
   --dimensions 768 \
@@ -232,12 +239,7 @@ kg admin embedding set \
   --memory 512 \
   --threads 4 \
   --batch-size 8
-
-# Local configuration (minimal - uses defaults)
-kg admin embedding set \
-  --provider local \
-  --model "nomic-ai/nomic-embed-text-v1.5" \
-  --dimensions 768
+kg admin embedding activate <new-id>
 ```
 
 #### Hot Reload Model
@@ -325,7 +327,7 @@ vector search. Remove protection first with: kg admin embedding unprotect --chan
 kg admin embedding unprotect 1 --change
 
 # Then update configuration
-kg admin embedding set --provider local --model "..." --dimensions 768
+kg admin embedding create --provider local --model "..." --dimensions 768 && kg admin embedding activate <new-id>
 
 # Reload to apply
 kg admin embedding reload
@@ -355,7 +357,7 @@ kg admin embedding delete <config-id>
 **Solution:**
 ```bash
 # Always specify dimensions for local provider
-kg admin embedding set \
+kg admin embedding create \
   --provider local \
   --model "nomic-ai/nomic-embed-text-v1.5" \
   --dimensions 768
@@ -557,7 +559,7 @@ Migration 006 adds:
 |------|---------|
 | View active config | `kg admin embedding config` |
 | List all configs | `kg admin embedding list` |
-| Switch to local | `kg admin embedding set --provider local --model "..." --dimensions 768` |
+| Switch to local | `kg admin embedding create --provider local --model "..." --dimensions 768 && kg admin embedding activate <new-id>` |
 | Switch to OpenAI | `kg admin embedding set --provider openai` |
 | Hot reload | `kg admin embedding reload` |
 | Remove change lock | `kg admin embedding unprotect <id> --change` |
