@@ -34,6 +34,7 @@ _Containers, deployment, backup, storage, networking_
 | [ADR-086](./infrastructure/ADR-086-deployment-topology.md) | Deployment Topology (Dev/Stable Split) | Draft |
 | [ADR-088](./infrastructure/ADR-088-semantic-election-protocol.md) | Semantic Election Protocol for Distributed Concept Placement | Proposed |
 | [ADR-100](./infrastructure/ADR-100-database-driven-job-dispatch.md) | Database-Driven Job Dispatch | Accepted |
+| [ADR-101](./infrastructure/ADR-101-rocm-image-variant-and-install-time-selection.md) | ROCm Image Variant and Install-Time Selection | Accepted |
 
 ## Database/Schema
 _Apache AGE, migrations, schema design, PostgreSQL_
@@ -50,6 +51,7 @@ _Apache AGE, migrations, schema design, PostgreSQL_
 | [ADR-203](./database-schema/ADR-203-graph-epoch-event-log.md) | Graph Epoch Event Log | Draft |
 | [ADR-204](./database-schema/ADR-204-node-type-and-abstract-property-representation-for-concept-nodes.md) | Node Type and Abstract Property Representation for Concept Nodes | Draft |
 | [ADR-205](./database-schema/ADR-205-postgresql-18-migration.md) | PostgreSQL 18 Migration | Draft |
+| [ADR-206](./database-schema/ADR-206-closed-vocabulary-annealing-actions-with-tiered-escalation-and-epistemic-ledger.md) | Closed-Vocabulary Annealing Actions with Tiered Escalation and Epistemic Ledger | Draft |
 
 ## Ingestion
 _Content processing, jobs, extraction, deduplication_

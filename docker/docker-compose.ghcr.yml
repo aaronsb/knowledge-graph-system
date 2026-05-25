@@ -14,7 +14,10 @@ services:
     image: ghcr.io/aaronsb/knowledge-graph-system/kg-postgres:latest
 
   api:
-    image: ghcr.io/aaronsb/knowledge-graph-system/kg-api:latest
+    # ADR-101: KG_API_IMAGE_TAG selects ROCm variants (rocm60/rocm61/rocm72-host)
+    # for AMD hosts. Operator sets it from GPU_MODE; unset means CPU/NVIDIA
+    # which use the default kg-api:latest (PyPI torch wheel ships CUDA runtime).
+    image: ghcr.io/aaronsb/knowledge-graph-system/kg-api:${KG_API_IMAGE_TAG:-latest}
 
   web:
     image: ghcr.io/aaronsb/knowledge-graph-system/kg-web:latest

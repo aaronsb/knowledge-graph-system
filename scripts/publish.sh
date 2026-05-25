@@ -87,6 +87,8 @@ Version Management:
 
 Publishing:
   images [api|web|operator] Publish Docker images to GHCR
+  images-rocm [variant...]  Publish kg-api ROCm variants (rocm60|rocm61|rocm72-host)
+                            Defaults to rocm72-host only; --force enables deferred variants
   cli                       Publish npm package (@aaronsb/kg-cli)
   fuse                      Publish Python package (kg-fuse) to PyPI
   all                       Publish everything (images, cli, fuse)
@@ -112,7 +114,7 @@ EOF
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        status|bump|sync-scripts|release|images|all)
+        status|bump|sync-scripts|release|images|images-rocm|all)
             COMMAND="$1"
             shift
             ;;
@@ -136,7 +138,7 @@ while [[ $# -gt 0 ]]; do
             fi
             shift
             ;;
-        api|web|operator|postgres)
+        api|web|operator|postgres|rocm60|rocm61|rocm72-host)
             TARGETS+=("$1")
             shift
             ;;
@@ -753,6 +755,143 @@ cmd_images() {
     done
 }
 
+# ============================================================================
+# ADR-101: Publish ROCm variants of kg-api
+#
+# Builds and pushes one or more ROCm-specific kg-api images to GHCR. The
+# default-published kg-api:latest carries PyPI's default torch wheel (CUDA
+# runtime bundled, works for NVIDIA + CPU). AMD ROCm needs separate wheels
+# from PyTorch's ROCm index OR AMD's official rocm/pytorch base image.
+#
+# Variants — only the ones with a confirmed tester ship by default. The
+# deferred variants (rocm60, rocm61) require explicit invocation:
+#   ./publish.sh images-rocm rocm60 --force
+# See ADR-101.
+#
+#   rocm60      api/Dockerfile + PYTORCH_VARIANT=rocm60        ROCm 6.0 wheels
+#   rocm61      api/Dockerfile + PYTORCH_VARIANT=rocm61        ROCm 6.1 wheels
+#   rocm72-host api/Dockerfile.rocm-host                       ROCm 7.x via base image
+#
+# Single-arch (linux/amd64). ROCm has no production arm64 build path.
+# Tagged as kg-api:<variant> and kg-api:<VERSION>-<variant>; does NOT touch
+# the :latest tag.
+# ============================================================================
+cmd_images_rocm() {
+    get_versions
+
+    # Variants the maintainer has personally verified end-to-end. If you're
+    # adding a variant after testing, append to this list. Untested variants
+    # belong in DEFERRED_VARIANTS until someone runs them on real hardware.
+    local DEFAULT_VARIANTS=(rocm72-host)
+    local DEFERRED_VARIANTS=(rocm60 rocm61)
+
+    local variants=("${DEFAULT_VARIANTS[@]}")
+    # TARGETS may carry explicit variant names from CLI (e.g.
+    # `publish.sh images-rocm rocm60 rocm61`).
+    if [ ${#TARGETS[@]} -gt 0 ]; then
+        variants=("${TARGETS[@]}")
+    fi
+
+    echo -e "${BOLD}Publishing ROCm variants of kg-api to GHCR${NC} (ADR-101)"
+    echo -e "  Version:  ${BLUE}$VERSION${NC}"
+    echo -e "  Commit:   ${BLUE}$GIT_SHA${NC}"
+    echo -e "  Variants: ${BLUE}${variants[*]}${NC}"
+    echo -e "  Arch:     ${DIM}linux/amd64 (ROCm has no arm64 path)${NC}"
+    [ -n "$DESCRIPTION" ] && echo -e "  Message:  ${BLUE}$DESCRIPTION${NC}"
+    [ "$DRY_RUN" = "true" ] && echo -e "  Mode:     ${YELLOW}DRY RUN${NC}"
+    echo ""
+
+    if [ "$DRY_RUN" = "false" ] && ! check_ghcr_auth; then
+        echo -e "${RED}Not authenticated to GHCR${NC}"
+        echo "Run: docker login ghcr.io"
+        exit 1
+    fi
+
+    cd "$PROJECT_ROOT"
+
+    local image_name="kg-api"
+    local full_image="$GHCR_REGISTRY/$IMAGE_PREFIX/$image_name"
+
+    for variant in "${variants[@]}"; do
+        local dockerfile=""
+        local build_arg=""
+
+        case "$variant" in
+            rocm60)
+                dockerfile="./api/Dockerfile"
+                build_arg="PYTORCH_VARIANT=rocm60"
+                ;;
+            rocm61)
+                dockerfile="./api/Dockerfile"
+                build_arg="PYTORCH_VARIANT=rocm61"
+                ;;
+            rocm72-host)
+                dockerfile="./api/Dockerfile.rocm-host"
+                build_arg=""  # base image pins torch; PYTORCH_VARIANT is N/A
+                ;;
+            *)
+                echo -e "${RED}Unknown ROCm variant: $variant${NC}"
+                echo -e "  Known variants: rocm60, rocm61, rocm72-host"
+                continue
+                ;;
+        esac
+
+        # Gate deferred (untested) variants behind an explicit confirmation
+        # in the variants list — refusing to silently build something we
+        # haven't personally verified.
+        local is_deferred=false
+        for d in "${DEFERRED_VARIANTS[@]}"; do
+            if [ "$d" = "$variant" ]; then
+                is_deferred=true
+                break
+            fi
+        done
+        if [ "$is_deferred" = "true" ] && [ "${FORCE:-false}" != "true" ]; then
+            echo -e "${YELLOW}⚠ Skipping deferred variant ${variant}${NC} — no maintainer-verified test on real hardware."
+            echo -e "  Re-run with ${BLUE}--force${NC} to publish anyway."
+            echo ""
+            continue
+        fi
+
+        echo -e "${BLUE}→ Building $image_name:$variant from $dockerfile...${NC}"
+
+        local label_args=(
+            --label "org.opencontainers.image.version=$VERSION"
+            --label "org.opencontainers.image.revision=$GIT_SHA"
+            --label "org.opencontainers.image.created=$BUILD_DATE"
+            --label "org.opencontainers.image.source=https://github.com/$IMAGE_PREFIX"
+            --label "knowledge-graph.rocm.variant=$variant"
+        )
+        [ -n "$DESCRIPTION" ] && label_args+=(--label "org.opencontainers.image.description=$DESCRIPTION")
+
+        local build_arg_flag=()
+        [ -n "$build_arg" ] && build_arg_flag=(--build-arg "$build_arg")
+
+        if [ "$SKIP_BUILD" = "false" ]; then
+            docker build \
+                --file "$dockerfile" \
+                --build-arg GIT_COMMIT="$GIT_SHA" \
+                --build-arg BUILD_DATE="$BUILD_DATE" \
+                "${build_arg_flag[@]}" \
+                "${label_args[@]}" \
+                --tag "$full_image:$variant" \
+                --tag "$full_image:$VERSION-$variant" \
+                --tag "$full_image:sha-$GIT_SHA-$variant" \
+                .
+            echo -e "${GREEN}✓ Built $full_image:$variant${NC}"
+        fi
+
+        if [ "$DRY_RUN" = "false" ]; then
+            echo -e "${BLUE}→ Pushing $image_name:$variant...${NC}"
+            docker push "$full_image:$variant"
+            docker push "$full_image:$VERSION-$variant"
+            docker push "$full_image:sha-$GIT_SHA-$variant"
+            echo -e "${GREEN}✓ Pushed $full_image:$variant${NC}"
+        fi
+        echo ""
+    done
+}
+
 cmd_cli() {
     get_versions
 
@@ -881,6 +1020,7 @@ case "$COMMAND" in
     sync-scripts) cmd_sync_scripts ;;
     release)      cmd_release ;;
     images)       cmd_images ;;
+    images-rocm)  cmd_images_rocm ;;
     cli)          cmd_cli ;;
     fuse)         cmd_fuse ;;
     all)          cmd_all ;;

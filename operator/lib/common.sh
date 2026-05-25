@@ -32,6 +32,19 @@ load_operator_config() {
     CONTAINER_SUFFIX="${CONTAINER_SUFFIX:-}"
     COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.yml}"
     IMAGE_SOURCE="${IMAGE_SOURCE:-local}"
+
+    # ADR-101: derive kg-api image tag via the shared helper (see
+    # operator/lib/image-tag.sh for the single source of truth).
+    # docker-compose.ghcr.yml substitutes ${KG_API_IMAGE_TAG:-latest} into
+    # the api service's image: line, so AMD ROCm hosts pull the matching
+    # variant instead of the CUDA-bundled :latest. Explicit override in
+    # .operator.conf (or environment) wins.
+    if [ -z "$KG_API_IMAGE_TAG" ]; then
+        # shellcheck source=operator/lib/image-tag.sh
+        source "$_COMMON_DIR/image-tag.sh"
+        KG_API_IMAGE_TAG=$(derive_kg_api_image_tag "$GPU_MODE" "$ROCM_VERSION")
+    fi
+    export KG_API_IMAGE_TAG
 }
 
 # Get container name for a service

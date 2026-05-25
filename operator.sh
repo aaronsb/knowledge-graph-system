@@ -64,6 +64,18 @@ load_config() {
     else
         IMAGE_SOURCE="${IMAGE_SOURCE:-ghcr}"
     fi
+
+    # ADR-101: derive kg-api image tag via the shared helper. The mapping
+    # used to live inline here AND in operator/lib/common.sh's
+    # load_operator_config AND in operator/lib/guided-init.sh — the
+    # triplication drifted (commit c448f098 fixed one of the gaps after
+    # the bug had silently shipped). Now there is one definition.
+    if [ -z "$KG_API_IMAGE_TAG" ]; then
+        # shellcheck source=operator/lib/image-tag.sh
+        source "$SCRIPT_DIR/operator/lib/image-tag.sh"
+        KG_API_IMAGE_TAG=$(derive_kg_api_image_tag "$GPU_MODE" "$ROCM_VERSION")
+    fi
+    export KG_API_IMAGE_TAG
 }
 
 # Build compose command with overlays
@@ -85,9 +97,10 @@ get_compose_cmd() {
 
     # GPU overlays
     case "$GPU_MODE" in
-        nvidia) [ -f "$DOCKER_DIR/docker-compose.gpu-nvidia.yml" ] && cmd="$cmd -f $DOCKER_DIR/docker-compose.gpu-nvidia.yml" ;;
-        amd)    [ -f "$DOCKER_DIR/docker-compose.gpu-amd.yml" ] && cmd="$cmd -f $DOCKER_DIR/docker-compose.gpu-amd.yml" ;;
-        mac)    [ -f "$DOCKER_DIR/docker-compose.override.mac.yml" ] && cmd="$cmd -f $DOCKER_DIR/docker-compose.override.mac.yml" ;;
+        nvidia)   [ -f "$DOCKER_DIR/docker-compose.gpu-nvidia.yml" ]   && cmd="$cmd -f $DOCKER_DIR/docker-compose.gpu-nvidia.yml" ;;
+        amd)      [ -f "$DOCKER_DIR/docker-compose.gpu-amd.yml" ]      && cmd="$cmd -f $DOCKER_DIR/docker-compose.gpu-amd.yml" ;;
+        amd-host) [ -f "$DOCKER_DIR/docker-compose.gpu-amd-host.yml" ] && cmd="$cmd -f $DOCKER_DIR/docker-compose.gpu-amd-host.yml" ;;
+        mac)      [ -f "$DOCKER_DIR/docker-compose.override.mac.yml" ] && cmd="$cmd -f $DOCKER_DIR/docker-compose.override.mac.yml" ;;
     esac
 
     echo "$cmd --env-file $ENV_FILE"

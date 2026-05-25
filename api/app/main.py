@@ -187,6 +187,10 @@ async def startup_event():
     # (fixes race condition where jobs start before EmbeddingWorker is ready)
 
     # ADR-039: Initialize embedding model manager (if local embeddings configured)
+    # ADR-101: init_embedding_model_manager() already attempts a CPU fallback when
+    # the requested accelerator is unavailable. If this still raises, the local
+    # provider is unusable and downstream code will fail — log the truth instead
+    # of pretending we fell back to an API provider.
     try:
         from .lib.embedding_model_manager import init_embedding_model_manager
         model_manager = await init_embedding_model_manager()
@@ -195,8 +199,13 @@ async def startup_event():
         else:
             logger.info("📍 Using API-based embeddings (OpenAI or configured provider)")
     except Exception as e:
-        logger.warning(f"⚠️  Failed to initialize local embedding model: {e}")
-        logger.info("   Falling back to API-based embeddings")
+        logger.error(f"❌ Failed to initialize local embedding model (including CPU fallback): {e}")
+        logger.error(
+            "   Active embedding profile is 'local' but no model could be loaded. "
+            "Ingestion and semantic search will fail until this is resolved. "
+            "Fix: switch the active profile to an API provider via the operator, "
+            "or repair the local model configuration."
+        )
 
     # Initialize visual embedding generator (profile-driven, migration 055)
     try:
@@ -207,8 +216,16 @@ async def startup_event():
         else:
             logger.info("📍 Visual embeddings: disabled (text-only profile or API-based)")
     except Exception as e:
-        logger.warning(f"⚠️  Failed to initialize visual embedding generator: {e}")
-        logger.info("   Visual embedding features may be limited")
+        # ADR-101: parity with the text-embedding honesty fix at line 199.
+        # "Features may be limited" obscured the actual state — the profile
+        # asks for visual embeddings, the load failed, so every image ingest
+        # will raise. State that, instead of softening.
+        logger.error(f"❌ Failed to initialize visual embedding generator: {e}")
+        logger.error(
+            "   Visual embedding profile is active but the generator could not load. "
+            "Image ingestion will fail until this is resolved. "
+            "Fix: switch to a text-only profile, or repair the visual model configuration."
+        )
 
     # ADR-041: Validate API keys at startup (non-blocking)
     try:
