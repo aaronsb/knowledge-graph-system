@@ -27,6 +27,13 @@ from api.app.lib.age_client import AGEClient
 
 logger = logging.getLogger(__name__)
 
+# Source columns selected by the regeneration paths. Aliased so the facade
+# return-clause keys match the dict access in `_collect_target_sources`.
+_REGEN_SOURCE_RETURN_CLAUSE = (
+    "s.source_id as source_id, s.full_text as full_text, "
+    "s.document as document, s.paragraph as paragraph"
+)
+
 
 def run_source_embedding_worker(
     job_data: Dict[str, Any],
@@ -152,17 +159,20 @@ def run_source_embedding_worker(
 
         # Fetch Source node from AGE to get full_text
         with AGEClient() as age_client:
-            # Use facade for namespace-safe query (ADR-048)
-            result_set = age_client.facade.execute_raw("""
-                MATCH (s:Source {source_id: $source_id})
-                RETURN s.source_id, s.full_text, s.document, s.paragraph
-            """, params={"source_id": source_id}, namespace="source_embedding")
+            result_set = age_client.facade.match_sources(
+                where="s.source_id = $source_id",
+                params={"source_id": source_id},
+                return_clause=(
+                    "s.source_id as source_id, s.full_text as full_text, "
+                    "s.document as document, s.paragraph as paragraph"
+                ),
+            )
 
             if not result_set:
                 raise ValueError(f"Source not found: {source_id}")
 
             source_data = result_set[0]
-            source_text = source_data[1]  # full_text
+            source_text = source_data["full_text"]
 
             if not source_text:
                 raise ValueError(f"Source {source_id} has no full_text")
@@ -380,15 +390,10 @@ def generate_source_embeddings(
 
         # Step 6: Update Source.content_hash in AGE graph
         with AGEClient() as age_client:
-            # Use facade for namespace-safe query (ADR-048)
-            age_client.facade.execute_raw("""
-                MATCH (s:Source {source_id: $source_id})
-                SET s.content_hash = $content_hash
-                RETURN s.source_id
-            """, params={
-                "source_id": source_id,
-                "content_hash": source_hash
-            }, namespace="source_embedding")
+            age_client.facade.update_source_properties(
+                source_id,
+                {"content_hash": source_hash},
+            )
             logger.debug(f"Updated Source.content_hash in AGE: {source_hash[:16]}...")
 
         # Return success result
@@ -478,47 +483,34 @@ async def get_embedding_status(ontology: Optional[str] = None) -> Dict[str, Any]
     # 1. Concept Embeddings
     # ====================================================================
     with AGEClient() as age_client:
-        # Count total concepts
-        cypher = "MATCH (c:Concept)"
-        params = {}
+        ontology_params = {"ontology": ontology} if ontology else None
 
+        total_concepts = age_client.facade.count_concepts(
+            where="c.ontology = $ontology" if ontology else None,
+            params=ontology_params,
+        )
+
+        embedded_where = "c.embedding IS NOT NULL"
         if ontology:
-            cypher += " WHERE c.ontology = $ontology"
-            params["ontology"] = ontology
+            embedded_where += " AND c.ontology = $ontology"
 
-        cypher += " RETURN count(c) as total"
+        concepts_with_embeddings = age_client.facade.count_concepts(
+            where=embedded_where,
+            params=ontology_params,
+        )
 
-        result = age_client.facade.execute_raw(cypher, params=params if params else None, namespace="embedding_status")
-        total_concepts = result[0]["total"] if result else 0
-
-        # Count concepts WITH embeddings
-        cypher = "MATCH (c:Concept) WHERE c.embedding IS NOT NULL"
-
-        if ontology:
-            cypher += " AND c.ontology = $ontology"
-
-        cypher += " RETURN count(c) as with_embeddings"
-
-        result = age_client.facade.execute_raw(cypher, params=params if params else None, namespace="embedding_status")
-        concepts_with_embeddings = result[0]["with_embeddings"] if result else 0
-
-        # Check for incompatible embeddings (dimension mismatch)
-        # Note: AGE stores embeddings as arrays without metadata, so we check dimension by size
+        # Check for incompatible embeddings (dimension mismatch).
+        # AGE stores embeddings as arrays without metadata, so dimension is checked by size.
         incompatible_concepts = 0
         if active_dims and concepts_with_embeddings > 0:
-            # Fetch all concepts with embeddings and check their dimensions
-            cypher = "MATCH (c:Concept) WHERE c.embedding IS NOT NULL"
+            embedding_rows = age_client.facade.match_concepts(
+                where=embedded_where,
+                params=ontology_params,
+                return_clause="c.concept_id as concept_id, size(c.embedding) as dim",
+            )
 
-            if ontology:
-                cypher += " AND c.ontology = $ontology"
-
-            cypher += " RETURN c.concept_id, size(c.embedding) as dim"
-
-            result = age_client.facade.execute_raw(cypher, params=params if params else None, namespace="embedding_status")
-
-            for row in result:
-                embedding_dim = row["dim"]
-                if embedding_dim != active_dims:
+            for row in embedding_rows:
+                if row["dim"] != active_dims:
                     incompatible_concepts += 1
 
             logger.debug(
@@ -538,29 +530,20 @@ async def get_embedding_status(ontology: Optional[str] = None) -> Dict[str, Any]
     # 2. Source Embeddings (with hash verification)
     # ====================================================================
     with AGEClient() as age_client:
-        # Count total sources
-        cypher = "MATCH (s:Source)"
-        params = {}
+        ontology_where = "s.document = $ontology" if ontology else None
+        ontology_params = {"ontology": ontology} if ontology else None
 
-        if ontology:
-            cypher += " WHERE s.document = $ontology"
-            params["ontology"] = ontology
+        total_sources = age_client.facade.count_sources(
+            where=ontology_where,
+            params=ontology_params,
+        )
 
-        cypher += " RETURN count(s) as total"
-
-        result = age_client.facade.execute_raw(cypher, params=params if params else None, namespace="embedding_status")
-        total_sources = result[0]["total"] if result else 0
-
-        # Get all sources with their content_hash
-        cypher = "MATCH (s:Source)"
-
-        if ontology:
-            cypher += " WHERE s.document = $ontology"
-
-        cypher += " RETURN s.source_id as source_id, s.content_hash as content_hash"
-
-        result = age_client.facade.execute_raw(cypher, params=params if params else None, namespace="embedding_status")
-        sources_map = {row["source_id"]: row["content_hash"] for row in result}  # {source_id: content_hash}
+        source_rows = age_client.facade.match_sources(
+            where=ontology_where,
+            params=ontology_params,
+            return_clause="s.source_id as source_id, s.content_hash as content_hash",
+        )
+        sources_map = {row["source_id"]: row["content_hash"] for row in source_rows}
 
     # Check which sources have embeddings in PostgreSQL
     conn = psycopg2.connect(
@@ -862,33 +845,24 @@ async def regenerate_source_embeddings(
                     "errors": []
                 }
 
-            # Build Cypher query for sources WITH incompatible embeddings
-            cypher_where = "WHERE s.source_id IN $incompatible_ids"
+            where_clause = "s.source_id IN $incompatible_ids"
             params = {"incompatible_ids": list(incompatible_source_ids)}
 
             if ontology:
-                cypher_where += " AND s.document = $ontology"
+                where_clause += " AND s.document = $ontology"
                 params["ontology"] = ontology
 
-            cypher = f"""
-                MATCH (s:Source)
-                {cypher_where}
-                RETURN s.source_id, s.full_text, s.document, s.paragraph
-                ORDER BY s.document, s.paragraph
-            """
-
-            if limit:
-                cypher += f" LIMIT {limit}"
-
-            results = age_client.facade.execute_raw(
-                cypher,
+            results = age_client.facade.match_sources(
+                where=where_clause,
                 params=params,
-                namespace="source_embedding_regeneration"
+                return_clause=_REGEN_SOURCE_RETURN_CLAUSE,
+                order_by="s.document, s.paragraph",
+                limit=limit,
             )
 
         elif only_missing:
-            # Find sources WITHOUT any source_embeddings entries
-            # Use PostgreSQL to check which source_ids are missing from source_embeddings
+            # Find sources WITHOUT any source_embeddings entries.
+            # Use PostgreSQL to check which source_ids are missing from source_embeddings.
             conn = psycopg2.connect(
                 host=os.getenv("POSTGRES_HOST", "localhost"),
                 port=int(os.getenv("POSTGRES_PORT", 5432)),
@@ -899,7 +873,6 @@ async def regenerate_source_embeddings(
 
             try:
                 with conn.cursor() as cursor:
-                    # Get all source_ids that have embeddings
                     cursor.execute("""
                         SELECT DISTINCT source_id
                         FROM kg_api.source_embeddings
@@ -908,51 +881,28 @@ async def regenerate_source_embeddings(
             finally:
                 conn.close()
 
-            # Build Cypher query for sources WITHOUT embeddings
-            cypher_where = "WHERE NOT s.source_id IN $embedded_ids"
+            where_clause = "NOT s.source_id IN $embedded_ids"
             params = {"embedded_ids": list(embedded_source_ids)}
 
             if ontology:
-                cypher_where += " AND s.document = $ontology"
+                where_clause += " AND s.document = $ontology"
                 params["ontology"] = ontology
 
-            cypher = f"""
-                MATCH (s:Source)
-                {cypher_where}
-                RETURN s.source_id, s.full_text, s.document, s.paragraph
-                ORDER BY s.document, s.paragraph
-            """
-
-            if limit:
-                cypher += f" LIMIT {limit}"
-
-            results = age_client.facade.execute_raw(
-                cypher,
+            results = age_client.facade.match_sources(
+                where=where_clause,
                 params=params,
-                namespace="source_embedding_regeneration"
+                return_clause=_REGEN_SOURCE_RETURN_CLAUSE,
+                order_by="s.document, s.paragraph",
+                limit=limit,
             )
 
         else:
-            # Get ALL sources (or filtered by ontology)
-            cypher = "MATCH (s:Source)"
-            params = {}
-
-            if ontology:
-                cypher += " WHERE s.document = $ontology"
-                params["ontology"] = ontology
-
-            cypher += """
-                RETURN s.source_id, s.full_text, s.document, s.paragraph
-                ORDER BY s.document, s.paragraph
-            """
-
-            if limit:
-                cypher += f" LIMIT {limit}"
-
-            results = age_client.facade.execute_raw(
-                cypher,
-                params=params if params else None,
-                namespace="source_embedding_regeneration"
+            results = age_client.facade.match_sources(
+                where="s.document = $ontology" if ontology else None,
+                params={"ontology": ontology} if ontology else None,
+                return_clause=_REGEN_SOURCE_RETURN_CLAUSE,
+                order_by="s.document, s.paragraph",
+                limit=limit,
             )
 
         # Extract source data
