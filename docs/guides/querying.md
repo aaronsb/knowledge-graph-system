@@ -106,8 +106,10 @@ curl -X POST "http://localhost:8000/oauth/token" \
 ### Search Endpoint
 
 ```bash
-curl "http://localhost:8000/concepts/search?query=climate+change&limit=10" \
-  -H "Authorization: Bearer $TOKEN"
+curl -X POST "http://localhost:8000/query/search" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"query": "climate change", "limit": 10, "min_similarity": 0.7}'
 ```
 
 **Response:**
