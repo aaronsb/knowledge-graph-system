@@ -377,7 +377,7 @@ kg admin embedding list
 kg admin embedding reload
 
 # Check again
-kg admin embedding config
+kg admin embedding list
 ```
 
 ### Vector Search Returns Wrong Results After Config Change
@@ -421,13 +421,14 @@ Check network access to HuggingFace from your server.
 Reduce memory allocation or use smaller precision:
 
 ```bash
-kg admin embedding set \
+kg admin embedding create \
   --provider local \
   --model "nomic-ai/nomic-embed-text-v1.5" \
   --dimensions 768 \
   --precision float16 \  # Use float16 instead of float32
   --memory 256 \          # Reduce from 512
   --batch-size 4          # Reduce from 8
+# Then: kg admin embedding activate <new-id> && kg admin embedding reload
 ```
 
 ---
@@ -440,7 +441,7 @@ kg admin embedding set \
    - Auto-protection prevents follow-up accidents
 
 2. **Test configuration changes in non-production first**
-   - Create snapshot before major changes: `./scripts/snapshot-db.sh`
+   - Create a database backup before major changes: `kg admin backup --type full`
    - Verify vector search still works after dimension changes
 
 3. **Document your configurations**
@@ -557,10 +558,10 @@ Migration 006 adds:
 
 | Task | Command |
 |------|---------|
-| View active config | `kg admin embedding config` |
+| List profiles (active marked) | `kg admin embedding list` |
 | List all configs | `kg admin embedding list` |
 | Switch to local | `kg admin embedding create --provider local --model "..." --dimensions 768 && kg admin embedding activate <new-id>` |
-| Switch to OpenAI | `kg admin embedding set --provider openai` |
+| Switch to OpenAI | `kg admin embedding create --provider openai --model text-embedding-3-small --dimensions 1536 && kg admin embedding activate <new-id>` |
 | Hot reload | `kg admin embedding reload` |
 | Remove change lock | `kg admin embedding unprotect <id> --change` |
 | Enable protection | `kg admin embedding protect <id> --change --delete` |

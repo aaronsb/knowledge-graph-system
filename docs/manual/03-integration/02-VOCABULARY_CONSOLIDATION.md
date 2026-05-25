@@ -177,9 +177,10 @@ kg vocab consolidate --dry-run --target 75 --threshold 0.90
 ```
 
 **Parameters:**
-- `--dry-run` - Evaluate top 10 candidates, no execution
-- `--target 75` - Target vocabulary size (used only in live mode)
-- `--threshold 0.90` - **DEPRECATED** (AITL trusts LLM completely)
+- `--dry-run` - Preview without executing (no merges, no pruning)
+- `--target <size>` - Target vocabulary size (default: 90, used only when actually executing)
+- `--threshold <value>` - Auto-execute similarity threshold (default: 0.90)
+- `--no-prune-unused` - Skip pruning vocabulary types with 0 uses
 
 **Example output:**
 ```
@@ -223,13 +224,16 @@ Rejected Merges:
 
 **Execute consolidation with target size:**
 ```bash
-kg vocab consolidate --auto --target 75
+kg vocab consolidate --target 75
 ```
 
+`kg vocab consolidate` executes by default. Pass `--dry-run` to preview without making changes.
+
 **Parameters:**
-- `--auto` - Enable live mode (required for execution)
-- `--target 75` - Stop when vocabulary reaches this size (default: 90)
-- `--threshold 0.90` - **DEPRECATED** (no longer used in AITL)
+- `--target <size>` - Stop when vocabulary reaches this size (default: 90)
+- `--threshold <0.0-1.0>` - Auto-execute similarity threshold (default: 0.90)
+- `--dry-run` - Preview only (no merges, no pruning)
+- `--no-prune-unused` - Skip pruning vocabulary types with 0 uses
 
 **Example output:**
 ```
