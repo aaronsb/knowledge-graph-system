@@ -26,28 +26,30 @@ The documentation updates automatically when the API changes.
 
 Two methods supported:
 
-### JWT Bearer Token
+### OAuth Bearer Token
+
+The legacy `/auth/login` endpoint was removed (ADR-054). All clients now obtain tokens through OAuth 2.0 flows under `/auth/oauth/`:
+
+- **Programmatic clients (MCP, scripts):** client credentials grant — `POST /auth/oauth/token`
+- **Web app (viz):** authorization code with PKCE — `GET /auth/oauth/authorize` → `POST /auth/oauth/token`
+- **Headless tools:** device authorization — `POST /auth/oauth/device` → `POST /auth/oauth/token`
 
 ```bash
-# Get token
-curl -X POST http://localhost:8000/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"username": "admin", "password": "..."}'
+# Get a token via client credentials (MCP-style)
+curl -X POST http://localhost:8000/auth/oauth/token \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "grant_type=client_credentials&client_id=...&client_secret=..."
 
-# Use token
+# Use the token
 curl http://localhost:8000/concepts \
   -H "Authorization: Bearer <token>"
 ```
 
-### API Key
+Create credentials via CLI:
 
 ```bash
-# Create API key via CLI
-kg oauth create --name my-app
-
-# Use API key
-curl http://localhost:8000/concepts \
-  -H "X-API-Key: <key>"
+kg oauth create --name my-app          # Generic client
+kg oauth create-mcp                    # MCP-shaped client
 ```
 
 ---
@@ -58,31 +60,40 @@ curl http://localhost:8000/concepts \
 
 | Endpoint | Method | What It Does |
 |----------|--------|--------------|
+| `/ingest` | POST | Ingest uploaded file (multipart) |
 | `/ingest/text` | POST | Ingest raw text |
-| `/ingest/file` | POST | Ingest uploaded file |
-| `/ingest/directory` | POST | Ingest directory (server-side path) |
 | `/ingest/image` | POST | Ingest image with vision AI |
+
+Directory ingestion is performed client-side (CLI/web iterate over files and submit `/ingest` per file).
 
 ### Search & Query
 
 | Endpoint | Method | What It Does |
 |----------|--------|--------------|
-| `/search` | GET | Semantic concept search |
-| `/search/sources` | GET | Search source passages |
-| `/search/documents` | GET | Document-level search |
-| `/concepts/{id}` | GET | Get concept details |
-| `/concepts/{id}/related` | GET | Find related concepts |
-| `/concepts/connect` | GET | Find path between concepts |
+| `/query/search` | POST | Semantic concept search |
+| `/query/sources/search` | POST | Search source passages |
+| `/query/concept/{concept_id}` | GET | Get concept details |
+| `/query/related` | POST | Find related concepts |
+| `/query/connect` | POST | Find path between two concepts |
+| `/query/connect-by-search` | POST | Path search using query strings |
+| `/query/cypher` | POST | Raw Cypher query (namespaced for safety, ADR-048) |
+| `/query/documents` | GET | Document-level search |
 
-### Graph Operations
+### Graph Operations (Deterministic CRUD — ADR-089)
 
 | Endpoint | Method | What It Does |
 |----------|--------|--------------|
-| `/graph/concepts` | POST | Create concept |
-| `/graph/concepts/{id}` | PUT | Update concept |
-| `/graph/concepts/{id}` | DELETE | Delete concept |
-| `/graph/edges` | POST | Create relationship |
-| `/graph/edges/{id}` | DELETE | Delete relationship |
+| `/concepts` | POST | Create concept |
+| `/concepts` | GET | List concepts |
+| `/concepts/{id}` | GET | Get concept |
+| `/concepts/{id}` | PATCH | Update concept |
+| `/concepts/{id}` | DELETE | Delete concept |
+| `/concepts/{id}/evidence` | POST | Add evidence to a concept |
+| `/edges` | POST | Create edge |
+| `/edges` | GET | List edges |
+| `/edges/{from}/{relationship_type}/{to}` | PATCH | Update edge |
+| `/edges/{from}/{relationship_type}/{to}` | DELETE | Delete edge |
+| `/graph/batch` | POST | Batch graph operations |
 
 ### Job Management
 
@@ -91,35 +102,41 @@ curl http://localhost:8000/concepts \
 | `/jobs` | GET | List jobs |
 | `/jobs/{id}` | GET | Get job status |
 | `/jobs/{id}/approve` | POST | Approve pending job |
-| `/jobs/{id}/cancel` | POST | Cancel running job |
-| `/jobs/{id}` | DELETE | Delete job |
+| `/jobs/{id}` | DELETE | Cancel or delete job |
+| `/jobs/{id}/stream` | GET | Stream job progress (SSE) |
 
 ### Ontologies
 
 | Endpoint | Method | What It Does |
 |----------|--------|--------------|
-| `/ontologies` | GET | List all ontologies |
-| `/ontologies/{name}` | GET | Get ontology info |
-| `/ontologies/{name}/files` | GET | List source files |
-| `/ontologies/{name}` | DELETE | Delete ontology |
+| `/ontology` | GET | List all ontologies |
+| `/ontology/{name}` | GET | Get ontology info |
+| `/ontology/{name}/files` | GET | List source files |
+| `/ontology/{name}` | DELETE | Delete ontology |
 
 ### Documents & Sources
 
 | Endpoint | Method | What It Does |
 |----------|--------|--------------|
 | `/documents` | GET | List documents |
-| `/documents/{id}` | GET | Get document content |
+| `/documents/{id}/content` | GET | Get document content |
 | `/documents/{id}/concepts` | GET | Get concepts from document |
-| `/sources/{id}` | GET | Get source content |
+| `/documents/{id}` | DELETE | Delete document |
+| `/sources/{id}` | GET | Get source metadata and content |
+| `/sources/{id}/document` | GET | Retrieve original document from Garage |
+| `/sources/{id}/image` | GET | Retrieve image from source (ADR-057) |
 
 ### Analysis
 
 | Endpoint | Method | What It Does |
 |----------|--------|--------------|
-| `/polarity/analyze` | POST | Run polarity axis analysis |
-| `/projections` | GET | List embedding projections |
+| `/query/polarity-axis` | POST | Run polarity axis analysis (synchronous) |
+| `/query/polarity-axis/jobs` | POST | Submit polarity analysis as a job |
+| `/projection/{ontology}` | GET | Get cached embedding projection (UMAP/t-SNE) |
+| `/projection/algorithms` | GET | List available projection algorithms |
 | `/artifacts` | GET | List saved artifacts |
 | `/vocabulary/status` | GET | Get vocabulary health |
+| `/vocabulary/types` | GET | List relationship types |
 
 ### Administration
 
@@ -138,14 +155,16 @@ curl http://localhost:8000/concepts \
 ### Search for Concepts
 
 ```bash
-curl "http://localhost:8000/search?query=machine+learning&limit=10" \
-  -H "Authorization: Bearer <token>"
+curl -X POST http://localhost:8000/query/search \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{"query": "machine learning", "limit": 10, "min_similarity": 0.7}'
 ```
 
 ### Create a Concept
 
 ```bash
-curl -X POST http://localhost:8000/graph/concepts \
+curl -X POST http://localhost:8000/concepts \
   -H "Authorization: Bearer <token>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -157,15 +176,14 @@ curl -X POST http://localhost:8000/graph/concepts \
 
 ### Ingest Text
 
+`/ingest/text` accepts form-encoded data (not JSON):
+
 ```bash
 curl -X POST http://localhost:8000/ingest/text \
   -H "Authorization: Bearer <token>" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "text": "Neural networks consist of layers of interconnected nodes...",
-    "ontology": "machine-learning",
-    "auto_approve": true
-  }'
+  -F "text=Neural networks consist of layers of interconnected nodes..." \
+  -F "ontology=machine-learning" \
+  -F "auto_approve=true"
 ```
 
 ---

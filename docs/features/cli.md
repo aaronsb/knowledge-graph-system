@@ -216,15 +216,16 @@ Familiar commands for quick access.
 
 ```bash
 # List resources
-kg ls ontologies
-kg ls concepts --ontology economics
+kg ls ontology
+kg ls job
+kg ls source --ontology economics
 
 # Show details
-kg cat concept c_abc123
-kg stat ontology economics
+kg cat concept c_abc123       # → kg search show c_abc123
+kg stat database               # → kg database stats
 
 # Delete
-kg rm job job_abc123
+kg rm job job_abc123           # → kg job cancel job_abc123
 ```
 
 ---

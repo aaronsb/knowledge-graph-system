@@ -120,6 +120,15 @@ Full control over the extraction pipeline.
 | **analyze_polarity_axis** | Project concepts onto semantic dimensions |
 | **epistemic_status** | Check knowledge validation state |
 
+### Programs & Session Tools
+
+| Tool | What It Does |
+|------|--------------|
+| **program** | Compose, execute, or chain stored multi-step graph programs (ADR-500) |
+| **session_context** | Retrieve persistent session context for the agent |
+| **session_ingest** | Submit content from the current session for ingestion |
+| **epoch** | Query the graph epoch event log (ADR-203) |
+
 ---
 
 ## Example Conversations
