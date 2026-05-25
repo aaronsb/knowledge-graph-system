@@ -31,47 +31,59 @@ Functional test coverage map for the knowledge graph system. This document outli
 ### Python/FastAPI Backend
 
 **Framework:** pytest 8.0+ with pytest-asyncio, httpx, pytest-cov
-**Test Location:** `tests/`
+**Test Location:** `tests/` (with `tests/api/`, `tests/unit/`, `tests/security/`, `tests/manual/`)
 **Configuration:** `pytest.ini`
 
 **Key Features:**
-- Mock AI provider (no API keys needed)
-- In-memory job queue for fast tests
-- Test markers: `smoke`, `integration`, `api`
-- Coverage reporting (HTML + terminal)
+- Mock AI provider (no API keys needed) — `AI_PROVIDER=mock` set in `pytest.ini`
+- Test markers: `unit`, `smoke`, `integration`, `api`, `slow`, `security`
+- Auto-marking based on test location (see `tests/conftest.py::pytest_collection_modifyitems`)
+- Coverage reporting (HTML + terminal) against `api/app`
+- `tests/manual/` ignored during automated collection
 
-**Run Tests:**
+**Run Tests (canonical — inside container):**
 ```bash
-source venv/bin/activate
+# Platform must be running: ./operator.sh start
 
-# All tests
-pytest
+# Convenience wrapper (auto-detects kg-api-dev / kg-api container)
+./tests/run.sh                           # Full suite
+./tests/run.sh tests/api/                # Just API tests
+./tests/run.sh tests/unit/               # Just unit tests
+./tests/run.sh -k "concept"              # Pattern match
+./tests/run.sh -m "not slow"             # Skip slow tests
+
+# Equivalent direct invocations (per CLAUDE.md)
+docker exec kg-api-dev pytest tests/ -x -q          # full suite
+docker exec kg-api-dev pytest tests/unit/ -x -q     # unit tests only
+docker exec kg-api-dev pytest tests/api/ -x -q      # route tests only
 
 # By category
-pytest -m smoke          # Fast, no database (16 tests)
-pytest -m integration    # Full workflows (35 tests)
-pytest -m api           # API endpoints (all tests)
+./tests/run.sh -m smoke           # Quick sanity checks
+./tests/run.sh -m integration     # Integration (require DB)
+./tests/run.sh -m api             # All API endpoint tests
+./tests/run.sh -m unit            # Unit tests
+./tests/run.sh -m security        # Auth/security tests
 
-# With coverage
-pytest --cov=src --cov-report=html
-open htmlcov/index.html
+# Coverage (configured in pytest.ini: --cov=api/app)
+./tests/run.sh --cov-report=html
 ```
 
 ### TypeScript/Jest CLI Client
 
 **Framework:** Jest 29.7+ with ts-jest
-**Test Location:** `client/tests/`
-**Configuration:** `client/jest.config.js`
+**Test Location:** `cli/tests/` (sub-dirs: `cli/`, `lib/`, `mcp/`, plus `helpers/`)
+**Configuration:** `cli/jest.config.js`
 
 **Key Features:**
-- Auto-starts API server for tests
+- Auto-starts API server for tests (`globalSetup.ts`/`globalTeardown.ts`)
 - Real integration (no mocks)
 - Global setup/teardown
-- TypeScript support
+- TypeScript support (`ts-jest` preset)
+- `testTimeout: 30000`
 
 **Run Tests:**
 ```bash
-cd client
+cd cli
 
 # Build first (required)
 npm run build
@@ -451,7 +463,7 @@ def test_ontology_list(api_client):
 
 **Test:** CLI Health Check
 ```typescript
-// client/tests/cli/health.test.ts
+// cli/tests/cli/health.test.ts
 describe('kg health', () => {
   it('should return healthy status', async () => {
     const { stdout } = await execAsync(`${KG_CLI} health`);
