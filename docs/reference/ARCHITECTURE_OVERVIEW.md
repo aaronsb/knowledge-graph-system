@@ -447,17 +447,27 @@ detailed pattern):
 
 ## Testing Strategy
 
-### Unit Tests
-- AI provider abstraction
-- Concept matching logic
-- Graph queries
+### Python (API)
 
-### Integration Tests
-- End-to-end ingestion
-- MCP tool functionality
-- CLI commands
+API tests run inside the dev container (`kg-api-dev`) because they need the
+database and AGE extension. Start the platform first
+(`./operator.sh start`).
 
-### Manual Testing
-- Use sample Watts documents
-- Verify concept extraction quality
-- Test relationship accuracy
+```bash
+docker exec kg-api-dev pytest tests/ -x -q          # full suite
+docker exec kg-api-dev pytest tests/unit/ -x -q     # unit tests only
+docker exec kg-api-dev pytest tests/api/ -x -q      # route tests only
+```
+
+### TypeScript (CLI + MCP)
+
+```bash
+cd cli && npm test
+```
+
+### Rust (`graph-accel`)
+
+```bash
+cd graph-accel && cargo test                  # core unit tests
+cd graph-accel && cargo pgrx test pg18        # pgrx extension tests
+```

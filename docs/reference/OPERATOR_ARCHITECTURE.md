@@ -183,33 +183,45 @@ operator.sh:
 
 ## Files Inventory
 
-### Downloaded by install.sh to Host
+### Downloaded by install.sh to Host (standalone installs)
 ```
 knowledge-graph/
-├── .env                          # Secrets
-├── .operator.conf                # Configuration
-├── docker-compose.yml            # Base compose
-├── docker-compose.prod.yml       # Production overrides
-├── docker-compose.ghcr.yml       # GHCR image references
-├── docker-compose.ssl.yml        # SSL configuration
-├── nginx.ssl.conf                # Nginx HTTPS config
-├── certs/                        # SSL certificates
-├── operator.sh                   # Management shim
+├── .env                          # Secrets (generated)
+├── .operator.conf                # Operator configuration (DEV_MODE, GPU_MODE,
+│                                 # IMAGE_SOURCE, etc.)
+├── operator.sh                   # Management shim (also embeds VERSION)
+├── docker/
+│   ├── docker-compose.yml        # Base compose (postgres, garage, api, web,
+│   │                             # operator)
+│   ├── docker-compose.prod.yml   # Production overrides
+│   ├── docker-compose.ghcr.yml   # GHCR image references
+│   ├── docker-compose.standalone.yml  # Removes dev mounts (standalone mode)
+│   ├── docker-compose.ssl.yml    # SSL overlay (if SSL configured)
+│   ├── docker-compose.gpu-*.yml  # GPU overlays (nvidia / amd / amd-host)
+│   ├── docker-compose.override.mac.yml  # macOS (MPS) overlay
+│   └── nginx.prod.conf
+├── certs/                        # SSL certificates (if SSL configured)
 ├── operator/
 │   ├── configure.py              # Python config tool
-│   ├── lib/
-│   │   ├── common.sh
-│   │   ├── start-infra.sh
-│   │   ├── start-app.sh
-│   │   ├── stop.sh
-│   │   ├── upgrade.sh
-│   │   └── teardown.sh
-│   └── database/
-│       ├── migrate-db.sh
-│       └── backup-database.sh
-└── schema/
-    └── 00_baseline.sql
+│   ├── lib/                      # common, start-{infra,app,platform},
+│   │                             # stop, upgrade, teardown, garage-manager,
+│   │                             # guided-init, headless-init,
+│   │                             # init-secrets, image-tag, operator-help
+│   └── database/                 # migrate-db.sh, backup-database.sh,
+│                                 # restore-database.sh
+├── schema/
+│   ├── 00_baseline.sql
+│   ├── 11_graph_accel.sql
+│   ├── init.cypher
+│   ├── migrations/*.sql
+│   └── migrations-warm/*.sql
+└── config/
+    └── garage.toml               # Garage server config
 ```
+
+In **dev (repo) installs**, the same files are checked out in-place from the
+repo and the operator container bind-mounts the repo root to `/workspace`,
+so there is no separate "downloaded" copy.
 
 ### Baked into kg-operator Container Image
 ```
