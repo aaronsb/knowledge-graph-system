@@ -92,7 +92,7 @@ Instead of asking "which prototype is this edge closer to?" (binary), we ask "wh
 
 The following diagram illustrates the complete polarity axis triangulation approach:
 
-![Polarity Axis Triangulation Overview](media/ADR-058/polarity_axis_documentation.png)
+![Polarity Axis Triangulation Overview](media-ADR-058/polarity_axis_documentation.png)
 
 **Key Components:**
 - **Top Left:** Multiple opposing relationship pairs in embedding space
@@ -273,7 +273,7 @@ Concepts now exhibit continuous grounding scores instead of binary extremes:
 
 **Visual Comparison:**
 
-![Before and After Comparison](media/ADR-058/polarity_axis_before_after.png)
+![Before and After Comparison](media-ADR-058/polarity_axis_before_after.png)
 
 The visualization above shows:
 - **Left panel:** Old binary classification forcing edges into extreme buckets
