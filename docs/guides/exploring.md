@@ -27,11 +27,11 @@ Returns concepts semantically similar to your query, even if they use different 
 # Limit results
 kg search --limit 20 "economic policy"
 
-# Filter by ontology
-kg search --ontology "research" "neural networks"
+# Search source documents within a specific ontology
+kg search sources "neural networks" --ontology "research"
 
-# Show more detail
-kg search --verbose "machine learning"
+# Adjust similarity threshold (default 0.7)
+kg search --min-similarity 0.5 "machine learning"
 ```
 
 ### Web Interface

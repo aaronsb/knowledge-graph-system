@@ -186,10 +186,23 @@ Add to your Claude Desktop config (`~/.config/claude/claude_desktop_config.json`
   "mcpServers": {
     "knowledge-graph": {
       "command": "node",
-      "args": ["/path/to/knowledge-graph-system/mcp/dist/index.js"],
+      "args": ["/path/to/knowledge-graph-system/cli/dist/mcp-server.js"],
       "env": {
         "KG_API_URL": "http://localhost:8000"
       }
+    }
+  }
+}
+```
+
+Or, if installed via npm:
+
+```json
+{
+  "mcpServers": {
+    "knowledge-graph": {
+      "command": "kg-mcp-server",
+      "env": { "KG_API_URL": "http://localhost:8000" }
     }
   }
 }

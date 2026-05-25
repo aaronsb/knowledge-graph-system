@@ -112,21 +112,26 @@ Beyond grounding scores, concepts and relationships have epistemic status:
 
 | Status | Meaning |
 |--------|---------|
-| **Affirmative** | High grounding, well-established |
-| **Contested** | Significant disagreement between sources |
-| **Contradictory** | Strong evidence against |
-| **Historical** | Was accurate in its time period |
-| **Insufficient Data** | Too few sources to judge |
+| **WELL_GROUNDED** | High grounding (> 0.8), well-established |
+| **MIXED_GROUNDING** | Variable evidence (0.15–0.8), contested |
+| **WEAK_GROUNDING** | Weak positive evidence (0.0–0.15), emerging |
+| **POORLY_GROUNDED** | Weak negative evidence (-0.5–0.0), uncertain |
+| **CONTRADICTED** | Strong evidence against (< -0.5) |
+| **HISTORICAL** | Temporal vocabulary (e.g. WAS, FORMER) |
+| **INSUFFICIENT_DATA** | Too few sources to judge (< 3 measurements) |
 
 ### Checking Epistemic Status
 
 ```bash
-# See status for relationship types
-kg vocabulary list --status CONTESTED
+# See vocabulary types by epistemic status
+kg vocab epistemic-status list --status MIXED_GROUNDING
 
-# Filter concepts by status
-kg search "topic" --status AFFIRMATIVE
+# Show detail for a single type
+kg vocab epistemic-status show SUPPORTS
 ```
+
+See [EPISTEMIC-STATUS-FILTERING.md](EPISTEMIC-STATUS-FILTERING.md) for
+querying relationships by status.
 
 ## Working with Contradictions
 
@@ -147,7 +152,7 @@ Look for concepts with:
 kg search "controversial topic"
 
 # Get details to see both sides
-kg concept details <concept-id>
+kg search show <concept-id>
 ```
 
 ### Understanding Both Sides
@@ -223,13 +228,13 @@ kg ingest latest-study.pdf --ontology research
 
 ### Separate Domains
 
-Different ontologies can have different evidence bases:
-```bash
-# Medical research has high grounding for X
-kg search --ontology medical "treatment X"
+Different ontologies can have different evidence bases. Ingest into
+separate ontologies, then list/explore each independently:
 
-# General news has low grounding for X
-kg search --ontology news "treatment X"
+```bash
+# Inspect a single ontology's documents and stats
+kg ontology info medical
+kg ontology info news
 ```
 
 ## Summary
