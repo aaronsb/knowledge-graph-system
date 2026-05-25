@@ -223,7 +223,7 @@ Implementation testing revealed:
 
 **Critical Discovery:** The 3x speedup comes from **batched queries with IN clauses**, NOT from parallelization. Parallelization adds overhead beyond 1-2 workers.
 
-**See [ADR-071a: Parallel Implementation Findings](ADR-071a-parallel-implementation-findings.md) for detailed analysis.**
+The detailed analysis is the section above — the planned standalone "ADR-071a: Parallel Implementation Findings" was never split out from this ADR and the findings live inline here under [Actual Performance Results](#actual-performance-results-adr-071a).
 
 ## Configuration Management
 
@@ -278,7 +278,6 @@ def load_parallel_config() -> ParallelQueryConfig:
 ## Related ADRs
 
 - **[ADR-070: Polarity Axis Analysis](../ai-embeddings/ADR-070-polarity-axis-analysis.md)** - The feature that exposed this performance issue
-- **[ADR-071a: Parallel Implementation Findings](ADR-071a-parallel-implementation-findings.md)** - Actual performance results and critical discoveries
 - **[ADR-049: Rate Limiting and Concurrency](../ai-embeddings/ADR-049-rate-limiting-and-concurrency.md)** - Semaphore pattern for resource limiting
 - **[ADR-048: GraphQueryFacade](../vocabulary-relationships/ADR-048-vocabulary-metadata-as-graph.md)** - Namespace-safe query interface
 

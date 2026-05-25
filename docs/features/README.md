@@ -40,6 +40,6 @@ Create, edit, and delete concepts directly. Correct extraction errors, merge dup
 
 ## Quick Links
 
-- **Get Started**: [Deployment Guide](../deployment/README.md)
+- **Get Started**: [Deployment Guide](../guides/DEPLOYMENT.md)
 - **Learn Concepts**: [Core Concepts](../concepts/README.md)
 - **Step-by-Step**: [User Guides](../guides/README.md)

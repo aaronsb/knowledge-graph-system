@@ -215,4 +215,4 @@ docker-compose up -d
 ./scripts/development/build/rebuild-operator.sh
 ```
 
-See [QUICKSTART.md](QUICKSTART.md) for the full development workflow.
+See [QUICKSTART.md](../manual/01-getting-started/02-CLI_USAGE.md) for the full development workflow.

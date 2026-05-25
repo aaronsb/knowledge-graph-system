@@ -194,5 +194,5 @@ Large documents with many chunks can exhaust memory. Try:
 
 ## Next Steps
 
-- [Exploring Knowledge](exploring.md) - Navigate what you've ingested
-- [Understanding Grounding](understanding-grounding.md) - Interpret confidence scores
+- [Exploring Knowledge](../../guides/exploring.md) - Navigate what you've ingested
+- [Understanding Grounding](../../guides/understanding-grounding.md) - Interpret confidence scores

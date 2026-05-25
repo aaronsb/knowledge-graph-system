@@ -510,8 +510,7 @@ This requires ADR-068 (Source Text Embeddings) to be implemented first.
 - **[ADR-041: AI Extraction Provider Configuration](../ai-embeddings/ADR-041-ai-extraction-config.md)** - Database-first configuration pattern
 - **[ADR-049: Rate Limiting and Concurrency](../ai-embeddings/ADR-049-rate-limiting-and-concurrency.md)** - Per-provider semaphores and configuration
 - **[ADR-068: Source Text Embeddings](../ai-embeddings/ADR-068-source-text-embeddings.md)** - Future: Evidence-aware matching
-- **[ADR-071: Parallel Graph Query Optimization](../query-search/ADR-071-parallel-graph-queries.md)** - Epsilon-greedy degree-biased search pattern
-- **[ADR-071a: Parallel Implementation Findings](../query-search/ADR-071a-parallel-implementation-findings.md)** - Discovery that query optimization > parallelization
+- **[ADR-071: Parallel Graph Query Optimization](../query-search/ADR-071-parallel-graph-queries.md)** - Epsilon-greedy degree-biased search pattern; the planned standalone "ADR-071a" findings document was never split out and lives inline in [Actual Performance Results](../query-search/ADR-071-parallel-graph-queries.md#actual-performance-results-adr-071a) — discovery that query optimization > parallelization
 
 ## References
 

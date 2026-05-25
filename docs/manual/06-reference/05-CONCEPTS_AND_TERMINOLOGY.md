@@ -532,7 +532,7 @@ python -m src.admin.check_integrity --ontology "Alan Watts" --repair
 
 ## Further Reading
 
-- [Architecture Decisions](../../architecture/ARCHITECTURE_DECISIONS.md) - ADR-011 on backup/restore design
+- [Architecture Decisions](../../architecture/INDEX.md) - ADR-011 on backup/restore design
 - [Backup & Restore Guide](../05-maintenance/01-BACKUP_RESTORE.md) - Detailed operational guide
 - [openCypher Language Reference](https://s3.amazonaws.com/artifacts.opencypher.org/openCypher9.pdf) - Query language reference
 - [Apache AGE Documentation](https://age.apache.org/age-manual/master/intro/overview.html) - AGE implementation details

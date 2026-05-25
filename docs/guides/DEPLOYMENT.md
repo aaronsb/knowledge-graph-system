@@ -639,7 +639,7 @@ docker exec kg-operator python /workspace/operator/setup/configure-db-profile.sh
 
 ## See Also
 
-- [Quickstart Guide](QUICKSTART.md) - Get started in 10 minutes
+- [Quickstart Guide](../manual/01-getting-started/02-CLI_USAGE.md) - Get started in 10 minutes
 - [Container Images Guide](CONTAINER_IMAGES.md) - Pre-built images and versioning
-- [Architecture Overview](../architecture/ARCHITECTURE.md) - System design
-- [ADR-061: Operator Architecture](../architecture/ADR-061-operator-pattern-lifecycle.md) - Architecture decision
+- [Architecture Overview](../reference/ARCHITECTURE_OVERVIEW.md) - System design
+- [ADR-061: Operator Architecture](../architecture/database-schema/ADR-061-operator-pattern-lifecycle.md) - Architecture decision

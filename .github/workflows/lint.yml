@@ -49,6 +49,23 @@ jobs:
         run: |
           python3 -m py_compile $(find api/app scripts -name "*.py")
 
+  docs-link-check:
+    name: Docs Link Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Check for broken local links in docs/
+        run: |
+          python3 scripts/development/lint/link_check.py --fail-on-broken
+
   # TODO: Add full test infrastructure in future
   # pytest-unit:
   #   name: Unit Tests

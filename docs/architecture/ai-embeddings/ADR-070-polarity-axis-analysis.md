@@ -619,10 +619,8 @@ Core functionality (API, CLI, MCP) provides complete access to polarity axis ana
 
 ## References
 
-- **Feature Documentation:** [Polarity Axis Analysis](../features/polarity-axis-analysis/)
-  - [Implementation Plan](../features/polarity-axis-analysis/IMPLEMENTATION_PLAN.md) - Complete technical roadmap
-  - [Experimental Findings](../features/polarity-axis-analysis/FINDINGS.md) - Validation results
-  - [Experimental Code](../features/polarity-axis-analysis/experimental_code/) - Validated prototypes
+- **Implementation:** `api/app/lib/polarity_axis.py`, `api/app/routes/polarity.py`. The earlier prototype directory under `features/polarity-axis-analysis/` was removed when the feature shipped to production.
+- **Experimental Findings:** [Validation Results](../../research/vision-testing/FINDINGS.md) from the original vision-testing run that informed the design.
 - **Research papers:**
   - [Large Concept Models](https://arxiv.org/abs/2412.08821) - Meta AI, Dec 2024
   - [Path-Constrained Retrieval](https://arxiv.org/html/2511.18313)
