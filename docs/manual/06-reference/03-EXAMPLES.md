@@ -15,7 +15,7 @@ All examples use real data from the system.
 **What the Knowledge Graph does:**
 
 ```bash
-$ python cli.py search "uselessness" --limit 3
+$ kg search query "uselessness" --limit 3
 
 Found 2 concepts:
 
@@ -39,7 +39,7 @@ Found 2 concepts:
 **Query:** Get details on "Value of Uselessness"
 
 ```bash
-$ python cli.py details watts_taoism_02_chunk1_603de879
+$ kg search details watts_taoism_02_chunk1_603de879
 
 Concept Details: watts_taoism_02_chunk1_603de879
 
@@ -126,7 +126,7 @@ The graph enabled the LLM to:
 **Query:** "What are the main concepts?"
 
 ```bash
-$ python cli.py search "system design organization" --limit 10
+$ kg search query "system design organization" --limit 10
 
 Found 10 concepts:
 
@@ -141,7 +141,7 @@ Found 10 concepts:
 **Then traverse:**
 
 ```bash
-$ python cli.py related variety_as_a_fulcrum_chunk1_27613d66 --depth 2
+$ kg search related variety_as_a_fulcrum_chunk1_27613d66 --depth 2
 
 Related concepts from: AI Sandwich Systems Model
 
@@ -164,7 +164,7 @@ You discover the argument structure without reading the document linearly.
 **Query:** "What does Zhuangzi say about humor?"
 
 ```bash
-$ python cli.py search "Zhuangzi humor philosophy"
+$ kg search query "Zhuangzi humor philosophy"
 
 1. Humor in Philosophy
    Evidence: "He's almost the only philosopher from the whole of
@@ -189,7 +189,7 @@ The same knowledge graph can be queried three ways:
 
 **Via CLI (humans):**
 ```bash
-$ python cli.py search "adoption valley"
+$ kg search query "adoption valley"
 → Returns: "Adoption Valley" concept with evidence
 ```
 
@@ -200,7 +200,7 @@ Claude: Let me search the knowledge graph for "adoption valley"...
 → Gets: Full concept details with relationships
 ```
 
-**Via Neo4j Browser (visual):**
+**Via direct Cypher (Apache AGE on PostgreSQL):**
 ```cypher
 MATCH (c:Concept {label: "Adoption Valley"})-[r]->(related:Concept)
 RETURN c, r, related
@@ -222,7 +222,7 @@ Sometimes the LLM misidentifies concepts or creates poor relationships. You'll s
 **Deduplication Over-Merging:**
 Occasionally, similar but distinct concepts merge when they shouldn't. Check with:
 ```bash
-$ python cli.py details <concept-id>
+$ kg search details <concept-id>
 → Review evidence to see if multiple ideas were merged
 ```
 
@@ -289,18 +289,18 @@ After building a knowledge graph, you can:
 
 ```bash
 # Ingest your own document
-./scripts/ingest.sh your-document.txt --name "My Document"
+kg ingest file your-document.txt -o "My Document"
 
 # Search for concepts
-python cli.py search "your query"
+kg search query "your query"
 
 # Explore relationships
-python cli.py details <concept-id>
-python cli.py related <concept-id>
+kg search details <concept-id>
+kg search related <concept-id>
 
 # Visual exploration
-# Open http://localhost:7474 in browser
-# Run: MATCH (c:Concept)-[r]->(related) RETURN c, r, related LIMIT 50
+# Run a Cypher query via the operator/database tools or the web visualizer (http://localhost:3000)
+# Example: MATCH (c:Concept)-[r]->(related) RETURN c, r, related LIMIT 50
 ```
 
 The graph grows with every document. The connections emerge over time.

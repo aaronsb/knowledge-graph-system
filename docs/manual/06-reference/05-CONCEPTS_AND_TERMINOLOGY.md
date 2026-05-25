@@ -164,7 +164,7 @@ Concept B                (relationship removed)
 
 **Command:**
 ```bash
-python -m src.admin.prune --ontology "Alan Watts Lectures"
+kg ontology delete "Alan Watts Lectures" --force
 ```
 
 **Result:**
@@ -196,7 +196,7 @@ Concept B ──SUPPORTS─> ??? ──similarity──> Concept Y' (92% similar
 
 **Command:**
 ```bash
-python -m src.admin.stitch --backup backups/alan_watts.json --threshold 0.85
+kg admin restore --file alan_watts.json --deps stitch
 ```
 
 **Result:**
@@ -398,10 +398,10 @@ python cli.py ingest watts_1.txt --ontology "Alan Watts"
 python cli.py ingest watts_2.txt --ontology "Alan Watts"
 
 # Backup
-python -m src.admin.backup --ontology "Alan Watts"
+kg admin backup --type ontology --ontology "Alan Watts"
 
 # Later: Restore to new database
-python -m src.admin.restore --file backups/alan_watts.json
+kg admin restore --file alan_watts.json
 ```
 
 **Integrity**: No external dependencies, no stitching/pruning needed
@@ -419,7 +419,7 @@ python cli.py ingest agile_*.md --ontology "Agile Methodology"
 python cli.py ingest systems_*.pdf --ontology "Systems Thinking"
 
 # Full backup
-python -m src.admin.backup --auto-full
+kg admin backup --type full
 ```
 
 **Integrity**: Cross-ontology relationships exist, full backup captures everything
@@ -432,14 +432,14 @@ python -m src.admin.backup --auto-full
 
 ```bash
 # Backup single ontology (has external refs to other ontologies)
-python -m src.admin.backup --ontology "Alan Watts"
+kg admin backup --type ontology --ontology "Alan Watts"
 
 # Restore to database that has "Systems Thinking" ontology
-python -m src.admin.restore --file backups/alan_watts.json
+kg admin restore --file alan_watts.json
 # Choose: "Stitch later (defer)"
 
 # Stitch using semantic similarity
-python -m src.admin.stitch --backup backups/alan_watts.json --threshold 0.85
+kg admin restore --file alan_watts.json --deps stitch
 # System matches + auto-prunes unmatched → 100% edge handling
 ```
 
@@ -453,7 +453,7 @@ python -m src.admin.stitch --backup backups/alan_watts.json --threshold 0.85
 
 ```bash
 # Empty database
-python -m src.admin.restore --file backups/alan_watts.json
+kg admin restore --file alan_watts.json
 # Auto-detects clean database
 # Auto-selects prune mode
 # Message: "✓ Target database is empty - will auto-prune to keep ontology isolated"
@@ -469,11 +469,11 @@ python -m src.admin.restore --file backups/alan_watts.json
 
 ```bash
 # Restore but maintain boundaries
-python -m src.admin.restore --file backups/alan_watts.json
+kg admin restore --file alan_watts.json
 # Choose: "Auto-prune after restore (keep isolated)"
 
 # Or prune existing dangling relationships
-python -m src.admin.prune --ontology "Alan Watts"
+kg ontology delete "Alan Watts" --force
 ```
 
 **Result**: Clean ontology boundaries, no cross-domain connections
@@ -486,15 +486,15 @@ python -m src.admin.prune --ontology "Alan Watts"
 
 ```bash
 # Before restore: Assess backup
-python -m src.admin.backup --ontology "Alan Watts"
+kg admin backup --type ontology --ontology "Alan Watts"
 # Console shows: "⚠ 7 relationships to external concepts"
 
 # After restore: Validate
-python -m src.admin.check_integrity --ontology "Alan Watts"
+# Integrity is validated automatically during `kg admin restore`.
 # Reports orphaned concepts, dangling relationships, missing embeddings
 
 # Repair if needed
-python -m src.admin.check_integrity --ontology "Alan Watts" --repair
+# Integrity repair runs as part of `kg admin restore --deps stitch`.
 ```
 
 ---

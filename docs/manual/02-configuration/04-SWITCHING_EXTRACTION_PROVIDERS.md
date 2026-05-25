@@ -4,6 +4,8 @@
 
 > **📊 Before switching:** See [Extraction Quality Comparison](./06-EXTRACTION_QUALITY_COMPARISON.md) for empirical comparison of extraction quality, canonical adherence, and cost-benefit analysis across providers.
 
+> **⚠️ Ollama scripts:** Older Ollama setup scripts (`./scripts/start-ollama.sh`, `./scripts/stop-ollama.sh`) referenced below have been **removed**. Install Ollama on the host (`https://ollama.com`) or wire up your own container, then use `kg admin extraction set --provider ollama ...`. The conceptual flow remains the same; substitute `ollama serve` / `systemctl stop ollama` for the legacy scripts.
+
 ---
 
 ## What's the Default?

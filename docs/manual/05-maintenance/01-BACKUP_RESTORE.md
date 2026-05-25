@@ -4,20 +4,25 @@
 
 The Knowledge Graph System provides comprehensive backup and restore functionality with **integrity checking** to protect against **torn ontological fabric** - the phenomenon where partial backups/restores create dangling references and orphaned concepts.
 
+Backups are created and restored via the `kg admin` CLI (which talks to the API, ADR-036). For pure SQL dumps of the underlying PostgreSQL, see `operator/database/backup-database.sh` and `operator/database/restore-database.sh`.
+
 ## Quick Start
 
 ```bash
-# Full database backup
-./scripts/backup.sh
+# Interactive backup (choose full or per-ontology)
+kg admin backup
+
+# Full database backup, non-interactive
+kg admin backup --type full
 
 # Ontology-specific backup
-python -m src.admin.backup --ontology "My Ontology"
+kg admin backup --type ontology --ontology "My Ontology"
 
-# Restore from backup
-./scripts/restore.sh
+# List available backups (configured backup directory)
+kg admin list-backups
 
-# Check database integrity
-python -m src.admin.check_integrity
+# Restore from backup (requires admin auth; prompts for password)
+kg admin restore --file <backup-file>
 ```
 
 ## The Problem: Torn Ontological Fabric
@@ -34,13 +39,13 @@ When backing up or restoring **partial ontologies**, you risk creating integrity
 **Problem:**
 ```bash
 # Backup only Ontology A
-python -m src.admin.backup --ontology "Ontology A"
+kg admin backup --type ontology --ontology "Ontology A"
 
 # Delete entire database
-./scripts/reset.sh
+kg admin reset
 
 # Restore Ontology A
-python -m src.admin.restore --file backups/ontology_a.json
+kg admin restore --file ontology_a.json
 ```
 
 **Result:** Concept X now has a dangling `IMPLIES` relationship pointing to non-existent Concept Y.
@@ -54,13 +59,13 @@ python -m src.admin.restore --file backups/ontology_a.json
 **Problem:**
 ```bash
 # Backup Ontology A
-python -m src.admin.backup --ontology "Ontology A"
+kg admin backup --type ontology --ontology "Ontology A"
 
 # Delete Ontology A
-python cli.py --yes ontology delete "Ontology A"
+kg ontology delete "Ontology A" --force
 
 # Restore Ontology A
-python -m src.admin.restore --file backups/ontology_a.json
+kg admin restore --file ontology_a.json
 ```
 
 **Result:** Concept X loses all connections to Ontology B sources. The concept's evidence from Ontology B is severed.
@@ -76,7 +81,7 @@ python -m src.admin.restore --file backups/ontology_a.json
 **Problem:**
 ```bash
 # Backup Ontology 1 only
-python -m src.admin.backup --ontology "Ontology 1"
+kg admin backup --type ontology --ontology "Ontology 1"
 
 # Restore into clean database
 # Concept A is restored, but its IMPLIES relationship to B is dangling
@@ -91,7 +96,7 @@ python -m src.admin.backup --ontology "Ontology 1"
 When backing up an ontology, the system **analyzes cross-ontology dependencies**:
 
 ```bash
-python -m src.admin.backup --ontology "Ontology A"
+kg admin backup --type ontology --ontology "Ontology A"
 ```
 
 **Output:**
@@ -131,7 +136,7 @@ External Dependencies:
 After restoring, the system **validates integrity**:
 
 ```bash
-python -m src.admin.restore --file backups/ontology_a.json
+kg admin restore --file ontology_a.json
 ```
 
 **Output:**
@@ -172,13 +177,13 @@ Attempt automatic repair? [Y/n]:
 
 ```bash
 # Check entire database
-python -m src.admin.check_integrity
+# Integrity is validated automatically by `kg admin restore`.
 
 # Check specific ontology
-python -m src.admin.check_integrity --ontology "My Ontology"
+# Integrity is validated automatically by `kg admin restore`.
 
 # Auto-repair orphaned concepts
-python -m src.admin.check_integrity --repair
+# Integrity repair runs as part of `kg admin restore` (use `--deps stitch|prune|defer`).
 ```
 
 ## Restore Strategies
@@ -189,10 +194,10 @@ python -m src.admin.check_integrity --repair
 
 ```bash
 # Backup entire database
-python -m src.admin.backup --auto-full
+kg admin backup --type full
 
 # Restore entire database
-python -m src.admin.restore --file backups/full_backup_20251006.json
+kg admin restore --file full_backup_20251006.json
 ```
 
 **Pros:**
@@ -210,14 +215,14 @@ Backup **related ontologies together**:
 
 ```bash
 # Backup Ontology A
-python -m src.admin.backup --ontology "Ontology A"
+kg admin backup --type ontology --ontology "Ontology A"
 
 # Backup Ontology B (which A references)
-python -m src.admin.backup --ontology "Ontology B"
+kg admin backup --type ontology --ontology "Ontology B"
 
 # Restore both
-python -m src.admin.restore --file backups/ontology_a.json
-python -m src.admin.restore --file backups/ontology_b.json
+kg admin restore --file ontology_a.json
+kg admin restore --file ontology_b.json
 ```
 
 **Pros:**
@@ -235,13 +240,13 @@ Restore ontology, accept warnings, and repair:
 
 ```bash
 # Restore (may have dangling refs)
-python -m src.admin.restore --file backups/ontology_a.json
+kg admin restore --file ontology_a.json
 
 # System offers repair:
 # "Attempt automatic repair? [Y/n]: y"
 
 # Or manually repair later:
-python -m src.admin.check_integrity --ontology "Ontology A" --repair
+# Re-run `kg admin restore --file ontology_a.json` to revalidate integrity.
 ```
 
 **What gets repaired:**
@@ -310,42 +315,42 @@ Ingesting large documents can cost **$50-100 in LLM tokens**. Backups protect th
 1. **Ingest once, restore many times**
    ```bash
    # Expensive: Process 400KB document
-   ./scripts/ingest.sh large_document.txt --name "Expensive Ontology"
+   kg ingest file large_document.txt -o "Expensive Ontology"
    # Cost: $75 in tokens
 
    # Cheap: Backup immediately
-   python -m src.admin.backup --ontology "Expensive Ontology"
+   kg admin backup --type ontology --ontology "Expensive Ontology"
    # Cost: $0
 
    # Cheap: Restore anytime
-   python -m src.admin.restore --file backups/expensive_ontology.json
+   kg admin restore --file expensive_ontology.json
    # Cost: $0
    ```
 
 2. **Share ontologies between team members**
    ```bash
    # Team member A ingests
-   ./scripts/ingest.sh document.txt --name "Shared Knowledge"
-   python -m src.admin.backup --ontology "Shared Knowledge"
+   kg ingest file document.txt -o "Shared Knowledge"
+   kg admin backup --type ontology --ontology "Shared Knowledge"
 
    # Send backup file to team member B
    scp backups/ontology_shared_knowledge.json teammate@remote:/path/
 
    # Team member B restores (no re-ingestion needed)
-   python -m src.admin.restore --file ontology_shared_knowledge.json
+   kg admin restore --file ontology_shared_knowledge.json
    ```
 
 3. **Experiment safely**
    ```bash
    # Backup before experiments
-   python -m src.admin.backup --ontology "Production Data"
+   kg admin backup --type ontology --ontology "Production Data"
 
    # Run risky experiments
-   python cli.py ontology delete "Production Data"
+   kg ontology delete "Production Data" --force
    # Try different ingestion parameters
 
    # Restore if experiment fails
-   python -m src.admin.restore --file backups/production_data.json
+   kg admin restore --file production_data.json
    ```
 
 ## Best Practices
@@ -354,13 +359,13 @@ Ingesting large documents can cost **$50-100 in LLM tokens**. Backups protect th
 
 ```bash
 # Before deleting ontologies
-python -m src.admin.backup --auto-full
+kg admin backup --type full
 
 # Before schema migrations
-python -m src.admin.backup --auto-full
+kg admin backup --type full
 
 # Before experiments
-python -m src.admin.backup --ontology "Ontology Name"
+kg admin backup --type ontology --ontology "Ontology Name"
 ```
 
 ### 2. Check Integrity After Restore
@@ -368,7 +373,7 @@ python -m src.admin.backup --ontology "Ontology Name"
 **Always** validate after partial restore:
 
 ```bash
-python -m src.admin.check_integrity --ontology "Restored Ontology"
+# Integrity is validated automatically by `kg admin restore`.
 ```
 
 ### 3. Document Dependencies
@@ -390,14 +395,13 @@ Before restoring to production:
 
 ```bash
 # Restore to test database first
-NEO4J_URI=bolt://localhost:7688 python -m src.admin.restore \
-  --file backups/production.json
+# Use a separate API instance (e.g. via KG_API_URL=...) to restore to staging:
+KG_API_URL=http://staging:8000 kg admin restore --file production.json
 
-# Verify integrity
-NEO4J_URI=bolt://localhost:7688 python -m src.admin.check_integrity
+# (Integrity is validated automatically by `kg admin restore`.)
 
 # If ok, restore to production
-python -m src.admin.restore --file backups/production.json
+kg admin restore --file production.json
 ```
 
 ### 5. Version Control Backup Files
@@ -428,7 +432,8 @@ git add .gitattributes backups/
 
 **Solution:**
 ```bash
-python -m src.admin.check_integrity --ontology "My Ontology" --repair
+# Integrity is validated automatically during `kg admin restore`. There is
+# no standalone check-integrity command; rerun the restore to revalidate.
 ```
 
 ### Issue: "Concepts missing embeddings"
@@ -446,7 +451,7 @@ python -m src.admin.check_integrity --ontology "My Ontology" --repair
 **Solutions:**
 1. Compress backup files: `gzip backups/*.json`
 2. Split into ontology-specific backups
-3. Use database-level backup (Neo4j native tools)
+3. Use PostgreSQL-level backups (e.g. `operator/database/backup-database.sh`)
 
 ## See Also
 

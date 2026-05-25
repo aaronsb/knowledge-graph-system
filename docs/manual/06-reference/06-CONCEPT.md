@@ -149,11 +149,11 @@ Not just finding similar text. **Understanding the knowledge.**
 ## Implementation Reality
 
 This system:
-- Uses LLMs for extraction (GPT-4, Claude, etc.)
-- Stores concepts in Neo4j with vector embeddings
+- Uses LLMs for extraction (GPT-4o, Claude, Ollama, etc.)
+- Stores concepts in Apache AGE (PostgreSQL graph extension) with vector embeddings
 - Deduplicates via vector similarity (concepts merge across documents)
 - Preserves evidence links to source quotes
-- Provides multiple query interfaces (MCP, CLI, Neo4j Browser)
+- Provides multiple query interfaces (MCP, CLI, web visualizer, direct openCypher)
 
 It's not magic. It's structured extraction + graph storage + semantic retrieval.
 

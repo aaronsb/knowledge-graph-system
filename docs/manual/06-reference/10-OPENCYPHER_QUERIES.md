@@ -725,7 +725,7 @@ kg database stats
 ### PostgreSQL psql (Direct Database Access)
 ```bash
 # Access PostgreSQL container directly
-docker exec -it knowledge-graph-postgres psql -U postgres -d knowledge_graph
+docker exec -it knowledge-graph-postgres psql -U admin -d knowledge_graph
 
 # Then run AGE queries wrapped in SELECT
 SELECT * FROM cypher('knowledge_graph', $$

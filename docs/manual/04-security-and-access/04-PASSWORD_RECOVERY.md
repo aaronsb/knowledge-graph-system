@@ -16,8 +16,8 @@
 ## Prerequisites
 
 **Required:**
-- Docker running with PostgreSQL container
-- Python 3 with project dependencies installed (for password hashing)
+- Docker running with the PostgreSQL container started by `./operator.sh start`
+- Operator container running (the reset script runs inside it for Python password hashing)
 - Access to the project root directory
 - Shell access to run scripts
 
@@ -34,7 +34,7 @@
 
 ```bash
 cd /path/to/knowledge-graph-system
-./scripts/reset-password.sh
+./operator/admin/reset-password.sh
 ```
 
 **Step 2: Choose the user**
@@ -101,24 +101,23 @@ Scopes: read:*, write:*
 
 Success! You're back in. The login command creates OAuth client credentials that don't expire.
 
-## Alternative: Initialize Auth Script
+## Alternative: Initialize Platform
 
-If you need to reset the admin password AND regenerate OAuth token signing keys, use the more comprehensive initialize script:
+For a fresh setup (or to (re)generate `.env` secrets), use the operator init flow:
 
 ```bash
-./scripts/setup/initialize-platform.sh
+./operator.sh init
 ```
 
-This script:
-- Detects if admin user exists
-- Offers to reset admin password
-- Optionally regenerates JWT_SECRET_KEY (used to sign OAuth access tokens)
-- Updates `.env` file with new secrets
-- Provides full setup instructions
+This:
+- Detects whether admin user exists
+- Generates infrastructure secrets in `.env` (`ENCRYPTION_KEY`, `OAUTH_SIGNING_KEY`, `POSTGRES_PASSWORD`, `INTERNAL_KEY_SERVICE_SECRET`)
+- Creates the admin user via the operator container
+- Sets sensible defaults for the rest of the platform
 
 **When to use which:**
-- **`reset-password.sh`**: Quick password reset for any user
-- **`initialize-platform.sh`**: Full authentication setup or admin password + token signing key regeneration
+- **`operator/admin/reset-password.sh`**: Quick password reset for any user (direct DB access)
+- **`./operator.sh init`**: First-time setup — creates admin user, generates `.env` secrets including the JWT signing key
 
 ## What This Does Under the Hood
 
@@ -184,12 +183,12 @@ docker ps  # Verify container is running
 **Error:**
 ```
 ✗ No users found in database
-  Run: ./scripts/setup/initialize-platform.sh to create admin user
+  Run: ./operator.sh init to create admin user
 ```
 
 **Fix:**
 ```bash
-./scripts/setup/initialize-platform.sh
+./operator.sh init
 # Creates initial admin user
 ```
 
@@ -243,7 +242,7 @@ python3 --version  # Should be 3.11+
 pip install --upgrade passlib bcrypt
 
 # Try again
-./scripts/reset-password.sh
+./operator/admin/reset-password.sh
 ```
 
 ## Security Considerations

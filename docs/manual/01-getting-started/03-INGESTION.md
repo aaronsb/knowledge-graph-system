@@ -199,5 +199,6 @@ Large documents with many chunks can exhaust memory. Try:
 
 ## Next Steps
 
-- [Exploring Knowledge](../../guides/exploring.md) - Navigate what you've ingested
-- [Understanding Grounding](../../guides/understanding-grounding.md) - Interpret confidence scores
+- [CLI Usage Guide](02-CLI_USAGE.md) - All `kg` commands for querying and managing the graph
+- [Examples](../06-reference/03-EXAMPLES.md) - Real queries against an ingested corpus
+- [Schema Reference](../06-reference/01-SCHEMA_REFERENCE.md) - Underlying graph and table structure
