@@ -404,7 +404,60 @@ async def init_embedding_model_manager() -> Optional[EmbeddingModelManager]:
     if query_prefix or document_prefix:
         logger.info(f"  Task prefixes: query={query_prefix!r} document={document_prefix!r}")
 
-    def _build_and_load(use_device: str) -> EmbeddingModelManager:
+    # Build into a local first; only publish to the module global once load_model()
+    # actually succeeded. Otherwise a failed load leaves _model_manager pointing
+    # at an EmbeddingModelManager with self.model is None, and every downstream
+    # caller raises "Embedding model not loaded. Call load_model() first." — the
+    # exact misdiagnosis described in issue #405.
+    try:
+        manager = _build_with_cpu_fallback(
+            model_name=model_name,
+            precision=precision,
+            device=device,
+            loader=loader,
+            revision=revision,
+            trust_remote_code=trust_remote_code,
+            query_prefix=query_prefix,
+            document_prefix=document_prefix,
+        )
+    except Exception:
+        _model_manager = None
+        raise
+
+    _model_manager = manager
+
+    # Verify dimensions match config
+    actual_dims = _model_manager.get_dimensions()
+    expected_dims = config.get('text_dimensions', config.get('embedding_dimensions'))
+    if expected_dims and actual_dims != expected_dims:
+        logger.warning(f"Dimension mismatch: model has {actual_dims} dims, config specifies {expected_dims}")
+
+    logger.info(f"Local embedding model manager initialized")
+    return _model_manager
+
+
+def _build_with_cpu_fallback(
+    *,
+    model_name: str,
+    precision: str,
+    device: str,
+    loader: str,
+    revision: Optional[str],
+    trust_remote_code: bool,
+    query_prefix: Optional[str],
+    document_prefix: Optional[str],
+) -> EmbeddingModelManager:
+    """Build + load_model with one-shot CPU fallback. @verified 49fc13ba
+
+    Used by the boot-time init path. Hot-reload (`reload_embedding_model_manager`)
+    deliberately does NOT use this — see the comment there.
+
+    When the requested accelerator is unusable (CUDA-built torch on an AMD
+    host, missing /dev/kfd for ROCm, MPS on a non-Apple host, etc.), retries
+    once on CPU rather than leaving the platform silent-broken.
+    """
+
+    def _build(use_device: str) -> EmbeddingModelManager:
         m = EmbeddingModelManager(
             model_name=model_name,
             precision=precision,
@@ -418,47 +471,31 @@ async def init_embedding_model_manager() -> Optional[EmbeddingModelManager]:
         m.load_model()
         return m
 
-    # Build into a local first; only publish to the module global once load_model()
-    # actually succeeded. Otherwise a failed load leaves _model_manager pointing
-    # at an EmbeddingModelManager with self.model is None, and every downstream
-    # caller raises "Embedding model not loaded. Call load_model() first." — the
-    # exact misdiagnosis described in issue #405.
-    manager: Optional[EmbeddingModelManager] = None
+    # Case-insensitive 'cpu' check — config may carry 'CPU', whitespace, etc.;
+    # we'd rather not double-log a failure by attempting a no-op retry.
+    is_cpu = (device or '').strip().lower() == 'cpu'
+
     try:
-        manager = _build_and_load(device)
+        return _build(device)
     except Exception as e:
-        # ADR-101: when the requested accelerator is unusable (CUDA-built torch
-        # on AMD host, missing /dev/kfd for ROCm, MPS unavailable, etc.), retry
-        # once on CPU rather than leaving the platform silent-broken.
-        if device == 'cpu':
-            _model_manager = None
+        if is_cpu:
             logger.error(f"Failed to initialize embedding model manager on CPU: {e}")
             raise
         logger.warning(
             f"Local embedding model failed to load on device={device!r}: {e}"
         )
+        logger.warning(f"Attempting CPU fallback for local embedding model {model_name!r}...")
+        try:
+            manager = _build('cpu')
+        except Exception as cpu_err:
+            logger.error(f"CPU fallback also failed: {cpu_err}")
+            raise
         logger.warning(
-            f"Falling back to CPU for local embedding model {model_name!r}. "
+            f"Loaded {model_name!r} on CPU (configured device={device!r} was unavailable). "
             f"Re-run ./operator.sh init or `configure.py embedding --device <device>` "
             f"once the accelerator is available."
         )
-        try:
-            manager = _build_and_load('cpu')
-        except Exception as cpu_err:
-            _model_manager = None
-            logger.error(f"CPU fallback also failed: {cpu_err}")
-            raise
-
-    _model_manager = manager
-
-    # Verify dimensions match config
-    actual_dims = _model_manager.get_dimensions()
-    expected_dims = config.get('text_dimensions', config.get('embedding_dimensions'))
-    if expected_dims and actual_dims != expected_dims:
-        logger.warning(f"Dimension mismatch: model has {actual_dims} dims, config specifies {expected_dims}")
-
-    logger.info(f"Local embedding model manager initialized")
-    return _model_manager
+        return manager
 
 
 def get_embedding_model_manager() -> EmbeddingModelManager:
@@ -523,6 +560,16 @@ async def reload_embedding_model_manager() -> Optional[EmbeddingModelManager]:
 
     logger.info(f"Loading new model: {model_name} (loader={loader})")
 
+    # Hot-reload deliberately does NOT call _build_with_cpu_fallback. Boot-time
+    # init falls back to CPU because its device value is stale config that
+    # could be hours/weeks old (hardware may have changed). Reload's device
+    # value is FRESH — the operator just ran `configure.py embedding --device
+    # X` and asked for it. Silently downgrading their explicit choice would be
+    # a worse failure than raising: they'd see "reload succeeded", believe
+    # they're on the requested device, and debug a phantom slowdown later.
+    # The atomic-swap pattern below preserves the previous working manager on
+    # failure, so a failed reload is non-destructive — the loud error is the
+    # right outcome.
     try:
         new_manager = EmbeddingModelManager(
             model_name=model_name,

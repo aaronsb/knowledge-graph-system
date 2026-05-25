@@ -88,9 +88,12 @@ class TestEmbeddingFallback:
         assert load_calls == ["cuda", "cpu"]
         assert manager is not None
         assert emm._model_manager is manager
-        # User-facing log carries the truth: device fell back to CPU.
+        # User-facing log carries the truth: attempt-then-success messaging
+        # reads correctly whether the retry ultimately succeeded or failed.
         joined = "\n".join(r.message for r in caplog.records)
-        assert "Falling back to CPU" in joined
+        assert "Attempting CPU fallback" in joined
+        assert "Loaded" in joined and "on CPU" in joined
+        assert "configured device='cuda'" in joined
 
     @pytest.mark.asyncio
     async def test_should_raise_and_clear_global_when_both_devices_fail(self):
@@ -124,4 +127,29 @@ class TestEmbeddingFallback:
         # Only one attempt — no spurious retry that would double the failure
         # noise in logs.
         assert load_calls == ["cpu"]
+        assert emm._model_manager is None
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("device_value", ["CPU", " cpu", "Cpu", "cpu "])
+    async def test_should_treat_cpu_case_insensitively_when_short_circuiting_retry(
+        self, device_value
+    ):
+        """A 'CPU' / ' cpu' / 'Cpu' config value must not trigger a redundant
+        retry on lowercase 'cpu' after the first attempt already failed. Without
+        this guard the fallback double-logs the same failure and confuses the
+        operator about whether two distinct device attempts happened."""
+        load_calls = []
+
+        def fake_load(self):
+            load_calls.append(self.configured_device)
+            raise RuntimeError("simulated load failure")
+
+        with _patch_config_module(device=device_value), \
+             patch.object(emm.EmbeddingModelManager, "load_model", fake_load):
+            with pytest.raises(RuntimeError):
+                await emm.init_embedding_model_manager()
+
+        # Single attempt — no retry. The value passed through to the manager
+        # is whatever the config said; only the retry-guard normalizes.
+        assert load_calls == [device_value]
         assert emm._model_manager is None
