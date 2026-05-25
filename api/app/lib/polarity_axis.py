@@ -216,13 +216,18 @@ def discover_candidate_concepts(
     validate_concept_id(positive_pole_id)
     validate_concept_id(negative_pole_id)
 
-    # Find concepts connected to either pole within max_hops
-    # Filter for concepts with embeddings (required for projection)
-    # Using facade.execute_raw for variable-length path (ADR-048 namespace safety)
-    # Format pole IDs as Cypher list manually (json.dumps uses double quotes which Cypher rejects)
-    # Note: IDs are validated above, safe to use in f-string
-    # Performance optimization: Limit per-pole results to avoid expensive DISTINCT on large sets
-    # Safety: 10 second timeout to prevent database spiral on highly connected graphs
+    # Find concepts connected to either pole within max_hops, filtered for
+    # concepts with embeddings (required for projection).
+    #
+    # This stays on facade.execute_raw rather than a typed match_concepts call
+    # because Cypher's variable-length pattern `[*1..N]` does not accept a bound
+    # parameter for N — the hop count must be inlined into the query text. A
+    # typed method that took `max_hops` would still have to string-substitute
+    # it, defeating the safety promise. The pole IDs are inlined the same way
+    # (validate_concept_id above is the safety boundary). The audit log still
+    # records the namespace, so the escape hatch shows up in QueryAuditLog.
+    # Safety: 10s statement timeout below prevents database spiral on highly
+    # connected graphs.
     pole_ids_cypher = "[" + ", ".join(f"'{pid}'" for pid in [positive_pole_id, negative_pole_id]) + "]"
 
     # Set query timeout to prevent runaway queries (PostgreSQL SQL, not Cypher)

@@ -236,6 +236,79 @@ class TestGraphQueryFacade:
         assert 'MATCH (s:Source)' in query
         assert "WHERE s.document = 'test.md'" in query
 
+    def test_match_sources_with_return_and_order(self, facade, mock_age_client):
+        """match_sources composes return_clause + order_by + limit in correct order."""
+        facade.match_sources(
+            where="s.document = $ontology",
+            params={"ontology": "kg"},
+            return_clause="s.source_id as source_id, s.full_text as full_text",
+            order_by="s.document, s.paragraph",
+            limit=25,
+        )
+
+        query = mock_age_client._execute_cypher.call_args[0][0]
+        assert 'MATCH (s:Source)' in query
+        assert 'WHERE s.document = $ontology' in query
+        assert 'RETURN s.source_id as source_id, s.full_text as full_text' in query
+        assert 'ORDER BY s.document, s.paragraph' in query
+        assert 'LIMIT 25' in query
+        # ORDER BY precedes LIMIT
+        assert query.index('ORDER BY') < query.index('LIMIT')
+
+    def test_count_sources(self, facade, mock_age_client):
+        """count_sources returns scalar node_count."""
+        mock_age_client._execute_cypher.return_value = {'node_count': 712}
+
+        count = facade.count_sources(where="s.document = $ontology",
+                                     params={"ontology": "kg"})
+
+        assert count == 712
+        query = mock_age_client._execute_cypher.call_args[0][0]
+        assert 'MATCH (s:Source)' in query
+        assert 'WHERE s.document = $ontology' in query
+        assert 'count(s) as node_count' in query
+
+    def test_count_sources_empty_result(self, facade, mock_age_client):
+        """count_sources returns 0 when the query yields no row."""
+        mock_age_client._execute_cypher.return_value = None
+        assert facade.count_sources() == 0
+
+    def test_update_source_properties_builds_set_clause(self, facade, mock_age_client):
+        """update_source_properties emits a SET clause with one assignment per property
+        and merges source_id into the parameter map."""
+        mock_age_client._execute_cypher.return_value = {'source_id': 'src_abc'}
+
+        returned = facade.update_source_properties(
+            'src_abc',
+            {"content_hash": "deadbeef", "embedding_model": "nomic"},
+        )
+
+        assert returned == 'src_abc'
+        call_args = mock_age_client._execute_cypher.call_args
+        query = call_args[0][0]
+        merged_params = call_args[0][1]
+
+        assert 'MATCH (s:Source {source_id: $source_id})' in query
+        assert 's.content_hash = $content_hash' in query
+        assert 's.embedding_model = $embedding_model' in query
+        assert merged_params == {
+            "source_id": "src_abc",
+            "content_hash": "deadbeef",
+            "embedding_model": "nomic",
+        }
+        assert call_args[1].get('fetch_one') is True
+
+    def test_update_source_properties_returns_none_when_missing(self, facade, mock_age_client):
+        """When the MATCH returns nothing, update_source_properties returns None."""
+        mock_age_client._execute_cypher.return_value = None
+        assert facade.update_source_properties('missing', {"x": 1}) is None
+
+    def test_update_source_properties_noop_on_empty_props(self, facade, mock_age_client):
+        """An empty properties dict short-circuits without touching the database."""
+        result = facade.update_source_properties('src_abc', {})
+        assert result == 'src_abc'
+        mock_age_client._execute_cypher.assert_not_called()
+
     def test_match_instances(self, facade, mock_age_client):
         """Test matching instance nodes."""
         facade.match_instances(limit=50)
@@ -244,6 +317,63 @@ class TestGraphQueryFacade:
         query = call_args[0][0]
         assert 'MATCH (i:Instance)' in query
         assert 'LIMIT 50' in query
+
+    def test_match_instances_with_return_and_order(self, facade, mock_age_client):
+        """match_instances supports return_clause + order_by for DSL parity."""
+        facade.match_instances(
+            where="i.confidence > 0.5",
+            return_clause="i.instance_id as id, i.confidence as conf",
+            order_by="i.confidence DESC",
+            limit=10,
+        )
+
+        query = mock_age_client._execute_cypher.call_args[0][0]
+        assert 'MATCH (i:Instance)' in query
+        assert 'WHERE i.confidence > 0.5' in query
+        assert 'RETURN i.instance_id as id, i.confidence as conf' in query
+        assert 'ORDER BY i.confidence DESC' in query
+        assert 'LIMIT 10' in query
+
+    def test_match_vocab_types_with_return_and_order(self, facade, mock_age_client):
+        """match_vocab_types supports return_clause + order_by for DSL parity."""
+        facade.match_vocab_types(
+            return_clause="v.name as name, v.usage_count as usage",
+            order_by="v.usage_count DESC",
+            limit=5,
+        )
+
+        query = mock_age_client._execute_cypher.call_args[0][0]
+        assert 'MATCH (v:VocabType)' in query
+        assert 'RETURN v.name as name, v.usage_count as usage' in query
+        assert 'ORDER BY v.usage_count DESC' in query
+        assert 'LIMIT 5' in query
+
+    def test_get_vocab_type_stats_returns_aggregate_dict(self, facade, mock_age_client):
+        """get_vocab_type_stats collapses the active/inactive aggregation into a dict."""
+        mock_age_client._execute_cypher.return_value = {
+            'total_types': 118,
+            'active_types': 95,
+            'inactive_types': 23,
+        }
+
+        stats = facade.get_vocab_type_stats()
+
+        assert stats == {'total_types': 118, 'active_types': 95, 'inactive_types': 23}
+        call_args = mock_age_client._execute_cypher.call_args
+        query = call_args[0][0]
+        assert 'MATCH (v:VocabType)' in query
+        assert 'count(v) as total_types' in query
+        assert 'CASE WHEN v.is_active = true' in query
+        assert call_args[1].get('fetch_one') is True
+
+    def test_get_vocab_type_stats_handles_empty(self, facade, mock_age_client):
+        """get_vocab_type_stats returns zeros when AGE returns no row."""
+        mock_age_client._execute_cypher.return_value = None
+        assert facade.get_vocab_type_stats() == {
+            'total_types': 0,
+            'active_types': 0,
+            'inactive_types': 0,
+        }
 
     # =========================================================================
     # Statistics Methods

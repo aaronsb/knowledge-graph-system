@@ -107,26 +107,21 @@ class GraphQueryFacade:
         where: Optional[str] = None,
         params: Optional[Dict] = None,
         limit: Optional[int] = None,
-        return_clause: str = "c"
+        return_clause: str = "c",
+        order_by: Optional[str] = None
     ) -> List[Dict]:
         """
         Match concept nodes with explicit :Concept label.
 
         Args:
-            where: Optional WHERE clause (without WHERE keyword)
+            where: Optional WHERE clause (without the WHERE keyword)
             params: Query parameters
             limit: Optional result limit
-            return_clause: What to return (default: "c")
+            return_clause: What to return (default: "c" — full node)
+            order_by: Optional ORDER BY clause (without the ORDER BY keyword)
 
         Returns:
-            List of result dictionaries
-
-        Example:
-            # Find concepts by label pattern
-            concepts = facade.match_concepts(
-                where="c.label =~ '(?i).*recursive.*'",
-                limit=10
-            )
+            List of result dictionaries (keyed by RETURN-clause column names)
         """
         query = "MATCH (c:Concept)"
 
@@ -134,6 +129,9 @@ class GraphQueryFacade:
             query += f" WHERE {where}"
 
         query += f" RETURN {return_clause}"
+
+        if order_by:
+            query += f" ORDER BY {order_by}"
 
         if limit:
             query += f" LIMIT {limit}"
@@ -250,14 +248,11 @@ class GraphQueryFacade:
         Count concept nodes (namespace-safe).
 
         Args:
-            where: Optional WHERE clause
+            where: Optional WHERE clause (without the WHERE keyword)
             params: Query parameters
 
         Returns:
             Count of matching concepts
-
-        Example:
-            total_concepts = facade.count_concepts()
         """
         query = "MATCH (c:Concept)"
 
@@ -279,31 +274,32 @@ class GraphQueryFacade:
         self,
         where: Optional[str] = None,
         params: Optional[Dict] = None,
-        limit: Optional[int] = None
+        limit: Optional[int] = None,
+        return_clause: str = "v",
+        order_by: Optional[str] = None
     ) -> List[Dict]:
         """
         Match vocabulary type nodes with explicit :VocabType label.
 
         Args:
-            where: Optional WHERE clause
+            where: Optional WHERE clause (without the WHERE keyword)
             params: Query parameters
             limit: Optional result limit
+            return_clause: What to return (default: "v" — full node)
+            order_by: Optional ORDER BY clause (without the ORDER BY keyword)
 
         Returns:
-            List of vocabulary type dictionaries
-
-        Example:
-            # Find active vocabulary types in causation category
-            types = facade.match_vocab_types(
-                where="v.is_active = true AND v.category = 'causation'"
-            )
+            List of vocabulary type dictionaries (keyed by RETURN-clause column names)
         """
         query = "MATCH (v:VocabType)"
 
         if where:
             query += f" WHERE {where}"
 
-        query += " RETURN v"
+        query += f" RETURN {return_clause}"
+
+        if order_by:
+            query += f" ORDER BY {order_by}"
 
         if limit:
             query += f" LIMIT {limit}"
@@ -314,27 +310,36 @@ class GraphQueryFacade:
     def match_vocab_categories(
         self,
         where: Optional[str] = None,
-        params: Optional[Dict] = None
+        params: Optional[Dict] = None,
+        limit: Optional[int] = None,
+        return_clause: str = "c",
+        order_by: Optional[str] = None
     ) -> List[Dict]:
         """
-        Match vocabulary category nodes.
+        Match vocabulary category nodes with explicit :VocabCategory label.
 
         Args:
-            where: Optional WHERE clause
+            where: Optional WHERE clause (without the WHERE keyword)
             params: Query parameters
+            limit: Optional result limit
+            return_clause: What to return (default: "c" — full node)
+            order_by: Optional ORDER BY clause (without the ORDER BY keyword)
 
         Returns:
-            List of category dictionaries
-
-        Example:
-            categories = facade.match_vocab_categories()
+            List of category dictionaries (keyed by RETURN-clause column names)
         """
         query = "MATCH (c:VocabCategory)"
 
         if where:
             query += f" WHERE {where}"
 
-        query += " RETURN c"
+        query += f" RETURN {return_clause}"
+
+        if order_by:
+            query += f" ORDER BY {order_by}"
+
+        if limit:
+            query += f" LIMIT {limit}"
 
         self.audit.log_query(query, namespace="vocabulary", params=params)
         return self.db._execute_cypher(query, params)
@@ -388,16 +393,11 @@ class GraphQueryFacade:
         Count vocabulary type nodes (namespace-safe).
 
         Args:
-            where: Optional WHERE clause
+            where: Optional WHERE clause (without the WHERE keyword)
             params: Query parameters
 
         Returns:
-            Count of vocabulary types
-
-        Example:
-            active_types = facade.count_vocab_types(
-                where="v.is_active = true"
-            )
+            Count of matching vocabulary types
         """
         query = "MATCH (v:VocabType)"
 
@@ -411,6 +411,34 @@ class GraphQueryFacade:
 
         return result.get("node_count", 0) if result else 0
 
+    def get_vocab_type_stats(self) -> Dict[str, int]:
+        """
+        Aggregate vocabulary-type counts in a single namespace-safe query.
+
+        Returns:
+            Dict with keys ``total_types``, ``active_types``, ``inactive_types``.
+            Missing values default to 0.
+        """
+        query = """
+            MATCH (v:VocabType)
+            RETURN
+                count(v) as total_types,
+                sum(CASE WHEN v.is_active = true THEN 1 ELSE 0 END) as active_types,
+                sum(CASE WHEN v.is_active = false THEN 1 ELSE 0 END) as inactive_types
+        """
+
+        self.audit.log_query(query, namespace="vocabulary", params=None)
+        result = self.db._execute_cypher(query, None, fetch_one=True)
+
+        if not result:
+            return {"total_types": 0, "active_types": 0, "inactive_types": 0}
+
+        return {
+            "total_types": int(result.get("total_types") or 0),
+            "active_types": int(result.get("active_types") or 0),
+            "inactive_types": int(result.get("inactive_types") or 0),
+        }
+
     # -------------------------------------------------------------------------
     # SOURCE & INSTANCE NAMESPACE
     # -------------------------------------------------------------------------
@@ -419,25 +447,32 @@ class GraphQueryFacade:
         self,
         where: Optional[str] = None,
         params: Optional[Dict] = None,
-        limit: Optional[int] = None
+        limit: Optional[int] = None,
+        return_clause: str = "s",
+        order_by: Optional[str] = None
     ) -> List[Dict]:
         """
         Match source nodes with explicit :Source label.
 
         Args:
-            where: Optional WHERE clause
+            where: Optional WHERE clause (without the WHERE keyword)
             params: Query parameters
             limit: Optional result limit
+            return_clause: What to return (default: "s" — full node)
+            order_by: Optional ORDER BY clause (without the ORDER BY keyword)
 
         Returns:
-            List of source dictionaries
+            List of source dictionaries (keyed by RETURN-clause column names)
         """
         query = "MATCH (s:Source)"
 
         if where:
             query += f" WHERE {where}"
 
-        query += " RETURN s"
+        query += f" RETURN {return_clause}"
+
+        if order_by:
+            query += f" ORDER BY {order_by}"
 
         if limit:
             query += f" LIMIT {limit}"
@@ -445,29 +480,96 @@ class GraphQueryFacade:
         self.audit.log_query(query, namespace="concept", params=params)
         return self.db._execute_cypher(query, params)
 
+    def count_sources(
+        self,
+        where: Optional[str] = None,
+        params: Optional[Dict] = None
+    ) -> int:
+        """
+        Count source nodes (namespace-safe).
+
+        Args:
+            where: Optional WHERE clause (without the WHERE keyword)
+            params: Query parameters
+
+        Returns:
+            Count of matching sources
+        """
+        query = "MATCH (s:Source)"
+
+        if where:
+            query += f" WHERE {where}"
+
+        query += " RETURN count(s) as node_count"
+
+        self.audit.log_query(query, namespace="concept", params=params)
+        result = self.db._execute_cypher(query, params, fetch_one=True)
+
+        return result.get("node_count", 0) if result else 0
+
+    def update_source_properties(
+        self,
+        source_id: str,
+        properties: Dict[str, Any]
+    ) -> Optional[str]:
+        """
+        Set properties on a Source node, returning its source_id on success.
+
+        Args:
+            source_id: Source ID to update
+            properties: Mapping of property name → value to SET on the node
+
+        Returns:
+            source_id if the node existed and was updated; None if no match
+        """
+        if not properties:
+            return source_id
+
+        set_clauses = ", ".join(f"s.{key} = ${key}" for key in properties.keys())
+        query = (
+            "MATCH (s:Source {source_id: $source_id}) "
+            f"SET {set_clauses} "
+            "RETURN s.source_id as source_id"
+        )
+
+        merged_params: Dict[str, Any] = {"source_id": source_id}
+        merged_params.update(properties)
+
+        self.audit.log_query(query, namespace="concept", params=merged_params)
+        result = self.db._execute_cypher(query, merged_params, fetch_one=True)
+
+        return result.get("source_id") if result else None
+
     def match_instances(
         self,
         where: Optional[str] = None,
         params: Optional[Dict] = None,
-        limit: Optional[int] = None
+        limit: Optional[int] = None,
+        return_clause: str = "i",
+        order_by: Optional[str] = None
     ) -> List[Dict]:
         """
         Match instance nodes with explicit :Instance label.
 
         Args:
-            where: Optional WHERE clause
+            where: Optional WHERE clause (without the WHERE keyword)
             params: Query parameters
             limit: Optional result limit
+            return_clause: What to return (default: "i" — full node)
+            order_by: Optional ORDER BY clause (without the ORDER BY keyword)
 
         Returns:
-            List of instance dictionaries
+            List of instance dictionaries (keyed by RETURN-clause column names)
         """
         query = "MATCH (i:Instance)"
 
         if where:
             query += f" WHERE {where}"
 
-        query += " RETURN i"
+        query += f" RETURN {return_clause}"
+
+        if order_by:
+            query += f" ORDER BY {order_by}"
 
         if limit:
             query += f" LIMIT {limit}"
