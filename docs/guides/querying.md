@@ -50,7 +50,7 @@ kg search details <concept-id>
 
 # Find related concepts
 kg search related <concept-id>
-kg search related <concept-id> --depth 2 --type SUPPORTS
+kg search related <concept-id> --depth 2 --types SUPPORTS
 
 # Find paths between concepts
 kg search connect "concept A" "concept B"
@@ -93,15 +93,14 @@ Direct HTTP access for custom applications.
 
 ### Authentication
 
-Get an OAuth token first:
+Get an OAuth token first. The CLI stores tokens in
+`~/.config/kg/config.json` after `kg login`. For scripts, run the OAuth
+client-credentials or device-code flow against the API directly:
 
 ```bash
-# Using the CLI token
-TOKEN=$(kg auth token)
-
-# Or via OAuth flow
-curl -X POST "http://localhost:8000/auth/oauth/token" \
-  -d "grant_type=authorization_code&code=..."
+# Example: client-credentials grant
+curl -X POST "http://localhost:8000/oauth/token" \
+  -d "grant_type=client_credentials&client_id=...&client_secret=..."
 ```
 
 ### Search Endpoint
