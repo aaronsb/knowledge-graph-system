@@ -32,29 +32,12 @@ The protection system prevents accidental breaking changes while allowing delibe
 
 ## Configuration Options
 
-### Viewing Current Configuration
+### Viewing All Profiles
+
+Embedding is configured via **profiles** stored in `kg_api.embedding_profile`. Each profile bundles text/image providers, models, dimensions, precision, and resource settings (ADR-039). One profile is active at a time.
 
 ```bash
-# Show active configuration (public endpoint)
-kg admin embedding config
-```
-
-Output:
-```
-🎯 Embedding Configuration
-────────────────────────────────────────
-
-  Provider:   openai
-  Model:      text-embedding-3-small
-  Dimensions: 1536
-
-  Config ID: 1
-```
-
-### Viewing All Configurations
-
-```bash
-# List all configs (including inactive ones)
+# List all profiles with active marker, dimensions, and protection state
 kg admin embedding list
 ```
 
