@@ -64,6 +64,20 @@ load_config() {
     else
         IMAGE_SOURCE="${IMAGE_SOURCE:-ghcr}"
     fi
+
+    # ADR-101: derive kg-api image tag from GPU_MODE so the GHCR overlay pulls
+    # the matching ROCm variant. Mirrored from operator/lib/common.sh's
+    # load_operator_config so the top-level operator.sh entry-point exports
+    # the tag too — without this, docker-compose substitutes :latest and AMD
+    # users silently land on the CUDA-bundled image (the #405 failure mode).
+    if [ -z "$KG_API_IMAGE_TAG" ]; then
+        case "$GPU_MODE" in
+            amd)         KG_API_IMAGE_TAG="${ROCM_VERSION:-rocm60}" ;;
+            amd-host)    KG_API_IMAGE_TAG="rocm72-host" ;;
+            *)           KG_API_IMAGE_TAG="latest" ;;
+        esac
+    fi
+    export KG_API_IMAGE_TAG
 }
 
 # Build compose command with overlays
@@ -85,9 +99,10 @@ get_compose_cmd() {
 
     # GPU overlays
     case "$GPU_MODE" in
-        nvidia) [ -f "$DOCKER_DIR/docker-compose.gpu-nvidia.yml" ] && cmd="$cmd -f $DOCKER_DIR/docker-compose.gpu-nvidia.yml" ;;
-        amd)    [ -f "$DOCKER_DIR/docker-compose.gpu-amd.yml" ] && cmd="$cmd -f $DOCKER_DIR/docker-compose.gpu-amd.yml" ;;
-        mac)    [ -f "$DOCKER_DIR/docker-compose.override.mac.yml" ] && cmd="$cmd -f $DOCKER_DIR/docker-compose.override.mac.yml" ;;
+        nvidia)   [ -f "$DOCKER_DIR/docker-compose.gpu-nvidia.yml" ]   && cmd="$cmd -f $DOCKER_DIR/docker-compose.gpu-nvidia.yml" ;;
+        amd)      [ -f "$DOCKER_DIR/docker-compose.gpu-amd.yml" ]      && cmd="$cmd -f $DOCKER_DIR/docker-compose.gpu-amd.yml" ;;
+        amd-host) [ -f "$DOCKER_DIR/docker-compose.gpu-amd-host.yml" ] && cmd="$cmd -f $DOCKER_DIR/docker-compose.gpu-amd-host.yml" ;;
+        mac)      [ -f "$DOCKER_DIR/docker-compose.override.mac.yml" ] && cmd="$cmd -f $DOCKER_DIR/docker-compose.override.mac.yml" ;;
     esac
 
     echo "$cmd --env-file $ENV_FILE"
