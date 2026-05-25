@@ -100,14 +100,14 @@ The system automatically protects:
 **Safe workflow to change embedding provider:**
 
 ```bash
-# 1. View current config
+# 1. View current profiles
 kg admin embedding list
 
-# 2. Remove change protection from active config
+# 2. Remove change protection from active profile (if set)
 kg admin embedding unprotect 1 --change
 
-# 3. Create new local embedding configuration
-kg admin embedding set \
+# 3. Create a new local embedding profile
+kg admin embedding create \
   --provider local \
   --model "nomic-ai/nomic-embed-text-v1.5" \
   --dimensions 768 \
@@ -117,10 +117,13 @@ kg admin embedding set \
   --threads 4 \
   --batch-size 8
 
-# 4. Hot reload to apply changes (zero-downtime)
+# 4. Activate the new profile (use the ID printed by `create` or by `list`)
+kg admin embedding activate <new-profile-id>
+
+# 5. Hot reload the worker to load the new model (zero-downtime)
 kg admin embedding reload
 
-# 5. Verify new config is active and auto-protected
+# 6. Verify the new profile is active and auto-protected
 kg admin embedding list
 ```
 
@@ -137,38 +140,28 @@ kg admin embedding list
 ### Workflow 2: Switch Back to OpenAI
 
 ```bash
-# 1. Remove change protection from current local config
+# 1. Find or create an OpenAI profile
+kg admin embedding list
+
+# 2. If you need a new OpenAI profile:
+kg admin embedding create \
+  --provider openai \
+  --model text-embedding-3-small \
+  --dimensions 1536
+
+# 3. Remove change protection from current active profile
 kg admin embedding unprotect <active-id> --change
 
-# 2. Switch back to OpenAI
-kg admin embedding set --provider openai
+# 4. Activate the OpenAI profile
+kg admin embedding activate <openai-profile-id>
 
-# 3. Hot reload
+# 5. Hot reload
 kg admin embedding reload
-
-# 4. Verify
-kg admin embedding config
 ```
 
 ### Workflow 3: Adjust Local Model Settings
 
-**If you just want to tune resource settings (not changing dimensions):**
-
-```bash
-# View current config
-kg admin embedding config
-
-# Adjust resource allocation (no protection needed if dimensions unchanged)
-kg admin embedding set \
-  --memory 1024 \
-  --threads 8 \
-  --batch-size 16
-
-# Hot reload
-kg admin embedding reload
-```
-
-**Note:** Resource changes (memory, threads, batch size) do NOT require removing change protection.
+To change resource tuning (memory, threads, batch size, etc.) without changing dimensions, create a new profile based on the same provider/model with updated resource values and activate it, then reload. (There is no in-place `set` for an existing profile — use `create` + `activate` + `reload`.)
 
 ### Workflow 4: Clean Up Old Configs
 
