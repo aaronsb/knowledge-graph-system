@@ -4,13 +4,14 @@
 # properly configured. This avoids library compatibility issues.
 #
 # Base image includes:
-#   - ROCm 7.1
-#   - Python 3.13
+#   - ROCm 7.2.3
+#   - Python 3.12
 #   - PyTorch 2.9.1 with ROCm support
 #
-# Usage: GPU_MODE=amd-host ./operator.sh start
+# Published as: ghcr.io/aaronsb/knowledge-graph-system/kg-api:rocm72-host
+# Usage: GPU_MODE=amd-host ./operator.sh start  (ADR-101)
 
-FROM rocm/pytorch:rocm7.1_ubuntu24.04_py3.13_pytorch_release_2.9.1
+FROM rocm/pytorch:rocm7.2.3_ubuntu24.04_py3.12_pytorch_release_2.9.1
 
 # Build metadata
 ARG GIT_COMMIT=unknown

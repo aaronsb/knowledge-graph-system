@@ -81,7 +81,7 @@ user's hardware choice.
 | `kg-api:latest` (unchanged) | `api/Dockerfile`, `PYTORCH_VARIANT=cpu` | Default PyPI torch (bundles CUDA runtime) | CPU and NVIDIA hosts |
 | `kg-api:rocm60` | `api/Dockerfile`, `PYTORCH_VARIANT=rocm60` | `https://download.pytorch.org/whl/rocm6.0` | ROCm 6.0 hosts |
 | `kg-api:rocm61` | `api/Dockerfile`, `PYTORCH_VARIANT=rocm61` | `https://download.pytorch.org/whl/rocm6.1` | ROCm 6.1 hosts |
-| `kg-api:rocm71-host` | `api/Dockerfile.rocm-host` | `rocm/pytorch:rocm7.1_ubuntu24.04_py3.13_pytorch_release_2.9.1` | ROCm 7.x hosts (Arch, modern Ubuntu) |
+| `kg-api:rocm72-host` | `api/Dockerfile.rocm-host` | `rocm/pytorch:rocm7.2.3_ubuntu24.04_py3.12_pytorch_release_2.9.1` | ROCm 7.x hosts (Arch, modern Ubuntu) |
 
 **NVIDIA support is preserved.** `kg-api:latest` is built from `PYTORCH_VARIANT=cpu`,
 which in this Dockerfile means "install torch from the default PyPI index" —
@@ -93,7 +93,15 @@ get no operator changes, no new flags, no new image tags — they continue
 on `latest` exactly as today.
 
 Versioned aliases follow the same pattern: `kg-api:0.13.1`,
-`kg-api:0.13.1-rocm60`, `kg-api:0.13.1-rocm61`, `kg-api:0.13.1-rocm71-host`.
+`kg-api:0.13.1-rocm60`, `kg-api:0.13.1-rocm61`, `kg-api:0.13.1-rocm72-host`.
+
+**Naming convention**: the suffix is the **base image's** ROCm version. For
+wheel-index variants (`rocm60`, `rocm61`) it's the wheel's ROCm version.
+For host-mounted variants (`rocm72-host`) it's the base image's ROCm
+version — which should match the operator's host ROCm major.minor as
+closely as possible. When AMD ships an updated base image (e.g.
+`rocm7.3.x`), a new variant tag (`rocm73-host`) is added rather than
+overloading the existing tag — keeps tags immutable in meaning.
 
 ROCm variants are **single-arch (`linux/amd64`) only**. AMD ROCm has no
 production-quality `arm64` build path. arm64 users get the CPU image, which
@@ -114,7 +122,7 @@ api:
 | `GPU_MODE` | `KG_API_IMAGE_TAG` |
 |---|---|
 | `amd` | `rocm60` (default) or `rocm61` if `ROCM_VERSION=rocm61` |
-| `amd-host` | `rocm71-host` |
+| `amd-host` | `rocm72-host` |
 | `nvidia` / `mac` / `cpu` / unset | `latest` |
 
 The `.operator.conf` file gains an optional `KG_API_IMAGE_TAG=` line for

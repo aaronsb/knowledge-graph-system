@@ -32,6 +32,30 @@ load_operator_config() {
     CONTAINER_SUFFIX="${CONTAINER_SUFFIX:-}"
     COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.yml}"
     IMAGE_SOURCE="${IMAGE_SOURCE:-local}"
+
+    # ADR-101: derive kg-api image tag from GPU_MODE when not explicitly set.
+    # docker-compose.ghcr.yml substitutes ${KG_API_IMAGE_TAG:-latest} into the
+    # api service's image: line, so AMD ROCm hosts pull the matching variant
+    # instead of the CUDA-bundled :latest. Explicit override in .operator.conf
+    # (or environment) wins — useful when ROCM_VERSION pins to rocm61, or for
+    # testing unpublished variants.
+    if [ -z "$KG_API_IMAGE_TAG" ]; then
+        case "$GPU_MODE" in
+            amd)
+                # Default to rocm60 wheel-based image. Override via
+                # ROCM_VERSION=rocm61 in .operator.conf.
+                KG_API_IMAGE_TAG="${ROCM_VERSION:-rocm60}"
+                ;;
+            amd-host)
+                # ROCm 7.x via AMD's official rocm/pytorch base image.
+                KG_API_IMAGE_TAG="rocm72-host"
+                ;;
+            nvidia|mac|cpu|*)
+                KG_API_IMAGE_TAG="latest"
+                ;;
+        esac
+    fi
+    export KG_API_IMAGE_TAG
 }
 
 # Get container name for a service
