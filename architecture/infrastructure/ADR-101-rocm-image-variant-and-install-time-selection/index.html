@@ -13,25 +13,25 @@
       
       
       
-        <link rel="prev" href="../search/">
+        <link rel="prev" href="../ADR-100-database-driven-job-dispatch/">
       
       
-        <link rel="next" href="../../media/">
+        <link rel="next" href="../../ingestion-content/ADR-014-job-approval-workflow/">
       
       
         
       
       
-      <link rel="icon" href="../../../../assets/images/favicon.png">
+      <link rel="icon" href="../../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
-        <title>kg vocabulary - Knowledge Graph System</title>
+        <title>ADR-101: ROCm Image Variant and Install-Time Selection - Knowledge Graph System</title>
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
       
       
 
@@ -50,7 +50,7 @@
       
     
     
-    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -68,7 +68,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#kg-vocabulary" class="md-skip">
+        <a href="#adr-101-rocm-image-variant-and-install-time-selection" class="md-skip">
           Skip to content
         </a>
       
@@ -84,7 +84,7 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../../../.." title="Knowledge Graph System" class="md-header__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+    <a href="../../.." title="Knowledge Graph System" class="md-header__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -104,7 +104,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              kg vocabulary
+              ADR-101: ROCm Image Variant and Install-Time Selection
             
           </span>
         </div>
@@ -194,7 +194,7 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../../../.." title="Knowledge Graph System" class="md-nav__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+    <a href="../../.." title="Knowledge Graph System" class="md-nav__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -224,7 +224,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../.." class="md-nav__link">
+      <a href="../../.." class="md-nav__link">
         
   
   
@@ -298,7 +298,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../concepts/" class="md-nav__link">
+      <a href="../../../concepts/" class="md-nav__link">
         
   
   
@@ -326,7 +326,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../concepts/glossary/" class="md-nav__link">
+      <a href="../../../concepts/glossary/" class="md-nav__link">
         
   
   
@@ -354,7 +354,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../concepts/how-it-works/" class="md-nav__link">
+      <a href="../../../concepts/how-it-works/" class="md-nav__link">
         
   
   
@@ -436,7 +436,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../features/" class="md-nav__link">
+      <a href="../../../features/" class="md-nav__link">
         
   
   
@@ -464,7 +464,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../features/web-workstation/" class="md-nav__link">
+      <a href="../../../features/web-workstation/" class="md-nav__link">
         
   
   
@@ -492,7 +492,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../features/cli/" class="md-nav__link">
+      <a href="../../../features/cli/" class="md-nav__link">
         
   
   
@@ -520,7 +520,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../features/mcp-server/" class="md-nav__link">
+      <a href="../../../features/mcp-server/" class="md-nav__link">
         
   
   
@@ -548,7 +548,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../features/fuse-driver/" class="md-nav__link">
+      <a href="../../../features/fuse-driver/" class="md-nav__link">
         
   
   
@@ -576,7 +576,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../features/rest-api/" class="md-nav__link">
+      <a href="../../../features/rest-api/" class="md-nav__link">
         
   
   
@@ -658,7 +658,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/ASYNC-ARCHITECTURE/" class="md-nav__link">
+      <a href="../../../guides/ASYNC-ARCHITECTURE/" class="md-nav__link">
         
   
   
@@ -686,7 +686,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/CLI_DEVELOPMENT/" class="md-nav__link">
+      <a href="../../../guides/CLI_DEVELOPMENT/" class="md-nav__link">
         
   
   
@@ -714,7 +714,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/CONTAINER_IMAGES/" class="md-nav__link">
+      <a href="../../../guides/CONTAINER_IMAGES/" class="md-nav__link">
         
   
   
@@ -742,7 +742,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/CROSS_ONTOLOGY_LINKING/" class="md-nav__link">
+      <a href="../../../guides/CROSS_ONTOLOGY_LINKING/" class="md-nav__link">
         
   
   
@@ -770,7 +770,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/DEPLOYMENT/" class="md-nav__link">
+      <a href="../../../guides/DEPLOYMENT/" class="md-nav__link">
         
   
   
@@ -798,7 +798,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/DOCSTRING_COVERAGE/" class="md-nav__link">
+      <a href="../../../guides/DOCSTRING_COVERAGE/" class="md-nav__link">
         
   
   
@@ -826,7 +826,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/EPISTEMIC-STATUS-FILTERING/" class="md-nav__link">
+      <a href="../../../guides/EPISTEMIC-STATUS-FILTERING/" class="md-nav__link">
         
   
   
@@ -854,7 +854,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/FUSE_FILESYSTEM/" class="md-nav__link">
+      <a href="../../../guides/FUSE_FILESYSTEM/" class="md-nav__link">
         
   
   
@@ -882,7 +882,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/POLARITY_AXIS_ANALYSIS/" class="md-nav__link">
+      <a href="../../../guides/POLARITY_AXIS_ANALYSIS/" class="md-nav__link">
         
   
   
@@ -910,7 +910,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/QUERY_SAFETY_BASELINE/" class="md-nav__link">
+      <a href="../../../guides/QUERY_SAFETY_BASELINE/" class="md-nav__link">
         
   
   
@@ -938,7 +938,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/SAVED_QUERIES/" class="md-nav__link">
+      <a href="../../../guides/SAVED_QUERIES/" class="md-nav__link">
         
   
   
@@ -966,7 +966,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/SCHEDULED-JOBS/" class="md-nav__link">
+      <a href="../../../guides/SCHEDULED-JOBS/" class="md-nav__link">
         
   
   
@@ -994,7 +994,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/SEMANTIC_PATH_GRADIENTS/" class="md-nav__link">
+      <a href="../../../guides/SEMANTIC_PATH_GRADIENTS/" class="md-nav__link">
         
   
   
@@ -1022,7 +1022,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/VOCABULARY_LIFECYCLE/" class="md-nav__link">
+      <a href="../../../guides/VOCABULARY_LIFECYCLE/" class="md-nav__link">
         
   
   
@@ -1050,7 +1050,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/adr-045-046-migration-plan/" class="md-nav__link">
+      <a href="../../../guides/adr-045-046-migration-plan/" class="md-nav__link">
         
   
   
@@ -1078,7 +1078,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/adr-068-implementation-plan/" class="md-nav__link">
+      <a href="../../../guides/adr-068-implementation-plan/" class="md-nav__link">
         
   
   
@@ -1106,7 +1106,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/adr-074-implementation-checklist/" class="md-nav__link">
+      <a href="../../../guides/adr-074-implementation-checklist/" class="md-nav__link">
         
   
   
@@ -1134,7 +1134,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/exploring/" class="md-nav__link">
+      <a href="../../../guides/exploring/" class="md-nav__link">
         
   
   
@@ -1162,7 +1162,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/querying/" class="md-nav__link">
+      <a href="../../../guides/querying/" class="md-nav__link">
         
   
   
@@ -1190,7 +1190,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/understanding-grounding/" class="md-nav__link">
+      <a href="../../../guides/understanding-grounding/" class="md-nav__link">
         
   
   
@@ -1272,7 +1272,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/" class="md-nav__link">
+      <a href="../../../manual/" class="md-nav__link">
         
   
   
@@ -1347,7 +1347,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/00-introduction/01-WHAT_AND_WHY/" class="md-nav__link">
+      <a href="../../../manual/00-introduction/01-WHAT_AND_WHY/" class="md-nav__link">
         
   
   
@@ -1430,7 +1430,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/01-getting-started/02-CLI_USAGE/" class="md-nav__link">
+      <a href="../../../manual/01-getting-started/02-CLI_USAGE/" class="md-nav__link">
         
   
   
@@ -1458,7 +1458,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/01-getting-started/03-INGESTION/" class="md-nav__link">
+      <a href="../../../manual/01-getting-started/03-INGESTION/" class="md-nav__link">
         
   
   
@@ -1541,7 +1541,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/02-configuration/01-AI_PROVIDERS/" class="md-nav__link">
+      <a href="../../../manual/02-configuration/01-AI_PROVIDERS/" class="md-nav__link">
         
   
   
@@ -1569,7 +1569,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/02-configuration/02-EXTRACTION_CONFIGURATION/" class="md-nav__link">
+      <a href="../../../manual/02-configuration/02-EXTRACTION_CONFIGURATION/" class="md-nav__link">
         
   
   
@@ -1597,7 +1597,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/02-configuration/03-EMBEDDING_CONFIGURATION/" class="md-nav__link">
+      <a href="../../../manual/02-configuration/03-EMBEDDING_CONFIGURATION/" class="md-nav__link">
         
   
   
@@ -1625,7 +1625,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/02-configuration/04-SWITCHING_EXTRACTION_PROVIDERS/" class="md-nav__link">
+      <a href="../../../manual/02-configuration/04-SWITCHING_EXTRACTION_PROVIDERS/" class="md-nav__link">
         
   
   
@@ -1653,7 +1653,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/02-configuration/05-LOCAL_INFERENCE_IMPLEMENTATION/" class="md-nav__link">
+      <a href="../../../manual/02-configuration/05-LOCAL_INFERENCE_IMPLEMENTATION/" class="md-nav__link">
         
   
   
@@ -1681,7 +1681,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/02-configuration/06-EXTRACTION_QUALITY_COMPARISON/" class="md-nav__link">
+      <a href="../../../manual/02-configuration/06-EXTRACTION_QUALITY_COMPARISON/" class="md-nav__link">
         
   
   
@@ -1764,7 +1764,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/03-integration/01-MCP_SETUP/" class="md-nav__link">
+      <a href="../../../manual/03-integration/01-MCP_SETUP/" class="md-nav__link">
         
   
   
@@ -1792,7 +1792,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/03-integration/02-VOCABULARY_CONSOLIDATION/" class="md-nav__link">
+      <a href="../../../manual/03-integration/02-VOCABULARY_CONSOLIDATION/" class="md-nav__link">
         
   
   
@@ -1875,7 +1875,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/04-security-and-access/01-AUTHENTICATION/" class="md-nav__link">
+      <a href="../../../manual/04-security-and-access/01-AUTHENTICATION/" class="md-nav__link">
         
   
   
@@ -1903,7 +1903,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/04-security-and-access/02-RBAC/" class="md-nav__link">
+      <a href="../../../manual/04-security-and-access/02-RBAC/" class="md-nav__link">
         
   
   
@@ -1931,7 +1931,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/04-security-and-access/03-SECURITY/" class="md-nav__link">
+      <a href="../../../manual/04-security-and-access/03-SECURITY/" class="md-nav__link">
         
   
   
@@ -1959,7 +1959,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/04-security-and-access/04-PASSWORD_RECOVERY/" class="md-nav__link">
+      <a href="../../../manual/04-security-and-access/04-PASSWORD_RECOVERY/" class="md-nav__link">
         
   
   
@@ -2042,7 +2042,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/05-maintenance/01-BACKUP_RESTORE/" class="md-nav__link">
+      <a href="../../../manual/05-maintenance/01-BACKUP_RESTORE/" class="md-nav__link">
         
   
   
@@ -2070,7 +2070,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/05-maintenance/02-DATABASE_MIGRATIONS/" class="md-nav__link">
+      <a href="../../../manual/05-maintenance/02-DATABASE_MIGRATIONS/" class="md-nav__link">
         
   
   
@@ -2153,7 +2153,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/06-reference/01-SCHEMA_REFERENCE/" class="md-nav__link">
+      <a href="../../../manual/06-reference/01-SCHEMA_REFERENCE/" class="md-nav__link">
         
   
   
@@ -2181,7 +2181,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/06-reference/02-USE_CASES/" class="md-nav__link">
+      <a href="../../../manual/06-reference/02-USE_CASES/" class="md-nav__link">
         
   
   
@@ -2209,7 +2209,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/06-reference/03-EXAMPLES/" class="md-nav__link">
+      <a href="../../../manual/06-reference/03-EXAMPLES/" class="md-nav__link">
         
   
   
@@ -2237,7 +2237,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/06-reference/04-github_project_history/" class="md-nav__link">
+      <a href="../../../manual/06-reference/04-github_project_history/" class="md-nav__link">
         
   
   
@@ -2265,7 +2265,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/06-reference/05-CONCEPTS_AND_TERMINOLOGY/" class="md-nav__link">
+      <a href="../../../manual/06-reference/05-CONCEPTS_AND_TERMINOLOGY/" class="md-nav__link">
         
   
   
@@ -2293,7 +2293,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/06-reference/06-CONCEPT/" class="md-nav__link">
+      <a href="../../../manual/06-reference/06-CONCEPT/" class="md-nav__link">
         
   
   
@@ -2321,7 +2321,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/06-reference/07-ENRICHMENT_JOURNEY/" class="md-nav__link">
+      <a href="../../../manual/06-reference/07-ENRICHMENT_JOURNEY/" class="md-nav__link">
         
   
   
@@ -2349,7 +2349,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/06-reference/08-DISTRIBUTED_SHARDING_RESEARCH/" class="md-nav__link">
+      <a href="../../../manual/06-reference/08-DISTRIBUTED_SHARDING_RESEARCH/" class="md-nav__link">
         
   
   
@@ -2377,7 +2377,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/06-reference/09-CYPHER_PATTERNS/" class="md-nav__link">
+      <a href="../../../manual/06-reference/09-CYPHER_PATTERNS/" class="md-nav__link">
         
   
   
@@ -2405,7 +2405,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/06-reference/10-OPENCYPHER_QUERIES/" class="md-nav__link">
+      <a href="../../../manual/06-reference/10-OPENCYPHER_QUERIES/" class="md-nav__link">
         
   
   
@@ -2433,7 +2433,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/06-reference/11-LLM_EDGE_DISCOVERY_FLOW/" class="md-nav__link">
+      <a href="../../../manual/06-reference/11-LLM_EDGE_DISCOVERY_FLOW/" class="md-nav__link">
         
   
   
@@ -2523,7 +2523,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../deployment/macvlan-dedicated-ip/" class="md-nav__link">
+      <a href="../../../deployment/macvlan-dedicated-ip/" class="md-nav__link">
         
   
   
@@ -2605,7 +2605,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../operating/" class="md-nav__link">
+      <a href="../../../operating/" class="md-nav__link">
         
   
   
@@ -2633,7 +2633,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../operating/backup-restore/" class="md-nav__link">
+      <a href="../../../operating/backup-restore/" class="md-nav__link">
         
   
   
@@ -2661,7 +2661,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../operating/client-tools/" class="md-nav__link">
+      <a href="../../../operating/client-tools/" class="md-nav__link">
         
   
   
@@ -2689,7 +2689,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../operating/configuration/" class="md-nav__link">
+      <a href="../../../operating/configuration/" class="md-nav__link">
         
   
   
@@ -2717,7 +2717,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../operating/macvlan-headless-install/" class="md-nav__link">
+      <a href="../../../operating/macvlan-headless-install/" class="md-nav__link">
         
   
   
@@ -2745,7 +2745,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../operating/production/" class="md-nav__link">
+      <a href="../../../operating/production/" class="md-nav__link">
         
   
   
@@ -2773,7 +2773,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../operating/quick-start/" class="md-nav__link">
+      <a href="../../../operating/quick-start/" class="md-nav__link">
         
   
   
@@ -2801,7 +2801,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../operating/troubleshooting/" class="md-nav__link">
+      <a href="../../../operating/troubleshooting/" class="md-nav__link">
         
   
   
@@ -2829,7 +2829,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../operating/upgrading/" class="md-nav__link">
+      <a href="../../../operating/upgrading/" class="md-nav__link">
         
   
   
@@ -2861,20 +2861,18 @@
       
   
   
-    
   
   
-  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
         
           
           <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
@@ -2895,7 +2893,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_8">
             <span class="md-nav__icon md-icon"></span>
             
@@ -2913,7 +2911,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../" class="md-nav__link">
+      <a href="../../../reference/" class="md-nav__link">
         
   
   
@@ -2941,7 +2939,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../ARCHITECTURE_OVERVIEW/" class="md-nav__link">
+      <a href="../../../reference/ARCHITECTURE_OVERVIEW/" class="md-nav__link">
         
   
   
@@ -2969,7 +2967,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../OPERATOR_ARCHITECTURE/" class="md-nav__link">
+      <a href="../../../reference/OPERATOR_ARCHITECTURE/" class="md-nav__link">
         
   
   
@@ -2997,7 +2995,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../RECURSIVE_UPSERT_ARCHITECTURE/" class="md-nav__link">
+      <a href="../../../reference/RECURSIVE_UPSERT_ARCHITECTURE/" class="md-nav__link">
         
   
   
@@ -3025,7 +3023,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../STORAGE-ARCHITECTURE/" class="md-nav__link">
+      <a href="../../../reference/STORAGE-ARCHITECTURE/" class="md-nav__link">
         
   
   
@@ -3100,7 +3098,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../api/" class="md-nav__link">
+      <a href="../../../reference/api/" class="md-nav__link">
         
   
   
@@ -3128,7 +3126,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../api/ADMIN-ENDPOINTS/" class="md-nav__link">
+      <a href="../../../reference/api/ADMIN-ENDPOINTS/" class="md-nav__link">
         
   
   
@@ -3161,20 +3159,18 @@
                 
   
   
-    
   
   
-  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8_7" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8_7" >
         
           
           <label class="md-nav__link" for="__nav_8_7" id="__nav_8_7_label" tabindex="0">
@@ -3195,7 +3191,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_8_7_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_8_7_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_8_7">
             <span class="md-nav__icon md-icon"></span>
             
@@ -3213,7 +3209,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../" class="md-nav__link">
+      <a href="../../../reference/cli/" class="md-nav__link">
         
   
   
@@ -3238,20 +3234,18 @@
                 
   
   
-    
   
   
-  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8_7_2" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8_7_2" >
         
           
           <label class="md-nav__link" for="__nav_8_7_2" id="__nav_8_7_2_label" tabindex="0">
@@ -3272,7 +3266,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_8_7_2_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_8_7_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_8_7_2">
             <span class="md-nav__icon md-icon"></span>
             
@@ -3290,7 +3284,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../admin/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/admin/" class="md-nav__link">
         
   
   
@@ -3318,7 +3312,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../config/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/config/" class="md-nav__link">
         
   
   
@@ -3346,7 +3340,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../database/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/database/" class="md-nav__link">
         
   
   
@@ -3374,7 +3368,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../health/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/health/" class="md-nav__link">
         
   
   
@@ -3402,7 +3396,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ingest/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/ingest/" class="md-nav__link">
         
   
   
@@ -3430,7 +3424,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../job/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/job/" class="md-nav__link">
         
   
   
@@ -3458,7 +3452,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../login/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/login/" class="md-nav__link">
         
   
   
@@ -3486,7 +3480,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../logout/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/logout/" class="md-nav__link">
         
   
   
@@ -3514,7 +3508,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../oauth/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/oauth/" class="md-nav__link">
         
   
   
@@ -3542,7 +3536,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ontology/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/ontology/" class="md-nav__link">
         
   
   
@@ -3570,7 +3564,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../search/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/search/" class="md-nav__link">
         
   
   
@@ -3595,37 +3589,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    kg vocabulary
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../../reference/cli/commands/vocabulary/" class="md-nav__link">
         
   
   
@@ -3641,280 +3608,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#vocabulary-vocab" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        vocabulary (vocab)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="vocabulary (vocab)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#status" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        status
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#list" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        list
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#consolidate" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        consolidate
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#merge" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        merge
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#generate-embeddings" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        generate-embeddings
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#category-scores" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        category-scores
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#refresh-categories" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        refresh-categories
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#similar" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        similar
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#opposite" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        opposite
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#analyze" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        analyze
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#config" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        config
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#config-update" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        config-update
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#profiles" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        profiles
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#profiles-show" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        profiles-show
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#profiles-create" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        profiles-create
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#profiles-delete" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        profiles-delete
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#epistemic-status" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        epistemic-status
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="epistemic-status">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#list_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        list
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#show" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        show
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#measure" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        measure
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#sync" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        sync
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -3982,7 +3675,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../media/" class="md-nav__link">
+      <a href="../../../reference/cli/media/" class="md-nav__link">
         
   
   
@@ -4073,7 +3766,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../fuse/" class="md-nav__link">
+      <a href="../../../reference/fuse/" class="md-nav__link">
         
   
   
@@ -4156,7 +3849,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../mcp/" class="md-nav__link">
+      <a href="../../../reference/mcp/" class="md-nav__link">
         
   
   
@@ -4231,7 +3924,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../mcp/media/" class="md-nav__link">
+      <a href="../../../reference/mcp/media/" class="md-nav__link">
         
   
   
@@ -4314,7 +4007,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../mcp/tools/analyze_polarity_axis/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/analyze_polarity_axis/" class="md-nav__link">
         
   
   
@@ -4342,7 +4035,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../mcp/tools/artifact/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/artifact/" class="md-nav__link">
         
   
   
@@ -4370,7 +4063,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../mcp/tools/concept/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/concept/" class="md-nav__link">
         
   
   
@@ -4398,7 +4091,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../mcp/tools/document/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/document/" class="md-nav__link">
         
   
   
@@ -4426,7 +4119,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../mcp/tools/epistemic_status/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/epistemic_status/" class="md-nav__link">
         
   
   
@@ -4454,7 +4147,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../mcp/tools/epoch/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/epoch/" class="md-nav__link">
         
   
   
@@ -4482,7 +4175,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../mcp/tools/graph/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/graph/" class="md-nav__link">
         
   
   
@@ -4510,7 +4203,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../mcp/tools/ingest-directory/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/ingest-directory/" class="md-nav__link">
         
   
   
@@ -4538,7 +4231,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../mcp/tools/ingest-file/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/ingest-file/" class="md-nav__link">
         
   
   
@@ -4566,7 +4259,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../mcp/tools/ingest/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/ingest/" class="md-nav__link">
         
   
   
@@ -4594,7 +4287,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../mcp/tools/inspect-file/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/inspect-file/" class="md-nav__link">
         
   
   
@@ -4622,7 +4315,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../mcp/tools/job/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/job/" class="md-nav__link">
         
   
   
@@ -4650,7 +4343,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../mcp/tools/ontology/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/ontology/" class="md-nav__link">
         
   
   
@@ -4678,7 +4371,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../mcp/tools/program/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/program/" class="md-nav__link">
         
   
   
@@ -4706,7 +4399,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../mcp/tools/search/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/search/" class="md-nav__link">
         
   
   
@@ -4734,7 +4427,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../mcp/tools/session_context/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/session_context/" class="md-nav__link">
         
   
   
@@ -4762,7 +4455,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../mcp/tools/source/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/source/" class="md-nav__link">
         
   
   
@@ -4810,18 +4503,20 @@
       
   
   
+    
   
   
+  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" checked>
         
           
           <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
@@ -4842,7 +4537,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_9">
             <span class="md-nav__icon md-icon"></span>
             
@@ -4860,7 +4555,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/INDEX/" class="md-nav__link">
+      <a href="../../INDEX/" class="md-nav__link">
         
   
   
@@ -4935,7 +4630,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/access-workflow/ADR-001-multi-tier-agent-access/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-001-multi-tier-agent-access/" class="md-nav__link">
         
   
   
@@ -4970,7 +4665,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/access-workflow/ADR-002-node-fitness-scoring/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-002-node-fitness-scoring/" class="md-nav__link">
         
   
   
@@ -5005,7 +4700,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/access-workflow/ADR-003-semantic-tool-hints/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-003-semantic-tool-hints/" class="md-nav__link">
         
   
   
@@ -5040,7 +4735,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/access-workflow/ADR-004-pure-graph-design/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-004-pure-graph-design/" class="md-nav__link">
         
   
   
@@ -5075,7 +4770,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/access-workflow/ADR-005-source-text-tracking/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-005-source-text-tracking/" class="md-nav__link">
         
   
   
@@ -5110,7 +4805,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/access-workflow/ADR-006-staging-migration-workflows/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-006-staging-migration-workflows/" class="md-nav__link">
         
   
   
@@ -5145,7 +4840,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/access-workflow/ADR-038-official-project-apparel/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-038-official-project-apparel/" class="md-nav__link">
         
   
   
@@ -5180,7 +4875,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/access-workflow/ADR-087-documentation-strategy/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-087-documentation-strategy/" class="md-nav__link">
         
   
   
@@ -5215,7 +4910,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/access-workflow/ADR-900-adr-numbering-domain-system/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-900-adr-numbering-domain-system/" class="md-nav__link">
         
   
   
@@ -5305,7 +5000,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ai-embeddings/ADR-039-local-embedding-service/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-039-local-embedding-service/" class="md-nav__link">
         
   
   
@@ -5340,7 +5035,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ai-embeddings/ADR-041-ai-extraction-config/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-041-ai-extraction-config/" class="md-nav__link">
         
   
   
@@ -5375,7 +5070,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ai-embeddings/ADR-042-local-extraction-inference/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-042-local-extraction-inference/" class="md-nav__link">
         
   
   
@@ -5410,7 +5105,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ai-embeddings/ADR-043-single-node-resource-management/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-043-single-node-resource-management/" class="md-nav__link">
         
   
   
@@ -5445,7 +5140,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ai-embeddings/ADR-044-probabilistic-truth-convergence/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-044-probabilistic-truth-convergence/" class="md-nav__link">
         
   
   
@@ -5480,7 +5175,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ai-embeddings/ADR-045-unified-embedding-generation/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-045-unified-embedding-generation/" class="md-nav__link">
         
   
   
@@ -5515,7 +5210,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ai-embeddings/ADR-049-rate-limiting-and-concurrency/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-049-rate-limiting-and-concurrency/" class="md-nav__link">
         
   
   
@@ -5550,7 +5245,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ai-embeddings/ADR-058-polarity-axis-triangulation/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-058-polarity-axis-triangulation/" class="md-nav__link">
         
   
   
@@ -5585,7 +5280,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ai-embeddings/ADR-068-source-text-embeddings/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-068-source-text-embeddings/" class="md-nav__link">
         
   
   
@@ -5620,7 +5315,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ai-embeddings/ADR-070-polarity-axis-analysis/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-070-polarity-axis-analysis/" class="md-nav__link">
         
   
   
@@ -5655,7 +5350,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ai-embeddings/ADR-800-dynamic-model-catalog-and-openrouter-support/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-800-dynamic-model-catalog-and-openrouter-support/" class="md-nav__link">
         
   
   
@@ -5690,7 +5385,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ai-embeddings/ADR-801-uniform-provider-configuration-contract/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-801-uniform-provider-configuration-contract/" class="md-nav__link">
         
   
   
@@ -5772,7 +5467,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ai-embeddings/media-ADR-058/README_VISUALIZATIONS/" class="md-nav__link">
+      <a href="../../ai-embeddings/media-ADR-058/README_VISUALIZATIONS/" class="md-nav__link">
         
   
   
@@ -5863,7 +5558,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/authentication-security/ADR-017-sensitive-auth-verification/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-017-sensitive-auth-verification/" class="md-nav__link">
         
   
   
@@ -5898,7 +5593,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/authentication-security/ADR-027-user-management-api/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-027-user-management-api/" class="md-nav__link">
         
   
   
@@ -5933,7 +5628,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/authentication-security/ADR-028-dynamic-rbac-system/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-028-dynamic-rbac-system/" class="md-nav__link">
         
   
   
@@ -5968,7 +5663,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/authentication-security/ADR-031-encrypted-api-key-storage/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-031-encrypted-api-key-storage/" class="md-nav__link">
         
   
   
@@ -6003,7 +5698,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/authentication-security/ADR-054-oauth-client-management/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-054-oauth-client-management/" class="md-nav__link">
         
   
   
@@ -6038,7 +5733,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/authentication-security/ADR-060-endpoint-security-architecture/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-060-endpoint-security-architecture/" class="md-nav__link">
         
   
   
@@ -6073,7 +5768,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/authentication-security/ADR-062-mcp-file-ingestion-security/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-062-mcp-file-ingestion-security/" class="md-nav__link">
         
   
   
@@ -6108,7 +5803,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/authentication-security/ADR-074-platform-admin-role/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-074-platform-admin-role/" class="md-nav__link">
         
   
   
@@ -6143,7 +5838,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/authentication-security/ADR-082-user-scoping-artifact-ownership/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-082-user-scoping-artifact-ownership/" class="md-nav__link">
         
   
   
@@ -6233,7 +5928,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/database-schema/ADR-016-apache-age-migration/" class="md-nav__link">
+      <a href="../../database-schema/ADR-016-apache-age-migration/" class="md-nav__link">
         
   
   
@@ -6268,7 +5963,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/database-schema/ADR-024-multi-schema-postgresql-architecture/" class="md-nav__link">
+      <a href="../../database-schema/ADR-024-multi-schema-postgresql-architecture/" class="md-nav__link">
         
   
   
@@ -6303,7 +5998,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/database-schema/ADR-040-database-schema-migrations/" class="md-nav__link">
+      <a href="../../database-schema/ADR-040-database-schema-migrations/" class="md-nav__link">
         
   
   
@@ -6338,7 +6033,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/database-schema/ADR-061-operator-pattern-lifecycle/" class="md-nav__link">
+      <a href="../../database-schema/ADR-061-operator-pattern-lifecycle/" class="md-nav__link">
         
   
   
@@ -6373,7 +6068,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/database-schema/ADR-200-annealing-ontologies-self-organizing-knowledge-graph-structure/" class="md-nav__link">
+      <a href="../../database-schema/ADR-200-annealing-ontologies-self-organizing-knowledge-graph-structure/" class="md-nav__link">
         
   
   
@@ -6408,7 +6103,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/database-schema/ADR-201-in-memory-graph-acceleration-extension/" class="md-nav__link">
+      <a href="../../database-schema/ADR-201-in-memory-graph-acceleration-extension/" class="md-nav__link">
         
   
   
@@ -6443,7 +6138,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/database-schema/ADR-202-timestamp-timezone-normalization/" class="md-nav__link">
+      <a href="../../database-schema/ADR-202-timestamp-timezone-normalization/" class="md-nav__link">
         
   
   
@@ -6478,7 +6173,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/database-schema/ADR-203-graph-epoch-event-log/" class="md-nav__link">
+      <a href="../../database-schema/ADR-203-graph-epoch-event-log/" class="md-nav__link">
         
   
   
@@ -6513,7 +6208,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/database-schema/ADR-204-node-type-and-abstract-property-representation-for-concept-nodes/" class="md-nav__link">
+      <a href="../../database-schema/ADR-204-node-type-and-abstract-property-representation-for-concept-nodes/" class="md-nav__link">
         
   
   
@@ -6548,7 +6243,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/database-schema/ADR-205-postgresql-18-migration/" class="md-nav__link">
+      <a href="../../database-schema/ADR-205-postgresql-18-migration/" class="md-nav__link">
         
   
   
@@ -6583,7 +6278,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/database-schema/ADR-206-closed-vocabulary-annealing-actions-with-tiered-escalation-and-epistemic-ledger/" class="md-nav__link">
+      <a href="../../database-schema/ADR-206-closed-vocabulary-annealing-actions-with-tiered-escalation-and-epistemic-ledger/" class="md-nav__link">
         
   
   
@@ -6623,18 +6318,20 @@
                 
   
   
+    
   
   
+  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9_6" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9_6" checked>
         
           
           <label class="md-nav__link" for="__nav_9_6" id="__nav_9_6_label" tabindex="0">
@@ -6655,7 +6352,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_9_6_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_9_6_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_9_6">
             <span class="md-nav__icon md-icon"></span>
             
@@ -6673,7 +6370,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/infrastructure/ADR-012-api-server-architecture/" class="md-nav__link">
+      <a href="../ADR-012-api-server-architecture/" class="md-nav__link">
         
   
   
@@ -6708,7 +6405,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/infrastructure/ADR-015-backup-restore-streaming/" class="md-nav__link">
+      <a href="../ADR-015-backup-restore-streaming/" class="md-nav__link">
         
   
   
@@ -6743,7 +6440,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/infrastructure/ADR-018-server-sent-events-streaming/" class="md-nav__link">
+      <a href="../ADR-018-server-sent-events-streaming/" class="md-nav__link">
         
   
   
@@ -6778,7 +6475,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/infrastructure/ADR-020-admin-module-architecture/" class="md-nav__link">
+      <a href="../ADR-020-admin-module-architecture/" class="md-nav__link">
         
   
   
@@ -6813,7 +6510,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/infrastructure/ADR-021-live-man-switch-ai-safety/" class="md-nav__link">
+      <a href="../ADR-021-live-man-switch-ai-safety/" class="md-nav__link">
         
   
   
@@ -6848,7 +6545,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/infrastructure/ADR-050-scheduled-jobs-system/" class="md-nav__link">
+      <a href="../ADR-050-scheduled-jobs-system/" class="md-nav__link">
         
   
   
@@ -6883,7 +6580,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/infrastructure/ADR-055-cdn-serverless-deployment-model/" class="md-nav__link">
+      <a href="../ADR-055-cdn-serverless-deployment-model/" class="md-nav__link">
         
   
   
@@ -6918,7 +6615,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/infrastructure/ADR-056-timezone-aware-datetime-utilities/" class="md-nav__link">
+      <a href="../ADR-056-timezone-aware-datetime-utilities/" class="md-nav__link">
         
   
   
@@ -6953,7 +6650,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/infrastructure/ADR-079-projection-artifact-storage/" class="md-nav__link">
+      <a href="../ADR-079-projection-artifact-storage/" class="md-nav__link">
         
   
   
@@ -6988,7 +6685,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/infrastructure/ADR-080-garage-service-architecture/" class="md-nav__link">
+      <a href="../ADR-080-garage-service-architecture/" class="md-nav__link">
         
   
   
@@ -7023,7 +6720,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/infrastructure/ADR-083-artifact-persistence-pattern/" class="md-nav__link">
+      <a href="../ADR-083-artifact-persistence-pattern/" class="md-nav__link">
         
   
   
@@ -7058,7 +6755,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/infrastructure/ADR-086-deployment-topology/" class="md-nav__link">
+      <a href="../ADR-086-deployment-topology/" class="md-nav__link">
         
   
   
@@ -7093,7 +6790,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/infrastructure/ADR-088-semantic-election-protocol/" class="md-nav__link">
+      <a href="../ADR-088-semantic-election-protocol/" class="md-nav__link">
         
   
   
@@ -7128,7 +6825,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/infrastructure/ADR-100-database-driven-job-dispatch/" class="md-nav__link">
+      <a href="../ADR-100-database-driven-job-dispatch/" class="md-nav__link">
         
   
   
@@ -7160,10 +6857,44 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../../../architecture/infrastructure/ADR-101-rocm-image-variant-and-install-time-selection/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-101: ROCm Image Variant and Install-Time Selection
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--Accepted"></span>
+  
+
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -7186,6 +6917,231 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Decision">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#image-tags" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Image tags
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#operator-selection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Operator selection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#publish-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Publish flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#embedding-device-mapping-stays-cuda-for-amd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Embedding device mapping stays cuda for AMD
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#honest-cpu-fallback-at-startup-separate-but-related" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Honest CPU fallback at startup (separate but related)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Consequences">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#positive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Positive
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#negative" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Negative
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#neutral" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Neutral
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#alternatives-considered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alternatives Considered
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Alternatives Considered">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#one-fat-image-with-every-pytorch-variant" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        One fat image with every PyTorch variant
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#run-time-wheel-download-image-stays-small-fetches-the-right-torch-on-first-boot" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Run-time wheel download — image stays small, fetches the right torch on first boot
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#detect-rocm-at-startup-and-refuse-to-start-if-image-variant-is-wrong" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Detect ROCm at startup and refuse to start if image variant is wrong
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#build-rocm-variants-in-ci-github-actions-rather-than-locally" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build ROCm variants in CI (GitHub Actions) rather than locally
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#drop-rocm-support-and-document-cpu-only-on-amd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Drop ROCm support and document "CPU only on AMD"
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -7253,7 +7209,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ingestion-content/ADR-014-job-approval-workflow/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-014-job-approval-workflow/" class="md-nav__link">
         
   
   
@@ -7288,7 +7244,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ingestion-content/ADR-023-markdown-structured-content-preprocessing/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-023-markdown-structured-content-preprocessing/" class="md-nav__link">
         
   
   
@@ -7323,7 +7279,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ingestion-content/ADR-033-multimodal-ingestion-configurable-prompts/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-033-multimodal-ingestion-configurable-prompts/" class="md-nav__link">
         
   
   
@@ -7358,7 +7314,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ingestion-content/ADR-037-human-guided-graph-editing/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-037-human-guided-graph-editing/" class="md-nav__link">
         
   
   
@@ -7393,7 +7349,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ingestion-content/ADR-051.1-graph-document-deduplication/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-051.1-graph-document-deduplication/" class="md-nav__link">
         
   
   
@@ -7428,7 +7384,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ingestion-content/ADR-051.2-api-changes/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-051.2-api-changes/" class="md-nav__link">
         
   
   
@@ -7463,7 +7419,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ingestion-content/ADR-057.1-multimodal-image-ingestion/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-057.1-multimodal-image-ingestion/" class="md-nav__link">
         
   
   
@@ -7498,7 +7454,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ingestion-content/ADR-057.2-appendix-single-vs-two-stage/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-057.2-appendix-single-vs-two-stage/" class="md-nav__link">
         
   
   
@@ -7533,7 +7489,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ingestion-content/ADR-072-concept-matching-strategies/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-072-concept-matching-strategies/" class="md-nav__link">
         
   
   
@@ -7568,7 +7524,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ingestion-content/ADR-081-source-document-lifecycle/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-081-source-document-lifecycle/" class="md-nav__link">
         
   
   
@@ -7603,7 +7559,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ingestion-content/ADR-089-deterministic-node-edge-creation/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-089-deterministic-node-edge-creation/" class="md-nav__link">
         
   
   
@@ -7693,7 +7649,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/query-search/ADR-030-concept-deduplication-validation/" class="md-nav__link">
+      <a href="../../query-search/ADR-030-concept-deduplication-validation/" class="md-nav__link">
         
   
   
@@ -7728,7 +7684,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/query-search/ADR-063-semantic-diversity-authenticity-signal/" class="md-nav__link">
+      <a href="../../query-search/ADR-063-semantic-diversity-authenticity-signal/" class="md-nav__link">
         
   
   
@@ -7763,7 +7719,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/query-search/ADR-066-published-query-endpoints/" class="md-nav__link">
+      <a href="../../query-search/ADR-066-published-query-endpoints/" class="md-nav__link">
         
   
   
@@ -7798,7 +7754,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/query-search/ADR-071-parallel-graph-queries/" class="md-nav__link">
+      <a href="../../query-search/ADR-071-parallel-graph-queries/" class="md-nav__link">
         
   
   
@@ -7833,7 +7789,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/query-search/ADR-071.1-parallel-implementation-findings/" class="md-nav__link">
+      <a href="../../query-search/ADR-071.1-parallel-implementation-findings/" class="md-nav__link">
         
   
   
@@ -7868,7 +7824,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/query-search/ADR-076-pathfinding-optimization/" class="md-nav__link">
+      <a href="../../query-search/ADR-076-pathfinding-optimization/" class="md-nav__link">
         
   
   
@@ -7903,7 +7859,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/query-search/ADR-076.1-pathfinding-baseline/" class="md-nav__link">
+      <a href="../../query-search/ADR-076.1-pathfinding-baseline/" class="md-nav__link">
         
   
   
@@ -7938,7 +7894,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/query-search/ADR-084-document-search/" class="md-nav__link">
+      <a href="../../query-search/ADR-084-document-search/" class="md-nav__link">
         
   
   
@@ -7973,7 +7929,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/query-search/ADR-500-graph-program-dsl-and-ast-architecture/" class="md-nav__link">
+      <a href="../../query-search/ADR-500-graph-program-dsl-and-ast-architecture/" class="md-nav__link">
         
   
   
@@ -8063,7 +8019,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/user-interfaces/ADR-011-cli-admin-separation/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-011-cli-admin-separation/" class="md-nav__link">
         
   
   
@@ -8098,7 +8054,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/user-interfaces/ADR-013-unified-typescript-client/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-013-unified-typescript-client/" class="md-nav__link">
         
   
   
@@ -8133,7 +8089,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/user-interfaces/ADR-019-type-based-table-formatting/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-019-type-based-table-formatting/" class="md-nav__link">
         
   
   
@@ -8168,7 +8124,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/user-interfaces/ADR-029-cli-theory-of-operation/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-029-cli-theory-of-operation/" class="md-nav__link">
         
   
   
@@ -8203,7 +8159,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/user-interfaces/ADR-034-graph-visualization-query-workbench/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-034-graph-visualization-query-workbench/" class="md-nav__link">
         
   
   
@@ -8238,7 +8194,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/user-interfaces/ADR-035-explorer-methods-uses-capabilities/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-035-explorer-methods-uses-capabilities/" class="md-nav__link">
         
   
   
@@ -8273,7 +8229,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/user-interfaces/ADR-036-universal-visual-query-builder/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-036-universal-visual-query-builder/" class="md-nav__link">
         
   
   
@@ -8308,7 +8264,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/user-interfaces/ADR-064-specialized-truth-convergence-visualizations/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-064-specialized-truth-convergence-visualizations/" class="md-nav__link">
         
   
   
@@ -8343,7 +8299,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/user-interfaces/ADR-067-web-app-workstation-architecture/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-067-web-app-workstation-architecture/" class="md-nav__link">
         
   
   
@@ -8378,7 +8334,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/user-interfaces/ADR-069-semantic-fuse-filesystem/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-069-semantic-fuse-filesystem/" class="md-nav__link">
         
   
   
@@ -8413,7 +8369,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/user-interfaces/ADR-069.1-fuse-implementation-specifics/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-069.1-fuse-implementation-specifics/" class="md-nav__link">
         
   
   
@@ -8448,7 +8404,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/user-interfaces/ADR-075-postmodern-theme/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-075-postmodern-theme/" class="md-nav__link">
         
   
   
@@ -8483,7 +8439,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/user-interfaces/ADR-700-ontology-explorer/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-700-ontology-explorer/" class="md-nav__link">
         
   
   
@@ -8518,7 +8474,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/user-interfaces/ADR-701-vocabulary-administration-interface/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-701-vocabulary-administration-interface/" class="md-nav__link">
         
   
   
@@ -8553,7 +8509,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/user-interfaces/ADR-702-unified-graph-rendering-engine/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-702-unified-graph-rendering-engine/" class="md-nav__link">
         
   
   
@@ -8588,7 +8544,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/user-interfaces/ADR-703-ontology-lifecycle-administration-interface/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-703-ontology-lifecycle-administration-interface/" class="md-nav__link">
         
   
   
@@ -8678,7 +8634,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/visualization/ADR-078-embedding-landscape-explorer/" class="md-nav__link">
+      <a href="../../visualization/ADR-078-embedding-landscape-explorer/" class="md-nav__link">
         
   
   
@@ -8713,7 +8669,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/visualization/ADR-085-document-explorer/" class="md-nav__link">
+      <a href="../../visualization/ADR-085-document-explorer/" class="md-nav__link">
         
   
   
@@ -8803,7 +8759,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/vocabulary-relationships/ADR-022-semantic-relationship-taxonomy/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-022-semantic-relationship-taxonomy/" class="md-nav__link">
         
   
   
@@ -8838,7 +8794,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/vocabulary-relationships/ADR-025-dynamic-relationship-vocabulary/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-025-dynamic-relationship-vocabulary/" class="md-nav__link">
         
   
   
@@ -8873,7 +8829,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/vocabulary-relationships/ADR-026-autonomous-vocabulary-curation/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-026-autonomous-vocabulary-curation/" class="md-nav__link">
         
   
   
@@ -8908,7 +8864,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/vocabulary-relationships/ADR-032.1-automatic-edge-vocabulary-expansion/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-032.1-automatic-edge-vocabulary-expansion/" class="md-nav__link">
         
   
   
@@ -8943,7 +8899,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/vocabulary-relationships/ADR-032.2-implementation-notes/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-032.2-implementation-notes/" class="md-nav__link">
         
   
   
@@ -8978,7 +8934,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/vocabulary-relationships/ADR-046-grounding-aware-vocabulary-management/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-046-grounding-aware-vocabulary-management/" class="md-nav__link">
         
   
   
@@ -9013,7 +8969,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/vocabulary-relationships/ADR-047-probabilistic-vocabulary-categorization/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-047-probabilistic-vocabulary-categorization/" class="md-nav__link">
         
   
   
@@ -9048,7 +9004,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/vocabulary-relationships/ADR-048-vocabulary-metadata-as-graph/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-048-vocabulary-metadata-as-graph/" class="md-nav__link">
         
   
   
@@ -9083,7 +9039,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/vocabulary-relationships/ADR-052-vocabulary-expansion-consolidation-cycle/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-052-vocabulary-expansion-consolidation-cycle/" class="md-nav__link">
         
   
   
@@ -9118,7 +9074,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/vocabulary-relationships/ADR-053-eager-vocabulary-categorization/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-053-eager-vocabulary-categorization/" class="md-nav__link">
         
   
   
@@ -9153,7 +9109,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/vocabulary-relationships/ADR-059-llm-determined-relationship-direction/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-059-llm-determined-relationship-direction/" class="md-nav__link">
         
   
   
@@ -9188,7 +9144,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/vocabulary-relationships/ADR-065-vocabulary-based-provenance-relationships/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-065-vocabulary-based-provenance-relationships/" class="md-nav__link">
         
   
   
@@ -9223,7 +9179,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/vocabulary-relationships/ADR-077-vocabulary-explorers/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-077-vocabulary-explorers/" class="md-nav__link">
         
   
   
@@ -9320,7 +9276,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../research/code-intelligence-platforms-comparison/" class="md-nav__link">
+      <a href="../../../research/code-intelligence-platforms-comparison/" class="md-nav__link">
         
   
   
@@ -9348,7 +9304,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../research/emergent-visual-relationships/" class="md-nav__link">
+      <a href="../../../research/emergent-visual-relationships/" class="md-nav__link">
         
   
   
@@ -9376,7 +9332,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../research/epistemic-confidence/" class="md-nav__link">
+      <a href="../../../research/epistemic-confidence/" class="md-nav__link">
         
   
   
@@ -9404,7 +9360,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../research/graph-object-platform-exploration/" class="md-nav__link">
+      <a href="../../../research/graph-object-platform-exploration/" class="md-nav__link">
         
   
   
@@ -9432,7 +9388,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../research/headless-install-analysis/" class="md-nav__link">
+      <a href="../../../research/headless-install-analysis/" class="md-nav__link">
         
   
   
@@ -9460,7 +9416,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../research/llm-knowledge-extraction-research-2024-2025/" class="md-nav__link">
+      <a href="../../../research/llm-knowledge-extraction-research-2024-2025/" class="md-nav__link">
         
   
   
@@ -9488,7 +9444,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../research/polarity-axis-findings/" class="md-nav__link">
+      <a href="../../../research/polarity-axis-findings/" class="md-nav__link">
         
   
   
@@ -9516,7 +9472,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../research/polarity-axis-visualization/" class="md-nav__link">
+      <a href="../../../research/polarity-axis-visualization/" class="md-nav__link">
         
   
   
@@ -9544,7 +9500,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../research/t-sne-viz/" class="md-nav__link">
+      <a href="../../../research/t-sne-viz/" class="md-nav__link">
         
   
   
@@ -9619,7 +9575,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../research/vision-testing/" class="md-nav__link">
+      <a href="../../../research/vision-testing/" class="md-nav__link">
         
   
   
@@ -9647,7 +9603,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../research/vision-testing/EMBEDDING_COMPARISON_REPORT/" class="md-nav__link">
+      <a href="../../../research/vision-testing/EMBEDDING_COMPARISON_REPORT/" class="md-nav__link">
         
   
   
@@ -9675,7 +9631,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../research/vision-testing/FINDINGS/" class="md-nav__link">
+      <a href="../../../research/vision-testing/FINDINGS/" class="md-nav__link">
         
   
   
@@ -9703,7 +9659,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../research/vision-testing/RESEARCH_SUMMARY/" class="md-nav__link">
+      <a href="../../../research/vision-testing/RESEARCH_SUMMARY/" class="md-nav__link">
         
   
   
@@ -9793,7 +9749,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../testing/ADR-200-PHASE-3A-EXERCISE-REPORT/" class="md-nav__link">
+      <a href="../../../testing/ADR-200-PHASE-3A-EXERCISE-REPORT/" class="md-nav__link">
         
   
   
@@ -9821,7 +9777,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../testing/API_AUTH_AUDIT_RESULTS/" class="md-nav__link">
+      <a href="../../../testing/API_AUTH_AUDIT_RESULTS/" class="md-nav__link">
         
   
   
@@ -9849,7 +9805,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../testing/API_AUTH_AUDIT_SUMMARY/" class="md-nav__link">
+      <a href="../../../testing/API_AUTH_AUDIT_SUMMARY/" class="md-nav__link">
         
   
   
@@ -9877,7 +9833,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../testing/API_AUTH_TESTING_RESEARCH/" class="md-nav__link">
+      <a href="../../../testing/API_AUTH_TESTING_RESEARCH/" class="md-nav__link">
         
   
   
@@ -9905,7 +9861,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../testing/INTEGRATION_TEST_NOTES/" class="md-nav__link">
+      <a href="../../../testing/INTEGRATION_TEST_NOTES/" class="md-nav__link">
         
   
   
@@ -9933,7 +9889,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../testing/INTEGRATION_TEST_PLAN/" class="md-nav__link">
+      <a href="../../../testing/INTEGRATION_TEST_PLAN/" class="md-nav__link">
         
   
   
@@ -9961,7 +9917,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../testing/SCHEMA_MIGRATION_TEST_REPORT/" class="md-nav__link">
+      <a href="../../../testing/SCHEMA_MIGRATION_TEST_REPORT/" class="md-nav__link">
         
   
   
@@ -9989,7 +9945,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../testing/TEST_COVERAGE/" class="md-nav__link">
+      <a href="../../../testing/TEST_COVERAGE/" class="md-nav__link">
         
   
   
@@ -10044,22 +10000,33 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#vocabulary-vocab" class="md-nav__link">
+  <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
-        vocabulary (vocab)
+        Context
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="vocabulary (vocab)">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Decision">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#status" class="md-nav__link">
+  <a href="#image-tags" class="md-nav__link">
     <span class="md-ellipsis">
       
-        status
+        Image tags
       
     </span>
   </a>
@@ -10067,10 +10034,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#list" class="md-nav__link">
+  <a href="#operator-selection" class="md-nav__link">
     <span class="md-ellipsis">
       
-        list
+        Operator selection
       
     </span>
   </a>
@@ -10078,10 +10045,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#consolidate" class="md-nav__link">
+  <a href="#publish-flow" class="md-nav__link">
     <span class="md-ellipsis">
       
-        consolidate
+        Publish flow
       
     </span>
   </a>
@@ -10089,10 +10056,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#merge" class="md-nav__link">
+  <a href="#embedding-device-mapping-stays-cuda-for-amd" class="md-nav__link">
     <span class="md-ellipsis">
       
-        merge
+        Embedding device mapping stays cuda for AMD
       
     </span>
   </a>
@@ -10100,176 +10067,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#generate-embeddings" class="md-nav__link">
+  <a href="#honest-cpu-fallback-at-startup-separate-but-related" class="md-nav__link">
     <span class="md-ellipsis">
       
-        generate-embeddings
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#category-scores" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        category-scores
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#refresh-categories" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        refresh-categories
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#similar" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        similar
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#opposite" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        opposite
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#analyze" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        analyze
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#config" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        config
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#config-update" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        config-update
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#profiles" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        profiles
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#profiles-show" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        profiles-show
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#profiles-create" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        profiles-create
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#profiles-delete" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        profiles-delete
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#epistemic-status" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        epistemic-status
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="epistemic-status">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#list_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        list
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#show" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        show
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#measure" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        measure
+        Honest CPU fallback at startup (separate but related)
       
     </span>
   </a>
@@ -10280,12 +10081,118 @@
     </nav>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#sync" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
     <span class="md-ellipsis">
       
-        sync
+        Consequences
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Consequences">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#positive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Positive
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#negative" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Negative
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#neutral" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Neutral
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#alternatives-considered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alternatives Considered
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Alternatives Considered">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#one-fat-image-with-every-pytorch-variant" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        One fat image with every PyTorch variant
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#run-time-wheel-download-image-stays-small-fetches-the-right-torch-on-first-boot" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Run-time wheel download — image stays small, fetches the right torch on first boot
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#detect-rocm-at-startup-and-refuse-to-start-if-image-variant-is-wrong" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Detect ROCm at startup and refuse to start if image variant is wrong
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#build-rocm-variants-in-ci-github-actions-rather-than-locally" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build ROCm variants in CI (GitHub Actions) rather than locally
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#drop-rocm-support-and-document-cpu-only-on-amd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Drop ROCm support and document "CPU only on AMD"
       
     </span>
   </a>
@@ -10317,536 +10224,285 @@
   
 
 
-<h1 id="kg-vocabulary">kg vocabulary</h1>
-<blockquote>
-<p>Auto-generated</p>
-</blockquote>
-<h2 id="vocabulary-vocab">vocabulary (vocab)</h2>
-<p>Edge vocabulary management and consolidation. Manages relationship types between concepts including builtin types (30 predefined), custom types (LLM-extracted from documents), categories (semantic groupings), consolidation (AI-assisted merging via AITL - ADR-032), and auto-categorization (probabilistic via embeddings - ADR-047). Features zone-based management (GREEN/WATCH/DANGER/EMERGENCY) and LLM-determined relationship direction (ADR-049).</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kg<span class="w"> </span>vocabulary<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
-</code></pre></div></p>
-<p><strong>Subcommands:</strong></p>
+<h1 id="adr-101-rocm-image-variant-and-install-time-selection">ADR-101: ROCm Image Variant and Install-Time Selection</h1>
+<h2 id="context">Context</h2>
+<p>Issue #405 reports that <code>./operator.sh init</code> advertises an "AMD ROCm" path
+but the resulting platform fails to ingest. The startup log claims "Falling
+back to API-based embeddings" while the active embedding profile is still
+<code>local</code>, and every concept then fails with <code>Embedding model not loaded. Call
+load_model() first.</code> — a silent-broken state that looks fixed but isn't.</p>
+<p>The root cause is image packaging, not configuration code:</p>
 <ul>
-<li><code>status</code> - Show current vocabulary status including size, zone (GREEN/WATCH/DANGER/EMERGENCY per ADR-032), aggressiveness (growth above minimum), and thresholds. Shows breakdown of builtin types, custom types, and categories. Use this to monitor vocabulary health, check zone before consolidation, track growth over time, and trigger consolidation workflows when needed.</li>
-<li><code>list</code> - List all edge types with statistics, categories, and confidence scores (ADR-047). Shows TYPE (colored by semantic), CATEGORY (composition, causation, logical, etc.), CONF (confidence score with ⚠ for ambiguous), GROUNDING (epistemic status avg_grounding), EDGES (usage count), STATUS (active ✓), and [B] flag for builtin types. Use this for vocabulary overview, finding consolidation candidates, reviewing auto-categorization accuracy, identifying unused types, and auditing quality.</li>
-<li><code>consolidate</code> - AI-assisted vocabulary consolidation workflow (AITL - AI-in-the-loop, ADR-032). Analyzes vocabulary via embeddings, identifies similar pairs above threshold, presents merge recommendations with confidence, and executes or prompts based on mode. Workflow: 1) analyze vocabulary, 2) identify candidates, 3) present recommendations, 4) execute or prompt, 5) apply merges (deprecate source, redirect edges), 6) prune unused types (default). Modes: interactive (default, prompts each), dry-run (shows candidates without executing), AITL auto (auto-executes high confidence). Threshold guidelines: 0.95+ very conservative, 0.90-0.95 balanced AITL, 0.85-0.90 aggressive requires review, &lt;0.85 very aggressive manual review.</li>
-<li><code>merge</code> - Manually merge one edge type into another for consolidation or correction. Validates both types exist, redirects all edges from deprecated type to target type, marks deprecated type as inactive, records audit trail (reason, user, timestamp), and preserves edge provenance. This is a non-destructive, atomic operation useful for manual consolidation, fixing misnamed types from extraction, bulk scripted operations, and targeted category cleanup. Safety: edges preserved, atomic transaction, audit trail for compliance, can be reviewed in inactive types list.</li>
-<li><code>generate-embeddings</code> - Generate vector embeddings for vocabulary types (required for consolidation and categorization). Identifies types without embeddings, generates embeddings using configured embedding model, stores embeddings for similarity comparison, and enables consolidation and auto-categorization. Use after fresh install (bootstrap vocabulary embeddings), after ingestion introduces new custom types, when switching embedding models (regenerate), or for inconsistency fixes (force regeneration if corrupted). Performance: ~100-200ms per embedding (OpenAI), ~20-50ms per embedding (local models), parallel generation (batches of 10).</li>
-<li><code>category-scores</code> - Show category similarity scores for a specific relationship type (ADR-047). Displays assigned category, confidence score (calculated as max_score/second_max_score * 100), ambiguous flag (set when runner-up within 20% of winner), runner-up category if ambiguous, and similarity to all category seeds (0-100%) sorted by similarity with visual bar chart. Use this to verify auto-categorization makes sense, debug low confidence assignments, understand why confidence is low, resolve ambiguity between close categories, and audit all types for misassignments.</li>
-<li><code>refresh-categories</code> - Refresh category assignments for vocabulary types using latest embeddings (ADR-047, ADR-053). As of ADR-053, new edge types are automatically categorized during ingestion, so this command is primarily needed when category seeds change. Use when category seed definitions are updated (seeds currently defined in code, future: database-configurable), after embedding model changes, or for migrating pre-ADR-053 uncategorized types. This is a non-destructive operation (doesn't affect edges), preserves manual assignments, and records audit trail per type.</li>
-<li><code>similar</code> - Find similar edge types via embedding similarity (ADR-053). Shows types with highest cosine similarity - useful for synonym detection and consolidation. Use --limit to control results (1-100, default 10). Similar types with high similarity (&gt;0.90) are strong merge candidates for vocabulary consolidation (ADR-052).</li>
-<li><code>opposite</code> - Find opposite (least similar) edge types via embedding similarity (ADR-053). Shows types with lowest cosine similarity - useful for understanding semantic range and antonyms. Use --limit to control results (1-100, default 5).</li>
-<li><code>analyze</code> - Detailed analysis of vocabulary type for quality assurance (ADR-053). Shows category fit, similar types in same/other categories, and detects potential miscategorization. Use this to verify auto-categorization accuracy and identify types that may need reclassification.</li>
-<li><code>config</code> - Show or update vocabulary configuration. No args: display config table. With args: update properties directly using database key names (e.g., "kg vocab config vocab_max 275 vocab_emergency 350"). Property names shown in config table.</li>
-<li><code>config-update</code> - [DEPRECATED: Use <code>kg vocab config &lt;property&gt; &lt;value&gt;</code> instead] Update vocabulary configuration settings. Supports updating multiple properties at once including thresholds (min, max, emergency), pruning mode (naive, hitl, aitl), aggressiveness profile, synonym thresholds, auto-expand setting, and consolidation threshold. Changes are persisted to database and take effect immediately. Use this for runtime threshold adjustments, switching pruning modes, changing aggressiveness profiles, tuning synonym detection, and enabling/disabling auto-expand.</li>
-<li><code>profiles</code> - List all aggressiveness profiles including builtin profiles (8 predefined Bezier curves) and custom profiles (user-created curves). Shows profile name, control points (x1, y1, x2, y2 for cubic Bezier), description, and builtin flag. Use this to view available profiles for configuration, review custom profiles, understand Bezier curve parameters, and identify profiles for deletion. Builtin profiles: linear, ease, ease-in, ease-out, ease-in-out, aggressive (recommended), gentle, exponential.</li>
-<li><code>profiles-show</code> - Show details for a specific aggressiveness profile including full Bezier curve parameters, description, builtin status, and timestamps. Use this to inspect profile details before using, verify control point values, understand profile behavior, and check creation/update times.</li>
-<li><code>profiles-create</code> - Create a custom aggressiveness profile with Bezier curve parameters. Profiles control how aggressively vocabulary consolidation operates as size approaches thresholds. Bezier curve defined by two control points (x1, y1) and (x2, y2) where X is normalized vocabulary size (0.0-1.0) and Y is aggressiveness multiplier. Use this to create deployment-specific curves, experiment with consolidation behavior, tune for specific vocabulary growth patterns, and optimize for production workloads. Cannot overwrite builtin profiles.</li>
-<li><code>profiles-delete</code> - Delete a custom aggressiveness profile. Removes the profile permanently from the database. Cannot delete builtin profiles (protected by database trigger). Use this to remove unused custom profiles, clean up experimental curves, and maintain profile list. Safety: builtin profiles cannot be deleted, atomic operation, immediate effect.</li>
-<li><code>epistemic-status</code> - Epistemic status classification for vocabulary types (ADR-065 Phase 2). Shows knowledge validation state based on grounding patterns: WELL_GROUNDED (avg &gt;0.8, well-established), MIXED_GROUNDING (0.15-0.8, variable validation), WEAK_GROUNDING (0.0-0.15, emerging evidence), POORLY_GROUNDED (-0.5-0.0, uncertain), CONTRADICTED (&lt;-0.5, refuted), HISTORICAL (temporal vocabulary), INSUFFICIENT_DATA (&lt;3 measurements). Results are temporal measurements that change as graph evolves. Use for filtering relationships by epistemic reliability, identifying contested knowledge, tracking knowledge validation trends, and curating high-confidence vs exploratory subgraphs.</li>
-<li><code>sync</code> - Sync missing edge types from graph to vocabulary (ADR-077). Discovers edge types used in the graph but not registered in vocabulary table/VocabType nodes. Use --dry-run first to preview, then --execute to sync.</li>
+<li>The published <code>kg-api:latest</code> image is built from <code>api/Dockerfile</code> with
+  <code>PYTORCH_VARIANT=cpu</code> (the default). That step runs
+  <code>pip install -r requirements.txt</code>, which pulls torch from the default
+  PyPI index. <strong>The default PyPI torch wheel bundles a CUDA runtime
+  (<code>+cuXXX</code>).</strong> That works on hosts with NVIDIA drivers and on hosts with
+  no GPU at all (<code>torch.cuda.is_available()</code> → False, CPU path is taken).
+  It does <strong>not</strong> work on AMD ROCm — ROCm PyTorch is a separate wheel
+  (<code>+rocmYY</code>) only available from
+  <code>https://download.pytorch.org/whl/rocmYY</code>.</li>
+<li>The operator wizard sets <code>embedding_profile.device = 'cuda'</code> for both
+  <code>amd</code> and <code>amd-host</code> modes (<code>operator/lib/guided-init.sh:359</code>). On a
+  CUDA-built torch this raises <code>Found no NVIDIA driver on your system</code>;
+  on a ROCm-built torch the same value works because ROCm PyTorch reuses
+  the <code>torch.cuda</code> API.</li>
 </ul>
-<hr />
-<h3 id="status">status</h3>
-<p>Show current vocabulary status including size, zone (GREEN/WATCH/DANGER/EMERGENCY per ADR-032), aggressiveness (growth above minimum), and thresholds. Shows breakdown of builtin types, custom types, and categories. Use this to monitor vocabulary health, check zone before consolidation, track growth over time, and trigger consolidation workflows when needed.</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kg<span class="w"> </span>status<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
-</code></pre></div></p>
-<h3 id="list">list</h3>
-<p>List all edge types with statistics, categories, and confidence scores (ADR-047). Shows TYPE (colored by semantic), CATEGORY (composition, causation, logical, etc.), CONF (confidence score with ⚠ for ambiguous), GROUNDING (epistemic status avg_grounding), EDGES (usage count), STATUS (active ✓), and [B] flag for builtin types. Use this for vocabulary overview, finding consolidation candidates, reviewing auto-categorization accuracy, identifying unused types, and auditing quality.</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kg<span class="w"> </span>list<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
-</code></pre></div></p>
-<p><strong>Options:</strong></p>
+<p>The codebase already contains every piece needed to <em>build</em> an image that
+works on ROCm — they have simply never been published.</p>
 <table>
 <thead>
 <tr>
-<th>Option</th>
-<th>Description</th>
-<th>Default</th>
+<th>Asset</th>
+<th>Purpose</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>--inactive</code></td>
-<td>Include inactive/deprecated types</td>
-<td>-</td>
+<td><code>api/Dockerfile</code> with <code>ARG PYTORCH_VARIANT=cpu\|rocm60\|rocm61</code></td>
+<td>Builds an image that installs PyTorch from a ROCm wheel index.</td>
 </tr>
 <tr>
-<td><code>--no-builtin</code></td>
-<td>Exclude builtin types</td>
-<td>-</td>
+<td><code>api/Dockerfile.rocm-host</code></td>
+<td>Layered on <code>rocm/pytorch:rocm7.1_ubuntu24.04_py3.13_pytorch_release_2.9.1</code> — ROCm comes from the base image.</td>
 </tr>
 <tr>
-<td><code>--sort &lt;fields&gt;</code></td>
-<td>Sort by comma-separated fields: edges, type, conf, grounding, category, status (case-insensitive). Default: edges (descending)</td>
-<td>-</td>
+<td><code>docker/docker-compose.gpu-amd.yml</code></td>
+<td>Sets <code>PYTORCH_VARIANT: ${ROCM_VERSION:-rocm60}</code> as a build arg, plus <code>/dev/kfd</code> + <code>/dev/dri</code> + <code>video</code> group.</td>
 </tr>
 <tr>
-<td><code>--json</code></td>
-<td>Output as JSON for programmatic use</td>
-<td>-</td>
+<td><code>docker/docker-compose.gpu-amd-host.yml</code></td>
+<td>Builds <code>Dockerfile.rocm-host</code>, plus <code>privileged: true</code> and <code>ipc: host</code> for ROCm 7.x HSA init.</td>
+</tr>
+<tr>
+<td><code>operator/lib/common.sh:148-156</code></td>
+<td>Selects the right overlay based on <code>GPU_MODE</code>.</td>
+</tr>
+<tr>
+<td><code>operator/lib/guided-init.sh:218-225</code></td>
+<td>Wizard options 3 (<code>amd</code>) and 4 (<code>amd-host</code>).</td>
 </tr>
 </tbody>
 </table>
-<h3 id="consolidate">consolidate</h3>
-<p>AI-assisted vocabulary consolidation workflow (AITL - AI-in-the-loop, ADR-032). Analyzes vocabulary via embeddings, identifies similar pairs above threshold, presents merge recommendations with confidence, and executes or prompts based on mode. Workflow: 1) analyze vocabulary, 2) identify candidates, 3) present recommendations, 4) execute or prompt, 5) apply merges (deprecate source, redirect edges), 6) prune unused types (default). Modes: interactive (default, prompts each), dry-run (shows candidates without executing), AITL auto (auto-executes high confidence). Threshold guidelines: 0.95+ very conservative, 0.90-0.95 balanced AITL, 0.85-0.90 aggressive requires review, &lt;0.85 very aggressive manual review.</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kg<span class="w"> </span>consolidate<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
-</code></pre></div></p>
-<p><strong>Options:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>-t, --target &lt;size&gt;</code></td>
-<td>Target vocabulary size</td>
-<td><code>"90"</code></td>
-</tr>
-<tr>
-<td><code>--threshold &lt;value&gt;</code></td>
-<td>Auto-execute threshold (0.0-1.0)</td>
-<td><code>"0.90"</code></td>
-</tr>
-<tr>
-<td><code>--dry-run</code></td>
-<td>Evaluate candidates without executing merges</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>--auto</code></td>
-<td>Auto-execute high confidence merges (AITL mode)</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>--no-prune-unused</code></td>
-<td>Skip pruning vocabulary types with 0 uses (default: prune enabled)</td>
-<td>-</td>
-</tr>
-</tbody>
-</table>
-<h3 id="merge">merge</h3>
-<p>Manually merge one edge type into another for consolidation or correction. Validates both types exist, redirects all edges from deprecated type to target type, marks deprecated type as inactive, records audit trail (reason, user, timestamp), and preserves edge provenance. This is a non-destructive, atomic operation useful for manual consolidation, fixing misnamed types from extraction, bulk scripted operations, and targeted category cleanup. Safety: edges preserved, atomic transaction, audit trail for compliance, can be reviewed in inactive types list.</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kg<span class="w"> </span>merge<span class="w"> </span>&lt;deprecated-type&gt;<span class="w"> </span>&lt;target-type&gt;
-</code></pre></div></p>
-<p><strong>Arguments:</strong></p>
+<p>All of this works under <code>./operator.sh init</code> <em>when the user has a local
+source checkout and we let <code>docker compose build</code> run</em> — but the standalone
+install path (<code>docker-compose.ghcr.yml</code>, used by <code>install.sh</code>) pulls
+<code>kg-api:latest</code> and never builds, so the ROCm Dockerfile paths never
+execute.</p>
+<p>Two AMD modes exist because they target different ROCm generations:</p>
 <ul>
-<li><code>&lt;deprecated-type&gt;</code> - Edge type to deprecate (becomes inactive)</li>
-<li><code>&lt;target-type&gt;</code> - Target edge type to merge into (receives all edges)</li>
+<li><strong><code>amd</code></strong> — ROCm 6.0 / 6.1 wheels installed via pip from the PyTorch
+  ROCm index. The image carries ROCm libraries pinned to whichever wheel
+  was chosen at build time.</li>
+<li><strong><code>amd-host</code></strong> — ROCm 7.1 via AMD's official <code>rocm/pytorch</code> base image.
+  Used for distros (Arch, recent Ubuntu) where ROCm 7.x is the platform.
+  Higher-overhead image but tracks AMD's official build.</li>
 </ul>
-<p><strong>Options:</strong></p>
+<p>These cannot be unified into one image — they pin different ROCm runtime
+versions — so we publish multiple variant tags rather than try to autodetect
+at startup.</p>
+<h2 id="decision">Decision</h2>
+<p>We publish ROCm variants of <code>kg-api</code> to GHCR alongside the existing default
+tag, and the operator selects the right tag at install time based on the
+user's hardware choice.</p>
+<h3 id="image-tags">Image tags</h3>
 <table>
 <thead>
 <tr>
-<th>Option</th>
-<th>Description</th>
-<th>Default</th>
+<th>Tag</th>
+<th>Built from</th>
+<th>Torch source</th>
+<th>Target</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>-r, --reason &lt;text&gt;</code></td>
-<td>Reason for merge (audit trail)</td>
-<td>-</td>
+<td><code>kg-api:latest</code> (unchanged)</td>
+<td><code>api/Dockerfile</code>, <code>PYTORCH_VARIANT=cpu</code></td>
+<td>Default PyPI torch (bundles CUDA runtime)</td>
+<td>CPU and NVIDIA hosts</td>
 </tr>
 <tr>
-<td><code>-u, --user &lt;email&gt;</code></td>
-<td>User performing the merge</td>
-<td><code>"cli-user"</code></td>
+<td><code>kg-api:rocm60</code></td>
+<td><code>api/Dockerfile</code>, <code>PYTORCH_VARIANT=rocm60</code></td>
+<td><code>https://download.pytorch.org/whl/rocm6.0</code></td>
+<td>ROCm 6.0 hosts</td>
+</tr>
+<tr>
+<td><code>kg-api:rocm61</code></td>
+<td><code>api/Dockerfile</code>, <code>PYTORCH_VARIANT=rocm61</code></td>
+<td><code>https://download.pytorch.org/whl/rocm6.1</code></td>
+<td>ROCm 6.1 hosts</td>
+</tr>
+<tr>
+<td><code>kg-api:rocm72-host</code></td>
+<td><code>api/Dockerfile.rocm-host</code></td>
+<td><code>rocm/pytorch:rocm7.2.3_ubuntu24.04_py3.12_pytorch_release_2.9.1</code></td>
+<td>ROCm 7.x hosts (Arch, modern Ubuntu)</td>
 </tr>
 </tbody>
 </table>
-<h3 id="generate-embeddings">generate-embeddings</h3>
-<p>Generate vector embeddings for vocabulary types (required for consolidation and categorization). Identifies types without embeddings, generates embeddings using configured embedding model, stores embeddings for similarity comparison, and enables consolidation and auto-categorization. Use after fresh install (bootstrap vocabulary embeddings), after ingestion introduces new custom types, when switching embedding models (regenerate), or for inconsistency fixes (force regeneration if corrupted). Performance: ~100-200ms per embedding (OpenAI), ~20-50ms per embedding (local models), parallel generation (batches of 10).</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>kg<span class="w"> </span>generate-embeddings<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
-</code></pre></div></p>
-<p><strong>Options:</strong></p>
+<p><strong>NVIDIA support is preserved.</strong> <code>kg-api:latest</code> is built from <code>PYTORCH_VARIANT=cpu</code>,
+which in this Dockerfile means "install torch from the default PyPI index" —
+and that wheel ships with the CUDA runtime bundled (the <code>+cuXXX</code> build seen
+in issue #405's repro). On a host with NVIDIA drivers,
+<code>torch.cuda.is_available()</code> returns True and the model loads on the GPU.
+On a CPU-only host, the same image works (CUDA libs idle). NVIDIA users
+get no operator changes, no new flags, no new image tags — they continue
+on <code>latest</code> exactly as today.</p>
+<p>Versioned aliases follow the same pattern: <code>kg-api:0.13.1</code>,
+<code>kg-api:0.13.1-rocm60</code>, <code>kg-api:0.13.1-rocm61</code>, <code>kg-api:0.13.1-rocm72-host</code>.</p>
+<p><strong>Naming convention</strong>: the suffix is the <strong>base image's</strong> ROCm version. For
+wheel-index variants (<code>rocm60</code>, <code>rocm61</code>) it's the wheel's ROCm version.
+For host-mounted variants (<code>rocm72-host</code>) it's the base image's ROCm
+version — which should match the operator's host ROCm major.minor as
+closely as possible. When AMD ships an updated base image (e.g.
+<code>rocm7.3.x</code>), a new variant tag (<code>rocm73-host</code>) is added rather than
+overloading the existing tag — keeps tags immutable in meaning.</p>
+<p>ROCm variants are <strong>single-arch (<code>linux/amd64</code>) only</strong>. AMD ROCm has no
+production-quality <code>arm64</code> build path. arm64 users get the CPU image, which
+works because the default PyPI wheel ships an arm64 variant with no CUDA
+runtime.</p>
+<h3 id="operator-selection">Operator selection</h3>
+<p><code>docker/docker-compose.ghcr.yml</code> becomes parametric:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nt">api</span><span class="p">:</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ghcr.io/aaronsb/knowledge-graph-system/kg-api:${KG_API_IMAGE_TAG:-latest}</span>
+</code></pre></div>
+<p><code>operator/lib/common.sh</code> exports <code>KG_API_IMAGE_TAG</code> based on <code>GPU_MODE</code>:</p>
 <table>
 <thead>
 <tr>
-<th>Option</th>
-<th>Description</th>
-<th>Default</th>
+<th><code>GPU_MODE</code></th>
+<th><code>KG_API_IMAGE_TAG</code></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>--force</code></td>
-<td>Regenerate ALL embeddings regardless of existing state</td>
-<td>-</td>
+<td><code>amd</code></td>
+<td><code>rocm60</code> (default) or <code>rocm61</code> if <code>ROCM_VERSION=rocm61</code></td>
 </tr>
 <tr>
-<td><code>--all</code></td>
-<td>Process all active types (not just missing)</td>
-<td>-</td>
+<td><code>amd-host</code></td>
+<td><code>rocm72-host</code></td>
+</tr>
+<tr>
+<td><code>nvidia</code> / <code>mac</code> / <code>cpu</code> / unset</td>
+<td><code>latest</code></td>
 </tr>
 </tbody>
 </table>
-<h3 id="category-scores">category-scores</h3>
-<p>Show category similarity scores for a specific relationship type (ADR-047). Displays assigned category, confidence score (calculated as max_score/second_max_score * 100), ambiguous flag (set when runner-up within 20% of winner), runner-up category if ambiguous, and similarity to all category seeds (0-100%) sorted by similarity with visual bar chart. Use this to verify auto-categorization makes sense, debug low confidence assignments, understand why confidence is low, resolve ambiguity between close categories, and audit all types for misassignments.</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>kg<span class="w"> </span>category-scores<span class="w"> </span>&lt;type&gt;
-</code></pre></div></p>
-<p><strong>Arguments:</strong></p>
+<p>The <code>.operator.conf</code> file gains an optional <code>KG_API_IMAGE_TAG=</code> line for
+explicit overrides; if absent, the mapping above applies. This keeps a
+single GHCR compose file and avoids a fan-out of <code>docker-compose.ghcr-*.yml</code>
+overlays.</p>
+<h3 id="publish-flow">Publish flow</h3>
+<p><code>publish.sh images</code> continues to publish <code>kg-api:latest</code> (unchanged
+default). A new target group, <code>api-rocm</code>, publishes the three ROCm variants
+in one invocation:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>./publish.sh<span class="w"> </span>images-rocm<span class="w">                      </span><span class="c1"># default-variants only (rocm72-host)</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>./publish.sh<span class="w"> </span>images-rocm<span class="w"> </span>rocm60<span class="w"> </span>--force<span class="w">       </span><span class="c1"># opt into a deferred wheel variant</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>./publish.sh<span class="w"> </span>images-rocm<span class="w"> </span>rocm72-host<span class="w"> </span>rocm60<span class="w"> </span>--force<span class="w">  </span><span class="c1"># explicit subset</span>
+</code></pre></div>
+<p>ROCm variants build locally only (consistent with the CLAUDE.md
+"build strategy: local builds are faster than GHA runners" stance). The
+publish flow runs <code>docker build</code> with the <code>PYTORCH_VARIANT</code> build arg, then
+pushes the tag. No CI changes required.</p>
+<h3 id="embedding-device-mapping-stays-cuda-for-amd">Embedding device mapping stays <code>cuda</code> for AMD</h3>
+<p>The mapping at <code>operator/lib/guided-init.sh:359</code> is <strong>correct in spirit</strong>
+— ROCm PyTorch presents through the <code>torch.cuda</code> API, so <code>device='cuda'</code>
+on a ROCm-built image will pick the ROCm device. It only failed before
+because the wrong torch wheel was in the image. With this ADR's image
+selection wired up, that mapping does the right thing end-to-end and no
+operator-side change is needed.</p>
+<h3 id="honest-cpu-fallback-at-startup-separate-but-related">Honest CPU fallback at startup (separate but related)</h3>
+<p>A separate change — landed in the same PR as this ADR draft — makes the
+API attempt an in-process CPU fallback when <code>load_model()</code> fails because
+the requested device is unavailable. That removes the "Falling back to
+API-based embeddings" lie at <code>api/app/main.py:199</code> and ensures that users
+who pick the wrong ROCm variant get a degraded-but-working install instead
+of a silent-broken one. The ROCm image work and the fallback work are
+independent: the fallback is correct behavior even with no ROCm images
+published.</p>
+<h2 id="consequences">Consequences</h2>
+<h3 id="positive">Positive</h3>
 <ul>
-<li><code>&lt;type&gt;</code> - Relationship type to analyze (e.g., CAUSES, ENABLES)</li>
+<li>AMD ROCm users can run the standalone installer (<code>install.sh</code> →
+  <code>./operator.sh init</code> → choose AMD) and get a working platform without
+  cloning the repo to build locally.</li>
+<li>The "silent broken" state from issue #405 disappears for the canonical
+  paths.</li>
+<li>Tag scheme generalizes: if a future ROCm 7.0 wheel-based variant
+  appears, it slots in as <code>kg-api:rocm70</code> with no operator-side changes.</li>
 </ul>
-<h3 id="refresh-categories">refresh-categories</h3>
-<p>Refresh category assignments for vocabulary types using latest embeddings (ADR-047, ADR-053). As of ADR-053, new edge types are automatically categorized during ingestion, so this command is primarily needed when category seeds change. Use when category seed definitions are updated (seeds currently defined in code, future: database-configurable), after embedding model changes, or for migrating pre-ADR-053 uncategorized types. This is a non-destructive operation (doesn't affect edges), preserves manual assignments, and records audit trail per type.</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>kg<span class="w"> </span>refresh-categories<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
-</code></pre></div></p>
-<p><strong>Options:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>--computed-only</code></td>
-<td>Refresh only types with category_source=computed (excludes manual assignments)</td>
-<td>-</td>
-</tr>
-</tbody>
-</table>
-<h3 id="similar">similar</h3>
-<p>Find similar edge types via embedding similarity (ADR-053). Shows types with highest cosine similarity - useful for synonym detection and consolidation. Use --limit to control results (1-100, default 10). Similar types with high similarity (&gt;0.90) are strong merge candidates for vocabulary consolidation (ADR-052).</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>kg<span class="w"> </span>similar<span class="w"> </span>&lt;type&gt;
-</code></pre></div></p>
-<p><strong>Arguments:</strong></p>
+<h3 id="negative">Negative</h3>
 <ul>
-<li><code>&lt;type&gt;</code> - Relationship type to analyze (e.g., IMPLIES)</li>
+<li>Three additional <code>kg-api</code> images (~3–5 GB each on disk, smaller as
+  registry blobs but still substantial) increase release time and GHCR
+  storage. Acceptable given ROCm is opt-in — most releases will skip
+  <code>api-rocm</code> and publish only on AMD-relevant changes.</li>
+<li>ROCm 7.x via host mode (<code>amd-host</code>) requires <code>privileged: true</code> and
+  <code>ipc: host</code> (from <code>gpu-amd-host.yml</code>). This is a docker compose
+  privilege escalation that some hardened deployments will reject. ROCm 6
+  via <code>amd</code> mode does not need either; that's the lower-privilege
+  fallback.</li>
+<li>AMD users with the <em>wrong</em> ROCm runtime version (host has 6.1, picked
+  <code>rocm60</code> image — or vice versa) will still hit a device-load failure.
+  The CPU fallback (separate change) absorbs this failure cleanly, but
+  the user does not get GPU acceleration until they re-init with the
+  matching variant. Wizard hint added.</li>
+<li>The visual embedding generator (<code>api/app/lib/visual_embeddings.py</code>,
+  initialized at <code>main.py:202-211</code>) has the same "user picks
+  unavailable accelerator" surface but is <strong>not</strong> addressed in this
+  ADR's first PR. Its failure mode is less severe (no global-pollution
+  bug; visual embeddings are opt-in via the profile's image config)
+  and #405 only names the text path. Follow-up: extend the CPU fallback
+  in <code>init_visual_embedding_generator</code> once the text-path approach is
+  shipped and verified on the ROCm 7900 XTX target.</li>
 </ul>
-<p><strong>Options:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>--limit &lt;n&gt;</code></td>
-<td>Number of results to return (1-100)</td>
-<td><code>"10"</code></td>
-</tr>
-</tbody>
-</table>
-<h3 id="opposite">opposite</h3>
-<p>Find opposite (least similar) edge types via embedding similarity (ADR-053). Shows types with lowest cosine similarity - useful for understanding semantic range and antonyms. Use --limit to control results (1-100, default 5).</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>kg<span class="w"> </span>opposite<span class="w"> </span>&lt;type&gt;
-</code></pre></div></p>
-<p><strong>Arguments:</strong></p>
+<h3 id="neutral">Neutral</h3>
 <ul>
-<li><code>&lt;type&gt;</code> - Relationship type to analyze (e.g., IMPLIES)</li>
+<li>The release flow gains a maintainer judgment call: "does this release
+  touch anything ROCm-relevant?" If no, skip <code>api-rocm</code>. If yes, run it.
+  Documented in <code>publish.sh</code> help text.</li>
+<li>Versioned ROCm tags <code>kg-api:0.13.1-rocm60</code> mean we never overwrite a
+  ROCm variant for a released version — same immutability story as the
+  default tag.</li>
+<li>arm64 hosts get no ROCm option. This is a ROCm-side limitation, not a
+  decision we're making; documenting it explicitly so it's not a surprise.</li>
 </ul>
-<p><strong>Options:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>--limit &lt;n&gt;</code></td>
-<td>Number of results to return (1-100)</td>
-<td><code>"5"</code></td>
-</tr>
-</tbody>
-</table>
-<h3 id="analyze">analyze</h3>
-<p>Detailed analysis of vocabulary type for quality assurance (ADR-053). Shows category fit, similar types in same/other categories, and detects potential miscategorization. Use this to verify auto-categorization accuracy and identify types that may need reclassification.</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>kg<span class="w"> </span>analyze<span class="w"> </span>&lt;type&gt;
-</code></pre></div></p>
-<p><strong>Arguments:</strong></p>
-<ul>
-<li><code>&lt;type&gt;</code> - Relationship type to analyze (e.g., STORES)</li>
-</ul>
-<h3 id="config">config</h3>
-<p>Show or update vocabulary configuration. No args: display config table. With args: update properties directly using database key names (e.g., "kg vocab config vocab_max 275 vocab_emergency 350"). Property names shown in config table.</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>kg<span class="w"> </span>config<span class="w"> </span><span class="o">[</span>properties<span class="o">]</span>
-</code></pre></div></p>
-<p><strong>Arguments:</strong></p>
-<ul>
-<li><code>&lt;properties&gt;</code> - Property assignments: key value [key value...]</li>
-</ul>
-<h3 id="config-update">config-update</h3>
-<p>[DEPRECATED: Use <code>kg vocab config &lt;property&gt; &lt;value&gt;</code> instead] Update vocabulary configuration settings. Supports updating multiple properties at once including thresholds (min, max, emergency), pruning mode (naive, hitl, aitl), aggressiveness profile, synonym thresholds, auto-expand setting, and consolidation threshold. Changes are persisted to database and take effect immediately. Use this for runtime threshold adjustments, switching pruning modes, changing aggressiveness profiles, tuning synonym detection, and enabling/disabling auto-expand.</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>kg<span class="w"> </span>config-update<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
-</code></pre></div></p>
-<p><strong>Options:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>--min &lt;n&gt;</code></td>
-<td>Minimum vocabulary size (e.g., 30)</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>--max &lt;n&gt;</code></td>
-<td>Maximum vocabulary size (e.g., 225-275)</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>--emergency &lt;n&gt;</code></td>
-<td>Emergency threshold (e.g., 300-400)</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>--mode &lt;mode&gt;</code></td>
-<td>Pruning mode: naive, hitl, aitl</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>--profile &lt;name&gt;</code></td>
-<td>Aggressiveness profile name</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>--auto-expand</code></td>
-<td>Enable automatic expansion</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>--no-auto-expand</code></td>
-<td>Disable automatic expansion</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>--synonym-strong &lt;n&gt;</code></td>
-<td>Strong synonym threshold (0.7-1.0)</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>--synonym-moderate &lt;n&gt;</code></td>
-<td>Moderate synonym threshold (0.5-0.9)</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>--low-value &lt;n&gt;</code></td>
-<td>Low value score threshold (0.0-10.0)</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>--consolidation-threshold &lt;n&gt;</code></td>
-<td>Auto-merge threshold (0.5-1.0)</td>
-<td>-</td>
-</tr>
-</tbody>
-</table>
-<h3 id="profiles">profiles</h3>
-<p>List all aggressiveness profiles including builtin profiles (8 predefined Bezier curves) and custom profiles (user-created curves). Shows profile name, control points (x1, y1, x2, y2 for cubic Bezier), description, and builtin flag. Use this to view available profiles for configuration, review custom profiles, understand Bezier curve parameters, and identify profiles for deletion. Builtin profiles: linear, ease, ease-in, ease-out, ease-in-out, aggressive (recommended), gentle, exponential.</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>kg<span class="w"> </span>profiles<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
-</code></pre></div></p>
-<h3 id="profiles-show">profiles-show</h3>
-<p>Show details for a specific aggressiveness profile including full Bezier curve parameters, description, builtin status, and timestamps. Use this to inspect profile details before using, verify control point values, understand profile behavior, and check creation/update times.</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>kg<span class="w"> </span>profiles-show<span class="w"> </span>&lt;name&gt;
-</code></pre></div></p>
-<p><strong>Arguments:</strong></p>
-<ul>
-<li><code>&lt;name&gt;</code> - Profile name</li>
-</ul>
-<h3 id="profiles-create">profiles-create</h3>
-<p>Create a custom aggressiveness profile with Bezier curve parameters. Profiles control how aggressively vocabulary consolidation operates as size approaches thresholds. Bezier curve defined by two control points (x1, y1) and (x2, y2) where X is normalized vocabulary size (0.0-1.0) and Y is aggressiveness multiplier. Use this to create deployment-specific curves, experiment with consolidation behavior, tune for specific vocabulary growth patterns, and optimize for production workloads. Cannot overwrite builtin profiles.</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>kg<span class="w"> </span>profiles-create<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
-</code></pre></div></p>
-<p><strong>Options:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>--name &lt;name&gt;</code></td>
-<td>Profile name (3-50 chars)</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>--x1 &lt;n&gt;</code></td>
-<td>First control point X (0.0-1.0)</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>--y1 &lt;n&gt;</code></td>
-<td>First control point Y (-2.0 to 2.0)</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>--x2 &lt;n&gt;</code></td>
-<td>Second control point X (0.0-1.0)</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>--y2 &lt;n&gt;</code></td>
-<td>Second control point Y (-2.0 to 2.0)</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>--description &lt;desc&gt;</code></td>
-<td>Profile description (min 10 chars)</td>
-<td>-</td>
-</tr>
-</tbody>
-</table>
-<h3 id="profiles-delete">profiles-delete</h3>
-<p>Delete a custom aggressiveness profile. Removes the profile permanently from the database. Cannot delete builtin profiles (protected by database trigger). Use this to remove unused custom profiles, clean up experimental curves, and maintain profile list. Safety: builtin profiles cannot be deleted, atomic operation, immediate effect.</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>kg<span class="w"> </span>profiles-delete<span class="w"> </span>&lt;name&gt;
-</code></pre></div></p>
-<p><strong>Arguments:</strong></p>
-<ul>
-<li><code>&lt;name&gt;</code> - Profile name to delete</li>
-</ul>
-<h3 id="epistemic-status">epistemic-status</h3>
-<p>Epistemic status classification for vocabulary types (ADR-065 Phase 2). Shows knowledge validation state based on grounding patterns: WELL_GROUNDED (avg &gt;0.8, well-established), MIXED_GROUNDING (0.15-0.8, variable validation), WEAK_GROUNDING (0.0-0.15, emerging evidence), POORLY_GROUNDED (-0.5-0.0, uncertain), CONTRADICTED (&lt;-0.5, refuted), HISTORICAL (temporal vocabulary), INSUFFICIENT_DATA (&lt;3 measurements). Results are temporal measurements that change as graph evolves. Use for filtering relationships by epistemic reliability, identifying contested knowledge, tracking knowledge validation trends, and curating high-confidence vs exploratory subgraphs.</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>kg<span class="w"> </span>epistemic-status<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
-</code></pre></div></p>
-<p><strong>Subcommands:</strong></p>
-<ul>
-<li><code>list</code> - List all vocabulary types with their epistemic status classifications and statistics. Shows TYPE, STATUS (color-coded), AVG GROUNDING (reliability score), SAMPLED (edges analyzed), and MEASURED AT (timestamp). Filter by status using --status flag. Sorted by highest grounding first. Use for overview of epistemic landscape, finding high-confidence types for critical queries, identifying contested/contradictory types needing review, and tracking temporal evolution of knowledge validation.</li>
-<li><code>show</code> - Show detailed epistemic status for a specific vocabulary type including full grounding statistics, measurement timestamp, and rationale. Displays classification (WELL_GROUNDED/MIXED_GROUNDING/etc.), average grounding (reliability), standard deviation (consistency), min/max range (outliers), sample sizes (measurement scope), total edges (population), and measurement timestamp (temporal context). Use for deep-diving on specific types, understanding classification rationale, verifying measurement quality, and tracking individual type evolution.</li>
-<li><code>measure</code> - Run epistemic status measurement for all vocabulary types (ADR-065 Phase 2). Samples edges (default 100 per type), calculates grounding dynamically for target concepts (bounded recursion), classifies epistemic patterns (AFFIRMATIVE/CONTESTED/CONTRADICTORY/HISTORICAL), and optionally stores results to VocabType nodes. Measurement is temporal and observer-dependent - results change as graph evolves. Use --sample-size to control precision vs speed (larger samples = more accurate but slower), --no-store for analysis without persistence, --verbose for detailed statistics. This enables Phase 2 query filtering via GraphQueryFacade.match_concept_relationships().</li>
-</ul>
-<hr />
-<h4 id="list_1">list</h4>
-<p>List all vocabulary types with their epistemic status classifications and statistics. Shows TYPE, STATUS (color-coded), AVG GROUNDING (reliability score), SAMPLED (edges analyzed), and MEASURED AT (timestamp). Filter by status using --status flag. Sorted by highest grounding first. Use for overview of epistemic landscape, finding high-confidence types for critical queries, identifying contested/contradictory types needing review, and tracking temporal evolution of knowledge validation.</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>kg<span class="w"> </span>list<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
-</code></pre></div></p>
-<p><strong>Options:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>--status &lt;status&gt;</code></td>
-<td>Filter by status: WELL_GROUNDED, MIXED_GROUNDING, WEAK_GROUNDING, POORLY_GROUNDED, CONTRADICTED, HISTORICAL, INSUFFICIENT_DATA</td>
-<td>-</td>
-</tr>
-</tbody>
-</table>
-<h4 id="show">show</h4>
-<p>Show detailed epistemic status for a specific vocabulary type including full grounding statistics, measurement timestamp, and rationale. Displays classification (WELL_GROUNDED/MIXED_GROUNDING/etc.), average grounding (reliability), standard deviation (consistency), min/max range (outliers), sample sizes (measurement scope), total edges (population), and measurement timestamp (temporal context). Use for deep-diving on specific types, understanding classification rationale, verifying measurement quality, and tracking individual type evolution.</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>kg<span class="w"> </span>show<span class="w"> </span>&lt;type&gt;
-</code></pre></div></p>
-<p><strong>Arguments:</strong></p>
-<ul>
-<li><code>&lt;type&gt;</code> - Relationship type to show (e.g., IMPLIES, SUPPORTS)</li>
-</ul>
-<h4 id="measure">measure</h4>
-<p>Run epistemic status measurement for all vocabulary types (ADR-065 Phase 2). Samples edges (default 100 per type), calculates grounding dynamically for target concepts (bounded recursion), classifies epistemic patterns (AFFIRMATIVE/CONTESTED/CONTRADICTORY/HISTORICAL), and optionally stores results to VocabType nodes. Measurement is temporal and observer-dependent - results change as graph evolves. Use --sample-size to control precision vs speed (larger samples = more accurate but slower), --no-store for analysis without persistence, --verbose for detailed statistics. This enables Phase 2 query filtering via GraphQueryFacade.match_concept_relationships().</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>kg<span class="w"> </span>measure<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
-</code></pre></div></p>
-<p><strong>Options:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>--sample-size &lt;n&gt;</code></td>
-<td>Edges to sample per type (default: 100)</td>
-<td><code>100</code></td>
-</tr>
-<tr>
-<td><code>--no-store</code></td>
-<td>Run measurement without storing to database</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>--verbose</code></td>
-<td>Include detailed statistics in output</td>
-<td>-</td>
-</tr>
-</tbody>
-</table>
-<h3 id="sync">sync</h3>
-<p>Sync missing edge types from graph to vocabulary (ADR-077). Discovers edge types used in the graph but not registered in vocabulary table/VocabType nodes. Use --dry-run first to preview, then --execute to sync.</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>kg<span class="w"> </span>sync<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
-</code></pre></div></p>
-<p><strong>Options:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>--dry-run</code></td>
-<td>Preview missing types without syncing (default)</td>
-<td><code>true</code></td>
-</tr>
-<tr>
-<td><code>--execute</code></td>
-<td>Actually sync missing types to vocabulary</td>
-<td><code>false</code></td>
-</tr>
-<tr>
-<td><code>--json</code></td>
-<td>Output as JSON for scripting</td>
-<td>-</td>
-</tr>
-</tbody>
-</table>
+<h2 id="alternatives-considered">Alternatives Considered</h2>
+<h3 id="one-fat-image-with-every-pytorch-variant">One fat image with every PyTorch variant</h3>
+<p>Reject: image would be ~15 GB+, defeats the registry-pull install model,
+and PyTorch builds are mutually exclusive in a single Python env (only
+one <code>torch</code> install at a time).</p>
+<h3 id="run-time-wheel-download-image-stays-small-fetches-the-right-torch-on-first-boot">Run-time wheel download — image stays small, fetches the right torch on first boot</h3>
+<p>Reject: introduces a network dependency at startup, fails for airgapped
+installs, and turns a fast container start into a multi-minute wheel
+download. Also moves a build-time concern (which torch?) into the runtime
+codepath where it's harder to debug.</p>
+<h3 id="detect-rocm-at-startup-and-refuse-to-start-if-image-variant-is-wrong">Detect ROCm at startup and refuse to start if image variant is wrong</h3>
+<p>Reject: helpful for diagnostics, but doesn't make AMD installs work — the
+fallback to CPU does. Worth adding as a <em>log line</em> alongside the CPU
+fallback, but not as a hard gate.</p>
+<h3 id="build-rocm-variants-in-ci-github-actions-rather-than-locally">Build ROCm variants in CI (GitHub Actions) rather than locally</h3>
+<p>Reject (for now): ROCm wheel installs are heavy and slow even on local
+hardware; GHA runners are slower still and have no ROCm hardware to test
+against anyway. Re-evaluate if a maintainer without ROCm hardware needs to
+ship variants.</p>
+<h3 id="drop-rocm-support-and-document-cpu-only-on-amd">Drop ROCm support and document "CPU only on AMD"</h3>
+<p>Reject: the platform already has working <code>amd-host</code> and <code>amd</code> paths from
+a local build; users with AMD hardware reasonably expect the published
+images to support them too. The marginal cost of publishing variants is
+worth the marginal user.</p>
 
 
 
 
 
 
+
+  
+  
 
 
 
@@ -10890,10 +10546,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../../../..", "features": [], "search": "../../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": [], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>
