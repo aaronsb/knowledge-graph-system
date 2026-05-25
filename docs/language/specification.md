@@ -256,9 +256,12 @@ interface WorkingGraph {
 ```
 
 > **Implementation note:** `WorkingGraph` corresponds to `RawGraphData` in the
-> current web codebase (`cypherResultMapper.ts`). `RawNode` corresponds to
-> `RawGraphNode` and `RawLink` to `RawGraphLink`. The spec names are the
-> canonical names for cross-document reference; implementations may alias them.
+> current web codebase (`cypherResultMapper.ts`). The server-side Pydantic
+> models live in `api/app/models/program.py` and collapse most concept-specific
+> fields into a generic `properties: Dict[str, Any]` bag; the web's
+> `RawGraphNode` / `RawGraphLink` interfaces enumerate the well-known
+> properties for display. The spec names are the canonical names for
+> cross-document reference; implementations may alias them.
 
 **Node identity** is determined by `concept_id` (string). Two nodes are
 considered the same node if and only if they share the same `concept_id`.
@@ -269,10 +272,13 @@ interface RawNode {
   label: string;
   ontology?: string;
   description?: string;
+  // Web-side conveniences extracted from `properties` by the result mapper:
   search_terms?: string[];
   grounding_strength?: number;
   diversity_score?: number;
   evidence_count?: number;
+  // Server-side model carries all extra fields here:
+  properties?: Record<string, unknown>;
 }
 ```
 
@@ -287,7 +293,10 @@ interface RawLink {
   relationship_type: string; // e.g. "IMPLIES", "SUPPORTS", "CONTRADICTS"
   category?: string;
   confidence?: number;
+  // Web-side conveniences extracted from `properties` by the result mapper:
   grounding_strength?: number;
+  // Server-side model carries all extra fields here:
+  properties?: Record<string, unknown>;
 }
 ```
 
@@ -871,35 +880,82 @@ And adds the `version: 1` field to the root.
 
 ## 9. API Endpoints
 
+The program endpoints are mounted under `/programs` (see
+`api/app/routes/programs.py`).
+
 ### 9.1 Validate
 
 ```
 POST /programs/validate
 
-Request:  GraphProgram (JSON body)
+Request:  ProgramSubmission { name?: string, program: GraphProgram (as dict) }
 Response: ValidationResult
 ```
 
-Validates the program AST without executing it. Returns structured errors.
+Validates the program AST without executing it. Always returns HTTP 200;
+inspect `valid`, `errors`, and `warnings` on the response.
 
-### 9.2 Execute
+### 9.2 Notarize and Store
+
+```
+POST /programs
+
+Request:  ProgramSubmission { name?: string, program: GraphProgram (as dict) }
+Response: 201 ProgramCreateResponse { id, name, program, valid, created_at, updated_at }
+```
+
+Validates and stores the program as a `program`-type query definition.
+On validation failure returns HTTP 400 with
+`{ detail: { error, validation: ValidationResult } }`.
+
+### 9.3 List
+
+```
+GET /programs?search=<text>&limit=<n>
+
+Response: ProgramListItem[]
+```
+
+Returns lightweight summaries (id, name, description, statement_count,
+created_at) for programs visible to the caller (own + system-owned;
+admins see all). `limit` is 1-100 (default 20).
+
+### 9.4 Retrieve
+
+```
+GET /programs/{id}
+
+Response: ProgramReadResponse { id, name, program, owner_id, created_at, updated_at }
+```
+
+Returns the full notarized program. Access requires ownership or admin role
+(system-owned programs with `owner_id IS NULL` are visible to all
+authenticated users).
+
+### 9.5 Execute
 
 ```
 POST /programs/execute
 
-Request: {
-  program: GraphProgram,
-  params?: Record<string, string | number>   // Phase 2
-}
+Request: ProgramExecuteRequest -- one of the following modes:
+  Single (inline):   { program: GraphProgram (as dict), params?: Record<string, string | number> }
+  Single (by ID):    { program_id: int, params?: Record<string, string | number> }
+  Chain (deck):      { deck: DeckEntry[] }   // 1-10 entries; each entry has program_id or program
 
-Response: ProgramResult
+Response: ProgramResult (single) or BatchProgramResult (deck)
 ```
 
-Validates and executes the program. Returns the final W and step log.
+Re-validates the program(s) before execution (defense in depth).
+If validation fails, returns HTTP 400 with the `ValidationResult`.
+If an assert (`!`) fails during execution, returns HTTP 200 with the
+`aborted` field populated and W in its state prior to the failing statement.
+Program execution is bounded by `PROGRAM_TIMEOUT_SECONDS` (default 60s in
+`api/app/services/program_executor.py`); a timeout produces the same
+`aborted` shape with reason `"Program execution timed out"`.
 
-If validation fails, returns the `ValidationResult` with HTTP 400.
-If an assert (`!`) fails during execution, returns HTTP 200 with the `aborted`
-field populated and W in its state prior to the failing statement.
+In deck mode, programs run sequentially with W threaded forward; if any
+program aborts, the chain stops and the partial `BatchProgramResult` is
+returned.
 
 ---
 
