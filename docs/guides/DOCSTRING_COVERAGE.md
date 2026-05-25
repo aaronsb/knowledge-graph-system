@@ -150,7 +150,7 @@ then unverified ones for spot-checking.
 ```
 usage: docstring_coverage.py [-h] [-v] [--fail-under FAIL_UNDER]
                              [--python-only] [--ts-only] [--rust-only]
-                             [--staleness] [--no-color]
+                             [--staleness] [--no-color] [--json]
 
 options:
   -v, --verbose         Show each undocumented item with file:line
@@ -160,6 +160,7 @@ options:
   --rust-only           Run only Rust scan
   --staleness           Analyze docstring freshness via @verified tags
   --no-color            Disable ANSI color output
+  --json                Output as JSON (for CI or piping to other tools)
 ```
 
 ### Notes

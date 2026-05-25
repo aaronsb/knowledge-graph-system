@@ -45,11 +45,11 @@
 ```
 
 **Key modules:**
-- `client/src/lib/auth/token-manager.ts` - JWT token lifecycle
-- `client/src/lib/auth/auth-client.ts` - HTTP client for auth endpoints
-- `client/src/lib/auth/challenge.ts` - Re-auth prompt for sensitive ops
-- `client/src/lib/config.ts` - Config file management (extended for auth)
-- `client/src/api/client.ts` - Main API client (with auth interceptors)
+- `cli/src/lib/auth/token-manager.ts` - JWT token lifecycle
+- `cli/src/lib/auth/auth-client.ts` - HTTP client for auth endpoints
+- `cli/src/lib/auth/challenge.ts` - Re-auth prompt for sensitive ops
+- `cli/src/lib/config.ts` - Config file management (extended for auth)
+- `cli/src/api/client.ts` - Main API client (with auth interceptors)
 
 ---
 
@@ -393,10 +393,10 @@ if (!token) {
 ## Quick Reference
 
 **Key Files:**
-- `client/src/lib/auth/` - Authentication modules
-- `client/src/cli/login.ts` - Login command
-- `client/src/cli/admin/user.ts` - User management commands
-- `client/src/api/client.ts` - Main API client
+- `cli/src/lib/auth/` - Authentication modules
+- `cli/src/cli/login.ts` - Login command
+- `cli/src/cli/auth-admin.ts` - User management commands
+- `cli/src/api/client.ts` - Main API client
 
 **Key Commands:**
 - `kg login` - Authenticate user
@@ -411,4 +411,4 @@ if (!token) {
 **Token Lifespan:**
 - Default: 60 minutes
 - Buffer: 5 minutes (55 minutes effective)
-- Configurable server-side: `JWT_EXPIRATION_MINUTES`
+- Configurable server-side: `ACCESS_TOKEN_EXPIRE_MINUTES`
