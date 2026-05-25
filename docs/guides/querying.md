@@ -23,7 +23,7 @@ The `kg` command-line interface provides full access.
 kg login
 
 # Check configuration and auth status
-kg config show
+kg config list
 
 # Logout
 kg logout
@@ -36,11 +36,10 @@ kg logout
 kg search "your query"
 
 # With options
-kg search --limit 20 --ontology "research" "machine learning"
+kg search --limit 20 "machine learning"
 
-# Output formats
-kg search --format json "query"
-kg search --format table "query"
+# JSON output for scripting
+kg search "query" --json
 ```
 
 ### Concept Operations
