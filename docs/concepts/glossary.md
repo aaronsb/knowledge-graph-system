@@ -169,4 +169,4 @@ Useful for finding concepts that bridge different domains.
 
 ---
 
-Next: [Using the System](../using/README.md) - Getting started as a user
+Next: [Using the System](../manual/README.md) - Getting started as a user

@@ -459,4 +459,4 @@ Later enhancements (grounding, namespace safety, HNSW indexing, epistemic classi
 - **ADR-065:** Epistemic Status Classification (merge reliability)
 - **ADR-072:** Configuration-Driven Matching (threshold tuning)
 
-For complete system architecture, see [ARCHITECTURE.md](ARCHITECTURE.md).
+For complete system architecture, see [ARCHITECTURE.md](ARCHITECTURE_OVERVIEW.md).

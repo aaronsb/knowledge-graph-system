@@ -242,8 +242,8 @@ Unlike traditional systems that require manual organization and explicit linking
 
 ## Further Reading
 
-- [Architecture Documentation](../architecture/ARCHITECTURE.md) - Overall system design
+- [Architecture Documentation](../reference/ARCHITECTURE_OVERVIEW.md) - Overall system design
 - [ADR-048: GraphQueryFacade](../architecture/vocabulary-relationships/ADR-048-vocabulary-metadata-as-graph.md) - Query safety and namespace isolation
-- [ADR-068: Unified Embedding Regeneration](../architecture/ADR-068-unified-embedding-regeneration.md) - The example used in this guide
+- [ADR-068: Unified Embedding Regeneration](../architecture/ai-embeddings/ADR-068-source-text-embeddings.md) - The example used in this guide
 - [API Documentation](../reference/api/) - REST API reference
 - [MCP Integration](../reference/mcp/) - Claude Desktop integration

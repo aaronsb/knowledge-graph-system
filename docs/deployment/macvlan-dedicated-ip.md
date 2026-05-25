@@ -232,6 +232,6 @@ healthcheck:
 
 ## Related
 
-- [install.sh SSL options](../installation.md) - `--ssl letsencrypt --ssl-dns`
+- `install.sh` (project root) — supports `--ssl letsencrypt --ssl-dns` for the macvlan + Let's Encrypt DNS-01 path described above.
 - [acme.sh DNS API](https://github.com/acmesh-official/acme.sh/wiki/dnsapi)
 - [Docker macvlan docs](https://docs.docker.com/network/drivers/macvlan/)

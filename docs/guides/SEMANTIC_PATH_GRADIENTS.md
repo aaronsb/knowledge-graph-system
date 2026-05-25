@@ -539,7 +539,7 @@ GROUP BY path_ids;
 ## Related Documentation
 
 - [Cross-Ontology Knowledge Linking](./CROSS_ONTOLOGY_LINKING.md) - Automatic semantic linking across domains
-- [Architecture Documentation](../architecture/ARCHITECTURE.md) - Overall system design
+- [Architecture Documentation](../reference/ARCHITECTURE_OVERVIEW.md) - Overall system design
 - ADR-048: GraphQueryFacade - Query safety and namespace isolation
 - ADR-068: Unified Embedding Regeneration - Embedding generation system
 

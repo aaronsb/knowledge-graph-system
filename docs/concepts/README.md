@@ -43,5 +43,5 @@ Future state: The knowledge graph becomes part of how AI thinks, not just someth
 
 - [How It Works](how-it-works.md) - The conceptual model (still no code)
 - [Glossary](glossary.md) - Terms explained in plain language
-- [Using the System](../using/README.md) - Getting started as a user
+- [Using the System](../manual/README.md) - Getting started as a user
 - [Operating the System](../operating/README.md) - Deploying and maintaining
