@@ -48,10 +48,12 @@ No authentication required.
 |----------|-------------|
 | `GET /` | API info and health check |
 | `GET /health` | Simple health check |
-| `POST /auth/login` | User login (returns JWT) |
-| `POST /auth/token` | OAuth token endpoint |
-| `GET /auth/device/code` | Device authorization flow |
-| `POST /auth/device/token` | Device token polling |
+| `POST /auth/register` | User registration |
+| `POST /auth/oauth/token` | OAuth token endpoint (all grant types) |
+| `POST /auth/oauth/device` | Device authorization request |
+| `GET /auth/oauth/device-status/{user_code}` | Device code status |
+| `GET /auth/oauth/authorize` | OAuth authorization code flow |
+| `POST /auth/oauth/login-and-authorize` | Combined login + authorize (viz-app) |
 
 ---
 
@@ -62,10 +64,14 @@ Requires valid JWT token. Available to all logged-in users.
 ### User Account
 | Endpoint | Description |
 |----------|-------------|
-| `GET /auth/me` | Get current user info |
-| `POST /auth/logout` | Logout (invalidate token) |
+| `GET /users/me` | Get current user info (ADR-054) |
+| `GET /users/me/permissions` | Get effective permissions (ADR-074) |
+| `PUT /auth/me` | Update own profile (password) |
+| `POST /auth/oauth/revoke` | Revoke OAuth token |
 | `GET /auth/oauth/clients/personal` | List own OAuth clients |
-| `POST /auth/oauth/clients/personal/new` | Create personal OAuth client |
+| `POST /auth/oauth/clients/personal` | Create personal OAuth client |
+| `POST /auth/oauth/clients/personal/new` | Create additional personal client |
+| `POST /auth/oauth/clients/personal/{id}/rotate-secret` | Rotate own client secret |
 | `DELETE /auth/oauth/clients/personal/{id}` | Delete own OAuth client |
 
 ### Knowledge Graph Queries
@@ -87,22 +93,25 @@ Requires valid JWT token. Available to all logged-in users.
 |----------|-------------|
 | `POST /ingest` | Upload file for ingestion |
 | `POST /ingest/text` | Ingest raw text |
-| `POST /ingest/image` | Ingest image (multimodal) |
-| `POST /ingest/url` | Ingest from URL |
+| `POST /ingest/image` | Ingest image (multimodal, ADR-057) |
 
 ### Jobs
 | Endpoint | Description |
 |----------|-------------|
 | `GET /jobs` | List jobs |
 | `GET /jobs/{id}` | Get job status |
+| `GET /jobs/{id}/stream` | Stream job progress (SSE) |
 | `POST /jobs/{id}/approve` | Approve pending job |
-| `POST /jobs/{id}/cancel` | Cancel job |
+| `DELETE /jobs/{id}` | Cancel or delete a job |
+| `DELETE /jobs` | Bulk delete jobs with filters |
 
 ### Sources
 | Endpoint | Description |
 |----------|-------------|
-| `GET /sources/{id}` | Get source content |
-| `GET /sources/{id}/image` | Get source image (if applicable) |
+| `GET /sources` | List source nodes |
+| `GET /sources/{id}` | Get source metadata and content |
+| `GET /sources/{id}/image` | Retrieve image from source (ADR-057) |
+| `GET /sources/{id}/document` | Retrieve original document from Garage (ADR-081) |
 
 ### Vocabulary (Read)
 | Endpoint | Description |
@@ -133,9 +142,11 @@ These endpoints require specific permissions. Each endpoint shows the required `
 | `GET /users/me` | (authenticated) | Get own profile | Read |
 | `GET /users/me/permissions` | (authenticated) | Get effective permissions | Read |
 | `GET /users` | `users:read` | List all users | Read |
+| `POST /users` | `users:create` | Create user | Medium |
 | `GET /users/{id}` | `users:read` | Get user details | Read |
 | `PUT /users/{id}` | `users:write` | Update user | Medium |
 | `DELETE /users/{id}` | `users:delete` | Delete user | High |
+| `POST /users/{id}/reset-password` | `users:write` | Admin reset of user password | High |
 
 ### OAuth Client Management
 | Endpoint | Permission | Description | Impact |
