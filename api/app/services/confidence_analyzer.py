@@ -43,6 +43,7 @@ _confidence_cache: Dict[Tuple[str, int], Dict[str, Any]] = {}
 _confidence_cache_generation: Optional[int] = None
 
 from api.app.constants import BATCH_CHUNK_SIZE
+from api.app.lib.age_client.graph_generation import get_graph_generation
 
 
 # Confidence level thresholds
@@ -109,8 +110,10 @@ class ConfidenceAnalyzer:
         """
         global _confidence_cache, _confidence_cache_generation
 
-        # Check graph generation for cache validity
-        graph_gen = self._get_graph_generation()
+        # Check graph generation for cache validity. Acquires a short-lived
+        # connection just to read the counter — the per-concept work below
+        # opens its own cursor scope.
+        graph_gen = self._read_graph_generation_with_pool_conn()
 
         with _confidence_cache_lock:
             if _confidence_cache_generation != graph_gen:
@@ -183,41 +186,19 @@ class ConfidenceAnalyzer:
             logger.error(f"Confidence calculation failed for {concept_id}: {e}")
             raise
 
-    def _get_graph_generation(self) -> int:
-        """Read graph generation for cache invalidation.
+    def _read_graph_generation_with_pool_conn(self) -> int:
+        """
+        Acquire a pool connection just to read graph generation.
 
-        Same two-tier probe as query.py: tries graph_accel.generation first,
-        falls back to vocabulary_change_counter.
+        Thin wrapper around `get_graph_generation` for callers that don't
+        already hold a cursor. Batch callers should use `get_graph_generation`
+        directly on the cursor they already have — avoid double-acquiring.
         """
         from psycopg2 import extras
         conn = self.client.pool.getconn()
         try:
             with conn.cursor(cursor_factory=extras.RealDictCursor) as cur:
-                try:
-                    cur.execute("SAVEPOINT conf_gen_check")
-                    cur.execute(
-                        "SELECT current_generation FROM graph_accel.generation "
-                        "WHERE graph_name = 'knowledge_graph'"
-                    )
-                    row = cur.fetchone()
-                    cur.execute("RELEASE SAVEPOINT conf_gen_check")
-                    if row:
-                        return int(row['current_generation'])
-                except Exception:
-                    try:
-                        cur.execute("ROLLBACK TO SAVEPOINT conf_gen_check")
-                    except Exception:
-                        pass
-                # Fallback
-                try:
-                    cur.execute(
-                        "SELECT counter FROM graph_metrics "
-                        "WHERE metric_name = 'vocabulary_change_counter'"
-                    )
-                    row = cur.fetchone()
-                    return int(row['counter']) if row else 0
-                except Exception:
-                    return 0
+                return get_graph_generation(cur, savepoint_name="conf_gen_check")
         finally:
             self.client.pool.putconn(conn)
 
@@ -275,7 +256,7 @@ class ConfidenceAnalyzer:
         conn = self.client.pool.getconn()
         try:
             with conn.cursor(cursor_factory=pg_extras.RealDictCursor) as cur:
-                graph_gen = self._get_graph_generation_on_cursor(cur)
+                graph_gen = get_graph_generation(cur, savepoint_name="conf_gen_check_batch")
 
                 misses = []
                 with _confidence_cache_lock:
@@ -375,39 +356,6 @@ class ConfidenceAnalyzer:
         )
 
         return result
-
-    def _get_graph_generation_on_cursor(self, cur) -> int:
-        """Read graph generation using an existing cursor.
-
-        Same two-tier probe as _get_graph_generation(), but operates on
-        a caller-provided cursor instead of acquiring its own connection.
-        Used by batch methods that already hold a connection.
-        """
-        try:
-            cur.execute("SAVEPOINT conf_gen_check_batch")
-            cur.execute(
-                "SELECT current_generation FROM graph_accel.generation "
-                "WHERE graph_name = 'knowledge_graph'"
-            )
-            row = cur.fetchone()
-            cur.execute("RELEASE SAVEPOINT conf_gen_check_batch")
-            if row:
-                return int(row['current_generation'])
-        except Exception:
-            try:
-                cur.execute("ROLLBACK TO SAVEPOINT conf_gen_check_batch")
-            except Exception:
-                pass
-        # Fallback to vocabulary_change_counter
-        try:
-            cur.execute(
-                "SELECT counter FROM graph_metrics "
-                "WHERE metric_name = 'vocabulary_change_counter'"
-            )
-            row = cur.fetchone()
-            return int(row['counter']) if row else 0
-        except Exception:
-            return 0
 
     def _gather_signals_batch(
         self,

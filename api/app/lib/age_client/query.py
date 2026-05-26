@@ -28,6 +28,8 @@ from typing import List, Dict, Optional, Any, Tuple
 import numpy as np
 from psycopg2 import extras
 
+from .graph_generation import get_graph_generation
+
 logger = logging.getLogger(__name__)
 
 # ---- Two-tier grounding cache (ADR-201 Phase 5f) ----
@@ -670,7 +672,7 @@ class QueryMixin:
                 # ---- Tier 2 cache check: per-concept grounding ----
                 # Read graph generation from graph_accel if available,
                 # otherwise fall back to a simple counter.
-                graph_gen = self._get_graph_generation(cur)
+                graph_gen = get_graph_generation(cur)
 
                 # Evict entire cache if graph generation changed
                 with _grounding_cache_lock:
@@ -824,7 +826,7 @@ class QueryMixin:
         conn = self.pool.getconn()
         try:
             with conn.cursor(cursor_factory=extras.RealDictCursor) as cur:
-                graph_gen = self._get_graph_generation(cur)
+                graph_gen = get_graph_generation(cur)
 
                 misses = []
                 with _grounding_cache_lock:
@@ -988,35 +990,6 @@ class QueryMixin:
         )
 
         return result
-
-    def _get_graph_generation(self, cur) -> int:
-        """Read current graph generation for cache invalidation.
-
-        Uses graph_accel.generation table if available (bumped by
-        graph_accel_invalidate after mutations), falls back to
-        vocabulary_change_counter from graph_metrics.
-
-        Uses SAVEPOINT to safely probe for graph_accel.generation —
-        if the extension isn't loaded on this pool connection, the
-        query fails without aborting the outer transaction.
-        """
-        try:
-            cur.execute("SAVEPOINT gen_check")
-            cur.execute(
-                "SELECT current_generation FROM graph_accel.generation "
-                "WHERE graph_name = 'knowledge_graph'"
-            )
-            row = cur.fetchone()
-            cur.execute("RELEASE SAVEPOINT gen_check")
-            if row:
-                return int(row['current_generation'])
-        except Exception:
-            try:
-                cur.execute("ROLLBACK TO SAVEPOINT gen_check")
-            except Exception:
-                pass
-        # Fallback: use vocabulary_change_counter
-        return self._get_vocab_generation(cur)
 
     async def execute_query(self, query: str, params: tuple = None) -> List[Dict]:
         """
