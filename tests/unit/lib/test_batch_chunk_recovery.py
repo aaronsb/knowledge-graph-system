@@ -143,7 +143,7 @@ class FakePool:
 @pytest.fixture(autouse=True)
 def reset_grounding_cache():
     """Each test starts with empty grounding caches so writes are observable."""
-    from api.app.lib.age_client import query as query_mod
+    from api.app.lib.age_client import grounding as query_mod
     with query_mod._grounding_cache_lock:
         query_mod._grounding_cache.clear()
         query_mod._grounding_cache_generation = None
@@ -180,8 +180,8 @@ class TestGroundingBatchPerChunkRecovery:
         the per-concept method's behavior on error). A WARNING is logged
         with the failed chunk's concept_ids so operators can drill in.
         """
-        from api.app.lib.age_client.query import QueryMixin
-        from api.app.lib.age_client import query as query_mod
+        from api.app.lib.age_client.grounding import GroundingMixin
+        from api.app.lib.age_client import grounding as query_mod
 
         # 4D embeddings — projection onto axis [1,0,0,0] gives the first
         # component. Chunks 1 and 3 should produce non-zero grounding;
@@ -211,7 +211,7 @@ class TestGroundingBatchPerChunkRecovery:
         # makes "chunk 2 fails" observable as a per-concept failure.
         with patch.object(query_mod, "BATCH_CHUNK_SIZE", 1), \
              caplog.at_level("WARNING"):
-            result = QueryMixin.calculate_grounding_strength_batch(
+            result = GroundingMixin.calculate_grounding_strength_batch(
                 client,
                 concept_ids=["c_alpha", "c_beta", "c_gamma"],
             )
@@ -246,8 +246,8 @@ class TestGroundingBatchPerChunkRecovery:
         Sanity: when no chunks fail, the behavior matches the pre-#281
         code — no WARNING, all concepts computed, all cached.
         """
-        from api.app.lib.age_client.query import QueryMixin
-        from api.app.lib.age_client import query as query_mod
+        from api.app.lib.age_client.grounding import GroundingMixin
+        from api.app.lib.age_client import grounding as query_mod
 
         cursor = FakeCursor(
             edges_by_chunk_signature={
@@ -267,7 +267,7 @@ class TestGroundingBatchPerChunkRecovery:
 
         with patch.object(query_mod, "BATCH_CHUNK_SIZE", 1), \
              caplog.at_level("WARNING"):
-            result = QueryMixin.calculate_grounding_strength_batch(
+            result = GroundingMixin.calculate_grounding_strength_batch(
                 client,
                 concept_ids=["c_alpha", "c_beta"],
             )
@@ -283,8 +283,8 @@ class TestGroundingBatchPerChunkRecovery:
         raise and the caller's fallback would recompute everything. Post-fix:
         chunks 2 and 3 still process and their values land in the dict + cache.
         """
-        from api.app.lib.age_client.query import QueryMixin
-        from api.app.lib.age_client import query as query_mod
+        from api.app.lib.age_client.grounding import GroundingMixin
+        from api.app.lib.age_client import grounding as query_mod
 
         cursor = FakeCursor(
             edges_by_chunk_signature={
@@ -305,7 +305,7 @@ class TestGroundingBatchPerChunkRecovery:
 
         with patch.object(query_mod, "BATCH_CHUNK_SIZE", 1), \
              caplog.at_level("WARNING"):
-            result = QueryMixin.calculate_grounding_strength_batch(
+            result = GroundingMixin.calculate_grounding_strength_batch(
                 client,
                 concept_ids=["c_alpha", "c_beta", "c_gamma"],
             )
@@ -319,8 +319,8 @@ class TestGroundingBatchPerChunkRecovery:
         Every getconn must have a matching putconn — even on the failing
         chunk. Otherwise the pool drains under repeated batch failures.
         """
-        from api.app.lib.age_client.query import QueryMixin
-        from api.app.lib.age_client import query as query_mod
+        from api.app.lib.age_client.grounding import GroundingMixin
+        from api.app.lib.age_client import grounding as query_mod
 
         cursor = FakeCursor(
             edges_by_chunk_signature={
@@ -334,7 +334,7 @@ class TestGroundingBatchPerChunkRecovery:
         client = FakeAgeClient(pool)
 
         with patch.object(query_mod, "BATCH_CHUNK_SIZE", 1):
-            QueryMixin.calculate_grounding_strength_batch(
+            GroundingMixin.calculate_grounding_strength_batch(
                 client,
                 concept_ids=["c_ok", "c_bad"],
             )
