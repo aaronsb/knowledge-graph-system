@@ -1,23 +1,29 @@
 """
-Annealing Manager — orchestrates ontology annealing cycles (ADR-200).
+Annealing Manager — orchestrates ontology annealing cycles (ADR-200 + ADR-206).
 
-Follows the vocabulary consolidation pattern:
-score all → identify candidates → LLM judgment → store proposals.
+Per cycle: score all ontologies → identify candidates → drive the 6-verb
+closed action vocabulary through `AnnealingDecisionService` → store the
+returned proposal(s) on `kg_api.annealing_proposals`.
 
 In autonomous mode (default), proposals are auto-approved and executed
-by the annealing worker. In hitl mode, proposals wait for human review.
+by the annealing worker. In hitl mode they wait for human review.
 """
 
 import logging
 from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional, Set, Tuple
 
+from psycopg2.extras import Json
+
 from api.app.lib.ontology_scorer import OntologyScorer
-from api.app.lib.annealing_evaluator import (
-    llm_evaluate_promotion,
-    llm_evaluate_demotion,
-    PromotionDecision,
-    DemotionDecision,
+from .annealing_decision_service import (
+    AnnealingDecisionService,
+    AnnealingContext,
+    AnnealingCandidate,
+    OntologySummary,
+    AnchorConcept,
+    AffinityTarget,
+    FailedProposalSummary,
 )
 
 logger = logging.getLogger(__name__)
@@ -25,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 class AnnealingManager:
     """
-    Runs annealing cycles: score, identify candidates, evaluate, propose.
+    Runs annealing cycles: score, identify candidates, decide, propose.
 
     Execution is handled by the annealing worker (autonomous mode) or
     human review endpoint (hitl mode).
@@ -66,7 +72,7 @@ class AnnealingManager:
         3. Derive ontology-to-ontology edges (Phase 5)
         4. Identify demotion candidates (low protection)
         5. Identify promotion candidates (high-degree concepts)
-        6. LLM evaluation (unless dry_run)
+        6. LLM decision via AnnealingDecisionService (unless dry_run)
         7. Store proposals
 
         Args:
@@ -210,13 +216,32 @@ class AnnealingManager:
                         kept.append(c)
                 demotion_candidates = kept
 
-        # 6. Evaluate and store proposals
+        # 6. Build the per-cycle decision context, then decide + store
+        inventory = [
+            OntologySummary(
+                name=s.get("ontology", ""),
+                concept_count=s.get("concept_count", 0),
+                lifecycle_state=(
+                    self.client.get_ontology_node(s.get("ontology", "")) or {}
+                ).get("lifecycle_state", "active"),
+            )
+            for s in all_scores
+        ]
+        context = AnnealingContext(
+            ontology_inventory=inventory, primordial_pool_name="primordial"
+        )
+        decision_service = (
+            AnnealingDecisionService(self.ai_provider) if self.ai_provider else None
+        )
+
         proposal_ids = []
         remaining = max_proposals
 
         # Demotions first (more impactful)
         for candidate in demotion_candidates[:remaining]:
-            proposal_id = await self._evaluate_and_store_demotion(candidate, global_epoch)
+            proposal_id = await self._decide_and_store_demotion(
+                candidate, decision_service, context, global_epoch
+            )
             if proposal_id:
                 proposal_ids.append(proposal_id)
                 remaining -= 1
@@ -225,7 +250,9 @@ class AnnealingManager:
 
         # Then promotions
         for candidate in promotion_candidates[:remaining]:
-            proposal_id = await self._evaluate_and_store_promotion(candidate, global_epoch)
+            proposal_id = await self._decide_and_store_promotion(
+                candidate, decision_service, context, global_epoch
+            )
             if proposal_id:
                 proposal_ids.append(proposal_id)
                 remaining -= 1
@@ -395,6 +422,13 @@ class AnnealingManager:
         block re-proposal, so the cycle still self-heals if an ontology is
         later deleted.
 
+        ADR-206 routing: CLEAVE proposals key on the anchor concept id (the
+        promotion analogue); DISSOLVE / MERGE / RENAME proposals key on the
+        ontology name(s) they touch (the demotion analogue). Deprecated
+        'promotion' / 'demotion' rows preserve the pre-ADR-206 routing on
+        the typed columns. Newer rows carry the relevant identifiers inside
+        the `params` JSONB.
+
         Returns:
             (open_promotion_anchor_ids, open_demotion_ontology_names)
         """
@@ -405,19 +439,44 @@ class AnnealingManager:
             try:
                 with conn.cursor() as cur:
                     cur.execute("""
-                        SELECT proposal_type, ontology_name, anchor_concept_id
+                        SELECT proposal_type, ontology_name, anchor_concept_id,
+                               params
                         FROM kg_api.annealing_proposals
-                        WHERE status IN ('pending', 'approved', 'executing')
+                        WHERE proposal_type IN (
+                                'promotion', 'CLEAVE',
+                                'demotion', 'DISSOLVE',
+                                'MERGE', 'RENAME'
+                              )
+                          AND status IN ('pending', 'approved', 'executing')
                     """)
                     rows = cur.fetchall()
                 conn.commit()
             finally:
                 self.client.pool.putconn(conn)
-            for proposal_type, ontology_name, anchor_concept_id in rows:
-                if proposal_type == "promotion" and anchor_concept_id:
-                    open_promotions.add(anchor_concept_id)
-                elif proposal_type == "demotion" and ontology_name:
-                    open_demotions.add(ontology_name)
+            for proposal_type, ontology_name, anchor_concept_id, params in rows:
+                params = params or {}
+                if proposal_type == "promotion":
+                    if anchor_concept_id:
+                        open_promotions.add(anchor_concept_id)
+                elif proposal_type == "CLEAVE":
+                    anchor = params.get("anchor_concept_id") or anchor_concept_id
+                    if anchor:
+                        open_promotions.add(anchor)
+                elif proposal_type == "demotion":
+                    if ontology_name:
+                        open_demotions.add(ontology_name)
+                elif proposal_type == "DISSOLVE":
+                    source = params.get("source_ontology") or ontology_name
+                    if source:
+                        open_demotions.add(source)
+                elif proposal_type == "MERGE":
+                    for donor in params.get("donor_ontologies", []) or []:
+                        if donor:
+                            open_demotions.add(donor)
+                elif proposal_type == "RENAME":
+                    target_name = params.get("ontology") or ontology_name
+                    if target_name:
+                        open_demotions.add(target_name)
         except Exception as e:
             logger.error(f"Failed to read open proposals for dedup: {e}")
         return open_promotions, open_demotions
@@ -510,79 +569,116 @@ class AnnealingManager:
             return set()
 
     # =========================================================================
-    # LLM Evaluation + Proposal Storage
+    # LLM Decision + Proposal Storage (ADR-206 6-verb vocabulary)
     # =========================================================================
 
-    async def _evaluate_and_store_demotion(
-        self, candidate: Dict, epoch: int
+    async def _decide_and_store_demotion(
+        self,
+        candidate: Dict,
+        decision_service: Optional[AnnealingDecisionService],
+        context: AnnealingContext,
+        epoch: int,
     ) -> Optional[int]:
-        """Evaluate a demotion candidate with LLM and store proposal if confirmed."""
+        """Decide an action for a low-protection ontology and store the proposal."""
         name = candidate["ontology"]
 
-        # Get affinity targets for the LLM
         try:
-            affinities = self.client.get_cross_ontology_affinity(name, limit=5)
+            affinity_rows = self.client.get_cross_ontology_affinity(name, limit=5)
         except Exception:
-            affinities = []
+            affinity_rows = []
+        affinity_targets = [
+            AffinityTarget(
+                other_ontology=row.get("other_ontology", ""),
+                shared_concept_count=row.get("shared_concept_count", 0),
+                affinity_score=row.get("affinity_score", 0.0),
+            )
+            for row in (affinity_rows or [])
+        ]
 
         stats = self.client.get_ontology_stats(name)
         concept_count = stats.get("concept_count", 0) if stats else 0
 
-        if self.ai_provider:
-            decision = await llm_evaluate_demotion(
-                ontology_name=name,
-                mass_score=candidate.get("mass_score", 0),
-                coherence_score=candidate.get("coherence_score", 0),
-                protection_score=candidate.get("protection_score", 0),
-                concept_count=concept_count,
-                affinity_targets=affinities,
-                ai_provider=self.ai_provider,
+        ann_candidate = AnnealingCandidate(
+            signal_kind="low_protection_low_coherence",
+            primary_ontology=name,
+            mass_score=candidate.get("mass_score", 0),
+            coherence_score=candidate.get("coherence_score", 0),
+            protection_score=candidate.get("protection_score", 0),
+            concept_count=concept_count,
+            affinity_targets=affinity_targets,
+        )
+
+        if decision_service is None:
+            best_target = (
+                affinity_rows[0].get("other_ontology") if affinity_rows else None
             )
-        else:
-            # No AI provider — propose based on scores alone
-            best_target = affinities[0].get("other_ontology") if affinities else None
-            decision = DemotionDecision(
-                should_demote=True,
-                reasoning=f"Protection score {candidate.get('protection_score', 0):.3f} "
-                          f"below threshold (no LLM available for evaluation)",
-                absorption_target=best_target,
+            reasoning = (
+                f"Protection score {candidate.get('protection_score', 0):.3f} "
+                f"below threshold (no LLM available for evaluation)"
+            )
+            return self._store_proposal(
+                proposal_type="DISSOLVE",
+                ontology_name=name,
+                target_ontology=best_target,
+                reasoning=reasoning,
+                proposal_kind="ontology",
+                params={"source_ontology": name, "rationale": reasoning},
+                mass_score=candidate.get("mass_score"),
+                coherence_score=candidate.get("coherence_score"),
+                protection_score=candidate.get("protection_score"),
+                epoch=epoch,
             )
 
-        if not decision.should_demote:
-            logger.info(f"Demotion rejected for '{name}': {decision.reasoning}")
-            return None
+        decision = await decision_service.decide_async(context, ann_candidate)
+
+        # UI hint: DISSOLVE / MERGE / RENAME all touch an ontology; surface the
+        # best-affinity neighbor (if any) on target_ontology so the queue view
+        # can render a destination without parsing params. The executor reads
+        # params for actual routing.
+        ui_hint_target = (
+            affinity_rows[0].get("other_ontology") if affinity_rows else None
+        )
 
         return self._store_proposal(
-            proposal_type="demotion",
+            proposal_type=decision.proposal_type,
             ontology_name=name,
-            target_ontology=decision.absorption_target,
+            target_ontology=ui_hint_target,
             reasoning=decision.reasoning,
+            proposal_kind=decision.proposal_kind,
+            params=decision.params,
             mass_score=candidate.get("mass_score"),
             coherence_score=candidate.get("coherence_score"),
             protection_score=candidate.get("protection_score"),
             epoch=epoch,
         )
 
-    async def _evaluate_and_store_promotion(
-        self, candidate: Dict, epoch: int
+    async def _decide_and_store_promotion(
+        self,
+        candidate: Dict,
+        decision_service: Optional[AnnealingDecisionService],
+        context: AnnealingContext,
+        epoch: int,
     ) -> Optional[int]:
-        """Evaluate a promotion candidate with LLM and store proposal if confirmed."""
+        """Decide an action for a high-degree concept and store the proposal."""
         ontology_name = candidate["ontology"]
+        concept_id = candidate["concept_id"]
+        label = candidate["label"]
 
         try:
-            affinities = self.client.get_cross_ontology_affinity(ontology_name, limit=5)
+            affinity_rows = self.client.get_cross_ontology_affinity(
+                ontology_name, limit=5
+            )
         except Exception:
-            affinities = []
+            affinity_rows = []
+        affinity_targets = [
+            AffinityTarget(
+                other_ontology=row.get("other_ontology", ""),
+                shared_concept_count=row.get("shared_concept_count", 0),
+                affinity_score=row.get("affinity_score", 0.0),
+            )
+            for row in (affinity_rows or [])
+        ]
 
-        # Get neighbor labels for context
-        try:
-            # Use the concept's ontology stats for count
-            stats = self.client.get_ontology_stats(ontology_name)
-            ontology_concept_count = stats.get("concept_count", 0) if stats else 0
-        except Exception:
-            ontology_concept_count = 0
-
-        # Get neighbor labels so the LLM can assess coherence
         try:
             neighbor_rows = self.client._execute_cypher(
                 """
@@ -591,44 +687,74 @@ class AnnealingManager:
                 ORDER BY rel_count DESC
                 LIMIT 10
                 """,
-                params={"cid": candidate["concept_id"]},
+                params={"cid": concept_id},
             )
             top_neighbors = [row["label"] for row in (neighbor_rows or [])]
         except Exception:
             top_neighbors = []
 
-        if self.ai_provider:
-            decision = await llm_evaluate_promotion(
-                concept_label=candidate["label"],
-                concept_description=candidate.get("description", ""),
-                degree=candidate["degree"],
-                ontology_name=ontology_name,
-                ontology_concept_count=ontology_concept_count,
-                top_neighbors=top_neighbors,
-                affinity_targets=affinities,
-                ai_provider=self.ai_provider,
+        anchor = AnchorConcept(
+            concept_id=concept_id,
+            label=label,
+            description=candidate.get("description", "") or "",
+            degree=candidate.get("degree", 0),
+            top_neighbors=top_neighbors,
+        )
+
+        ann_candidate = AnnealingCandidate(
+            signal_kind="high_degree_concept",
+            primary_ontology=ontology_name,
+            anchor_concept=anchor,
+            affinity_targets=affinity_targets,
+        )
+
+        if decision_service is None:
+            reasoning = (
+                f"Degree {candidate.get('degree', 0)} exceeds threshold "
+                f"(no LLM available for evaluation)"
             )
-        else:
-            decision = PromotionDecision(
-                should_promote=True,
-                reasoning=f"Degree {candidate['degree']} exceeds threshold "
-                          f"(no LLM available for evaluation)",
-                suggested_name=candidate["label"],
-                suggested_description=f"Domain anchored by concept '{candidate['label']}'",
+            params = {
+                "source_ontology": ontology_name,
+                "anchor_concept_id": concept_id,
+                "cluster_selection": "first_order",
+                "cluster_params": {},
+                "target": {
+                    "kind": "new",
+                    "new_name": label,
+                    "new_description": f"Domain anchored by concept '{label}'",
+                },
+                "reasoning": reasoning,
+            }
+            return self._store_proposal(
+                proposal_type="CLEAVE",
+                ontology_name=ontology_name,
+                anchor_concept_id=concept_id,
+                reasoning=reasoning,
+                proposal_kind="ontology",
+                params=params,
+                suggested_name=label,
+                suggested_description=f"Domain anchored by concept '{label}'",
+                epoch=epoch,
             )
 
-        if not decision.should_promote:
-            logger.info(f"Promotion rejected for '{candidate['label']}': {decision.reasoning}")
-            return None
+        decision = await decision_service.decide_async(context, ann_candidate)
+
+        # Surface the CLEAVE target name on suggested_name (UI hint) so the
+        # queue view can render a destination without parsing params.
+        target = (decision.params or {}).get("target") or {}
+        suggested_name = target.get("new_name")
+        suggested_description = target.get("new_description")
 
         return self._store_proposal(
-            proposal_type="promotion",
+            proposal_type=decision.proposal_type,
             ontology_name=ontology_name,
-            anchor_concept_id=candidate["concept_id"],
+            anchor_concept_id=concept_id,
             reasoning=decision.reasoning,
+            proposal_kind=decision.proposal_kind,
+            params=decision.params,
+            suggested_name=suggested_name,
+            suggested_description=suggested_description,
             epoch=epoch,
-            suggested_name=decision.suggested_name,
-            suggested_description=decision.suggested_description,
         )
 
     def _store_proposal(
@@ -637,6 +763,8 @@ class AnnealingManager:
         ontology_name: str,
         reasoning: str,
         epoch: int,
+        proposal_kind: str = "ontology",
+        params: Optional[Dict[str, Any]] = None,
         anchor_concept_id: Optional[str] = None,
         target_ontology: Optional[str] = None,
         mass_score: Optional[float] = None,
@@ -645,7 +773,7 @@ class AnnealingManager:
         suggested_name: Optional[str] = None,
         suggested_description: Optional[str] = None,
     ) -> Optional[int]:
-        """Store a proposal in the annealing_proposals table. Returns proposal ID."""
+        """Insert a proposal into kg_api.annealing_proposals; return its id."""
         # Autonomous mode: born 'approved' (no human-raceable pending window).
         # hitl mode: born 'pending', awaiting human review.
         autonomous = self.automation_level == "autonomous"
@@ -660,16 +788,18 @@ class AnnealingManager:
                 with conn.cursor() as cur:
                     cur.execute("""
                         INSERT INTO kg_api.annealing_proposals
-                        (proposal_type, ontology_name, anchor_concept_id,
+                        (proposal_type, proposal_kind, params,
+                         ontology_name, anchor_concept_id,
                          target_ontology, reasoning, mass_score, coherence_score,
                          protection_score, created_at_epoch,
                          suggested_name, suggested_description,
                          status, reviewed_by, reviewed_at, reviewer_notes)
                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                                %s, %s, %s, %s)
+                                %s, %s, %s, %s, %s, %s)
                         RETURNING id
                     """, (
-                        proposal_type, ontology_name, anchor_concept_id,
+                        proposal_type, proposal_kind, Json(params or {}),
+                        ontology_name, anchor_concept_id,
                         target_ontology, reasoning, mass_score, coherence_score,
                         protection_score, epoch,
                         suggested_name, suggested_description,

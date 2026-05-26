@@ -27,8 +27,8 @@ def call_llm_sync(
     Synchronous LLM call dispatching to OpenAI, Anthropic, or Ollama.
 
     Single source of truth for provider-branching logic used by vocabulary
-    consolidation (pruning_strategies) and ontology annealing
-    (annealing_evaluator).
+    consolidation (pruning_strategies). Ontology annealing moved to the
+    provider-neutral `call_with_tools` facade (ADR-206).
 
     Args:
         ai_provider: AI provider instance with get_provider_name(), client
