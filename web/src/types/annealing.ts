@@ -1,16 +1,37 @@
 /**
- * Ontology annealing lifecycle types (ADR-200 / ADR-703).
+ * Ontology annealing lifecycle types (ADR-200 / ADR-206 / ADR-703).
  *
  * Mirrors the Pydantic models in api/app/models/ontology.py.
  */
 
+/**
+ * ADR-206 closed action vocabulary plus the Opus-tier meta-action.
+ * The server normalizes legacy `promotion` / `demotion` rows to
+ * CLEAVE / DISSOLVE before they reach the UI, but the type stays
+ * `string` to remain permissive on inbound payloads.
+ */
+export type ProposalType =
+  | 'CLEAVE'
+  | 'DISSOLVE'
+  | 'MERGE'
+  | 'RENAME'
+  | 'NO_ACTION'
+  | 'ESCALATE'
+  | 'ADJUST_CONTROL'
+  | string;
+
+export type ProposalKind = 'ontology' | 'control' | string;
+
 export interface AnnealingProposal {
   id: number;
-  proposal_type: string;
+  proposal_type: ProposalType;
+  proposal_kind?: ProposalKind;
   ontology_name: string;
   anchor_concept_id?: string | null;
   target_ontology?: string | null;
   reasoning: string;
+  /** ADR-206 §1 verb-specific parameter shape. */
+  params?: Record<string, unknown> | null;
   mass_score?: number | null;
   coherence_score?: number | null;
   protection_score?: number | null;

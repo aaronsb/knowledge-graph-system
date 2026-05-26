@@ -17,13 +17,18 @@ import {
   ListChecks,
   CheckCircle,
   XCircle,
-  ArrowUpCircle,
-  ArrowDownCircle,
+  Scissors,
+  ArrowDownToLine,
+  GitMerge,
+  PenLine,
+  CircleSlash,
+  ArrowUpFromLine,
+  Sliders,
 } from 'lucide-react';
 import { apiClient } from '../../api/client';
 import { useAuthStore } from '../../store/authStore';
 import { Section, InfoCard, formatDateTime } from './components';
-import type { AnnealingStatus, AnnealingProposal } from '../../types/annealing';
+import type { AnnealingProposal, AnnealingStatus } from '../../types/annealing';
 
 interface OntologyTabProps {
   onError: (error: string) => void;
@@ -57,6 +62,83 @@ const Pill: React.FC<{ className?: string; children: React.ReactNode }> = ({
 
 const fmtScore = (v?: number | null): string =>
   v === null || v === undefined ? '—' : v.toFixed(2);
+
+/**
+ * ADR-206 verb → display metadata: lucide icon component, human label,
+ * and a tailwind class controlling icon hue. The icon hue maps each
+ * verb to a semantic family — DISSOLVE / NO_ACTION read as muted /
+ * cautionary; CLEAVE / RENAME read as active changes; ADJUST_CONTROL
+ * reads as a meta-action.
+ */
+const VERB_META: Record<string, {
+  Icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  iconClass: string;
+}> = {
+  CLEAVE:         { Icon: Scissors,         label: 'CLEAVE',         iconClass: 'text-status-active' },
+  DISSOLVE:       { Icon: ArrowDownToLine,  label: 'DISSOLVE',       iconClass: 'text-status-warning' },
+  MERGE:          { Icon: GitMerge,         label: 'MERGE',          iconClass: 'text-status-info' },
+  RENAME:         { Icon: PenLine,          label: 'RENAME',         iconClass: 'text-status-info' },
+  NO_ACTION:      { Icon: CircleSlash,      label: 'NO_ACTION',      iconClass: 'text-muted-foreground' },
+  ESCALATE:       { Icon: ArrowUpFromLine,  label: 'ESCALATE',       iconClass: 'text-status-warning' },
+  ADJUST_CONTROL: { Icon: Sliders,          label: 'ADJUST_CONTROL', iconClass: 'text-status-info' },
+};
+
+const verbMeta = (proposalType: string) =>
+  VERB_META[proposalType] ?? {
+    Icon: ListChecks,
+    label: proposalType,
+    iconClass: 'text-muted-foreground',
+  };
+
+/**
+ * One-line params highlight per verb (mirrors the CLI's
+ * paramsHighlight in cli/src/cli/ontology.ts). Returns null when no
+ * useful detail is available, so the caller can omit the row.
+ */
+const paramsHighlight = (p: AnnealingProposal): string | null => {
+  const params = (p.params ?? {}) as Record<string, unknown>;
+  switch (p.proposal_type) {
+    case 'CLEAVE': {
+      const target = params.target as Record<string, unknown> | undefined;
+      if (target?.kind === 'new' && target.new_name) return `→ new(${String(target.new_name)})`;
+      if (target?.kind === 'existing' && target.existing_ontology) return `→ ${String(target.existing_ontology)}`;
+      return p.anchor_concept_id ? `anchor=${p.anchor_concept_id}` : null;
+    }
+    case 'DISSOLVE': {
+      if (params.force_primordial === true) return 'force_primordial';
+      return p.target_ontology ? `→ ${p.target_ontology}` : null;
+    }
+    case 'MERGE': {
+      const donors = (params.donor_ontologies as string[] | undefined) ?? [];
+      const target = params.target as Record<string, unknown> | undefined;
+      const targetName =
+        target?.kind === 'new' ? `new(${String(target.new_name ?? '?')})`
+        : target?.kind === 'existing' ? String(target.existing_ontology ?? '?')
+        : '?';
+      return `${donors.length} donor${donors.length === 1 ? '' : 's'} → ${targetName}`;
+    }
+    case 'RENAME': {
+      const newName = params.new_name as string | undefined;
+      return newName ? `→ ${newName}` : null;
+    }
+    case 'ESCALATE': {
+      const rec = params.recommended_action as string | undefined;
+      const conf = params.confidence as number | undefined;
+      if (rec) return conf !== undefined ? `recommends ${rec} (conf ${conf.toFixed(2)})` : `recommends ${rec}`;
+      return null;
+    }
+    case 'ADJUST_CONTROL': {
+      const key = params.control_key as string | undefined;
+      const cur = params.current_value;
+      const rec = params.recommended_value;
+      if (key) return `${key}: ${String(cur ?? '?')} → ${String(rec ?? '?')}`;
+      return null;
+    }
+    default:
+      return null;
+  }
+};
 
 export const OntologyTab: React.FC<OntologyTabProps> = ({ onError, onSuccess }) => {
   const { hasPermission } = useAuthStore();
@@ -292,36 +374,45 @@ export const OntologyTab: React.FC<OntologyTabProps> = ({ onError, onSuccess }) 
           </p>
         ) : (
           <div className="space-y-3">
-            {proposals.map((p) => (
+            {proposals.map((p) => {
+              const meta = verbMeta(p.proposal_type);
+              const VerbIcon = meta.Icon;
+              const isControl = p.proposal_kind === 'control';
+              const subject = isControl
+                ? '(control)'
+                : (p.suggested_name || p.ontology_name);
+              const highlight = paramsHighlight(p);
+              return (
               <div key={p.id} className="p-4 bg-muted/50 rounded-lg border border-border">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      {p.proposal_type === 'promotion' ? (
-                        <ArrowUpCircle className="w-4 h-4 text-status-active" />
-                      ) : (
-                        <ArrowDownCircle className="w-4 h-4 text-status-warning" />
-                      )}
-                      <span className="font-medium text-foreground">
-                        {p.proposal_type === 'promotion' ? 'Promote' : 'Demote'}
+                      <VerbIcon className={`w-4 h-4 ${meta.iconClass}`} />
+                      <span className="font-mono text-xs font-semibold text-foreground">
+                        {meta.label}
                       </span>
-                      <span className="text-foreground">
-                        {p.suggested_name || p.ontology_name}
-                      </span>
-                      {p.target_ontology && (
+                      <span className="text-foreground">{subject}</span>
+                      {highlight && (
                         <span className="text-sm text-muted-foreground">
-                          → {p.target_ontology}
+                          {highlight}
                         </span>
                       )}
                       <Pill className={PROPOSAL_STATUS_STYLES[p.status] ?? undefined}>
                         {p.status}
                       </Pill>
+                      {isControl && (
+                        <Pill className="bg-status-info/10 text-status-info">control</Pill>
+                      )}
                     </div>
                     <p className="mt-2 text-sm text-muted-foreground">{p.reasoning}</p>
                     <div className="mt-2 flex flex-wrap gap-4 text-xs text-muted-foreground">
-                      <span>mass {fmtScore(p.mass_score)}</span>
-                      <span>coherence {fmtScore(p.coherence_score)}</span>
-                      <span>protection {fmtScore(p.protection_score)}</span>
+                      {!isControl && (
+                        <>
+                          <span>mass {fmtScore(p.mass_score)}</span>
+                          <span>coherence {fmtScore(p.coherence_score)}</span>
+                          <span>protection {fmtScore(p.protection_score)}</span>
+                        </>
+                      )}
                       <span>epoch {p.created_at_epoch}</span>
                       <span>{formatDateTime(p.created_at)}</span>
                       {p.reviewed_by && <span>reviewed by {p.reviewed_by}</span>}
@@ -353,7 +444,8 @@ export const OntologyTab: React.FC<OntologyTabProps> = ({ onError, onSuccess }) 
                   )}
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </Section>
