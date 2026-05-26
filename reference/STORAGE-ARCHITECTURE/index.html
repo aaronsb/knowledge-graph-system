@@ -4407,62 +4407,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../mcp/tools/ingest-directory/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-directory
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../mcp/tools/ingest-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-file
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../mcp/tools/ingest/" class="md-nav__link">
         
   
@@ -4471,34 +4415,6 @@
     
   
     ingest
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../mcp/tools/inspect-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    inspect-file
   
 
     
@@ -10106,14 +10022,15 @@
 <a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>│    • Job queue, scheduled jobs (kg_api.*)                           │
 <a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>│    • Artifact metadata, small inline payloads (kg_api.artifacts)    │
 <a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>│    • Query definitions (kg_api.query_definitions)                   │
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>│    • Configuration and API keys (kg_api.*)                          │
-<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>│                                                                     │
-<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>│  Garage S3 (Object Storage)                                         │
-<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>│    • Original source documents (pre-chunking)                       │
-<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>│    • Original images                                                │
-<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>│    • Large computed artifacts (&gt;10KB)                               │
-<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>│                                                                     │
-<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>└─────────────────────────────────────────────────────────────────────┘
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>│    • Configuration and encrypted API keys (kg_api.*)                │
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>│    • Audit trail, observability (kg_logs.*)                         │
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>│                                                                     │
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>│  Garage S3 (Object Storage)                                         │
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>│    • Original source documents (pre-chunking)                       │
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>│    • Original images                                                │
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>│    • Large computed artifacts (&gt;10KB)                               │
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>│                                                                     │
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>└─────────────────────────────────────────────────────────────────────┘
 </code></pre></div>
 <h2 id="garage-namespaces">Garage Namespaces</h2>
 <p>Garage object storage is organized into namespaces by content type:</p>
@@ -10130,13 +10047,13 @@
 <tr>
 <td><code>sources/</code></td>
 <td>Full original documents</td>
-<td><code>sources/{ontology}/{filename}</code></td>
+<td><code>sources/{ontology}/{hash32}.{ext}</code> (first 32 hex chars of SHA-256)</td>
 <td>ADR-081</td>
 </tr>
 <tr>
 <td><code>images/</code></td>
 <td>Original image files</td>
-<td><code>images/{hash}.{ext}</code></td>
+<td><code>images/{ontology}/{source_id}.{ext}</code></td>
 <td>ADR-057</td>
 </tr>
 <tr>
@@ -10147,12 +10064,14 @@
 </tr>
 <tr>
 <td><code>projections/</code></td>
-<td>Legacy projections</td>
-<td><code>projections/{ontology}/...</code></td>
+<td>Projection snapshots (latest + historical)</td>
+<td><code>projections/{ontology}/{embedding_source}/latest.json</code> and <code>.../{timestamp}.json</code></td>
 <td>ADR-079</td>
 </tr>
 </tbody>
 </table>
+<p>All namespaces live inside a single Garage bucket (<code>kg-storage</code> by default,
+configurable via <code>GARAGE_BUCKET</code>).</p>
 <h2 id="data-flow-document-ingestion">Data Flow: Document Ingestion</h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>                    ┌─────────────────┐
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>                    │ Original Doc    │

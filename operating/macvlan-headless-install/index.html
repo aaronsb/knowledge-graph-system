@@ -4479,62 +4479,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/ingest-directory/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-directory
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/ingest-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-file
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../reference/mcp/tools/ingest/" class="md-nav__link">
         
   
@@ -4543,34 +4487,6 @@
     
   
     ingest
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/inspect-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    inspect-file
   
 
     
@@ -10347,6 +10263,14 @@
 <td>Use existing <code>kg-macvlan</code> network</td>
 </tr>
 <tr>
+<td><code>--macvlan-ip IP</code></td>
+<td>Static IP on macvlan (recommended — avoids DHCP MAC drift)</td>
+</tr>
+<tr>
+<td><code>--macvlan-mac MAC</code></td>
+<td>Optional MAC address for DHCP reservation</td>
+</tr>
+<tr>
 <td><code>--gpu nvidia</code></td>
 <td>Enable NVIDIA GPU support (or <code>amd</code>, <code>cpu</code>)</td>
 </tr>
@@ -10376,8 +10300,10 @@
 <a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="w">  </span>--skip-ai
 </code></pre></div>
 <h2 id="post-install-set-static-ip">Post-Install: Set Static IP</h2>
-<p>The installer generates a compose overlay that initially uses DHCP. For reliable operation, update it to use a static IP:</p>
-<p>Edit <code>~/knowledge-graph/docker-compose.ssl.yml</code>:</p>
+<p>If you did not pass <code>--macvlan-ip</code> during install, the generated compose
+overlay uses DHCP. For reliable operation, set a static IP — either pass
+<code>--macvlan-ip 192.168.1.82</code> to <code>install.sh</code> up front, or edit
+<code>~/knowledge-graph/docker-compose.ssl.yml</code> after install:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nt">services</span><span class="p">:</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="nt">web</span><span class="p">:</span>
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">    </span><span class="nt">networks</span><span class="p">:</span>

@@ -4753,62 +4753,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/ingest-directory/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-directory
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/ingest-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-file
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../../reference/mcp/tools/ingest/" class="md-nav__link">
         
   
@@ -4817,34 +4761,6 @@
     
   
     ingest
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/inspect-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    inspect-file
   
 
     
@@ -10782,10 +10698,9 @@
 <h2 id="prerequisites">Prerequisites</h2>
 <ul>
 <li>Node.js 18+ installed</li>
-<li>PostgreSQL + Apache AGE database running (see <code>docs/guides/QUICKSTART.md</code>)</li>
-<li>FastAPI server running (<code>./scripts/services/start-api.sh</code>)</li>
-<li>kg CLI installed globally (<code>cd client &amp;&amp; ./install.sh</code>)</li>
-<li><strong>User account created</strong> - Run <code>kg login</code> to create an admin account if you haven't already</li>
+<li>Platform running (<code>./operator.sh start</code>) - includes PostgreSQL + Apache AGE + the FastAPI server</li>
+<li>kg CLI installed globally (<code>cd cli &amp;&amp; npm run build &amp;&amp; ./install.sh</code>)</li>
+<li><strong>User account created</strong> - The admin user is created by <code>./operator.sh init</code>. Run <code>kg login</code> to obtain OAuth client credentials.</li>
 </ul>
 <h2 id="authentication">Authentication</h2>
 <p>The MCP server uses OAuth 2.0 client credentials for authentication. You configure OAuth client ID and secret (<code>KG_OAUTH_CLIENT_ID</code> and <code>KG_OAUTH_CLIENT_SECRET</code>) in your MCP server settings. The server automatically obtains and refreshes access tokens, making authentication transparent to Claude.</p>
@@ -10874,35 +10789,33 @@
 <a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">  </span><span class="p">}</span>
 <a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="p">}</span>
 </code></pre></div>
-<p><strong>If you already have other MCP servers configured, add the <code>knowledge-graph</code> entry:</strong></p>
+<p><strong>If you already have other MCP servers configured, add the <code>knowledge-graph</code> entry.</strong> Use the OAuth client credentials from <code>kg oauth create-mcp</code>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="p">{</span>
 <a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">  </span><span class="nt">&quot;mcpServers&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
 <a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">    </span><span class="nt">&quot;existing-server&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
 <a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">      </span><span class="nt">&quot;command&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;some-other-mcp-server&quot;</span>
 <a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">    </span><span class="p">},</span>
-<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="w">    </span><span class="nt">&quot;knowledge-graph&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
-<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="err">        </span><span class="nt">&quot;command&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;kg-mcp-server&quot;</span><span class="p">,</span><span class="w">  </span>
-<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="err">        </span><span class="nt">&quot;args&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span><span class="w">  </span>
-<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="err">        </span><span class="nt">&quot;env&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
-<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="err">          </span><span class="nt">&quot;KG_API_URL&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;http://localhost:8000&quot;</span><span class="p">,</span><span class="w">  </span>
-<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="err">          </span><span class="nt">&quot;KG_USERNAME&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;claude&quot;</span><span class="p">,</span><span class="w">  </span>
-<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a><span class="err">          </span><span class="nt">&quot;KG_PASSWORD&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Password1!&quot;</span><span class="w">  </span>
-<a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a><span class="err">        </span><span class="p">}</span><span class="w">  </span>
-<a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a><span class="err">     </span><span class="p">}</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="w">    </span><span class="nt">&quot;knowledge-graph&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="w">      </span><span class="nt">&quot;command&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;kg-mcp-server&quot;</span><span class="p">,</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="w">      </span><span class="nt">&quot;args&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="w">      </span><span class="nt">&quot;env&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="w">        </span><span class="nt">&quot;KG_API_URL&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;http://localhost:8000&quot;</span><span class="p">,</span>
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="w">        </span><span class="nt">&quot;KG_OAUTH_CLIENT_ID&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;kg-mcp-server-admin-20251102&quot;</span><span class="p">,</span>
+<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a><span class="w">        </span><span class="nt">&quot;KG_OAUTH_CLIENT_SECRET&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;oauth_secret_abc123...&quot;</span>
+<a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a><span class="w">      </span><span class="p">}</span>
+<a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a><span class="w">    </span><span class="p">}</span>
 <a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a><span class="w">  </span><span class="p">}</span>
 <a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a><span class="p">}</span>
 </code></pre></div>
 <p><strong>Configuration Breakdown:</strong>
-- <code>command</code>: <code>kg-mcp-server</code> - The globally installed MCP server command
-- <code>env.KG_USERNAME</code>: Your username (same as what you used for <code>kg login</code>)
-- <code>env.KG_PASSWORD</code>: Your password
-- The MCP server will automatically login on startup using these credentials
-- Authentication happens transparently - Claude is not aware of it</p>
+- <code>command</code>: <code>kg-mcp-server</code> - the globally installed MCP server command
+- <code>env.KG_OAUTH_CLIENT_ID</code> / <code>env.KG_OAUTH_CLIENT_SECRET</code>: from <code>kg oauth create-mcp</code>; the MCP server exchanges these for short-lived access tokens via OAuth 2.0 client credentials grant
+- Authentication is transparent to Claude</p>
 <p><strong>Important Checklist:</strong>
-- ✅ Replace <code>your-password-here</code> with your actual password
+- ✅ Paste the exact <code>KG_OAUTH_CLIENT_ID</code> and <code>KG_OAUTH_CLIENT_SECRET</code> from <code>kg oauth create-mcp</code> (client secret is shown once)
 - ✅ Ensure JSON syntax is valid (use a JSON validator if needed)
-- ✅ The <code>kg-mcp-server</code> command must be globally installed: <code>cd client &amp;&amp; ./install.sh</code>
-- ✅ The API server must be running: <code>./scripts/services/start-api.sh</code></p>
+- ✅ The <code>kg-mcp-server</code> command must be globally installed: <code>cd cli &amp;&amp; npm run build &amp;&amp; ./install.sh</code>
+- ✅ The platform must be running: <code>./operator.sh start</code></p>
 <h3 id="step-4-restart-claude-desktop">Step 4: Restart Claude Desktop</h3>
 <p><strong>Important:</strong> You must completely quit and restart Claude Desktop:
 1. <strong>Quit Claude Desktop completely</strong> (Cmd+Q on macOS, or close from system tray on Windows)
@@ -11098,7 +11011,7 @@
 <a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="c1"># Should show: /usr/local/bin/kg-mcp-server (or similar)</span>
 </code></pre></div></p>
 <p><strong>Reinstall if needed:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="nb">cd</span><span class="w"> </span>client
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="nb">cd</span><span class="w"> </span>cli
 <a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>./uninstall.sh
 <a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>./install.sh
 </code></pre></div></p>
@@ -11106,8 +11019,8 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>curl<span class="w"> </span>http://localhost:8000/health
 <a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="c1"># Should return: {&quot;status&quot;:&quot;healthy&quot;}</span>
 </code></pre></div></p>
-<p><strong>Start API server if needed:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>./scripts/services/start-api.sh
+<p><strong>Start platform if needed:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>./operator.sh<span class="w"> </span>start
 </code></pre></div></p>
 <p><strong>Check PostgreSQL is running:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>docker<span class="w"> </span>ps<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>postgres
@@ -11155,7 +11068,7 @@
 MCP server stderr is captured in Claude Code session logs.</p>
 <h2 id="development-tips">Development Tips</h2>
 <h3 id="rebuilding-after-code-changes">Rebuilding After Code Changes</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="nb">cd</span><span class="w"> </span>client
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="nb">cd</span><span class="w"> </span>cli
 <a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>npm<span class="w"> </span>run<span class="w"> </span>build
 <a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>./install.sh<span class="w">  </span><span class="c1"># Reinstall globally</span>
 <a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a>
@@ -11172,10 +11085,10 @@ MCP server stderr is captured in Claude Code session logs.</p>
 <h3 id="adding-new-tools">Adding New Tools</h3>
 <ol>
 <li>Add API endpoint to <code>api/app/routes/</code> (if needed)</li>
-<li>Add client method to <code>client/src/api/client.ts</code></li>
-<li>Add tool definition to <code>client/src/mcp-server.ts</code> (ListToolsRequestSchema handler)</li>
+<li>Add client method to <code>cli/src/api/client.ts</code></li>
+<li>Add tool definition to <code>cli/src/mcp-server.ts</code> (ListToolsRequestSchema handler)</li>
 <li>Add case handler to CallToolRequestSchema handler</li>
-<li>Rebuild: <code>cd client &amp;&amp; npm run build &amp;&amp; ./install.sh</code></li>
+<li>Rebuild: <code>cd cli &amp;&amp; npm run build &amp;&amp; ./install.sh</code></li>
 <li>Restart Claude</li>
 </ol>
 <h2 id="configuration-examples">Configuration Examples</h2>

@@ -4524,62 +4524,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/ingest-directory/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-directory
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/ingest-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-file
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../reference/mcp/tools/ingest/" class="md-nav__link">
         
   
@@ -4588,34 +4532,6 @@
     
   
     ingest
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/inspect-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    inspect-file
   
 
     
@@ -10339,7 +10255,7 @@
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>kg<span class="w"> </span>search<span class="w"> </span>query<span class="w"> </span><span class="s2">&quot;causes of inflation&quot;</span>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># Get full concept details with evidence</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>kg<span class="w"> </span>search<span class="w"> </span>details<span class="w"> </span>c_abc123
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>kg<span class="w"> </span>search<span class="w"> </span>show<span class="w"> </span>c_abc123
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
 <a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="c1"># Find related concepts (2 hops)</span>
 <a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>kg<span class="w"> </span>search<span class="w"> </span>related<span class="w"> </span>c_abc123<span class="w"> </span>--depth<span class="w"> </span><span class="m">2</span>
@@ -10354,8 +10270,8 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Single file</span>
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>research-paper.pdf<span class="w"> </span>--ontology<span class="w"> </span>economics
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># Directory (recursive)</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>kg<span class="w"> </span>ingest<span class="w"> </span>directory<span class="w"> </span>./papers<span class="w"> </span>--ontology<span class="w"> </span>economics<span class="w"> </span>--recursive
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># Directory (recursive — requires --depth)</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>kg<span class="w"> </span>ingest<span class="w"> </span>directory<span class="w"> </span>./papers<span class="w"> </span>--ontology<span class="w"> </span>economics<span class="w"> </span>--recurse<span class="w"> </span>--depth<span class="w"> </span>all
 <a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
 <a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="c1"># Raw text</span>
 <a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>kg<span class="w"> </span>ingest<span class="w"> </span>text<span class="w"> </span><span class="s2">&quot;The Federal Reserve controls interest rates...&quot;</span><span class="w"> </span>--ontology<span class="w"> </span>economics
@@ -10374,7 +10290,7 @@
 <a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>kg<span class="w"> </span>document<span class="w"> </span>show<span class="w"> </span>doc_abc123
 <a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>
 <a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="c1"># Access original source text</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>kg<span class="w"> </span><span class="nb">source</span><span class="w"> </span>show<span class="w"> </span>src_abc123
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>kg<span class="w"> </span><span class="nb">source</span><span class="w"> </span>get<span class="w"> </span>src_abc123
 </code></pre></div>
 <hr />
 <h3 id="ontology">Ontology</h3>
@@ -10397,10 +10313,8 @@
 <p>Analyze semantic dimensions.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Project concepts onto an axis</span>
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>kg<span class="w"> </span>polarity<span class="w"> </span>analyze<span class="w"> </span>--positive<span class="w"> </span><span class="s2">&quot;modern&quot;</span><span class="w"> </span>--negative<span class="w"> </span><span class="s2">&quot;traditional&quot;</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c1"># List saved analyses</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>kg<span class="w"> </span>polarity<span class="w"> </span>list
 </code></pre></div>
+<p>Saved analyses are accessible via <code>kg artifact list</code> (polarity results are persisted as artifacts).</p>
 <p><strong>What you can do:</strong> Discover where concepts fall on semantic spectrums, find concepts that balance opposing viewpoints.</p>
 <hr />
 <h3 id="vocabulary">Vocabulary</h3>
@@ -10430,14 +10344,14 @@
 <a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1"># Watch job progress</span>
 <a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>kg<span class="w"> </span>job<span class="w"> </span>status<span class="w"> </span>job_abc123<span class="w"> </span>--watch
 <a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>
-<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="c1"># Approve pending jobs</span>
-<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>kg<span class="w"> </span>job<span class="w"> </span>approve<span class="w"> </span>job_abc123
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="c1"># Approve a pending job</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>kg<span class="w"> </span>job<span class="w"> </span>approve<span class="w"> </span>job<span class="w"> </span>job_abc123
 <a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>
 <a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="c1"># Cancel running job</span>
 <a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>kg<span class="w"> </span>job<span class="w"> </span>cancel<span class="w"> </span>job_abc123
 <a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a>
-<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a><span class="c1"># Clean up old jobs</span>
-<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a>kg<span class="w"> </span>job<span class="w"> </span>cleanup<span class="w"> </span>--older-than<span class="w"> </span>7d<span class="w"> </span>--status<span class="w"> </span>completed
+<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a><span class="c1"># Clean up old jobs (preview by default; add --confirm to delete)</span>
+<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a>kg<span class="w"> </span>job<span class="w"> </span>cleanup<span class="w"> </span>--older-than<span class="w"> </span>7d<span class="w"> </span>--status<span class="w"> </span>completed<span class="w"> </span>--confirm
 </code></pre></div>
 <p><strong>What you can do:</strong> Control when extraction happens, monitor costs, clean up completed work.</p>
 <hr />
@@ -10446,11 +10360,11 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># Check system health</span>
 <a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>status
 <a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1"># Create backup</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1"># Create backup (full system or per-ontology)</span>
 <a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>backup<span class="w"> </span>--type<span class="w"> </span>full
 <a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>
-<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="c1"># Restore from backup</span>
-<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>kg<span class="w"> </span>admin<span class="w"> </span>restore<span class="w"> </span>--file<span class="w"> </span>backup.sql
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="c1"># Restore from backup archive</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>kg<span class="w"> </span>admin<span class="w"> </span>restore<span class="w"> </span>--file<span class="w"> </span>backup.tar.gz<span class="w"> </span>--confirm
 </code></pre></div>
 <hr />
 <h3 id="authentication">Authentication</h3>
@@ -10461,7 +10375,7 @@
 <a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="c1"># Logout</span>
 <a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>kg<span class="w"> </span><span class="nb">logout</span>
 <a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>
-<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="c1"># Create MCP credentials</span>
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="c1"># Create MCP credentials (alias for: kg oauth create --for mcp)</span>
 <a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>kg<span class="w"> </span>oauth<span class="w"> </span>create-mcp
 <a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>
 <a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a><span class="c1"># List OAuth clients</span>
@@ -10471,32 +10385,33 @@
 <h2 id="unix-shortcuts">Unix Shortcuts</h2>
 <p>Familiar commands for quick access.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># List resources</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>kg<span class="w"> </span>ls<span class="w"> </span>ontologies
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>kg<span class="w"> </span>ls<span class="w"> </span>concepts<span class="w"> </span>--ontology<span class="w"> </span>economics
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="c1"># Show details</span>
-<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>kg<span class="w"> </span>cat<span class="w"> </span>concept<span class="w"> </span>c_abc123
-<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>kg<span class="w"> </span>stat<span class="w"> </span>ontology<span class="w"> </span>economics
-<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>
-<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a><span class="c1"># Delete</span>
-<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>kg<span class="w"> </span>rm<span class="w"> </span>job<span class="w"> </span>job_abc123
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>kg<span class="w"> </span>ls<span class="w"> </span>ontology
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>kg<span class="w"> </span>ls<span class="w"> </span>job
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>kg<span class="w"> </span>ls<span class="w"> </span><span class="nb">source</span><span class="w"> </span>--ontology<span class="w"> </span>economics
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="c1"># Show details</span>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>kg<span class="w"> </span>cat<span class="w"> </span>concept<span class="w"> </span>c_abc123<span class="w">       </span><span class="c1"># → kg search show c_abc123</span>
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>kg<span class="w"> </span>stat<span class="w"> </span>database<span class="w">               </span><span class="c1"># → kg database stats</span>
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>
+<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a><span class="c1"># Delete</span>
+<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>kg<span class="w"> </span>rm<span class="w"> </span>job<span class="w"> </span>job_abc123<span class="w">           </span><span class="c1"># → kg job cancel job_abc123</span>
 </code></pre></div>
 <hr />
 <h2 id="scripting-examples">Scripting Examples</h2>
 <h3 id="batch-ingest">Batch Ingest</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># Ingest all PDFs, auto-approve</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># Ingest all PDFs (auto-approve is the default)</span>
 <a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="k">for</span><span class="w"> </span>f<span class="w"> </span><span class="k">in</span><span class="w"> </span>papers/*.pdf<span class="p">;</span><span class="w"> </span><span class="k">do</span>
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">  </span>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$f</span><span class="s2">&quot;</span><span class="w"> </span>--ontology<span class="w"> </span>research<span class="w"> </span>--auto-approve
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">  </span>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$f</span><span class="s2">&quot;</span><span class="w"> </span>--ontology<span class="w"> </span>research
 <a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="k">done</span>
 </code></pre></div>
 <h3 id="export-search-results">Export Search Results</h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1"># Search and pipe to jq</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>kg<span class="w"> </span>search<span class="w"> </span>query<span class="w"> </span><span class="s2">&quot;machine learning&quot;</span><span class="w"> </span>--format<span class="w"> </span>json<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span><span class="s1">&#39;.concepts[].label&#39;</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>kg<span class="w"> </span>search<span class="w"> </span>query<span class="w"> </span><span class="s2">&quot;machine learning&quot;</span><span class="w"> </span>--json<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span><span class="s1">&#39;.concepts[].label&#39;</span>
 </code></pre></div>
 <h3 id="cicd-integration">CI/CD Integration</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># Validate graph health in CI</span>
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>kg<span class="w"> </span>health<span class="w"> </span>--exit-code
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>kg<span class="w"> </span>database<span class="w"> </span>stats<span class="w"> </span>--format<span class="w"> </span>json
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># Validate graph health in CI (exits non-zero on failure)</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>kg<span class="w"> </span>health
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>kg<span class="w"> </span>database<span class="w"> </span>stats
 </code></pre></div>
 <hr />
 <h2 id="configuration">Configuration</h2>
@@ -10504,12 +10419,12 @@
 <a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>kg<span class="w"> </span>config<span class="w"> </span>get
 <a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>
 <a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="c1"># Set auto-approval</span>
-<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>kg<span class="w"> </span>config<span class="w"> </span><span class="nb">set</span><span class="w"> </span>auto-approve<span class="w"> </span><span class="nb">true</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>kg<span class="w"> </span>config<span class="w"> </span><span class="nb">set</span><span class="w"> </span>auto_approve<span class="w"> </span><span class="nb">true</span>
 <a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>
 <a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="c1"># Set API URL</span>
-<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a>kg<span class="w"> </span>config<span class="w"> </span><span class="nb">set</span><span class="w"> </span>api-url<span class="w"> </span>http://localhost:8000
+<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a>kg<span class="w"> </span>config<span class="w"> </span><span class="nb">set</span><span class="w"> </span>api_url<span class="w"> </span>http://localhost:8000
 </code></pre></div>
-<p>Config stored in <code>~/.config/kg-cli/config.json</code>.</p>
+<p>Config stored in <code>~/.config/kg/config.json</code>.</p>
 
 
 

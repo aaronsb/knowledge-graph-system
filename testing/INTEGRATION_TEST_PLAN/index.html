@@ -4231,62 +4231,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/ingest-directory/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-directory
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/ingest-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-file
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../reference/mcp/tools/ingest/" class="md-nav__link">
         
   
@@ -4295,34 +4239,6 @@
     
   
     ingest
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/inspect-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    inspect-file
   
 
     
@@ -11397,41 +11313,51 @@
 <h2 id="test-environment-setup">Test Environment Setup</h2>
 <h3 id="prerequisites">Prerequisites</h3>
 <ul>
-<li>Docker and docker-compose installed</li>
-<li>Python 3.11+ with venv</li>
-<li>Node.js 18+ and npm</li>
-<li>kg CLI installed globally (<code>cd client &amp;&amp; ./install.sh</code>)</li>
-<li>API keys configured (OpenAI or Anthropic)</li>
+<li>Docker and docker compose installed</li>
+<li>Python 3.11+ (only needed for local lint/utility scripts — the API runs in <code>kg-api-dev</code>)</li>
+<li>Node.js 18+ and npm (for CLI/MCP)</li>
+<li>kg CLI installed globally (<code>cd cli &amp;&amp; npm run build &amp;&amp; ./install.sh</code>)</li>
+<li>API keys configured (OpenAI or Anthropic) via <code>./operator.sh shell</code></li>
 </ul>
 <h3 id="clean-environment-checklist">Clean Environment Checklist</h3>
 <ul>
-<li>[ ] Stop all running containers: <code>docker-compose down -v</code></li>
-<li>[ ] Remove volumes: <code>docker volume prune</code></li>
+<li>[ ] Stop the platform: <code>./operator.sh stop</code></li>
+<li>[ ] Wipe data (destructive): <code>./operator.sh reset</code> (or <code>kg admin reset</code>)</li>
 <li>[ ] Clean API logs: <code>rm -f logs/api_*.log</code></li>
-<li>[ ] Fresh Python venv: <code>rm -rf venv &amp;&amp; python3 -m venv venv</code></li>
 </ul>
+<blockquote>
+<p>Historical note: earlier revisions of this plan referenced <code>docker-compose down -v</code>
+and a local Python venv. The platform is now fully containerized — use <code>operator.sh</code>
+for lifecycle commands.</p>
+</blockquote>
 <hr />
 <h2 id="phase-1-cold-start-schema-validation">Phase 1: Cold Start &amp; Schema Validation</h2>
 <h3 id="11-database-initialization">1.1 Database Initialization</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Start fresh PostgreSQL + AGE</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>docker-compose<span class="w"> </span>up<span class="w"> </span>-d
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Start platform (PostgreSQL + AGE + API + Web + Garage)</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>./operator.sh<span class="w"> </span>start
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># Wait for database ready</span>
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>docker<span class="w"> </span>logs<span class="w"> </span>knowledge-graph-postgres<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot;ready to accept connections&quot;</span>
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="c1"># Apply migrations</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>./scripts/migrate-db.sh<span class="w"> </span>--dry-run<span class="w">  </span><span class="c1"># Preview</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>./scripts/migrate-db.sh<span class="w"> </span>-y<span class="w">         </span><span class="c1"># Apply</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="c1"># Migrations are applied automatically on API startup.</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="c1"># To preview/upgrade explicitly:</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>./operator.sh<span class="w"> </span>upgrade<span class="w"> </span>--dry-run<span class="w">    </span><span class="c1"># Preview</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>./operator.sh<span class="w"> </span>upgrade<span class="w">              </span><span class="c1"># Apply</span>
 </code></pre></div>
+<blockquote>
+<p>Historical note: <code>scripts/migrate-db.sh</code> is no longer present; migration runs
+as part of the API container startup and <code>operator.sh upgrade</code>.</p>
+</blockquote>
 <p><strong>Verify:</strong>
 - [ ] PostgreSQL container running
 - [ ] Apache AGE extension loaded
 - [ ] All migrations applied successfully
 - [ ] No migration errors in logs</p>
 <h3 id="12-schema-audit">1.2 Schema Audit</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># List all tables</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>knowledge-graph-postgres<span class="w"> </span>psql<span class="w"> </span>-U<span class="w"> </span>postgres<span class="w"> </span>-d<span class="w"> </span>knowledge_graph<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;\dt ag_catalog.*&quot;</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>knowledge-graph-postgres<span class="w"> </span>psql<span class="w"> </span>-U<span class="w"> </span>postgres<span class="w"> </span>-d<span class="w"> </span>knowledge_graph<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;\dt public.*&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># List all tables (use POSTGRES_USER from .env — typically `admin`)</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>knowledge-graph-postgres<span class="w"> </span>psql<span class="w"> </span>-U<span class="w"> </span>admin<span class="w"> </span>-d<span class="w"> </span>knowledge_graph<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;\dt ag_catalog.*&quot;</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>knowledge-graph-postgres<span class="w"> </span>psql<span class="w"> </span>-U<span class="w"> </span>admin<span class="w"> </span>-d<span class="w"> </span>knowledge_graph<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;\dt kg_api.*&quot;</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>knowledge-graph-postgres<span class="w"> </span>psql<span class="w"> </span>-U<span class="w"> </span>admin<span class="w"> </span>-d<span class="w"> </span>knowledge_graph<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;\dt kg_auth.*&quot;</span>
 </code></pre></div>
 <p><strong>Expected Tables:</strong>
 - <code>public.embeddings</code> - Unified embedding cache (ADR-045)
@@ -11445,16 +11371,18 @@
 - [ ] All expected tables exist
 - [ ] Vocabulary table has SUPPORTS/CONTRADICTS prototypes</p>
 <h3 id="13-api-server-startup">1.3 API Server Startup</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Configure AI provider</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>./scripts/configure-ai.sh
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># Start API</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>./scripts/start-api.sh
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="c1"># Check health</span>
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>kg<span class="w"> </span>health
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>curl<span class="w"> </span>http://localhost:8000/health
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Configure AI provider (interactive shell)</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>./operator.sh<span class="w"> </span>shell
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="c1"># then inside the shell: configure.py ai-provider</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="c1"># API is already running after `./operator.sh start` — check health</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>kg<span class="w"> </span>health
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>curl<span class="w"> </span>http://localhost:8000/health
 </code></pre></div>
+<blockquote>
+<p>Historical note: <code>scripts/configure-ai.sh</code> and <code>scripts/start-api.sh</code> no longer
+exist. Use <code>operator.sh shell</code> (configuration) and <code>operator.sh start</code> (lifecycle).</p>
+</blockquote>
 <p><strong>Verify:</strong>
 - [ ] API server starts without errors
 - [ ] Health endpoint returns 200

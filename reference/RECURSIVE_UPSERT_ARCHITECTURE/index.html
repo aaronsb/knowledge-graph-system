@@ -4707,62 +4707,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../mcp/tools/ingest-directory/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-directory
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../mcp/tools/ingest-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-file
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../mcp/tools/ingest/" class="md-nav__link">
         
   
@@ -4771,34 +4715,6 @@
     
   
     ingest
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../mcp/tools/inspect-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    inspect-file
   
 
     
@@ -10754,18 +10670,28 @@
 </code></pre></div>
 <p>This happens when the LLM has seen similar text before and predicts an existing <code>concept_id</code>. We trust the LLM's judgment here.</p>
 <h3 id="stage-2-vector-similarity-search-primary">Stage 2: Vector Similarity Search (Primary)</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>1. Embed new concept: label + search_terms → 1536-dim vector
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>2. Cosine similarity against ALL existing concept embeddings
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>3. IF max_similarity &gt; 0.85:
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    → Use existing concept (semantic match)
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    → Confidence: similarity_score
+<p>The current code (<code>api/app/lib/ingestion.py</code>, <code>api/app/lib/age_client/query.py</code>)
+uses <strong>two-tier matching</strong> to avoid duplicates when the same concept is
+described differently:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>1. Embed new concept: label + description + search_terms → embedding vector
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>   (dimensionality depends on the configured embedding model — 1536 for
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>   text-embedding-3-small, 768 for nomic-style local models, etc.)
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>2. Cosine similarity against ALL existing concept embeddings
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>   (vector_search() called with threshold=0.75 to catch label-boosted matches)
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>3. Decide a match:
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>   a. similarity ≥ 0.85                        → match (strict tier)
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>   b. 0.75 ≤ similarity &lt; 0.85 AND labels
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>      are identical or one contains the other  → match (label-boosted tier)
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>   c. otherwise                                 → no match, create new
 </code></pre></div>
 <p>This is the <strong>core of the pattern</strong>. Vector similarity captures semantic equivalence:
 - "linear scanning system" matches "sequential attention mechanism"
 - "human-directed evolution" matches "genetic self-modification"</p>
-<p>The threshold (0.85) balances:
+<p>The strict threshold (0.85) balances:
 - <strong>Higher threshold (&gt;0.90):</strong> Fewer merges, more duplicates, safer
 - <strong>Lower threshold (&lt;0.80):</strong> More merges, potential false positives, aggressive</p>
+<p>The label-boosted tier (0.75) catches paraphrased descriptions of an
+identically-named concept that the strict threshold would otherwise miss.</p>
 <h3 id="stage-3-create-new-concept">Stage 3: Create New Concept</h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>IF no match found:
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    → Generate new concept_id

@@ -4403,62 +4403,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/ingest-directory/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-directory
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/ingest-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-file
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../../reference/mcp/tools/ingest/" class="md-nav__link">
         
   
@@ -4467,34 +4411,6 @@
     
   
     ingest
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/inspect-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    inspect-file
   
 
     
@@ -10086,7 +10002,7 @@
 <p><strong>Query:</strong> "uselessness"</p>
 <p><strong>What RAG would do:</strong> Find text chunks containing "useless" or similar words</p>
 <p><strong>What the Knowledge Graph does:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>$<span class="w"> </span>python<span class="w"> </span>cli.py<span class="w"> </span>search<span class="w"> </span><span class="s2">&quot;uselessness&quot;</span><span class="w"> </span>--limit<span class="w"> </span><span class="m">3</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>$<span class="w"> </span>kg<span class="w"> </span>search<span class="w"> </span>query<span class="w"> </span><span class="s2">&quot;uselessness&quot;</span><span class="w"> </span>--limit<span class="w"> </span><span class="m">3</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>Found<span class="w"> </span><span class="m">2</span><span class="w"> </span>concepts:
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
@@ -10105,7 +10021,7 @@
 <p><strong>Why this matters:</strong> The system identified <em>concepts</em> related to uselessness, not just text containing the word. It understood "Value of Uselessness" as a philosophical idea.</p>
 <h2 id="example-2-evidence-and-provenance">Example 2: Evidence and Provenance</h2>
 <p><strong>Query:</strong> Get details on "Value of Uselessness"</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>$<span class="w"> </span>python<span class="w"> </span>cli.py<span class="w"> </span>details<span class="w"> </span>watts_taoism_02_chunk1_603de879
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>$<span class="w"> </span>kg<span class="w"> </span>search<span class="w"> </span>details<span class="w"> </span>watts_taoism_02_chunk1_603de879
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>Concept<span class="w"> </span>Details:<span class="w"> </span>watts_taoism_02_chunk1_603de879
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>
@@ -10174,7 +10090,7 @@
 <h2 id="example-5-exploring-unknown-connections">Example 5: Exploring Unknown Connections</h2>
 <p><strong>Scenario:</strong> You've ingested a document but don't know what's in it.</p>
 <p><strong>Query:</strong> "What are the main concepts?"</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>$<span class="w"> </span>python<span class="w"> </span>cli.py<span class="w"> </span>search<span class="w"> </span><span class="s2">&quot;system design organization&quot;</span><span class="w"> </span>--limit<span class="w"> </span><span class="m">10</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>$<span class="w"> </span>kg<span class="w"> </span>search<span class="w"> </span>query<span class="w"> </span><span class="s2">&quot;system design organization&quot;</span><span class="w"> </span>--limit<span class="w"> </span><span class="m">10</span>
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
 <a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>Found<span class="w"> </span><span class="m">10</span><span class="w"> </span>concepts:
 <a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>
@@ -10186,7 +10102,7 @@
 <a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>...
 </code></pre></div>
 <p><strong>Then traverse:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>$<span class="w"> </span>python<span class="w"> </span>cli.py<span class="w"> </span>related<span class="w"> </span>variety_as_a_fulcrum_chunk1_27613d66<span class="w"> </span>--depth<span class="w"> </span><span class="m">2</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>$<span class="w"> </span>kg<span class="w"> </span>search<span class="w"> </span>related<span class="w"> </span>variety_as_a_fulcrum_chunk1_27613d66<span class="w"> </span>--depth<span class="w"> </span><span class="m">2</span>
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>Related<span class="w"> </span>concepts<span class="w"> </span>from:<span class="w"> </span>AI<span class="w"> </span>Sandwich<span class="w"> </span>Systems<span class="w"> </span>Model
 <a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>
@@ -10203,7 +10119,7 @@
 <h2 id="example-6-evidence-based-learning">Example 6: Evidence-Based Learning</h2>
 <p><strong>Use case:</strong> Understanding a philosophical argument</p>
 <p><strong>Query:</strong> "What does Zhuangzi say about humor?"</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>$<span class="w"> </span>python<span class="w"> </span>cli.py<span class="w"> </span>search<span class="w"> </span><span class="s2">&quot;Zhuangzi humor philosophy&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>$<span class="w"> </span>kg<span class="w"> </span>search<span class="w"> </span>query<span class="w"> </span><span class="s2">&quot;Zhuangzi humor philosophy&quot;</span>
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="m">1</span>.<span class="w"> </span>Humor<span class="w"> </span><span class="k">in</span><span class="w"> </span>Philosophy
 <a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">   </span>Evidence:<span class="w"> </span><span class="s2">&quot;He&#39;s almost the only philosopher from the whole of</span>
@@ -10223,7 +10139,7 @@
 <h2 id="example-7-multi-modal-access">Example 7: Multi-Modal Access</h2>
 <p>The same knowledge graph can be queried three ways:</p>
 <p><strong>Via CLI (humans):</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>$<span class="w"> </span>python<span class="w"> </span>cli.py<span class="w"> </span>search<span class="w"> </span><span class="s2">&quot;adoption valley&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>$<span class="w"> </span>kg<span class="w"> </span>search<span class="w"> </span>query<span class="w"> </span><span class="s2">&quot;adoption valley&quot;</span>
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>→<span class="w"> </span>Returns:<span class="w"> </span><span class="s2">&quot;Adoption Valley&quot;</span><span class="w"> </span>concept<span class="w"> </span>with<span class="w"> </span>evidence
 </code></pre></div></p>
 <p><strong>Via MCP (LLMs in Claude Desktop):</strong>
@@ -10231,7 +10147,7 @@
 <a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>→ Uses: mcp__knowledge-graph__search_concepts
 <a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>→ Gets: Full concept details with relationships
 </code></pre></div></p>
-<p><strong>Via Neo4j Browser (visual):</strong>
+<p><strong>Via direct Cypher (Apache AGE on PostgreSQL):</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">c</span><span class="p">:</span><span class="n">Concept</span><span class="w"> </span><span class="p">{</span><span class="n">label</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Adoption Valley&quot;</span><span class="p">})</span><span class="o">-[</span><span class="n">r</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">related</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span>
 <a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="k">RETURN</span><span class="w"> </span><span class="n">c</span><span class="p">,</span><span class="w"> </span><span class="n">r</span><span class="p">,</span><span class="w"> </span><span class="n">related</span>
 </code></pre></div>
@@ -10245,7 +10161,7 @@ Sometimes the LLM misidentifies concepts or creates poor relationships. You'll s
 </code></pre></div></p>
 <p><strong>Deduplication Over-Merging:</strong>
 Occasionally, similar but distinct concepts merge when they shouldn't. Check with:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>$<span class="w"> </span>python<span class="w"> </span>cli.py<span class="w"> </span>details<span class="w"> </span>&lt;concept-id&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>$<span class="w"> </span>kg<span class="w"> </span>search<span class="w"> </span>details<span class="w"> </span>&lt;concept-id&gt;
 <a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>→<span class="w"> </span>Review<span class="w"> </span>evidence<span class="w"> </span>to<span class="w"> </span>see<span class="w"> </span><span class="k">if</span><span class="w"> </span>multiple<span class="w"> </span>ideas<span class="w"> </span>were<span class="w"> </span>merged
 </code></pre></div></p>
 <p><strong>Relationship Confidence:</strong>
@@ -10291,18 +10207,18 @@ Low-confidence relationships (&lt; 0.5) may be spurious:
 <hr />
 <h2 id="try-it-yourself">Try It Yourself</h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="c1"># Ingest your own document</span>
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>./scripts/ingest.sh<span class="w"> </span>your-document.txt<span class="w"> </span>--name<span class="w"> </span><span class="s2">&quot;My Document&quot;</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>your-document.txt<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;My Document&quot;</span>
 <a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>
 <a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="c1"># Search for concepts</span>
-<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>python<span class="w"> </span>cli.py<span class="w"> </span>search<span class="w"> </span><span class="s2">&quot;your query&quot;</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>kg<span class="w"> </span>search<span class="w"> </span>query<span class="w"> </span><span class="s2">&quot;your query&quot;</span>
 <a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>
 <a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="c1"># Explore relationships</span>
-<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a>python<span class="w"> </span>cli.py<span class="w"> </span>details<span class="w"> </span>&lt;concept-id&gt;
-<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a>python<span class="w"> </span>cli.py<span class="w"> </span>related<span class="w"> </span>&lt;concept-id&gt;
+<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a>kg<span class="w"> </span>search<span class="w"> </span>details<span class="w"> </span>&lt;concept-id&gt;
+<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a>kg<span class="w"> </span>search<span class="w"> </span>related<span class="w"> </span>&lt;concept-id&gt;
 <a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a>
 <a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a><span class="c1"># Visual exploration</span>
-<a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a><span class="c1"># Open http://localhost:7474 in browser</span>
-<a id="__codelineno-15-13" name="__codelineno-15-13" href="#__codelineno-15-13"></a><span class="c1"># Run: MATCH (c:Concept)-[r]-&gt;(related) RETURN c, r, related LIMIT 50</span>
+<a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a><span class="c1"># Run a Cypher query via the operator/database tools or the web visualizer (http://localhost:3000)</span>
+<a id="__codelineno-15-13" name="__codelineno-15-13" href="#__codelineno-15-13"></a><span class="c1"># Example: MATCH (c:Concept)-[r]-&gt;(related) RETURN c, r, related LIMIT 50</span>
 </code></pre></div>
 <p>The graph grows with every document. The connections emerge over time.</p>
 <p><em>Not retrieval. Understanding.</em></p>

@@ -4231,62 +4231,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/ingest-directory/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-directory
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/ingest-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-file
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../reference/mcp/tools/ingest/" class="md-nav__link">
         
   
@@ -4295,34 +4239,6 @@
     
   
     ingest
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/inspect-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    inspect-file
   
 
     
@@ -10187,10 +10103,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#84-storage" class="md-nav__link">
+  <a href="#84-storage-notarize" class="md-nav__link">
     <span class="md-ellipsis">
       
-        8.4 Storage
+        8.4 Storage (Notarize)
       
     </span>
   </a>
@@ -10393,23 +10309,43 @@ API confirms it is structurally sound, safe to execute, and bounded.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>POST /programs/validate
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>Content-Type: application/json
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>{ &quot;version&quot;: 1, &quot;statements&quot;: [...], &quot;params&quot;: [...] }
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>{
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>  &quot;name&quot;: &quot;optional name&quot;,
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>  &quot;program&quot;: { &quot;version&quot;: 1, &quot;statements&quot;: [...], &quot;params&quot;: [...] }
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>}
 </code></pre></div>
-<p>Returns <code>200</code> with <code>{ "valid": true }</code> or <code>400</code> with structured errors:</p>
+<p>The request body is a <code>ProgramSubmission</code> wrapper around the raw program
+AST (see <code>api/app/models/program.py</code>). The endpoint always returns <code>200</code>
+with the structured <code>ValidationResult</code>; the <code>valid</code> flag and <code>errors</code>
+array communicate pass/fail:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="p">{</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="nt">&quot;valid&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span><span class="nt">&quot;errors&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;statement&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;field&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;query&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;MATCH without LIMIT on unbounded pattern&quot;</span><span class="w"> </span><span class="p">}</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">  </span><span class="p">]</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="p">}</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">    </span><span class="p">{</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">      </span><span class="nt">&quot;rule_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;V030&quot;</span><span class="p">,</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">      </span><span class="nt">&quot;severity&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;error&quot;</span><span class="p">,</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">      </span><span class="nt">&quot;statement&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">      </span><span class="nt">&quot;field&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;operation.query&quot;</span><span class="p">,</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="w">      </span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Variable-length path depth 10 exceeds maximum 6: [*1..10]&quot;</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="w">  </span><span class="p">],</span>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="w">  </span><span class="nt">&quot;warnings&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[]</span>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="p">}</span>
 </code></pre></div>
 <p>This is a dry-run — the program is not stored.</p>
 <h3 id="22-validate-and-store">2.2 Validate-and-Store</h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>POST /programs
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>Content-Type: application/json
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>{
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>  &quot;name&quot;: &quot;optional name (falls back to metadata.name or &#39;Untitled program&#39;)&quot;,
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>  &quot;program&quot;: { &quot;version&quot;: 1, &quot;statements&quot;: [...] }
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>}
 </code></pre></div>
-<p>Validates the program and, if valid, stores it as a query definition in one
-atomic operation. Returns the created definition ID. If validation fails, no
-storage occurs and the response is the same <code>400</code> error format.</p>
+<p>Validates the program and, if valid, stores it as a <code>program</code>-type query
+definition in one atomic operation. Returns <code>201</code> with the
+<code>ProgramCreateResponse</code> (<code>{ id, name, program, valid, created_at, updated_at }</code>).
+If validation fails the response is <code>400</code> with <code>{ "detail": { "error": ..., "validation": ValidationResult } }</code>.</p>
 <h3 id="23-what-validation-checks">2.3 What Validation Checks</h3>
 <p>The table below summarizes validation categories. For the authoritative rule
 catalog with individual rule IDs, see <a href="../validation/">validation.md</a>.</p>
@@ -10481,40 +10417,48 @@ control:</p>
   types (explorations, polarity analyses, etc.).</li>
 </ul>
 <h3 id="33-crud-operations">3.3 CRUD Operations</h3>
-<p>All clients use the same REST API for storage management:</p>
+<p>Programs have a dedicated REST surface that wraps notarization (validate +
+store) in a single endpoint. The generic <code>/query-definitions</code> surface is
+still available for compatibility with other definition types:</p>
 <table>
 <thead>
 <tr>
 <th>Operation</th>
-<th>Endpoint</th>
+<th>Programs endpoint</th>
+<th>Generic endpoint</th>
 <th>Notes</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td>Create</td>
+<td><code>POST /programs</code></td>
 <td><code>POST /query-definitions</code></td>
-<td>Accepts <code>{ name, definition_type: 'program', definition: { ... } }</code></td>
+<td>The <code>/programs</code> route validates the AST before insert (returns 400 on validation failure); the generic route does not.</td>
 </tr>
 <tr>
 <td>List</td>
+<td><code>GET /programs</code></td>
 <td><code>GET /query-definitions?definition_type=program</code></td>
-<td>Paginated, filtered by owner</td>
+<td><code>/programs</code> returns lightweight items (id, name, description, statement_count).</td>
 </tr>
 <tr>
 <td>Get</td>
+<td><code>GET /programs/{id}</code></td>
 <td><code>GET /query-definitions/{id}</code></td>
-<td>Returns full definition including AST</td>
+<td><code>/programs/{id}</code> re-validates and returns a typed <code>ProgramReadResponse</code>.</td>
 </tr>
 <tr>
 <td>Update</td>
+<td>(none)</td>
 <td><code>PUT /query-definitions/{id}</code></td>
-<td>Partial update of name, definition, or metadata</td>
+<td>Programs are updated via the generic endpoint. Re-validation on update is a known gap (see security.md T6).</td>
 </tr>
 <tr>
 <td>Delete</td>
+<td>(none)</td>
 <td><code>DELETE /query-definitions/{id}</code></td>
-<td>Ownership check enforced</td>
+<td>Ownership check enforced.</td>
 </tr>
 </tbody>
 </table>
@@ -10605,12 +10549,20 @@ executed entirely server-side:</p>
 <a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>  &quot;params&quot;: { &quot;concept_name&quot;: &quot;organizational&quot; }
 <a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>}
 </code></pre></div>
-<p>Or by reference to a stored program:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>POST /programs/{id}/execute
+<p>Or by reference to a stored program (the same endpoint accepts either an
+inline <code>program</code> AST or a <code>program_id</code> referencing a stored notarized program):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>POST /programs/execute
 <a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>Content-Type: application/json
 <a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>{ &quot;params&quot;: { &quot;concept_name&quot;: &quot;organizational&quot; } }
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>{
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>  &quot;program_id&quot;: 42,
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>  &quot;params&quot;: { &quot;concept_name&quot;: &quot;organizational&quot; }
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>}
 </code></pre></div>
+<p>The endpoint also supports a <code>deck</code> chain mode that threads W through a
+sequence of programs (<code>{ "deck": [{ program_id }, { program }, ...] }</code>,
+maximum 10 entries). See <code>ProgramExecuteRequest</code> in
+<code>api/app/models/program.py</code>.</p>
 <p><strong>Execution flow:</strong></p>
 <ol>
 <li>Validate the AST (same checks as <code>/programs/validate</code>).</li>
@@ -10805,8 +10757,8 @@ emits <code>Statement[]</code> with <code>BlockAnnotation</code> metadata. Once 
 result is a standard <code>GraphProgram</code> that can be stored as a <code>program</code>
 definition.</p>
 <h3 id="73-definition-type-registry">7.3 Definition Type Registry</h3>
-<p>The <code>DEFINITION_TYPES</code> list in <code>api/app/models/query_definition.py</code> will be
-extended to include <code>'program'</code>:</p>
+<p>The <code>DEFINITION_TYPES</code> list in <code>api/app/models/query_definition.py</code> already
+includes <code>'program'</code>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="n">DEFINITION_TYPES</span> <span class="o">=</span> <span class="p">[</span>
 <a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>    <span class="s1">&#39;block_diagram&#39;</span><span class="p">,</span>
 <a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>    <span class="s1">&#39;cypher&#39;</span><span class="p">,</span>
@@ -10871,23 +10823,25 @@ migrated.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>POST /programs/validate
 <a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>--&gt; { &quot;valid&quot;: true }
 </code></pre></div>
-<h3 id="84-storage">8.4 Storage</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>POST /query-definitions
+<h3 id="84-storage-notarize">8.4 Storage (Notarize)</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>POST /programs
 <a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>{
 <a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>  &quot;name&quot;: &quot;Organizational Patterns&quot;,
-<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>  &quot;definition_type&quot;: &quot;program&quot;,
-<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a>  &quot;definition&quot;: { ... the GraphProgram above ... }
-<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>}
-<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a>--&gt; { &quot;id&quot;: 42, &quot;name&quot;: &quot;Organizational Patterns&quot;, ... }
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>  &quot;program&quot;: { ... the GraphProgram above ... }
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a>}
+<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>--&gt; { &quot;id&quot;: 42, &quot;name&quot;: &quot;Organizational Patterns&quot;, &quot;program&quot;: {...}, &quot;valid&quot;: true, ... }
 </code></pre></div>
+<p>This single call validates the AST and stores it as a <code>program</code>-type
+query definition. If validation fails it returns HTTP 400 with the
+structured <code>ValidationResult</code> and stores nothing.</p>
 <h3 id="85-retrieval-cli">8.5 Retrieval (CLI)</h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>kg<span class="w"> </span>query-def<span class="w"> </span>show<span class="w"> </span><span class="m">42</span>
 </code></pre></div>
 <p>Displays the stored program definition.</p>
 <h3 id="86-execution-agent-via-mcp">8.6 Execution (Agent via MCP)</h3>
 <p>An agent loads and executes the stored program with a parameter override:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>POST /programs/42/execute
-<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>{ &quot;params&quot;: { &quot;concept_name&quot;: &quot;governance&quot; } }
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>POST /programs/execute
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>{ &quot;program_id&quot;: 42, &quot;params&quot;: { &quot;concept_name&quot;: &quot;governance&quot; } }
 </code></pre></div>
 <p>The API returns the final W (<code>WorkingGraph</code> containing <code>RawNode[]</code> and
 <code>RawLink[]</code>) and a step log showing how many nodes and links each statement

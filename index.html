@@ -4420,62 +4420,6 @@
   
   
     <li class="md-nav__item">
-      <a href="reference/mcp/tools/ingest-directory/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-directory
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="reference/mcp/tools/ingest-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-file
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="reference/mcp/tools/ingest/" class="md-nav__link">
         
   
@@ -4484,34 +4428,6 @@
     
   
     ingest
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="reference/mcp/tools/inspect-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    inspect-file
   
 
     
@@ -10126,18 +10042,20 @@
 <h3 id="manual"><code>manual/</code></h3>
 <p>User manual organized into numbered sections for reading order.</p>
 <ul>
-<li><strong>01-getting-started/</strong> - Quickstart, CLI usage, ingestion basics</li>
+<li><strong>00-introduction/</strong> - What and why</li>
+<li><strong>01-getting-started/</strong> - CLI usage, ingestion basics</li>
 <li><strong>02-configuration/</strong> - AI providers, extraction, embeddings</li>
 <li><strong>03-integration/</strong> - MCP setup, vocabulary management</li>
-<li><strong>04-security-and-access/</strong> - Authentication, RBAC, security</li>
+<li><strong>04-security-and-access/</strong> - Authentication, RBAC, security, password recovery</li>
 <li><strong>05-maintenance/</strong> - Backup/restore, migrations</li>
 <li><strong>06-reference/</strong> - Schema, concepts, examples, query patterns</li>
 </ul>
-<p>See <code>manual/README.md</code> for detailed navigation.</p>
+<p>See <code>manual/README.md</code> for detailed navigation. Platform install/upgrade lives
+in <code>operating/</code>, not in <code>manual/</code>.</p>
 <h3 id="architecture"><code>architecture/</code></h3>
 <p>Architecture decisions and design documents.</p>
 <ul>
-<li><strong>INDEX.md</strong> - ADR index (96 decisions)</li>
+<li><strong>INDEX.md</strong> - ADR index (107 decisions)</li>
 <li><strong>ADR-###-*.md</strong> - Individual architecture decision records (organized in subdirectories)</li>
 </ul>
 <p>Key ADRs for understanding the system:

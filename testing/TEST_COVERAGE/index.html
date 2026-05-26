@@ -4229,62 +4229,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/ingest-directory/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-directory
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/ingest-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-file
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../reference/mcp/tools/ingest/" class="md-nav__link">
         
   
@@ -4293,34 +4237,6 @@
     
   
     ingest
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/inspect-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    inspect-file
   
 
     
@@ -10088,10 +10004,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#python-tests" class="md-nav__link">
+  <a href="#python-tests-run-inside-kg-api-dev-container" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Python Tests
+        Python Tests (run inside kg-api-dev container)
       
     </span>
   </a>
@@ -10664,10 +10580,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#python-tests" class="md-nav__link">
+  <a href="#python-tests-run-inside-kg-api-dev-container" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Python Tests
+        Python Tests (run inside kg-api-dev container)
       
     </span>
   </a>
@@ -10923,39 +10839,55 @@
 <h2 id="current-testing-stack">Current Testing Stack</h2>
 <h3 id="pythonfastapi-backend">Python/FastAPI Backend</h3>
 <p><strong>Framework:</strong> pytest 8.0+ with pytest-asyncio, httpx, pytest-cov
-<strong>Test Location:</strong> <code>tests/</code>
+<strong>Test Location:</strong> <code>tests/</code> (with <code>tests/api/</code>, <code>tests/unit/</code>, <code>tests/security/</code>, <code>tests/manual/</code>).
+Root-level <code>tests/test_*.py</code> files cover library/services unit tests (chunker, vocabulary,
+synonym detector, query facade, pruning, clustering, etc.).
 <strong>Configuration:</strong> <code>pytest.ini</code></p>
 <p><strong>Key Features:</strong>
-- Mock AI provider (no API keys needed)
-- In-memory job queue for fast tests
-- Test markers: <code>smoke</code>, <code>integration</code>, <code>api</code>
-- Coverage reporting (HTML + terminal)</p>
-<p><strong>Run Tests:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nb">source</span><span class="w"> </span>venv/bin/activate
+- Mock AI provider (no API keys needed) — <code>AI_PROVIDER=mock</code> set in <code>pytest.ini</code>
+- Test markers: <code>unit</code>, <code>smoke</code>, <code>integration</code>, <code>api</code>, <code>slow</code> (registered in <code>pytest.ini</code>).
+  <code>security</code> is registered dynamically in <code>tests/conftest.py::pytest_configure</code>.
+- Auto-marking based on test location (see <code>tests/conftest.py::pytest_collection_modifyitems</code>)
+- Coverage reporting (HTML + terminal) against <code>api/app</code>
+- <code>tests/manual/</code> ignored during automated collection (<code>pytest_ignore_collect</code> + <code>norecursedirs</code>)</p>
+<p><strong>Run Tests (canonical — inside container):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Platform must be running: ./operator.sh start</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="c1"># All tests</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>pytest
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="c1"># By category</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>pytest<span class="w"> </span>-m<span class="w"> </span>smoke<span class="w">          </span><span class="c1"># Fast, no database (16 tests)</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>pytest<span class="w"> </span>-m<span class="w"> </span>integration<span class="w">    </span><span class="c1"># Full workflows (35 tests)</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>pytest<span class="w"> </span>-m<span class="w"> </span>api<span class="w">           </span><span class="c1"># API endpoints (all tests)</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="c1"># With coverage</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>pytest<span class="w"> </span>--cov<span class="o">=</span>src<span class="w"> </span>--cov-report<span class="o">=</span>html
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>open<span class="w"> </span>htmlcov/index.html
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="c1"># Convenience wrapper (auto-detects kg-api-dev / kg-api container)</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>./tests/run.sh<span class="w">                           </span><span class="c1"># Full suite</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>./tests/run.sh<span class="w"> </span>tests/api/<span class="w">                </span><span class="c1"># Just API tests</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>./tests/run.sh<span class="w"> </span>tests/unit/<span class="w">               </span><span class="c1"># Just unit tests</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>./tests/run.sh<span class="w"> </span>-k<span class="w"> </span><span class="s2">&quot;concept&quot;</span><span class="w">              </span><span class="c1"># Pattern match</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>./tests/run.sh<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;not slow&quot;</span><span class="w">             </span><span class="c1"># Skip slow tests</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="c1"># Equivalent direct invocations (per CLAUDE.md)</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>kg-api-dev<span class="w"> </span>pytest<span class="w"> </span>tests/<span class="w"> </span>-x<span class="w"> </span>-q<span class="w">          </span><span class="c1"># full suite</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>kg-api-dev<span class="w"> </span>pytest<span class="w"> </span>tests/unit/<span class="w"> </span>-x<span class="w"> </span>-q<span class="w">     </span><span class="c1"># unit tests only</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>kg-api-dev<span class="w"> </span>pytest<span class="w"> </span>tests/api/<span class="w"> </span>-x<span class="w"> </span>-q<span class="w">      </span><span class="c1"># route tests only</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="c1"># By category</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>./tests/run.sh<span class="w"> </span>-m<span class="w"> </span>smoke<span class="w">           </span><span class="c1"># Quick sanity checks</span>
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>./tests/run.sh<span class="w"> </span>-m<span class="w"> </span>integration<span class="w">     </span><span class="c1"># Integration (require DB)</span>
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>./tests/run.sh<span class="w"> </span>-m<span class="w"> </span>api<span class="w">             </span><span class="c1"># All API endpoint tests</span>
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>./tests/run.sh<span class="w"> </span>-m<span class="w"> </span>unit<span class="w">            </span><span class="c1"># Unit tests</span>
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>./tests/run.sh<span class="w"> </span>-m<span class="w"> </span>security<span class="w">        </span><span class="c1"># Auth/security tests</span>
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="c1"># Coverage (configured in pytest.ini: --cov=api/app)</span>
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>./tests/run.sh<span class="w"> </span>--cov-report<span class="o">=</span>html
 </code></pre></div></p>
 <h3 id="typescriptjest-cli-client">TypeScript/Jest CLI Client</h3>
-<p><strong>Framework:</strong> Jest 29.7+ with ts-jest
-<strong>Test Location:</strong> <code>client/tests/</code>
-<strong>Configuration:</strong> <code>client/jest.config.js</code></p>
+<p><strong>Framework:</strong> Jest 29.x with ts-jest
+<strong>Test Location:</strong> <code>cli/tests/</code> (sub-dirs: <code>cli/</code>, <code>lib/</code>, <code>mcp/</code>, plus <code>helpers/</code>)
+<strong>Configuration:</strong> <code>cli/jest.config.js</code>
+<strong>Test roots:</strong> <code>&lt;rootDir&gt;/src</code> and <code>&lt;rootDir&gt;/tests</code></p>
 <p><strong>Key Features:</strong>
-- Auto-starts API server for tests
+- Auto-starts API server for tests (<code>globalSetup.ts</code>/<code>globalTeardown.ts</code>)
 - Real integration (no mocks)
 - Global setup/teardown
-- TypeScript support</p>
+- TypeScript support (<code>ts-jest</code> preset)
+- <code>testTimeout: 30000</code></p>
 <p><strong>Run Tests:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nb">cd</span><span class="w"> </span>client
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nb">cd</span><span class="w"> </span>cli
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="c1"># Build first (required)</span>
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>npm<span class="w"> </span>run<span class="w"> </span>build
@@ -11167,7 +11099,8 @@
 - ✅ ADR-014 approval workflow validated</p>
 <hr />
 <h3 id="23-graph-queries-pending-requires-database">⏳ 2.3 Graph Queries (Pending - Requires Database)</h3>
-<p><strong>Status:</strong> PLACEHOLDER TESTS</p>
+<p><strong>Status:</strong> PLACEHOLDER TESTS — no <code>tests/api/test_queries.py</code> exists yet.
+Related current files: <code>tests/api/test_concepts.py</code>, <code>tests/api/test_edges.py</code>.</p>
 <p><strong>Future Test:</strong> Semantic Search
 <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1"># tests/api/test_queries.py (to be implemented)</span>
 <a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">integration</span>
@@ -11223,7 +11156,8 @@
 - Graph traversal via AGE Cypher compatibility</p>
 <hr />
 <h3 id="24-database-operations-pending">⏳ 2.4 Database Operations (Pending)</h3>
-<p><strong>Status:</strong> PLACEHOLDER TESTS</p>
+<p><strong>Status:</strong> PLACEHOLDER TESTS — no <code>tests/api/test_database.py</code> exists.
+<code>tests/api/test_database_counters.py</code> exists but is currently empty (no test functions).</p>
 <p><strong>Future Test:</strong> Database Statistics
 <div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="c1"># tests/api/test_database.py (to be implemented)</span>
 <a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">integration</span>
@@ -11271,7 +11205,7 @@
 <h3 id="31-health-command">✅ 3.1 Health Command</h3>
 <p><strong>Status:</strong> IMPLEMENTED (2 tests passing)</p>
 <p><strong>Test:</strong> CLI Health Check
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="c1">// client/tests/cli/health.test.ts</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="c1">// cli/tests/cli/health.test.ts</span>
 <a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="nx">describe</span><span class="p">(</span><span class="s1">&#39;kg health&#39;</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
 <a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="w">  </span><span class="nx">it</span><span class="p">(</span><span class="s1">&#39;should return healthy status&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
 <a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">stdout</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">execAsync</span><span class="p">(</span><span class="sb">`</span><span class="si">${</span><span class="nx">KG_CLI</span><span class="si">}</span><span class="sb"> health`</span><span class="p">);</span>
@@ -11358,15 +11292,15 @@
 - Vector search via PostgreSQL extensions (pgvector)
 - Relationship syntax slightly different</p>
 <p><strong>Test Database Setup:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="c1"># Start PostgreSQL + AGE via Docker</span>
-<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>docker-compose<span class="w"> </span>up<span class="w"> </span>-d
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="c1"># Start the platform (PostgreSQL + AGE + API + Web + Garage)</span>
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>./operator.sh<span class="w"> </span>start
 <a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>
 <a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="c1"># Verify AGE extension</span>
 <a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-it<span class="w"> </span>knowledge-graph-postgres<span class="w"> </span>psql<span class="w"> </span>-U<span class="w"> </span>admin<span class="w"> </span>-d<span class="w"> </span>knowledge_graph<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a><span class="w">  </span>-c<span class="w"> </span><span class="s2">&quot;SELECT extname FROM pg_extension WHERE extname = &#39;age&#39;;&quot;</span>
 <a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a>
-<a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a><span class="c1"># Run integration tests</span>
-<a id="__codelineno-22-9" name="__codelineno-22-9" href="#__codelineno-22-9"></a>pytest<span class="w"> </span>-m<span class="w"> </span>integration
+<a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a><span class="c1"># Run integration tests inside the API container</span>
+<a id="__codelineno-22-9" name="__codelineno-22-9" href="#__codelineno-22-9"></a>./tests/run.sh<span class="w"> </span>-m<span class="w"> </span>integration
 </code></pre></div></p>
 <p><strong>Graph Schema (Unchanged from Neo4j):</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="err">--</span><span class="w"> </span><span class="n">Nodes</span>
@@ -11383,17 +11317,30 @@
 <hr />
 <h2 id="6-test-coverage-summary">6. Test Coverage Summary</h2>
 <h3 id="current-status">Current Status</h3>
-<p><strong>Python/FastAPI:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>Total Tests: 51
-<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>- Smoke: 16 (passing) ✅
-<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a>- Integration: 35 (passing) ✅
-<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a>Code Coverage: 28-31% (functional coverage complete)
-</code></pre></div></p>
-<p><strong>TypeScript/Jest:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>Total Tests: 2
-<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>- CLI health: 2 (passing) ✅
-<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a>Code Coverage: TBD
-</code></pre></div></p>
+<p><strong>Python/pytest:</strong> The suite has grown substantially since the original 51-test snapshot.
+A recent collection count (excluding <code>tests/manual/</code>) puts total test functions at well over
+a thousand, spread across:</p>
+<ul>
+<li><code>tests/api/</code> — ~22 files covering health, root, jobs, ingest, ontology, ontology_routes,
+  concepts, edges, batch, programs, providers_routes, polarity_axis, backup (streaming +
+  integrity), database_counters, auth, auth_utils, auth_dependencies, oauth_utils,
+  endpoint_security, job_permissions</li>
+<li><code>tests/unit/</code> — <code>test_cypher_guard.py</code>, <code>test_program_validation.py</code>,
+  <code>test_program_executor.py</code>, <code>test_program_operators.py</code>, plus subtrees <code>lib/</code>,
+  <code>services/</code>, <code>workers/</code></li>
+<li><code>tests/security/</code> — <code>test_api_auth_audit.py</code>, <code>test_auth_patterns.py</code></li>
+<li><code>tests/test_*.py</code> (root) — <code>test_mock_provider.py</code>, <code>test_aggressiveness_curve.py</code>,
+  <code>test_category_classifier.py</code>, <code>test_clustering.py</code>, <code>test_datetime_utils.py</code>,
+  <code>test_hash_utils.py</code>, <code>test_pruning_strategies.py</code>, <code>test_query_facade.py</code>,
+  <code>test_query_linter.py</code>, <code>test_source_chunker.py</code>, <code>test_synonym_detector.py</code>,
+  <code>test_vocabulary_manager_integration.py</code>, <code>test_vocabulary_scoring.py</code></li>
+</ul>
+<p>Code coverage: configured against <code>api/app</code> in <code>pytest.ini</code>; current numbers vary by
+environment (database fixtures impact integration coverage).</p>
+<p><strong>TypeScript/Jest (<code>cli/tests/</code>):</strong>
+- <code>cli/health.test.ts</code> (2 tests)
+- <code>lib/mcp-allowlist.test.ts</code> (~36 cases)
+- <code>mcp/graph-operations.test.ts</code> (~8 cases)</p>
 <h3 id="functional-coverage-by-feature">Functional Coverage by Feature</h3>
 <table>
 <thead>
@@ -11406,207 +11353,246 @@
 <tbody>
 <tr>
 <td>API Health</td>
-<td>4 Python + 2 TS</td>
-<td>✅ Complete</td>
+<td><code>tests/api/test_health.py</code> (+ CLI <code>health.test.ts</code>)</td>
+<td>Implemented</td>
 </tr>
 <tr>
 <td>API Status</td>
-<td>5 Python</td>
-<td>✅ Complete</td>
+<td><code>tests/api/test_root.py</code></td>
+<td>Implemented</td>
 </tr>
 <tr>
 <td>Job Management</td>
-<td>13 Python</td>
-<td>✅ Complete</td>
+<td><code>tests/api/test_jobs.py</code>, <code>test_job_permissions.py</code></td>
+<td>Implemented</td>
 </tr>
 <tr>
 <td>Ingestion</td>
-<td>14 Python</td>
-<td>✅ Complete</td>
+<td><code>tests/api/test_ingest.py</code></td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Auth / OAuth</td>
+<td><code>tests/api/test_auth*.py</code>, <code>test_oauth_utils.py</code>, <code>test_endpoint_security.py</code></td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Backup</td>
+<td><code>tests/api/test_backup_streaming.py</code>, <code>test_backup_integrity.py</code></td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Polarity axis</td>
+<td><code>tests/api/test_polarity_axis.py</code></td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Programs (ADR-089)</td>
+<td><code>tests/api/test_programs.py</code> + <code>tests/unit/test_program_*.py</code></td>
+<td>Implemented (api tests file currently empty)</td>
+</tr>
+<tr>
+<td>Concepts / Edges (ADR-089)</td>
+<td><code>tests/api/test_concepts.py</code>, <code>test_edges.py</code></td>
+<td>Files exist, currently empty placeholders</td>
 </tr>
 <tr>
 <td>Mock AI Provider</td>
-<td>Comprehensive</td>
-<td>✅ Complete</td>
+<td><code>tests/test_mock_provider.py</code></td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Vocabulary</td>
+<td><code>tests/test_vocabulary_*.py</code>, <code>test_synonym_detector.py</code></td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Pruning / Clustering</td>
+<td><code>tests/test_pruning_strategies.py</code>, <code>test_clustering.py</code></td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Query facade / linter</td>
+<td><code>tests/test_query_facade.py</code>, <code>test_query_linter.py</code></td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Ontology routes</td>
+<td><code>tests/api/test_ontology.py</code> (DB-skipped), <code>test_ontology_routes.py</code> (empty)</td>
+<td>Partial</td>
 </tr>
 <tr>
 <td>Semantic Search</td>
-<td>Placeholder</td>
-<td>⏳ Needs DB</td>
-</tr>
-<tr>
-<td>Concept Details</td>
-<td>Placeholder</td>
-<td>⏳ Needs DB</td>
-</tr>
-<tr>
-<td>Graph Traversal</td>
-<td>Placeholder</td>
-<td>⏳ Needs DB</td>
-</tr>
-<tr>
-<td>Path Finding</td>
-<td>Placeholder</td>
-<td>⏳ Needs DB</td>
-</tr>
-<tr>
-<td>Ontology Mgmt</td>
-<td>Placeholder</td>
-<td>⏳ Needs DB</td>
+<td>—</td>
+<td>Pending (no <code>test_queries.py</code> yet)</td>
 </tr>
 <tr>
 <td>Database Stats</td>
-<td>Placeholder</td>
-<td>⏳ Needs DB</td>
+<td>—</td>
+<td>Pending (<code>test_database_counters.py</code> empty)</td>
 </tr>
 </tbody>
 </table>
 <h3 id="coverage-metrics-python">Coverage Metrics (Python)</h3>
-<p><strong>High Coverage (Tested Modules):</strong>
-- <code>api/app/routes/jobs.py</code> - 95%
-- <code>api/app/services/job_analysis.py</code> - 92%
-- <code>api/app/main.py</code> - 86%
-- <code>api/app/routes/ingest.py</code> - 85%
-- <code>api/app/services/job_queue.py</code> - 82%</p>
-<p><strong>Low Coverage (Needs Database):</strong>
-- <code>api/app/routes/queries.py</code> - 18%
-- <code>api/app/routes/database.py</code> - 17%
-- <code>api/app/routes/ontology.py</code> - 21%
-- <code>api/app/lib/age_client.py</code> - 14%</p>
-<p><strong>Overall:</strong> 28-31% (expected given database-dependent features not yet tested)</p>
+<p>Coverage numbers below are historical and have not been re-measured. Run the suite
+in-container to get current metrics:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>./tests/run.sh<span class="w"> </span>--cov<span class="o">=</span>api/app<span class="w"> </span>--cov-report<span class="o">=</span>term-missing
+</code></pre></div>
+<p>Older snapshot (pre-OAuth / pre-ADR-089 expansion):
+- High coverage: <code>routes/jobs.py</code> (~95%), <code>services/job_analysis.py</code> (~92%),
+  <code>main.py</code> (~86%), <code>routes/ingest.py</code> (~85%), <code>services/job_queue.py</code> (~82%)
+- Low coverage (DB-dependent): <code>routes/queries.py</code>, <code>routes/database.py</code>,
+  <code>routes/ontology.py</code>, <code>lib/age_client.py</code></p>
 <hr />
 <h2 id="7-test-organization">7. Test Organization</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>tests/                          # Python/pytest tests
-<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>├── conftest.py                 # Shared fixtures
-<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a>├── README.md                   # Testing guide
-<a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a>├── api/                        # API endpoint tests
-<a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a>│   ├── __init__.py
-<a id="__codelineno-26-6" name="__codelineno-26-6" href="#__codelineno-26-6"></a>│   ├── test_health.py          # 4 smoke tests ✅
-<a id="__codelineno-26-7" name="__codelineno-26-7" href="#__codelineno-26-7"></a>│   ├── test_root.py            # 5 smoke tests ✅
-<a id="__codelineno-26-8" name="__codelineno-26-8" href="#__codelineno-26-8"></a>│   ├── test_jobs.py            # 13 integration tests ✅
-<a id="__codelineno-26-9" name="__codelineno-26-9" href="#__codelineno-26-9"></a>│   ├── test_ingest.py          # 14 integration tests ✅
-<a id="__codelineno-26-10" name="__codelineno-26-10" href="#__codelineno-26-10"></a>│   └── test_ontology.py        # Placeholders (skip)
-<a id="__codelineno-26-11" name="__codelineno-26-11" href="#__codelineno-26-11"></a>└── test_mock_provider.py       # Mock provider tests ✅
-<a id="__codelineno-26-12" name="__codelineno-26-12" href="#__codelineno-26-12"></a>
-<a id="__codelineno-26-13" name="__codelineno-26-13" href="#__codelineno-26-13"></a>client/tests/                   # TypeScript/Jest tests
-<a id="__codelineno-26-14" name="__codelineno-26-14" href="#__codelineno-26-14"></a>├── setup.ts                    # Global configuration
-<a id="__codelineno-26-15" name="__codelineno-26-15" href="#__codelineno-26-15"></a>├── globalSetup.ts              # Start API server
-<a id="__codelineno-26-16" name="__codelineno-26-16" href="#__codelineno-26-16"></a>├── globalTeardown.ts           # Stop API server
-<a id="__codelineno-26-17" name="__codelineno-26-17" href="#__codelineno-26-17"></a>├── helpers/
-<a id="__codelineno-26-18" name="__codelineno-26-18" href="#__codelineno-26-18"></a>│   └── api-server.ts           # Server management
-<a id="__codelineno-26-19" name="__codelineno-26-19" href="#__codelineno-26-19"></a>└── cli/
-<a id="__codelineno-26-20" name="__codelineno-26-20" href="#__codelineno-26-20"></a>    └── health.test.ts          # 2 tests ✅
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>tests/                          # Python/pytest tests
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>├── conftest.py                 # Shared fixtures + marker registration
+<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a>├── helpers.py                  # Shared test helpers
+<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a>├── run.sh                      # Container test runner (kg-api-dev/kg-api)
+<a id="__codelineno-25-5" name="__codelineno-25-5" href="#__codelineno-25-5"></a>├── README.md                   # Testing guide
+<a id="__codelineno-25-6" name="__codelineno-25-6" href="#__codelineno-25-6"></a>├── api/                        # API endpoint tests (~22 files)
+<a id="__codelineno-25-7" name="__codelineno-25-7" href="#__codelineno-25-7"></a>│   ├── test_health.py, test_root.py, test_jobs.py, test_ingest.py
+<a id="__codelineno-25-8" name="__codelineno-25-8" href="#__codelineno-25-8"></a>│   ├── test_ontology.py, test_ontology_routes.py
+<a id="__codelineno-25-9" name="__codelineno-25-9" href="#__codelineno-25-9"></a>│   ├── test_auth.py, test_auth_utils.py, test_auth_dependencies.py
+<a id="__codelineno-25-10" name="__codelineno-25-10" href="#__codelineno-25-10"></a>│   ├── test_oauth_utils.py, test_endpoint_security.py, test_job_permissions.py
+<a id="__codelineno-25-11" name="__codelineno-25-11" href="#__codelineno-25-11"></a>│   ├── test_backup_streaming.py, test_backup_integrity.py
+<a id="__codelineno-25-12" name="__codelineno-25-12" href="#__codelineno-25-12"></a>│   ├── test_polarity_axis.py, test_programs.py, test_concepts.py,
+<a id="__codelineno-25-13" name="__codelineno-25-13" href="#__codelineno-25-13"></a>│   │   test_edges.py, test_batch.py, test_database_counters.py,
+<a id="__codelineno-25-14" name="__codelineno-25-14" href="#__codelineno-25-14"></a>│   │   test_providers_routes.py
+<a id="__codelineno-25-15" name="__codelineno-25-15" href="#__codelineno-25-15"></a>├── unit/                       # Unit tests (fast, isolated)
+<a id="__codelineno-25-16" name="__codelineno-25-16" href="#__codelineno-25-16"></a>│   ├── test_cypher_guard.py, test_program_*.py
+<a id="__codelineno-25-17" name="__codelineno-25-17" href="#__codelineno-25-17"></a>│   └── lib/, services/, workers/
+<a id="__codelineno-25-18" name="__codelineno-25-18" href="#__codelineno-25-18"></a>├── security/                   # Auth/security tests
+<a id="__codelineno-25-19" name="__codelineno-25-19" href="#__codelineno-25-19"></a>│   ├── test_api_auth_audit.py, test_auth_patterns.py
+<a id="__codelineno-25-20" name="__codelineno-25-20" href="#__codelineno-25-20"></a>├── manual/                     # Excluded from automated collection
+<a id="__codelineno-25-21" name="__codelineno-25-21" href="#__codelineno-25-21"></a>└── test_*.py                   # Root-level lib/service unit tests
+<a id="__codelineno-25-22" name="__codelineno-25-22" href="#__codelineno-25-22"></a>    (mock_provider, vocabulary_*, synonym_detector, pruning_strategies,
+<a id="__codelineno-25-23" name="__codelineno-25-23" href="#__codelineno-25-23"></a>     clustering, query_facade, query_linter, source_chunker,
+<a id="__codelineno-25-24" name="__codelineno-25-24" href="#__codelineno-25-24"></a>     aggressiveness_curve, category_classifier, datetime_utils, hash_utils)
+<a id="__codelineno-25-25" name="__codelineno-25-25" href="#__codelineno-25-25"></a>
+<a id="__codelineno-25-26" name="__codelineno-25-26" href="#__codelineno-25-26"></a>cli/tests/                      # TypeScript/Jest tests
+<a id="__codelineno-25-27" name="__codelineno-25-27" href="#__codelineno-25-27"></a>├── setup.ts                    # Global configuration
+<a id="__codelineno-25-28" name="__codelineno-25-28" href="#__codelineno-25-28"></a>├── globalSetup.ts              # Start API server
+<a id="__codelineno-25-29" name="__codelineno-25-29" href="#__codelineno-25-29"></a>├── globalTeardown.ts           # Stop API server
+<a id="__codelineno-25-30" name="__codelineno-25-30" href="#__codelineno-25-30"></a>├── helpers/                    # Server management helpers
+<a id="__codelineno-25-31" name="__codelineno-25-31" href="#__codelineno-25-31"></a>├── cli/
+<a id="__codelineno-25-32" name="__codelineno-25-32" href="#__codelineno-25-32"></a>│   └── health.test.ts
+<a id="__codelineno-25-33" name="__codelineno-25-33" href="#__codelineno-25-33"></a>├── lib/
+<a id="__codelineno-25-34" name="__codelineno-25-34" href="#__codelineno-25-34"></a>│   └── mcp-allowlist.test.ts
+<a id="__codelineno-25-35" name="__codelineno-25-35" href="#__codelineno-25-35"></a>└── mcp/
+<a id="__codelineno-25-36" name="__codelineno-25-36" href="#__codelineno-25-36"></a>    └── graph-operations.test.ts
 </code></pre></div>
 <hr />
 <h2 id="8-running-tests">8. Running Tests</h2>
-<h3 id="python-tests">Python Tests</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a><span class="c1"># From project root</span>
-<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a><span class="nb">source</span><span class="w"> </span>venv/bin/activate
-<a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a>
-<a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a><span class="c1"># All tests</span>
-<a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a>pytest<span class="w"> </span>-v
-<a id="__codelineno-27-6" name="__codelineno-27-6" href="#__codelineno-27-6"></a>
-<a id="__codelineno-27-7" name="__codelineno-27-7" href="#__codelineno-27-7"></a><span class="c1"># By category</span>
-<a id="__codelineno-27-8" name="__codelineno-27-8" href="#__codelineno-27-8"></a>pytest<span class="w"> </span>-m<span class="w"> </span>smoke<span class="w">          </span><span class="c1"># Fast tests (16 passing)</span>
-<a id="__codelineno-27-9" name="__codelineno-27-9" href="#__codelineno-27-9"></a>pytest<span class="w"> </span>-m<span class="w"> </span>integration<span class="w">    </span><span class="c1"># Full workflows (35 passing)</span>
-<a id="__codelineno-27-10" name="__codelineno-27-10" href="#__codelineno-27-10"></a>pytest<span class="w"> </span>-m<span class="w"> </span>api<span class="w">           </span><span class="c1"># All API tests (51 passing)</span>
-<a id="__codelineno-27-11" name="__codelineno-27-11" href="#__codelineno-27-11"></a>
-<a id="__codelineno-27-12" name="__codelineno-27-12" href="#__codelineno-27-12"></a><span class="c1"># By file</span>
-<a id="__codelineno-27-13" name="__codelineno-27-13" href="#__codelineno-27-13"></a>pytest<span class="w"> </span>tests/api/test_jobs.py<span class="w"> </span>-v
-<a id="__codelineno-27-14" name="__codelineno-27-14" href="#__codelineno-27-14"></a>pytest<span class="w"> </span>tests/api/test_ingest.py<span class="w"> </span>-v
-<a id="__codelineno-27-15" name="__codelineno-27-15" href="#__codelineno-27-15"></a>
-<a id="__codelineno-27-16" name="__codelineno-27-16" href="#__codelineno-27-16"></a><span class="c1"># With coverage</span>
-<a id="__codelineno-27-17" name="__codelineno-27-17" href="#__codelineno-27-17"></a>pytest<span class="w"> </span>--cov<span class="o">=</span>src<span class="w"> </span>--cov-report<span class="o">=</span>html
-<a id="__codelineno-27-18" name="__codelineno-27-18" href="#__codelineno-27-18"></a>open<span class="w"> </span>htmlcov/index.html
+<h3 id="python-tests-run-inside-kg-api-dev-container">Python Tests (run inside <code>kg-api-dev</code> container)</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="c1"># Platform must be running in dev mode first</span>
+<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>./operator.sh<span class="w"> </span>start
+<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a>
+<a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a><span class="c1"># Via wrapper (auto-detects kg-api-dev / kg-api)</span>
+<a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a>./tests/run.sh<span class="w">                           </span><span class="c1"># All tests</span>
+<a id="__codelineno-26-6" name="__codelineno-26-6" href="#__codelineno-26-6"></a>./tests/run.sh<span class="w"> </span>tests/api/<span class="w">                </span><span class="c1"># API tests only</span>
+<a id="__codelineno-26-7" name="__codelineno-26-7" href="#__codelineno-26-7"></a>./tests/run.sh<span class="w"> </span>tests/api/test_jobs.py<span class="w">    </span><span class="c1"># Single file</span>
+<a id="__codelineno-26-8" name="__codelineno-26-8" href="#__codelineno-26-8"></a>./tests/run.sh<span class="w"> </span>-k<span class="w"> </span><span class="s2">&quot;concept&quot;</span><span class="w">              </span><span class="c1"># Pattern match</span>
+<a id="__codelineno-26-9" name="__codelineno-26-9" href="#__codelineno-26-9"></a>./tests/run.sh<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;not slow&quot;</span><span class="w">             </span><span class="c1"># Skip slow tests</span>
+<a id="__codelineno-26-10" name="__codelineno-26-10" href="#__codelineno-26-10"></a>./tests/run.sh<span class="w"> </span>-m<span class="w"> </span>smoke<span class="w">                  </span><span class="c1"># Only smoke tests</span>
+<a id="__codelineno-26-11" name="__codelineno-26-11" href="#__codelineno-26-11"></a>
+<a id="__codelineno-26-12" name="__codelineno-26-12" href="#__codelineno-26-12"></a><span class="c1"># Equivalent direct docker exec (per CLAUDE.md)</span>
+<a id="__codelineno-26-13" name="__codelineno-26-13" href="#__codelineno-26-13"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>kg-api-dev<span class="w"> </span>pytest<span class="w"> </span>tests/<span class="w"> </span>-x<span class="w"> </span>-q
+<a id="__codelineno-26-14" name="__codelineno-26-14" href="#__codelineno-26-14"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>kg-api-dev<span class="w"> </span>pytest<span class="w"> </span>tests/unit/<span class="w"> </span>-x<span class="w"> </span>-q
+<a id="__codelineno-26-15" name="__codelineno-26-15" href="#__codelineno-26-15"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>kg-api-dev<span class="w"> </span>pytest<span class="w"> </span>tests/api/<span class="w"> </span>-x<span class="w"> </span>-q
+<a id="__codelineno-26-16" name="__codelineno-26-16" href="#__codelineno-26-16"></a>
+<a id="__codelineno-26-17" name="__codelineno-26-17" href="#__codelineno-26-17"></a><span class="c1"># Coverage (configured against api/app in pytest.ini)</span>
+<a id="__codelineno-26-18" name="__codelineno-26-18" href="#__codelineno-26-18"></a>./tests/run.sh<span class="w"> </span>--cov-report<span class="o">=</span>html
+<a id="__codelineno-26-19" name="__codelineno-26-19" href="#__codelineno-26-19"></a><span class="c1"># HTML report: htmlcov/index.html inside the container</span>
 </code></pre></div>
 <h3 id="typescript-tests">TypeScript Tests</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a><span class="c1"># From client/</span>
-<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>npm<span class="w"> </span>run<span class="w"> </span>build<span class="w">            </span><span class="c1"># Required before tests</span>
-<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a>
-<a id="__codelineno-28-4" name="__codelineno-28-4" href="#__codelineno-28-4"></a><span class="c1"># All tests</span>
-<a id="__codelineno-28-5" name="__codelineno-28-5" href="#__codelineno-28-5"></a>npm<span class="w"> </span><span class="nb">test</span>
-<a id="__codelineno-28-6" name="__codelineno-28-6" href="#__codelineno-28-6"></a>
-<a id="__codelineno-28-7" name="__codelineno-28-7" href="#__codelineno-28-7"></a><span class="c1"># Specific pattern</span>
-<a id="__codelineno-28-8" name="__codelineno-28-8" href="#__codelineno-28-8"></a>npm<span class="w"> </span><span class="nb">test</span><span class="w"> </span>--<span class="w"> </span>--testPathPattern<span class="o">=</span>health
-<a id="__codelineno-28-9" name="__codelineno-28-9" href="#__codelineno-28-9"></a>
-<a id="__codelineno-28-10" name="__codelineno-28-10" href="#__codelineno-28-10"></a><span class="c1"># With coverage</span>
-<a id="__codelineno-28-11" name="__codelineno-28-11" href="#__codelineno-28-11"></a>npm<span class="w"> </span>run<span class="w"> </span>test:coverage
-<a id="__codelineno-28-12" name="__codelineno-28-12" href="#__codelineno-28-12"></a>open<span class="w"> </span>coverage/lcov-report/index.html
-<a id="__codelineno-28-13" name="__codelineno-28-13" href="#__codelineno-28-13"></a>
-<a id="__codelineno-28-14" name="__codelineno-28-14" href="#__codelineno-28-14"></a><span class="c1"># Watch mode (dev)</span>
-<a id="__codelineno-28-15" name="__codelineno-28-15" href="#__codelineno-28-15"></a>npm<span class="w"> </span>run<span class="w"> </span>test:watch
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a><span class="c1"># From cli/</span>
+<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>npm<span class="w"> </span>run<span class="w"> </span>build<span class="w">            </span><span class="c1"># Required before tests</span>
+<a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a>
+<a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a><span class="c1"># All tests</span>
+<a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a>npm<span class="w"> </span><span class="nb">test</span>
+<a id="__codelineno-27-6" name="__codelineno-27-6" href="#__codelineno-27-6"></a>
+<a id="__codelineno-27-7" name="__codelineno-27-7" href="#__codelineno-27-7"></a><span class="c1"># Specific pattern</span>
+<a id="__codelineno-27-8" name="__codelineno-27-8" href="#__codelineno-27-8"></a>npm<span class="w"> </span><span class="nb">test</span><span class="w"> </span>--<span class="w"> </span>--testPathPattern<span class="o">=</span>health
+<a id="__codelineno-27-9" name="__codelineno-27-9" href="#__codelineno-27-9"></a>
+<a id="__codelineno-27-10" name="__codelineno-27-10" href="#__codelineno-27-10"></a><span class="c1"># With coverage</span>
+<a id="__codelineno-27-11" name="__codelineno-27-11" href="#__codelineno-27-11"></a>npm<span class="w"> </span>run<span class="w"> </span>test:coverage
+<a id="__codelineno-27-12" name="__codelineno-27-12" href="#__codelineno-27-12"></a>open<span class="w"> </span>coverage/lcov-report/index.html
+<a id="__codelineno-27-13" name="__codelineno-27-13" href="#__codelineno-27-13"></a>
+<a id="__codelineno-27-14" name="__codelineno-27-14" href="#__codelineno-27-14"></a><span class="c1"># Watch mode (dev)</span>
+<a id="__codelineno-27-15" name="__codelineno-27-15" href="#__codelineno-27-15"></a>npm<span class="w"> </span>run<span class="w"> </span>test:watch
 </code></pre></div>
 <hr />
 <h2 id="9-cicd-integration-future">9. CI/CD Integration (Future)</h2>
 <h3 id="github-actions-suggested">GitHub Actions (Suggested)</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Tests</span>
-<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a>
-<a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a><span class="nt">on</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">push</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">pull_request</span><span class="p p-Indicator">]</span>
-<a id="__codelineno-29-4" name="__codelineno-29-4" href="#__codelineno-29-4"></a>
-<a id="__codelineno-29-5" name="__codelineno-29-5" href="#__codelineno-29-5"></a><span class="nt">jobs</span><span class="p">:</span>
-<a id="__codelineno-29-6" name="__codelineno-29-6" href="#__codelineno-29-6"></a><span class="w">  </span><span class="nt">test-python</span><span class="p">:</span>
-<a id="__codelineno-29-7" name="__codelineno-29-7" href="#__codelineno-29-7"></a><span class="w">    </span><span class="nt">runs-on</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ubuntu-latest</span>
-<a id="__codelineno-29-8" name="__codelineno-29-8" href="#__codelineno-29-8"></a><span class="w">    </span><span class="nt">services</span><span class="p">:</span>
-<a id="__codelineno-29-9" name="__codelineno-29-9" href="#__codelineno-29-9"></a><span class="w">      </span><span class="nt">postgres</span><span class="p">:</span>
-<a id="__codelineno-29-10" name="__codelineno-29-10" href="#__codelineno-29-10"></a><span class="w">        </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">apache/age:PG16</span>
-<a id="__codelineno-29-11" name="__codelineno-29-11" href="#__codelineno-29-11"></a><span class="w">        </span><span class="nt">env</span><span class="p">:</span>
-<a id="__codelineno-29-12" name="__codelineno-29-12" href="#__codelineno-29-12"></a><span class="w">          </span><span class="nt">POSTGRES_DB</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">knowledge_graph_test</span>
-<a id="__codelineno-29-13" name="__codelineno-29-13" href="#__codelineno-29-13"></a><span class="w">          </span><span class="nt">POSTGRES_USER</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">test</span>
-<a id="__codelineno-29-14" name="__codelineno-29-14" href="#__codelineno-29-14"></a><span class="w">          </span><span class="nt">POSTGRES_PASSWORD</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">test</span>
-<a id="__codelineno-29-15" name="__codelineno-29-15" href="#__codelineno-29-15"></a><span class="w">        </span><span class="nt">ports</span><span class="p">:</span>
-<a id="__codelineno-29-16" name="__codelineno-29-16" href="#__codelineno-29-16"></a><span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5432:5432</span>
-<a id="__codelineno-29-17" name="__codelineno-29-17" href="#__codelineno-29-17"></a><span class="w">        </span><span class="nt">options</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">&gt;-</span>
-<a id="__codelineno-29-18" name="__codelineno-29-18" href="#__codelineno-29-18"></a><span class="w">          </span><span class="no">--health-cmd pg_isready</span>
-<a id="__codelineno-29-19" name="__codelineno-29-19" href="#__codelineno-29-19"></a><span class="w">          </span><span class="no">--health-interval 10s</span>
-<a id="__codelineno-29-20" name="__codelineno-29-20" href="#__codelineno-29-20"></a><span class="w">          </span><span class="no">--health-timeout 5s</span>
-<a id="__codelineno-29-21" name="__codelineno-29-21" href="#__codelineno-29-21"></a><span class="w">          </span><span class="no">--health-retries 5</span>
-<a id="__codelineno-29-22" name="__codelineno-29-22" href="#__codelineno-29-22"></a>
-<a id="__codelineno-29-23" name="__codelineno-29-23" href="#__codelineno-29-23"></a><span class="w">    </span><span class="nt">steps</span><span class="p">:</span>
-<a id="__codelineno-29-24" name="__codelineno-29-24" href="#__codelineno-29-24"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">actions/checkout@v3</span>
-<a id="__codelineno-29-25" name="__codelineno-29-25" href="#__codelineno-29-25"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">actions/setup-python@v4</span>
-<a id="__codelineno-29-26" name="__codelineno-29-26" href="#__codelineno-29-26"></a><span class="w">        </span><span class="nt">with</span><span class="p">:</span>
-<a id="__codelineno-29-27" name="__codelineno-29-27" href="#__codelineno-29-27"></a><span class="w">          </span><span class="nt">python-version</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;3.11&#39;</span>
-<a id="__codelineno-29-28" name="__codelineno-29-28" href="#__codelineno-29-28"></a>
-<a id="__codelineno-29-29" name="__codelineno-29-29" href="#__codelineno-29-29"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Install dependencies</span>
-<a id="__codelineno-29-30" name="__codelineno-29-30" href="#__codelineno-29-30"></a><span class="w">        </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pip install -r requirements.txt</span>
-<a id="__codelineno-29-31" name="__codelineno-29-31" href="#__codelineno-29-31"></a>
-<a id="__codelineno-29-32" name="__codelineno-29-32" href="#__codelineno-29-32"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Run smoke tests</span>
-<a id="__codelineno-29-33" name="__codelineno-29-33" href="#__codelineno-29-33"></a><span class="w">        </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pytest -m smoke -v</span>
-<a id="__codelineno-29-34" name="__codelineno-29-34" href="#__codelineno-29-34"></a>
-<a id="__codelineno-29-35" name="__codelineno-29-35" href="#__codelineno-29-35"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Run integration tests</span>
-<a id="__codelineno-29-36" name="__codelineno-29-36" href="#__codelineno-29-36"></a><span class="w">        </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pytest -m integration -v</span>
-<a id="__codelineno-29-37" name="__codelineno-29-37" href="#__codelineno-29-37"></a><span class="w">        </span><span class="nt">env</span><span class="p">:</span>
-<a id="__codelineno-29-38" name="__codelineno-29-38" href="#__codelineno-29-38"></a><span class="w">          </span><span class="nt">AI_PROVIDER</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mock</span>
-<a id="__codelineno-29-39" name="__codelineno-29-39" href="#__codelineno-29-39"></a><span class="w">          </span><span class="nt">POSTGRES_HOST</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">localhost</span>
-<a id="__codelineno-29-40" name="__codelineno-29-40" href="#__codelineno-29-40"></a><span class="w">          </span><span class="nt">POSTGRES_PORT</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5432</span>
-<a id="__codelineno-29-41" name="__codelineno-29-41" href="#__codelineno-29-41"></a>
-<a id="__codelineno-29-42" name="__codelineno-29-42" href="#__codelineno-29-42"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Upload coverage</span>
-<a id="__codelineno-29-43" name="__codelineno-29-43" href="#__codelineno-29-43"></a><span class="w">        </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">codecov/codecov-action@v3</span>
-<a id="__codelineno-29-44" name="__codelineno-29-44" href="#__codelineno-29-44"></a>
-<a id="__codelineno-29-45" name="__codelineno-29-45" href="#__codelineno-29-45"></a><span class="w">  </span><span class="nt">test-typescript</span><span class="p">:</span>
-<a id="__codelineno-29-46" name="__codelineno-29-46" href="#__codelineno-29-46"></a><span class="w">    </span><span class="nt">runs-on</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ubuntu-latest</span>
-<a id="__codelineno-29-47" name="__codelineno-29-47" href="#__codelineno-29-47"></a><span class="w">    </span><span class="nt">steps</span><span class="p">:</span>
-<a id="__codelineno-29-48" name="__codelineno-29-48" href="#__codelineno-29-48"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">actions/checkout@v3</span>
-<a id="__codelineno-29-49" name="__codelineno-29-49" href="#__codelineno-29-49"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">actions/setup-node@v3</span>
-<a id="__codelineno-29-50" name="__codelineno-29-50" href="#__codelineno-29-50"></a><span class="w">        </span><span class="nt">with</span><span class="p">:</span>
-<a id="__codelineno-29-51" name="__codelineno-29-51" href="#__codelineno-29-51"></a><span class="w">          </span><span class="nt">node-version</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;18&#39;</span>
-<a id="__codelineno-29-52" name="__codelineno-29-52" href="#__codelineno-29-52"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">actions/setup-python@v4</span>
-<a id="__codelineno-29-53" name="__codelineno-29-53" href="#__codelineno-29-53"></a><span class="w">        </span><span class="nt">with</span><span class="p">:</span>
-<a id="__codelineno-29-54" name="__codelineno-29-54" href="#__codelineno-29-54"></a><span class="w">          </span><span class="nt">python-version</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;3.11&#39;</span>
-<a id="__codelineno-29-55" name="__codelineno-29-55" href="#__codelineno-29-55"></a>
-<a id="__codelineno-29-56" name="__codelineno-29-56" href="#__codelineno-29-56"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Install Python dependencies</span>
-<a id="__codelineno-29-57" name="__codelineno-29-57" href="#__codelineno-29-57"></a><span class="w">        </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pip install -r requirements.txt</span>
-<a id="__codelineno-29-58" name="__codelineno-29-58" href="#__codelineno-29-58"></a>
-<a id="__codelineno-29-59" name="__codelineno-29-59" href="#__codelineno-29-59"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Install Node dependencies</span>
-<a id="__codelineno-29-60" name="__codelineno-29-60" href="#__codelineno-29-60"></a><span class="w">        </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">cd client &amp;&amp; npm install</span>
-<a id="__codelineno-29-61" name="__codelineno-29-61" href="#__codelineno-29-61"></a>
-<a id="__codelineno-29-62" name="__codelineno-29-62" href="#__codelineno-29-62"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Build CLI</span>
-<a id="__codelineno-29-63" name="__codelineno-29-63" href="#__codelineno-29-63"></a><span class="w">        </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">cd client &amp;&amp; npm run build</span>
-<a id="__codelineno-29-64" name="__codelineno-29-64" href="#__codelineno-29-64"></a>
-<a id="__codelineno-29-65" name="__codelineno-29-65" href="#__codelineno-29-65"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Run CLI tests</span>
-<a id="__codelineno-29-66" name="__codelineno-29-66" href="#__codelineno-29-66"></a><span class="w">        </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">cd client &amp;&amp; npm test</span>
-<a id="__codelineno-29-67" name="__codelineno-29-67" href="#__codelineno-29-67"></a><span class="w">        </span><span class="nt">env</span><span class="p">:</span>
-<a id="__codelineno-29-68" name="__codelineno-29-68" href="#__codelineno-29-68"></a><span class="w">          </span><span class="nt">AI_PROVIDER</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mock</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Tests</span>
+<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>
+<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a><span class="nt">on</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">push</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">pull_request</span><span class="p p-Indicator">]</span>
+<a id="__codelineno-28-4" name="__codelineno-28-4" href="#__codelineno-28-4"></a>
+<a id="__codelineno-28-5" name="__codelineno-28-5" href="#__codelineno-28-5"></a><span class="nt">jobs</span><span class="p">:</span>
+<a id="__codelineno-28-6" name="__codelineno-28-6" href="#__codelineno-28-6"></a><span class="w">  </span><span class="nt">test-python</span><span class="p">:</span>
+<a id="__codelineno-28-7" name="__codelineno-28-7" href="#__codelineno-28-7"></a><span class="w">    </span><span class="nt">runs-on</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ubuntu-latest</span>
+<a id="__codelineno-28-8" name="__codelineno-28-8" href="#__codelineno-28-8"></a><span class="w">    </span><span class="nt">services</span><span class="p">:</span>
+<a id="__codelineno-28-9" name="__codelineno-28-9" href="#__codelineno-28-9"></a><span class="w">      </span><span class="nt">postgres</span><span class="p">:</span>
+<a id="__codelineno-28-10" name="__codelineno-28-10" href="#__codelineno-28-10"></a><span class="w">        </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">apache/age:PG16</span>
+<a id="__codelineno-28-11" name="__codelineno-28-11" href="#__codelineno-28-11"></a><span class="w">        </span><span class="nt">env</span><span class="p">:</span>
+<a id="__codelineno-28-12" name="__codelineno-28-12" href="#__codelineno-28-12"></a><span class="w">          </span><span class="nt">POSTGRES_DB</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">knowledge_graph_test</span>
+<a id="__codelineno-28-13" name="__codelineno-28-13" href="#__codelineno-28-13"></a><span class="w">          </span><span class="nt">POSTGRES_USER</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">test</span>
+<a id="__codelineno-28-14" name="__codelineno-28-14" href="#__codelineno-28-14"></a><span class="w">          </span><span class="nt">POSTGRES_PASSWORD</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">test</span>
+<a id="__codelineno-28-15" name="__codelineno-28-15" href="#__codelineno-28-15"></a><span class="w">        </span><span class="nt">ports</span><span class="p">:</span>
+<a id="__codelineno-28-16" name="__codelineno-28-16" href="#__codelineno-28-16"></a><span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5432:5432</span>
+<a id="__codelineno-28-17" name="__codelineno-28-17" href="#__codelineno-28-17"></a><span class="w">        </span><span class="nt">options</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">&gt;-</span>
+<a id="__codelineno-28-18" name="__codelineno-28-18" href="#__codelineno-28-18"></a><span class="w">          </span><span class="no">--health-cmd pg_isready</span>
+<a id="__codelineno-28-19" name="__codelineno-28-19" href="#__codelineno-28-19"></a><span class="w">          </span><span class="no">--health-interval 10s</span>
+<a id="__codelineno-28-20" name="__codelineno-28-20" href="#__codelineno-28-20"></a><span class="w">          </span><span class="no">--health-timeout 5s</span>
+<a id="__codelineno-28-21" name="__codelineno-28-21" href="#__codelineno-28-21"></a><span class="w">          </span><span class="no">--health-retries 5</span>
+<a id="__codelineno-28-22" name="__codelineno-28-22" href="#__codelineno-28-22"></a>
+<a id="__codelineno-28-23" name="__codelineno-28-23" href="#__codelineno-28-23"></a><span class="w">    </span><span class="nt">steps</span><span class="p">:</span>
+<a id="__codelineno-28-24" name="__codelineno-28-24" href="#__codelineno-28-24"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">actions/checkout@v3</span>
+<a id="__codelineno-28-25" name="__codelineno-28-25" href="#__codelineno-28-25"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">actions/setup-python@v4</span>
+<a id="__codelineno-28-26" name="__codelineno-28-26" href="#__codelineno-28-26"></a><span class="w">        </span><span class="nt">with</span><span class="p">:</span>
+<a id="__codelineno-28-27" name="__codelineno-28-27" href="#__codelineno-28-27"></a><span class="w">          </span><span class="nt">python-version</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;3.11&#39;</span>
+<a id="__codelineno-28-28" name="__codelineno-28-28" href="#__codelineno-28-28"></a>
+<a id="__codelineno-28-29" name="__codelineno-28-29" href="#__codelineno-28-29"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Install dependencies</span>
+<a id="__codelineno-28-30" name="__codelineno-28-30" href="#__codelineno-28-30"></a><span class="w">        </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pip install -r requirements.txt</span>
+<a id="__codelineno-28-31" name="__codelineno-28-31" href="#__codelineno-28-31"></a>
+<a id="__codelineno-28-32" name="__codelineno-28-32" href="#__codelineno-28-32"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Run smoke tests</span>
+<a id="__codelineno-28-33" name="__codelineno-28-33" href="#__codelineno-28-33"></a><span class="w">        </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pytest -m smoke -v</span>
+<a id="__codelineno-28-34" name="__codelineno-28-34" href="#__codelineno-28-34"></a>
+<a id="__codelineno-28-35" name="__codelineno-28-35" href="#__codelineno-28-35"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Run integration tests</span>
+<a id="__codelineno-28-36" name="__codelineno-28-36" href="#__codelineno-28-36"></a><span class="w">        </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pytest -m integration -v</span>
+<a id="__codelineno-28-37" name="__codelineno-28-37" href="#__codelineno-28-37"></a><span class="w">        </span><span class="nt">env</span><span class="p">:</span>
+<a id="__codelineno-28-38" name="__codelineno-28-38" href="#__codelineno-28-38"></a><span class="w">          </span><span class="nt">AI_PROVIDER</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mock</span>
+<a id="__codelineno-28-39" name="__codelineno-28-39" href="#__codelineno-28-39"></a><span class="w">          </span><span class="nt">POSTGRES_HOST</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">localhost</span>
+<a id="__codelineno-28-40" name="__codelineno-28-40" href="#__codelineno-28-40"></a><span class="w">          </span><span class="nt">POSTGRES_PORT</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5432</span>
+<a id="__codelineno-28-41" name="__codelineno-28-41" href="#__codelineno-28-41"></a>
+<a id="__codelineno-28-42" name="__codelineno-28-42" href="#__codelineno-28-42"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Upload coverage</span>
+<a id="__codelineno-28-43" name="__codelineno-28-43" href="#__codelineno-28-43"></a><span class="w">        </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">codecov/codecov-action@v3</span>
+<a id="__codelineno-28-44" name="__codelineno-28-44" href="#__codelineno-28-44"></a>
+<a id="__codelineno-28-45" name="__codelineno-28-45" href="#__codelineno-28-45"></a><span class="w">  </span><span class="nt">test-typescript</span><span class="p">:</span>
+<a id="__codelineno-28-46" name="__codelineno-28-46" href="#__codelineno-28-46"></a><span class="w">    </span><span class="nt">runs-on</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ubuntu-latest</span>
+<a id="__codelineno-28-47" name="__codelineno-28-47" href="#__codelineno-28-47"></a><span class="w">    </span><span class="nt">steps</span><span class="p">:</span>
+<a id="__codelineno-28-48" name="__codelineno-28-48" href="#__codelineno-28-48"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">actions/checkout@v3</span>
+<a id="__codelineno-28-49" name="__codelineno-28-49" href="#__codelineno-28-49"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">actions/setup-node@v3</span>
+<a id="__codelineno-28-50" name="__codelineno-28-50" href="#__codelineno-28-50"></a><span class="w">        </span><span class="nt">with</span><span class="p">:</span>
+<a id="__codelineno-28-51" name="__codelineno-28-51" href="#__codelineno-28-51"></a><span class="w">          </span><span class="nt">node-version</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;18&#39;</span>
+<a id="__codelineno-28-52" name="__codelineno-28-52" href="#__codelineno-28-52"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">actions/setup-python@v4</span>
+<a id="__codelineno-28-53" name="__codelineno-28-53" href="#__codelineno-28-53"></a><span class="w">        </span><span class="nt">with</span><span class="p">:</span>
+<a id="__codelineno-28-54" name="__codelineno-28-54" href="#__codelineno-28-54"></a><span class="w">          </span><span class="nt">python-version</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;3.11&#39;</span>
+<a id="__codelineno-28-55" name="__codelineno-28-55" href="#__codelineno-28-55"></a>
+<a id="__codelineno-28-56" name="__codelineno-28-56" href="#__codelineno-28-56"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Install Python dependencies</span>
+<a id="__codelineno-28-57" name="__codelineno-28-57" href="#__codelineno-28-57"></a><span class="w">        </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pip install -r requirements.txt</span>
+<a id="__codelineno-28-58" name="__codelineno-28-58" href="#__codelineno-28-58"></a>
+<a id="__codelineno-28-59" name="__codelineno-28-59" href="#__codelineno-28-59"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Install Node dependencies</span>
+<a id="__codelineno-28-60" name="__codelineno-28-60" href="#__codelineno-28-60"></a><span class="w">        </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">cd cli &amp;&amp; npm install</span>
+<a id="__codelineno-28-61" name="__codelineno-28-61" href="#__codelineno-28-61"></a>
+<a id="__codelineno-28-62" name="__codelineno-28-62" href="#__codelineno-28-62"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Build CLI</span>
+<a id="__codelineno-28-63" name="__codelineno-28-63" href="#__codelineno-28-63"></a><span class="w">        </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">cd cli &amp;&amp; npm run build</span>
+<a id="__codelineno-28-64" name="__codelineno-28-64" href="#__codelineno-28-64"></a>
+<a id="__codelineno-28-65" name="__codelineno-28-65" href="#__codelineno-28-65"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Run CLI tests</span>
+<a id="__codelineno-28-66" name="__codelineno-28-66" href="#__codelineno-28-66"></a><span class="w">        </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">cd cli &amp;&amp; npm test</span>
+<a id="__codelineno-28-67" name="__codelineno-28-67" href="#__codelineno-28-67"></a><span class="w">        </span><span class="nt">env</span><span class="p">:</span>
+<a id="__codelineno-28-68" name="__codelineno-28-68" href="#__codelineno-28-68"></a><span class="w">          </span><span class="nt">AI_PROVIDER</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mock</span>
 </code></pre></div>
 <hr />
 <h2 id="10-future-test-areas">10. Future Test Areas</h2>
@@ -11666,10 +11652,10 @@
 </li>
 <li>
 <p><strong>Mark appropriately:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">smoke</span>
-<a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">api</span>
-<a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_endpoint</span><span class="p">(</span><span class="n">api_client</span><span class="p">):</span>
-<a id="__codelineno-30-4" name="__codelineno-30-4" href="#__codelineno-30-4"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Clear description of what we&#39;re testing&quot;&quot;&quot;</span>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">smoke</span>
+<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">api</span>
+<a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_endpoint</span><span class="p">(</span><span class="n">api_client</span><span class="p">):</span>
+<a id="__codelineno-29-4" name="__codelineno-29-4" href="#__codelineno-29-4"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Clear description of what we&#39;re testing&quot;&quot;&quot;</span>
 </code></pre></div></p>
 </li>
 <li>
@@ -11681,76 +11667,76 @@
 </li>
 <li>
 <p><strong>Document intent:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a><span class="sd">&quot;&quot;&quot;</span>
-<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a><span class="sd">Tests for: kg health</span>
-<a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a><span class="sd">Endpoint: GET /health</span>
-<a id="__codelineno-31-4" name="__codelineno-31-4" href="#__codelineno-31-4"></a><span class="sd">Purpose: Validate API health check</span>
-<a id="__codelineno-31-5" name="__codelineno-31-5" href="#__codelineno-31-5"></a><span class="sd">&quot;&quot;&quot;</span>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a><span class="sd">Tests for: kg health</span>
+<a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a><span class="sd">Endpoint: GET /health</span>
+<a id="__codelineno-30-4" name="__codelineno-30-4" href="#__codelineno-30-4"></a><span class="sd">Purpose: Validate API health check</span>
+<a id="__codelineno-30-5" name="__codelineno-30-5" href="#__codelineno-30-5"></a><span class="sd">&quot;&quot;&quot;</span>
 </code></pre></div></p>
 </li>
 </ol>
 <h3 id="writing-functional-tests">Writing Functional Tests</h3>
 <p>Focus on <strong>user workflows</strong>, not code paths:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a><span class="c1"># ✅ Good - tests user workflow</span>
-<a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_submit_and_approve_job</span><span class="p">(</span><span class="n">api_client</span><span class="p">):</span>
-<a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;User submits job, waits for analysis, approves, monitors completion&quot;&quot;&quot;</span>
-<a id="__codelineno-32-4" name="__codelineno-32-4" href="#__codelineno-32-4"></a>    <span class="c1"># 1. Submit</span>
-<a id="__codelineno-32-5" name="__codelineno-32-5" href="#__codelineno-32-5"></a>    <span class="n">response</span> <span class="o">=</span> <span class="n">api_client</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/ingest/text&quot;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="o">...</span><span class="p">})</span>
-<a id="__codelineno-32-6" name="__codelineno-32-6" href="#__codelineno-32-6"></a>    <span class="n">job_id</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s2">&quot;job_id&quot;</span><span class="p">]</span>
-<a id="__codelineno-32-7" name="__codelineno-32-7" href="#__codelineno-32-7"></a>
-<a id="__codelineno-32-8" name="__codelineno-32-8" href="#__codelineno-32-8"></a>    <span class="c1"># 2. Wait for analysis</span>
-<a id="__codelineno-32-9" name="__codelineno-32-9" href="#__codelineno-32-9"></a>    <span class="c1"># ... polling logic ...</span>
-<a id="__codelineno-32-10" name="__codelineno-32-10" href="#__codelineno-32-10"></a>
-<a id="__codelineno-32-11" name="__codelineno-32-11" href="#__codelineno-32-11"></a>    <span class="c1"># 3. Approve</span>
-<a id="__codelineno-32-12" name="__codelineno-32-12" href="#__codelineno-32-12"></a>    <span class="n">api_client</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;/jobs/</span><span class="si">{</span><span class="n">job_id</span><span class="si">}</span><span class="s2">/approve&quot;</span><span class="p">)</span>
-<a id="__codelineno-32-13" name="__codelineno-32-13" href="#__codelineno-32-13"></a>
-<a id="__codelineno-32-14" name="__codelineno-32-14" href="#__codelineno-32-14"></a>    <span class="c1"># 4. Verify</span>
-<a id="__codelineno-32-15" name="__codelineno-32-15" href="#__codelineno-32-15"></a>    <span class="n">status</span> <span class="o">=</span> <span class="n">api_client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;/jobs/</span><span class="si">{</span><span class="n">job_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<a id="__codelineno-32-16" name="__codelineno-32-16" href="#__codelineno-32-16"></a>    <span class="k">assert</span> <span class="n">status</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;approved&quot;</span><span class="p">,</span> <span class="s2">&quot;processing&quot;</span><span class="p">,</span> <span class="s2">&quot;completed&quot;</span><span class="p">]</span>
-<a id="__codelineno-32-17" name="__codelineno-32-17" href="#__codelineno-32-17"></a>
-<a id="__codelineno-32-18" name="__codelineno-32-18" href="#__codelineno-32-18"></a><span class="c1"># ❌ Avoid - testing implementation</span>
-<a id="__codelineno-32-19" name="__codelineno-32-19" href="#__codelineno-32-19"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_internal_queue_state</span><span class="p">():</span>
-<a id="__codelineno-32-20" name="__codelineno-32-20" href="#__codelineno-32-20"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Check internal data structures&quot;&quot;&quot;</span>
-<a id="__codelineno-32-21" name="__codelineno-32-21" href="#__codelineno-32-21"></a>    <span class="c1"># Too coupled to implementation</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a><span class="c1"># ✅ Good - tests user workflow</span>
+<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_submit_and_approve_job</span><span class="p">(</span><span class="n">api_client</span><span class="p">):</span>
+<a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;User submits job, waits for analysis, approves, monitors completion&quot;&quot;&quot;</span>
+<a id="__codelineno-31-4" name="__codelineno-31-4" href="#__codelineno-31-4"></a>    <span class="c1"># 1. Submit</span>
+<a id="__codelineno-31-5" name="__codelineno-31-5" href="#__codelineno-31-5"></a>    <span class="n">response</span> <span class="o">=</span> <span class="n">api_client</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/ingest/text&quot;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="o">...</span><span class="p">})</span>
+<a id="__codelineno-31-6" name="__codelineno-31-6" href="#__codelineno-31-6"></a>    <span class="n">job_id</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s2">&quot;job_id&quot;</span><span class="p">]</span>
+<a id="__codelineno-31-7" name="__codelineno-31-7" href="#__codelineno-31-7"></a>
+<a id="__codelineno-31-8" name="__codelineno-31-8" href="#__codelineno-31-8"></a>    <span class="c1"># 2. Wait for analysis</span>
+<a id="__codelineno-31-9" name="__codelineno-31-9" href="#__codelineno-31-9"></a>    <span class="c1"># ... polling logic ...</span>
+<a id="__codelineno-31-10" name="__codelineno-31-10" href="#__codelineno-31-10"></a>
+<a id="__codelineno-31-11" name="__codelineno-31-11" href="#__codelineno-31-11"></a>    <span class="c1"># 3. Approve</span>
+<a id="__codelineno-31-12" name="__codelineno-31-12" href="#__codelineno-31-12"></a>    <span class="n">api_client</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;/jobs/</span><span class="si">{</span><span class="n">job_id</span><span class="si">}</span><span class="s2">/approve&quot;</span><span class="p">)</span>
+<a id="__codelineno-31-13" name="__codelineno-31-13" href="#__codelineno-31-13"></a>
+<a id="__codelineno-31-14" name="__codelineno-31-14" href="#__codelineno-31-14"></a>    <span class="c1"># 4. Verify</span>
+<a id="__codelineno-31-15" name="__codelineno-31-15" href="#__codelineno-31-15"></a>    <span class="n">status</span> <span class="o">=</span> <span class="n">api_client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;/jobs/</span><span class="si">{</span><span class="n">job_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-31-16" name="__codelineno-31-16" href="#__codelineno-31-16"></a>    <span class="k">assert</span> <span class="n">status</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;approved&quot;</span><span class="p">,</span> <span class="s2">&quot;processing&quot;</span><span class="p">,</span> <span class="s2">&quot;completed&quot;</span><span class="p">]</span>
+<a id="__codelineno-31-17" name="__codelineno-31-17" href="#__codelineno-31-17"></a>
+<a id="__codelineno-31-18" name="__codelineno-31-18" href="#__codelineno-31-18"></a><span class="c1"># ❌ Avoid - testing implementation</span>
+<a id="__codelineno-31-19" name="__codelineno-31-19" href="#__codelineno-31-19"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_internal_queue_state</span><span class="p">():</span>
+<a id="__codelineno-31-20" name="__codelineno-31-20" href="#__codelineno-31-20"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Check internal data structures&quot;&quot;&quot;</span>
+<a id="__codelineno-31-21" name="__codelineno-31-21" href="#__codelineno-31-21"></a>    <span class="c1"># Too coupled to implementation</span>
 </code></pre></div>
 <hr />
 <h2 id="troubleshooting">Troubleshooting</h2>
 <h3 id="tests-fail-with-connection-refused">Tests Fail with "Connection Refused"</h3>
 <p><strong>Problem:</strong> API server or database not running</p>
 <p><strong>Solution:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a><span class="c1"># Check API</span>
-<a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a>curl<span class="w"> </span>http://localhost:8000/health
-<a id="__codelineno-33-3" name="__codelineno-33-3" href="#__codelineno-33-3"></a>
-<a id="__codelineno-33-4" name="__codelineno-33-4" href="#__codelineno-33-4"></a><span class="c1"># Check PostgreSQL</span>
-<a id="__codelineno-33-5" name="__codelineno-33-5" href="#__codelineno-33-5"></a>docker<span class="w"> </span>ps<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>postgres
-<a id="__codelineno-33-6" name="__codelineno-33-6" href="#__codelineno-33-6"></a>
-<a id="__codelineno-33-7" name="__codelineno-33-7" href="#__codelineno-33-7"></a><span class="c1"># Start services</span>
-<a id="__codelineno-33-8" name="__codelineno-33-8" href="#__codelineno-33-8"></a>docker-compose<span class="w"> </span>up<span class="w"> </span>-d
+<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a><span class="c1"># Check API</span>
+<a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a>curl<span class="w"> </span>http://localhost:8000/health
+<a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a>
+<a id="__codelineno-32-4" name="__codelineno-32-4" href="#__codelineno-32-4"></a><span class="c1"># Check container status</span>
+<a id="__codelineno-32-5" name="__codelineno-32-5" href="#__codelineno-32-5"></a>./operator.sh<span class="w"> </span>status
+<a id="__codelineno-32-6" name="__codelineno-32-6" href="#__codelineno-32-6"></a>
+<a id="__codelineno-32-7" name="__codelineno-32-7" href="#__codelineno-32-7"></a><span class="c1"># Start the platform</span>
+<a id="__codelineno-32-8" name="__codelineno-32-8" href="#__codelineno-32-8"></a>./operator.sh<span class="w"> </span>start
 </code></pre></div></p>
 <h3 id="mock-provider-not-working">Mock Provider Not Working</h3>
 <p><strong>Problem:</strong> Tests calling real APIs</p>
 <p><strong>Solution:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a><span class="c1"># Verify env</span>
-<a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a>grep<span class="w"> </span>AI_PROVIDER<span class="w"> </span>.env
-<a id="__codelineno-34-3" name="__codelineno-34-3" href="#__codelineno-34-3"></a><span class="c1"># Should be: AI_PROVIDER=mock</span>
-<a id="__codelineno-34-4" name="__codelineno-34-4" href="#__codelineno-34-4"></a>
-<a id="__codelineno-34-5" name="__codelineno-34-5" href="#__codelineno-34-5"></a><span class="c1"># Or check pytest.ini:</span>
-<a id="__codelineno-34-6" name="__codelineno-34-6" href="#__codelineno-34-6"></a><span class="c1"># env = AI_PROVIDER=mock</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a><span class="c1"># Verify env</span>
+<a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a>grep<span class="w"> </span>AI_PROVIDER<span class="w"> </span>.env
+<a id="__codelineno-33-3" name="__codelineno-33-3" href="#__codelineno-33-3"></a><span class="c1"># Should be: AI_PROVIDER=mock</span>
+<a id="__codelineno-33-4" name="__codelineno-33-4" href="#__codelineno-33-4"></a>
+<a id="__codelineno-33-5" name="__codelineno-33-5" href="#__codelineno-33-5"></a><span class="c1"># Or check pytest.ini:</span>
+<a id="__codelineno-33-6" name="__codelineno-33-6" href="#__codelineno-33-6"></a><span class="c1"># env = AI_PROVIDER=mock</span>
 </code></pre></div></p>
 <h3 id="typescript-tests-timeout">TypeScript Tests Timeout</h3>
 <p><strong>Problem:</strong> API server slow to start</p>
 <p><strong>Solution:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a><span class="c1"># Check Python venv</span>
-<a id="__codelineno-35-2" name="__codelineno-35-2" href="#__codelineno-35-2"></a><span class="nb">source</span><span class="w"> </span>venv/bin/activate
-<a id="__codelineno-35-3" name="__codelineno-35-3" href="#__codelineno-35-3"></a>python<span class="w"> </span>-m<span class="w"> </span>uvicorn<span class="w"> </span>api.app.main:app<span class="w"> </span>--version
-<a id="__codelineno-35-4" name="__codelineno-35-4" href="#__codelineno-35-4"></a>
-<a id="__codelineno-35-5" name="__codelineno-35-5" href="#__codelineno-35-5"></a><span class="c1"># Increase timeout in jest.config.js</span>
-<a id="__codelineno-35-6" name="__codelineno-35-6" href="#__codelineno-35-6"></a>testTimeout:<span class="w"> </span><span class="m">60000</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a><span class="c1"># Check the API container is up and healthy</span>
+<a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a>./operator.sh<span class="w"> </span>status
+<a id="__codelineno-34-3" name="__codelineno-34-3" href="#__codelineno-34-3"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>kg-api-dev<span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>uvicorn<span class="w"> </span>api.app.main:app<span class="w"> </span>--version
+<a id="__codelineno-34-4" name="__codelineno-34-4" href="#__codelineno-34-4"></a>
+<a id="__codelineno-34-5" name="__codelineno-34-5" href="#__codelineno-34-5"></a><span class="c1"># Increase timeout in cli/jest.config.js</span>
+<a id="__codelineno-34-6" name="__codelineno-34-6" href="#__codelineno-34-6"></a><span class="c1"># testTimeout: 60000</span>
 </code></pre></div></p>
 <hr />
-<p><strong>Last Updated:</strong> 2025-10-08
-<strong>Test Framework:</strong> pytest 8.0+, Jest 29.7+
-<strong>Database:</strong> PostgreSQL 16 + Apache AGE 1.5.0
+<p><strong>Last Updated:</strong> 2026-05-25 (doc/code alignment review)
+<strong>Test Framework:</strong> pytest 8.0+, Jest 29.x
+<strong>Database:</strong> PostgreSQL 16 + Apache AGE
 <strong>Mock Provider:</strong> Deterministic hash-based (no API keys needed)
 <strong>Philosophy:</strong> Functional coverage &gt; Line coverage</p>
 

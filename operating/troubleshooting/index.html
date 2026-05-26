@@ -4658,62 +4658,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/ingest-directory/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-directory
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/ingest-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-file
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../reference/mcp/tools/ingest/" class="md-nav__link">
         
   
@@ -4722,34 +4666,6 @@
     
   
     ingest
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/inspect-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    inspect-file
   
 
     
@@ -10593,13 +10509,15 @@
 <p>Common issues and how to fix them.</p>
 <h2 id="container-issues">Container Issues</h2>
 <h3 id="containers-wont-start">Containers Won't Start</h3>
-<p><strong>Check logs:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>./operator.sh<span class="w"> </span>logs
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>docker<span class="w"> </span>logs<span class="w"> </span>kg-api
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>docker<span class="w"> </span>logs<span class="w"> </span>kg-postgres
+<p><strong>Check logs</strong> (substitute the correct container name — see
+<a href="../configuration/#container-naming">Configuration &gt; Container Naming</a>):
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>./operator.sh<span class="w"> </span>logs<span class="w"> </span>api
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>docker<span class="w"> </span>logs<span class="w"> </span>kg-api<span class="w">                          </span><span class="c1"># or kg-api-dev in dev mode</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>docker<span class="w"> </span>logs<span class="w"> </span>knowledge-graph-postgres<span class="w">        </span><span class="c1"># or kg-postgres with --container-prefix=kg</span>
 </code></pre></div></p>
 <p><strong>Check container status:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>docker<span class="w"> </span>ps<span class="w"> </span>-a
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>./operator.sh<span class="w"> </span>status
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>docker<span class="w"> </span>ps<span class="w"> </span>-a
 </code></pre></div></p>
 <p>Look for containers in "Exited" state and check their logs.</p>
 <h3 id="port-already-in-use">Port Already in Use</h3>
@@ -10645,11 +10563,11 @@ or
 </code></pre></div>
 <p><strong>Check PostgreSQL is running:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>docker<span class="w"> </span>ps<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>postgres
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>docker<span class="w"> </span>logs<span class="w"> </span>kg-postgres
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>docker<span class="w"> </span>logs<span class="w"> </span><span class="k">$(</span>docker<span class="w"> </span>ps<span class="w"> </span>--format<span class="w"> </span><span class="s1">&#39;{{.Names}}&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>postgres<span class="k">)</span>
 </code></pre></div></p>
 <p><strong>Check network:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>docker<span class="w"> </span>network<span class="w"> </span>ls
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>docker<span class="w"> </span>network<span class="w"> </span>inspect<span class="w"> </span>kg-internal
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>docker<span class="w"> </span>network<span class="w"> </span>inspect<span class="w"> </span>knowledge-graph-network
 </code></pre></div></p>
 <h3 id="migration-errors">Migration Errors</h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>Migration failed
@@ -10659,25 +10577,27 @@ or
 </code></pre></div></p>
 <p><strong>Run migrations manually:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>./operator.sh<span class="w"> </span>shell
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>python<span class="w"> </span>-m<span class="w"> </span>api.database.migrate
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>/workspace/operator/database/migrate-db.sh<span class="w"> </span>-y
 </code></pre></div></p>
 <h3 id="database-corrupted">Database Corrupted</h3>
 <p>If PostgreSQL won't start due to corruption:</p>
 <ol>
 <li>
-<p><strong>Try recovery mode:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-it<span class="w"> </span>kg-postgres<span class="w"> </span>psql<span class="w"> </span>-U<span class="w"> </span>admin<span class="w"> </span>-d<span class="w"> </span>knowledge_graph
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="c1"># If this works, backup immediately</span>
+<p><strong>Try recovery mode</strong> (use the postgres container name shown by
+   <code>./operator.sh status</code>):
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>./operator.sh<span class="w"> </span>query<span class="w"> </span><span class="s1">&#39;SELECT version();&#39;</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="c1"># If this works, back up immediately</span>
 </code></pre></div></p>
 </li>
 <li>
-<p><strong>Restore from backup:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>./operator.sh<span class="w"> </span>restore<span class="w"> </span>/path/to/backup.sql
+<p><strong>Restore from backup</strong> (uses <code>pg_restore</code> inside the operator container):
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>./operator.sh<span class="w"> </span>shell
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>/workspace/operator/database/restore-database.sh<span class="w"> </span>/project/backups/&lt;file&gt;.dump
 </code></pre></div></p>
 </li>
 <li>
 <p><strong>Last resort - reinitialize:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>./operator.sh<span class="w"> </span>teardown<span class="w">  </span><span class="c1"># WARNING: Destroys data</span>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>./operator.sh<span class="w"> </span>teardown<span class="w"> </span>--full<span class="w">  </span><span class="c1"># WARNING: Destroys data (removes volumes)</span>
 <a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>./operator.sh<span class="w"> </span>init
 </code></pre></div></p>
 </li>
@@ -10685,14 +10605,13 @@ or
 <h2 id="authentication-issues">Authentication Issues</h2>
 <h3 id="cant-log-in">Can't Log In</h3>
 <p><strong>Check OAuth client exists:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>kg-postgres<span class="w"> </span>psql<span class="w"> </span>-U<span class="w"> </span>admin<span class="w"> </span>-d<span class="w"> </span>knowledge_graph<span class="w"> </span>-c<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>./operator.sh<span class="w"> </span>query<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="w">  </span><span class="s2">&quot;SELECT client_id, redirect_uris FROM kg_auth.oauth_clients;&quot;</span>
 </code></pre></div></p>
 <p><strong>Ensure redirect URI matches:</strong>
 The registered redirect URI must match your <code>WEB_HOSTNAME</code>.</p>
 <p><strong>Reset admin password:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>./operator.sh<span class="w"> </span>shell
-<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>configure.py<span class="w"> </span>reset-password<span class="w"> </span>--username<span class="w"> </span>admin
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>./operator.sh<span class="w"> </span>admin<span class="w"> </span>--username<span class="w"> </span>admin<span class="w"> </span>--password<span class="w"> </span>&lt;new-password&gt;
 </code></pre></div></p>
 <h3 id="500-error-on-login">500 Error on Login</h3>
 <p>Check API logs:
@@ -10730,7 +10649,7 @@ The registered redirect URI must match your <code>WEB_HOSTNAME</code>.</p>
 </code></pre></div></p>
 <p>The <code>apiUrl</code> should use <code>https://</code> if your site uses HTTPS.</p>
 <p><strong>Fix:</strong> Set correct <code>WEB_HOSTNAME</code> and restart:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> </span>docker/docker-compose.prod.yml<span class="w"> </span>up<span class="w"> </span>-d<span class="w"> </span>web
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>./operator.sh<span class="w"> </span>restart<span class="w"> </span>web
 </code></pre></div></p>
 <h2 id="gpu-issues">GPU Issues</h2>
 <h3 id="gpu-not-detected">GPU Not Detected</h3>
@@ -10789,18 +10708,21 @@ Break into smaller files before ingestion.</p>
 </code></pre></div></p>
 <h3 id="cli-authentication-failed">CLI Authentication Failed</h3>
 <p><strong>Re-authenticate:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a>kg<span class="w"> </span>auth<span class="w"> </span>login
+<div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a>kg<span class="w"> </span><span class="nb">logout</span>
+<a id="__codelineno-37-2" name="__codelineno-37-2" href="#__codelineno-37-2"></a>kg<span class="w"> </span>login
 </code></pre></div></p>
 <p><strong>Check API URL:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a>kg<span class="w"> </span>config<span class="w"> </span>show
+<div class="highlight"><pre><span></span><code><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a>kg<span class="w"> </span>config<span class="w"> </span>get
+<a id="__codelineno-38-2" name="__codelineno-38-2" href="#__codelineno-38-2"></a>kg<span class="w"> </span>config<span class="w"> </span>get<span class="w"> </span>api_url
 </code></pre></div></p>
 <h2 id="getting-more-help">Getting More Help</h2>
 <h3 id="collect-diagnostic-info">Collect Diagnostic Info</h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a>./operator.sh<span class="w"> </span>status
-<a id="__codelineno-39-2" name="__codelineno-39-2" href="#__codelineno-39-2"></a>./operator.sh<span class="w"> </span>logs<span class="w"> </span>&gt;<span class="w"> </span>logs.txt<span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span>
-<a id="__codelineno-39-3" name="__codelineno-39-3" href="#__codelineno-39-3"></a>docker<span class="w"> </span>ps<span class="w"> </span>-a
-<a id="__codelineno-39-4" name="__codelineno-39-4" href="#__codelineno-39-4"></a>docker<span class="w"> </span>version
-<a id="__codelineno-39-5" name="__codelineno-39-5" href="#__codelineno-39-5"></a>cat<span class="w"> </span>.env<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-v<span class="w"> </span>KEY<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-v<span class="w"> </span>SECRET<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-v<span class="w"> </span>PASSWORD
+<a id="__codelineno-39-2" name="__codelineno-39-2" href="#__codelineno-39-2"></a>./operator.sh<span class="w"> </span>versions
+<a id="__codelineno-39-3" name="__codelineno-39-3" href="#__codelineno-39-3"></a>./operator.sh<span class="w"> </span>logs<span class="w"> </span>api<span class="w"> </span>&gt;<span class="w"> </span>logs.txt<span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span>
+<a id="__codelineno-39-4" name="__codelineno-39-4" href="#__codelineno-39-4"></a>docker<span class="w"> </span>ps<span class="w"> </span>-a
+<a id="__codelineno-39-5" name="__codelineno-39-5" href="#__codelineno-39-5"></a>docker<span class="w"> </span>version
+<a id="__codelineno-39-6" name="__codelineno-39-6" href="#__codelineno-39-6"></a>cat<span class="w"> </span>.env<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-v<span class="w"> </span>KEY<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-v<span class="w"> </span>SECRET<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-v<span class="w"> </span>PASSWORD
 </code></pre></div>
 <h3 id="report-an-issue">Report an Issue</h3>
 <p>Open an issue at https://github.com/aaronsb/knowledge-graph-system/issues with:

@@ -1961,47 +1961,11 @@
 </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="../mcp/tools/ingest-directory/">
-<span class="md-ellipsis">
-    
-  
-    ingest-directory
-  
-
-    
-  </span>
-</a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="../mcp/tools/ingest-file/">
-<span class="md-ellipsis">
-    
-  
-    ingest-file
-  
-
-    
-  </span>
-</a>
-</li>
-<li class="md-nav__item">
 <a class="md-nav__link" href="../mcp/tools/ingest/">
 <span class="md-ellipsis">
     
   
     ingest
-  
-
-    
-  </span>
-</a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="../mcp/tools/inspect-file/">
-<span class="md-ellipsis">
-    
-  
-    inspect-file
   
 
     
@@ -4217,8 +4181,8 @@
 <h2 id="api-overview">API Overview</h2>
 <p>The Knowledge Graph API provides RESTful endpoints for:</p>
 <ul>
-<li><strong>Authentication</strong> - User registration, login, API key management</li>
-<li><strong>Ingestion</strong> - Document submission and text processing</li>
+<li><strong>Authentication</strong> - User registration and OAuth 2.0 token flows (ADR-054)</li>
+<li><strong>Ingestion</strong> - Document, text, and image submission</li>
 <li><strong>Jobs</strong> - Async job management and monitoring</li>
 <li><strong>Queries</strong> - Graph querying and concept exploration</li>
 <li><strong>Ontology</strong> - Knowledge domain organization</li>
@@ -4230,17 +4194,15 @@
 <div class="highlight"><pre><span></span><code><a href="#__codelineno-0-1" id="__codelineno-0-1" name="__codelineno-0-1"></a>http://localhost:8000
 </code></pre></div>
 <h2 id="authentication">Authentication</h2>
-<p>The API supports two authentication methods:</p>
-<ol>
-<li><strong>JWT Tokens</strong> - Bearer tokens from <code>/auth/login</code></li>
-<li><strong>API Keys</strong> - Long-lived keys from <code>/auth/api-keys</code></li>
-</ol>
-<p>Include authentication in requests:</p>
-<div class="highlight"><pre><span></span><code><a href="#__codelineno-1-1" id="__codelineno-1-1" name="__codelineno-1-1"></a><span class="c1"># JWT Token</span>
-<a href="#__codelineno-1-2" id="__codelineno-1-2" name="__codelineno-1-2"></a>curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">"Authorization: Bearer &lt;token&gt;"</span><span class="w"> </span>http://localhost:8000/jobs
-<a href="#__codelineno-1-3" id="__codelineno-1-3" name="__codelineno-1-3"></a>
-<a href="#__codelineno-1-4" id="__codelineno-1-4" name="__codelineno-1-4"></a><span class="c1"># API Key</span>
-<a href="#__codelineno-1-5" id="__codelineno-1-5" name="__codelineno-1-5"></a>curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-API-Key: &lt;key&gt;"</span><span class="w"> </span>http://localhost:8000/jobs
+<p>The API uses OAuth 2.0 (ADR-054). All authentication flows issue bearer
+tokens via <code>/auth/oauth/token</code>:</p>
+<ul>
+<li><strong>Client credentials</strong> - CLI personal clients and MCP servers</li>
+<li><strong>Authorization code + PKCE</strong> - viz-app browser sign-in</li>
+<li><strong>Device authorization</strong> - third-party tools (<code>/auth/oauth/device</code>)</li>
+</ul>
+<p>Include the bearer token in requests:</p>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-1-1" id="__codelineno-1-1" name="__codelineno-1-1"></a>curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">"Authorization: Bearer &lt;token&gt;"</span><span class="w"> </span>http://localhost:8000/jobs
 </code></pre></div>
 <h2 id="interactive-documentation">Interactive Documentation</h2>
 <p>Explore the full API specification below using the interactive Swagger UI interface:</p>

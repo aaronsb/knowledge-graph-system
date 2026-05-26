@@ -4036,6 +4036,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#cmd_resetargs-namespace" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        cmd_reset(args: Namespace)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#cmd_repairargs-namespace" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6229,62 +6240,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../mcp/tools/ingest-directory/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-directory
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../mcp/tools/ingest-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-file
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../mcp/tools/ingest/" class="md-nav__link">
         
   
@@ -6293,34 +6248,6 @@
     
   
     ingest
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../mcp/tools/inspect-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    inspect-file
   
 
     
@@ -11941,6 +11868,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#cmd_resetargs-namespace" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        cmd_reset(args: Namespace)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#cmd_repairargs-namespace" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -13777,7 +13715,7 @@ the graph is modified. Used for cache invalidation.</p>
 <hr />
 <h2 id="cli">cli</h2>
 <p>Subcommand implementations for kg-fuse CLI.</p>
-<p>Commands: init, mount, unmount, status, config, repair, update.</p>
+<p>Commands: init, mount, unmount, status, config, reset, repair, update.</p>
 <h3 id="cmd_statusargs-namespace"><code>cmd_status(args: Namespace)</code></h3>
 <p>Show status of all configured mounts + system info.</p>
 <h3 id="cmd_initargs-namespace"><code>cmd_init(args: Namespace)</code></h3>
@@ -13788,6 +13726,8 @@ the graph is modified. Used for cache invalidation.</p>
 <p>Unmount one or all FUSE filesystems.</p>
 <h3 id="cmd_configargs-namespace"><code>cmd_config(args: Namespace)</code></h3>
 <p>Show current configuration with masked secrets.</p>
+<h3 id="cmd_resetargs-namespace"><code>cmd_reset(args: Namespace)</code></h3>
+<p>Restart the FUSE driver via systemd (systemd mode) or kill+refork (daemon mode).</p>
 <h3 id="cmd_repairargs-namespace"><code>cmd_repair(args: Namespace)</code></h3>
 <p>Detect and fix orphaned mounts, stale PIDs, bad config.</p>
 <h3 id="cmd_updateargs-namespace"><code>cmd_update(args: Namespace)</code></h3>
@@ -14109,6 +14049,7 @@ backed by the knowledge graph API.</p>
     kg-fuse unmount                  # Unmount all
     kg-fuse status                   # Same as bare kg-fuse
     kg-fuse config                   # Show configuration
+    kg-fuse reset                    # Restart the FUSE driver
     kg-fuse repair                   # Fix orphaned mounts
     kg-fuse update                   # Self-update via pipx</p>
 <h3 id="get_version"><code>get_version()</code></h3>

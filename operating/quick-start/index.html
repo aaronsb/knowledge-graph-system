@@ -4480,62 +4480,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/ingest-directory/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-directory
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/ingest-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-file
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../reference/mcp/tools/ingest/" class="md-nav__link">
         
   
@@ -4544,34 +4488,6 @@
     
   
     ingest
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/inspect-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    inspect-file
   
 
     
@@ -10394,14 +10310,17 @@
 <p>Check that everything is running:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>./operator.sh<span class="w"> </span>status
 </code></pre></div>
-<p>You should see all containers healthy:
+<p>You should see all containers healthy. Names depend on install mode:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>Container Status:
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>kg-postgres   Up (healthy)
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>kg-garage     Up (healthy)
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>kg-api        Up (healthy)
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>kg-web        Up (healthy)
-<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>kg-operator   Up
-</code></pre></div></p>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>knowledge-graph-postgres   Up (healthy)
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>knowledge-graph-garage     Up (healthy)
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>kg-api                     Up (healthy)
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>kg-web                     Up (healthy)
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>kg-operator                Up
+</code></pre></div>
+<p>In <code>--container-prefix=kg</code> mode (production overlay) the infra containers are
+named <code>kg-postgres</code> and <code>kg-garage</code>. In development mode (default) the
+application containers are <code>kg-api-dev</code> and <code>kg-web-dev</code>.</p>
 <p>Access the system:
 - <strong>Web UI</strong>: https://your-hostname (or http://localhost:3000 for dev)
 - <strong>API Docs</strong>: https://your-hostname/api/docs
@@ -10426,38 +10345,44 @@
 <a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a>
 <a id="__codelineno-10-16" name="__codelineno-10-16" href="#__codelineno-10-16"></a><span class="c1"># Configuration</span>
 <a id="__codelineno-10-17" name="__codelineno-10-17" href="#__codelineno-10-17"></a>./operator.sh<span class="w"> </span>shell<span class="w">              </span><span class="c1"># Enter configuration shell</span>
-<a id="__codelineno-10-18" name="__codelineno-10-18" href="#__codelineno-10-18"></a>./operator.sh<span class="w"> </span>query<span class="w"> </span><span class="s1">&#39;SQL&#39;</span><span class="w">        </span><span class="c1"># Run database queries</span>
+<a id="__codelineno-10-18" name="__codelineno-10-18" href="#__codelineno-10-18"></a>./operator.sh<span class="w"> </span>query<span class="w"> </span><span class="s1">&#39;SQL&#39;</span><span class="w">        </span><span class="c1"># Run SQL query against PostgreSQL</span>
 <a id="__codelineno-10-19" name="__codelineno-10-19" href="#__codelineno-10-19"></a>
 <a id="__codelineno-10-20" name="__codelineno-10-20" href="#__codelineno-10-20"></a><span class="c1"># Maintenance</span>
 <a id="__codelineno-10-21" name="__codelineno-10-21" href="#__codelineno-10-21"></a>./operator.sh<span class="w"> </span>restart<span class="w"> </span>api<span class="w">        </span><span class="c1"># Restart a service</span>
 <a id="__codelineno-10-22" name="__codelineno-10-22" href="#__codelineno-10-22"></a>./operator.sh<span class="w"> </span>teardown<span class="w">           </span><span class="c1"># Remove containers (keeps data)</span>
-<a id="__codelineno-10-23" name="__codelineno-10-23" href="#__codelineno-10-23"></a>./operator.sh<span class="w"> </span>teardown<span class="w"> </span>--full<span class="w">    </span><span class="c1"># Complete reset</span>
+<a id="__codelineno-10-23" name="__codelineno-10-23" href="#__codelineno-10-23"></a>./operator.sh<span class="w"> </span>teardown<span class="w"> </span>--full<span class="w">    </span><span class="c1"># Complete reset (also removes volumes)</span>
+</code></pre></div>
+<p>The most common configure subcommands also have shortcuts on <code>operator.sh</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>./operator.sh<span class="w"> </span>admin<span class="w">              </span><span class="c1"># Manage admin user</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>./operator.sh<span class="w"> </span>ai-provider<span class="w"> </span>openai<span class="w"> </span><span class="c1"># Change AI provider</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>./operator.sh<span class="w"> </span>api-key<span class="w"> </span>openai<span class="w">     </span><span class="c1"># Store API key</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>./operator.sh<span class="w"> </span>embedding<span class="w">          </span><span class="c1"># Configure embeddings</span>
 </code></pre></div>
 <p>Inside the configuration shell (<code>./operator.sh shell</code>):
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>configure.py<span class="w"> </span>status<span class="w">              </span><span class="c1"># Show current config</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>configure.py<span class="w"> </span>ai-provider<span class="w"> </span>openai<span class="w">  </span><span class="c1"># Change AI provider</span>
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>configure.py<span class="w"> </span>api-key<span class="w"> </span>openai<span class="w">      </span><span class="c1"># Store API key</span>
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>configure.py<span class="w"> </span>oauth<span class="w"> </span>--list<span class="w">        </span><span class="c1"># Manage OAuth clients</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>configure.py<span class="w"> </span>status<span class="w">              </span><span class="c1"># Show current config</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>configure.py<span class="w"> </span>ai-provider<span class="w"> </span>openai<span class="w">  </span><span class="c1"># Change AI provider</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>configure.py<span class="w"> </span>api-key<span class="w"> </span>openai<span class="w">      </span><span class="c1"># Store API key</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>configure.py<span class="w"> </span>oauth<span class="w"> </span>--list<span class="w">        </span><span class="c1"># Manage OAuth clients</span>
 </code></pre></div></p>
 <hr />
 <h2 id="optional-install-the-cli">Optional: Install the CLI</h2>
 <p>The <code>kg</code> CLI provides command-line access. Choose your method:</p>
 <h3 id="from-npm-recommended">From npm (recommended)</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>npm<span class="w"> </span>install<span class="w"> </span>-g<span class="w"> </span>@aaronsb/kg-cli
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>npm<span class="w"> </span>install<span class="w"> </span>-g<span class="w"> </span>@aaronsb/kg-cli
 </code></pre></div>
 <h3 id="using-the-client-installer">Using the client installer</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>curl<span class="w"> </span>-fsSL<span class="w"> </span>https://raw.githubusercontent.com/aaronsb/knowledge-graph-system/main/client-manager.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>bash
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>curl<span class="w"> </span>-fsSL<span class="w"> </span>https://raw.githubusercontent.com/aaronsb/knowledge-graph-system/main/client-manager.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>bash
 </code></pre></div>
 <h3 id="from-source-development">From source (development)</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="nb">cd</span><span class="w"> </span>cli
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>npm<span class="w"> </span>install<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>npm<span class="w"> </span>run<span class="w"> </span>build
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>npm<span class="w"> </span>install<span class="w"> </span>-g<span class="w"> </span>.
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="nb">cd</span><span class="w"> </span>cli
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>npm<span class="w"> </span>install<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>npm<span class="w"> </span>run<span class="w"> </span>build
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>npm<span class="w"> </span>install<span class="w"> </span>-g<span class="w"> </span>.
 </code></pre></div>
 <h3 id="configure-and-test">Configure and test</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>kg<span class="w"> </span>config<span class="w"> </span><span class="nb">set</span><span class="w"> </span>api_url<span class="w"> </span>http://localhost:8000<span class="w">  </span><span class="c1"># or your API URL</span>
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>kg<span class="w"> </span>login<span class="w">                                      </span><span class="c1"># authenticate</span>
-<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>kg<span class="w"> </span>health<span class="w">                                     </span><span class="c1"># verify connection</span>
-<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>kg<span class="w"> </span>search<span class="w"> </span><span class="s2">&quot;your query&quot;</span><span class="w">                        </span><span class="c1"># test search</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>kg<span class="w"> </span>config<span class="w"> </span><span class="nb">set</span><span class="w"> </span>api_url<span class="w"> </span>http://localhost:8000<span class="w">  </span><span class="c1"># or your API URL</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>kg<span class="w"> </span>login<span class="w">                                      </span><span class="c1"># authenticate</span>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>kg<span class="w"> </span>health<span class="w">                                     </span><span class="c1"># verify connection</span>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>kg<span class="w"> </span>search<span class="w"> </span><span class="s2">&quot;your query&quot;</span><span class="w">                        </span><span class="c1"># test search</span>
 </code></pre></div>
 <hr />
 <h2 id="whats-next">What's Next?</h2>

@@ -1837,6 +1837,28 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#33-kg-ingest-directory-dir" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.3 kg ingest directory &lt;dir&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#34-kg-ingest-image-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.4 kg ingest image &lt;path&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -5074,62 +5096,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/ingest-directory/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-directory
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/ingest-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-file
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../../reference/mcp/tools/ingest/" class="md-nav__link">
         
   
@@ -5138,34 +5104,6 @@
     
   
     ingest
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/inspect-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    inspect-file
   
 
     
@@ -10923,6 +10861,28 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#33-kg-ingest-directory-dir" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.3 kg ingest directory &lt;dir&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#34-kg-ingest-image-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.4 kg ingest image &lt;path&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -11614,11 +11574,12 @@
 <p><strong>Options:</strong>
 - <code>-o, --ontology &lt;name&gt;</code> - <strong>REQUIRED</strong> - Ontology/collection name
 - <code>-f, --force</code> - Force re-ingestion even if duplicate (default: false)
-- <code>-y, --yes</code> - Auto-approve job, skip approval step (default: false)
+- <code>--no-approve</code> - Require manual approval (default: auto-approve is on; pass this flag to disable it)
+- <code>--parallel</code> - Process chunks in parallel (faster, may duplicate concepts); default serial
 - <code>--filename &lt;name&gt;</code> - Override filename for tracking
 - <code>--target-words &lt;n&gt;</code> - Target words per chunk (default: 1000)
 - <code>--overlap-words &lt;n&gt;</code> - Overlap between chunks (default: 200)
-- <code>--no-wait</code> - Submit and exit (don't wait for completion)</p>
+- <code>-w, --wait</code> - Wait for job completion (default: submit and exit)</p>
 <p><strong>States:</strong>
 1. File validation
    - File not found → Error, exit(1)
@@ -11632,8 +11593,8 @@
 <li>
 <p>Wait behavior</p>
 </li>
-<li>With --wait (default) → Poll job with progress</li>
-<li>With --no-wait → Return immediately with job ID</li>
+<li>Default (no <code>-w</code>) → Submit and exit immediately with job ID</li>
+<li>With <code>-w/--wait</code> → Poll job with progress until completion</li>
 </ol>
 <p><strong>Flow:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>kg ingest file doc.txt -o &quot;My Ontology&quot;
@@ -11653,12 +11614,28 @@
 <p><strong>Options:</strong>
 - <code>-o, --ontology &lt;name&gt;</code> - <strong>REQUIRED</strong>
 - <code>-f, --force</code> - Force re-ingestion
-- <code>-y, --yes</code> - Auto-approve job
+- <code>--no-approve</code> - Require manual approval (default: auto-approve is on)
+- <code>--parallel</code> - Process chunks in parallel
 - <code>--filename &lt;name&gt;</code> - Filename for tracking (default: "text_input")
 - <code>--target-words &lt;n&gt;</code> - Target words per chunk (default: 1000)
-- <code>--no-wait</code> - Submit and exit</p>
+- <code>-w, --wait</code> - Wait for job completion (default: submit and exit)</p>
 <p><strong>States:</strong>
 - Same as <code>kg ingest file</code> above</p>
+<h3 id="33-kg-ingest-directory-dir">3.3 <code>kg ingest directory &lt;dir&gt;</code></h3>
+<p><strong>Purpose:</strong> Batch-ingest matching files from a directory (and optionally subdirectories)</p>
+<p><strong>Key options:</strong>
+- <code>-o, --ontology &lt;name&gt;</code> - Single target ontology (required unless <code>--directories-as-ontologies</code>)
+- <code>-p, --pattern &lt;patterns...&gt;</code> - File patterns (default <code>*.md *.txt *.png *.jpg *.jpeg *.gif *.webp *.bmp</code>)
+- <code>-r, --recurse</code> - Enable recursive scan (must combine with <code>--depth</code>)
+- <code>-d, --depth &lt;n&gt;</code> - Max recursion depth (<code>0</code> = current dir only, <code>all</code> = unlimited)
+- <code>--directories-as-ontologies</code> - Auto-create ontologies from subdirectory names
+- <code>--dry-run</code> - Preview without submitting</p>
+<h3 id="34-kg-ingest-image-path">3.4 <code>kg ingest image &lt;path&gt;</code></h3>
+<p><strong>Purpose:</strong> Ingest an image via the vision pipeline (ADR-057)</p>
+<p><strong>Key options:</strong>
+- <code>-o, --ontology &lt;name&gt;</code> (required)
+- <code>--vision-provider &lt;provider&gt;</code> - <code>openai</code> (default), <code>anthropic</code>, <code>ollama</code>
+- <code>--vision-model &lt;model&gt;</code> - Optional; defaults to provider's vision model</p>
 <hr />
 <h2 id="4-job-commands">4. Job Commands</h2>
 <p><strong>Command:</strong> <code>kg job &lt;subcommand&gt;</code> (alias: <code>jobs</code>)</p>
@@ -11687,9 +11664,11 @@
 <h3 id="42-kg-job-list">4.2 <code>kg job list</code></h3>
 <p><strong>Purpose:</strong> List recent jobs</p>
 <p><strong>Options:</strong>
-- <code>-s, --status &lt;status&gt;</code> - Filter by status
-- <code>-c, --client &lt;client-id&gt;</code> - Filter by client ID
-- <code>-l, --limit &lt;n&gt;</code> - Maximum jobs to return (default: 20)</p>
+- <code>-s, --status &lt;status&gt;</code> - Filter by status (pending|approved|queued|running|completed|failed|cancelled)
+- <code>-c, --client &lt;user-id&gt;</code> - Filter by user ID
+- <code>-l, --limit &lt;n&gt;</code> - Maximum jobs to return (max: 500, default: 100)
+- <code>-o, --offset &lt;n&gt;</code> - Offset for pagination (default: 0)
+- <code>--full-id</code> - Show full job IDs without truncation</p>
 <p><strong>States:</strong>
 - No jobs → "No jobs found"
 - Has jobs → Display table</p>

@@ -2101,10 +2101,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#alternative-initialize-auth-script" class="md-nav__link">
+  <a href="#alternative-initialize-platform" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Alternative: Initialize Auth Script
+        Alternative: Initialize Platform
       
     </span>
   </a>
@@ -4626,62 +4626,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/ingest-directory/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-directory
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/ingest-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-file
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../../reference/mcp/tools/ingest/" class="md-nav__link">
         
   
@@ -4690,34 +4634,6 @@
     
   
     ingest
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/inspect-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    inspect-file
   
 
     
@@ -10210,10 +10126,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#alternative-initialize-auth-script" class="md-nav__link">
+  <a href="#alternative-initialize-platform" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Alternative: Initialize Auth Script
+        Alternative: Initialize Platform
       
     </span>
   </a>
@@ -10535,8 +10451,8 @@
 - Testing authentication without going through the full API workflow</p>
 <h2 id="prerequisites">Prerequisites</h2>
 <p><strong>Required:</strong>
-- Docker running with PostgreSQL container
-- Python 3 with project dependencies installed (for password hashing)
+- Docker running with the PostgreSQL container started by <code>./operator.sh start</code>
+- Operator container running (the reset script runs inside it for Python password hashing)
 - Access to the project root directory
 - Shell access to run scripts</p>
 <p><strong>Not Required:</strong>
@@ -10547,7 +10463,7 @@
 <h3 id="quick-password-reset">Quick Password Reset</h3>
 <p><strong>Step 1: Run the reset script</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nb">cd</span><span class="w"> </span>/path/to/knowledge-graph-system
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>./scripts/reset-password.sh
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>./operator/admin/reset-password.sh
 </code></pre></div>
 <p><strong>Step 2: Choose the user</strong></p>
 <p>The script lists all existing users:
@@ -10598,19 +10514,18 @@
 <a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>Scopes: read:*, write:*
 </code></pre></div></p>
 <p>Success! You're back in. The login command creates OAuth client credentials that don't expire.</p>
-<h2 id="alternative-initialize-auth-script">Alternative: Initialize Auth Script</h2>
-<p>If you need to reset the admin password AND regenerate OAuth token signing keys, use the more comprehensive initialize script:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>./scripts/setup/initialize-platform.sh
+<h2 id="alternative-initialize-platform">Alternative: Initialize Platform</h2>
+<p>For a fresh setup (or to (re)generate <code>.env</code> secrets), use the operator init flow:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>./operator.sh<span class="w"> </span>init
 </code></pre></div>
-<p>This script:
-- Detects if admin user exists
-- Offers to reset admin password
-- Optionally regenerates JWT_SECRET_KEY (used to sign OAuth access tokens)
-- Updates <code>.env</code> file with new secrets
-- Provides full setup instructions</p>
+<p>This:
+- Detects whether admin user exists
+- Generates infrastructure secrets in <code>.env</code> (<code>ENCRYPTION_KEY</code>, <code>OAUTH_SIGNING_KEY</code>, <code>POSTGRES_PASSWORD</code>, <code>INTERNAL_KEY_SERVICE_SECRET</code>)
+- Creates the admin user via the operator container
+- Sets sensible defaults for the rest of the platform</p>
 <p><strong>When to use which:</strong>
-- <strong><code>reset-password.sh</code></strong>: Quick password reset for any user
-- <strong><code>initialize-platform.sh</code></strong>: Full authentication setup or admin password + token signing key regeneration</p>
+- <strong><code>operator/admin/reset-password.sh</code></strong>: Quick password reset for any user (direct DB access)
+- <strong><code>./operator.sh init</code></strong>: First-time setup — creates admin user, generates <code>.env</code> secrets including the JWT signing key</p>
 <h2 id="what-this-does-under-the-hood">What This Does Under the Hood</h2>
 <h3 id="1-direct-database-access">1. <strong>Direct Database Access</strong></h3>
 <p>The script bypasses the API and talks directly to PostgreSQL:</p>
@@ -10652,10 +10567,10 @@
 <h3 id="no-users-found">No Users Found</h3>
 <p><strong>Error:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>✗ No users found in database
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>  Run: ./scripts/setup/initialize-platform.sh to create admin user
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>  Run: ./operator.sh init to create admin user
 </code></pre></div></p>
 <p><strong>Fix:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>./scripts/setup/initialize-platform.sh
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>./operator.sh<span class="w"> </span>init
 <a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="c1"># Creates initial admin user</span>
 </code></pre></div></p>
 <h3 id="python-import-errors">Python Import Errors</h3>
@@ -10694,7 +10609,7 @@
 <a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a>pip<span class="w"> </span>install<span class="w"> </span>--upgrade<span class="w"> </span>passlib<span class="w"> </span>bcrypt
 <a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>
 <a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a><span class="c1"># Try again</span>
-<a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a>./scripts/reset-password.sh
+<a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a>./operator/admin/reset-password.sh
 </code></pre></div></p>
 <h2 id="security-considerations">Security Considerations</h2>
 <h3 id="this-script-is-powerful">This Script is Powerful</h3>

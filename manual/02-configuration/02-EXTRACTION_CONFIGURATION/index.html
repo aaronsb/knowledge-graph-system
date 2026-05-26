@@ -4820,62 +4820,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/ingest-directory/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-directory
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/ingest-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-file
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../../reference/mcp/tools/ingest/" class="md-nav__link">
         
   
@@ -4884,34 +4828,6 @@
     
   
     ingest
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/inspect-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    inspect-file
   
 
     
@@ -10932,16 +10848,14 @@
 3. <strong>Generate metadata</strong> - Create search terms, descriptions, and relationship types
 4. <strong>Structure knowledge</strong> - Convert unstructured text into graph-ready format</p>
 <h3 id="supported-providers">Supported Providers</h3>
-<p><strong>OpenAI</strong> (ADR-041)
-- <code>gpt-4o</code> - Latest GPT-4 Omni (recommended, supports vision)
-- <code>gpt-4o-mini</code> - Faster, cheaper variant
-- <code>gpt-4-turbo</code> - Previous generation
-- JSON mode support</p>
-<p><strong>Anthropic</strong> (ADR-041)
-- <code>claude-sonnet-4</code> - Latest Claude Sonnet (recommended)
-- <code>claude-3-5-sonnet-20241022</code> - Previous generation
-- <code>claude-opus-4</code> - Most capable (higher cost)
-- Native JSON support</p>
+<p><strong>OpenAI</strong> (ADR-041, default model <code>gpt-4o</code>)
+- Model catalog is sourced from the live OpenAI API and stored in <code>kg_api.provider_model_catalog</code> (ADR-800).
+- Refresh: <code>./operator.sh models refresh openai</code>
+- JSON mode support.</p>
+<p><strong>Anthropic</strong> (ADR-041, default model <code>claude-sonnet-4-20250514</code>)
+- Catalog also stored in <code>kg_api.provider_model_catalog</code>.
+- Native JSON output.</p>
+<p><strong>Ollama</strong> (default model <code>mistral:7b-instruct</code>) and <strong>OpenRouter</strong> (default <code>openai/gpt-4o</code>) are also supported as extraction providers.</p>
 <h3 id="configuration-vs-api-keys">Configuration vs API Keys</h3>
 <p>The system has two separate but related configurations:</p>
 <ol>
@@ -10981,13 +10895,13 @@
 <tr>
 <td><code>provider</code></td>
 <td>AI provider</td>
-<td><code>openai</code>, <code>anthropic</code></td>
+<td><code>openai</code>, <code>anthropic</code>, <code>ollama</code>, <code>openrouter</code></td>
 <td><code>openai</code></td>
 </tr>
 <tr>
 <td><code>model</code></td>
 <td>Model name</td>
-<td>See model lists below</td>
+<td>See model catalog (<code>./operator.sh models list &lt;provider&gt;</code>)</td>
 <td><code>gpt-4o</code></td>
 </tr>
 <tr>
@@ -11005,8 +10919,8 @@
 <tr>
 <td><code>max_tokens</code></td>
 <td>Max output tokens</td>
-<td>1024-8192</td>
-<td>4096</td>
+<td>1024-16384</td>
+<td>16384</td>
 </tr>
 </tbody>
 </table>
@@ -11127,12 +11041,12 @@
 <a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span>anthropic<span class="w"> </span>--model<span class="w"> </span>claude-sonnet-4
 <a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>
 <a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="c1"># 4. Restart API to apply changes</span>
-<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a>./scripts/services/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/services/start-api.sh
+<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a>./operator.sh<span class="w"> </span>restart<span class="w"> </span>api
 <a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a>
 <a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a><span class="c1"># 5. Test with ingestion</span>
 <a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;Test Ontology&quot;</span><span class="w"> </span>-y<span class="w"> </span>test-document.txt
 </code></pre></div>
-<p><strong>Note:</strong> Unlike embedding configs, extraction changes require API restart (no hot reload yet).</p>
+<p><strong>Note:</strong> Extraction configuration is loaded from the database at the start of each ingestion job, so changes apply to the next job submitted. The API does not need to be restarted.</p>
 <h3 id="workflow-3-switch-to-cost-optimized-model">Workflow 3: Switch to Cost-Optimized Model</h3>
 <p><strong>Use cheaper model for development/testing:</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># Switch to gpt-4o-mini for faster, cheaper extraction</span>
@@ -11142,7 +11056,7 @@
 <a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="w">  </span>--max-tokens<span class="w"> </span><span class="m">2048</span>
 <a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>
 <a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="c1"># Restart API</span>
-<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>./scripts/services/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/services/start-api.sh
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>./operator.sh<span class="w"> </span>restart<span class="w"> </span>api
 <a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>
 <a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a><span class="c1"># Switch back to gpt-4o for production</span>
 <a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span><span class="se">\</span>
@@ -11151,7 +11065,7 @@
 <a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a><span class="w">  </span>--max-tokens<span class="w"> </span><span class="m">4096</span>
 <a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a>
 <a id="__codelineno-10-16" name="__codelineno-10-16" href="#__codelineno-10-16"></a><span class="c1"># Restart API</span>
-<a id="__codelineno-10-17" name="__codelineno-10-17" href="#__codelineno-10-17"></a>./scripts/services/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/services/start-api.sh
+<a id="__codelineno-10-17" name="__codelineno-10-17" href="#__codelineno-10-17"></a>./operator.sh<span class="w"> </span>restart<span class="w"> </span>api
 </code></pre></div>
 <h3 id="workflow-4-enabledisable-features">Workflow 4: Enable/Disable Features</h3>
 <p><strong>Configure model capabilities:</strong></p>
@@ -11165,7 +11079,7 @@
 <a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--max-tokens<span class="w"> </span><span class="m">8192</span>
 <a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>
 <a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a><span class="c1"># Restart API to apply</span>
-<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>./scripts/services/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/services/start-api.sh
+<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>./operator.sh<span class="w"> </span>restart<span class="w"> </span>api
 </code></pre></div>
 <h3 id="workflow-5-fix-invalid-api-key">Workflow 5: Fix Invalid API Key</h3>
 <p><strong>When a key expires or becomes invalid:</strong></p>
@@ -11180,7 +11094,7 @@
 <a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a><span class="c1"># Enter new key when prompted</span>
 <a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a>
 <a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a><span class="c1"># 4. Restart API (picks up new key automatically)</span>
-<a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a>./scripts/services/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/services/start-api.sh
+<a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a>./operator.sh<span class="w"> </span>restart<span class="w"> </span>api
 <a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a>
 <a id="__codelineno-12-14" name="__codelineno-12-14" href="#__codelineno-12-14"></a><span class="c1"># 5. Verify</span>
 <a id="__codelineno-12-15" name="__codelineno-12-15" href="#__codelineno-12-15"></a>kg<span class="w"> </span>admin<span class="w"> </span>keys<span class="w"> </span>list
@@ -11216,79 +11130,77 @@
 <a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a><span class="c1"># Disable vision support</span>
 <a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--no-vision
 </code></pre></div>
-<p><strong>Important:</strong> Extraction config changes require API restart (no hot reload yet):
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>./scripts/services/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/services/start-api.sh
-</code></pre></div></p>
+<p><strong>Note:</strong> Extraction config is read from the database when each ingestion job starts, so changes apply to the next submitted job. The API does not need to be restarted.</p>
 <h3 id="api-key-management_1">API Key Management</h3>
 <h4 id="list-api-keys">List API Keys</h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>keys<span class="w"> </span>list
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>keys<span class="w"> </span>list
 </code></pre></div>
 <p>Shows all providers with validation status, masked keys, and last validation time.</p>
 <h4 id="set-api-key">Set API Key</h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>keys<span class="w"> </span><span class="nb">set</span><span class="w"> </span>&lt;provider&gt;<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>keys<span class="w"> </span><span class="nb">set</span><span class="w"> </span>&lt;provider&gt;<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
 </code></pre></div>
 <p><strong>Arguments:</strong>
 - <code>&lt;provider&gt;</code> - Provider name: <code>openai</code> or <code>anthropic</code></p>
 <p><strong>Options:</strong>
 - <code>--key &lt;key&gt;</code> - API key (prompts if not provided)</p>
 <p><strong>Examples:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="c1"># Interactive (prompts for key)</span>
-<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>keys<span class="w"> </span><span class="nb">set</span><span class="w"> </span>openai
-<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>
-<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="c1"># Non-interactive</span>
-<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>keys<span class="w"> </span><span class="nb">set</span><span class="w"> </span>openai<span class="w"> </span>--key<span class="w"> </span>sk-...
-<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>
-<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a><span class="c1"># Set Anthropic key</span>
-<a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a>kg<span class="w"> </span>admin<span class="w"> </span>keys<span class="w"> </span><span class="nb">set</span><span class="w"> </span>anthropic
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="c1"># Interactive (prompts for key)</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>keys<span class="w"> </span><span class="nb">set</span><span class="w"> </span>openai
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="c1"># Non-interactive</span>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>keys<span class="w"> </span><span class="nb">set</span><span class="w"> </span>openai<span class="w"> </span>--key<span class="w"> </span>sk-...
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a>
+<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a><span class="c1"># Set Anthropic key</span>
+<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a>kg<span class="w"> </span>admin<span class="w"> </span>keys<span class="w"> </span><span class="nb">set</span><span class="w"> </span>anthropic
 </code></pre></div>
 <p><strong>Validation:</strong>
 - Keys are validated before storage
 - Invalid keys are rejected immediately
 - Successful validation confirms key works</p>
 <h4 id="delete-api-key">Delete API Key</h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>keys<span class="w"> </span>delete<span class="w"> </span>&lt;provider&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>keys<span class="w"> </span>delete<span class="w"> </span>&lt;provider&gt;
 </code></pre></div>
 <p><strong>Arguments:</strong>
 - <code>&lt;provider&gt;</code> - Provider name: <code>openai</code> or <code>anthropic</code></p>
 <p><strong>Example:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>keys<span class="w"> </span>delete<span class="w"> </span>openai
-<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="c1"># Prompts: Delete openai API key? (yes/no):</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>keys<span class="w"> </span>delete<span class="w"> </span>openai
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="c1"># Prompts: Delete openai API key? (yes/no):</span>
 </code></pre></div>
 <hr />
 <h2 id="troubleshooting">Troubleshooting</h2>
 <h3 id="error-no-api-key-configured">Error: "No API key configured"</h3>
 <p><strong>Full error:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>✗ Ingestion failed
-<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>No API key configured for provider: openai
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>✗ Ingestion failed
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>No API key configured for provider: openai
 </code></pre></div></p>
 <p><strong>Solution:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="c1"># Set the API key</span>
-<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>keys<span class="w"> </span><span class="nb">set</span><span class="w"> </span>openai
-<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a>
-<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a><span class="c1"># Restart API</span>
-<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a>./scripts/services/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/services/start-api.sh
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="c1"># Set the API key</span>
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>keys<span class="w"> </span><span class="nb">set</span><span class="w"> </span>openai
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="c1"># Restart API</span>
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>./operator.sh<span class="w"> </span>restart<span class="w"> </span>api
 </code></pre></div></p>
 <h3 id="error-api-key-validation-failed">Error: "API key validation failed"</h3>
 <p><strong>Full error:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>✗ Failed to set API key
-<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>Authentication failed: invalid API key
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>✗ Failed to set API key
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>Authentication failed: invalid API key
 </code></pre></div></p>
 <p><strong>Causes:</strong>
 - Wrong API key
 - Expired API key
 - Incorrect provider (e.g., using OpenAI key for Anthropic)</p>
 <p><strong>Solution:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="c1"># Verify you&#39;re using the correct key format</span>
-<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a><span class="c1"># OpenAI: sk-...</span>
-<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a><span class="c1"># Anthropic: sk-ant-...</span>
-<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a>
-<a id="__codelineno-25-5" name="__codelineno-25-5" href="#__codelineno-25-5"></a><span class="c1"># Try setting the key again</span>
-<a id="__codelineno-25-6" name="__codelineno-25-6" href="#__codelineno-25-6"></a>kg<span class="w"> </span>admin<span class="w"> </span>keys<span class="w"> </span><span class="nb">set</span><span class="w"> </span>openai
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="c1"># Verify you&#39;re using the correct key format</span>
+<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a><span class="c1"># OpenAI: sk-...</span>
+<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a><span class="c1"># Anthropic: sk-ant-...</span>
+<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a>
+<a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a><span class="c1"># Try setting the key again</span>
+<a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a>kg<span class="w"> </span>admin<span class="w"> </span>keys<span class="w"> </span><span class="nb">set</span><span class="w"> </span>openai
 </code></pre></div></p>
 <h3 id="error-extraction-model-not-found">Error: "Extraction model not found"</h3>
 <p><strong>Full error:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>✗ Failed to update extraction configuration
-<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>Model not found: gpt-5
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>✗ Failed to update extraction configuration
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>Model not found: gpt-5
 </code></pre></div></p>
 <p><strong>Cause:</strong> Invalid model name.</p>
 <p><strong>Solution:</strong></p>
@@ -11301,13 +11213,13 @@
 - <code>claude-sonnet-4</code>
 - <code>claude-opus-4</code>
 - <code>claude-3-5-sonnet-20241022</code></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a><span class="c1"># Correct command</span>
-<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span>openai<span class="w"> </span>--model<span class="w"> </span>gpt-4o
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="c1"># Correct command</span>
+<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span>openai<span class="w"> </span>--model<span class="w"> </span>gpt-4o
 </code></pre></div>
 <h3 id="error-rate-limit-exceeded">Error: "Rate limit exceeded"</h3>
 <p><strong>Error during ingestion:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>✗ Chunk processing failed
-<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>Rate limit exceeded: 429 Too Many Requests
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>✗ Chunk processing failed
+<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>Rate limit exceeded: 429 Too Many Requests
 </code></pre></div></p>
 <p><strong>Causes:</strong>
 - Too many concurrent ingestion jobs
@@ -11317,29 +11229,29 @@
 <ol>
 <li>
 <p><strong>Reduce concurrent jobs:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a><span class="c1"># Cancel running jobs</span>
-<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a>kg<span class="w"> </span><span class="nb">jobs</span><span class="w"> </span>list<span class="w"> </span>--status<span class="w"> </span>running
-<a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a>kg<span class="w"> </span><span class="nb">jobs</span><span class="w"> </span>cancel<span class="w"> </span>&lt;job-id&gt;
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a><span class="c1"># Cancel running jobs</span>
+<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>kg<span class="w"> </span><span class="nb">jobs</span><span class="w"> </span>list<span class="w"> </span>--status<span class="w"> </span>running
+<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a>kg<span class="w"> </span><span class="nb">jobs</span><span class="w"> </span>cancel<span class="w"> </span>&lt;job-id&gt;
 </code></pre></div></p>
 </li>
 <li>
 <p><strong>Wait and retry:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a><span class="c1"># Wait a few minutes, then retry</span>
-<a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;My Ontology&quot;</span><span class="w"> </span>-y<span class="w"> </span>document.txt
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a><span class="c1"># Wait a few minutes, then retry</span>
+<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;My Ontology&quot;</span><span class="w"> </span>-y<span class="w"> </span>document.txt
 </code></pre></div></p>
 </li>
 <li>
 <p><strong>Switch to a model with higher limits:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a><span class="c1"># OpenAI: Higher tier accounts have higher limits</span>
-<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a><span class="c1"># Anthropic: Contact support for rate limit increases</span>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a><span class="c1"># OpenAI: Higher tier accounts have higher limits</span>
+<a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a><span class="c1"># Anthropic: Contact support for rate limit increases</span>
 </code></pre></div></p>
 </li>
 <li>
 <p><strong>Use batch processing:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a><span class="c1"># Ingest files one at a time instead of in parallel</span>
-<a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;Ontology&quot;</span><span class="w"> </span>-y<span class="w"> </span>file1.txt
-<a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a><span class="c1"># Wait for completion...</span>
-<a id="__codelineno-32-4" name="__codelineno-32-4" href="#__codelineno-32-4"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;Ontology&quot;</span><span class="w"> </span>-y<span class="w"> </span>file2.txt
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a><span class="c1"># Ingest files one at a time instead of in parallel</span>
+<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;Ontology&quot;</span><span class="w"> </span>-y<span class="w"> </span>file1.txt
+<a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a><span class="c1"># Wait for completion...</span>
+<a id="__codelineno-31-4" name="__codelineno-31-4" href="#__codelineno-31-4"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;Ontology&quot;</span><span class="w"> </span>-y<span class="w"> </span>file2.txt
 </code></pre></div></p>
 </li>
 </ol>
@@ -11356,67 +11268,67 @@
 <ol>
 <li>
 <p><strong>Switch to a more capable model:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a><span class="c1"># OpenAI: Use gpt-4o instead of gpt-4o-mini</span>
-<a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span>openai<span class="w"> </span>--model<span class="w"> </span>gpt-4o
-<a id="__codelineno-33-3" name="__codelineno-33-3" href="#__codelineno-33-3"></a>
-<a id="__codelineno-33-4" name="__codelineno-33-4" href="#__codelineno-33-4"></a><span class="c1"># Anthropic: Use claude-opus-4 for highest quality</span>
-<a id="__codelineno-33-5" name="__codelineno-33-5" href="#__codelineno-33-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span>anthropic<span class="w"> </span>--model<span class="w"> </span>claude-opus-4
-<a id="__codelineno-33-6" name="__codelineno-33-6" href="#__codelineno-33-6"></a>
-<a id="__codelineno-33-7" name="__codelineno-33-7" href="#__codelineno-33-7"></a><span class="c1"># Restart API</span>
-<a id="__codelineno-33-8" name="__codelineno-33-8" href="#__codelineno-33-8"></a>./scripts/services/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/services/start-api.sh
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a><span class="c1"># OpenAI: Use gpt-4o instead of gpt-4o-mini</span>
+<a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span>openai<span class="w"> </span>--model<span class="w"> </span>gpt-4o
+<a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a>
+<a id="__codelineno-32-4" name="__codelineno-32-4" href="#__codelineno-32-4"></a><span class="c1"># Anthropic: Use claude-opus-4 for highest quality</span>
+<a id="__codelineno-32-5" name="__codelineno-32-5" href="#__codelineno-32-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span>anthropic<span class="w"> </span>--model<span class="w"> </span>claude-opus-4
+<a id="__codelineno-32-6" name="__codelineno-32-6" href="#__codelineno-32-6"></a>
+<a id="__codelineno-32-7" name="__codelineno-32-7" href="#__codelineno-32-7"></a><span class="c1"># Restart API</span>
+<a id="__codelineno-32-8" name="__codelineno-32-8" href="#__codelineno-32-8"></a>./operator.sh<span class="w"> </span>restart<span class="w"> </span>api
 </code></pre></div></p>
 </li>
 <li>
 <p><strong>Increase max_tokens:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--max-tokens<span class="w"> </span><span class="m">8192</span>
-<a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a>./scripts/services/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/services/start-api.sh
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--max-tokens<span class="w"> </span><span class="m">8192</span>
+<a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a>./operator.sh<span class="w"> </span>restart<span class="w"> </span>api
 </code></pre></div></p>
 </li>
 <li>
 <p><strong>Re-ingest with better config:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a><span class="c1"># Delete old ontology</span>
-<a id="__codelineno-35-2" name="__codelineno-35-2" href="#__codelineno-35-2"></a>kg<span class="w"> </span>ontology<span class="w"> </span>delete<span class="w"> </span><span class="s2">&quot;My Ontology&quot;</span>
-<a id="__codelineno-35-3" name="__codelineno-35-3" href="#__codelineno-35-3"></a>
-<a id="__codelineno-35-4" name="__codelineno-35-4" href="#__codelineno-35-4"></a><span class="c1"># Re-ingest with new config</span>
-<a id="__codelineno-35-5" name="__codelineno-35-5" href="#__codelineno-35-5"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;My Ontology&quot;</span><span class="w"> </span>-y<span class="w"> </span>document.txt
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a><span class="c1"># Delete old ontology</span>
+<a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a>kg<span class="w"> </span>ontology<span class="w"> </span>delete<span class="w"> </span><span class="s2">&quot;My Ontology&quot;</span>
+<a id="__codelineno-34-3" name="__codelineno-34-3" href="#__codelineno-34-3"></a>
+<a id="__codelineno-34-4" name="__codelineno-34-4" href="#__codelineno-34-4"></a><span class="c1"># Re-ingest with new config</span>
+<a id="__codelineno-34-5" name="__codelineno-34-5" href="#__codelineno-34-5"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;My Ontology&quot;</span><span class="w"> </span>-y<span class="w"> </span>document.txt
 </code></pre></div></p>
 </li>
 </ol>
 <h3 id="api-startup-shows-key-validation-failures">API Startup Shows Key Validation Failures</h3>
 <p><strong>Startup log:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a>⚠️  anthropic: API key validation failed - Authentication error
-<a id="__codelineno-36-2" name="__codelineno-36-2" href="#__codelineno-36-2"></a>✓ openai: API key validated successfully
-<a id="__codelineno-36-3" name="__codelineno-36-3" href="#__codelineno-36-3"></a>🔐 API key validation complete: 1/2 valid
+<div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a>⚠️  anthropic: API key validation failed - Authentication error
+<a id="__codelineno-35-2" name="__codelineno-35-2" href="#__codelineno-35-2"></a>✓ openai: API key validated successfully
+<a id="__codelineno-35-3" name="__codelineno-35-3" href="#__codelineno-35-3"></a>🔐 API key validation complete: 1/2 valid
 </code></pre></div></p>
 <p><strong>Meaning:</strong>
 - Anthropic key is invalid or expired
 - OpenAI key is valid
 - System will continue startup with only OpenAI available</p>
 <p><strong>Solution:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a><span class="c1"># Fix the invalid key</span>
-<a id="__codelineno-37-2" name="__codelineno-37-2" href="#__codelineno-37-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>keys<span class="w"> </span>delete<span class="w"> </span>anthropic
-<a id="__codelineno-37-3" name="__codelineno-37-3" href="#__codelineno-37-3"></a>kg<span class="w"> </span>admin<span class="w"> </span>keys<span class="w"> </span><span class="nb">set</span><span class="w"> </span>anthropic
-<a id="__codelineno-37-4" name="__codelineno-37-4" href="#__codelineno-37-4"></a>
-<a id="__codelineno-37-5" name="__codelineno-37-5" href="#__codelineno-37-5"></a><span class="c1"># Restart API</span>
-<a id="__codelineno-37-6" name="__codelineno-37-6" href="#__codelineno-37-6"></a>./scripts/services/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/services/start-api.sh
+<div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a><span class="c1"># Fix the invalid key</span>
+<a id="__codelineno-36-2" name="__codelineno-36-2" href="#__codelineno-36-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>keys<span class="w"> </span>delete<span class="w"> </span>anthropic
+<a id="__codelineno-36-3" name="__codelineno-36-3" href="#__codelineno-36-3"></a>kg<span class="w"> </span>admin<span class="w"> </span>keys<span class="w"> </span><span class="nb">set</span><span class="w"> </span>anthropic
+<a id="__codelineno-36-4" name="__codelineno-36-4" href="#__codelineno-36-4"></a>
+<a id="__codelineno-36-5" name="__codelineno-36-5" href="#__codelineno-36-5"></a><span class="c1"># Restart API</span>
+<a id="__codelineno-36-6" name="__codelineno-36-6" href="#__codelineno-36-6"></a>./operator.sh<span class="w"> </span>restart<span class="w"> </span>api
 </code></pre></div></p>
 <h3 id="config-changes-not-applied">Config Changes Not Applied</h3>
 <p><strong>Symptom:</strong> Changed extraction config but ingestion still uses old model.</p>
 <p><strong>Cause:</strong> Forgot to restart API.</p>
 <p><strong>Solution:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a><span class="c1"># Extraction config changes require restart</span>
-<a id="__codelineno-38-2" name="__codelineno-38-2" href="#__codelineno-38-2"></a>./scripts/services/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/services/start-api.sh
-<a id="__codelineno-38-3" name="__codelineno-38-3" href="#__codelineno-38-3"></a>
-<a id="__codelineno-38-4" name="__codelineno-38-4" href="#__codelineno-38-4"></a><span class="c1"># Verify new config is active</span>
-<a id="__codelineno-38-5" name="__codelineno-38-5" href="#__codelineno-38-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span>config
+<div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a><span class="c1"># Extraction config changes require restart</span>
+<a id="__codelineno-37-2" name="__codelineno-37-2" href="#__codelineno-37-2"></a>./operator.sh<span class="w"> </span>restart<span class="w"> </span>api
+<a id="__codelineno-37-3" name="__codelineno-37-3" href="#__codelineno-37-3"></a>
+<a id="__codelineno-37-4" name="__codelineno-37-4" href="#__codelineno-37-4"></a><span class="c1"># Verify new config is active</span>
+<a id="__codelineno-37-5" name="__codelineno-37-5" href="#__codelineno-37-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span>config
 </code></pre></div></p>
 <hr />
 <h2 id="best-practices">Best Practices</h2>
 <ol>
 <li>
 <p><strong>Always validate API keys before production</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>keys<span class="w"> </span>list
-<a id="__codelineno-39-2" name="__codelineno-39-2" href="#__codelineno-39-2"></a><span class="c1"># Ensure all providers show &quot;Valid&quot; status</span>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>keys<span class="w"> </span>list
+<a id="__codelineno-38-2" name="__codelineno-38-2" href="#__codelineno-38-2"></a><span class="c1"># Ensure all providers show &quot;Valid&quot; status</span>
 </code></pre></div></p>
 </li>
 <li>
@@ -11453,13 +11365,13 @@
 </li>
 <li>
 <p><strong>Test configuration changes before production</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a><span class="c1"># Test with a small document first</span>
-<a id="__codelineno-40-2" name="__codelineno-40-2" href="#__codelineno-40-2"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;Test&quot;</span><span class="w"> </span>-y<span class="w"> </span>small-test.txt
-<a id="__codelineno-40-3" name="__codelineno-40-3" href="#__codelineno-40-3"></a>
-<a id="__codelineno-40-4" name="__codelineno-40-4" href="#__codelineno-40-4"></a><span class="c1"># Verify quality</span>
-<a id="__codelineno-40-5" name="__codelineno-40-5" href="#__codelineno-40-5"></a>kg<span class="w"> </span>search<span class="w"> </span>query<span class="w"> </span><span class="s2">&quot;test concept&quot;</span>
-<a id="__codelineno-40-6" name="__codelineno-40-6" href="#__codelineno-40-6"></a>
-<a id="__codelineno-40-7" name="__codelineno-40-7" href="#__codelineno-40-7"></a><span class="c1"># Then proceed with full ingestion</span>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a><span class="c1"># Test with a small document first</span>
+<a id="__codelineno-39-2" name="__codelineno-39-2" href="#__codelineno-39-2"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;Test&quot;</span><span class="w"> </span>-y<span class="w"> </span>small-test.txt
+<a id="__codelineno-39-3" name="__codelineno-39-3" href="#__codelineno-39-3"></a>
+<a id="__codelineno-39-4" name="__codelineno-39-4" href="#__codelineno-39-4"></a><span class="c1"># Verify quality</span>
+<a id="__codelineno-39-5" name="__codelineno-39-5" href="#__codelineno-39-5"></a>kg<span class="w"> </span>search<span class="w"> </span>query<span class="w"> </span><span class="s2">&quot;test concept&quot;</span>
+<a id="__codelineno-39-6" name="__codelineno-39-6" href="#__codelineno-39-6"></a>
+<a id="__codelineno-39-7" name="__codelineno-39-7" href="#__codelineno-39-7"></a><span class="c1"># Then proceed with full ingestion</span>
 </code></pre></div></p>
 </li>
 <li>
@@ -11473,60 +11385,60 @@
 <h2 id="advanced-topics">Advanced Topics</h2>
 <h3 id="manual-api-calls">Manual API Calls</h3>
 <p>If you need to use the API directly:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a><span class="c1"># Get extraction config (public endpoint)</span>
-<a id="__codelineno-41-2" name="__codelineno-41-2" href="#__codelineno-41-2"></a>curl<span class="w"> </span>http://localhost:8000/extraction/config
-<a id="__codelineno-41-3" name="__codelineno-41-3" href="#__codelineno-41-3"></a>
-<a id="__codelineno-41-4" name="__codelineno-41-4" href="#__codelineno-41-4"></a><span class="c1"># Get full config details (admin endpoint)</span>
-<a id="__codelineno-41-5" name="__codelineno-41-5" href="#__codelineno-41-5"></a>curl<span class="w"> </span>http://localhost:8000/admin/extraction/config
-<a id="__codelineno-41-6" name="__codelineno-41-6" href="#__codelineno-41-6"></a>
-<a id="__codelineno-41-7" name="__codelineno-41-7" href="#__codelineno-41-7"></a><span class="c1"># Update extraction config (admin endpoint)</span>
-<a id="__codelineno-41-8" name="__codelineno-41-8" href="#__codelineno-41-8"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:8000/admin/extraction/config<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-41-9" name="__codelineno-41-9" href="#__codelineno-41-9"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-41-10" name="__codelineno-41-10" href="#__codelineno-41-10"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{</span>
-<a id="__codelineno-41-11" name="__codelineno-41-11" href="#__codelineno-41-11"></a><span class="s1">    &quot;provider&quot;: &quot;openai&quot;,</span>
-<a id="__codelineno-41-12" name="__codelineno-41-12" href="#__codelineno-41-12"></a><span class="s1">    &quot;model_name&quot;: &quot;gpt-4o&quot;,</span>
-<a id="__codelineno-41-13" name="__codelineno-41-13" href="#__codelineno-41-13"></a><span class="s1">    &quot;supports_vision&quot;: true,</span>
-<a id="__codelineno-41-14" name="__codelineno-41-14" href="#__codelineno-41-14"></a><span class="s1">    &quot;supports_json_mode&quot;: true,</span>
-<a id="__codelineno-41-15" name="__codelineno-41-15" href="#__codelineno-41-15"></a><span class="s1">    &quot;max_tokens&quot;: 4096</span>
-<a id="__codelineno-41-16" name="__codelineno-41-16" href="#__codelineno-41-16"></a><span class="s1">  }&#39;</span>
-<a id="__codelineno-41-17" name="__codelineno-41-17" href="#__codelineno-41-17"></a>
-<a id="__codelineno-41-18" name="__codelineno-41-18" href="#__codelineno-41-18"></a><span class="c1"># List API keys (admin endpoint)</span>
-<a id="__codelineno-41-19" name="__codelineno-41-19" href="#__codelineno-41-19"></a>curl<span class="w"> </span>http://localhost:8000/admin/keys
-<a id="__codelineno-41-20" name="__codelineno-41-20" href="#__codelineno-41-20"></a>
-<a id="__codelineno-41-21" name="__codelineno-41-21" href="#__codelineno-41-21"></a><span class="c1"># Set API key (admin endpoint)</span>
-<a id="__codelineno-41-22" name="__codelineno-41-22" href="#__codelineno-41-22"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:8000/admin/keys/openai<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-41-23" name="__codelineno-41-23" href="#__codelineno-41-23"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-41-24" name="__codelineno-41-24" href="#__codelineno-41-24"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;api_key&quot;: &quot;sk-...&quot;}&#39;</span>
-<a id="__codelineno-41-25" name="__codelineno-41-25" href="#__codelineno-41-25"></a>
-<a id="__codelineno-41-26" name="__codelineno-41-26" href="#__codelineno-41-26"></a><span class="c1"># Delete API key (admin endpoint)</span>
-<a id="__codelineno-41-27" name="__codelineno-41-27" href="#__codelineno-41-27"></a>curl<span class="w"> </span>-X<span class="w"> </span>DELETE<span class="w"> </span>http://localhost:8000/admin/keys/openai
+<div class="highlight"><pre><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a><span class="c1"># Get extraction config (public endpoint)</span>
+<a id="__codelineno-40-2" name="__codelineno-40-2" href="#__codelineno-40-2"></a>curl<span class="w"> </span>http://localhost:8000/extraction/config
+<a id="__codelineno-40-3" name="__codelineno-40-3" href="#__codelineno-40-3"></a>
+<a id="__codelineno-40-4" name="__codelineno-40-4" href="#__codelineno-40-4"></a><span class="c1"># Get full config details (admin endpoint)</span>
+<a id="__codelineno-40-5" name="__codelineno-40-5" href="#__codelineno-40-5"></a>curl<span class="w"> </span>http://localhost:8000/admin/extraction/config
+<a id="__codelineno-40-6" name="__codelineno-40-6" href="#__codelineno-40-6"></a>
+<a id="__codelineno-40-7" name="__codelineno-40-7" href="#__codelineno-40-7"></a><span class="c1"># Update extraction config (admin endpoint)</span>
+<a id="__codelineno-40-8" name="__codelineno-40-8" href="#__codelineno-40-8"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:8000/admin/extraction/config<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-40-9" name="__codelineno-40-9" href="#__codelineno-40-9"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-40-10" name="__codelineno-40-10" href="#__codelineno-40-10"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{</span>
+<a id="__codelineno-40-11" name="__codelineno-40-11" href="#__codelineno-40-11"></a><span class="s1">    &quot;provider&quot;: &quot;openai&quot;,</span>
+<a id="__codelineno-40-12" name="__codelineno-40-12" href="#__codelineno-40-12"></a><span class="s1">    &quot;model_name&quot;: &quot;gpt-4o&quot;,</span>
+<a id="__codelineno-40-13" name="__codelineno-40-13" href="#__codelineno-40-13"></a><span class="s1">    &quot;supports_vision&quot;: true,</span>
+<a id="__codelineno-40-14" name="__codelineno-40-14" href="#__codelineno-40-14"></a><span class="s1">    &quot;supports_json_mode&quot;: true,</span>
+<a id="__codelineno-40-15" name="__codelineno-40-15" href="#__codelineno-40-15"></a><span class="s1">    &quot;max_tokens&quot;: 4096</span>
+<a id="__codelineno-40-16" name="__codelineno-40-16" href="#__codelineno-40-16"></a><span class="s1">  }&#39;</span>
+<a id="__codelineno-40-17" name="__codelineno-40-17" href="#__codelineno-40-17"></a>
+<a id="__codelineno-40-18" name="__codelineno-40-18" href="#__codelineno-40-18"></a><span class="c1"># List API keys (admin endpoint)</span>
+<a id="__codelineno-40-19" name="__codelineno-40-19" href="#__codelineno-40-19"></a>curl<span class="w"> </span>http://localhost:8000/admin/keys
+<a id="__codelineno-40-20" name="__codelineno-40-20" href="#__codelineno-40-20"></a>
+<a id="__codelineno-40-21" name="__codelineno-40-21" href="#__codelineno-40-21"></a><span class="c1"># Set API key (admin endpoint)</span>
+<a id="__codelineno-40-22" name="__codelineno-40-22" href="#__codelineno-40-22"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:8000/admin/keys/openai<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-40-23" name="__codelineno-40-23" href="#__codelineno-40-23"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-40-24" name="__codelineno-40-24" href="#__codelineno-40-24"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;api_key&quot;: &quot;sk-...&quot;}&#39;</span>
+<a id="__codelineno-40-25" name="__codelineno-40-25" href="#__codelineno-40-25"></a>
+<a id="__codelineno-40-26" name="__codelineno-40-26" href="#__codelineno-40-26"></a><span class="c1"># Delete API key (admin endpoint)</span>
+<a id="__codelineno-40-27" name="__codelineno-40-27" href="#__codelineno-40-27"></a>curl<span class="w"> </span>-X<span class="w"> </span>DELETE<span class="w"> </span>http://localhost:8000/admin/keys/openai
 </code></pre></div>
 <h3 id="database-schema">Database Schema</h3>
 <p><strong>Extraction Configuration:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-42-1" name="__codelineno-42-1" href="#__codelineno-42-1"></a><span class="c1">-- View extraction configs</span>
-<a id="__codelineno-42-2" name="__codelineno-42-2" href="#__codelineno-42-2"></a><span class="k">SELECT</span><span class="w"> </span><span class="n">id</span><span class="p">,</span><span class="w"> </span><span class="n">provider</span><span class="p">,</span><span class="w"> </span><span class="n">model_name</span><span class="p">,</span><span class="w"> </span><span class="n">supports_vision</span><span class="p">,</span><span class="w"> </span><span class="n">supports_json_mode</span><span class="p">,</span><span class="w"> </span><span class="n">max_tokens</span><span class="p">,</span><span class="w"> </span><span class="n">active</span>
-<a id="__codelineno-42-3" name="__codelineno-42-3" href="#__codelineno-42-3"></a><span class="k">FROM</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">ai_extraction_config</span>
-<a id="__codelineno-42-4" name="__codelineno-42-4" href="#__codelineno-42-4"></a><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">id</span><span class="w"> </span><span class="k">DESC</span><span class="p">;</span>
-<a id="__codelineno-42-5" name="__codelineno-42-5" href="#__codelineno-42-5"></a>
-<a id="__codelineno-42-6" name="__codelineno-42-6" href="#__codelineno-42-6"></a><span class="c1">-- Check active config</span>
-<a id="__codelineno-42-7" name="__codelineno-42-7" href="#__codelineno-42-7"></a><span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">ai_extraction_config</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">active</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">TRUE</span><span class="p">;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a><span class="c1">-- View extraction configs</span>
+<a id="__codelineno-41-2" name="__codelineno-41-2" href="#__codelineno-41-2"></a><span class="k">SELECT</span><span class="w"> </span><span class="n">id</span><span class="p">,</span><span class="w"> </span><span class="n">provider</span><span class="p">,</span><span class="w"> </span><span class="n">model_name</span><span class="p">,</span><span class="w"> </span><span class="n">supports_vision</span><span class="p">,</span><span class="w"> </span><span class="n">supports_json_mode</span><span class="p">,</span><span class="w"> </span><span class="n">max_tokens</span><span class="p">,</span><span class="w"> </span><span class="n">active</span>
+<a id="__codelineno-41-3" name="__codelineno-41-3" href="#__codelineno-41-3"></a><span class="k">FROM</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">ai_extraction_config</span>
+<a id="__codelineno-41-4" name="__codelineno-41-4" href="#__codelineno-41-4"></a><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">id</span><span class="w"> </span><span class="k">DESC</span><span class="p">;</span>
+<a id="__codelineno-41-5" name="__codelineno-41-5" href="#__codelineno-41-5"></a>
+<a id="__codelineno-41-6" name="__codelineno-41-6" href="#__codelineno-41-6"></a><span class="c1">-- Check active config</span>
+<a id="__codelineno-41-7" name="__codelineno-41-7" href="#__codelineno-41-7"></a><span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">ai_extraction_config</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">active</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">TRUE</span><span class="p">;</span>
 </code></pre></div></p>
 <p><strong>API Keys:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-43-1" name="__codelineno-43-1" href="#__codelineno-43-1"></a><span class="c1">-- View API keys (encrypted)</span>
-<a id="__codelineno-43-2" name="__codelineno-43-2" href="#__codelineno-43-2"></a><span class="k">SELECT</span><span class="w"> </span><span class="n">provider</span><span class="p">,</span><span class="w"> </span><span class="n">encrypted_api_key</span><span class="p">,</span><span class="w"> </span><span class="n">validation_status</span><span class="p">,</span><span class="w"> </span><span class="n">last_validated_at</span>
-<a id="__codelineno-43-3" name="__codelineno-43-3" href="#__codelineno-43-3"></a><span class="k">FROM</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">encrypted_api_keys</span><span class="p">;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-42-1" name="__codelineno-42-1" href="#__codelineno-42-1"></a><span class="c1">-- View API keys (encrypted)</span>
+<a id="__codelineno-42-2" name="__codelineno-42-2" href="#__codelineno-42-2"></a><span class="k">SELECT</span><span class="w"> </span><span class="n">provider</span><span class="p">,</span><span class="w"> </span><span class="n">encrypted_api_key</span><span class="p">,</span><span class="w"> </span><span class="n">validation_status</span><span class="p">,</span><span class="w"> </span><span class="n">last_validated_at</span>
+<a id="__codelineno-42-3" name="__codelineno-42-3" href="#__codelineno-42-3"></a><span class="k">FROM</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">encrypted_api_keys</span><span class="p">;</span>
 </code></pre></div></p>
 <p><strong>Note:</strong> API keys are encrypted at rest and cannot be decrypted via SQL.</p>
 <h3 id="encryption-key-management">Encryption Key Management</h3>
 <p>API keys are encrypted using the <code>ENCRYPTION_KEY</code> environment variable:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-44-1" name="__codelineno-44-1" href="#__codelineno-44-1"></a><span class="c1"># Generate new encryption key (32-byte hex)</span>
-<a id="__codelineno-44-2" name="__codelineno-44-2" href="#__codelineno-44-2"></a>openssl<span class="w"> </span>rand<span class="w"> </span>-hex<span class="w"> </span><span class="m">32</span>
-<a id="__codelineno-44-3" name="__codelineno-44-3" href="#__codelineno-44-3"></a>
-<a id="__codelineno-44-4" name="__codelineno-44-4" href="#__codelineno-44-4"></a><span class="c1"># Set in .env file</span>
-<a id="__codelineno-44-5" name="__codelineno-44-5" href="#__codelineno-44-5"></a><span class="nv">ENCRYPTION_KEY</span><span class="o">=</span>your-generated-key-here
-<a id="__codelineno-44-6" name="__codelineno-44-6" href="#__codelineno-44-6"></a>
-<a id="__codelineno-44-7" name="__codelineno-44-7" href="#__codelineno-44-7"></a><span class="c1"># Restart API to use new key</span>
-<a id="__codelineno-44-8" name="__codelineno-44-8" href="#__codelineno-44-8"></a>./scripts/services/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/services/start-api.sh
+<div class="highlight"><pre><span></span><code><a id="__codelineno-43-1" name="__codelineno-43-1" href="#__codelineno-43-1"></a><span class="c1"># Generate new encryption key (32-byte hex)</span>
+<a id="__codelineno-43-2" name="__codelineno-43-2" href="#__codelineno-43-2"></a>openssl<span class="w"> </span>rand<span class="w"> </span>-hex<span class="w"> </span><span class="m">32</span>
+<a id="__codelineno-43-3" name="__codelineno-43-3" href="#__codelineno-43-3"></a>
+<a id="__codelineno-43-4" name="__codelineno-43-4" href="#__codelineno-43-4"></a><span class="c1"># Set in .env file</span>
+<a id="__codelineno-43-5" name="__codelineno-43-5" href="#__codelineno-43-5"></a><span class="nv">ENCRYPTION_KEY</span><span class="o">=</span>your-generated-key-here
+<a id="__codelineno-43-6" name="__codelineno-43-6" href="#__codelineno-43-6"></a>
+<a id="__codelineno-43-7" name="__codelineno-43-7" href="#__codelineno-43-7"></a><span class="c1"># Restart API to use new key</span>
+<a id="__codelineno-43-8" name="__codelineno-43-8" href="#__codelineno-43-8"></a>./operator.sh<span class="w"> </span>restart<span class="w"> </span>api
 </code></pre></div>
 <p><strong>Warning:</strong> Changing ENCRYPTION_KEY invalidates all stored API keys!</p>
 <h3 id="provider-specific-features">Provider-Specific Features</h3>
@@ -11587,7 +11499,7 @@
 </tr>
 <tr>
 <td>Restart API</td>
-<td><code>./scripts/services/stop-api.sh &amp;&amp; ./scripts/services/start-api.sh</code></td>
+<td><code>./operator.sh restart api</code></td>
 </tr>
 <tr>
 <td>Test configuration</td>

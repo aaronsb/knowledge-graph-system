@@ -3141,10 +3141,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-script-duplication" class="md-nav__link">
+  <a href="#1-script-duplication-standalone-installs" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Script Duplication
+        1. Script Duplication (standalone installs)
       
     </span>
   </a>
@@ -3241,10 +3241,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#downloaded-by-installsh-to-host" class="md-nav__link">
+  <a href="#downloaded-by-installsh-to-host-standalone-installs" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Downloaded by install.sh to Host
+        Downloaded by install.sh to Host (standalone installs)
       
     </span>
   </a>
@@ -3256,6 +3256,17 @@
     <span class="md-ellipsis">
       
         Baked into kg-operator Container Image
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#file-path-note-app-vs-workspace" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File path note: /app/ vs /workspace/
       
     </span>
   </a>
@@ -4491,62 +4502,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../mcp/tools/ingest-directory/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-directory
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../mcp/tools/ingest-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-file
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../mcp/tools/ingest/" class="md-nav__link">
         
   
@@ -4555,34 +4510,6 @@
     
   
     ingest
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../mcp/tools/inspect-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    inspect-file
   
 
     
@@ -10109,10 +10036,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-script-duplication" class="md-nav__link">
+  <a href="#1-script-duplication-standalone-installs" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Script Duplication
+        1. Script Duplication (standalone installs)
       
     </span>
   </a>
@@ -10209,10 +10136,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#downloaded-by-installsh-to-host" class="md-nav__link">
+  <a href="#downloaded-by-installsh-to-host-standalone-installs" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Downloaded by install.sh to Host
+        Downloaded by install.sh to Host (standalone installs)
       
     </span>
   </a>
@@ -10224,6 +10151,17 @@
     <span class="md-ellipsis">
       
         Baked into kg-operator Container Image
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#file-path-note-app-vs-workspace" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File path note: /app/ vs /workspace/
       
     </span>
   </a>
@@ -10285,9 +10223,11 @@
 <a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>kg-operator container (has ALL logic)
 <a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>    │
 <a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>    ├─► docker.io CLI (controls sibling containers via socket)
-<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>    ├─► postgresql-client (psql for migrations)
-<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>    ├─► /workspace/operator/lib/*.sh scripts
-<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>    └─► /workspace/operator/configure.py
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>    ├─► docker compose v2 plugin (for compose operations)
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>    ├─► postgresql-client (psql for migrations)
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>    ├─► /workspace/operator/lib/*.sh scripts
+<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>    ├─► /workspace/operator/database/*.sh (migrate, backup, restore)
+<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>    └─► /workspace/operator/configure.py
 </code></pre></div>
 <h2 id="current-architecture-legacy">Current Architecture (Legacy)</h2>
 <h3 id="installsh-responsibilities">install.sh Responsibilities</h3>
@@ -10365,92 +10305,116 @@
 <tr>
 <td><code>init</code></td>
 <td>Host</td>
-<td><code>lib/guided-init.sh</code></td>
-<td>Interactive setup (dev mode)</td>
+<td><code>lib/guided-init.sh</code> or <code>lib/headless-init.sh</code></td>
+<td>Interactive / headless setup (repo mode only)</td>
 </tr>
 <tr>
 <td><code>start</code></td>
 <td>Host</td>
-<td><code>lib/start-infra.sh</code>, <code>lib/start-app.sh</code></td>
-<td>Start platform</td>
+<td><code>cmd_start_infra</code> + container <code>database/migrate-db.sh</code></td>
+<td>Start platform (infra + migrations + app)</td>
 </tr>
 <tr>
 <td><code>stop</code></td>
 <td>Host</td>
-<td><code>lib/stop.sh</code></td>
-<td>Stop platform</td>
+<td>docker compose stop</td>
+<td>Stop platform or specific service (<code>--keep-infra</code> available)</td>
 </tr>
 <tr>
 <td><code>restart</code></td>
 <td>Host</td>
-<td>stop + start</td>
-<td>Restart platform</td>
+<td>docker compose restart</td>
+<td>Restart a service (or <code>all</code>)</td>
 </tr>
 <tr>
 <td><code>upgrade</code></td>
 <td>Host</td>
-<td><code>lib/upgrade.sh</code></td>
-<td>Pull images, migrate, restart</td>
+<td>inline upgrade flow + <code>check_pg_major_compatibility</code></td>
+<td>Pull/build, migrate, restart with PG major-version safety gate</td>
 </tr>
 <tr>
 <td><code>update</code></td>
 <td>Host</td>
-<td>docker compose pull</td>
-<td>Pull images only</td>
+<td>docker compose pull / build</td>
+<td>Pull (or build, in local mode) images only</td>
 </tr>
 <tr>
 <td><code>status</code></td>
 <td>Host</td>
-<td>docker compose ps</td>
+<td>docker ps</td>
 <td>Show container status</td>
+</tr>
+<tr>
+<td><code>versions</code></td>
+<td>Host</td>
+<td>OCI labels + GHCR API</td>
+<td>Show running/local/remote image versions</td>
 </tr>
 <tr>
 <td><code>logs</code></td>
 <td>Host</td>
 <td>docker compose logs</td>
-<td>View logs</td>
+<td>View logs (default service: api)</td>
 </tr>
 <tr>
 <td><code>shell</code></td>
 <td>Container</td>
-<td>docker exec</td>
+<td><code>docker exec -it kg-operator /bin/bash</code></td>
 <td>Enter operator container</td>
 </tr>
 <tr>
 <td><code>teardown</code></td>
 <td>Host</td>
-<td><code>lib/teardown.sh</code></td>
-<td>Remove platform</td>
+<td>docker compose down (<code>--full</code> adds <code>-v</code>)</td>
+<td>Remove containers (optionally volumes)</td>
 </tr>
 <tr>
 <td><code>recert</code></td>
-<td>Host</td>
-<td>acme.sh</td>
+<td>Container</td>
+<td><code>operator/lib/recert.sh</code></td>
 <td>Renew SSL certificates</td>
 </tr>
 <tr>
 <td><code>admin</code></td>
 <td>Container</td>
-<td>configure.py</td>
+<td>configure.py admin</td>
 <td>Admin user management</td>
 </tr>
 <tr>
 <td><code>ai-provider</code></td>
 <td>Container</td>
-<td>configure.py</td>
+<td>configure.py ai-provider</td>
 <td>Configure AI extraction</td>
 </tr>
 <tr>
 <td><code>embedding</code></td>
 <td>Container</td>
-<td>configure.py</td>
+<td>configure.py embedding</td>
 <td>Configure embeddings</td>
 </tr>
 <tr>
 <td><code>api-key</code></td>
 <td>Container</td>
-<td>configure.py</td>
+<td>configure.py api-key</td>
 <td>Manage API keys</td>
+</tr>
+<tr>
+<td><code>query</code> / <code>pg</code></td>
+<td>Host</td>
+<td>docker compose exec postgres psql</td>
+<td>Run an SQL query against PostgreSQL</td>
+</tr>
+<tr>
+<td><code>garage</code></td>
+<td>Container</td>
+<td><code>operator/lib/garage-manager.sh</code></td>
+<td>Manage Garage storage (status, init, repair)</td>
+</tr>
+<tr>
+<td><code>self-update</code></td>
+<td>Host</td>
+<td><code>docker cp</code> + <code>docker pull</code></td>
+<td>Update operator.sh from container + pull latest operator image</td>
 </tr>
 </tbody>
 </table>
@@ -10475,19 +10439,27 @@
 <a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>│  ┌────────────────────────────────────────────────────────────┐ │
 <a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>│  │                    kg-operator CONTAINER                    │ │
 <a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>│  │                                                             │ │
-<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>│  │   configure.py ─── Direct database/API access               │ │
-<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>│  │   /app/operator/lib/*.sh ─── Baked into image               │ │
-<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>│  │                                                             │ │
-<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>│  └────────────────────────────────────────────────────────────┘ │
-<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>└─────────────────────────────────────────────────────────────────┘
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>│  │   /workspace/operator/configure.py ── Database config       │ │
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>│  │   /workspace/operator/lib/*.sh ─────── Helper scripts       │ │
+<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>│  │   /workspace/operator/database/*.sh ── Migrations/backups   │ │
+<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>│  │   /etc/kg/operator.sh ──────────────── Trusted shim copy    │ │
+<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>│  │                                                             │ │
+<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>│  │   WORKDIR is /workspace. In dev mode the host repo is       │ │
+<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a>│  │   bind-mounted to /workspace; in standalone mode the same   │ │
+<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a>│  │   paths are baked into the image (no separate /app/         │ │
+<a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a>│  │   prefix).                                                  │ │
+<a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a>│  └────────────────────────────────────────────────────────────┘ │
+<a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a>└─────────────────────────────────────────────────────────────────┘
 </code></pre></div>
 <h2 id="issues-with-current-architecture">Issues with Current Architecture</h2>
-<h3 id="1-script-duplication">1. Script Duplication</h3>
+<h3 id="1-script-duplication-standalone-installs">1. Script Duplication (standalone installs)</h3>
 <ul>
-<li><code>operator/lib/*.sh</code> exists in both:</li>
+<li>In <strong>standalone</strong> installs, <code>operator/lib/*.sh</code> exists in two places:</li>
 <li>Host filesystem (downloaded by install.sh)</li>
 <li>Operator container image (baked in at build)</li>
-<li>Must keep both in sync</li>
+<li>They must be kept in sync.</li>
+<li>In <strong>dev</strong> installs the host repo is bind-mounted to <code>/workspace</code>, so the
+  container sees the same files as the host and there is no duplication.</li>
 </ul>
 <h3 id="2-permission-problems">2. Permission Problems</h3>
 <ul>
@@ -10496,9 +10468,11 @@
 </ul>
 <h3 id="3-mixed-execution-model">3. Mixed Execution Model</h3>
 <ul>
-<li>Some commands run on host, some in container</li>
-<li>Confusing mental model</li>
-<li>Host scripts need docker socket access</li>
+<li>Some commands run on host (start/stop/restart/upgrade/teardown/update/status/
+  versions/logs/query), others in container (admin/ai-provider/embedding/
+  api-key/garage/recert/shell).</li>
+<li>Host scripts need Docker socket access via the local Docker CLI; container
+  scripts use the mounted <code>/var/run/docker.sock</code> to manage sibling containers.</li>
 </ul>
 <h2 id="proposed-architecture-future">Proposed Architecture (Future)</h2>
 <h3 id="option-a-container-first">Option A: Container-First</h3>
@@ -10534,41 +10508,69 @@
 <p><strong>Pros</strong>: Clean separation, operator.sh is trivial
 <strong>Cons</strong>: install.sh becomes the primary tool</p>
 <h2 id="files-inventory">Files Inventory</h2>
-<h3 id="downloaded-by-installsh-to-host">Downloaded by install.sh to Host</h3>
+<h3 id="downloaded-by-installsh-to-host-standalone-installs">Downloaded by install.sh to Host (standalone installs)</h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>knowledge-graph/
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>├── .env                          # Secrets
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>├── .operator.conf                # Configuration
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>├── docker-compose.yml            # Base compose
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>├── docker-compose.prod.yml       # Production overrides
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>├── docker-compose.ghcr.yml       # GHCR image references
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>├── docker-compose.ssl.yml        # SSL configuration
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>├── nginx.ssl.conf                # Nginx HTTPS config
-<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>├── certs/                        # SSL certificates
-<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>├── operator.sh                   # Management shim
-<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>├── operator/
-<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>│   ├── configure.py              # Python config tool
-<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>│   ├── lib/
-<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>│   │   ├── common.sh
-<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a>│   │   ├── start-infra.sh
-<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a>│   │   ├── start-app.sh
-<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a>│   │   ├── stop.sh
-<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a>│   │   ├── upgrade.sh
-<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a>│   │   └── teardown.sh
-<a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a>│   └── database/
-<a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a>│       ├── migrate-db.sh
-<a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a>│       └── backup-database.sh
-<a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a>└── schema/
-<a id="__codelineno-5-24" name="__codelineno-5-24" href="#__codelineno-5-24"></a>    └── 00_baseline.sql
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>├── .env                          # Secrets (generated)
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>├── .operator.conf                # Operator configuration (DEV_MODE, GPU_MODE,
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>│                                 # IMAGE_SOURCE, etc.)
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>├── operator.sh                   # Management shim (also embeds VERSION)
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>├── docker/
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>│   ├── docker-compose.yml        # Base compose (postgres, garage, api, web,
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>│   │                             # operator)
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>│   ├── docker-compose.prod.yml   # Production overrides
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>│   ├── docker-compose.ghcr.yml   # GHCR image references
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>│   ├── docker-compose.standalone.yml  # Removes dev mounts (standalone mode)
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>│   ├── docker-compose.ssl.yml    # SSL overlay (if SSL configured)
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>│   ├── docker-compose.gpu-*.yml  # GPU overlays (nvidia / amd / amd-host)
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>│   ├── docker-compose.override.mac.yml  # macOS (MPS) overlay
+<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a>│   └── nginx.prod.conf
+<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a>├── certs/                        # SSL certificates (if SSL configured)
+<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a>├── operator/
+<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a>│   ├── configure.py              # Python config tool
+<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a>│   ├── lib/                      # common, start-{infra,app,platform},
+<a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a>│   │                             # stop, upgrade, teardown, garage-manager,
+<a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a>│   │                             # guided-init, headless-init,
+<a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a>│   │                             # init-secrets, image-tag, operator-help
+<a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a>│   └── database/                 # migrate-db.sh, backup-database.sh,
+<a id="__codelineno-5-24" name="__codelineno-5-24" href="#__codelineno-5-24"></a>│                                 # restore-database.sh
+<a id="__codelineno-5-25" name="__codelineno-5-25" href="#__codelineno-5-25"></a>├── schema/
+<a id="__codelineno-5-26" name="__codelineno-5-26" href="#__codelineno-5-26"></a>│   ├── 00_baseline.sql
+<a id="__codelineno-5-27" name="__codelineno-5-27" href="#__codelineno-5-27"></a>│   ├── 11_graph_accel.sql
+<a id="__codelineno-5-28" name="__codelineno-5-28" href="#__codelineno-5-28"></a>│   ├── init.cypher
+<a id="__codelineno-5-29" name="__codelineno-5-29" href="#__codelineno-5-29"></a>│   ├── migrations/*.sql
+<a id="__codelineno-5-30" name="__codelineno-5-30" href="#__codelineno-5-30"></a>│   └── migrations-warm/*.sql
+<a id="__codelineno-5-31" name="__codelineno-5-31" href="#__codelineno-5-31"></a>└── config/
+<a id="__codelineno-5-32" name="__codelineno-5-32" href="#__codelineno-5-32"></a>    └── garage.toml               # Garage server config
 </code></pre></div>
+<p>In <strong>dev (repo) installs</strong>, the same files are checked out in-place from the
+repo and the operator container bind-mounts the repo root to <code>/workspace</code>,
+so there is no separate "downloaded" copy.</p>
 <h3 id="baked-into-kg-operator-container-image">Baked into kg-operator Container Image</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>/app/
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>/workspace/                          # WORKDIR (also bind-mounted in dev mode)
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>├── operator/
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>│   ├── configure.py
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>│   └── lib/*.sh
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>└── schema/
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>    ├── 00_baseline.sql
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>    └── migrations/*.sql
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>│   ├── lib/*.sh                     # common, start-*, stop, upgrade, teardown,
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>│   │                                # garage-manager, guided-init, headless-init,
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>│   │                                # init-secrets, image-tag, operator-help
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>│   └── database/                    # migrate-db.sh, backup-database.sh,
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>│                                    # restore-database.sh
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>├── api/app/lib/                     # Subset of API libs imported by configure.py
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>├── schema/
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>│   ├── 00_baseline.sql
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a>│   ├── 11_graph_accel.sql
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a>│   ├── migrations/*.sql             # Forward migrations (numbered)
+<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a>│   └── migrations-warm/*.sql        # Warm-cluster migrations
+<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a>└── scripts/development/             # Diagnostics for shell sessions
+<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a>
+<a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a>/etc/kg/
+<a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a>└── operator.sh                      # Trusted copy for self-update extraction
 </code></pre></div>
+<h3 id="file-path-note-app-vs-workspace">File path note: <code>/app/</code> vs <code>/workspace/</code></h3>
+<p>The operator container's <code>WORKDIR</code> is <code>/workspace</code>. Earlier drafts of this
+document referenced <code>/app/operator/...</code>; that path does not exist in the
+shipping image. All operator code (scripts, configure.py, database tools) lives
+under <code>/workspace/operator/</code>, which is what <code>operator.sh</code> invokes via
+<code>docker exec kg-operator ...</code>.</p>
 
 
 

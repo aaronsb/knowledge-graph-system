@@ -4408,62 +4408,6 @@
   
   
     <li class="md-nav__item">
-      <a href="mcp/tools/ingest-directory/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-directory
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="mcp/tools/ingest-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-file
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="mcp/tools/ingest/" class="md-nav__link">
         
   
@@ -4472,34 +4416,6 @@
     
   
     ingest
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="mcp/tools/inspect-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    inspect-file
   
 
     
@@ -10094,48 +10010,55 @@
 <h2 id="tool-reference">📚 Tool Reference</h2>
 <h3 id="cli-commands"><a href="cli/">CLI Commands</a></h3>
 <p>Complete reference for all <code>kg</code> command-line interface commands.</p>
-<p><strong>Coverage:</strong> 8 commands (health, config, ingest, search, database, ontology, vocabulary, admin)</p>
+<p><strong>Coverage:</strong> commands include <code>health</code>, <code>config</code>, <code>login</code>, <code>logout</code>, <code>oauth</code>,
+<code>ingest</code>, <code>search</code>, <code>job</code>, <code>database</code>, <code>ontology</code>, <code>vocabulary</code>, and <code>admin</code>
+(see <a href="cli/commands/">cli/commands/</a> for the current generated list).</p>
 <p>All CLI commands are auto-generated from the actual command definitions, ensuring documentation stays synchronized with the code.</p>
 <h3 id="mcp-tools"><a href="mcp/">MCP Tools</a></h3>
-<p>Complete reference for all Model Context Protocol (MCP) tools exposed to Claude Desktop.</p>
-<p><strong>Coverage:</strong> 19 tools across 6 categories
-- Search &amp; Query (5 tools)
-- Database (3 tools)
-- Ontology (4 tools)
-- Job Management (4 tools)
-- Ingestion (1 tool)
-- System (2 tools)</p>
+<p>Complete reference for all Model Context Protocol (MCP) tools exposed to
+Claude Desktop / Claude Code.</p>
+<p>The generated set lives under <a href="mcp/tools/">mcp/tools/</a> and covers
+search/query, ingestion, concept and graph inspection, ontology, job
+management, polarity / epistemic-status analysis, source/document/artifact
+inspection, programs (executable graph operations), epoch tracking, and
+session context.</p>
 <p>All MCP tool documentation is auto-generated from the tool schemas, ensuring accuracy and completeness.</p>
 <h2 id="api-reference">🌐 API Reference</h2>
 <h3 id="rest-api"><a href="api/">REST API</a></h3>
 <p>Interactive OpenAPI/Swagger documentation for the Knowledge Graph HTTP API.</p>
-<p><strong>Coverage:</strong> All REST endpoints organized by tag
-- Authentication - User registration, login, API keys
-- Ingestion - Document submission and processing
-- Jobs - Async job management and monitoring
-- Queries - Graph exploration and concept search
-- Ontology - Knowledge domain organization
-- Vocabulary - Relationship type management
-- Admin - System administration
-- RBAC - Role-based access control</p>
+<p><strong>Coverage:</strong> All REST endpoints organized by tag (see <code>openapi.json</code> for the
+authoritative list). Current top-level tags:
+- health - Liveness/readiness probes
+- authentication - OAuth 2.0 login, tokens, API keys (ADR-054)
+- ingestion - Document submission and processing
+- jobs - Async job management and monitoring
+- queries - Graph exploration and concept search
+- database - Database introspection and admin
+- ontology - Knowledge domain organization
+- vocabulary - Relationship type management
+- embedding - Embedding configuration and inspection
+- extraction - Extraction configuration
+- admin - System administration
+- rbac - Role-based access control</p>
 <p>API documentation uses industry-standard Swagger UI for interactive exploration, testing, and schema browsing.</p>
 <h2 id="auto-generation">🤖 Auto-Generation</h2>
 <h3 id="tool-documentation-cli-mcp">Tool Documentation (CLI + MCP)</h3>
 <p>Generated during the build process:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nb">cd</span><span class="w"> </span>client<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>npm<span class="w"> </span>run<span class="w"> </span>build
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nb">cd</span><span class="w"> </span>cli<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>npm<span class="w"> </span>run<span class="w"> </span>build
 </code></pre></div>
 <p><strong>Features:</strong>
-- ✅ Extracts from source code (CLI commands, MCP tool schemas)
-- ✅ Git churn prevention (only writes if content changed)
-- ✅ Synchronized with code changes
-- ✅ No manual maintenance required</p>
-<p><strong>Generators:</strong>
-- <code>client/scripts/simple-doc-gen.mjs</code> - CLI documentation
-- <code>client/scripts/generate-mcp-docs.mjs</code> - MCP documentation
-- <code>client/scripts/doc-utils.mjs</code> - Smart write utilities</p>
+- Extracts from source code (CLI commands, MCP tool schemas)
+- Git churn prevention (only writes if content changed)
+- Synchronized with code changes
+- No manual maintenance required</p>
+<p><strong>Generators (in <code>cli/scripts/</code>):</strong>
+- <code>simple-doc-gen.mjs</code> - CLI documentation
+- <code>generate-mcp-docs.mjs</code> - MCP documentation
+- <code>doc-utils.mjs</code> - Smart write utilities
+- <code>check-docs.js</code> - Lint/check rendered docs</p>
 <h3 id="api-documentation">API Documentation</h3>
 <p>Exported from running API server:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>curl<span class="w"> </span>http://localhost:8000/openapi.json<span class="w"> </span>&gt;<span class="w"> </span>docs/openapi.json
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>curl<span class="w"> </span>http://localhost:8000/openapi.json<span class="w"> </span>&gt;<span class="w"> </span>docs/reference/openapi.json
 </code></pre></div>
 <p><strong>Features:</strong>
 - ✅ Standard OpenAPI 3.1.0 specification
@@ -10144,17 +10067,24 @@
 - ✅ Industry-standard documentation approach</p>
 <h2 id="structure">📖 Structure</h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>reference/
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>├── README.md                   (this file)
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>├── cli/
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>│   ├── README.md              (CLI index)
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>│   ├── commands/              (auto-generated)
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>│   └── media/                 (screenshots, diagrams)
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>├── mcp/
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>│   ├── README.md              (MCP index)
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>│   ├── tools/                 (auto-generated)
-<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>│   └── media/                 (screenshots, diagrams)
-<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>└── api/
-<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>    └── README.md              (REST API with embedded Swagger UI)
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>├── README.md                       (this file)
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>├── ARCHITECTURE_OVERVIEW.md        (system architecture)
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>├── OPERATOR_ARCHITECTURE.md        (install.sh + operator.sh + kg-operator)
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>├── RECURSIVE_UPSERT_ARCHITECTURE.md (concept matching pattern)
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>├── STORAGE-ARCHITECTURE.md         (PostgreSQL + Garage + AGE tiers)
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>├── openapi.json                    (exported FastAPI schema)
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>├── cli/
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>│   ├── README.md                   (CLI index)
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>│   ├── commands/                   (auto-generated)
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>│   └── media/                      (screenshots, diagrams)
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>├── mcp/
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>│   ├── README.md                   (MCP index)
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>│   ├── tools/                      (auto-generated)
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>│   └── media/                      (screenshots, diagrams)
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>├── fuse/
+<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>│   └── README.md                   (FUSE driver reference)
+<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>└── api/
+<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a>    └── README.md                   (REST API with embedded Swagger UI)
 </code></pre></div>
 <h2 id="related-documentation">🔗 Related Documentation</h2>
 <ul>

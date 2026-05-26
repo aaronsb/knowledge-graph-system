@@ -4470,62 +4470,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/ingest-directory/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-directory
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/ingest-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-file
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../../reference/mcp/tools/ingest/" class="md-nav__link">
         
   
@@ -4534,34 +4478,6 @@
     
   
     ingest
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/inspect-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    inspect-file
   
 
     
@@ -10220,7 +10136,7 @@
 <li><strong>Graph relationships</strong> connect concepts through typed edges like IMPLIES, CONTRADICTS, ENABLES (the "graph" part)</li>
 <li><strong>Recursive enhancement</strong> means each new document doesn't just add data - it enriches existing concepts, discovers new connections, and builds understanding over time (the "recursive" part)</li>
 </ol>
-<p>When you ingest a second document mentioning concepts from the first, the system recognizes them through semantic similarity (≥0.85 cosine threshold), merges evidence, and discovers new relationships. By the tenth document, the graph knows your domain - concept hit rates climb from 0% to 60%+ as the system learns.</p>
+<p>When you ingest a second document mentioning concepts from the first, the system recognizes them through semantic similarity (vector cosine similarity, default 0.75 search threshold), merges evidence, and discovers new relationships. By the tenth document, the graph knows your domain - concept hit rates climb from 0% to 60%+ as the system learns.</p>
 <h2 id="why-this-matters-for-ai-systems">Why This Matters for AI Systems</h2>
 <p><strong>This platform is purpose-built as a memory and reasoning substrate for AI agents.</strong></p>
 <p>Large language models have vast latent knowledge, but they lack persistent, queryable memory about <em>your</em> specific domain knowledge and how concepts relate within it. This system provides that missing layer:</p>
@@ -10378,9 +10294,8 @@
 </ul>
 <p>The infrastructure (auth, RBAC, API, visualizer) exists to support the recursive upsert approach at production scale - it's mentioned where relevant but not the focus.</p>
 <h2 id="next-steps">Next Steps</h2>
-<p>Ready to try it? Start with <a href="../../01-getting-started/02-CLI_USAGE/">Quickstart</a> to get running in 5 minutes.</p>
-<p>Want to understand the architecture? See <a href="../../../reference/ARCHITECTURE_OVERVIEW/">Architecture Overview</a> and <a href="../../../architecture/database-schema/ADR-016-apache-age-migration/">ADR-016: Apache AGE Migration</a>.</p>
-<p>Curious about the recursive upsert pattern in depth? See <a href="../../../reference/RECURSIVE_UPSERT_ARCHITECTURE/">Recursive Upsert Architecture</a> (referenced in the knowledge graph) and <a href="../../06-reference/07-ENRICHMENT_JOURNEY/">Enrichment Journey</a> for a real example.</p>
+<p>Ready to try it? Start with the <a href="../../01-getting-started/02-CLI_USAGE/">CLI Usage Guide</a> to get running in 5 minutes.</p>
+<p>Curious about the recursive upsert pattern in depth? See <a href="../../06-reference/07-ENRICHMENT_JOURNEY/">Enrichment Journey</a> for a real example, and the ADR index at <code>docs/architecture/ARCHITECTURE_DECISIONS.md</code> (notably ADR-016 Apache AGE Migration).</p>
 
 
 

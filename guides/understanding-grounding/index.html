@@ -4613,62 +4613,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/ingest-directory/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-directory
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/ingest-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-file
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../reference/mcp/tools/ingest/" class="md-nav__link">
         
   
@@ -4677,34 +4621,6 @@
     
   
     ingest
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/inspect-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    inspect-file
   
 
     
@@ -10614,34 +10530,44 @@
 </thead>
 <tbody>
 <tr>
-<td><strong>Affirmative</strong></td>
-<td>High grounding, well-established</td>
+<td><strong>WELL_GROUNDED</strong></td>
+<td>High grounding (&gt; 0.8), well-established</td>
 </tr>
 <tr>
-<td><strong>Contested</strong></td>
-<td>Significant disagreement between sources</td>
+<td><strong>MIXED_GROUNDING</strong></td>
+<td>Variable evidence (0.15–0.8), contested</td>
 </tr>
 <tr>
-<td><strong>Contradictory</strong></td>
-<td>Strong evidence against</td>
+<td><strong>WEAK_GROUNDING</strong></td>
+<td>Weak positive evidence (0.0–0.15), emerging</td>
 </tr>
 <tr>
-<td><strong>Historical</strong></td>
-<td>Was accurate in its time period</td>
+<td><strong>POORLY_GROUNDED</strong></td>
+<td>Weak negative evidence (-0.5–0.0), uncertain</td>
 </tr>
 <tr>
-<td><strong>Insufficient Data</strong></td>
-<td>Too few sources to judge</td>
+<td><strong>CONTRADICTED</strong></td>
+<td>Strong evidence against (&lt; -0.5)</td>
+</tr>
+<tr>
+<td><strong>HISTORICAL</strong></td>
+<td>Temporal vocabulary (e.g. WAS, FORMER)</td>
+</tr>
+<tr>
+<td><strong>INSUFFICIENT_DATA</strong></td>
+<td>Too few sources to judge (&lt; 3 measurements)</td>
 </tr>
 </tbody>
 </table>
 <h3 id="checking-epistemic-status">Checking Epistemic Status</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># See status for relationship types</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>kg<span class="w"> </span>vocabulary<span class="w"> </span>list<span class="w"> </span>--status<span class="w"> </span>CONTESTED
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># See vocabulary types by epistemic status</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>kg<span class="w"> </span>vocab<span class="w"> </span>epistemic-status<span class="w"> </span>list<span class="w"> </span>--status<span class="w"> </span>MIXED_GROUNDING
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c1"># Filter concepts by status</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>kg<span class="w"> </span>search<span class="w"> </span><span class="s2">&quot;topic&quot;</span><span class="w"> </span>--status<span class="w"> </span>AFFIRMATIVE
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c1"># Show detail for a single type</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>kg<span class="w"> </span>vocab<span class="w"> </span>epistemic-status<span class="w"> </span>show<span class="w"> </span>SUPPORTS
 </code></pre></div>
+<p>See <a href="../EPISTEMIC-STATUS-FILTERING/">EPISTEMIC-STATUS-FILTERING.md</a> for
+querying relationships by status.</p>
 <h2 id="working-with-contradictions">Working with Contradictions</h2>
 <p>Contradictions are features, not bugs. They reveal:
 - Where experts disagree
@@ -10656,7 +10582,7 @@
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>kg<span class="w"> </span>search<span class="w"> </span><span class="s2">&quot;controversial topic&quot;</span>
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
 <a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="c1"># Get details to see both sides</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>kg<span class="w"> </span>concept<span class="w"> </span>details<span class="w"> </span>&lt;concept-id&gt;
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>kg<span class="w"> </span>search<span class="w"> </span>show<span class="w"> </span>&lt;concept-id&gt;
 </code></pre></div>
 <h3 id="understanding-both-sides">Understanding Both Sides</h3>
 <p>The evidence section shows which sources support and which contradict:</p>
@@ -10711,13 +10637,12 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>kg<span class="w"> </span>ingest<span class="w"> </span>latest-study.pdf<span class="w"> </span>--ontology<span class="w"> </span>research
 </code></pre></div></p>
 <h3 id="separate-domains">Separate Domains</h3>
-<p>Different ontologies can have different evidence bases:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># Medical research has high grounding for X</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>kg<span class="w"> </span>search<span class="w"> </span>--ontology<span class="w"> </span>medical<span class="w"> </span><span class="s2">&quot;treatment X&quot;</span>
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="c1"># General news has low grounding for X</span>
-<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>kg<span class="w"> </span>search<span class="w"> </span>--ontology<span class="w"> </span>news<span class="w"> </span><span class="s2">&quot;treatment X&quot;</span>
-</code></pre></div></p>
+<p>Different ontologies can have different evidence bases. Ingest into
+separate ontologies, then list/explore each independently:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># Inspect a single ontology&#39;s documents and stats</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>kg<span class="w"> </span>ontology<span class="w"> </span>info<span class="w"> </span>medical
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>kg<span class="w"> </span>ontology<span class="w"> </span>info<span class="w"> </span>news
+</code></pre></div>
 <h2 id="summary">Summary</h2>
 <table>
 <thead>

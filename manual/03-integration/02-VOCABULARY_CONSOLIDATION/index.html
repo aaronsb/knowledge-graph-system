@@ -4881,62 +4881,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/ingest-directory/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-directory
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/ingest-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-file
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../../reference/mcp/tools/ingest/" class="md-nav__link">
         
   
@@ -4945,34 +4889,6 @@
     
   
     ingest
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/inspect-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    inspect-file
   
 
     
@@ -11174,9 +11090,10 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>kg<span class="w"> </span>vocab<span class="w"> </span>consolidate<span class="w"> </span>--dry-run<span class="w"> </span>--target<span class="w"> </span><span class="m">75</span><span class="w"> </span>--threshold<span class="w"> </span><span class="m">0</span>.90
 </code></pre></div></p>
 <p><strong>Parameters:</strong>
-- <code>--dry-run</code> - Evaluate top 10 candidates, no execution
-- <code>--target 75</code> - Target vocabulary size (used only in live mode)
-- <code>--threshold 0.90</code> - <strong>DEPRECATED</strong> (AITL trusts LLM completely)</p>
+- <code>--dry-run</code> - Preview without executing (no merges, no pruning)
+- <code>--target &lt;size&gt;</code> - Target vocabulary size (default: 90, used only when actually executing)
+- <code>--threshold &lt;value&gt;</code> - Auto-execute similarity threshold (default: 0.90)
+- <code>--no-prune-unused</code> - Skip pruning vocabulary types with 0 uses</p>
 <p><strong>Example output:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>📊 Consolidation Results
 <a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>────────────────────────────────────────────────────────────────────────────────
@@ -11214,12 +11131,14 @@
 - Validate before committing to live mode</p>
 <h3 id="live-mode-autonomous-consolidation">Live Mode (Autonomous Consolidation)</h3>
 <p><strong>Execute consolidation with target size:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>kg<span class="w"> </span>vocab<span class="w"> </span>consolidate<span class="w"> </span>--auto<span class="w"> </span>--target<span class="w"> </span><span class="m">75</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>kg<span class="w"> </span>vocab<span class="w"> </span>consolidate<span class="w"> </span>--target<span class="w"> </span><span class="m">75</span>
 </code></pre></div></p>
+<p><code>kg vocab consolidate</code> executes by default. Pass <code>--dry-run</code> to preview without making changes.</p>
 <p><strong>Parameters:</strong>
-- <code>--auto</code> - Enable live mode (required for execution)
-- <code>--target 75</code> - Stop when vocabulary reaches this size (default: 90)
-- <code>--threshold 0.90</code> - <strong>DEPRECATED</strong> (no longer used in AITL)</p>
+- <code>--target &lt;size&gt;</code> - Stop when vocabulary reaches this size (default: 90)
+- <code>--threshold &lt;0.0-1.0&gt;</code> - Auto-execute similarity threshold (default: 0.90)
+- <code>--dry-run</code> - Preview only (no merges, no pruning)
+- <code>--no-prune-unused</code> - Skip pruning vocabulary types with 0 uses</p>
 <p><strong>Example output:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>🔄 Vocabulary Consolidation
 <a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>────────────────────────────────────────────────────────────────────────────────

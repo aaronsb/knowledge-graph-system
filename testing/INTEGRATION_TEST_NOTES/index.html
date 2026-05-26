@@ -4231,62 +4231,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/ingest-directory/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-directory
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/ingest-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-file
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../reference/mcp/tools/ingest/" class="md-nav__link">
         
   
@@ -4295,34 +4239,6 @@
     
   
     ingest
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/inspect-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    inspect-file
   
 
     
@@ -12370,7 +12286,7 @@
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>kg<span class="w"> </span>vocab<span class="w"> </span>generate-embeddings<span class="w">  </span><span class="c1"># Incorrectly showed: &quot;via OpenAI API...&quot;</span>
 </code></pre></div></p>
 <h3 id="fix-applied_1">Fix Applied</h3>
-<p><strong>File:</strong> <code>client/src/cli/vocabulary.ts:300-306</code>
+<p><strong>File:</strong> <code>cli/src/cli/vocabulary/config.ts</code> (formerly <code>client/src/cli/vocabulary.ts</code>)
 - Dynamically fetch active embedding config via <code>client.getEmbeddingConfig()</code>
 - Display correct provider name and model
 - Updated message format: <code>"Generating embeddings via {provider} ({model})..."</code></p>
@@ -13489,8 +13405,8 @@ The system correctly prevents accidental embedding provider switches that would 
 - <code>api/app/lib/age_client.py</code> - Removed duplicate embedding code (119 lines)
 - <code>api/app/routes/vocabulary.py</code> - Unified with EmbeddingWorker
 - <code>api/app/routes/embedding.py</code> - Added hot reload reset
-- <code>client/src/cli/vocabulary.ts</code> - Dynamic provider display
-- <code>client/src/mcp/formatters.ts</code> - Grounding formatting (unchanged, validated)</p>
+- <code>cli/src/cli/vocabulary/config.ts</code> - Dynamic provider display (formerly <code>client/src/cli/vocabulary.ts</code>)
+- <code>cli/src/mcp/formatters/</code> - Grounding formatting (unchanged, validated)</p>
 <h3 id="system-status-production-ready">System Status: PRODUCTION READY</h3>
 <p>All critical ADRs validated:
 - ✅ ADR-044: Grounding calculations functional

@@ -4641,62 +4641,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../mcp/tools/ingest-directory/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-directory
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../mcp/tools/ingest-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-file
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../mcp/tools/ingest/" class="md-nav__link">
         
   
@@ -4705,34 +4649,6 @@
     
   
     ingest
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../mcp/tools/inspect-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    inspect-file
   
 
     
@@ -10640,20 +10556,28 @@
 <td>Simple health check</td>
 </tr>
 <tr>
-<td><code>POST /auth/login</code></td>
-<td>User login (returns JWT)</td>
+<td><code>POST /auth/register</code></td>
+<td>User registration</td>
 </tr>
 <tr>
-<td><code>POST /auth/token</code></td>
-<td>OAuth token endpoint</td>
+<td><code>POST /auth/oauth/token</code></td>
+<td>OAuth token endpoint (all grant types)</td>
 </tr>
 <tr>
-<td><code>GET /auth/device/code</code></td>
-<td>Device authorization flow</td>
+<td><code>POST /auth/oauth/device</code></td>
+<td>Device authorization request</td>
 </tr>
 <tr>
-<td><code>POST /auth/device/token</code></td>
-<td>Device token polling</td>
+<td><code>GET /auth/oauth/device-status/{user_code}</code></td>
+<td>Device code status</td>
+</tr>
+<tr>
+<td><code>GET /auth/oauth/authorize</code></td>
+<td>OAuth authorization code flow</td>
+</tr>
+<tr>
+<td><code>POST /auth/oauth/login-and-authorize</code></td>
+<td>Combined login + authorize (viz-app)</td>
 </tr>
 </tbody>
 </table>
@@ -10670,20 +10594,36 @@
 </thead>
 <tbody>
 <tr>
-<td><code>GET /auth/me</code></td>
-<td>Get current user info</td>
+<td><code>GET /users/me</code></td>
+<td>Get current user info (ADR-054)</td>
 </tr>
 <tr>
-<td><code>POST /auth/logout</code></td>
-<td>Logout (invalidate token)</td>
+<td><code>GET /users/me/permissions</code></td>
+<td>Get effective permissions (ADR-074)</td>
+</tr>
+<tr>
+<td><code>PUT /auth/me</code></td>
+<td>Update own profile (password)</td>
+</tr>
+<tr>
+<td><code>POST /auth/oauth/revoke</code></td>
+<td>Revoke OAuth token</td>
 </tr>
 <tr>
 <td><code>GET /auth/oauth/clients/personal</code></td>
 <td>List own OAuth clients</td>
 </tr>
 <tr>
-<td><code>POST /auth/oauth/clients/personal/new</code></td>
+<td><code>POST /auth/oauth/clients/personal</code></td>
 <td>Create personal OAuth client</td>
+</tr>
+<tr>
+<td><code>POST /auth/oauth/clients/personal/new</code></td>
+<td>Create additional personal client</td>
+</tr>
+<tr>
+<td><code>POST /auth/oauth/clients/personal/{id}/rotate-secret</code></td>
+<td>Rotate own client secret</td>
 </tr>
 <tr>
 <td><code>DELETE /auth/oauth/clients/personal/{id}</code></td>
@@ -10756,11 +10696,7 @@
 </tr>
 <tr>
 <td><code>POST /ingest/image</code></td>
-<td>Ingest image (multimodal)</td>
-</tr>
-<tr>
-<td><code>POST /ingest/url</code></td>
-<td>Ingest from URL</td>
+<td>Ingest image (multimodal, ADR-057)</td>
 </tr>
 </tbody>
 </table>
@@ -10782,12 +10718,20 @@
 <td>Get job status</td>
 </tr>
 <tr>
+<td><code>GET /jobs/{id}/stream</code></td>
+<td>Stream job progress (SSE)</td>
+</tr>
+<tr>
 <td><code>POST /jobs/{id}/approve</code></td>
 <td>Approve pending job</td>
 </tr>
 <tr>
-<td><code>POST /jobs/{id}/cancel</code></td>
-<td>Cancel job</td>
+<td><code>DELETE /jobs/{id}</code></td>
+<td>Cancel or delete a job</td>
+</tr>
+<tr>
+<td><code>DELETE /jobs</code></td>
+<td>Bulk delete jobs with filters</td>
 </tr>
 </tbody>
 </table>
@@ -10801,12 +10745,20 @@
 </thead>
 <tbody>
 <tr>
+<td><code>GET /sources</code></td>
+<td>List source nodes</td>
+</tr>
+<tr>
 <td><code>GET /sources/{id}</code></td>
-<td>Get source content</td>
+<td>Get source metadata and content</td>
 </tr>
 <tr>
 <td><code>GET /sources/{id}/image</code></td>
-<td>Get source image (if applicable)</td>
+<td>Retrieve image from source (ADR-057)</td>
+</tr>
+<tr>
+<td><code>GET /sources/{id}/document</code></td>
+<td>Retrieve original document from Garage (ADR-081)</td>
 </tr>
 </tbody>
 </table>
@@ -10896,6 +10848,12 @@
 <td>Read</td>
 </tr>
 <tr>
+<td><code>POST /users</code></td>
+<td><code>users:create</code></td>
+<td>Create user</td>
+<td>Medium</td>
+</tr>
+<tr>
 <td><code>GET /users/{id}</code></td>
 <td><code>users:read</code></td>
 <td>Get user details</td>
@@ -10911,6 +10869,12 @@
 <td><code>DELETE /users/{id}</code></td>
 <td><code>users:delete</code></td>
 <td>Delete user</td>
+<td>High</td>
+</tr>
+<tr>
+<td><code>POST /users/{id}/reset-password</code></td>
+<td><code>users:write</code></td>
+<td>Admin reset of user password</td>
 <td>High</td>
 </tr>
 </tbody>

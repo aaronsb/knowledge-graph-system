@@ -5167,62 +5167,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../mcp/tools/ingest-directory/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-directory
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../mcp/tools/ingest-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-file
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../mcp/tools/ingest/" class="md-nav__link">
         
   
@@ -5231,34 +5175,6 @@
     
   
     ingest
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../mcp/tools/inspect-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    inspect-file
   
 
     
@@ -11616,14 +11532,29 @@ Last updated: 2026-03-02</p>
 <ul>
 <li><a href="#health"><code>health</code></a> - Check API server health and retrieve service information. Verifies the server is running and responsive. Use this as a first diagnostic step before running other commands.</li>
 <li><a href="#config"><code>config</code> (cfg)</a> - Manage kg CLI configuration settings. Controls API connection, authentication tokens, MCP tool preferences, and job auto-approval. Configuration stored in JSON file (typically ~/.kg/config.json).</li>
+<li><a href="commands/"><code>mcp-config</code></a> - Manage MCP server configuration (allowlists, server settings).</li>
 <li><a href="#login"><code>login</code></a> - Authenticate with username and password - creates personal OAuth client credentials (required for admin commands)</li>
 <li><a href="#logout"><code>logout</code></a> - End authentication session - revokes OAuth client and clears credentials (use --forget to also clear saved username)</li>
 <li><a href="#oauth"><code>oauth</code></a> - Manage OAuth clients (list, create for MCP, revoke)</li>
 <li><a href="#ingest"><code>ingest</code></a> - Ingest documents into the knowledge graph. Processes documents and extracts concepts, relationships, and evidence. Supports three modes: single file (one document), directory (batch ingest multiple files), and raw text (ingest text directly without a file). All operations create jobs (ADR-014) that can be monitored via "kg job" commands. Workflow: submit → chunk (semantic boundaries ~1000 words with overlap) → create job → optional approval → process (LLM extract, embed concepts, match existing, insert graph) → complete.</li>
 <li><a href="#job"><code>job</code> (jobs)</a> - Manage and monitor ingestion jobs through their lifecycle (pending → approval → processing → completed/failed)</li>
 <li><a href="#search"><code>search</code></a> - Search and explore the knowledge graph using vector similarity, graph traversal, and path finding</li>
+<li><a href="commands/"><code>document</code></a> - Document search and content retrieval (ADR-084).</li>
 <li><a href="#database"><code>database</code> (db)</a> - Database operations and information. Provides read-only queries for PostgreSQL + Apache AGE database health, statistics, and connection details.</li>
 <li><a href="#ontology"><code>ontology</code> (onto)</a> - Manage ontologies (knowledge domains). Ontologies are named collections that organize concepts into knowledge domains. Each ontology groups related documents and concepts together, making it easier to organize and query knowledge by topic or project.</li>
+<li><a href="commands/"><code>source</code></a> - Retrieve source content (text or image).</li>
+<li><a href="commands/vocabulary/"><code>vocabulary</code> (vocab)</a> - Edge vocabulary management and consolidation (ADR-032/047/053).</li>
+<li><a href="commands/"><code>concept</code></a> - Deterministic concept CRUD (ADR-089).</li>
+<li><a href="commands/"><code>edge</code></a> - Deterministic edge CRUD (ADR-089).</li>
+<li><a href="commands/"><code>batch</code></a> - Batch graph operations (ADR-089).</li>
+<li><a href="commands/admin/"><code>admin</code></a> - System administration: status, backup/restore, scheduler, workers, users, RBAC, embedding/extraction/keys.</li>
+<li><a href="commands/"><code>polarity</code></a> - Polarity-axis analysis (ADR-070).</li>
+<li><a href="commands/"><code>projection</code></a> - Embedding landscape projection (ADR-078).</li>
+<li><a href="commands/"><code>artifact</code></a> - Manage saved artifacts (ADR-083).</li>
+<li><a href="commands/"><code>group</code></a> - Groups and resource grants (ADR-082).</li>
+<li><a href="commands/"><code>query-def</code></a> - Stored query definitions (ADR-083).</li>
+<li><a href="commands/"><code>program</code></a> - GraphProgram notarization (ADR-500).</li>
+<li><a href="commands/"><code>storage</code></a> - Garage S3 storage diagnostics.</li>
 </ul>
 <hr />
 <h2 id="health">health</h2>

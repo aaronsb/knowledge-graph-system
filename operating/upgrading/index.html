@@ -4368,62 +4368,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/ingest-directory/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-directory
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/ingest-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-file
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../reference/mcp/tools/ingest/" class="md-nav__link">
         
   
@@ -4432,34 +4376,6 @@
     
   
     ingest
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/inspect-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    inspect-file
   
 
     
@@ -10053,23 +9969,28 @@
 5. Starts containers with new images
 6. Verifies health</p>
 <h2 id="upgrade-options">Upgrade Options</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># See what would change without doing it</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># See what would change without doing it (--whatif also works)</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>./operator.sh<span class="w"> </span>upgrade<span class="w"> </span>--dry-run
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># Skip backup (faster, but risky)</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># Skip the pre-upgrade backup prompt (faster, but risky)</span>
 <a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>./operator.sh<span class="w"> </span>upgrade<span class="w"> </span>--no-backup
 <a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="c1"># Upgrade to specific version</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>./operator.sh<span class="w"> </span>upgrade<span class="w"> </span>--version<span class="w"> </span><span class="m">0</span>.5.0
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="c1"># Skip the confirmation prompt</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>./operator.sh<span class="w"> </span>upgrade<span class="w"> </span>-y
 </code></pre></div>
+<p>To pin a specific version, edit the image tag in your compose file (see
+<a href="#version-pinning">Version Pinning</a> below) and then run
+<code>./operator.sh update &amp;&amp; ./operator.sh upgrade</code>.</p>
 <h2 id="before-upgrading">Before Upgrading</h2>
 <ol>
 <li><strong>Check the changelog</strong> for breaking changes</li>
-<li><strong>Backup your data:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>./operator.sh<span class="w"> </span>backup
+<li><strong>Backup your data</strong> (runs <code>pg_dump</code> inside the operator container):
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>./operator.sh<span class="w"> </span>shell
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>/workspace/operator/database/backup-database.sh<span class="w"> </span>-y
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="c1"># backup is written to /project/backups/ on the host</span>
 </code></pre></div></li>
-<li><strong>Note your current version:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>cat<span class="w"> </span>VERSION
+<li><strong>Check your current versions:</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>./operator.sh<span class="w"> </span>versions
 </code></pre></div></li>
 </ol>
 <h2 id="after-upgrading">After Upgrading</h2>
@@ -10100,8 +10021,9 @@
 </code></pre></div></p>
 </li>
 <li>
-<p><strong>Restore database:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>./operator.sh<span class="w"> </span>restore<span class="w"> </span>/path/to/backup.sql
+<p><strong>Restore database</strong> (uses <code>pg_restore</code> inside the operator container):
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>./operator.sh<span class="w"> </span>shell
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>/workspace/operator/database/restore-database.sh<span class="w"> </span>/project/backups/&lt;file&gt;.dump
 </code></pre></div></p>
 </li>
 <li>
@@ -10128,7 +10050,7 @@
 <li>
 <p>Run manually:
    <div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>./operator.sh<span class="w"> </span>shell
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>python<span class="w"> </span>-m<span class="w"> </span>api.database.migrate
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>/workspace/operator/database/migrate-db.sh<span class="w"> </span>-y
 </code></pre></div></p>
 </li>
 <li>

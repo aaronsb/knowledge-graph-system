@@ -4732,62 +4732,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/ingest-directory/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-directory
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/ingest-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-file
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../../reference/mcp/tools/ingest/" class="md-nav__link">
         
   
@@ -4796,34 +4740,6 @@
     
   
     ingest
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/inspect-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    inspect-file
   
 
     
@@ -10851,14 +10767,14 @@
 <p>When deploying the knowledge graph system for the first time, you need to initialize authentication and create the admin user.</p>
 <h3 id="prerequisites">Prerequisites</h3>
 <ol>
-<li>PostgreSQL container running: <code>./scripts/services/start-database.sh</code></li>
-<li>API server running: <code>./scripts/services/start-api.sh</code></li>
-<li>kg CLI installed: <code>cd client &amp;&amp; ./install.sh</code></li>
+<li>Platform running: <code>./operator.sh start</code> (PostgreSQL + API)</li>
+<li>kg CLI installed: <code>cd cli &amp;&amp; npm run build &amp;&amp; ./install.sh</code></li>
 </ol>
 <h3 id="initialization-steps">Initialization Steps</h3>
-<p><strong>Run the initialization script:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>./scripts/setup/initialize-platform.sh
+<p><strong>Run the platform initializer (creates admin user, generates secrets, sets defaults):</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>./operator.sh<span class="w"> </span>init
 </code></pre></div>
+<p>To reset the admin password later, run <code>./operator.sh admin --username admin --password '&lt;new password&gt;'</code> from the operator container, or use the password-reset script described in <a href="../04-PASSWORD_RECOVERY/">04-PASSWORD_RECOVERY.md</a>.</p>
 <p><strong>What this does:</strong></p>
 <ol>
 <li>✅ Checks if admin user already exists</li>
@@ -10907,7 +10823,7 @@
 <a id="__codelineno-2-37" name="__codelineno-2-37" href="#__codelineno-2-37"></a>  Password: (the password you just set)
 <a id="__codelineno-2-38" name="__codelineno-2-38" href="#__codelineno-2-38"></a>
 <a id="__codelineno-2-39" name="__codelineno-2-39" href="#__codelineno-2-39"></a>Next Steps:
-<a id="__codelineno-2-40" name="__codelineno-2-40" href="#__codelineno-2-40"></a>  1. Restart API server: ./scripts/services/stop-api.sh &amp;&amp; ./scripts/services/start-api.sh
+<a id="__codelineno-2-40" name="__codelineno-2-40" href="#__codelineno-2-40"></a>  1. Restart API server: ./operator.sh restart api
 <a id="__codelineno-2-41" name="__codelineno-2-41" href="#__codelineno-2-41"></a>  2. Login: kg login
 <a id="__codelineno-2-42" name="__codelineno-2-42" href="#__codelineno-2-42"></a>  3. View users: kg admin user list
 </code></pre></div>
@@ -11107,7 +11023,8 @@
 <a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>update<span class="w"> </span><span class="m">3</span><span class="w"> </span>--password
 <a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>
 <a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span class="c1"># Or use the out-of-band reset script</span>
-<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a>./scripts/setup/initialize-platform.sh<span class="w">  </span><span class="c1"># Select existing admin user</span>
+<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a><span class="c1"># From the operator container (./operator.sh shell), then:</span>
+<a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a>configure.py<span class="w"> </span>admin<span class="w"> </span>--username<span class="w"> </span>admin<span class="w"> </span>--password<span class="w"> </span><span class="s1">&#39;&lt;new password&gt;&#39;</span>
 </code></pre></div>
 <hr />
 <h2 id="troubleshooting">Troubleshooting</h2>
@@ -11131,25 +11048,28 @@
 <a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a>kg<span class="w"> </span>login
 </code></pre></div></p>
 <h3 id="forgot-admin-password">Forgot Admin Password</h3>
-<p>Use the initialization script to reset:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>./scripts/setup/initialize-platform.sh
+<p>Use the password reset script (bypasses the API; talks directly to PostgreSQL):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>./operator/admin/reset-password.sh
 </code></pre></div>
-<p>The script detects existing admin user and offers password reset.</p>
+<p>Or from inside the operator container shell (<code>./operator.sh shell</code>):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>configure.py<span class="w"> </span>admin<span class="w"> </span>--username<span class="w"> </span>admin<span class="w"> </span>--password<span class="w"> </span><span class="s1">&#39;&lt;new password&gt;&#39;</span>
+</code></pre></div>
+<p>See <a href="../04-PASSWORD_RECOVERY/">04-PASSWORD_RECOVERY.md</a> for details.</p>
 <h3 id="oauth-client-not-working">OAuth Client Not Working</h3>
 <p><strong>Verify client exists:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>kg<span class="w"> </span>oauth<span class="w"> </span>clients
+<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>kg<span class="w"> </span>oauth<span class="w"> </span>clients
 </code></pre></div>
 <p><strong>Check client credentials in config:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>kg<span class="w"> </span>config<span class="w"> </span>list
+<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>kg<span class="w"> </span>config<span class="w"> </span>list
 </code></pre></div>
 <p><strong>Test authentication:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a><span class="c1"># Should work without errors</span>
-<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>list
+<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a><span class="c1"># Should work without errors</span>
+<a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>list
 </code></pre></div>
 <h3 id="mcp-server-authentication-failures">MCP Server Authentication Failures</h3>
 <p><strong>Check MCP server logs</strong> for specific error:</p>
 <p><strong>macOS:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>tail<span class="w"> </span>-f<span class="w"> </span>~/Library/Logs/Claude/mcp*.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>tail<span class="w"> </span>-f<span class="w"> </span>~/Library/Logs/Claude/mcp*.log
 </code></pre></div></p>
 <p><strong>Common issues:</strong></p>
 <table>
@@ -11174,7 +11094,7 @@
 <tr>
 <td><code>401 Unauthorized</code></td>
 <td>API server not running</td>
-<td>Start API: <code>./scripts/services/start-api.sh</code></td>
+<td>Start platform: <code>./operator.sh start</code></td>
 </tr>
 </tbody>
 </table>

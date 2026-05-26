@@ -4563,62 +4563,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/ingest-directory/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-directory
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/ingest-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-file
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../reference/mcp/tools/ingest/" class="md-nav__link">
         
   
@@ -4627,34 +4571,6 @@
     
   
     ingest
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/inspect-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    inspect-file
   
 
     
@@ -10690,7 +10606,7 @@ As documents are ingested, the graph's natural structure diverges from human-imp
 <p><strong>To change:</strong>
 The threshold is currently hardcoded in <code>EpistemicRemeasurementLauncher.__init__()</code>. To adjust:</p>
 <ol>
-<li>Edit <code>api/api/launchers/epistemic_remeasurement.py</code></li>
+<li>Edit <code>api/app/launchers/epistemic_remeasurement.py</code></li>
 <li>Change <code>threshold</code> parameter in <code>__init__()</code> (default: 10)</li>
 <li>Restart API server</li>
 </ol>
@@ -10703,7 +10619,7 @@ The threshold is currently hardcoded in <code>EpistemicRemeasurementLauncher.__i
 - Consolidate when inactive &gt; 20% of active
 - Don't consolidate when inactive &lt; 10% of active</p>
 <p><strong>To change:</strong>
-Edit <code>VocabConsolidationLauncher.check_conditions()</code> in <code>api/api/launchers/vocab_consolidation.py</code>.</p>
+Edit <code>VocabConsolidationLauncher.check_conditions()</code> in <code>api/app/launchers/vocab_consolidation.py</code>.</p>
 <hr />
 <h2 id="related-documentation">Related Documentation</h2>
 <ul>

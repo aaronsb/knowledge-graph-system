@@ -4396,62 +4396,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/mcp/tools/ingest-directory/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-directory
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../reference/mcp/tools/ingest-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-file
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../reference/mcp/tools/ingest/" class="md-nav__link">
         
   
@@ -4460,34 +4404,6 @@
     
   
     ingest
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../reference/mcp/tools/inspect-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    inspect-file
   
 
     
@@ -10132,10 +10048,13 @@
 - Multi-machine setups
 - Scripted configuration</p>
 <h3 id="development">Development</h3>
-<p>Run <code>./operator.sh init</code> with dev mode enabled. Adds:
-- Hot reload for code changes
+<p>Run <code>./operator.sh init</code> (interactive) and choose dev mode, or use
+<code>./operator.sh init --headless --container-mode=dev --password-mode=simple</code>.
+Adds:
+- Hot reload for code changes (via <code>docker-compose.dev.yml</code>)
 - Simple default passwords
-- Local image builds</p>
+- Local image builds (<code>IMAGE_SOURCE=local</code>)
+- Container suffix <code>-dev</code> (so containers are <code>kg-api-dev</code>, <code>kg-web-dev</code>)</p>
 <h3 id="production">Production</h3>
 <p>Deploy with GHCR images, HTTPS, and proper secrets. Covered in <a href="production/">Production Deployment</a>.</p>
 <h2 id="what-youll-need">What You'll Need</h2>
@@ -10159,16 +10078,19 @@
 <a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>
 <a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="c1"># Check status</span>
 <a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>./operator.sh<span class="w"> </span>status
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="c1"># View logs</span>
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>./operator.sh<span class="w"> </span>logs<span class="w"> </span>api<span class="w">      </span><span class="c1"># API logs</span>
-<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>./operator.sh<span class="w"> </span>logs<span class="w">          </span><span class="c1"># All logs</span>
-<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>
-<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="c1"># Maintenance</span>
-<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>./operator.sh<span class="w"> </span>upgrade<span class="w">       </span><span class="c1"># Pull updates and migrate</span>
-<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>./operator.sh<span class="w"> </span>backup<span class="w">        </span><span class="c1"># Backup database</span>
-<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>./operator.sh<span class="w"> </span>shell<span class="w">         </span><span class="c1"># Enter operator shell for admin tasks</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>./operator.sh<span class="w"> </span>versions<span class="w">      </span><span class="c1"># Show image/version info per container</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="c1"># View logs (default service: api)</span>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>./operator.sh<span class="w"> </span>logs<span class="w"> </span>api<span class="w">      </span><span class="c1"># API logs</span>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>./operator.sh<span class="w"> </span>logs<span class="w"> </span>api<span class="w"> </span>-f<span class="w">   </span><span class="c1"># Follow API logs</span>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="c1"># Maintenance</span>
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>./operator.sh<span class="w"> </span>update<span class="w">        </span><span class="c1"># Pull images (no restart)</span>
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>./operator.sh<span class="w"> </span>upgrade<span class="w">       </span><span class="c1"># Pull, migrate, restart</span>
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>./operator.sh<span class="w"> </span>shell<span class="w">         </span><span class="c1"># Enter operator container for admin tasks</span>
 </code></pre></div>
+<p>Backup/restore run inside the operator container. See
+<a href="backup-restore/">Backup &amp; Restore</a>.</p>
 <h2 id="next-steps">Next Steps</h2>
 <ul>
 <li><a href="quick-start/">Quick Start</a> - Get running in 5 minutes</li>

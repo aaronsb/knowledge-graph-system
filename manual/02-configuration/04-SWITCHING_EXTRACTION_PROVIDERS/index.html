@@ -4732,62 +4732,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/ingest-directory/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-directory
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/ingest-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-file
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../../reference/mcp/tools/ingest/" class="md-nav__link">
         
   
@@ -4796,34 +4740,6 @@
     
   
     ingest
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../reference/mcp/tools/inspect-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    inspect-file
   
 
     
@@ -10739,6 +10655,7 @@
 <p><strong>A simple guide to switching between OpenAI, Anthropic, and Ollama (local) for concept extraction</strong></p>
 <blockquote>
 <p><strong>📊 Before switching:</strong> See <a href="../06-EXTRACTION_QUALITY_COMPARISON/">Extraction Quality Comparison</a> for empirical comparison of extraction quality, canonical adherence, and cost-benefit analysis across providers.</p>
+<p><strong>⚠️ Ollama scripts:</strong> Older Ollama setup scripts (<code>./scripts/start-ollama.sh</code>, <code>./scripts/stop-ollama.sh</code>) referenced below have been <strong>removed</strong>. Install Ollama on the host (<code>https://ollama.com</code>) or wire up your own container, then use <code>kg admin extraction set --provider ollama ...</code>. The conceptual flow remains the same; substitute <code>ollama serve</code> / <code>systemctl stop ollama</code> for the legacy scripts.</p>
 </blockquote>
 <hr />
 <h2 id="whats-the-default">What's the Default?</h2>
@@ -10801,18 +10718,20 @@
 <p><strong>Get API key</strong> from <a href="https://platform.openai.com/">OpenAI Platform</a></p>
 </li>
 <li>
-<p><strong>Add to <code>.env</code> file:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nv">OPENAI_API_KEY</span><span class="o">=</span>sk-your-key-here
+<p><strong>Store the key (encrypted in the database):</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>keys<span class="w"> </span><span class="nb">set</span><span class="w"> </span>openai
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="c1"># Or via operator:</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>./operator.sh<span class="w"> </span>api-key<span class="w"> </span>openai
 </code></pre></div></p>
 </li>
 <li>
-<p><strong>Restart API:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>./scripts/services/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/services/start-api.sh
+<p><strong>Confirm the active extraction provider:</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span>config
 </code></pre></div></p>
 </li>
 <li>
 <p><strong>Test it:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;Test&quot;</span><span class="w"> </span>-y<span class="w"> </span>test-document.txt
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>test-document.txt<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;Test&quot;</span>
 </code></pre></div></p>
 </li>
 </ol>
@@ -10826,11 +10745,9 @@
 <p><strong>Get API key</strong> from <a href="https://console.anthropic.com/">Anthropic Console</a></p>
 </li>
 <li>
-<p><strong>Add to <code>.env</code> file:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nv">ANTHROPIC_API_KEY</span><span class="o">=</span>sk-ant-your-key-here
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="c1"># You still need OpenAI for embeddings</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="nv">OPENAI_API_KEY</span><span class="o">=</span>sk-your-openai-key-here
+<p><strong>Store API keys (Anthropic for extraction, OpenAI still needed for embeddings unless you use a local embedding profile):</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>keys<span class="w"> </span><span class="nb">set</span><span class="w"> </span>anthropic
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>keys<span class="w"> </span><span class="nb">set</span><span class="w"> </span>openai<span class="w">     </span><span class="c1"># only if embedding profile is OpenAI</span>
 </code></pre></div></p>
 </li>
 <li>
@@ -10839,14 +10756,9 @@
 </code></pre></div></p>
 </li>
 <li>
-<p><strong>Restart API:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>./scripts/services/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/services/start-api.sh
-</code></pre></div></p>
-</li>
-<li>
 <p><strong>Test it:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span>config<span class="w">  </span><span class="c1"># Verify it says &quot;anthropic&quot;</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;Test&quot;</span><span class="w"> </span>-y<span class="w"> </span>test-document.txt
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span>config<span class="w">  </span><span class="c1"># Verify it says &quot;anthropic&quot;</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;Test&quot;</span><span class="w"> </span>-y<span class="w"> </span>test-document.txt
 </code></pre></div></p>
 </li>
 </ol>
@@ -10857,23 +10769,24 @@
 <p><strong>Trade-off:</strong> Slower extraction (8-30 seconds per chunk vs 2 seconds for cloud).</p>
 <h3 id="step-by-step-setup">Step-by-Step Setup:</h3>
 <h4 id="step-1-start-ollama-service">Step 1: Start Ollama Service</h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>./scripts/start-ollama.sh<span class="w"> </span>-y
-</code></pre></div>
-<p><strong>What this does:</strong>
-- Auto-detects your GPU (NVIDIA, AMD, Intel, or CPU-only)
-- Starts Ollama Docker container
-- Tells you next steps</p>
+<blockquote>
+<p><strong>Note:</strong> The legacy <code>./scripts/start-ollama.sh</code> script has been removed. Ollama integration is now expected to be managed externally (host install or your own <code>docker-compose</code> overlay pointing at <code>OLLAMA_BASE_URL</code>) and pointed at via the provider config. Use <code>kg admin extraction set --provider ollama --model &lt;model&gt;</code> once your Ollama instance is reachable from the API container.</p>
+</blockquote>
+<p><strong>Quick approach (host install):</strong>
+- Install Ollama from https://ollama.com/
+- Run <code>ollama serve</code> (defaults to <code>http://localhost:11434</code>)
+- Make sure the API container can reach it (configure <code>OLLAMA_BASE_URL</code> if not on localhost)</p>
 <p><strong>Output:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>🔍 Auto-detected hardware: nvidia
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>🚀 Starting Ollama (nvidia profile)...
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>✅ Ollama is ready!
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>
-<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>Next Steps:
-<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>  # Pull a model
-<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>  docker exec kg-ollama ollama pull mistral:7b-instruct
-<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>
-<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>  # Configure Knowledge Graph
-<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a>  kg admin extraction set --provider ollama --model mistral:7b-instruct
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>🔍 Auto-detected hardware: nvidia
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>🚀 Starting Ollama (nvidia profile)...
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>✅ Ollama is ready!
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>Next Steps:
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>  # Pull a model
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>  docker exec kg-ollama ollama pull mistral:7b-instruct
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>  # Configure Knowledge Graph
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>  kg admin extraction set --provider ollama --model mistral:7b-instruct
 </code></pre></div></p>
 <h4 id="step-2-download-a-model">Step 2: Download a Model</h4>
 <p><strong>Recommended models by hardware:</strong></p>
@@ -10909,29 +10822,29 @@
 </tbody>
 </table>
 <p><strong>For most users (16GB GPU):</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>kg-ollama<span class="w"> </span>ollama<span class="w"> </span>pull<span class="w"> </span>mistral:7b-instruct
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>kg-ollama<span class="w"> </span>ollama<span class="w"> </span>pull<span class="w"> </span>mistral:7b-instruct
 </code></pre></div></p>
 <p><strong>Wait ~5 minutes for download to complete.</strong></p>
 <h4 id="step-3-configure-knowledge-graph">Step 3: Configure Knowledge Graph</h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span>ollama<span class="w"> </span>--model<span class="w"> </span>mistral:7b-instruct
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span>ollama<span class="w"> </span>--model<span class="w"> </span>mistral:7b-instruct
 </code></pre></div>
 <p><strong>Output:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>✓ Configuration updated successfully
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>  Next Steps:
-<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>    1. Ensure Ollama is running: ./scripts/start-ollama.sh -y
-<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>    2. Pull model: docker exec kg-ollama ollama pull mistral:7b-instruct
-<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>    3. Test extraction: kg admin extraction test
-<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>
-<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>  ⚠️  API restart required to apply changes
-<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>  Run: ./scripts/services/stop-api.sh &amp;&amp; ./scripts/services/start-api.sh
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>✓ Configuration updated successfully
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>  Next Steps:
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>    1. Ensure Ollama is running: ./scripts/start-ollama.sh -y
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>    2. Pull model: docker exec kg-ollama ollama pull mistral:7b-instruct
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>    3. Test extraction: kg admin extraction test
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>  ⚠️  API restart required to apply changes
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>  Run: ./operator.sh restart api
 </code></pre></div></p>
 <h4 id="step-4-restart-api">Step 4: Restart API</h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>./scripts/services/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/services/start-api.sh
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>./operator.sh<span class="w"> </span>restart<span class="w"> </span>api
 </code></pre></div>
 <h4 id="step-5-test-it">Step 5: Test It</h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span>config<span class="w">  </span><span class="c1"># Should show &quot;ollama&quot;</span>
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;Test&quot;</span><span class="w"> </span>-y<span class="w"> </span>test-document.txt
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span>config<span class="w">  </span><span class="c1"># Should show &quot;ollama&quot;</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;Test&quot;</span><span class="w"> </span>-y<span class="w"> </span>test-document.txt
 </code></pre></div>
 <p><strong>Expect slower extraction (8-30s per chunk), but it's free!</strong></p>
 <p>✅ <strong>Done!</strong> Now using local Ollama inference.</p>
@@ -10939,44 +10852,44 @@
 <h2 id="scenario-4-switch-back-from-ollama-to-openai">Scenario 4: Switch Back from Ollama to OpenAI</h2>
 <p><strong>Why?</strong> Ollama too slow, need faster extraction.</p>
 <h3 id="quick-switch">Quick Switch:</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="c1"># 1. Switch back to OpenAI</span>
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span>openai<span class="w"> </span>--model<span class="w"> </span>gpt-4o
-<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>
-<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="c1"># 2. Restart API</span>
-<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>./scripts/services/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/services/start-api.sh
-<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>
-<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="c1"># 3. Optional: Stop Ollama to free resources</span>
-<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a>./scripts/stop-ollama.sh<span class="w"> </span>-y
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># 1. Switch back to OpenAI</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span>openai<span class="w"> </span>--model<span class="w"> </span>gpt-4o
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="c1"># 2. Restart API</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>./operator.sh<span class="w"> </span>restart<span class="w"> </span>api
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a><span class="c1"># 3. Optional: Stop Ollama to free resources</span>
+<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>./scripts/stop-ollama.sh<span class="w"> </span>-y
 </code></pre></div>
 <p>✅ <strong>Done!</strong> Back to fast cloud extraction.</p>
 <hr />
 <h2 id="scenario-5-switch-back-from-ollama-to-anthropic">Scenario 5: Switch Back from Ollama to Anthropic</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="c1"># 1. Switch to Anthropic</span>
-<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span>anthropic<span class="w"> </span>--model<span class="w"> </span>claude-sonnet-4-20250514
-<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>
-<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="c1"># 2. Restart API</span>
-<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>./scripts/services/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/services/start-api.sh
-<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a>
-<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a><span class="c1"># 3. Optional: Stop Ollama</span>
-<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a>./scripts/stop-ollama.sh<span class="w"> </span>-y
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="c1"># 1. Switch to Anthropic</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span>anthropic<span class="w"> </span>--model<span class="w"> </span>claude-sonnet-4-20250514
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="c1"># 2. Restart API</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>./operator.sh<span class="w"> </span>restart<span class="w"> </span>api
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="c1"># 3. Optional: Stop Ollama</span>
+<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a>./scripts/stop-ollama.sh<span class="w"> </span>-y
 </code></pre></div>
 <p>✅ <strong>Done!</strong></p>
 <hr />
 <h2 id="scenario-6-try-different-ollama-models">Scenario 6: Try Different Ollama Models</h2>
 <p><strong>Want better quality?</strong> Try a larger model (if you have VRAM):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="c1"># Pull the larger model</span>
-<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>kg-ollama<span class="w"> </span>ollama<span class="w"> </span>pull<span class="w"> </span>qwen2.5:14b-instruct
-<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>
-<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="c1"># Switch to it</span>
-<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span>ollama<span class="w"> </span>--model<span class="w"> </span>qwen2.5:14b-instruct
-<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a>
-<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a><span class="c1"># Restart API</span>
-<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a>./scripts/services/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/services/start-api.sh
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="c1"># Pull the larger model</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>kg-ollama<span class="w"> </span>ollama<span class="w"> </span>pull<span class="w"> </span>qwen2.5:14b-instruct
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="c1"># Switch to it</span>
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span>ollama<span class="w"> </span>--model<span class="w"> </span>qwen2.5:14b-instruct
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="c1"># Restart API</span>
+<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a>./operator.sh<span class="w"> </span>restart<span class="w"> </span>api
 </code></pre></div>
 <p><strong>Want fastest local?</strong> Try a smaller model:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>kg-ollama<span class="w"> </span>ollama<span class="w"> </span>pull<span class="w"> </span>phi3.5:3.8b-mini-instruct
-<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span>ollama<span class="w"> </span>--model<span class="w"> </span>phi3.5:3.8b-mini-instruct
-<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>./scripts/services/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/services/start-api.sh
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>kg-ollama<span class="w"> </span>ollama<span class="w"> </span>pull<span class="w"> </span>phi3.5:3.8b-mini-instruct
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span>ollama<span class="w"> </span>--model<span class="w"> </span>phi3.5:3.8b-mini-instruct
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>./operator.sh<span class="w"> </span>restart<span class="w"> </span>api
 </code></pre></div>
 <hr />
 <h2 id="scenario-7-using-reasoning-models-with-thinking-mode">Scenario 7: Using Reasoning Models with Thinking Mode</h2>
@@ -10994,20 +10907,20 @@
 3. System uses only the JSON, logs the thinking (for debugging)</p>
 <p><strong>Trade-off:</strong> Slower extraction but potentially higher quality for complex documents.</p>
 <h3 id="example-gpt-oss">Example: GPT-OSS</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="c1"># 1. Pull reasoning model (requires 16GB+ VRAM)</span>
-<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>kg-ollama<span class="w"> </span>ollama<span class="w"> </span>pull<span class="w"> </span>gpt-oss:20b
-<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>
-<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="c1"># 2. Configure with thinking mode</span>
-<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a><span class="w">  </span>--provider<span class="w"> </span>ollama<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a><span class="w">  </span>--model<span class="w"> </span>gpt-oss:20b<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-20-8" name="__codelineno-20-8" href="#__codelineno-20-8"></a><span class="w">  </span>--thinking-mode<span class="w"> </span>low
-<a id="__codelineno-20-9" name="__codelineno-20-9" href="#__codelineno-20-9"></a>
-<a id="__codelineno-20-10" name="__codelineno-20-10" href="#__codelineno-20-10"></a><span class="c1"># 3. Restart API</span>
-<a id="__codelineno-20-11" name="__codelineno-20-11" href="#__codelineno-20-11"></a>./scripts/services/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/services/start-api.sh
-<a id="__codelineno-20-12" name="__codelineno-20-12" href="#__codelineno-20-12"></a>
-<a id="__codelineno-20-13" name="__codelineno-20-13" href="#__codelineno-20-13"></a><span class="c1"># 4. Test it</span>
-<a id="__codelineno-20-14" name="__codelineno-20-14" href="#__codelineno-20-14"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;Test&quot;</span><span class="w"> </span>-y<span class="w"> </span>complex-document.txt
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="c1"># 1. Pull reasoning model (requires 16GB+ VRAM)</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>kg-ollama<span class="w"> </span>ollama<span class="w"> </span>pull<span class="w"> </span>gpt-oss:20b
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="c1"># 2. Configure with thinking mode</span>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="w">  </span>--provider<span class="w"> </span>ollama<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a><span class="w">  </span>--model<span class="w"> </span>gpt-oss:20b<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a><span class="w">  </span>--thinking-mode<span class="w"> </span>low
+<a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a>
+<a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a><span class="c1"># 3. Restart API</span>
+<a id="__codelineno-18-11" name="__codelineno-18-11" href="#__codelineno-18-11"></a>./operator.sh<span class="w"> </span>restart<span class="w"> </span>api
+<a id="__codelineno-18-12" name="__codelineno-18-12" href="#__codelineno-18-12"></a>
+<a id="__codelineno-18-13" name="__codelineno-18-13" href="#__codelineno-18-13"></a><span class="c1"># 4. Test it</span>
+<a id="__codelineno-18-14" name="__codelineno-18-14" href="#__codelineno-18-14"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;Test&quot;</span><span class="w"> </span>-y<span class="w"> </span>complex-document.txt
 </code></pre></div>
 <h3 id="thinking-modes-explained">Thinking Modes Explained</h3>
 <p><strong>Available modes:</strong> <code>off</code>, <code>low</code>, <code>medium</code>, <code>high</code></p>
@@ -11072,19 +10985,19 @@
 - ✅ Speed is critical
 - ✅ Using standard models (they don't distinguish levels)</p>
 <h3 id="change-thinking-mode">Change Thinking Mode</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="c1"># Fastest (GPT-OSS: minimal thinking, others: disabled)</span>
-<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="w">  </span>--provider<span class="w"> </span>ollama<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span class="w">  </span>--model<span class="w"> </span>gpt-oss:20b<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a><span class="w">  </span>--thinking-mode<span class="w"> </span>off
-<a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a>
-<a id="__codelineno-21-7" name="__codelineno-21-7" href="#__codelineno-21-7"></a><span class="c1"># Maximum quality (GPT-OSS: deep thinking, others: enabled)</span>
-<a id="__codelineno-21-8" name="__codelineno-21-8" href="#__codelineno-21-8"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-21-9" name="__codelineno-21-9" href="#__codelineno-21-9"></a><span class="w">  </span>--provider<span class="w"> </span>ollama<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-21-10" name="__codelineno-21-10" href="#__codelineno-21-10"></a><span class="w">  </span>--model<span class="w"> </span>gpt-oss:20b<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-21-11" name="__codelineno-21-11" href="#__codelineno-21-11"></a><span class="w">  </span>--thinking-mode<span class="w"> </span>high
-<a id="__codelineno-21-12" name="__codelineno-21-12" href="#__codelineno-21-12"></a>
-<a id="__codelineno-21-13" name="__codelineno-21-13" href="#__codelineno-21-13"></a>./scripts/services/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/services/start-api.sh
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="c1"># Fastest (GPT-OSS: minimal thinking, others: disabled)</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="w">  </span>--provider<span class="w"> </span>ollama<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="w">  </span>--model<span class="w"> </span>gpt-oss:20b<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="w">  </span>--thinking-mode<span class="w"> </span>off
+<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>
+<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a><span class="c1"># Maximum quality (GPT-OSS: deep thinking, others: enabled)</span>
+<a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-19-9" name="__codelineno-19-9" href="#__codelineno-19-9"></a><span class="w">  </span>--provider<span class="w"> </span>ollama<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-19-10" name="__codelineno-19-10" href="#__codelineno-19-10"></a><span class="w">  </span>--model<span class="w"> </span>gpt-oss:20b<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-19-11" name="__codelineno-19-11" href="#__codelineno-19-11"></a><span class="w">  </span>--thinking-mode<span class="w"> </span>high
+<a id="__codelineno-19-12" name="__codelineno-19-12" href="#__codelineno-19-12"></a>
+<a id="__codelineno-19-13" name="__codelineno-19-13" href="#__codelineno-19-13"></a>./operator.sh<span class="w"> </span>restart<span class="w"> </span>api
 </code></pre></div>
 <h3 id="performance-comparison">Performance Comparison</h3>
 <p><strong>Example: 10,000-word complex document</strong></p>
@@ -11176,81 +11089,81 @@
 <hr />
 <h2 id="troubleshooting">Troubleshooting</h2>
 <h3 id="cannot-connect-to-ollama">"Cannot connect to Ollama"</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="c1"># Check if Ollama is running</span>
-<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>docker<span class="w"> </span>ps<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>ollama
-<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>
-<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="c1"># If not running, start it</span>
-<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>./scripts/start-ollama.sh<span class="w"> </span>-y
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="c1"># Check if Ollama is running</span>
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>docker<span class="w"> </span>ps<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>ollama
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="c1"># If not running, start it</span>
+<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a>./scripts/start-ollama.sh<span class="w"> </span>-y
 </code></pre></div>
 <h3 id="model-not-found">"Model not found"</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="c1"># List downloaded models</span>
-<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>kg-ollama<span class="w"> </span>ollama<span class="w"> </span>list
-<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a>
-<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a><span class="c1"># Pull the missing model</span>
-<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>kg-ollama<span class="w"> </span>ollama<span class="w"> </span>pull<span class="w"> </span>mistral:7b-instruct
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="c1"># List downloaded models</span>
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>kg-ollama<span class="w"> </span>ollama<span class="w"> </span>list
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span class="c1"># Pull the missing model</span>
+<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>kg-ollama<span class="w"> </span>ollama<span class="w"> </span>pull<span class="w"> </span>mistral:7b-instruct
 </code></pre></div>
 <h3 id="extraction-is-very-slow-60s-per-chunk">"Extraction is very slow (&gt;60s per chunk)"</h3>
 <p><strong>Likely cause:</strong> CPU-only mode (no GPU detected)</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="c1"># Check if GPU is being used</span>
-<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>nvidia-smi<span class="w">  </span><span class="c1"># Should show ollama process</span>
-<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a>
-<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a><span class="c1"># Force NVIDIA profile</span>
-<a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a>./scripts/stop-ollama.sh<span class="w"> </span>-y
-<a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a>./scripts/start-ollama.sh<span class="w"> </span>-y<span class="w"> </span>--nvidia
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="c1"># Check if GPU is being used</span>
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>nvidia-smi<span class="w">  </span><span class="c1"># Should show ollama process</span>
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="c1"># Force NVIDIA profile</span>
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>./scripts/stop-ollama.sh<span class="w"> </span>-y
+<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a>./scripts/start-ollama.sh<span class="w"> </span>-y<span class="w"> </span>--nvidia
 </code></pre></div>
 <h3 id="out-of-vram">"Out of VRAM"</h3>
 <p><strong>Model too large for your GPU.</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="c1"># Use smaller model</span>
-<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>kg-ollama<span class="w"> </span>ollama<span class="w"> </span>pull<span class="w"> </span>mistral:7b-instruct
-<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span>ollama<span class="w"> </span>--model<span class="w"> </span>mistral:7b-instruct
-<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a>./scripts/services/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/services/start-api.sh
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="c1"># Use smaller model</span>
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>kg-ollama<span class="w"> </span>ollama<span class="w"> </span>pull<span class="w"> </span>mistral:7b-instruct
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span>ollama<span class="w"> </span>--model<span class="w"> </span>mistral:7b-instruct
+<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a>./operator.sh<span class="w"> </span>restart<span class="w"> </span>api
 </code></pre></div>
 <hr />
 <h2 id="the-complete-switch-workflow">The Complete Switch Workflow</h2>
 <h3 id="openai-ollama-back-to-openai">OpenAI → Ollama → Back to OpenAI</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="c1"># Start with OpenAI (default)</span>
-<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span>config<span class="w">  </span><span class="c1"># Shows: openai, gpt-4o</span>
-<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a>
-<a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a><span class="c1"># Try Ollama (local, free)</span>
-<a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a>./scripts/start-ollama.sh<span class="w"> </span>-y
-<a id="__codelineno-26-6" name="__codelineno-26-6" href="#__codelineno-26-6"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>kg-ollama<span class="w"> </span>ollama<span class="w"> </span>pull<span class="w"> </span>mistral:7b-instruct
-<a id="__codelineno-26-7" name="__codelineno-26-7" href="#__codelineno-26-7"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span>ollama<span class="w"> </span>--model<span class="w"> </span>mistral:7b-instruct
-<a id="__codelineno-26-8" name="__codelineno-26-8" href="#__codelineno-26-8"></a>./scripts/services/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/services/start-api.sh
-<a id="__codelineno-26-9" name="__codelineno-26-9" href="#__codelineno-26-9"></a>
-<a id="__codelineno-26-10" name="__codelineno-26-10" href="#__codelineno-26-10"></a><span class="c1"># Test it</span>
-<a id="__codelineno-26-11" name="__codelineno-26-11" href="#__codelineno-26-11"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;Test&quot;</span><span class="w"> </span>-y<span class="w"> </span>test.txt<span class="w">  </span><span class="c1"># Slower, but free</span>
-<a id="__codelineno-26-12" name="__codelineno-26-12" href="#__codelineno-26-12"></a>
-<a id="__codelineno-26-13" name="__codelineno-26-13" href="#__codelineno-26-13"></a><span class="c1"># Go back to OpenAI (need speed)</span>
-<a id="__codelineno-26-14" name="__codelineno-26-14" href="#__codelineno-26-14"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span>openai<span class="w"> </span>--model<span class="w"> </span>gpt-4o
-<a id="__codelineno-26-15" name="__codelineno-26-15" href="#__codelineno-26-15"></a>./scripts/services/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/services/start-api.sh
-<a id="__codelineno-26-16" name="__codelineno-26-16" href="#__codelineno-26-16"></a>./scripts/stop-ollama.sh<span class="w"> </span>-y<span class="w">  </span><span class="c1"># Free up resources</span>
-<a id="__codelineno-26-17" name="__codelineno-26-17" href="#__codelineno-26-17"></a>
-<a id="__codelineno-26-18" name="__codelineno-26-18" href="#__codelineno-26-18"></a><span class="c1"># Test it</span>
-<a id="__codelineno-26-19" name="__codelineno-26-19" href="#__codelineno-26-19"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;Test&quot;</span><span class="w"> </span>-y<span class="w"> </span>test.txt<span class="w">  </span><span class="c1"># Fast again</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="c1"># Start with OpenAI (default)</span>
+<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span>config<span class="w">  </span><span class="c1"># Shows: openai, gpt-4o</span>
+<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a>
+<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a><span class="c1"># Try Ollama (local, free)</span>
+<a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a>./scripts/start-ollama.sh<span class="w"> </span>-y
+<a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>kg-ollama<span class="w"> </span>ollama<span class="w"> </span>pull<span class="w"> </span>mistral:7b-instruct
+<a id="__codelineno-24-7" name="__codelineno-24-7" href="#__codelineno-24-7"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span>ollama<span class="w"> </span>--model<span class="w"> </span>mistral:7b-instruct
+<a id="__codelineno-24-8" name="__codelineno-24-8" href="#__codelineno-24-8"></a>./operator.sh<span class="w"> </span>restart<span class="w"> </span>api
+<a id="__codelineno-24-9" name="__codelineno-24-9" href="#__codelineno-24-9"></a>
+<a id="__codelineno-24-10" name="__codelineno-24-10" href="#__codelineno-24-10"></a><span class="c1"># Test it</span>
+<a id="__codelineno-24-11" name="__codelineno-24-11" href="#__codelineno-24-11"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;Test&quot;</span><span class="w"> </span>-y<span class="w"> </span>test.txt<span class="w">  </span><span class="c1"># Slower, but free</span>
+<a id="__codelineno-24-12" name="__codelineno-24-12" href="#__codelineno-24-12"></a>
+<a id="__codelineno-24-13" name="__codelineno-24-13" href="#__codelineno-24-13"></a><span class="c1"># Go back to OpenAI (need speed)</span>
+<a id="__codelineno-24-14" name="__codelineno-24-14" href="#__codelineno-24-14"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span>openai<span class="w"> </span>--model<span class="w"> </span>gpt-4o
+<a id="__codelineno-24-15" name="__codelineno-24-15" href="#__codelineno-24-15"></a>./operator.sh<span class="w"> </span>restart<span class="w"> </span>api
+<a id="__codelineno-24-16" name="__codelineno-24-16" href="#__codelineno-24-16"></a>./scripts/stop-ollama.sh<span class="w"> </span>-y<span class="w">  </span><span class="c1"># Free up resources</span>
+<a id="__codelineno-24-17" name="__codelineno-24-17" href="#__codelineno-24-17"></a>
+<a id="__codelineno-24-18" name="__codelineno-24-18" href="#__codelineno-24-18"></a><span class="c1"># Test it</span>
+<a id="__codelineno-24-19" name="__codelineno-24-19" href="#__codelineno-24-19"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;Test&quot;</span><span class="w"> </span>-y<span class="w"> </span>test.txt<span class="w">  </span><span class="c1"># Fast again</span>
 </code></pre></div>
 <hr />
 <h2 id="summary-cheat-sheet">Summary Cheat Sheet</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a><span class="c1"># Check current provider</span>
-<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span>config
-<a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a>
-<a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a><span class="c1"># Switch to OpenAI</span>
-<a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span>openai<span class="w"> </span>--model<span class="w"> </span>gpt-4o
-<a id="__codelineno-27-6" name="__codelineno-27-6" href="#__codelineno-27-6"></a>./scripts/services/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/services/start-api.sh
-<a id="__codelineno-27-7" name="__codelineno-27-7" href="#__codelineno-27-7"></a>
-<a id="__codelineno-27-8" name="__codelineno-27-8" href="#__codelineno-27-8"></a><span class="c1"># Switch to Anthropic</span>
-<a id="__codelineno-27-9" name="__codelineno-27-9" href="#__codelineno-27-9"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span>anthropic<span class="w"> </span>--model<span class="w"> </span>claude-sonnet-4-20250514
-<a id="__codelineno-27-10" name="__codelineno-27-10" href="#__codelineno-27-10"></a>./scripts/services/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/services/start-api.sh
-<a id="__codelineno-27-11" name="__codelineno-27-11" href="#__codelineno-27-11"></a>
-<a id="__codelineno-27-12" name="__codelineno-27-12" href="#__codelineno-27-12"></a><span class="c1"># Switch to Ollama (local)</span>
-<a id="__codelineno-27-13" name="__codelineno-27-13" href="#__codelineno-27-13"></a>./scripts/start-ollama.sh<span class="w"> </span>-y
-<a id="__codelineno-27-14" name="__codelineno-27-14" href="#__codelineno-27-14"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>kg-ollama<span class="w"> </span>ollama<span class="w"> </span>pull<span class="w"> </span>mistral:7b-instruct
-<a id="__codelineno-27-15" name="__codelineno-27-15" href="#__codelineno-27-15"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span>ollama<span class="w"> </span>--model<span class="w"> </span>mistral:7b-instruct
-<a id="__codelineno-27-16" name="__codelineno-27-16" href="#__codelineno-27-16"></a>./scripts/services/stop-api.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./scripts/services/start-api.sh
-<a id="__codelineno-27-17" name="__codelineno-27-17" href="#__codelineno-27-17"></a>
-<a id="__codelineno-27-18" name="__codelineno-27-18" href="#__codelineno-27-18"></a><span class="c1"># Stop Ollama (free resources)</span>
-<a id="__codelineno-27-19" name="__codelineno-27-19" href="#__codelineno-27-19"></a>./scripts/stop-ollama.sh<span class="w"> </span>-y
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="c1"># Check current provider</span>
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span>config
+<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a>
+<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a><span class="c1"># Switch to OpenAI</span>
+<a id="__codelineno-25-5" name="__codelineno-25-5" href="#__codelineno-25-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span>openai<span class="w"> </span>--model<span class="w"> </span>gpt-4o
+<a id="__codelineno-25-6" name="__codelineno-25-6" href="#__codelineno-25-6"></a>./operator.sh<span class="w"> </span>restart<span class="w"> </span>api
+<a id="__codelineno-25-7" name="__codelineno-25-7" href="#__codelineno-25-7"></a>
+<a id="__codelineno-25-8" name="__codelineno-25-8" href="#__codelineno-25-8"></a><span class="c1"># Switch to Anthropic</span>
+<a id="__codelineno-25-9" name="__codelineno-25-9" href="#__codelineno-25-9"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span>anthropic<span class="w"> </span>--model<span class="w"> </span>claude-sonnet-4-20250514
+<a id="__codelineno-25-10" name="__codelineno-25-10" href="#__codelineno-25-10"></a>./operator.sh<span class="w"> </span>restart<span class="w"> </span>api
+<a id="__codelineno-25-11" name="__codelineno-25-11" href="#__codelineno-25-11"></a>
+<a id="__codelineno-25-12" name="__codelineno-25-12" href="#__codelineno-25-12"></a><span class="c1"># Switch to Ollama (local)</span>
+<a id="__codelineno-25-13" name="__codelineno-25-13" href="#__codelineno-25-13"></a>./scripts/start-ollama.sh<span class="w"> </span>-y
+<a id="__codelineno-25-14" name="__codelineno-25-14" href="#__codelineno-25-14"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>kg-ollama<span class="w"> </span>ollama<span class="w"> </span>pull<span class="w"> </span>mistral:7b-instruct
+<a id="__codelineno-25-15" name="__codelineno-25-15" href="#__codelineno-25-15"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span>ollama<span class="w"> </span>--model<span class="w"> </span>mistral:7b-instruct
+<a id="__codelineno-25-16" name="__codelineno-25-16" href="#__codelineno-25-16"></a>./operator.sh<span class="w"> </span>restart<span class="w"> </span>api
+<a id="__codelineno-25-17" name="__codelineno-25-17" href="#__codelineno-25-17"></a>
+<a id="__codelineno-25-18" name="__codelineno-25-18" href="#__codelineno-25-18"></a><span class="c1"># Stop Ollama (free resources)</span>
+<a id="__codelineno-25-19" name="__codelineno-25-19" href="#__codelineno-25-19"></a>./scripts/stop-ollama.sh<span class="w"> </span>-y
 </code></pre></div>
-<p><strong>Remember:</strong> After every switch, you must restart the API!</p>
+<p><strong>Note:</strong> Extraction config is read from the database when each ingestion job starts, so switches apply to the next submitted job — no API restart needed. Ollama setup steps (pull a model, start the service) are still required before the first job using a new local model.</p>
 <hr />
 <p><strong>Related Guides:</strong>
 - Full extraction config details: <code>docs/guides/02-EXTRACTION_CONFIGURATION.md</code>

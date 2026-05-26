@@ -4685,62 +4685,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/ingest-directory/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-directory
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/ingest-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-file
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../reference/mcp/tools/ingest/" class="md-nav__link">
         
   
@@ -4749,34 +4693,6 @@
     
   
     ingest
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/inspect-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    inspect-file
   
 
     
@@ -10682,11 +10598,11 @@
 <a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>└─────────────────────────────────────────────────────────────┘
 </code></pre></div>
 <p><strong>Key modules:</strong>
-- <code>client/src/lib/auth/token-manager.ts</code> - JWT token lifecycle
-- <code>client/src/lib/auth/auth-client.ts</code> - HTTP client for auth endpoints
-- <code>client/src/lib/auth/challenge.ts</code> - Re-auth prompt for sensitive ops
-- <code>client/src/lib/config.ts</code> - Config file management (extended for auth)
-- <code>client/src/api/client.ts</code> - Main API client (with auth interceptors)</p>
+- <code>cli/src/lib/auth/token-manager.ts</code> - JWT token lifecycle
+- <code>cli/src/lib/auth/auth-client.ts</code> - HTTP client for auth endpoints
+- <code>cli/src/lib/auth/challenge.ts</code> - Re-auth prompt for sensitive ops
+- <code>cli/src/lib/config.ts</code> - Config file management (extended for auth)
+- <code>cli/src/api/client.ts</code> - Main API client (with auth interceptors)</p>
 <hr />
 <h2 id="authentication-flow">Authentication Flow</h2>
 <h3 id="login-flow">Login Flow</h3>
@@ -10957,10 +10873,10 @@
 <hr />
 <h2 id="quick-reference">Quick Reference</h2>
 <p><strong>Key Files:</strong>
-- <code>client/src/lib/auth/</code> - Authentication modules
-- <code>client/src/cli/login.ts</code> - Login command
-- <code>client/src/cli/admin/user.ts</code> - User management commands
-- <code>client/src/api/client.ts</code> - Main API client</p>
+- <code>cli/src/lib/auth/</code> - Authentication modules
+- <code>cli/src/cli/login.ts</code> - Login command
+- <code>cli/src/cli/auth-admin.ts</code> - User management commands
+- <code>cli/src/api/client.ts</code> - Main API client</p>
 <p><strong>Key Commands:</strong>
 - <code>kg login</code> - Authenticate user
 - <code>kg logout</code> - Clear stored token
@@ -10972,7 +10888,7 @@
 <p><strong>Token Lifespan:</strong>
 - Default: 60 minutes
 - Buffer: 5 minutes (55 minutes effective)
-- Configurable server-side: <code>JWT_EXPIRATION_MINUTES</code></p>
+- Configurable server-side: <code>ACCESS_TOKEN_EXPIRE_MINUTES</code></p>
 
 
 

@@ -4441,62 +4441,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/ingest-directory/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-directory
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/ingest-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-file
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../reference/mcp/tools/ingest/" class="md-nav__link">
         
   
@@ -4505,34 +4449,6 @@
     
   
     ingest
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/inspect-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    inspect-file
   
 
     
@@ -10193,9 +10109,10 @@
 <p>See <a href="../../reference/mcp/">MCP Reference</a> for tool documentation.</p>
 <h3 id="fuse-filesystem">FUSE Filesystem</h3>
 <p>Mount the knowledge graph as a filesystem.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>kg-fuse<span class="w"> </span>~/Knowledge<span class="w">    </span><span class="c1"># Mount at ~/Knowledge</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>ls<span class="w"> </span>~/Knowledge/<span class="w">        </span><span class="c1"># Browse ontologies</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>cat<span class="w"> </span>~/Knowledge/query/your<span class="se">\ </span>search<span class="w">  </span><span class="c1"># Semantic queries</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>kg-fuse<span class="w"> </span>init<span class="w"> </span>~/Knowledge<span class="w">   </span><span class="c1"># First-time setup at ~/Knowledge</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>kg-fuse<span class="w"> </span>mount<span class="w">              </span><span class="c1"># Start all configured mounts</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>ls<span class="w"> </span>~/Knowledge/<span class="w">            </span><span class="c1"># Browse ontologies</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>kg-fuse<span class="w"> </span>status<span class="w">             </span><span class="c1"># Check what&#39;s running</span>
 </code></pre></div>
 <p>See <a href="../../guides/FUSE_FILESYSTEM/">FUSE Guide</a> for details.</p>
 <h2 id="upgrading">Upgrading</h2>

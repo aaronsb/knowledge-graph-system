@@ -4231,62 +4231,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/ingest-directory/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-directory
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/ingest-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ingest-file
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../reference/mcp/tools/ingest/" class="md-nav__link">
         
   
@@ -4295,34 +4239,6 @@
     
   
     ingest
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/inspect-file/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    inspect-file
   
 
     
@@ -10196,7 +10112,7 @@ fails (the program can't be deserialized), subsequent layers are skipped.</p>
 <td>V003</td>
 <td>Statement structure invalid</td>
 <td>error</td>
-<td>Reserved for future operator-level checks</td>
+<td>Reserved. Operator and operation-type checks are currently enforced by Pydantic at Layer 1 (surfaces as V000).</td>
 </tr>
 <tr>
 <td>V004</td>
@@ -10552,7 +10468,7 @@ A program that passes client-side checks may still fail server-side validation
 <ul>
 <li><strong>Models</strong>: <code>api/app/models/program.py</code></li>
 <li><strong>Validator</strong>: <code>api/app/services/program_validator.py</code></li>
-<li><strong>Tests</strong>: <code>tests/unit/test_program_validation.py</code> (105 tests, executable specification)</li>
+<li><strong>Tests</strong>: <code>tests/unit/test_program_validation.py</code> (109 tests, executable specification)</li>
 </ul>
 
 
