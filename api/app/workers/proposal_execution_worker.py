@@ -10,6 +10,7 @@ import logging
 from typing import Any, Dict
 
 from api.app.lib.age_client import AGEClient
+from api.app.models.ontology import normalize_proposal_type
 from api.app.services.proposal_executor import ProposalExecutor
 
 logger = logging.getLogger(__name__)
@@ -75,18 +76,44 @@ def run_proposal_execution_worker(
             "progress": {"stage": "executing", "percent": 30}
         })
 
-        # 4. Execute
-        executor = ProposalExecutor(age_client)
+        # 4. Normalize the proposal to ADR-206 6-verb vocabulary.
+        #    Legacy rows arrive with proposal_type='promotion'|'demotion';
+        #    normalize_proposal_type collapses them onto CLEAVE/DISSOLVE and
+        #    merges the implicit params delta (e.g. source_ontology=primordial
+        #    for promotions). v2 rows pass through unchanged.
+        try:
+            canonical, merged_params = normalize_proposal_type(
+                proposal["proposal_type"], proposal.get("params")
+            )
+        except ValueError as exc:
+            return {
+                "status": "failed",
+                "error": f"Unknown proposal type: {proposal['proposal_type']} ({exc})",
+            }
+        proposal["proposal_type"] = canonical.value
+        proposal["params"] = merged_params or {}
 
-        if proposal["proposal_type"] == "promotion":
-            result = executor.execute_promotion(proposal)
-        elif proposal["proposal_type"] == "demotion":
-            result = executor.execute_demotion(proposal)
-        else:
+        # 5. Dispatch on the canonical verb.
+        executor = ProposalExecutor(age_client)
+        dispatch = {
+            "CLEAVE": executor.execute_cleave,
+            "DISSOLVE": executor.execute_dissolve,
+            "MERGE": executor.execute_merge,
+            "RENAME": executor.execute_rename,
+            "NO_ACTION": executor.execute_no_action,
+            "ESCALATE": executor.execute_escalate,
+            # ADJUST_CONTROL handled in a follow-up commit.
+        }
+        fn = dispatch.get(canonical.value)
+        if fn is None:
             result = {
                 "success": False,
-                "error": f"Unknown proposal type: {proposal['proposal_type']}",
+                "error": (
+                    f"Verb {canonical.value} not yet implemented in executor"
+                ),
             }
+        else:
+            result = fn(proposal)
 
         # 5. Update proposal with result
         if result.get("success"):
@@ -160,14 +187,20 @@ def run_proposal_execution_worker(
 
 
 def _load_proposal(age_client, proposal_id: int) -> Dict[str, Any] | None:
-    """Load a proposal from the annealing_proposals table."""
+    """Load a proposal from the annealing_proposals table.
+
+    Reads the ADR-206 columns (proposal_kind, params JSONB) alongside the
+    typed legacy columns so the executor can dispatch on the canonical
+    verb while still supporting backward-compat reads from old rows.
+    """
     from psycopg2.extras import RealDictCursor
     conn = age_client.pool.getconn()
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute(
                 """
-                SELECT id, proposal_type, ontology_name, anchor_concept_id,
+                SELECT id, proposal_type, proposal_kind, params,
+                       ontology_name, anchor_concept_id,
                        target_ontology, reasoning, mass_score, coherence_score,
                        protection_score, status, suggested_name,
                        suggested_description
@@ -179,9 +212,19 @@ def _load_proposal(age_client, proposal_id: int) -> Dict[str, Any] | None:
             row = cur.fetchone()
             if not row:
                 return None
+            # psycopg2 returns JSONB as a dict already; defend against the
+            # case where the driver hands back a string for any reason.
+            params = row.get("params")
+            if isinstance(params, str):
+                try:
+                    params = json.loads(params)
+                except (json.JSONDecodeError, TypeError):
+                    params = None
             return {
                 "id": row["id"],
                 "proposal_type": row["proposal_type"],
+                "proposal_kind": row.get("proposal_kind") or "ontology",
+                "params": params or {},
                 "ontology_name": row["ontology_name"],
                 "anchor_concept_id": row.get("anchor_concept_id"),
                 "target_ontology": row.get("target_ontology"),

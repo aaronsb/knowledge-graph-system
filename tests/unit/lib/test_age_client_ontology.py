@@ -731,10 +731,17 @@ class TestReassignSources:
 
 @pytest.mark.unit
 class TestDissolveOntology:
-    """Tests for dissolve_ontology() (ADR-200 Phase 3a)."""
+    """Tests for dissolve_ontology() (ADR-200 Phase 3a, ADR-206 per-source routing).
 
-    def test_dissolve_success(self, mock_age_client):
-        """Successfully dissolves an active ontology."""
+    Two modes:
+        - Legacy single-target (name, target_ontology=...) — preserved for
+          backward-compat with callers that pre-date ADR-206.
+        - New per-source (name, routing_map={source_id: target}) —
+          ADR-206 §Phase 1: each source picks its destination.
+    """
+
+    def test_dissolve_legacy_single_target(self, mock_age_client):
+        """Legacy single-target mode: dissolve_ontology(name, target_ontology=...)."""
         mock_age_client.get_ontology_node = MagicMock(side_effect=[
             {'name': 'dissolve-me', 'lifecycle_state': 'active'},  # dissolve check
             {'name': 'dissolve-me', 'lifecycle_state': 'active'},  # reassign from
@@ -748,11 +755,102 @@ class TestDissolveOntology:
         ])
         mock_age_client.delete_ontology_node = MagicMock(return_value=True)
 
-        result = mock_age_client.dissolve_ontology('dissolve-me', 'target')
+        result = mock_age_client.dissolve_ontology(
+            'dissolve-me', target_ontology='target'
+        )
 
         assert result['success'] is True
         assert result['sources_reassigned'] == 2
         assert result['ontology_node_deleted'] is True
+        assert result['routing_targets'] == ['target']
+        # Back-compat alias preserved.
+        assert result['reassignment_targets'] == ['target']
+
+    def test_dissolve_legacy_positional_signature(self, mock_age_client):
+        """The original (name, target_ontology) positional call must still work.
+
+        Existing callers wrote `dissolve_ontology('foo', 'bar')` — the
+        new keyword `routing_map` slot must not break them.
+        """
+        mock_age_client.get_ontology_node = MagicMock(side_effect=[
+            {'name': 'dissolve-me', 'lifecycle_state': 'active'},
+            {'name': 'dissolve-me', 'lifecycle_state': 'active'},
+            {'name': 'target', 'lifecycle_state': 'active'},
+        ])
+        mock_age_client._execute_cypher = MagicMock(side_effect=[
+            [{'source_id': 's1'}],
+            {'updated': 1}, {'deleted': 1}, {'created': 1},
+        ])
+        mock_age_client.delete_ontology_node = MagicMock(return_value=True)
+
+        # routing_map is the new positional arg — passing target_ontology
+        # by name keeps the (name, target_ontology) signature intact.
+        result = mock_age_client.dissolve_ontology(
+            'dissolve-me', target_ontology='target'
+        )
+        assert result['success'] is True
+
+    def test_dissolve_per_source_routing_split(self, mock_age_client):
+        """ADR-206 routing_map: sources fan out to multiple targets."""
+        mock_age_client.get_ontology_node = MagicMock(side_effect=[
+            {'name': 'donor', 'lifecycle_state': 'active'},        # dissolve check
+            # First reassign batch: from=donor, to=target-a
+            {'name': 'donor', 'lifecycle_state': 'active'},
+            {'name': 'target-a', 'lifecycle_state': 'active'},
+            # Second reassign batch: from=donor, to=target-b
+            {'name': 'donor', 'lifecycle_state': 'active'},
+            {'name': 'target-b', 'lifecycle_state': 'active'},
+        ])
+        mock_age_client._execute_cypher = MagicMock(side_effect=[
+            # First batch (target-a, sources [s1, s2])
+            {'updated': 2}, {'deleted': 2}, {'created': 2},
+            # Second batch (target-b, sources [s3])
+            {'updated': 1}, {'deleted': 1}, {'created': 1},
+        ])
+        mock_age_client.delete_ontology_node = MagicMock(return_value=True)
+
+        result = mock_age_client.dissolve_ontology(
+            'donor',
+            routing_map={
+                's1': 'target-a',
+                's2': 'target-a',
+                's3': 'target-b',
+            },
+        )
+
+        assert result['success'] is True
+        assert result['sources_reassigned'] == 3
+        assert sorted(result['routing_targets']) == ['target-a', 'target-b']
+        assert result['ontology_node_deleted'] is True
+
+    def test_dissolve_force_primordial_flag_echoed(self, mock_age_client):
+        """force_primordial=True is echoed in the result for the audit ledger."""
+        mock_age_client.get_ontology_node = MagicMock(side_effect=[
+            {'name': 'donor', 'lifecycle_state': 'active'},  # dissolve check
+            {'name': 'donor', 'lifecycle_state': 'active'},  # reassign from
+            {'name': 'primordial', 'lifecycle_state': 'active'},
+        ])
+        mock_age_client._execute_cypher = MagicMock(side_effect=[
+            {'updated': 1}, {'deleted': 1}, {'created': 1},
+        ])
+        mock_age_client.delete_ontology_node = MagicMock(return_value=True)
+
+        result = mock_age_client.dissolve_ontology(
+            'donor',
+            routing_map={'s1': 'primordial'},
+            force_primordial=True,
+        )
+        assert result['success'] is True
+        assert result['force_primordial'] is True
+
+    def test_dissolve_requires_routing_or_target(self, mock_age_client):
+        """Calling with neither routing_map nor target_ontology fails cleanly."""
+        mock_age_client.get_ontology_node = MagicMock(return_value={
+            'name': 'donor', 'lifecycle_state': 'active'
+        })
+        result = mock_age_client.dissolve_ontology('donor')
+        assert result['success'] is False
+        assert 'routing_map' in result['error']
 
     def test_dissolve_pinned_rejected(self, mock_age_client):
         """Cannot dissolve a pinned ontology."""
@@ -760,7 +858,9 @@ class TestDissolveOntology:
             'name': 'pinned-onto', 'lifecycle_state': 'pinned'
         })
 
-        result = mock_age_client.dissolve_ontology('pinned-onto', 'target')
+        result = mock_age_client.dissolve_ontology(
+            'pinned-onto', target_ontology='target'
+        )
 
         assert result['success'] is False
         assert 'pinned' in result['error']
@@ -771,7 +871,9 @@ class TestDissolveOntology:
             'name': 'frozen-onto', 'lifecycle_state': 'frozen'
         })
 
-        result = mock_age_client.dissolve_ontology('frozen-onto', 'target')
+        result = mock_age_client.dissolve_ontology(
+            'frozen-onto', target_ontology='target'
+        )
 
         assert result['success'] is False
         assert 'frozen' in result['error']
@@ -780,7 +882,9 @@ class TestDissolveOntology:
         """Cannot dissolve nonexistent ontology."""
         mock_age_client.get_ontology_node = MagicMock(return_value=None)
 
-        result = mock_age_client.dissolve_ontology('ghost', 'target')
+        result = mock_age_client.dissolve_ontology(
+            'ghost', target_ontology='target'
+        )
 
         assert result['success'] is False
         assert 'not found' in result['error']
