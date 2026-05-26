@@ -283,8 +283,20 @@ class AnnealingManager:
                 if remaining <= 0:
                     break
 
+        # 7. Emit ADJUST_CONTROL proposals for any pressure recommendation
+        #    whose |delta| exceeds the deadband (#249 Part 2, ADR-206 §Phase 3).
+        #    Bezier-derived; no LLM judgment needed — defense is the snapshot.
+        control_proposals = self._emit_control_proposals(
+            recommendation=ecological["pressure_recommendation"],
+            pressure_score=ecological["pressure_score"],
+            pressure_zone=ecological["pressure_zone"],
+            epoch=global_epoch,
+        )
+        proposal_ids.extend(control_proposals)
+
         logger.info(
-            f"Annealing cycle complete: {len(proposal_ids)} proposals, "
+            f"Annealing cycle complete: {len(proposal_ids)} proposals "
+            f"({len(control_proposals)} control), "
             f"{len(all_scores)} scored, {centroids_updated} centroids, "
             f"{edge_result.get('edges_created', 0)} edges, "
             f"{len(vetoed_inflight)} vetoed (in-flight ingestion)"
@@ -884,6 +896,97 @@ class AnnealingManager:
             "pressure_zone": pressure_zone,
             "pressure_recommendation": pressure_recommendation,
         }
+
+    # Below this absolute delta the recommendation is treated as noise —
+    # emitting an ADJUST_CONTROL proposal for ±1 epoch every cycle would
+    # spam the queue and burn human review attention. Operators tuning by
+    # hand are already in the same ballpark as Bezier; only diverge when
+    # the curve has something meaningful to say.
+    _ADJUST_CONTROL_DEADBAND = 2
+
+    def _emit_control_proposals(
+        self,
+        recommendation: Dict[str, Dict[str, Any]],
+        pressure_score: float,
+        pressure_zone: str,
+        epoch: int,
+    ) -> List[int]:
+        """
+        Synthesize ADJUST_CONTROL proposals when pressure recommendations
+        exceed the deadband AND no open ADJUST_CONTROL proposal already
+        targets the same control_key.
+
+        Returns the list of stored proposal IDs (empty list when nothing
+        crosses the deadband).
+        """
+        if not recommendation:
+            return []
+
+        open_keys = self._get_open_control_keys()
+        emitted: List[int] = []
+
+        for control_key, block in recommendation.items():
+            delta = block.get("delta", 0)
+            if abs(delta) < self._ADJUST_CONTROL_DEADBAND:
+                continue
+            if control_key in open_keys:
+                logger.debug(
+                    f"Skipping ADJUST_CONTROL for '{control_key}': open proposal exists"
+                )
+                continue
+
+            defense = (
+                f"Pressure score {pressure_score:.2f} ({pressure_zone}); "
+                f"Bezier-derived recommendation diverges from current "
+                f"{block['current']} by {delta:+d}."
+            )
+            params = {
+                "control_key": control_key,
+                "current_value": str(block["current"]),
+                "recommended_value": str(block["recommended"]),
+                "defense": defense,
+            }
+            proposal_id = self._store_proposal(
+                proposal_type="ADJUST_CONTROL",
+                ontology_name="(control)",
+                reasoning=defense,
+                epoch=epoch,
+                proposal_kind="control",
+                params=params,
+            )
+            if proposal_id:
+                emitted.append(proposal_id)
+                logger.info(
+                    f"Emitted ADJUST_CONTROL proposal #{proposal_id} for "
+                    f"'{control_key}' ({block['current']} → {block['recommended']})"
+                )
+
+        return emitted
+
+    def _get_open_control_keys(self) -> Set[str]:
+        """Return control_keys with an in-flight ADJUST_CONTROL proposal."""
+        keys: Set[str] = set()
+        try:
+            conn = self.client.pool.getconn()
+            try:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        """
+                        SELECT params->>'control_key'
+                        FROM kg_api.annealing_proposals
+                        WHERE proposal_kind = 'control'
+                          AND proposal_type = 'ADJUST_CONTROL'
+                          AND status IN ('pending', 'approved', 'executing')
+                        """
+                    )
+                    for (control_key,) in cur.fetchall():
+                        if control_key:
+                            keys.add(control_key)
+            finally:
+                self.client.pool.putconn(conn)
+        except Exception as exc:
+            logger.warning(f"Could not load open control proposals: {exc}")
+        return keys
 
     def _load_phase3_controls(self) -> Dict[str, str]:
         """Snapshot the tuneable Phase-3 options keyed in the recommendation."""

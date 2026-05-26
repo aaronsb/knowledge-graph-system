@@ -102,7 +102,7 @@ def run_proposal_execution_worker(
             "RENAME": executor.execute_rename,
             "NO_ACTION": executor.execute_no_action,
             "ESCALATE": executor.execute_escalate,
-            # ADJUST_CONTROL handled in a follow-up commit.
+            "ADJUST_CONTROL": executor.execute_adjust_control,
         }
         fn = dispatch.get(canonical.value)
         if fn is None:

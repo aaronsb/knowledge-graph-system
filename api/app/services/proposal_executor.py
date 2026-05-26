@@ -904,6 +904,101 @@ class ProposalExecutor:
             "escalation_recorded": True,
         }
 
+    # ADR-206 §Phase 3 safety rails. Operators may tune these from the
+    # admin UI; Opus is NEVER allowed to via ADJUST_CONTROL. Listed
+    # explicitly rather than "everything except this set" because adding a
+    # new safety rail without amending this list would silently widen
+    # autonomy — the system cannot widen its own autonomy is the
+    # self-regulation invariant.
+    _SAFETY_RAIL_KEYS = frozenset({
+        "automation_level",
+        "escalation_chain",
+        "opus_confidence",
+        "phone_a_friend_cost_budget",
+    })
+
+    def execute_adjust_control(self, proposal: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Execute an approved ADJUST_CONTROL proposal (ADR-206 §Phase 3).
+
+        Updates one row in kg_api.annealing_options. Rejects any control_key
+        that lives on the safety-rail list — Opus may tune operational
+        knobs (cadence, cooldowns, eligibility thresholds) but never
+        safety knobs (automation_level, escalation_chain, opus_confidence,
+        phone_a_friend_cost_budget). The self-regulation invariant: the
+        system can regulate its own cadence, but cannot widen its own
+        autonomy.
+        """
+        params = proposal.get("params") or {}
+        control_key = params.get("control_key")
+        recommended_value = params.get("recommended_value")
+
+        if not control_key:
+            return {"success": False, "error": "ADJUST_CONTROL missing control_key"}
+        if recommended_value is None:
+            return {"success": False, "error": "ADJUST_CONTROL missing recommended_value"}
+
+        if control_key in self._SAFETY_RAIL_KEYS:
+            return {
+                "success": False,
+                "error": (
+                    f"control_key '{control_key}' is a safety rail — "
+                    f"only operators can tune it (ADR-206 §Phase 3 self-regulation invariant)"
+                ),
+                "control_key": control_key,
+                "rejected_reason": "safety_rail",
+            }
+
+        try:
+            conn = self.client.pool.getconn()
+            try:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        "SELECT 1 FROM kg_api.annealing_options WHERE key = %s",
+                        (control_key,),
+                    )
+                    if not cur.fetchone():
+                        return {
+                            "success": False,
+                            "error": f"control_key '{control_key}' not found in annealing_options",
+                            "control_key": control_key,
+                        }
+                    cur.execute(
+                        """
+                        UPDATE kg_api.annealing_options
+                        SET value = %s, updated_at = NOW()
+                        WHERE key = %s
+                        RETURNING value
+                        """,
+                        (str(recommended_value), control_key),
+                    )
+                    row = cur.fetchone()
+                    conn.commit()
+                    new_value = row[0] if row else None
+            finally:
+                self.client.pool.putconn(conn)
+        except Exception as exc:
+            logger.error(f"ADJUST_CONTROL update failed for '{control_key}': {exc}")
+            return {
+                "success": False,
+                "error": str(exc),
+                "control_key": control_key,
+            }
+
+        logger.info(
+            f"ADJUST_CONTROL applied: {control_key} → {new_value} "
+            f"(was {params.get('current_value')!r}, "
+            f"defense={params.get('defense', '')!r})"
+        )
+        return {
+            "success": True,
+            "error": None,
+            "action": "adjust_control",
+            "control_key": control_key,
+            "previous_value": params.get("current_value"),
+            "new_value": new_value,
+        }
+
     # ------------------------------------------------------------------
     # Legacy shims — callers using v1 names get the v2 implementations.
     # ------------------------------------------------------------------
