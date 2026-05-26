@@ -219,8 +219,16 @@ class GroundingMixin:
         Warm-cache short-circuit (#278): if `_grounding_cache_generation`
         is set and `(concept_id, _grounding_cache_generation)` is already
         in the cache, this method returns without acquiring a pool
-        connection. Soundness: we might serve up-to-one-call-stale data
-        right after a graph mutation, but the next miss reseeds.
+        connection. Soundness: the warm path never re-reads the generation,
+        so the staleness window is bounded by the next cold-path call in
+        this process — not by wall-clock time. A workload that repeatedly
+        hits the same hot concepts can keep serving cached values from
+        before a graph mutation until something else takes the cold path
+        and re-reads the generation. This is the intended trade-off for
+        read-heavy steady-state workloads; callers that need linearizable
+        freshness should call `include_grounding=False` to bypass the
+        cache entirely, or rely on cache eviction triggered by other
+        endpoint hits.
 
         Args:
             concept_id: Target concept to calculate grounding for.
@@ -421,10 +429,14 @@ class GroundingMixin:
         # repeatedly (search-then-render, paginated UIs, etc.).
         #
         # Soundness trade-off: skipping the get_graph_generation() probe
-        # means we might serve up-to-one-call-stale data right after the
-        # graph mutates. The next non-warm call reads the new generation
-        # and evicts, so the stale window is bounded by exactly one call
-        # that happens between mutation and the first cache miss. Worth it
+        # means staleness is bounded by the next cold-path call in this
+        # process, NOT by wall-clock time. A workload that keeps hitting
+        # the same warm working set will keep returning pre-mutation values
+        # until something else (a different concept set, an unrelated
+        # endpoint, the API restart) takes the cold path and re-reads the
+        # generation. For the read-heavy steady state this targets that's
+        # the right trade — but callers needing linearizable freshness
+        # should opt out of the cache entirely. Worth it
         # for the read-heavy steady state.
         with _grounding_cache_lock:
             cached_gen = _grounding_cache_generation

@@ -253,12 +253,16 @@ class ConfidenceAnalyzer:
         from psycopg2 import extras as pg_extras
 
         # --- Phase 0: warm-cache short-circuit (ADR-201 Phase 5f #278) ---
-        # Mirror of the grounding-batch optimization in grounding.py. If
-        # every requested concept is cached at the last-known generation,
-        # return without acquiring a pool connection. Caveat: grounding_display
-        # is recomputed even on a warm hit because it depends on the caller's
-        # current grounding_map (which can change call-to-call independently
-        # of the graph generation).
+        # Mirror of the grounding-batch optimization in grounding.py — same
+        # staleness bound: bounded by the next cold-path call in this
+        # process, NOT by wall-clock time. See the long comment on
+        # grounding.py:calculate_grounding_strength_batch for the full
+        # rationale; the trade-off applies identically here.
+        #
+        # Caveat specific to confidence: grounding_display is recomputed
+        # even on a warm hit because it depends on the caller's current
+        # grounding_map (which can change call-to-call independently of
+        # the graph generation).
         with _confidence_cache_lock:
             cached_gen = _confidence_cache_generation
             if cached_gen is not None:
