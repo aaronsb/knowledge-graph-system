@@ -775,7 +775,11 @@ class EmbeddingWorker:
         model: str,
         provider: str
     ) -> None:
-        """Store embedding in relationship_vocabulary table"""
+        """
+        Store embedding in relationship_vocabulary table and bump the
+        vocabulary_embedding_generation_counter so the polarity-axis cache
+        (GroundingMixin) invalidates on next read (migration 069).
+        """
         query = """
             UPDATE kg_api.relationship_vocabulary
             SET embedding = %s::jsonb,
@@ -785,6 +789,12 @@ class EmbeddingWorker:
         """
         embedding_json = json.dumps(embedding)
         await self.db.execute_query(query, (embedding_json, model, relationship_type))
+        # Bump the embedding-generation counter so any cache keyed against it
+        # picks up the change. Independent of vocabulary_change_counter,
+        # which only moves on row membership changes (add/remove/categorize).
+        await self.db.execute_query(
+            "SELECT increment_counter('vocabulary_embedding_generation_counter')"
+        )
 
     async def _check_initialization_status(self) -> bool:
         """Check if cold start initialization is complete"""
