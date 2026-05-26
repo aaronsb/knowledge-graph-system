@@ -1366,15 +1366,29 @@ async def find_related_concepts(
             relationship_types=final_rel_types
         )
 
-        results = [
-            RelatedConcept(
+        # ADR-044: batch-hydrate grounding + confidence when requested.
+        # Same pattern as /search/concepts (batch query for all results,
+        # then look up per-concept). Cached against graph_accel.generation
+        # so repeated traversals are warm.
+        grounding_batch: Dict[str, Dict] = {}
+        if request.include_grounding and raw_results:
+            grounding_batch = _hydrate_grounding_batch(
+                client, [r['concept_id'] for r in raw_results]
+            )
+
+        results = []
+        for record in raw_results:
+            hydrated = grounding_batch.get(record['concept_id'], {})
+            results.append(RelatedConcept(
                 concept_id=record['concept_id'],
                 label=record['label'],
                 distance=record['distance'],
-                path_types=record['path_types']
-            )
-            for record in raw_results
-        ]
+                path_types=record['path_types'],
+                grounding_strength=hydrated.get('grounding_strength'),
+                confidence_level=hydrated.get('confidence_level'),
+                confidence_score=hydrated.get('confidence_score'),
+                grounding_display=hydrated.get('grounding_display'),
+            ))
 
         return RelatedConceptsResponse(
             concept_id=request.concept_id,

@@ -1726,6 +1726,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
               // ADR-065: Epistemic status filtering
               include_epistemic_status: toolArgs.include_epistemic_status as string[] | undefined,
               exclude_epistemic_status: toolArgs.exclude_epistemic_status as string[] | undefined,
+              // ADR-044: hydrate grounding for parity with search/connect-by-search (#280)
+              include_grounding: toolArgs.include_grounding !== false,
             });
 
             const formattedText = formatRelatedConcepts(result);

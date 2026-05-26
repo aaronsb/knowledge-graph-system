@@ -190,6 +190,8 @@ class RelatedConceptsRequest(BaseModel):
     # ADR-065: Epistemic status filtering
     include_epistemic_status: Optional[List[str]] = Field(None, description="Filter to only include relationships with these epistemic statuses (e.g., ['AFFIRMATIVE', 'CONTESTED'])")
     exclude_epistemic_status: Optional[List[str]] = Field(None, description="Exclude relationships with these epistemic statuses (e.g., ['HISTORICAL', 'INSUFFICIENT_DATA'])")
+    # ADR-044: grounding strength + confidence hydration (parity with /search/concepts and /query/connect)
+    include_grounding: bool = Field(True, description="Hydrate grounding_strength + confidence fields on each related concept (ADR-044)")
 
 
 class RelatedConcept(BaseModel):
@@ -198,6 +200,11 @@ class RelatedConcept(BaseModel):
     label: str = Field(..., description="Related concept label")
     distance: int = Field(..., description="Number of hops from starting concept")
     path_types: List[str] = Field(..., description="Relationship types traversed to reach this concept")
+    # ADR-044: grounding fields, populated when RelatedConceptsRequest.include_grounding is true
+    grounding_strength: Optional[float] = Field(None, description="Probabilistic truth convergence score (ADR-044)")
+    confidence_level: Optional[str] = Field(None, description="Categorical confidence label (e.g., 'high', 'medium')")
+    confidence_score: Optional[float] = Field(None, description="Numeric confidence score 0-1")
+    grounding_display: Optional[str] = Field(None, description="Categorical grounding label from 3x3 grounding x confidence matrix")
 
 
 class RelatedConceptsResponse(BaseModel):

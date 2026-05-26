@@ -103,6 +103,7 @@ kg related <concept-id>
 | `-t, --types <types...>` | Filter by relationship types (IMPLIES, ENABLES, SUPPORTS, etc. - see kg vocab list) | - |
 | `--include-epistemic <statuses...>` | Only include relationships with these epistemic statuses (ADR-065): AFFIRMATIVE, CONTESTED, CONTRADICTORY, HISTORICAL | - |
 | `--exclude-epistemic <statuses...>` | Exclude relationships with these epistemic statuses (ADR-065) | - |
+| `--no-grounding` | Disable grounding strength calculation (ADR-044 probabilistic truth convergence) for faster results | - |
 | `--json` | Output raw JSON instead of formatted text for scripting | - |
 
 ### connect

@@ -261,6 +261,8 @@ export interface RelatedConceptsRequest {
   // ADR-065: Epistemic status filtering
   include_epistemic_status?: string[]; // Filter to only include relationships with these epistemic statuses
   exclude_epistemic_status?: string[]; // Exclude relationships with these epistemic statuses
+  // ADR-044: parity with search/connect — hydrates grounding_strength on each result
+  include_grounding?: boolean;
 }
 
 export interface RelatedConcept {
@@ -268,6 +270,11 @@ export interface RelatedConcept {
   label: string;
   distance: number;
   path_types: string[];
+  // ADR-044: populated when include_grounding=true
+  grounding_strength?: number;
+  confidence_level?: string;
+  confidence_score?: number;
+  grounding_display?: string;
 }
 
 export interface RelatedConceptsResponse {

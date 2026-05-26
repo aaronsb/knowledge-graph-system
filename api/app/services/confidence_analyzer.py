@@ -43,6 +43,7 @@ _confidence_cache: Dict[Tuple[str, int], Dict[str, Any]] = {}
 _confidence_cache_generation: Optional[int] = None
 
 from api.app.constants import BATCH_CHUNK_SIZE
+from api.app.lib.age_client.graph_generation import get_graph_generation
 
 
 # Confidence level thresholds
@@ -109,8 +110,10 @@ class ConfidenceAnalyzer:
         """
         global _confidence_cache, _confidence_cache_generation
 
-        # Check graph generation for cache validity
-        graph_gen = self._get_graph_generation()
+        # Check graph generation for cache validity. Acquires a short-lived
+        # connection just to read the counter — the per-concept work below
+        # opens its own cursor scope.
+        graph_gen = self._read_graph_generation_with_pool_conn()
 
         with _confidence_cache_lock:
             if _confidence_cache_generation != graph_gen:
@@ -183,41 +186,19 @@ class ConfidenceAnalyzer:
             logger.error(f"Confidence calculation failed for {concept_id}: {e}")
             raise
 
-    def _get_graph_generation(self) -> int:
-        """Read graph generation for cache invalidation.
+    def _read_graph_generation_with_pool_conn(self) -> int:
+        """
+        Acquire a pool connection just to read graph generation.
 
-        Same two-tier probe as query.py: tries graph_accel.generation first,
-        falls back to vocabulary_change_counter.
+        Thin wrapper around `get_graph_generation` for callers that don't
+        already hold a cursor. Batch callers should use `get_graph_generation`
+        directly on the cursor they already have — avoid double-acquiring.
         """
         from psycopg2 import extras
         conn = self.client.pool.getconn()
         try:
             with conn.cursor(cursor_factory=extras.RealDictCursor) as cur:
-                try:
-                    cur.execute("SAVEPOINT conf_gen_check")
-                    cur.execute(
-                        "SELECT current_generation FROM graph_accel.generation "
-                        "WHERE graph_name = 'knowledge_graph'"
-                    )
-                    row = cur.fetchone()
-                    cur.execute("RELEASE SAVEPOINT conf_gen_check")
-                    if row:
-                        return int(row['current_generation'])
-                except Exception:
-                    try:
-                        cur.execute("ROLLBACK TO SAVEPOINT conf_gen_check")
-                    except Exception:
-                        pass
-                # Fallback
-                try:
-                    cur.execute(
-                        "SELECT counter FROM graph_metrics "
-                        "WHERE metric_name = 'vocabulary_change_counter'"
-                    )
-                    row = cur.fetchone()
-                    return int(row['counter']) if row else 0
-                except Exception:
-                    return 0
+                return get_graph_generation(cur, savepoint_name="conf_gen_check")
         finally:
             self.client.pool.putconn(conn)
 
@@ -271,11 +252,50 @@ class ConfidenceAnalyzer:
 
         from psycopg2 import extras as pg_extras
 
+        # --- Phase 0: warm-cache short-circuit (ADR-201 Phase 5f #278) ---
+        # Mirror of the grounding-batch optimization in grounding.py — same
+        # staleness bound: bounded by the next cold-path call in this
+        # process, NOT by wall-clock time. See the long comment on
+        # grounding.py:calculate_grounding_strength_batch for the full
+        # rationale; the trade-off applies identically here.
+        #
+        # Caveat specific to confidence: grounding_display is recomputed
+        # even on a warm hit because it depends on the caller's current
+        # grounding_map (which can change call-to-call independently of
+        # the graph generation).
+        with _confidence_cache_lock:
+            cached_gen = _confidence_cache_generation
+            if cached_gen is not None:
+                cached_entries = {}
+                for cid in concept_ids:
+                    entry = _confidence_cache.get((cid, cached_gen))
+                    if entry is None:
+                        cached_entries = None
+                        break
+                    cached_entries[cid] = entry
+                if cached_entries is not None:
+                    # Replace grounding_display per current grounding_map
+                    refreshed = {}
+                    for cid, entry in cached_entries.items():
+                        refreshed_entry = dict(entry)
+                        refreshed_entry['grounding_display'] = (
+                            self._get_grounding_display(
+                                grounding_map.get(cid), entry.get('level')
+                            )
+                        )
+                        refreshed[cid] = refreshed_entry
+                    logger.debug(
+                        f"Confidence batch: warm-cache short-circuit, "
+                        f"{len(concept_ids)} concepts served without "
+                        f"acquiring a pool connection"
+                    )
+                    return refreshed
+
         # --- Phase 1: cache check (one connection) ---
         conn = self.client.pool.getconn()
         try:
             with conn.cursor(cursor_factory=pg_extras.RealDictCursor) as cur:
-                graph_gen = self._get_graph_generation_on_cursor(cur)
+                graph_gen = get_graph_generation(cur, savepoint_name="conf_gen_check_batch")
 
                 misses = []
                 with _confidence_cache_lock:
@@ -324,6 +344,7 @@ class ConfidenceAnalyzer:
             'relationship_type_diversity': 0.0,
         }
 
+        failed_chunks: List[List[str]] = []
         for i in range(0, len(misses), BATCH_CHUNK_SIZE):
             chunk = misses[i:i + BATCH_CHUNK_SIZE]
             conn = self.client.pool.getconn()
@@ -361,53 +382,31 @@ class ConfidenceAnalyzer:
                             _confidence_cache[(cid, graph_gen)] = entry
 
             except Exception as e:
-                logger.error(f"Batch confidence chunk failed: {e}")
-                raise
+                # ADR-201 Phase 5f #281: per-chunk failure isolation.
+                # Mirror of the grounding batch path in query.py — earlier
+                # chunks' results are already in `result` and the cache, so
+                # they survive. Failed chunk's concept_ids are absent from
+                # the result dict; callers using .get(cid, {}) get an empty
+                # signals shape (same as a legitimately-no-signals concept).
+                logger.warning(
+                    f"Batch confidence chunk failed ({len(chunk)} concepts "
+                    f"affected, no entry returned): {e}. "
+                    f"Failed concept_ids: {chunk}"
+                )
+                failed_chunks.append(chunk)
             finally:
                 self.client.pool.putconn(conn)
 
+        total_chunks = (len(misses) + BATCH_CHUNK_SIZE - 1) // BATCH_CHUNK_SIZE
+        successful_chunks = total_chunks - len(failed_chunks)
         logger.debug(
             f"Confidence batch: {len(concept_ids)} concepts, "
             f"{len(concept_ids) - len(misses)} cached, "
-            f"{len(misses)} computed in "
-            f"{(len(misses) + BATCH_CHUNK_SIZE - 1) // BATCH_CHUNK_SIZE} "
-            f"chunks"
+            f"{len(misses)} computed in {successful_chunks} chunks "
+            f"({len(failed_chunks)} chunks failed)"
         )
 
         return result
-
-    def _get_graph_generation_on_cursor(self, cur) -> int:
-        """Read graph generation using an existing cursor.
-
-        Same two-tier probe as _get_graph_generation(), but operates on
-        a caller-provided cursor instead of acquiring its own connection.
-        Used by batch methods that already hold a connection.
-        """
-        try:
-            cur.execute("SAVEPOINT conf_gen_check_batch")
-            cur.execute(
-                "SELECT current_generation FROM graph_accel.generation "
-                "WHERE graph_name = 'knowledge_graph'"
-            )
-            row = cur.fetchone()
-            cur.execute("RELEASE SAVEPOINT conf_gen_check_batch")
-            if row:
-                return int(row['current_generation'])
-        except Exception:
-            try:
-                cur.execute("ROLLBACK TO SAVEPOINT conf_gen_check_batch")
-            except Exception:
-                pass
-        # Fallback to vocabulary_change_counter
-        try:
-            cur.execute(
-                "SELECT counter FROM graph_metrics "
-                "WHERE metric_name = 'vocabulary_change_counter'"
-            )
-            row = cur.fetchone()
-            return int(row['counter']) if row else 0
-        except Exception:
-            return 0
 
     def _gather_signals_batch(
         self,

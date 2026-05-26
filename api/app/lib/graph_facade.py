@@ -1,24 +1,53 @@
 """
 GraphFacade - Unified graph traversal with graph_accel acceleration.
+@verified 53b820d5
 
 Single facade for all graph topology operations. Uses graph_accel
 (ADR-201 in-memory extension) when available, falls back to Cypher.
 
-Two-phase query pattern:
-  Phase 1: Topology query (graph_accel sub-ms, or Cypher fallback)
-  Phase 2: Property hydration (batch SQL for returned IDs)
+## Three-phase query pipeline (ADR-201)
 
-Connection architecture:
-  Uses a module-level pinned connection (_accel_conn) for graph_accel SQL
-  calls. graph_accel stores its in-memory graph per Postgres backend, so
-  pinning ensures the graph loads once and stays resident across requests.
-  On each call, ensure_fresh() checks the generation counter (~0.01ms)
-  and only reloads after graph_accel_invalidate() bumps the generation.
+Phase 1 — Topology: graph_accel sub-ms in-memory traversal, or Cypher
+fallback. Returns concept IDs and structural relationships only — no
+embeddings, no labels, no documents. This is the fast spine of every
+read path.
 
-  Callers at the route layer add a third phase — grounding/confidence
-  hydration — which uses its own generation-aware caches (see
-  _hydrate_grounding_batch in routes/queries.py and the two-tier cache
-  in age_client/query.py:calculate_grounding_strength_semantic).
+Phase 2 — Property hydration: batch SQL for the IDs returned in Phase
+1. One round-trip per query regardless of result count. Concept labels,
+ontology, documents land here.
+
+Phase 3 — Grounding/confidence hydration: each concept's grounding
+strength + confidence score, computed at the route layer via
+_hydrate_grounding_batch (routes/queries.py). The underlying batch
+methods live in GroundingMixin (age_client/grounding.py) and
+ConfidenceAnalyzer, both backed by the two-tier cache described below.
+
+## Two-tier grounding cache
+
+Tier 1 — Polarity axis: derived from vocabulary embeddings, shared
+across all concepts. Cached against `graph_metrics.vocabulary_change_counter`.
+Invalidates when vocabulary mutates (synonym collapse, embedding
+regeneration). One axis computation amortizes across every concept.
+
+Tier 2 — Per-concept grounding: cached against `graph_accel.generation`.
+Each concept's grounding depends only on its own incoming edges (no
+cross-concept dependency), making independent caching safe. Invalidates
+when graph_accel_invalidate() bumps the generation after ingestion,
+edits, or vocabulary merges. A "warm cache" call (all requested
+concepts already cached at the current generation) returns without
+acquiring a pool connection — see #278 Phase 0 short-circuit.
+
+## Connection architecture
+
+Uses a module-level pinned connection (_accel_conn) for graph_accel SQL
+calls. graph_accel stores its in-memory graph per Postgres backend, so
+pinning ensures the graph loads once and stays resident across requests.
+On each call, ensure_fresh() checks the generation counter (~0.01ms)
+and only reloads after graph_accel_invalidate() bumps the generation.
+
+Grounding/confidence batch methods (Phase 3) use the regular pool, not
+the pinned connection — they're orthogonal to graph_accel and benefit
+from connection-level parallelism across concurrent requests.
 
 Replaces:
   - QueryService.build_related_concepts_query() → neighborhood()
@@ -1037,11 +1066,34 @@ class GraphFacade:
         params: Optional[tuple] = None
     ) -> List[Dict[str, Any]]:
         """Execute raw SQL via the dedicated graph_accel connection.
+        @verified 53b820d5
 
-        Uses a pinned connection so the in-memory graph stays loaded
-        across requests. The graph loads once on first query, then
-        graph_accel's ensure_fresh() handles generation-based reload
-        (~0.01ms check per call, only reloads after invalidation).
+        Pinned-connection design:
+          graph_accel uses thread_local + RefCell in Rust to hold the
+          in-memory graph per Postgres backend. If we let psycopg2's pool
+          rotate connections, each request would get a fresh backend with
+          no graph loaded — paying the full load cost (~seconds for large
+          graphs) on every call. The pinned _accel_conn ensures we always
+          hit the same backend, so the graph loads once and stays resident.
+
+        Generation-based ensure_fresh:
+          On every call, graph_accel_status() reports whether the loaded
+          graph matches the current `graph_accel.generation`. If yes
+          (~0.01ms check), the cached graph is used as-is. If no — because
+          graph_accel_invalidate() bumped the generation after a mutation —
+          graph_accel_load() reloads from the AGE source of truth.
+          This is the same generation counter the GroundingMixin caches
+          (age_client/grounding.py) key against; one bump invalidates both
+          the topology cache and the grounding cache atomically from the
+          graph's perspective.
+
+        Serialization:
+          _accel_conn_lock serializes all SQL through this connection.
+          Concurrent requests still parallelize at the Cypher fallback +
+          property hydration layers (which use the regular pool); only
+          the graph_accel-accelerated read path bottlenecks here. The
+          in-memory traversal is fast enough that the lock isn't usually
+          the bottleneck.
         """
         global _accel_conn
 

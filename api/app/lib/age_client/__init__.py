@@ -17,6 +17,7 @@ Import interface is unchanged:
 from .base import BaseMixin
 from .ingestion import IngestionMixin
 from .query import QueryMixin
+from .grounding import GroundingMixin
 from .ontology import OntologyMixin
 from .ontology_scoring import OntologyScoringMixin
 from .ontology_edges import OntologyEdgesMixin
@@ -28,6 +29,7 @@ class AGEClient(
     OntologyEdgesMixin,
     OntologyScoringMixin,
     OntologyMixin,
+    GroundingMixin,
     QueryMixin,
     IngestionMixin,
     BaseMixin,
@@ -37,7 +39,8 @@ class AGEClient(
     Composed from domain mixins:
     - BaseMixin: Connection pool, Cypher execution, AGE type parsing
     - IngestionMixin: Source/Concept/Instance CRUD, graph linking, document metadata
-    - QueryMixin: Vector search, learned knowledge, grounding strength, query facade
+    - QueryMixin: Vector search, learned knowledge, query/graph/epoch facades
+    - GroundingMixin: Polarity axis caching + grounding strength calculation (ADR-044)
     - OntologyMixin: Ontology node CRUD and lifecycle management
     - OntologyScoringMixin: Ontology scoring, analytics, and annealing mutations
     - OntologyEdgesMixin: Inter-ontology edges and proposal execution primitives
