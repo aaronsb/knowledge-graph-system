@@ -15,9 +15,11 @@ without touching unrelated query paths.
 ## Two-tier cache (ADR-201 Phase 5f)
 
 Tier 1 — Polarity axis: derived from vocabulary embeddings, shared
-across all concepts. Invalidates when vocabulary_change_counter changes
-(synonym collapse, embedding regeneration). One axis computation
-replaces N identical DB queries.
+across all concepts. Invalidates when
+vocabulary_embedding_generation_counter changes — bumped by any path
+that updates the `embedding` column on relationship_vocabulary rows
+(batch generation, add_edge_type inline path, regen). One axis
+computation replaces N identical DB queries.
 
 Tier 2 — Per-concept grounding: cached against graph generation. Each
 concept's grounding depends only on its own incoming edges (no
@@ -95,12 +97,20 @@ class GroundingMixin:
     - self._execute_cypher (BaseMixin) — Cypher executor
     """
 
-    def _get_vocab_generation(self, cur) -> int:
-        """Read vocabulary_change_counter from graph_metrics (single-row query)."""
+    def _get_vocab_embedding_generation(self, cur) -> int:
+        """Read vocabulary_embedding_generation_counter from graph_metrics.
+
+        Migration 069 introduced this counter as the polarity-axis cache key.
+        Distinct from vocabulary_change_counter: that one tracks row
+        membership (add/remove/categorize), this one tracks embedding
+        contents. The polarity axis is built from embedding vectors, so
+        it's the embedding-generation counter that should drive
+        invalidation — not membership.
+        """
         try:
             cur.execute(
                 "SELECT counter FROM graph_metrics "
-                "WHERE metric_name = 'vocabulary_change_counter'"
+                "WHERE metric_name = 'vocabulary_embedding_generation_counter'"
             )
             row = cur.fetchone()
             return int(row['counter']) if row else 0
@@ -108,19 +118,23 @@ class GroundingMixin:
             return 0
 
     def _get_polarity_axis(self, cur) -> Optional[np.ndarray]:
-        """Get cached polarity axis, recomputing if vocabulary has changed.
+        """Get cached polarity axis, recomputing if vocab embeddings changed.
 
         The polarity axis is derived from vocabulary embeddings for opposing
         relationship pairs (SUPPORTS/CONTRADICTS, etc.). It's shared across
         all concepts — only the per-concept edge projections differ.
 
-        Cached against graph_metrics.vocabulary_change_counter. Invalidates
-        when synonym collapse, embedding regeneration, or any vocabulary
-        mutation bumps the counter via refresh_graph_metrics().
+        Cached against graph_metrics.vocabulary_embedding_generation_counter
+        (migration 069). Invalidates when embeddings are generated or
+        regenerated — including via `kg admin embedding regenerate` and
+        the inline path in age_client/vocabulary.py:add_edge_type. The
+        previous key (vocabulary_change_counter, membership) didn't move
+        on embedding-content changes, requiring a process restart to
+        invalidate after `kg admin embedding regenerate --type vocabulary`.
         """
         global _polarity_axis_cache
 
-        vocab_gen = self._get_vocab_generation(cur)
+        vocab_gen = self._get_vocab_embedding_generation(cur)
 
         with _polarity_axis_cache_lock:
             if _polarity_axis_cache is not None:
@@ -205,8 +219,9 @@ class GroundingMixin:
 
         Tier 1 — Polarity axis (vocabulary-level): derived from
         relationship-type embeddings, shared across every concept. Cached
-        against graph_metrics.vocabulary_change_counter. Invalidates only
-        when vocabulary mutates (synonym collapse, embedding regeneration).
+        against graph_metrics.vocabulary_embedding_generation_counter
+        (migration 069). Invalidates only when embeddings are generated
+        or regenerated — including regen via `kg admin embedding regenerate`.
         One axis computation amortizes across the entire concept space.
 
         Tier 2 — Per-concept grounding: cached against

@@ -421,6 +421,16 @@ class VocabularyMixin:
                             WHERE relationship_type = %s
                         """, (embedding_json, model, relationship_type))
 
+                        # Migration 069: bump embedding-generation counter so the
+                        # polarity-axis cache (GroundingMixin) invalidates on next
+                        # read. The vocabulary_change_counter trigger will also
+                        # advance because of the INSERT above, but that counter is
+                        # for membership changes; the cache keys on this one for
+                        # embedding-content changes specifically.
+                        cur.execute(
+                            "SELECT increment_counter('vocabulary_embedding_generation_counter')"
+                        )
+
                         logger.debug(f"Generated embedding for vocabulary type '{relationship_type}' ({len(embedding)} dims)")
 
                         # ADR-047: Auto-categorize LLM-generated types

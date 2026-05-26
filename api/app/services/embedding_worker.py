@@ -124,33 +124,58 @@ class EmbeddingWorker:
             self._executor = None
             logger.debug(f"☁️  Cloud embedding provider ({self.provider_name}): native concurrency")
 
-    async def initialize_builtin_embeddings(self) -> EmbeddingJobResult:
+    async def regenerate_missing_if_vocab_changed(
+        self,
+        component: str = "builtin_vocabulary_embeddings",
+        job_type: str = "cold_start",
+    ) -> EmbeddingJobResult:
         """
-        Generate embeddings for all builtin vocabulary types without embeddings.
+        Generate embeddings for any vocab types missing them, IF the vocab
+        membership counter has advanced since the last successful run.
 
-        Called during system initialization or after schema migrations.
-        Idempotent - safe to call multiple times.
+        This is the workhorse for both boot-time cold-start (called from
+        main.py with default args) and the hourly VocabEmbeddingLauncher.
+        Both compare `vocabulary_change_counter` against
+        `last_processed_vocab_change_counter` on the named init-status
+        component, run the regen if there's a delta, and update the
+        last-processed value on success.
+
+        Migration 069 replaced the binary `initialized` flag with this
+        counter-delta gate. Pre-069 the binary flag was set to TRUE on
+        first boot regardless of whether any types were actually processed,
+        which permanently blocked re-runs after the vocab table grew. The
+        counter-delta gate naturally re-fires whenever new vocab membership
+        arrives, since the counter advances on each add.
+
+        Args:
+            component: system_initialization_status.component key (default
+                covers builtin types; future components can use the same
+                helper by passing a different key).
+            job_type: embedding_generation_jobs.job_type label for the audit
+                trail. Cold-start at boot uses "cold_start" for backwards
+                compatibility; the launcher uses "vocabulary_update".
 
         Returns:
-            EmbeddingJobResult with processing statistics
-
-        Example:
-            >>> worker = EmbeddingWorker(age_client, ai_provider)
-            >>> result = await worker.initialize_builtin_embeddings()
-            >>> print(f"Initialized {result.processed_count}/{result.target_count} types")
+            EmbeddingJobResult with processing statistics. target_count=0
+            when no work was needed (counter hadn't advanced or all types
+            already embedded).
         """
         job_id = str(uuid4())
         start_time = datetime.now()
 
-        logger.info(f"[{job_id}] Starting cold start: Initializing builtin vocabulary embeddings")
+        # Counter-delta gate. If we've already processed at or beyond the
+        # current vocab counter, there's nothing new to do.
+        current_counter = await self._get_vocab_change_counter()
+        last_processed = await self._get_last_processed_vocab_change(component)
 
-        # Check if already initialized
-        is_initialized = await self._check_initialization_status()
-        if is_initialized:
-            logger.info(f"[{job_id}] Cold start already completed, skipping")
+        if current_counter <= last_processed:
+            logger.info(
+                f"[{job_id}] No vocab changes since last embedding run "
+                f"(counter={current_counter}, last_processed={last_processed}) — skipping"
+            )
             return EmbeddingJobResult(
                 job_id=job_id,
-                job_type="cold_start",
+                job_type=job_type,
                 target_count=0,
                 processed_count=0,
                 failed_count=0,
@@ -159,15 +184,42 @@ class EmbeddingWorker:
                 embedding_provider=self.provider_name
             )
 
-        # Get builtin types missing embeddings
-        target_types = await self._get_builtin_types_missing_embeddings()
+        logger.info(
+            f"[{job_id}] Starting embedding regen: vocab_change_counter "
+            f"advanced from {last_processed} to {current_counter} "
+            f"(component={component})"
+        )
+
+        # Find types that need embeddings. Any active type without an
+        # embedding is in scope — this covers both builtin types (seeded
+        # by migrations) and LLM-discovered types.
+        #
+        # Race-window note: a new vocab row can arrive between the counter
+        # snapshot at line 168 and this fetch. That row will land in
+        # target_types AND it will have advanced the counter past our
+        # snapshot. After this run completes, last_processed gets set to
+        # the snapshot value (not the current counter), so the next launcher
+        # tick observes a residual delta of 1 and dispatches another run.
+        # That follow-up run reaches the "no types missing" no-op branch
+        # below (since the row we just processed is now embedded), advances
+        # last_processed to the new counter, and the loop closes. Net cost
+        # of the race: one extra worker dispatch per concurrent vocab add.
+        # Acceptable at hourly cadence.
+        target_types = await self._get_types_without_embeddings()
 
         if not target_types:
-            logger.info(f"[{job_id}] No builtin types need embeddings")
-            await self._mark_initialization_complete(job_id, 0)
+            logger.info(
+                f"[{job_id}] Counter advanced but no types are missing embeddings — "
+                f"likely a category-only change. Marking last_processed={current_counter}."
+            )
+            # Record the counter value so we don't keep re-checking the same delta.
+            await self._mark_initialization_complete(
+                job_id, count=0, component=component,
+                vocab_change_counter=current_counter
+            )
             return EmbeddingJobResult(
                 job_id=job_id,
-                job_type="cold_start",
+                job_type=job_type,
                 target_count=0,
                 processed_count=0,
                 failed_count=0,
@@ -179,7 +231,7 @@ class EmbeddingWorker:
         # Create job record
         await self._create_job_record(
             job_id=job_id,
-            job_type="cold_start",
+            job_type=job_type,
             target_types=target_types
         )
 
@@ -190,11 +242,17 @@ class EmbeddingWorker:
         result = await self._batch_generate_embeddings(
             job_id=job_id,
             relationship_types=target_types,
-            job_type="cold_start"
+            job_type=job_type
         )
 
-        # Mark initialization as complete
-        await self._mark_initialization_complete(job_id, result.processed_count)
+        # Update last_processed only on this run's counter snapshot — if
+        # new vocab rows arrived mid-run, they'll surface as a delta on
+        # the next call rather than being silently considered "done."
+        await self._mark_initialization_complete(
+            job_id, count=result.processed_count,
+            component=component,
+            vocab_change_counter=current_counter
+        )
 
         # Update job record with final status
         end_time = datetime.now()
@@ -209,11 +267,28 @@ class EmbeddingWorker:
         )
 
         logger.info(
-            f"[{job_id}] Cold start complete: {result.processed_count}/{result.target_count} "
-            f"builtin types initialized in {duration_ms}ms"
+            f"[{job_id}] Embedding regen complete: {result.processed_count}/{result.target_count} "
+            f"types in {duration_ms}ms (component={component}, "
+            f"last_processed_vocab_change_counter now={current_counter})"
         )
 
         return result
+
+    async def initialize_builtin_embeddings(self) -> EmbeddingJobResult:
+        """
+        Boot-time cold-start entry point. Thin wrapper around
+        regenerate_missing_if_vocab_changed for backwards compatibility
+        with main.py's startup sequence.
+
+        Migration 069 changed the semantics: this no longer uses a binary
+        one-shot flag. It re-fires whenever vocab membership has advanced
+        since the last successful embedding run, so a fresh boot after
+        migrations seed new builtin types will pick them up automatically.
+        """
+        return await self.regenerate_missing_if_vocab_changed(
+            component="builtin_vocabulary_embeddings",
+            job_type="cold_start",
+        )
 
     def _generate_embedding_internal(self, text: str) -> Dict[str, Any]:
         """
@@ -775,7 +850,11 @@ class EmbeddingWorker:
         model: str,
         provider: str
     ) -> None:
-        """Store embedding in relationship_vocabulary table"""
+        """
+        Store embedding in relationship_vocabulary table and bump the
+        vocabulary_embedding_generation_counter so the polarity-axis cache
+        (GroundingMixin) invalidates on next read (migration 069).
+        """
         query = """
             UPDATE kg_api.relationship_vocabulary
             SET embedding = %s::jsonb,
@@ -785,9 +864,62 @@ class EmbeddingWorker:
         """
         embedding_json = json.dumps(embedding)
         await self.db.execute_query(query, (embedding_json, model, relationship_type))
+        # Bump the embedding-generation counter so any cache keyed against it
+        # picks up the change. Independent of vocabulary_change_counter,
+        # which only moves on row membership changes (add/remove/categorize).
+        await self.db.execute_query(
+            "SELECT increment_counter('vocabulary_embedding_generation_counter')"
+        )
+
+    async def _get_vocab_change_counter(self) -> int:
+        """Read current vocabulary_change_counter from graph_metrics.
+
+        Used by regenerate_missing_if_vocab_changed to detect new work
+        since the last successful run. Distinct from
+        vocabulary_embedding_generation_counter (which keys the polarity
+        cache and is bumped by embedding-content changes); this counter
+        moves on row membership changes.
+        """
+        query = """
+            SELECT counter FROM graph_metrics
+            WHERE metric_name = 'vocabulary_change_counter'
+        """
+        try:
+            results = await self.db.execute_query(query)
+            if results and len(results) > 0:
+                return int(results[0]["counter"])
+            return 0
+        except Exception as e:
+            logger.debug(f"Error reading vocabulary_change_counter: {e}")
+            return 0
+
+    async def _get_last_processed_vocab_change(self, component: str) -> int:
+        """Read last_processed_vocab_change_counter for the given component.
+
+        Added by migration 069 to replace the binary `initialized` flag's
+        role as the "have we done embedding work?" gate.
+        """
+        query = """
+            SELECT last_processed_vocab_change_counter
+            FROM kg_api.system_initialization_status
+            WHERE component = %s
+        """
+        try:
+            results = await self.db.execute_query(query, (component,))
+            if results and len(results) > 0:
+                return int(results[0]["last_processed_vocab_change_counter"])
+            return 0
+        except Exception as e:
+            logger.debug(f"Error reading last_processed for {component}: {e}")
+            return 0
 
     async def _check_initialization_status(self) -> bool:
-        """Check if cold start initialization is complete"""
+        """
+        Legacy binary-flag check. Kept for code paths that still need it
+        (e.g., non-embedding components on system_initialization_status).
+        The cold-start path uses regenerate_missing_if_vocab_changed
+        instead — see migration 069.
+        """
         query = """
             SELECT initialized
             FROM kg_api.system_initialization_status
@@ -802,27 +934,53 @@ class EmbeddingWorker:
             logger.debug(f"Error checking initialization status: {e}")
             return False
 
-    async def _mark_initialization_complete(self, job_id: str, count: int) -> None:
-        """Mark cold start initialization as complete"""
+    async def _mark_initialization_complete(
+        self,
+        job_id: str,
+        count: int,
+        component: str = "builtin_vocabulary_embeddings",
+        vocab_change_counter: Optional[int] = None,
+    ) -> None:
+        """
+        Mark embedding work complete for the given component.
+
+        Updates the binary `initialized` flag (kept for non-counter
+        components) AND, when `vocab_change_counter` is provided, updates
+        `last_processed_vocab_change_counter` — the new counter-delta gate.
+
+        Args:
+            job_id: embedding_generation_jobs.job_id for the audit trail.
+            count: how many types were processed in this run.
+            component: which row of system_initialization_status to update.
+            vocab_change_counter: snapshot of vocabulary_change_counter at
+                the start of this run. Stored so the next call's delta
+                check sees "we processed up to N." Pass None to skip the
+                counter update (legacy callers).
+        """
         query = """
             UPDATE kg_api.system_initialization_status
             SET initialized = TRUE,
                 initialized_at = CURRENT_TIMESTAMP,
                 initialization_job_id = %s,
+                last_processed_vocab_change_counter = COALESCE(
+                    %s, last_processed_vocab_change_counter
+                ),
                 metadata = jsonb_build_object(
                     'types_initialized', %s,
                     'provider', %s,
                     'model', %s
                 )
-            WHERE component = 'builtin_vocabulary_embeddings'
+            WHERE component = %s
         """
         await self.db.execute_query(
             query,
             (
                 job_id,
+                vocab_change_counter,
                 count,
                 self.provider_name,
-                self.provider.model_name if hasattr(self.provider, 'model_name') else "unknown"
+                self.provider.model_name if hasattr(self.provider, 'model_name') else "unknown",
+                component,
             )
         )
 

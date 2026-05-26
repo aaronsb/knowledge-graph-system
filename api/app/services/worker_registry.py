@@ -16,6 +16,7 @@ from ..workers.restore_worker import run_restore_worker
 from ..workers.vocab_refresh_worker import run_vocab_refresh_worker
 from ..workers.vocab_consolidate_worker import run_vocab_consolidate_worker
 from ..workers.epistemic_remeasurement_worker import run_epistemic_remeasurement_worker
+from ..workers.vocab_embedding_worker import run_vocab_embedding_worker
 from ..workers.source_embedding_worker import run_source_embedding_worker
 from ..workers.projection_worker import run_projection_worker
 from ..workers.polarity_worker import run_polarity_worker
@@ -41,6 +42,7 @@ WORKER_REGISTRY: dict[str, WorkerEntry] = {
     "projection":              WorkerEntry(run_projection_worker,              "maintenance"),  # ADR-078
     "vocab_refresh":           WorkerEntry(run_vocab_refresh_worker,           "maintenance"),  # ADR-050
     "epistemic_remeasurement": WorkerEntry(run_epistemic_remeasurement_worker, "maintenance"),  # ADR-065
+    "vocab_embedding":         WorkerEntry(run_vocab_embedding_worker,         "maintenance"),  # Migration 069
     "ontology_annealing":      WorkerEntry(run_annealing_worker,              "maintenance"),  # ADR-200
     "proposal_execution":      WorkerEntry(run_proposal_execution_worker,     "maintenance"),  # ADR-200
 

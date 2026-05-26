@@ -13,6 +13,7 @@ from .base import JobLauncher
 from .category_refresh import CategoryRefreshLauncher
 from .vocab_consolidation import VocabConsolidationLauncher
 from .epistemic_remeasurement import EpistemicRemeasurementLauncher
+from .vocab_embedding import VocabEmbeddingLauncher
 from .projection import ProjectionLauncher
 from .artifact_cleanup import ArtifactCleanupLauncher
 from .annealing import AnnealingLauncher
@@ -22,6 +23,7 @@ __all__ = [
     "CategoryRefreshLauncher",
     "VocabConsolidationLauncher",
     "EpistemicRemeasurementLauncher",
+    "VocabEmbeddingLauncher",
     "ProjectionLauncher",
     "ArtifactCleanupLauncher",
     "AnnealingLauncher",
