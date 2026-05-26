@@ -89,3 +89,50 @@ export interface AnnealingProposalFilters {
   ontology?: string;
   limit?: number;
 }
+
+/**
+ * Ecological-pressure read-out for the admin UI (#249, ADR-206 §Phase 3).
+ *
+ * Mirrors the Pydantic models in api/app/models/ontology.py. Each
+ * AnnealingManager cycle appends one snapshot to
+ * kg_api.annealing_pressure_history; the current-state panel reads the
+ * latest row and the trend chart (future) reads a trailing window.
+ */
+export interface PressureControlRecommendation {
+  current: number;
+  recommended: number;
+  delta: number;
+}
+
+export interface EcologicalPressureSnapshot {
+  epoch: number;
+  total_ontologies: number;
+  total_concepts: number;
+  avg_concepts_per_ontology: number;
+  pressure_score: number;
+  pressure_zone: string;
+  pressure_recommendation: Record<string, PressureControlRecommendation>;
+  recorded_at?: string | null;
+}
+
+export interface EcologicalPressureCurve {
+  profile: string;
+  comfort_min: number;
+  comfort_max: number;
+  emergency_threshold: number;
+  /** Bezier first control point [x, y] — first endpoint is (0,0). */
+  bezier_p1: [number, number];
+  /** Bezier second control point [x, y] — second endpoint is (1,1). */
+  bezier_p2: [number, number];
+}
+
+export interface EcologicalPressureResponse {
+  current: EcologicalPressureSnapshot;
+  curve: EcologicalPressureCurve;
+}
+
+export interface EcologicalPressureHistoryResponse {
+  snapshots: EcologicalPressureSnapshot[];
+  count: number;
+  curve: EcologicalPressureCurve;
+}

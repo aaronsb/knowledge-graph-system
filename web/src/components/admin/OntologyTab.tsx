@@ -28,6 +28,7 @@ import {
 import { apiClient } from '../../api/client';
 import { useAuthStore } from '../../store/authStore';
 import { Section, InfoCard, formatDateTime } from './components';
+import { AnnealingPressurePanel } from './AnnealingPressurePanel';
 import type { AnnealingProposal, AnnealingStatus } from '../../types/annealing';
 
 interface OntologyTabProps {
@@ -328,6 +329,9 @@ export const OntologyTab: React.FC<OntologyTabProps> = ({ onError, onSuccess }) 
           </>
         )}
       </Section>
+
+      {/* Ecological pressure read-out (#249, ADR-206 §Phase 3) */}
+      <AnnealingPressurePanel onError={onError} />
 
       {/* Configuration (read-only) */}
       {status && (
