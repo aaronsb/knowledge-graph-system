@@ -252,6 +252,41 @@ class ConfidenceAnalyzer:
 
         from psycopg2 import extras as pg_extras
 
+        # --- Phase 0: warm-cache short-circuit (ADR-201 Phase 5f #278) ---
+        # Mirror of the grounding-batch optimization in grounding.py. If
+        # every requested concept is cached at the last-known generation,
+        # return without acquiring a pool connection. Caveat: grounding_display
+        # is recomputed even on a warm hit because it depends on the caller's
+        # current grounding_map (which can change call-to-call independently
+        # of the graph generation).
+        with _confidence_cache_lock:
+            cached_gen = _confidence_cache_generation
+            if cached_gen is not None:
+                cached_entries = {}
+                for cid in concept_ids:
+                    entry = _confidence_cache.get((cid, cached_gen))
+                    if entry is None:
+                        cached_entries = None
+                        break
+                    cached_entries[cid] = entry
+                if cached_entries is not None:
+                    # Replace grounding_display per current grounding_map
+                    refreshed = {}
+                    for cid, entry in cached_entries.items():
+                        refreshed_entry = dict(entry)
+                        refreshed_entry['grounding_display'] = (
+                            self._get_grounding_display(
+                                grounding_map.get(cid), entry.get('level')
+                            )
+                        )
+                        refreshed[cid] = refreshed_entry
+                    logger.debug(
+                        f"Confidence batch: warm-cache short-circuit, "
+                        f"{len(concept_ids)} concepts served without "
+                        f"acquiring a pool connection"
+                    )
+                    return refreshed
+
         # --- Phase 1: cache check (one connection) ---
         conn = self.client.pool.getconn()
         try:

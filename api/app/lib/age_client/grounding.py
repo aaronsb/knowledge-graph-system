@@ -224,6 +224,18 @@ class GroundingMixin:
         """
         global _grounding_cache, _grounding_cache_generation
 
+        # Warm-cache short-circuit (ADR-201 Phase 5f #278) — see the longer
+        # comment on calculate_grounding_strength_batch for the soundness
+        # rationale. Per-concept callers benefit even more from this:
+        # rendering a search result page typically calls this method
+        # serially per concept, so the bulk of repeat queries land here.
+        with _grounding_cache_lock:
+            cached_gen = _grounding_cache_generation
+            if cached_gen is not None:
+                cache_hit = _grounding_cache.get((concept_id, cached_gen))
+                if cache_hit is not None:
+                    return cache_hit
+
         conn = self.pool.getconn()
         try:
             with conn.cursor(cursor_factory=extras.RealDictCursor) as cur:
@@ -379,6 +391,36 @@ class GroundingMixin:
             return {}
 
         result = {cid: 0.0 for cid in concept_ids}
+
+        # --- Phase 0: warm-cache short-circuit (ADR-201 Phase 5f #278) ---
+        # If every requested concept is in the cache at the last-known graph
+        # generation, return without acquiring a pool connection. Saves one
+        # round-trip per call when callers are reading the same neighborhood
+        # repeatedly (search-then-render, paginated UIs, etc.).
+        #
+        # Soundness trade-off: skipping the get_graph_generation() probe
+        # means we might serve up-to-one-call-stale data right after the
+        # graph mutates. The next non-warm call reads the new generation
+        # and evicts, so the stale window is bounded by exactly one call
+        # that happens between mutation and the first cache miss. Worth it
+        # for the read-heavy steady state.
+        with _grounding_cache_lock:
+            cached_gen = _grounding_cache_generation
+            if cached_gen is not None:
+                cached_values = {}
+                for cid in concept_ids:
+                    cache_entry = _grounding_cache.get((cid, cached_gen))
+                    if cache_entry is None:
+                        cached_values = None
+                        break
+                    cached_values[cid] = cache_entry
+                if cached_values is not None:
+                    logger.debug(
+                        f"Grounding batch: warm-cache short-circuit, "
+                        f"{len(concept_ids)} concepts served without "
+                        f"acquiring a pool connection"
+                    )
+                    return cached_values
 
         # --- Phase 1: cache check + polarity axis (one connection) ---
         conn = self.pool.getconn()
