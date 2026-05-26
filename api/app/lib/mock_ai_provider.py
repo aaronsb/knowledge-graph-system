@@ -7,8 +7,8 @@ Useful for unit tests, integration tests, and development without live LLM calls
 
 import hashlib
 import json
-from typing import List, Dict, Any, Literal, Optional
-from .ai_providers import AIProvider
+from typing import List, Dict, Any, Literal, Optional, Union
+from .ai_providers import AIProvider, ToolSchema, ToolCallResponse, TokenUsage
 
 
 class MockAIProvider(AIProvider):
@@ -277,6 +277,33 @@ class MockAIProvider(AIProvider):
             "text": description,
             "tokens": self._calculate_mock_tokens(prompt)
         }
+
+    def call_with_tools(
+        self,
+        system_prompt: str,
+        user_prompt: str,
+        tools: List[ToolSchema],
+        tool_choice: Union[Literal["auto", "required"], str] = "auto",
+        max_tokens: int = 4096,
+        model: Optional[str] = None,
+        temperature: Optional[float] = None,
+    ) -> ToolCallResponse:
+        """Mock tool call: picks the first tool (or the named one) and returns
+        an empty params dict. Tests can monkeypatch this for richer behavior."""
+        if not tools:
+            raise ValueError("Mock call_with_tools requires at least one tool")
+        target = next((t for t in tools if t.name == tool_choice), tools[0])
+        return ToolCallResponse(
+            tool_name=target.name,
+            params={},
+            stop_reason="tool_use",
+            tokens=TokenUsage(
+                input_tokens=self._calculate_mock_tokens(system_prompt + user_prompt),
+                output_tokens=0,
+                cached_input_tokens=0,
+            ),
+            raw_response=None,
+        )
 
     def _calculate_mock_tokens(self, text: str) -> int:
         """
