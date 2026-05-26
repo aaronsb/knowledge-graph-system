@@ -216,15 +216,17 @@ export function formatOntologyAffinity(data: OntologyAffinityResponse): string {
   return output;
 }
 
-// ========== Annealing Proposals (ADR-200 Phase 3b/4) ==========
+// ========== Annealing Proposals (ADR-200 Phase 3b/4, ADR-206) ==========
 
 interface AnnealingProposal {
   id: number;
   proposal_type: string;
+  proposal_kind?: string;
   ontology_name: string;
   anchor_concept_id?: string;
   target_ontology?: string;
   reasoning: string;
+  params?: Record<string, unknown> | null;
   mass_score?: number;
   coherence_score?: number;
   protection_score?: number;
@@ -280,16 +282,43 @@ export function formatProposalList(data: ProposalListResponse): string {
   output += `**Total:** ${data.count}\n\n`;
 
   for (const p of data.proposals) {
-    const typeIcon = p.proposal_type === 'promotion' ? 'PROMOTE' : 'DEMOTE';
-    output += `### #${p.id} ${typeIcon}: ${p.ontology_name} ${formatStatus(p.status)}\n\n`;
+    const subject = (p as { proposal_kind?: string }).proposal_kind === 'control'
+      ? '(control)'
+      : p.ontology_name;
+    output += `### #${p.id} ${p.proposal_type}: ${subject} ${formatStatus(p.status)}\n\n`;
     output += `${p.reasoning}\n\n`;
 
-    if (p.proposal_type === 'promotion' && p.anchor_concept_id) {
-      output += `- **Anchor concept:** ${p.anchor_concept_id}\n`;
+    const params = (p as { params?: Record<string, unknown> }).params ?? {};
+    if (p.proposal_type === 'CLEAVE' || p.proposal_type === 'promotion') {
+      if (p.anchor_concept_id) output += `- **Anchor concept:** ${p.anchor_concept_id}\n`;
       if (p.suggested_name) output += `- **Suggested name:** ${p.suggested_name}\n`;
+      const target = params.target as Record<string, unknown> | undefined;
+      if (target?.kind === 'new' && target.new_name) {
+        output += `- **Target:** new ontology "${String(target.new_name)}"\n`;
+      } else if (target?.kind === 'existing' && target.existing_ontology) {
+        output += `- **Target:** existing ontology "${String(target.existing_ontology)}"\n`;
+      }
     }
-    if (p.proposal_type === 'demotion' && p.target_ontology) {
+    if ((p.proposal_type === 'DISSOLVE' || p.proposal_type === 'demotion') && p.target_ontology) {
       output += `- **Absorption target:** ${p.target_ontology}\n`;
+      if (params.force_primordial === true) {
+        output += `- **Force primordial:** true (defended override)\n`;
+      }
+    }
+    if (p.proposal_type === 'MERGE') {
+      const donors = (params.donor_ontologies as string[] | undefined) ?? [];
+      output += `- **Donors:** ${donors.join(', ')}\n`;
+    }
+    if (p.proposal_type === 'ESCALATE' && params.recommended_action) {
+      output += `- **Recommends:** ${String(params.recommended_action)}`;
+      if (typeof params.confidence === 'number') {
+        output += ` (confidence ${params.confidence.toFixed(2)})`;
+      }
+      output += `\n`;
+    }
+    if (p.proposal_type === 'ADJUST_CONTROL' && params.control_key) {
+      output += `- **Control:** ${String(params.control_key)} `;
+      output += `${String(params.current_value ?? '?')} → ${String(params.recommended_value ?? '?')}\n`;
     }
 
     const scores = formatScores(p);
@@ -317,18 +346,31 @@ export function formatProposalList(data: ProposalListResponse): string {
  * Format a single proposal (detail view or review result)
  */
 export function formatProposalDetail(p: AnnealingProposal): string {
-  const typeIcon = p.proposal_type === 'promotion' ? 'PROMOTE' : 'DEMOTE';
-  let output = `# Proposal #${p.id}: ${typeIcon} ${p.ontology_name}\n\n`;
+  const proposalKind = (p as { proposal_kind?: string }).proposal_kind;
+  const params = ((p as { params?: Record<string, unknown> }).params ?? {}) as Record<string, unknown>;
+  const subject = proposalKind === 'control' ? '(control)' : p.ontology_name;
+  let output = `# Proposal #${p.id}: ${p.proposal_type} — ${subject}\n\n`;
   output += `**Status:** ${formatStatus(p.status)}\n\n`;
+  if (proposalKind === 'control') {
+    output += `**Kind:** control (Opus-tier control-tuning)\n\n`;
+  }
   output += `## Reasoning\n\n${p.reasoning}\n\n`;
 
   output += `## Details\n\n`;
-  if (p.proposal_type === 'promotion') {
+  // Verb-specific params (ADR-206 §1)
+  if (Object.keys(params).length > 0) {
+    for (const [key, value] of Object.entries(params)) {
+      if (key === 'reasoning' || key === 'rationale' || key === 'defense') continue;
+      const rendered = typeof value === 'object' ? JSON.stringify(value) : String(value);
+      output += `- **${key}:** ${rendered}\n`;
+    }
+  }
+  if (p.proposal_type === 'CLEAVE' || p.proposal_type === 'promotion') {
     if (p.anchor_concept_id) output += `- **Anchor concept:** ${p.anchor_concept_id}\n`;
     if (p.suggested_name) output += `- **Suggested name:** ${p.suggested_name}\n`;
     if (p.suggested_description) output += `- **Suggested description:** ${p.suggested_description}\n`;
   }
-  if (p.proposal_type === 'demotion' && p.target_ontology) {
+  if ((p.proposal_type === 'DISSOLVE' || p.proposal_type === 'demotion') && p.target_ontology) {
     output += `- **Absorption target:** ${p.target_ontology}\n`;
   }
 

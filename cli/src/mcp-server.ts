@@ -602,8 +602,12 @@ For multi-step workflows (search → connect → expand → filter), compose the
             },
             proposal_type: {
               type: 'string',
-              enum: ['promotion', 'demotion'],
-              description: 'Filter proposals by type',
+              enum: [
+                'CLEAVE', 'DISSOLVE', 'MERGE', 'RENAME',
+                'NO_ACTION', 'ESCALATE', 'ADJUST_CONTROL',
+                'promotion', 'demotion',
+              ],
+              description: 'Filter proposals by ADR-206 verb (legacy promotion/demotion still accepted)',
             },
             notes: {
               type: 'string',
