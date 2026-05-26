@@ -42,7 +42,8 @@ identified what should happen. It said, in effect, "the sub-cluster you found
 inside `atlassian-api-bitbucket-dc` is not a new domain — it is the same
 domain as the existing `atlassian-api-bitbucket-cloud` ontology, and these
 sources should be reassigned there." The reasoning was right. The action
-slot was wrong. There is no `SPLIT_INTO_EXISTING` verb, so the worker fell
+slot was wrong. There was no way under the binary schema to express "merge
+this sub-cluster into an existing target ontology," so the worker fell
 back to `promotion` with a colliding name, and the executor refused because
 the target already existed. Three identical failures in three cycles, because
 nothing about the proposal queue or the cycle planner is failure-aware.
@@ -114,28 +115,31 @@ decision surface from ADR-200.
 
 ### Phase 1 — Closed action vocabulary
 
-Replace `proposal_type ∈ {promotion, demotion}` with a closed menu of seven
-self-contained actions. Each action carries every parameter its execution
-needs; the executor performs no interpretation.
+Replace `proposal_type ∈ {promotion, demotion}` with a closed menu of six
+self-contained actions, derived from system principles rather than verb
+proliferation. Each action carries every parameter its execution needs;
+the executor performs no interpretation.
 
 | Action | Parameters | Executor mapping (existing primitives) |
 |---|---|---|
-| `SPLIT_NEW` | `donor_ontology`, `anchor_concept_id`, `new_name`, `new_description`, `cluster_selection ∈ {first_order, embedding_radius, named_concepts}`, `cluster_params` | `create_ontology_node` + `create_anchored_by_edge` + `reassign_sources` |
-| `SPLIT_INTO_EXISTING` | `donor_ontology`, `anchor_concept_id`, `target_ontology` (must exist, `≠ donor_ontology`), `cluster_selection`, `cluster_params` | `reassign_sources` only |
-| `MERGE` | `donor_ontologies` (≥2), `target_ontology` (survivor name OR new name), `new_description` (if new name) | `dissolve_ontology` × N → target |
-| `DECOMPOSE_TO_PRIMORDIAL` | `ontology`, `rationale` (required) | `dissolve_ontology` → primordial pool |
-| `RENAME` | `ontology`, `new_name`, `new_description` | `rename_ontology` + `rename_ontology_node` |
+| `CLEAVE` | `source_ontology` (any, including primordial), `anchor_concept_id`, `cluster_selection ∈ {first_order, embedding_radius, named_concepts}`, `cluster_params`, `target` (one of: `new(name, description)` — must not exist; `existing(target_ontology)` — must exist, `≠ source_ontology`) | `create_ontology_node` (if `target=new`) + `create_anchored_by_edge` + `reassign_sources` |
+| `DISSOLVE` | `source_ontology` (must be named, not primordial), `force_primordial` (optional, defended override), `rationale` | per-source `reassign_sources` via `get_cross_ontology_affinity`; primordial is the floor for orphans; if `force_primordial=true`, all sources route to primordial regardless of affinity |
+| `MERGE` | `donor_ontologies` (≥2, all named, none primordial), `target` (one of: `existing(name)`; `new(name, description)`) | `dissolve_ontology` × N → target |
+| `RENAME` | `ontology` (must be named, not primordial), `new_name`, `new_description` | `rename_ontology` + `rename_ontology_node` |
 | `NO_ACTION` | `reasoning` | nothing |
 | `ESCALATE` | `candidate_actions[]`, `what_i_know`, `what_i_dont_know`, `recommended_action`, `confidence` | pins to next tier in `escalation_chain` |
 
-`SPLIT_NEW` and `SPLIT_INTO_EXISTING` are deliberately distinct so the
-executor's validation can short-circuit obvious name collisions before any
-graph mutation is attempted. `SPLIT_INTO_EXISTING` requires
-`target_ontology` to already exist; `SPLIT_NEW` requires that it does not.
-This is the schema slot whose absence caused the 35/36/37 failure trace.
+**Validation short-circuits before graph mutation.** The executor verifies
+target-existence preconditions on every action before touching the graph:
+`CLEAVE` with `target=new(name)` rejects when `name` exists; `CLEAVE` with
+`target=existing(X)` rejects when `X` does not. `MERGE` requires each
+donor to exist and to be distinct from the target. The schema slot whose
+absence caused the 35/36/37 failure trace is the `CLEAVE` with
+`target=existing(...)` form — donor sources to an already-existing target
+ontology.
 
-**Cluster selection is part of the action, not the executor.** The LLM
-picks the strategy and parameters that define the donated cluster:
+**Cluster selection is part of the action, not the executor.** For `CLEAVE`,
+the LLM picks the strategy and parameters that define the donated cluster:
 - `first_order` — anchor concept plus its direct neighbours.
 - `embedding_radius` — concepts within cosine distance `r` of the anchor.
 - `named_concepts` — an explicit list of concept IDs.
@@ -144,15 +148,31 @@ The executor materialises the cluster deterministically from the strategy.
 This keeps the "what to move" decision with the reasoner and the "how to
 move it" mechanics with the executor.
 
+**Affinity-aware DISSOLVE.** `DISSOLVE` reads `get_cross_ontology_affinity()`
+on the donor's sources and routes each source to its highest-affinity
+target ontology, with the primordial pool as the floor for sources that
+have no affinity above a configurable floor. The routing decision lives
+in graph data the system itself computed (open edge vocabulary, polarity,
+grounding); the executor does no interpretation of LLM intent. When the
+LLM has reason to override affinity — for example, declaring a domain
+wholesale-dead so its sources should *not* migrate to neighbouring
+ontologies — it sets `force_primordial=true` and defends that choice in
+the proposal's reasoning chain.
+
 **Backward compatibility.** Existing `promotion` and `demotion` rows
-remain valid for already-executed history. The two strings become read-only
-aliases (`promotion` ↔ `SPLIT_NEW`, `demotion` ↔ `DECOMPOSE_TO_PRIMORDIAL`)
-when the history view loads them. New proposals always use the expanded
-vocabulary.
+remain valid for already-executed history. The strings become read-only
+aliases when the history view loads them:
+- `promotion` → `CLEAVE` with `source_ontology=primordial`
+- `demotion` → `DISSOLVE`
+- `SPLIT_NEW` → `CLEAVE` with `target=new(...)`
+- `SPLIT_INTO_EXISTING` → `CLEAVE` with `target=existing(...)`
+- `DECOMPOSE_TO_PRIMORDIAL` → `DISSOLVE` with `force_primordial=true`
+
+New proposals always use the closed 6-verb vocabulary.
 
 **Prompt expansion.** The Sonnet prompt for action selection must include:
 - The full ontology inventory: names, concept counts, lifecycle states.
-  Without this, `SPLIT_INTO_EXISTING` and `MERGE` are unreachable.
+  Without this, `CLEAVE` with `target=existing(...)` and `MERGE` are unreachable.
 - The signal kind that produced the candidate (e.g. `high_overlap_pair`,
   `low_coherence_low_affinity`).
 - Local graph context around the anchor (first-order neighbourhood,
@@ -160,46 +180,66 @@ vocabulary.
 - Recent failed proposals for the same signal, with their failure reasons.
   Without this, the system retries the same bad action indefinitely.
 
-#### System invariant — the primordial pool is permanent
+#### System invariant — primordial is just another ontology
 
 The primordial pool (ADR-200's "everything else") is upgraded from a
-*starting posture* to a **load-bearing, undeletable system ontology**.
-Dissolution never destroys concepts; it relocates them.
+*starting posture* to a **load-bearing, undeletable system ontology** —
+and otherwise treated identically to every named ontology. It receives
+the same scoring (mass, coherence, exposure), the same refractory
+protection function `P(epochs_since_change)`, and the same `CLEAVE`
+candidacy. When primordial's internal sub-attractors strengthen
+sufficiently and its refractory has relaxed, the cycle planner surfaces
+it as a `CLEAVE` candidate — and what falls out is what ADR-200
+historically called "promotion." Promotion is `CLEAVE` applied to
+primordial; sub-ontology hierarchy is `CLEAVE` applied to a named
+ontology; same machinery, no separate pathway.
 
-- `MERGE` deposits dissolved members in a named target ontology.
-- `DECOMPOSE_TO_PRIMORDIAL` deposits dissolved members in the primordial
-  pool, where future cycles can re-cluster them.
+The three structural carve-outs for primordial are floor-related, not
+type-related:
 
-The primordial pool cannot be the target of dissolution itself, cannot be
-renamed, and cannot be deleted. This is the system's guarantee against
-catastrophic forgetting — every concept that has ever entered the graph
-remains addressable somewhere.
+- **`DISSOLVE`** has no valid meaning when applied to primordial — there
+  is no floor below it for sources to relocate to.
+- **`MERGE`** with primordial as a donor is forbidden for the same
+  reason. Primordial is always the survivor in any combination that
+  involves it.
+- **`RENAME`** is forbidden because the primordial pool's name is a
+  system identifier downstream code depends on.
+
+`DISSOLVE` of a named ontology deposits orphan sources (those with no
+affinity above the configured floor) in primordial. `MERGE` deposits
+dissolved donors in a named target. Concepts never disappear; they
+relocate. This is the system's guarantee against catastrophic
+forgetting — every concept that has ever entered the graph remains
+addressable somewhere.
 
 #### Action menu, mapped to primitives
 
 ```mermaid
 flowchart TD
-    A[LLM picks one action from closed menu]
+    A[LLM picks one action from closed 6-verb menu]
 
-    A --> SN[SPLIT_NEW]
-    A --> SE[SPLIT_INTO_EXISTING]
-    A --> M[MERGE]
-    A --> DP[DECOMPOSE_TO_PRIMORDIAL]
+    A --> CL[CLEAVE]
+    A --> DI[DISSOLVE]
+    A --> ME[MERGE]
     A --> R[RENAME]
     A --> NA[NO_ACTION]
     A --> ES[ESCALATE]
 
-    SN --> SN1[create_ontology_node]
-    SN --> SN2[create_anchored_by_edge]
-    SN --> SN3[reassign_sources from donor]
+    CL --> CL1{target?}
+    CL1 -->|new| CL2[create_ontology_node]
+    CL1 -->|existing| CL3[validate target exists]
+    CL2 --> CL4[create_anchored_by_edge]
+    CL3 --> CL4
+    CL4 --> CL5[reassign_sources from source_ontology cluster]
 
-    SE --> SE1[reassign_sources to existing target]
+    DI --> DI1{force_primordial?}
+    DI1 -->|true| DI2[reassign all sources to primordial]
+    DI1 -->|false| DI3[get_cross_ontology_affinity per source]
+    DI3 --> DI4[reassign each source to top-affinity target<br/>primordial as orphan floor]
 
-    M --> M1[dissolve_ontology x N]
-    M --> M2[deposits in target ontology]
-
-    DP --> DP1[dissolve_ontology]
-    DP --> DP2[deposits in primordial pool]
+    ME --> ME1[validate all donors exist, target distinct]
+    ME1 --> ME2[dissolve_ontology x N]
+    ME2 --> ME3[deposits in target ontology]
 
     R --> R1[rename_ontology]
     R --> R2[rename_ontology_node]
@@ -455,7 +495,7 @@ an empirical one:
 ### Positive
 
 - The LLM's intent is no longer silently truncated to fit a binary
-  vocabulary. `SPLIT_INTO_EXISTING` and `MERGE` are first-class.
+  vocabulary. `CLEAVE` with `target=existing(...)` and `MERGE` are first-class.
 - The 35/36/37 failure trace becomes impossible by construction: the
   prompt sees the ontology inventory, the action exists, the executor
   performs no name guessing.
@@ -486,7 +526,7 @@ an empirical one:
   follow-up input, commit-decision button). Phase 2 cannot ship
   user-visible HITL without ADR-700 work.
 - The closed vocabulary is, by definition, closed. Intents that fit none
-  of the seven actions must `ESCALATE` and get a human; we will discover
+  of the six actions must `ESCALATE` and get a human; we will discover
   missing actions only by watching the escalation rate.
 - Snapshotting controls at cycle start means an `ADJUST_CONTROL`
   proposal does not take effect until the *next* cycle. Operators must
@@ -531,7 +571,7 @@ done.
 gap (LLM cannot see existing ontology names), the missing escalation tier,
 the lack of failure-awareness across cycles, or the queue-vs-ledger
 distinction. Three months later the same investigation will surface a
-different intent (RENAME, SPLIT_INTO_EXISTING) with no schema slot, and
+different intent (RENAME, cleave-into-existing) with no schema slot, and
 we will be back here. The closed vocabulary is the smallest change that
 addresses the *class* of failure.
 
@@ -568,6 +608,52 @@ basis through a dedicated relational table.
 `:Ontology` node versus separate `ontology_overrides` table) is open
 and surfaced below. A platform-wide control set is sufficient for the
 first deployment; per-ontology override is a Phase 5 concern.
+
+### F. Seven-verb shape (`SPLIT_NEW`, `SPLIT_INTO_EXISTING`, `MERGE`, `DECOMPOSE_TO_PRIMORDIAL`, `RENAME`, `NO_ACTION`, `ESCALATE`)
+
+The Draft form of this ADR (2026-05-22) proposed a seven-verb closed
+menu in which `SPLIT_NEW` and `SPLIT_INTO_EXISTING` were distinct verbs
+parameterised by target type, and `DECOMPOSE_TO_PRIMORDIAL` was a verb
+distinct from `MERGE`. Each verb was a separately-named operation rather
+than a parameter combination on a smaller set.
+
+**Replaced (2026-05-25) by the principles-derived six-verb shape**
+(`CLEAVE`, `DISSOLVE`, `MERGE`, `RENAME`, `NO_ACTION`, `ESCALATE`) for
+three reasons:
+
+1. **Uniformity.** Under the seven-verb model, `SPLIT_NEW` applied to
+   primordial was the operation ADR-200 historically called "promotion,"
+   but the same operation applied to a named ontology produced
+   sub-domain extraction. Two verb names for the same primitive. The
+   six-verb model recognises both as `CLEAVE` and recovers the symmetry
+   that primordial is just another ontology with three floor-related
+   carve-outs.
+
+2. **Affinity is graph data, not LLM intent.** The seven-verb model
+   exposed `DECOMPOSE_TO_PRIMORDIAL` as a separate verb partly because
+   it had no notion of affinity-driven scatter. Under the six-verb
+   model, `DISSOLVE` routes by affinity using
+   `get_cross_ontology_affinity()` on the live graph; the executor
+   reads system-computed data, not LLM-emitted routing maps; the LLM's
+   wholesale-primordial intent becomes a defended `force_primordial`
+   parameter on the same verb.
+
+3. **Directed-merge naming was the wrong unification.** An intermediate
+   proposal collapsed the four move-verbs into a single `MOVE` verb
+   with a `target_policy` parameter, then re-expanded to a
+   `MERGE_INTO` / `MERGE_AS_NEW` / `MERGE_TO_PRIMORDIAL` /
+   `MERGE_BY_AFFINITY` family for verb-pick readability. This was
+   rejected: it preserves verb-pick clarity but obscures the underlying
+   algebra (`CLEAVE` is *cleaving*, not merging) and breeds vocabulary
+   surface without expressive gain. The six-verb shape derives from
+   what structural operations actually exist in the system, not from
+   what reads naturally as English.
+
+The seven-verb shape and the directed-merge family both work, but
+neither expresses the principle that primordial is just another
+ontology. The six-verb shape does, and as a consequence does not need
+separate vocabulary for promotion-vs-sub-domain-extraction or for
+explicit-vs-affinity-driven dissolution.
 
 ## Open Questions
 
