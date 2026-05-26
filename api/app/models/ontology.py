@@ -398,6 +398,61 @@ class AnnealingStatus(BaseModel):
     proposals_by_status: Dict[str, int] = {}
 
 
+class PressureControlRecommendation(BaseModel):
+    """Per-control delta from current → Bezier-recommended (ADR-206 §Phase 3)."""
+    current: int
+    recommended: int
+    delta: int
+
+
+class EcologicalPressureSnapshot(BaseModel):
+    """
+    One ecological-pressure read-out (#249, ADR-206 §Phase 3).
+
+    Mirrors the dict returned by `AnnealingManager._get_ecological_snapshot`
+    plus a `recorded_at` / `epoch` pair when loaded from history. The web
+    admin tab reads `/annealing/pressure` (latest row) for the current-
+    state Bezier panel and `/annealing/pressure/history` for the trend
+    chart.
+    """
+    epoch: int
+    total_ontologies: int
+    total_concepts: int
+    avg_concepts_per_ontology: float
+    pressure_score: float
+    pressure_zone: str
+    pressure_recommendation: Dict[str, PressureControlRecommendation] = {}
+    recorded_at: Optional[datetime] = None
+
+
+class EcologicalPressureCurve(BaseModel):
+    """
+    Static metadata describing the Bezier curve the system uses for
+    pressure mapping. Lets the UI draw the curve without hardcoding the
+    control points (so a future operator can tune them server-side and
+    the UI follows).
+    """
+    profile: str
+    comfort_min: float
+    comfort_max: float
+    emergency_threshold: float
+    bezier_p1: List[float]
+    bezier_p2: List[float]
+
+
+class EcologicalPressureResponse(BaseModel):
+    """Payload for GET /ontology/annealing/pressure."""
+    current: EcologicalPressureSnapshot
+    curve: EcologicalPressureCurve
+
+
+class EcologicalPressureHistoryResponse(BaseModel):
+    """Payload for GET /ontology/annealing/pressure/history."""
+    snapshots: List[EcologicalPressureSnapshot]
+    count: int
+    curve: EcologicalPressureCurve
+
+
 # =========================================================================
 # ADR-200 Phase 5: Ontology-to-Ontology Edges
 # =========================================================================

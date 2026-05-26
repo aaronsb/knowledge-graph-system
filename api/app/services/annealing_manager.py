@@ -294,6 +294,10 @@ class AnnealingManager:
         )
         proposal_ids.extend(control_proposals)
 
+        # 8. Persist the snapshot to kg_api.annealing_pressure_history so the
+        #    admin UI can render current state and trend over time (#249).
+        self._record_pressure_snapshot(ecological, global_epoch)
+
         logger.info(
             f"Annealing cycle complete: {len(proposal_ids)} proposals "
             f"({len(control_proposals)} control), "
@@ -1011,6 +1015,47 @@ class AnnealingManager:
         except Exception as exc:
             logger.warning(f"Could not load Phase-3 controls for snapshot: {exc}")
         return out
+
+    def _record_pressure_snapshot(
+        self,
+        ecological: Dict[str, Any],
+        epoch: int,
+    ) -> None:
+        """
+        Append one row to kg_api.annealing_pressure_history (#249).
+
+        Captures the post-cycle ecological state plus the Bezier-derived
+        recommendations so the admin UI can render current state and the
+        trend chart can read history. Failures are logged and swallowed —
+        a snapshot-write hiccup must never wedge the annealing cycle.
+        """
+        try:
+            conn = self.client.pool.getconn()
+            try:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        """
+                        INSERT INTO kg_api.annealing_pressure_history
+                            (epoch, total_ontologies, total_concepts,
+                             avg_concepts_per_ontology, pressure_score,
+                             pressure_zone, pressure_recommendation)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s)
+                        """,
+                        (
+                            epoch,
+                            ecological["total_ontologies"],
+                            ecological["total_concepts"],
+                            ecological["avg_concepts_per_ontology"],
+                            ecological["pressure_score"],
+                            ecological["pressure_zone"],
+                            Json(ecological["pressure_recommendation"]),
+                        ),
+                    )
+                    conn.commit()
+            finally:
+                self.client.pool.putconn(conn)
+        except Exception as exc:
+            logger.warning(f"Could not persist pressure snapshot: {exc}")
 
 
 def _ecological_pressure(avg_concepts_per_ontology: float) -> Tuple[float, str]:

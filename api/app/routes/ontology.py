@@ -10,6 +10,7 @@ Provides REST API access to:
 
 from fastapi import APIRouter, Depends, HTTPException, Query as QueryParam
 import logging
+from typing import Any, Dict
 
 from ..dependencies.auth import CurrentUser, require_role, require_permission
 from ..models.ontology import (
@@ -41,6 +42,11 @@ from ..models.ontology import (
     AnnealingProposalReviewRequest,
     AnnealingCycleResult,
     AnnealingStatus,
+    EcologicalPressureSnapshot,
+    EcologicalPressureCurve,
+    EcologicalPressureResponse,
+    EcologicalPressureHistoryResponse,
+    PressureControlRecommendation,
     OntologyEdge,
     OntologyEdgesResponse,
     OntologyEdgeCreateRequest,
@@ -752,6 +758,166 @@ async def get_annealing_status(
         )
     except Exception as e:
         logger.error(f"Failed to get annealing status: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        client.close()
+
+
+# =========================================================================
+# Ecological Pressure (#249, ADR-206 §Phase 3)
+# =========================================================================
+
+def _pressure_curve_metadata() -> EcologicalPressureCurve:
+    """
+    Build the static curve descriptor the UI uses to draw the Bezier.
+
+    Imported lazily from annealing_manager to keep route-loading cheap when
+    annealing isn't involved.
+    """
+    from api.app.services.annealing_manager import (
+        _PRESSURE_COMFORT_MAX,
+        _PRESSURE_COMFORT_MIN,
+        _PRESSURE_EMERGENCY,
+    )
+    from api.app.lib.aggressiveness_curve import AGGRESSIVENESS_CURVES
+
+    profile = "aggressive"
+    curve = AGGRESSIVENESS_CURVES[profile]
+    return EcologicalPressureCurve(
+        profile=profile,
+        comfort_min=_PRESSURE_COMFORT_MIN,
+        comfort_max=_PRESSURE_COMFORT_MAX,
+        emergency_threshold=_PRESSURE_EMERGENCY,
+        bezier_p1=[curve.x1, curve.y1],
+        bezier_p2=[curve.x2, curve.y2],
+    )
+
+
+def _snapshot_row_to_model(row: Dict[str, Any]) -> EcologicalPressureSnapshot:
+    """Map a kg_api.annealing_pressure_history row to the response model."""
+    recommendation_raw = row.get("pressure_recommendation") or {}
+    if isinstance(recommendation_raw, str):
+        try:
+            recommendation_raw = _json.loads(recommendation_raw)
+        except (ValueError, TypeError):
+            recommendation_raw = {}
+    return EcologicalPressureSnapshot(
+        epoch=row["epoch"],
+        total_ontologies=row["total_ontologies"],
+        total_concepts=row["total_concepts"],
+        avg_concepts_per_ontology=float(row["avg_concepts_per_ontology"]),
+        pressure_score=float(row["pressure_score"]),
+        pressure_zone=row["pressure_zone"],
+        pressure_recommendation={
+            key: PressureControlRecommendation(**block)
+            for key, block in recommendation_raw.items()
+        },
+        recorded_at=row.get("recorded_at"),
+    )
+
+
+@router.get("/annealing/pressure", response_model=EcologicalPressureResponse)
+async def get_ecological_pressure_current(
+    current_user: CurrentUser,
+    _: None = Depends(require_permission("ontologies", "read")),
+):
+    """
+    Latest ecological-pressure snapshot + curve metadata (#249).
+
+    Reads the newest row from kg_api.annealing_pressure_history (written
+    by AnnealingManager at the end of each cycle). Pairs with the static
+    `curve` descriptor so the UI can render the Bezier response function
+    plus a "you are here" marker without hardcoding the curve shape.
+    """
+    client = get_age_client()
+    try:
+        conn = client.pool.getconn()
+        try:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute(
+                    """
+                    SELECT epoch, total_ontologies, total_concepts,
+                           avg_concepts_per_ontology, pressure_score,
+                           pressure_zone, pressure_recommendation, recorded_at
+                    FROM kg_api.annealing_pressure_history
+                    ORDER BY recorded_at DESC
+                    LIMIT 1
+                    """
+                )
+                row = cur.fetchone()
+        finally:
+            client.pool.putconn(conn)
+
+        if row is None:
+            empty = EcologicalPressureSnapshot(
+                epoch=0,
+                total_ontologies=0,
+                total_concepts=0,
+                avg_concepts_per_ontology=0.0,
+                pressure_score=0.0,
+                pressure_zone="comfort",
+                pressure_recommendation={},
+            )
+            return EcologicalPressureResponse(
+                current=empty,
+                curve=_pressure_curve_metadata(),
+            )
+
+        return EcologicalPressureResponse(
+            current=_snapshot_row_to_model(dict(row)),
+            curve=_pressure_curve_metadata(),
+        )
+    except Exception as e:
+        logger.error(f"Failed to get ecological pressure: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        client.close()
+
+
+@router.get(
+    "/annealing/pressure/history",
+    response_model=EcologicalPressureHistoryResponse,
+)
+async def get_ecological_pressure_history(
+    current_user: CurrentUser,
+    limit: int = QueryParam(50, ge=1, le=500),
+    _: None = Depends(require_permission("ontologies", "read")),
+):
+    """
+    Trailing window of ecological-pressure snapshots (#249).
+
+    Returns up to `limit` rows from kg_api.annealing_pressure_history,
+    newest-first, for the trend chart in the admin tab. Default 50 ≈ ten
+    days of cycles at the typical 6-hour cadence.
+    """
+    client = get_age_client()
+    try:
+        conn = client.pool.getconn()
+        try:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute(
+                    """
+                    SELECT epoch, total_ontologies, total_concepts,
+                           avg_concepts_per_ontology, pressure_score,
+                           pressure_zone, pressure_recommendation, recorded_at
+                    FROM kg_api.annealing_pressure_history
+                    ORDER BY recorded_at DESC
+                    LIMIT %s
+                    """,
+                    (limit,),
+                )
+                rows = cur.fetchall() or []
+        finally:
+            client.pool.putconn(conn)
+
+        snapshots = [_snapshot_row_to_model(dict(r)) for r in rows]
+        return EcologicalPressureHistoryResponse(
+            snapshots=snapshots,
+            count=len(snapshots),
+            curve=_pressure_curve_metadata(),
+        )
+    except Exception as e:
+        logger.error(f"Failed to get ecological pressure history: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         client.close()
