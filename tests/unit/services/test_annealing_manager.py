@@ -1,18 +1,25 @@
 """
-Unit tests for AnnealingManager (ADR-200 Phase 3b).
+Unit tests for AnnealingManager (ADR-200 + ADR-206).
 
 Tests the annealing cycle orchestration:
 - Candidate identification (demotion, promotion)
 - Threshold filtering and lifecycle exclusion
 - Dry-run vs full cycle behavior
-- Proposal storage
+- Proposal storage (writes the ADR-206 proposal_kind / params columns)
+- Decide-and-store paths drive AnnealingDecisionService and persist its
+  canonical 6-verb output.
 """
 
 import pytest
 from unittest.mock import MagicMock, AsyncMock, patch
 
+from api.app.lib.ai_providers import TokenUsage
 from api.app.services.annealing_manager import AnnealingManager
-from api.app.lib.annealing_evaluator import PromotionDecision, DemotionDecision
+from api.app.services.annealing_decision_service import (
+    AnnealingDecision,
+    AnnealingContext,
+    OntologySummary,
+)
 
 
 @pytest.fixture
@@ -264,12 +271,20 @@ class TestAnnealingCycleFull:
 
 @pytest.mark.unit
 class TestStoreProposal:
-    """Tests for _store_proposal."""
+    """Tests for _store_proposal — must write the ADR-206 proposal_kind / params columns."""
 
-    def test_stores_demotion_proposal(self, manager, mock_client):
-        """Demotion proposal is stored with correct fields."""
+    def _extract_insert_params(self, mock_client):
+        """Return the parameter tuple passed to the INSERT statement."""
+        cursor = (
+            mock_client.pool.getconn.return_value
+            .cursor.return_value.__enter__.return_value
+        )
+        return cursor.execute.call_args[0][1]
+
+    def test_stores_dissolve_proposal(self, manager, mock_client):
+        """DISSOLVE proposal is stored with proposal_kind='ontology' and params JSONB."""
         proposal_id = manager._store_proposal(
-            proposal_type="demotion",
+            proposal_type="DISSOLVE",
             ontology_name="weak-domain",
             reasoning="Too small to justify existence",
             epoch=20,
@@ -277,34 +292,78 @@ class TestStoreProposal:
             mass_score=0.05,
             coherence_score=0.3,
             protection_score=-0.1,
+            proposal_kind="ontology",
+            params={"source_ontology": "weak-domain", "rationale": "Too small"},
         )
+        assert proposal_id == 1
 
-        assert proposal_id == 1  # From mock_cursor.fetchone = (1,)
+        params = self._extract_insert_params(mock_client)
+        # SQL column order: (proposal_type, proposal_kind, params, ontology_name, ...)
+        assert params[0] == "DISSOLVE"
+        assert params[1] == "ontology"
+        # params[2] is a psycopg2 Json wrapper; unwrap via .adapted
+        json_arg = params[2]
+        assert getattr(json_arg, "adapted", json_arg) == {
+            "source_ontology": "weak-domain",
+            "rationale": "Too small",
+        }
 
-    def test_stores_promotion_proposal(self, manager, mock_client):
-        """Promotion proposal is stored with correct fields."""
+    def test_stores_cleave_proposal(self, manager, mock_client):
+        """CLEAVE proposal is stored with anchor and full params payload."""
         proposal_id = manager._store_proposal(
-            proposal_type="promotion",
+            proposal_type="CLEAVE",
             ontology_name="big-domain",
             reasoning="PostgreSQL is a natural nucleus",
             epoch=20,
             anchor_concept_id="c_abc123",
+            proposal_kind="ontology",
+            params={
+                "source_ontology": "big-domain",
+                "anchor_concept_id": "c_abc123",
+                "cluster_selection": "first_order",
+                "cluster_params": {},
+                "target": {"kind": "new", "new_name": "PostgreSQL",
+                           "new_description": "RDBMS domain"},
+                "reasoning": "PostgreSQL is a natural nucleus",
+            },
         )
-
         assert proposal_id == 1
+
+        params = self._extract_insert_params(mock_client)
+        assert params[0] == "CLEAVE"
+        assert params[1] == "ontology"
+        json_arg = getattr(params[2], "adapted", params[2])
+        assert json_arg["source_ontology"] == "big-domain"
+        assert json_arg["target"]["kind"] == "new"
+        assert json_arg["target"]["new_name"] == "PostgreSQL"
 
     def test_db_error_returns_none(self, manager, mock_client):
         """Database error returns None instead of raising."""
         mock_client.pool.getconn.side_effect = Exception("Connection failed")
 
         proposal_id = manager._store_proposal(
-            proposal_type="demotion",
+            proposal_type="DISSOLVE",
             ontology_name="test",
             reasoning="test",
             epoch=20,
         )
 
         assert proposal_id is None
+
+    def test_default_proposal_kind_is_ontology(self, manager, mock_client):
+        """proposal_kind defaults to 'ontology' when caller omits it."""
+        manager._store_proposal(
+            proposal_type="CLEAVE",
+            ontology_name="big-domain",
+            reasoning="anchor",
+            epoch=20,
+            anchor_concept_id="c1",
+        )
+        params = self._extract_insert_params(mock_client)
+        assert params[1] == "ontology"
+        # Empty params still serializes to JSON {}, never NULL.
+        json_arg = getattr(params[2], "adapted", params[2])
+        assert json_arg == {}
 
     def test_autonomous_mode_stores_proposal_approved(self, mock_client, mock_scorer):
         """In autonomous mode a proposal is born 'approved' — no pending window."""
@@ -314,7 +373,7 @@ class TestStoreProposal:
         )
 
         manager._store_proposal(
-            proposal_type="promotion",
+            proposal_type="CLEAVE",
             ontology_name="big-domain",
             reasoning="natural nucleus",
             epoch=20,
@@ -342,7 +401,7 @@ class TestStoreProposal:
         )
 
         manager._store_proposal(
-            proposal_type="demotion",
+            proposal_type="DISSOLVE",
             ontology_name="weak-domain",
             reasoning="too small",
             epoch=20,
@@ -362,25 +421,224 @@ class TestStoreProposal:
 
 
 @pytest.mark.unit
+class TestDecideAndStore:
+    """Tests for the ADR-206 decide-and-store paths."""
+
+    @pytest.fixture
+    def context(self):
+        """An empty per-cycle context (the manager builds a real one)."""
+        return AnnealingContext(ontology_inventory=[], primordial_pool_name="primordial")
+
+    def _extract_insert_params(self, mock_client):
+        cursor = (
+            mock_client.pool.getconn.return_value
+            .cursor.return_value.__enter__.return_value
+        )
+        return cursor.execute.call_args[0][1]
+
+    # --- DISSOLVE / demotion path -----------------------------------------
+
+    @pytest.mark.asyncio
+    async def test_demotion_no_ai_writes_canonical_dissolve(
+        self, manager, mock_client, context
+    ):
+        """No-AI fallback writes 'DISSOLVE' (not the deprecated 'demotion')."""
+        mock_client.get_cross_ontology_affinity.return_value = [
+            {"other_ontology": "neighbor", "shared_concept_count": 3,
+             "affinity_score": 0.4},
+        ]
+        mock_client.get_ontology_stats.return_value = {"concept_count": 7}
+
+        candidate = {
+            "ontology": "weak-domain",
+            "mass_score": 0.1, "coherence_score": 0.2, "protection_score": 0.05,
+        }
+
+        proposal_id = await manager._decide_and_store_demotion(
+            candidate, decision_service=None, context=context, epoch=20
+        )
+        assert proposal_id == 1
+
+        params = self._extract_insert_params(mock_client)
+        assert params[0] == "DISSOLVE"
+        assert params[1] == "ontology"
+        json_arg = getattr(params[2], "adapted", params[2])
+        assert json_arg["source_ontology"] == "weak-domain"
+        # target_ontology UI hint = best affinity neighbor
+        # SQL column order: ..., ontology_name, anchor_concept_id, target_ontology, ...
+        # ontology_name=params[3], anchor_concept_id=params[4], target_ontology=params[5]
+        assert params[5] == "neighbor"
+
+    @pytest.mark.asyncio
+    async def test_demotion_with_ai_writes_decision_verb(
+        self, manager, mock_client, context
+    ):
+        """The decision_service's chosen verb + params are persisted as-is."""
+        mock_client.get_cross_ontology_affinity.return_value = [
+            {"other_ontology": "neighbor", "shared_concept_count": 5,
+             "affinity_score": 0.6},
+        ]
+        mock_client.get_ontology_stats.return_value = {"concept_count": 12}
+
+        decision = AnnealingDecision(
+            proposal_type="DISSOLVE",
+            proposal_kind="ontology",
+            params={
+                "source_ontology": "weak-domain",
+                "rationale": "low protection, strong affinity to neighbor",
+            },
+            reasoning="low protection, strong affinity to neighbor",
+            tokens=TokenUsage(),
+        )
+        decision_service = MagicMock()
+        decision_service.decide_async = AsyncMock(return_value=decision)
+
+        candidate = {
+            "ontology": "weak-domain",
+            "mass_score": 0.1, "coherence_score": 0.2, "protection_score": 0.05,
+        }
+
+        proposal_id = await manager._decide_and_store_demotion(
+            candidate, decision_service=decision_service, context=context, epoch=42
+        )
+        assert proposal_id == 1
+        decision_service.decide_async.assert_awaited_once()
+
+        params = self._extract_insert_params(mock_client)
+        assert params[0] == "DISSOLVE"
+        assert params[1] == "ontology"
+        json_arg = getattr(params[2], "adapted", params[2])
+        assert json_arg["source_ontology"] == "weak-domain"
+        # target_ontology UI hint still populated from best-affinity row
+        assert params[5] == "neighbor"
+
+    # --- CLEAVE / promotion path ------------------------------------------
+
+    @pytest.mark.asyncio
+    async def test_promotion_no_ai_writes_canonical_cleave(
+        self, manager, mock_client, context
+    ):
+        """No-AI fallback writes a CLEAVE with target.kind='new' anchored on the concept."""
+        mock_client.get_cross_ontology_affinity.return_value = []
+        mock_client._execute_cypher.return_value = []  # no neighbors
+
+        candidate = {
+            "ontology": "primordial",
+            "concept_id": "c_abc",
+            "label": "PostgreSQL",
+            "degree": 25,
+            "description": "RDBMS",
+        }
+
+        proposal_id = await manager._decide_and_store_promotion(
+            candidate, decision_service=None, context=context, epoch=20
+        )
+        assert proposal_id == 1
+
+        params = self._extract_insert_params(mock_client)
+        assert params[0] == "CLEAVE"
+        assert params[1] == "ontology"
+        json_arg = getattr(params[2], "adapted", params[2])
+        # ADR-206: primordial is just another ontology — source IS the concept's current ontology.
+        assert json_arg["source_ontology"] == "primordial"
+        assert json_arg["anchor_concept_id"] == "c_abc"
+        assert json_arg["cluster_selection"] == "first_order"
+        assert json_arg["target"]["kind"] == "new"
+        assert json_arg["target"]["new_name"] == "PostgreSQL"
+
+    @pytest.mark.asyncio
+    async def test_promotion_with_ai_surfaces_target_to_suggested_columns(
+        self, manager, mock_client, context
+    ):
+        """suggested_name/description mirror decision.params.target for UI rendering."""
+        mock_client.get_cross_ontology_affinity.return_value = []
+        mock_client._execute_cypher.return_value = []
+
+        decision = AnnealingDecision(
+            proposal_type="CLEAVE",
+            proposal_kind="ontology",
+            params={
+                "source_ontology": "primordial",
+                "anchor_concept_id": "c_abc",
+                "cluster_selection": "first_order",
+                "cluster_params": {},
+                "target": {
+                    "kind": "new",
+                    "new_name": "PostgreSQL Internals",
+                    "new_description": "Deep dives into the RDBMS engine.",
+                },
+                "reasoning": "Natural nucleus",
+            },
+            reasoning="Natural nucleus",
+            tokens=TokenUsage(),
+        )
+        decision_service = MagicMock()
+        decision_service.decide_async = AsyncMock(return_value=decision)
+
+        candidate = {
+            "ontology": "primordial",
+            "concept_id": "c_abc",
+            "label": "PostgreSQL",
+            "degree": 40,
+            "description": "RDBMS",
+        }
+
+        proposal_id = await manager._decide_and_store_promotion(
+            candidate, decision_service=decision_service, context=context, epoch=42
+        )
+        assert proposal_id == 1
+        decision_service.decide_async.assert_awaited_once()
+
+        params = self._extract_insert_params(mock_client)
+        assert params[0] == "CLEAVE"
+        # SQL column order ends with: ..., suggested_name, suggested_description,
+        # status, reviewed_by, reviewed_at, reviewer_notes
+        suggested_name = params[-6]
+        suggested_description = params[-5]
+        assert suggested_name == "PostgreSQL Internals"
+        assert suggested_description == "Deep dives into the RDBMS engine."
+
+
+@pytest.mark.unit
 class TestQueueDedup:
     """Tests for the idempotency guards that stop the cycle re-proposing work."""
 
-    def test_get_open_proposal_targets_parses_rows(self, manager, mock_client):
-        """Open proposals split into promotion-anchor and demotion-ontology sets."""
+    def test_get_open_proposal_targets_parses_legacy_rows(self, manager, mock_client):
+        """Legacy 'promotion' / 'demotion' rows route on the typed columns."""
         cursor = (
             mock_client.pool.getconn.return_value
             .cursor.return_value.__enter__.return_value
         )
         cursor.fetchall.return_value = [
-            ("promotion", "primordial", "concept-1"),
-            ("promotion", "primordial", "concept-2"),
-            ("demotion", "weak-domain", None),
+            ("promotion", "primordial", "concept-1", None),
+            ("promotion", "primordial", "concept-2", None),
+            ("demotion", "weak-domain", None, None),
         ]
 
         open_promotions, open_demotions = manager._get_open_proposal_targets()
 
         assert open_promotions == {"concept-1", "concept-2"}
         assert open_demotions == {"weak-domain"}
+
+    def test_get_open_proposal_targets_parses_v2_rows(self, manager, mock_client):
+        """ADR-206 verbs (CLEAVE / DISSOLVE / MERGE / RENAME) route on params."""
+        cursor = (
+            mock_client.pool.getconn.return_value
+            .cursor.return_value.__enter__.return_value
+        )
+        cursor.fetchall.return_value = [
+            ("CLEAVE", "primordial", None,
+             {"anchor_concept_id": "concept-3"}),
+            ("DISSOLVE", "weak-a", None, {"source_ontology": "weak-a"}),
+            ("MERGE", None, None,
+             {"donor_ontologies": ["weak-b", "weak-c"]}),
+            ("RENAME", "old-name", None, {"ontology": "old-name"}),
+        ]
+
+        open_promotions, open_demotions = manager._get_open_proposal_targets()
+
+        assert open_promotions == {"concept-3"}
+        assert open_demotions == {"weak-a", "weak-b", "weak-c", "old-name"}
 
     def test_get_anchored_concept_ids_parses_rows(self, manager, mock_client):
         """Anchored concept IDs are collected from ANCHORED_BY edges."""
@@ -425,11 +683,11 @@ class TestQueueDedup:
 
         evaluated = []
 
-        async def fake_eval(candidate, epoch):
+        async def fake_eval(candidate, decision_service, context, epoch):
             evaluated.append(candidate["ontology"])
             return None
 
-        manager._evaluate_and_store_demotion = fake_eval
+        manager._decide_and_store_demotion = fake_eval
 
         await manager.run_annealing_cycle(demotion_threshold=0.15)
 
@@ -627,11 +885,11 @@ class TestInflightIngestionVeto:
 
         evaluated = []
 
-        async def fake_eval(candidate, epoch):
+        async def fake_eval(candidate, decision_service, context, epoch):
             evaluated.append(candidate["ontology"])
             return None
 
-        manager._evaluate_and_store_demotion = fake_eval
+        manager._decide_and_store_demotion = fake_eval
 
         import logging
         with caplog.at_level(logging.INFO):
@@ -674,11 +932,11 @@ class TestInflightIngestionVeto:
 
         evaluated = []
 
-        async def fake_promo(candidate, epoch):
+        async def fake_promo(candidate, decision_service, context, epoch):
             evaluated.append(candidate["concept_id"])
             return None
 
-        manager._evaluate_and_store_promotion = fake_promo
+        manager._decide_and_store_promotion = fake_promo
 
         await manager.run_annealing_cycle()
 

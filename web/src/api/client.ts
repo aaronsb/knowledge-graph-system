@@ -32,6 +32,8 @@ import type {
   AnnealingProposalListResponse,
   AnnealingProposalFilters,
   AnnealingCycleResult,
+  EcologicalPressureResponse,
+  EcologicalPressureHistoryResponse,
 } from '../types/annealing';
 import { getAuthState } from '../lib/auth/oauth-utils';
 
@@ -553,6 +555,29 @@ class APIClient {
       '/ontology/annealing-cycle',
       null,
       { params: { dry_run: dryRun }, timeout: 60000 },
+    );
+    return response.data;
+  }
+
+  /**
+   * Get the most recent ecological-pressure snapshot + curve metadata.
+   */
+  async getEcologicalPressure(): Promise<EcologicalPressureResponse> {
+    const response = await this.client.get<EcologicalPressureResponse>(
+      '/ontology/annealing/pressure',
+    );
+    return response.data;
+  }
+
+  /**
+   * Get the trailing window of ecological-pressure snapshots.
+   */
+  async getEcologicalPressureHistory(
+    limit = 50,
+  ): Promise<EcologicalPressureHistoryResponse> {
+    const response = await this.client.get<EcologicalPressureHistoryResponse>(
+      '/ontology/annealing/pressure/history',
+      { params: { limit } },
     );
     return response.data;
   }

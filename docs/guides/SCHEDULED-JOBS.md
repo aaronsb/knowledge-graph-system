@@ -140,16 +140,16 @@ sequenceDiagram
     Manager->>DB: Recompute centroids
     Manager->>DB: Derive ontology-to-ontology edges
 
-    Manager->>DB: Find demotion candidates (protection < threshold)
-    Manager->>DB: Find promotion candidates (degree >= min)
+    Manager->>DB: Find dissolution candidates (low protection / coherence)
+    Manager->>DB: Find cleave candidates (high-degree anchor concepts)
 
     loop For each candidate (up to max_proposals)
-        Manager->>LLM: Evaluate with scores + context
-        LLM-->>Manager: Decision (promote/demote/reject + reasoning)
-        alt Decision confirmed
-            Manager->>DB: INSERT proposal (status='pending')
-        end
+        Manager->>LLM: AnnealingDecisionService.decide_async — offer<br/>6-verb tool schemas (ADR-206)
+        LLM-->>Manager: Tool call: one of CLEAVE / DISSOLVE / MERGE /<br/>RENAME / NO_ACTION / ESCALATE + verb-specific params
+        Manager->>DB: INSERT proposal (proposal_type=<verb>,<br/>proposal_kind='ontology', params JSONB)
     end
+
+    Note over Manager,DB: After candidates: check pressure_recommendation;<br/>emit ADJUST_CONTROL proposals when delta exceeds deadband
 
     Manager-->>Worker: {proposal_ids, scores, ...}
 

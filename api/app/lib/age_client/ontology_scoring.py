@@ -525,22 +525,43 @@ class OntologyScoringMixin:
             }
 
     def dissolve_ontology(
-        self, name: str, target_ontology: str
+        self,
+        name: str,
+        routing_map: Optional[Dict[str, str]] = None,
+        target_ontology: Optional[str] = None,
+        force_primordial: bool = False,
     ) -> Dict[str, Any]:
         """
-        Non-destructive ontology demotion: move all sources to target, then remove node.
+        Non-destructive dissolution with per-source routing (ADR-206 §Phase 1).
 
-        This is the key primitive for ontology demotion in the annealing cycle.
-        Unlike delete_ontology (which cascade-deletes sources), dissolve preserves
-        all data by moving it first.
+        Unlike delete_ontology (which cascade-deletes sources), dissolve
+        preserves all data by reassigning sources before removing the
+        Ontology node.
 
         Args:
-            name: Ontology to dissolve
-            target_ontology: Default ontology to receive sources
+            name: Ontology to dissolve.
+            routing_map: source_id → target ontology name. When provided,
+                each source is reassigned to its mapped target. ADR-206
+                invariant: the decision lives in the proposal; the
+                executor performs no interpretation. Multiple sources may
+                map to different targets (per-source affinity routing) or
+                the same target (forced-mode); both are supported.
+            target_ontology: BACKWARD-COMPAT only. When routing_map is None
+                and target_ontology is set, all sources route to
+                target_ontology — the v1 single-target behaviour. Retained
+                so legacy callers (and the corresponding tests) keep
+                working unchanged.
+            force_primordial: Informational flag echoed in the result for
+                the audit ledger. The actual primordial-routing is encoded
+                in routing_map by the caller; this just surfaces the
+                operator's intent to downstream observers.
 
         Returns:
-            {dissolved_ontology, sources_reassigned, ontology_node_deleted,
-             reassignment_targets, success, error}
+            {
+                dissolved_ontology, sources_reassigned, ontology_node_deleted,
+                routing_targets, reassignment_targets (legacy alias),
+                force_primordial, success, error
+            }
         """
         node = self.get_ontology_node(name)
         if not node:
@@ -548,7 +569,9 @@ class OntologyScoringMixin:
                 "dissolved_ontology": name,
                 "sources_reassigned": 0,
                 "ontology_node_deleted": False,
+                "routing_targets": [],
                 "reassignment_targets": [],
+                "force_primordial": force_primordial,
                 "success": False,
                 "error": f"Ontology '{name}' not found",
             }
@@ -559,61 +582,116 @@ class OntologyScoringMixin:
                 "dissolved_ontology": name,
                 "sources_reassigned": 0,
                 "ontology_node_deleted": False,
+                "routing_targets": [],
                 "reassignment_targets": [],
+                "force_primordial": force_primordial,
                 "success": False,
                 "error": f"Ontology '{name}' is {lifecycle} — cannot dissolve",
             }
 
-        # Get all source IDs in this ontology
-        source_query = """
-        MATCH (s:Source)-[:SCOPED_BY]->(o:Ontology {name: $name})
-        RETURN s.source_id as source_id
-        """
-        try:
-            results = self._execute_cypher(
-                source_query, params={"name": name}
-            )
-            all_source_ids = [
-                str(row.get("source_id", ""))
-                for row in results
-                if row.get("source_id")
-            ]
-        except Exception as e:
+        if routing_map is None and target_ontology is None:
             return {
                 "dissolved_ontology": name,
                 "sources_reassigned": 0,
                 "ontology_node_deleted": False,
+                "routing_targets": [],
                 "reassignment_targets": [],
+                "force_primordial": force_primordial,
                 "success": False,
-                "error": f"Failed to list sources: {e}",
+                "error": (
+                    "dissolve_ontology requires either routing_map "
+                    "(per-source) or target_ontology (single-target legacy)"
+                ),
             }
 
-        # Reassign all sources to target
         total_reassigned = 0
-        targets = set()
+        targets: set = set()
 
-        if all_source_ids:
-            result = self.reassign_sources(all_source_ids, name, target_ontology)
-            total_reassigned = result.get("sources_reassigned", 0)
-            if not result.get("success"):
+        if routing_map is not None:
+            # Per-source routing path (ADR-206). Group sources by target so
+            # we issue one reassign_sources batch per target instead of
+            # per source.
+            by_target: Dict[str, List[str]] = {}
+            for source_id, target in routing_map.items():
+                if not target:
+                    continue
+                by_target.setdefault(target, []).append(source_id)
+
+            for target_name, source_ids in by_target.items():
+                if not source_ids:
+                    continue
+                result = self.reassign_sources(source_ids, name, target_name)
+                total_reassigned += result.get("sources_reassigned", 0)
+                if not result.get("success"):
+                    return {
+                        "dissolved_ontology": name,
+                        "sources_reassigned": total_reassigned,
+                        "ontology_node_deleted": False,
+                        "routing_targets": sorted(targets),
+                        "reassignment_targets": sorted(targets),
+                        "force_primordial": force_primordial,
+                        "success": False,
+                        "error": result.get("error"),
+                    }
+                targets.add(target_name)
+        else:
+            # Legacy single-target path — preserved byte-for-byte so the
+            # existing tests (dissolve_ontology(name, target)) keep working.
+            source_query = """
+            MATCH (s:Source)-[:SCOPED_BY]->(o:Ontology {name: $name})
+            RETURN s.source_id as source_id
+            """
+            try:
+                results = self._execute_cypher(
+                    source_query, params={"name": name}
+                )
+                all_source_ids = [
+                    str(row.get("source_id", ""))
+                    for row in results
+                    if row.get("source_id")
+                ]
+            except Exception as e:
                 return {
                     "dissolved_ontology": name,
-                    "sources_reassigned": total_reassigned,
+                    "sources_reassigned": 0,
                     "ontology_node_deleted": False,
+                    "routing_targets": [],
                     "reassignment_targets": [],
+                    "force_primordial": force_primordial,
                     "success": False,
-                    "error": result.get("error"),
+                    "error": f"Failed to list sources: {e}",
                 }
-            targets.add(target_ontology)
+
+            if all_source_ids:
+                result = self.reassign_sources(
+                    all_source_ids, name, target_ontology
+                )
+                total_reassigned = result.get("sources_reassigned", 0)
+                if not result.get("success"):
+                    return {
+                        "dissolved_ontology": name,
+                        "sources_reassigned": total_reassigned,
+                        "ontology_node_deleted": False,
+                        "routing_targets": [],
+                        "reassignment_targets": [],
+                        "force_primordial": force_primordial,
+                        "success": False,
+                        "error": result.get("error"),
+                    }
+                targets.add(target_ontology)
 
         # Remove the Ontology node (only the node + its edges, not Sources)
         node_deleted = self.delete_ontology_node(name)
 
+        target_list = sorted(targets)
         return {
             "dissolved_ontology": name,
             "sources_reassigned": total_reassigned,
             "ontology_node_deleted": node_deleted,
-            "reassignment_targets": sorted(targets),
+            "routing_targets": target_list,
+            # Legacy alias for callers that already read this key.
+            "reassignment_targets": target_list,
+            "force_primordial": force_primordial,
             "success": True,
             "error": None,
         }

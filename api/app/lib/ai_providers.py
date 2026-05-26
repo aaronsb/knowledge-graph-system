@@ -11,8 +11,9 @@ API Key Loading (ADR-031):
 
 import os
 import logging
-from typing import List, Dict, Any, Literal, Optional
+from typing import List, Dict, Any, Literal, Optional, Union
 from abc import ABC, abstractmethod
+from dataclasses import dataclass, field
 import json
 from .rate_limiter import exponential_backoff_retry
 
@@ -95,6 +96,43 @@ EXTRACTION_TOOL_SCHEMA: Dict[str, Any] = {
         "required": ["concepts", "instances", "relationships"],
     },
 }
+
+
+@dataclass
+class ToolSchema:
+    """Provider-neutral tool description.
+
+    `params_schema` is JSON Schema (top-level `type: object` recommended).
+    Each provider adapter translates this to its native key (`parameters` for
+    OpenAI-style, `input_schema` for Anthropic).
+    """
+    name: str
+    description: str
+    params_schema: Dict[str, Any]
+
+
+@dataclass
+class TokenUsage:
+    """Normalized token counters across providers."""
+    input_tokens: int = 0
+    output_tokens: int = 0
+    cached_input_tokens: int = 0
+
+
+@dataclass
+class ToolCallResponse:
+    """Result of `AIProvider.call_with_tools`.
+
+    `stop_reason` is the provider-normalized reason the turn ended:
+    'tool_use' | 'end_turn' | 'max_tokens' | 'refusal' | provider-specific.
+    `raw_response` is the SDK's native message object (kept for debugging,
+    not part of the contract).
+    """
+    tool_name: str
+    params: Dict[str, Any]
+    stop_reason: str
+    tokens: TokenUsage
+    raw_response: Any = None
 
 
 # Default prompt for image description (ADR-033 Phase 1).
@@ -397,6 +435,33 @@ class AIProvider(ABC):
         """
         pass
 
+    @abstractmethod
+    def call_with_tools(
+        self,
+        system_prompt: str,
+        user_prompt: str,
+        tools: List[ToolSchema],
+        tool_choice: Union[Literal["auto", "required"], str] = "auto",
+        max_tokens: int = 4096,
+        model: Optional[str] = None,
+        temperature: Optional[float] = None,
+    ) -> ToolCallResponse:
+        """Provider-neutral tool-calling primitive.
+
+        Returns the first tool_use / tool_call emitted by the model. Raises if
+        the model refuses, truncates, or fails to call a tool when
+        `tool_choice="required"` or a specific tool name was passed.
+
+        `tool_choice`:
+          - "auto"     — model decides whether to call a tool
+          - "required" — model must call one of the offered tools
+          - str        — name of a specific tool the model must call
+
+        `model` overrides the provider's configured extraction model for this
+        call only. `temperature=None` means provider default.
+        """
+        pass
+
     def fetch_model_catalog(self) -> List[Dict[str, Any]]:
         """
         Fetch available models from the provider API for catalog storage (ADR-800).
@@ -537,6 +602,110 @@ class OpenAIProvider(AIProvider):
 
         except Exception as e:
             raise Exception(f"OpenAI concept extraction failed: {e}") from e
+
+    def call_with_tools(
+        self,
+        system_prompt: str,
+        user_prompt: str,
+        tools: List[ToolSchema],
+        tool_choice: Union[Literal["auto", "required"], str] = "auto",
+        max_tokens: int = 4096,
+        model: Optional[str] = None,
+        temperature: Optional[float] = None,
+    ) -> ToolCallResponse:
+        """Provider-neutral tool call via OpenAI `chat.completions`."""
+        if not tools:
+            raise ValueError("OpenAI call_with_tools requires at least one tool")
+
+        openai_tools = [
+            {
+                "type": "function",
+                "function": {
+                    "name": t.name,
+                    "description": t.description,
+                    "parameters": t.params_schema,
+                },
+            }
+            for t in tools
+        ]
+
+        if tool_choice == "auto":
+            native_choice: Any = "auto"
+        elif tool_choice == "required":
+            native_choice = "required"
+        else:
+            native_choice = {"type": "function", "function": {"name": tool_choice}}
+
+        request_kwargs: Dict[str, Any] = {
+            "model": model or self.extraction_model,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            "tools": openai_tools,
+            "tool_choice": native_choice,
+            "max_tokens": max_tokens,
+        }
+        if temperature is not None:
+            request_kwargs["temperature"] = temperature
+
+        try:
+            response = self.client.chat.completions.create(**request_kwargs)
+        except Exception as e:
+            raise Exception(f"OpenAI call_with_tools request failed: {e}") from e
+
+        choice = response.choices[0]
+        finish_reason = getattr(choice, "finish_reason", None) or ""
+        stop_reason_map = {
+            "tool_calls": "tool_use",
+            "stop": "end_turn",
+            "length": "max_tokens",
+            "content_filter": "refusal",
+        }
+        stop_reason = stop_reason_map.get(finish_reason, finish_reason or "unknown")
+
+        if stop_reason == "max_tokens":
+            raise Exception(
+                f"OpenAI call_with_tools truncated at max_tokens={max_tokens} "
+                f"(model={request_kwargs['model']})."
+            )
+
+        tool_calls = getattr(choice.message, "tool_calls", None) or []
+        if not tool_calls:
+            forced = tool_choice != "auto"
+            if forced:
+                raise Exception(
+                    f"OpenAI returned no tool_calls despite tool_choice={tool_choice!r} "
+                    f"(finish_reason={finish_reason}, model={request_kwargs['model']})."
+                )
+            raise Exception(
+                f"OpenAI call_with_tools returned no tool_calls "
+                f"(finish_reason={finish_reason}, model={request_kwargs['model']})."
+            )
+
+        first = tool_calls[0]
+        tool_name = first.function.name
+        try:
+            params = json.loads(first.function.arguments or "{}")
+        except json.JSONDecodeError as e:
+            raise Exception(
+                f"OpenAI tool_call arguments failed to JSON-decode for tool {tool_name!r}: {e}"
+            ) from e
+
+        usage = getattr(response, "usage", None)
+        tokens = TokenUsage(
+            input_tokens=getattr(usage, "prompt_tokens", 0) or 0,
+            output_tokens=getattr(usage, "completion_tokens", 0) or 0,
+            cached_input_tokens=0,
+        )
+
+        return ToolCallResponse(
+            tool_name=tool_name,
+            params=params,
+            stop_reason="tool_use",
+            tokens=tokens,
+            raw_response=response,
+        )
 
     def _extract_json(self, text: str) -> Dict[str, Any]:
         """Extract JSON from response text (handles markdown code blocks and whitespace)"""
@@ -926,6 +1095,19 @@ class LocalEmbeddingProvider(AIProvider):
             "Use OpenAI or Anthropic for image description."
         )
 
+    def call_with_tools(
+        self,
+        system_prompt: str,
+        user_prompt: str,
+        tools: List[ToolSchema],
+        tool_choice: Union[Literal["auto", "required"], str] = "auto",
+        max_tokens: int = 4096,
+        model: Optional[str] = None,
+        temperature: Optional[float] = None,
+    ) -> ToolCallResponse:
+        """LocalEmbeddingProvider is embedding-only."""
+        raise NotImplementedError("LocalEmbeddingProvider is embedding-only")
+
 
 class AnthropicProvider(AIProvider):
     """Anthropic provider for Claude models"""
@@ -1056,6 +1238,95 @@ class AnthropicProvider(AIProvider):
 
         except Exception as e:
             raise Exception(f"Anthropic concept extraction failed: {e}") from e
+
+    def call_with_tools(
+        self,
+        system_prompt: str,
+        user_prompt: str,
+        tools: List[ToolSchema],
+        tool_choice: Union[Literal["auto", "required"], str] = "auto",
+        max_tokens: int = 4096,
+        model: Optional[str] = None,
+        temperature: Optional[float] = None,
+    ) -> ToolCallResponse:
+        """Provider-neutral tool call via Anthropic `messages.create`."""
+        if not tools:
+            raise ValueError("Anthropic call_with_tools requires at least one tool")
+
+        anthropic_tools = [
+            {
+                "name": t.name,
+                "description": t.description,
+                "input_schema": t.params_schema,
+            }
+            for t in tools
+        ]
+
+        if tool_choice == "auto":
+            native_choice: Dict[str, Any] = {"type": "auto"}
+        elif tool_choice == "required":
+            native_choice = {"type": "any"}
+        else:
+            native_choice = {"type": "tool", "name": tool_choice}
+
+        target_model = model or self.extraction_model
+
+        request_kwargs: Dict[str, Any] = {
+            "model": target_model,
+            "max_tokens": max_tokens,
+            "system": system_prompt,
+            "tools": anthropic_tools,
+            "tool_choice": native_choice,
+            "messages": [{"role": "user", "content": user_prompt}],
+        }
+        if temperature is not None and not _anthropic_drops_sampling_params(target_model):
+            request_kwargs["temperature"] = temperature
+
+        try:
+            message = self.client.messages.create(**request_kwargs)
+        except Exception as e:
+            raise Exception(f"Anthropic call_with_tools request failed: {e}") from e
+
+        stop_reason = getattr(message, "stop_reason", "unknown") or "unknown"
+
+        if stop_reason == "max_tokens":
+            raise Exception(
+                f"Anthropic call_with_tools truncated at max_tokens={max_tokens} "
+                f"(model={target_model})."
+            )
+
+        tool_block = next(
+            (b for b in message.content if getattr(b, "type", None) == "tool_use"),
+            None,
+        )
+        if tool_block is None:
+            forced = tool_choice != "auto"
+            if forced:
+                raise Exception(
+                    f"Anthropic returned no tool_use block despite tool_choice={tool_choice!r} "
+                    f"(stop_reason={stop_reason}, model={target_model})."
+                )
+            raise Exception(
+                f"Anthropic call_with_tools returned no tool_use block "
+                f"(stop_reason={stop_reason}, model={target_model})."
+            )
+
+        params = dict(tool_block.input)
+
+        usage = getattr(message, "usage", None)
+        tokens = TokenUsage(
+            input_tokens=getattr(usage, "input_tokens", 0) or 0,
+            output_tokens=getattr(usage, "output_tokens", 0) or 0,
+            cached_input_tokens=getattr(usage, "cache_read_input_tokens", 0) or 0,
+        )
+
+        return ToolCallResponse(
+            tool_name=tool_block.name,
+            params=params,
+            stop_reason="tool_use",
+            tokens=tokens,
+            raw_response=message,
+        )
 
     def generate_embedding(self, text: str, purpose: Literal["query", "document"] = "document") -> List[float]:
         """Generate embedding using the configured embedding provider"""
@@ -1405,6 +1676,103 @@ class OpenRouterProvider(AIProvider):
 
         except Exception as e:
             raise Exception(f"OpenRouter concept extraction failed: {e}") from e
+
+    def call_with_tools(
+        self,
+        system_prompt: str,
+        user_prompt: str,
+        tools: List[ToolSchema],
+        tool_choice: Union[Literal["auto", "required"], str] = "auto",
+        max_tokens: int = 4096,
+        model: Optional[str] = None,
+        temperature: Optional[float] = None,
+    ) -> ToolCallResponse:
+        """Provider-neutral tool call via OpenRouter (OpenAI-compatible)."""
+        if not tools:
+            raise ValueError("OpenRouter call_with_tools requires at least one tool")
+
+        openai_tools = [
+            {
+                "type": "function",
+                "function": {
+                    "name": t.name,
+                    "description": t.description,
+                    "parameters": t.params_schema,
+                },
+            }
+            for t in tools
+        ]
+
+        if tool_choice == "auto":
+            native_choice: Any = "auto"
+        elif tool_choice == "required":
+            native_choice = "required"
+        else:
+            native_choice = {"type": "function", "function": {"name": tool_choice}}
+
+        request_kwargs: Dict[str, Any] = {
+            "model": model or self.extraction_model,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            "tools": openai_tools,
+            "tool_choice": native_choice,
+            "max_tokens": max_tokens,
+        }
+        if temperature is not None:
+            request_kwargs["temperature"] = temperature
+
+        try:
+            response = self.client.chat.completions.create(**request_kwargs)
+        except Exception as e:
+            raise Exception(f"OpenRouter call_with_tools request failed: {e}") from e
+
+        choice = response.choices[0]
+        finish_reason = getattr(choice, "finish_reason", None) or ""
+
+        if finish_reason == "length":
+            raise Exception(
+                f"OpenRouter call_with_tools truncated at max_tokens={max_tokens} "
+                f"(model={request_kwargs['model']})."
+            )
+
+        tool_calls = getattr(choice.message, "tool_calls", None) or []
+        if not tool_calls:
+            forced = tool_choice != "auto"
+            if forced:
+                raise Exception(
+                    f"OpenRouter returned no tool_calls despite tool_choice={tool_choice!r} "
+                    f"(finish_reason={finish_reason}, model={request_kwargs['model']})."
+                )
+            raise Exception(
+                f"OpenRouter call_with_tools returned no tool_calls "
+                f"(finish_reason={finish_reason}, model={request_kwargs['model']})."
+            )
+
+        first = tool_calls[0]
+        tool_name = first.function.name
+        try:
+            params = json.loads(first.function.arguments or "{}")
+        except json.JSONDecodeError as e:
+            raise Exception(
+                f"OpenRouter tool_call arguments failed to JSON-decode for tool {tool_name!r}: {e}"
+            ) from e
+
+        usage = getattr(response, "usage", None)
+        tokens = TokenUsage(
+            input_tokens=getattr(usage, "prompt_tokens", 0) or 0,
+            output_tokens=getattr(usage, "completion_tokens", 0) or 0,
+            cached_input_tokens=0,
+        )
+
+        return ToolCallResponse(
+            tool_name=tool_name,
+            params=params,
+            stop_reason="tool_use",
+            tokens=tokens,
+            raw_response=response,
+        )
 
     def _extract_json(self, text: str) -> Dict[str, Any]:
         """Extract JSON from response text (handles markdown code blocks)."""
@@ -1885,6 +2253,122 @@ class OllamaProvider(AIProvider):
             )
         except Exception as e:
             raise Exception(f"Ollama concept extraction failed: {e}") from e
+
+    def call_with_tools(
+        self,
+        system_prompt: str,
+        user_prompt: str,
+        tools: List[ToolSchema],
+        tool_choice: Union[Literal["auto", "required"], str] = "auto",
+        max_tokens: int = 4096,
+        model: Optional[str] = None,
+        temperature: Optional[float] = None,
+    ) -> ToolCallResponse:
+        """Provider-neutral tool call via Ollama `/api/chat`.
+
+        Ollama uses OpenAI-style tool schemas but does not honor
+        `tool_choice="required"` reliably across models — if forced and the
+        model returns no tool_calls, this raises rather than silently
+        returning prose.
+        """
+        import requests
+
+        if not tools:
+            raise ValueError("Ollama call_with_tools requires at least one tool")
+
+        ollama_tools = [
+            {
+                "type": "function",
+                "function": {
+                    "name": t.name,
+                    "description": t.description,
+                    "parameters": t.params_schema,
+                },
+            }
+            for t in tools
+        ]
+
+        target_model = model or self.extraction_model
+        effective_temperature = self.temperature if temperature is None else temperature
+
+        request_data: Dict[str, Any] = {
+            "model": target_model,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            "tools": ollama_tools,
+            "stream": False,
+            "options": {
+                "temperature": effective_temperature,
+                "top_p": self.top_p,
+                "num_predict": max_tokens,
+            },
+        }
+
+        try:
+            @exponential_backoff_retry(max_retries=3, base_delay=0.5)
+            def _make_request():
+                resp = self.session.post(
+                    f"{self.base_url}/api/chat",
+                    json=request_data,
+                    timeout=300,
+                )
+                resp.raise_for_status()
+                return resp
+
+            response = _make_request()
+        except requests.exceptions.ConnectionError as e:
+            raise Exception(
+                f"Cannot connect to Ollama at {self.base_url}: {e}"
+            ) from e
+        except Exception as e:
+            raise Exception(f"Ollama call_with_tools request failed: {e}") from e
+
+        response_data = response.json()
+        message = response_data.get("message", {})
+        tool_calls = message.get("tool_calls") or []
+
+        if not tool_calls:
+            forced = tool_choice != "auto"
+            if forced:
+                raise Exception(
+                    f"Ollama returned no tool_calls despite tool_choice={tool_choice!r} "
+                    f"(model={target_model}). Ollama does not honor forced tool_choice "
+                    "reliably across models — pick a model with stronger tool-use support, "
+                    "or fall back to tool_choice='auto' and a prompt that instructs the call."
+                )
+            raise Exception(
+                f"Ollama call_with_tools returned no tool_calls (model={target_model})."
+            )
+
+        first = tool_calls[0]
+        function = first.get("function", {})
+        tool_name = function.get("name", "")
+        arguments = function.get("arguments", {})
+        if isinstance(arguments, str):
+            try:
+                params = json.loads(arguments) if arguments else {}
+            except json.JSONDecodeError as e:
+                raise Exception(
+                    f"Ollama tool_call arguments failed to JSON-decode for tool {tool_name!r}: {e}"
+                ) from e
+        else:
+            params = dict(arguments)
+
+        tokens = TokenUsage(
+            input_tokens=response_data.get("prompt_eval_count", 0) or 0,
+            output_tokens=response_data.get("eval_count", 0) or 0,
+            cached_input_tokens=0,
+        )
+
+        return ToolCallResponse(
+            tool_name=tool_name,
+            params=params,
+            stop_reason="tool_use",
+            tokens=tokens,
+            raw_response=response_data,
+        )
 
     def _extract_json(self, text: str) -> Dict[str, Any]:
         """

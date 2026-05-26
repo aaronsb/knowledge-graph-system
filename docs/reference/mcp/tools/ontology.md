@@ -23,8 +23,8 @@ Manage ontologies (knowledge domains/collections): list all, get info, list file
 - `proposal_id` (`number`) - Proposal ID (for proposal_review action)
 - `status` (`string`) - Filter proposals by status, or review status (approved/rejected)
   - Allowed values: `pending`, `approved`, `rejected`, `executing`, `executed`, `failed`
-- `proposal_type` (`string`) - Filter proposals by type
-  - Allowed values: `promotion`, `demotion`
+- `proposal_type` (`string`) - Filter proposals by ADR-206 verb (legacy promotion/demotion still accepted)
+  - Allowed values: `CLEAVE`, `DISSOLVE`, `MERGE`, `RENAME`, `NO_ACTION`, `ESCALATE`, `ADJUST_CONTROL`, `promotion`, `demotion`
 - `notes` (`string`) - Review notes (for proposal_review action)
 - `dry_run` (`boolean`) - Preview candidates without proposals (for annealing_cycle)
   - Default: `false`

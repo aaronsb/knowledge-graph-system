@@ -1,31 +1,52 @@
 """
-Annealing Manager — orchestrates ontology annealing cycles (ADR-200).
+Annealing Manager — orchestrates ontology annealing cycles (ADR-200 + ADR-206).
 
-Follows the vocabulary consolidation pattern:
-score all → identify candidates → LLM judgment → store proposals.
+Per cycle: score all ontologies → identify candidates → drive the 6-verb
+closed action vocabulary through `AnnealingDecisionService` → store the
+returned proposal(s) on `kg_api.annealing_proposals`.
 
 In autonomous mode (default), proposals are auto-approved and executed
-by the annealing worker. In hitl mode, proposals wait for human review.
+by the annealing worker. In hitl mode they wait for human review.
 """
 
 import logging
 from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional, Set, Tuple
 
+from psycopg2.extras import Json
+
 from api.app.lib.ontology_scorer import OntologyScorer
-from api.app.lib.annealing_evaluator import (
-    llm_evaluate_promotion,
-    llm_evaluate_demotion,
-    PromotionDecision,
-    DemotionDecision,
+from api.app.lib.aggressiveness_curve import AGGRESSIVENESS_CURVES
+from api.app.models.ontology import ProposalType, ProposalKind
+from .annealing_decision_service import (
+    AnnealingDecisionService,
+    AnnealingContext,
+    AnnealingCandidate,
+    OntologySummary,
+    AnchorConcept,
+    AffinityTarget,
+    FailedProposalSummary,
 )
 
 logger = logging.getLogger(__name__)
 
 
+# Ecological-pressure thresholds (avg concepts per ontology). The healthy
+# band is empirically wide — operators with different ingestion volumes hit
+# very different "comfortable" ratios. These defaults match ADR-200 §9's
+# resolution-limit discussion: below ~10 the graph is over-fragmented
+# (many stubs), above ~80 ontologies are bloated and need CLEAVE. The
+# Bezier-derived score smoothly interpolates between these endpoints
+# rather than imposing sharp cutoffs.
+_PRESSURE_COMFORT_MIN = 10.0
+_PRESSURE_COMFORT_MAX = 80.0
+_PRESSURE_EMERGENCY = 150.0
+_PRESSURE_CURVE = AGGRESSIVENESS_CURVES["aggressive"]
+
+
 class AnnealingManager:
     """
-    Runs annealing cycles: score, identify candidates, evaluate, propose.
+    Runs annealing cycles: score, identify candidates, decide, propose.
 
     Execution is handled by the annealing worker (autonomous mode) or
     human review endpoint (hitl mode).
@@ -66,7 +87,7 @@ class AnnealingManager:
         3. Derive ontology-to-ontology edges (Phase 5)
         4. Identify demotion candidates (low protection)
         5. Identify promotion candidates (high-degree concepts)
-        6. LLM evaluation (unless dry_run)
+        6. LLM decision via AnnealingDecisionService (unless dry_run)
         7. Store proposals
 
         Args:
@@ -89,8 +110,18 @@ class AnnealingManager:
         ecological = self._get_ecological_snapshot(all_scores)
         logger.info(
             f"Ecological snapshot: {ecological['total_ontologies']} ontologies, "
-            f"~{ecological['avg_concepts_per_ontology']:.0f} concepts/ontology"
+            f"~{ecological['avg_concepts_per_ontology']:.0f} concepts/ontology, "
+            f"pressure={ecological['pressure_score']:.2f} ({ecological['pressure_zone']})"
         )
+        # Surface Bezier-derived control recommendations for operator review
+        # (commit 9 turns these into ADJUST_CONTROL proposals).
+        for key, block in ecological["pressure_recommendation"].items():
+            if block["delta"] != 0:
+                logger.info(
+                    f"  pressure_recommendation: {key} "
+                    f"{block['current']} → {block['recommended']} "
+                    f"(delta {block['delta']:+d})"
+                )
 
         # 2. Recompute centroids
         centroids_updated = self.scorer.recompute_all_centroids()
@@ -210,13 +241,32 @@ class AnnealingManager:
                         kept.append(c)
                 demotion_candidates = kept
 
-        # 6. Evaluate and store proposals
+        # 6. Build the per-cycle decision context, then decide + store
+        inventory = [
+            OntologySummary(
+                name=s.get("ontology", ""),
+                concept_count=s.get("concept_count", 0),
+                lifecycle_state=(
+                    self.client.get_ontology_node(s.get("ontology", "")) or {}
+                ).get("lifecycle_state", "active"),
+            )
+            for s in all_scores
+        ]
+        context = AnnealingContext(
+            ontology_inventory=inventory, primordial_pool_name="primordial"
+        )
+        decision_service = (
+            AnnealingDecisionService(self.ai_provider) if self.ai_provider else None
+        )
+
         proposal_ids = []
         remaining = max_proposals
 
         # Demotions first (more impactful)
         for candidate in demotion_candidates[:remaining]:
-            proposal_id = await self._evaluate_and_store_demotion(candidate, global_epoch)
+            proposal_id = await self._decide_and_store_demotion(
+                candidate, decision_service, context, global_epoch
+            )
             if proposal_id:
                 proposal_ids.append(proposal_id)
                 remaining -= 1
@@ -225,15 +275,33 @@ class AnnealingManager:
 
         # Then promotions
         for candidate in promotion_candidates[:remaining]:
-            proposal_id = await self._evaluate_and_store_promotion(candidate, global_epoch)
+            proposal_id = await self._decide_and_store_promotion(
+                candidate, decision_service, context, global_epoch
+            )
             if proposal_id:
                 proposal_ids.append(proposal_id)
                 remaining -= 1
                 if remaining <= 0:
                     break
 
+        # 7. Emit ADJUST_CONTROL proposals for any pressure recommendation
+        #    whose |delta| exceeds the deadband (#249 Part 2, ADR-206 §Phase 3).
+        #    Bezier-derived; no LLM judgment needed — defense is the snapshot.
+        control_proposals = self._emit_control_proposals(
+            recommendation=ecological["pressure_recommendation"],
+            pressure_score=ecological["pressure_score"],
+            pressure_zone=ecological["pressure_zone"],
+            epoch=global_epoch,
+        )
+        proposal_ids.extend(control_proposals)
+
+        # 8. Persist the snapshot to kg_api.annealing_pressure_history so the
+        #    admin UI can render current state and trend over time (#249).
+        self._record_pressure_snapshot(ecological, global_epoch)
+
         logger.info(
-            f"Annealing cycle complete: {len(proposal_ids)} proposals, "
+            f"Annealing cycle complete: {len(proposal_ids)} proposals "
+            f"({len(control_proposals)} control), "
             f"{len(all_scores)} scored, {centroids_updated} centroids, "
             f"{edge_result.get('edges_created', 0)} edges, "
             f"{len(vetoed_inflight)} vetoed (in-flight ingestion)"
@@ -395,6 +463,13 @@ class AnnealingManager:
         block re-proposal, so the cycle still self-heals if an ontology is
         later deleted.
 
+        ADR-206 routing: CLEAVE proposals key on the anchor concept id (the
+        promotion analogue); DISSOLVE / MERGE / RENAME proposals key on the
+        ontology name(s) they touch (the demotion analogue). Deprecated
+        'promotion' / 'demotion' rows preserve the pre-ADR-206 routing on
+        the typed columns. Newer rows carry the relevant identifiers inside
+        the `params` JSONB.
+
         Returns:
             (open_promotion_anchor_ids, open_demotion_ontology_names)
         """
@@ -405,19 +480,58 @@ class AnnealingManager:
             try:
                 with conn.cursor() as cur:
                     cur.execute("""
-                        SELECT proposal_type, ontology_name, anchor_concept_id
+                        SELECT proposal_type, ontology_name, anchor_concept_id,
+                               params
                         FROM kg_api.annealing_proposals
-                        WHERE status IN ('pending', 'approved', 'executing')
+                        WHERE proposal_type IN (
+                                'promotion', 'CLEAVE',
+                                'demotion', 'DISSOLVE',
+                                'MERGE', 'RENAME',
+                                'NO_ACTION', 'ESCALATE'
+                              )
+                          AND proposal_kind = 'ontology'
+                          AND status IN ('pending', 'approved', 'executing')
                     """)
                     rows = cur.fetchall()
                 conn.commit()
             finally:
                 self.client.pool.putconn(conn)
-            for proposal_type, ontology_name, anchor_concept_id in rows:
-                if proposal_type == "promotion" and anchor_concept_id:
-                    open_promotions.add(anchor_concept_id)
-                elif proposal_type == "demotion" and ontology_name:
-                    open_demotions.add(ontology_name)
+            for proposal_type, ontology_name, anchor_concept_id, params in rows:
+                params = params or {}
+                if proposal_type == "promotion":
+                    if anchor_concept_id:
+                        open_promotions.add(anchor_concept_id)
+                elif proposal_type == "CLEAVE":
+                    anchor = params.get("anchor_concept_id") or anchor_concept_id
+                    if anchor:
+                        open_promotions.add(anchor)
+                elif proposal_type == "demotion":
+                    if ontology_name:
+                        open_demotions.add(ontology_name)
+                elif proposal_type == "DISSOLVE":
+                    source = params.get("source_ontology") or ontology_name
+                    if source:
+                        open_demotions.add(source)
+                elif proposal_type == "MERGE":
+                    for donor in params.get("donor_ontologies", []) or []:
+                        if donor:
+                            open_demotions.add(donor)
+                elif proposal_type == "RENAME":
+                    target_name = params.get("ontology") or ontology_name
+                    if target_name:
+                        open_demotions.add(target_name)
+                elif proposal_type in ("NO_ACTION", "ESCALATE"):
+                    # No-op outcomes are recorded against the candidate that
+                    # produced them — the anchor_concept_id column for
+                    # promotion-shaped signals, ontology_name otherwise.
+                    # Until the row goes terminal it blocks re-emission for
+                    # the same target. Epoch-windowed cooldown (the deeper
+                    # fix per failure_cooldown_epochs) is a follow-up — for
+                    # now, terminal-state gating matches every other verb.
+                    if anchor_concept_id:
+                        open_promotions.add(anchor_concept_id)
+                    elif ontology_name:
+                        open_demotions.add(ontology_name)
         except Exception as e:
             logger.error(f"Failed to read open proposals for dedup: {e}")
         return open_promotions, open_demotions
@@ -510,79 +624,116 @@ class AnnealingManager:
             return set()
 
     # =========================================================================
-    # LLM Evaluation + Proposal Storage
+    # LLM Decision + Proposal Storage (ADR-206 6-verb vocabulary)
     # =========================================================================
 
-    async def _evaluate_and_store_demotion(
-        self, candidate: Dict, epoch: int
+    async def _decide_and_store_demotion(
+        self,
+        candidate: Dict,
+        decision_service: Optional[AnnealingDecisionService],
+        context: AnnealingContext,
+        epoch: int,
     ) -> Optional[int]:
-        """Evaluate a demotion candidate with LLM and store proposal if confirmed."""
+        """Decide an action for a low-protection ontology and store the proposal."""
         name = candidate["ontology"]
 
-        # Get affinity targets for the LLM
         try:
-            affinities = self.client.get_cross_ontology_affinity(name, limit=5)
+            affinity_rows = self.client.get_cross_ontology_affinity(name, limit=5)
         except Exception:
-            affinities = []
+            affinity_rows = []
+        affinity_targets = [
+            AffinityTarget(
+                other_ontology=row.get("other_ontology", ""),
+                shared_concept_count=row.get("shared_concept_count", 0),
+                affinity_score=row.get("affinity_score", 0.0),
+            )
+            for row in (affinity_rows or [])
+        ]
 
         stats = self.client.get_ontology_stats(name)
         concept_count = stats.get("concept_count", 0) if stats else 0
 
-        if self.ai_provider:
-            decision = await llm_evaluate_demotion(
-                ontology_name=name,
-                mass_score=candidate.get("mass_score", 0),
-                coherence_score=candidate.get("coherence_score", 0),
-                protection_score=candidate.get("protection_score", 0),
-                concept_count=concept_count,
-                affinity_targets=affinities,
-                ai_provider=self.ai_provider,
+        ann_candidate = AnnealingCandidate(
+            signal_kind="low_protection_low_coherence",
+            primary_ontology=name,
+            mass_score=candidate.get("mass_score", 0),
+            coherence_score=candidate.get("coherence_score", 0),
+            protection_score=candidate.get("protection_score", 0),
+            concept_count=concept_count,
+            affinity_targets=affinity_targets,
+        )
+
+        if decision_service is None:
+            best_target = (
+                affinity_rows[0].get("other_ontology") if affinity_rows else None
             )
-        else:
-            # No AI provider — propose based on scores alone
-            best_target = affinities[0].get("other_ontology") if affinities else None
-            decision = DemotionDecision(
-                should_demote=True,
-                reasoning=f"Protection score {candidate.get('protection_score', 0):.3f} "
-                          f"below threshold (no LLM available for evaluation)",
-                absorption_target=best_target,
+            reasoning = (
+                f"Protection score {candidate.get('protection_score', 0):.3f} "
+                f"below threshold (no LLM available for evaluation)"
+            )
+            return self._store_proposal(
+                proposal_type=ProposalType.DISSOLVE.value,
+                ontology_name=name,
+                target_ontology=best_target,
+                reasoning=reasoning,
+                proposal_kind=ProposalKind.ONTOLOGY.value,
+                params={"source_ontology": name, "rationale": reasoning},
+                mass_score=candidate.get("mass_score"),
+                coherence_score=candidate.get("coherence_score"),
+                protection_score=candidate.get("protection_score"),
+                epoch=epoch,
             )
 
-        if not decision.should_demote:
-            logger.info(f"Demotion rejected for '{name}': {decision.reasoning}")
-            return None
+        decision = await decision_service.decide_async(context, ann_candidate)
+
+        # UI hint: DISSOLVE / MERGE / RENAME all touch an ontology; surface the
+        # best-affinity neighbor (if any) on target_ontology so the queue view
+        # can render a destination without parsing params. The executor reads
+        # params for actual routing.
+        ui_hint_target = (
+            affinity_rows[0].get("other_ontology") if affinity_rows else None
+        )
 
         return self._store_proposal(
-            proposal_type="demotion",
+            proposal_type=decision.proposal_type,
             ontology_name=name,
-            target_ontology=decision.absorption_target,
+            target_ontology=ui_hint_target,
             reasoning=decision.reasoning,
+            proposal_kind=decision.proposal_kind,
+            params=decision.params,
             mass_score=candidate.get("mass_score"),
             coherence_score=candidate.get("coherence_score"),
             protection_score=candidate.get("protection_score"),
             epoch=epoch,
         )
 
-    async def _evaluate_and_store_promotion(
-        self, candidate: Dict, epoch: int
+    async def _decide_and_store_promotion(
+        self,
+        candidate: Dict,
+        decision_service: Optional[AnnealingDecisionService],
+        context: AnnealingContext,
+        epoch: int,
     ) -> Optional[int]:
-        """Evaluate a promotion candidate with LLM and store proposal if confirmed."""
+        """Decide an action for a high-degree concept and store the proposal."""
         ontology_name = candidate["ontology"]
+        concept_id = candidate["concept_id"]
+        label = candidate["label"]
 
         try:
-            affinities = self.client.get_cross_ontology_affinity(ontology_name, limit=5)
+            affinity_rows = self.client.get_cross_ontology_affinity(
+                ontology_name, limit=5
+            )
         except Exception:
-            affinities = []
+            affinity_rows = []
+        affinity_targets = [
+            AffinityTarget(
+                other_ontology=row.get("other_ontology", ""),
+                shared_concept_count=row.get("shared_concept_count", 0),
+                affinity_score=row.get("affinity_score", 0.0),
+            )
+            for row in (affinity_rows or [])
+        ]
 
-        # Get neighbor labels for context
-        try:
-            # Use the concept's ontology stats for count
-            stats = self.client.get_ontology_stats(ontology_name)
-            ontology_concept_count = stats.get("concept_count", 0) if stats else 0
-        except Exception:
-            ontology_concept_count = 0
-
-        # Get neighbor labels so the LLM can assess coherence
         try:
             neighbor_rows = self.client._execute_cypher(
                 """
@@ -591,44 +742,74 @@ class AnnealingManager:
                 ORDER BY rel_count DESC
                 LIMIT 10
                 """,
-                params={"cid": candidate["concept_id"]},
+                params={"cid": concept_id},
             )
             top_neighbors = [row["label"] for row in (neighbor_rows or [])]
         except Exception:
             top_neighbors = []
 
-        if self.ai_provider:
-            decision = await llm_evaluate_promotion(
-                concept_label=candidate["label"],
-                concept_description=candidate.get("description", ""),
-                degree=candidate["degree"],
-                ontology_name=ontology_name,
-                ontology_concept_count=ontology_concept_count,
-                top_neighbors=top_neighbors,
-                affinity_targets=affinities,
-                ai_provider=self.ai_provider,
+        anchor = AnchorConcept(
+            concept_id=concept_id,
+            label=label,
+            description=candidate.get("description", "") or "",
+            degree=candidate.get("degree", 0),
+            top_neighbors=top_neighbors,
+        )
+
+        ann_candidate = AnnealingCandidate(
+            signal_kind="high_degree_concept",
+            primary_ontology=ontology_name,
+            anchor_concept=anchor,
+            affinity_targets=affinity_targets,
+        )
+
+        if decision_service is None:
+            reasoning = (
+                f"Degree {candidate.get('degree', 0)} exceeds threshold "
+                f"(no LLM available for evaluation)"
             )
-        else:
-            decision = PromotionDecision(
-                should_promote=True,
-                reasoning=f"Degree {candidate['degree']} exceeds threshold "
-                          f"(no LLM available for evaluation)",
-                suggested_name=candidate["label"],
-                suggested_description=f"Domain anchored by concept '{candidate['label']}'",
+            params = {
+                "source_ontology": ontology_name,
+                "anchor_concept_id": concept_id,
+                "cluster_selection": "first_order",
+                "cluster_params": {},
+                "target": {
+                    "kind": "new",
+                    "new_name": label,
+                    "new_description": f"Domain anchored by concept '{label}'",
+                },
+                "reasoning": reasoning,
+            }
+            return self._store_proposal(
+                proposal_type=ProposalType.CLEAVE.value,
+                ontology_name=ontology_name,
+                anchor_concept_id=concept_id,
+                reasoning=reasoning,
+                proposal_kind=ProposalKind.ONTOLOGY.value,
+                params=params,
+                suggested_name=label,
+                suggested_description=f"Domain anchored by concept '{label}'",
+                epoch=epoch,
             )
 
-        if not decision.should_promote:
-            logger.info(f"Promotion rejected for '{candidate['label']}': {decision.reasoning}")
-            return None
+        decision = await decision_service.decide_async(context, ann_candidate)
+
+        # Surface the CLEAVE target name on suggested_name (UI hint) so the
+        # queue view can render a destination without parsing params.
+        target = (decision.params or {}).get("target") or {}
+        suggested_name = target.get("new_name")
+        suggested_description = target.get("new_description")
 
         return self._store_proposal(
-            proposal_type="promotion",
+            proposal_type=decision.proposal_type,
             ontology_name=ontology_name,
-            anchor_concept_id=candidate["concept_id"],
+            anchor_concept_id=concept_id,
             reasoning=decision.reasoning,
+            proposal_kind=decision.proposal_kind,
+            params=decision.params,
+            suggested_name=suggested_name,
+            suggested_description=suggested_description,
             epoch=epoch,
-            suggested_name=decision.suggested_name,
-            suggested_description=decision.suggested_description,
         )
 
     def _store_proposal(
@@ -637,6 +818,8 @@ class AnnealingManager:
         ontology_name: str,
         reasoning: str,
         epoch: int,
+        proposal_kind: str = "ontology",
+        params: Optional[Dict[str, Any]] = None,
         anchor_concept_id: Optional[str] = None,
         target_ontology: Optional[str] = None,
         mass_score: Optional[float] = None,
@@ -645,7 +828,7 @@ class AnnealingManager:
         suggested_name: Optional[str] = None,
         suggested_description: Optional[str] = None,
     ) -> Optional[int]:
-        """Store a proposal in the annealing_proposals table. Returns proposal ID."""
+        """Insert a proposal into kg_api.annealing_proposals; return its id."""
         # Autonomous mode: born 'approved' (no human-raceable pending window).
         # hitl mode: born 'pending', awaiting human review.
         autonomous = self.automation_level == "autonomous"
@@ -660,16 +843,18 @@ class AnnealingManager:
                 with conn.cursor() as cur:
                     cur.execute("""
                         INSERT INTO kg_api.annealing_proposals
-                        (proposal_type, ontology_name, anchor_concept_id,
+                        (proposal_type, proposal_kind, params,
+                         ontology_name, anchor_concept_id,
                          target_ontology, reasoning, mass_score, coherence_score,
                          protection_score, created_at_epoch,
                          suggested_name, suggested_description,
                          status, reviewed_by, reviewed_at, reviewer_notes)
                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                                %s, %s, %s, %s)
+                                %s, %s, %s, %s, %s, %s)
                         RETURNING id
                     """, (
-                        proposal_type, ontology_name, anchor_concept_id,
+                        proposal_type, proposal_kind, Json(params or {}),
+                        ontology_name, anchor_concept_id,
                         target_ontology, reasoning, mass_score, coherence_score,
                         protection_score, epoch,
                         suggested_name, suggested_description,
@@ -697,23 +882,290 @@ class AnnealingManager:
         self, all_scores: List[Dict]
     ) -> Dict[str, Any]:
         """
-        Compute ecological ratio metrics for the annealing cycle.
+        Compute ecological ratio metrics + Bezier-derived control
+        recommendations for the annealing cycle (#249 Part 1, ADR-206 §Phase 3).
 
-        Observational only — logged and returned but does not yet adjust
-        promotion/demotion thresholds. Threshold feedback is deferred (#249).
+        Observational only — the `pressure_recommendation` block is logged
+        and returned so operators can eyeball calibration. Part 2 (#249,
+        commit 9 of this PR) turns recommendations into ADJUST_CONTROL
+        proposals when they diverge from current settings beyond a deadband.
 
         Returns:
-            {total_ontologies, total_concepts, avg_concepts_per_ontology}
+            {
+              total_ontologies, total_concepts, avg_concepts_per_ontology,
+              pressure_score, pressure_zone,
+              pressure_recommendation: {control_key: {current, recommended, zone}}
+            }
         """
         total_ontologies = len(all_scores)
-
-        # Sum concept counts already carried in scores (from scorer's stats fetch)
         total_concepts = sum(s.get("concept_count", 0) for s in all_scores)
-
         avg = total_concepts / total_ontologies if total_ontologies > 0 else 0
+
+        pressure_score, pressure_zone = _ecological_pressure(avg)
+        pressure_recommendation = _build_pressure_recommendation(
+            pressure_score=pressure_score,
+            current_options=self._load_phase3_controls(),
+        )
 
         return {
             "total_ontologies": total_ontologies,
             "total_concepts": total_concepts,
             "avg_concepts_per_ontology": avg,
+            "pressure_score": pressure_score,
+            "pressure_zone": pressure_zone,
+            "pressure_recommendation": pressure_recommendation,
         }
+
+    # Below this absolute delta the recommendation is treated as noise —
+    # emitting an ADJUST_CONTROL proposal for ±1 epoch every cycle would
+    # spam the queue and burn human review attention. Operators tuning by
+    # hand are already in the same ballpark as Bezier; only diverge when
+    # the curve has something meaningful to say.
+    _ADJUST_CONTROL_DEADBAND = 2
+
+    def _emit_control_proposals(
+        self,
+        recommendation: Dict[str, Dict[str, Any]],
+        pressure_score: float,
+        pressure_zone: str,
+        epoch: int,
+    ) -> List[int]:
+        """
+        Synthesize ADJUST_CONTROL proposals when pressure recommendations
+        exceed the deadband AND no open ADJUST_CONTROL proposal already
+        targets the same control_key.
+
+        Returns the list of stored proposal IDs (empty list when nothing
+        crosses the deadband).
+        """
+        if not recommendation:
+            return []
+
+        open_keys = self._get_open_control_keys()
+        emitted: List[int] = []
+
+        for control_key, block in recommendation.items():
+            delta = block.get("delta", 0)
+            if abs(delta) < self._ADJUST_CONTROL_DEADBAND:
+                continue
+            if control_key in open_keys:
+                logger.debug(
+                    f"Skipping ADJUST_CONTROL for '{control_key}': open proposal exists"
+                )
+                continue
+
+            defense = (
+                f"Pressure score {pressure_score:.2f} ({pressure_zone}); "
+                f"Bezier-derived recommendation diverges from current "
+                f"{block['current']} by {delta:+d}."
+            )
+            params = {
+                "control_key": control_key,
+                "current_value": str(block["current"]),
+                "recommended_value": str(block["recommended"]),
+                "defense": defense,
+            }
+            proposal_id = self._store_proposal(
+                proposal_type=ProposalType.ADJUST_CONTROL.value,
+                ontology_name="(control)",
+                reasoning=defense,
+                epoch=epoch,
+                proposal_kind=ProposalKind.CONTROL.value,
+                params=params,
+            )
+            if proposal_id:
+                emitted.append(proposal_id)
+                logger.info(
+                    f"Emitted ADJUST_CONTROL proposal #{proposal_id} for "
+                    f"'{control_key}' ({block['current']} → {block['recommended']})"
+                )
+
+        return emitted
+
+    def _get_open_control_keys(self) -> Set[str]:
+        """Return control_keys with an in-flight ADJUST_CONTROL proposal."""
+        keys: Set[str] = set()
+        try:
+            conn = self.client.pool.getconn()
+            try:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        """
+                        SELECT params->>'control_key'
+                        FROM kg_api.annealing_proposals
+                        WHERE proposal_kind = 'control'
+                          AND proposal_type = 'ADJUST_CONTROL'
+                          AND status IN ('pending', 'approved', 'executing')
+                        """
+                    )
+                    for (control_key,) in cur.fetchall():
+                        if control_key:
+                            keys.add(control_key)
+            finally:
+                self.client.pool.putconn(conn)
+        except Exception as exc:
+            logger.warning(f"Could not load open control proposals: {exc}")
+        return keys
+
+    def _load_phase3_controls(self) -> Dict[str, str]:
+        """Snapshot the tuneable Phase-3 options keyed in the recommendation."""
+        keys = (
+            "failure_cooldown_epochs",
+            "max_proposals_per_cycle",
+            "min_activity_for_cycle",
+        )
+        out: Dict[str, str] = {}
+        try:
+            conn = self.client.pool.getconn()
+            try:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        "SELECT key, value FROM kg_api.annealing_options WHERE key = ANY(%s)",
+                        (list(keys),),
+                    )
+                    for key, value in cur.fetchall():
+                        out[key] = value
+            finally:
+                self.client.pool.putconn(conn)
+        except Exception as exc:
+            logger.warning(f"Could not load Phase-3 controls for snapshot: {exc}")
+        return out
+
+    def _record_pressure_snapshot(
+        self,
+        ecological: Dict[str, Any],
+        epoch: int,
+    ) -> None:
+        """
+        Append one row to kg_api.annealing_pressure_history (#249).
+
+        Captures the post-cycle ecological state plus the Bezier-derived
+        recommendations so the admin UI can render current state and the
+        trend chart can read history. Failures are logged and swallowed —
+        a snapshot-write hiccup must never wedge the annealing cycle.
+        """
+        try:
+            conn = self.client.pool.getconn()
+            try:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        """
+                        INSERT INTO kg_api.annealing_pressure_history
+                            (epoch, total_ontologies, total_concepts,
+                             avg_concepts_per_ontology, pressure_score,
+                             pressure_zone, pressure_recommendation)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s)
+                        """,
+                        (
+                            epoch,
+                            ecological["total_ontologies"],
+                            ecological["total_concepts"],
+                            ecological["avg_concepts_per_ontology"],
+                            ecological["pressure_score"],
+                            ecological["pressure_zone"],
+                            Json(ecological["pressure_recommendation"]),
+                        ),
+                    )
+                    conn.commit()
+            finally:
+                self.client.pool.putconn(conn)
+        except Exception as exc:
+            logger.warning(f"Could not persist pressure snapshot: {exc}")
+
+
+def _ecological_pressure(avg_concepts_per_ontology: float) -> Tuple[float, str]:
+    """
+    Map current ecological ratio to a pressure score in [0,1] + zone label.
+
+    Pressure rises monotonically as the average drifts from the comfort
+    band toward emergency. Below `_PRESSURE_COMFORT_MIN` the ratio also
+    contributes pressure (over-fragmented graphs need cycle-throttling
+    too), but the recommended *direction* of adjustment differs from
+    over-pressure — see `_build_pressure_recommendation`.
+
+    Returns:
+        (pressure_score in [0,1], zone in {"comfort", "watch", "tight",
+        "over", "emergency"})
+    """
+    if avg_concepts_per_ontology <= 0:
+        return (0.0, "comfort")
+
+    if _PRESSURE_COMFORT_MIN <= avg_concepts_per_ontology <= _PRESSURE_COMFORT_MAX:
+        return (0.0, "comfort")
+
+    if avg_concepts_per_ontology < _PRESSURE_COMFORT_MIN:
+        position = (_PRESSURE_COMFORT_MIN - avg_concepts_per_ontology) / _PRESSURE_COMFORT_MIN
+        score = _PRESSURE_CURVE.get_y_for_x(max(0.0, min(1.0, position)))
+        zone = "tight" if score < 0.5 else "over"
+        return (score, zone)
+
+    if avg_concepts_per_ontology >= _PRESSURE_EMERGENCY:
+        return (1.0, "emergency")
+
+    position = (avg_concepts_per_ontology - _PRESSURE_COMFORT_MAX) / (
+        _PRESSURE_EMERGENCY - _PRESSURE_COMFORT_MAX
+    )
+    score = _PRESSURE_CURVE.get_y_for_x(max(0.0, min(1.0, position)))
+    if score < 0.3:
+        zone = "watch"
+    elif score < 0.7:
+        zone = "tight"
+    elif score < 0.9:
+        zone = "over"
+    else:
+        zone = "emergency"
+    return (score, zone)
+
+
+def _build_pressure_recommendation(
+    pressure_score: float,
+    current_options: Dict[str, str],
+) -> Dict[str, Dict[str, Any]]:
+    """
+    Derive recommended values for each Phase-3 tuneable knob.
+
+    Heuristics:
+      - failure_cooldown_epochs scales UP with pressure — back off harder
+        on the same (anchor, action, target) triple when the graph is
+        already in distress.
+      - max_proposals_per_cycle scales DOWN with pressure — throttle
+        decision volume when too much is happening.
+      - min_activity_for_cycle scales UP modestly with pressure — raise
+        the no-op floor so quiet cycles do not run when the graph is
+        already churning.
+
+    Per-control deadband logic is *not* applied here; commit 9
+    (ADJUST_CONTROL) gates emission of proposals against the deadband.
+    """
+    def _parse(key: str, default: int) -> int:
+        raw = current_options.get(key)
+        try:
+            return int(raw) if raw is not None else default
+        except (TypeError, ValueError):
+            return default
+
+    cur_cooldown = _parse("failure_cooldown_epochs", 5)
+    cur_max_prop = _parse("max_proposals_per_cycle", 10)
+    cur_min_act = _parse("min_activity_for_cycle", 1)
+
+    recommended_cooldown = round(5 + pressure_score * 10)
+    recommended_max_prop = max(2, round(10 - pressure_score * 6))
+    recommended_min_act = round(1 + pressure_score * 2)
+
+    return {
+        "failure_cooldown_epochs": {
+            "current": cur_cooldown,
+            "recommended": recommended_cooldown,
+            "delta": recommended_cooldown - cur_cooldown,
+        },
+        "max_proposals_per_cycle": {
+            "current": cur_max_prop,
+            "recommended": recommended_max_prop,
+            "delta": recommended_max_prop - cur_max_prop,
+        },
+        "min_activity_for_cycle": {
+            "current": cur_min_act,
+            "recommended": recommended_min_act,
+            "delta": recommended_min_act - cur_min_act,
+        },
+    }
