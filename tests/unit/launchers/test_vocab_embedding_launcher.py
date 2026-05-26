@@ -13,7 +13,8 @@ track progress independently; tests guard against accidentally coupling
 them.
 """
 
-from typing import Any, List, Optional, Tuple
+from contextlib import contextmanager
+from typing import Any, Iterator, List, Optional, Tuple
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -38,10 +39,20 @@ class FakeCursor:
 
     def execute(self, sql: str, params: Optional[tuple] = None):
         self.queries.append((sql, params))
-        if "vocabulary_change_counter" in sql:
-            self._next_row = (self.vocab_change_counter,)
+        # Order matters: the combined CTE query mentions both phrases, so
+        # check for the more-specific (per-component cursor) phrase first.
+        # If the launcher ever splits these back into two queries, this
+        # cursor still handles each shape.
+        if (
+            "last_processed_vocab_change_counter" in sql
+            and "vocabulary_change_counter" in sql
+        ):
+            # Combined CTE — return both columns in one row
+            self._next_row = (self.vocab_change_counter, self.last_processed)
         elif "last_processed_vocab_change_counter" in sql:
             self._next_row = (self.last_processed,)
+        elif "vocabulary_change_counter" in sql:
+            self._next_row = (self.vocab_change_counter,)
         else:
             self._next_row = None
 
@@ -68,13 +79,22 @@ class FakePool:
         pass
 
 
-def _build_launcher_with_state(
+@contextmanager
+def _patched_launcher(
     vocab_change_counter: int, last_processed: int
-) -> Tuple[VocabEmbeddingLauncher, FakeCursor]:
+) -> Iterator[Tuple[VocabEmbeddingLauncher, FakeCursor]]:
     """
     Build a VocabEmbeddingLauncher whose check_conditions reads from a
-    scripted FakeCursor. Patches AGEClient inside the launcher module
-    so we don't need a live container.
+    scripted FakeCursor, with AGEClient already patched in the launcher
+    module's namespace. Use as:
+
+        with _patched_launcher(counter=42, last_processed=10) as (launcher, cur):
+            assert launcher.check_conditions() is True
+            # `cur.queries` is available for assertions
+
+    Returns a 2-tuple so the type annotation matches reality (S1 review
+    finding) and so callers don't have to repeat the `with patch(...)`
+    boilerplate that the previous shape required at every test site.
     """
     cur = FakeCursor(vocab_change_counter, last_processed)
     fake_client = MagicMock()
@@ -83,7 +103,11 @@ def _build_launcher_with_state(
     job_queue = MagicMock()
     launcher = VocabEmbeddingLauncher(job_queue)
 
-    return launcher, cur, fake_client
+    with patch(
+        "api.app.launchers.vocab_embedding.AGEClient",
+        return_value=fake_client,
+    ):
+        yield launcher, cur
 
 
 class TestVocabEmbeddingLauncherConditions:
@@ -94,10 +118,7 @@ class TestVocabEmbeddingLauncherConditions:
         Standard case: vocab membership grew (counter went from 10 to 42),
         worker hasn't caught up — launcher fires.
         """
-        launcher, cur, fake_client = _build_launcher_with_state(
-            vocab_change_counter=42, last_processed=10
-        )
-        with patch("api.app.launchers.vocab_embedding.AGEClient", return_value=fake_client):
+        with _patched_launcher(vocab_change_counter=42, last_processed=10) as (launcher, _cur):
             assert launcher.check_conditions() is True
 
     def test_no_op_when_counter_equals_last_processed(self):
@@ -106,10 +127,7 @@ class TestVocabEmbeddingLauncherConditions:
         Launcher does nothing — this is the path it will hit most of the
         time, when no new vocab has arrived between hourly ticks.
         """
-        launcher, cur, fake_client = _build_launcher_with_state(
-            vocab_change_counter=42, last_processed=42
-        )
-        with patch("api.app.launchers.vocab_embedding.AGEClient", return_value=fake_client):
+        with _patched_launcher(vocab_change_counter=42, last_processed=42) as (launcher, _cur):
             assert launcher.check_conditions() is False
 
     def test_no_op_when_counter_below_last_processed(self):
@@ -118,10 +136,7 @@ class TestVocabEmbeddingLauncherConditions:
         last_processed got desynced). Don't fire — the worker would
         no-op anyway via its own gate.
         """
-        launcher, cur, fake_client = _build_launcher_with_state(
-            vocab_change_counter=5, last_processed=42
-        )
-        with patch("api.app.launchers.vocab_embedding.AGEClient", return_value=fake_client):
+        with _patched_launcher(vocab_change_counter=5, last_processed=42) as (launcher, _cur):
             assert launcher.check_conditions() is False
 
     def test_threshold_is_any_positive_delta(self):
@@ -130,10 +145,7 @@ class TestVocabEmbeddingLauncherConditions:
         generation per-type is cheap; we don't want to delay a single
         new type by up to an hour just to batch. Delta of 1 fires.
         """
-        launcher, cur, fake_client = _build_launcher_with_state(
-            vocab_change_counter=11, last_processed=10
-        )
-        with patch("api.app.launchers.vocab_embedding.AGEClient", return_value=fake_client):
+        with _patched_launcher(vocab_change_counter=11, last_processed=10) as (launcher, _cur):
             assert launcher.check_conditions() is True
 
     def test_queries_per_component_not_global_cursor(self):
@@ -144,24 +156,18 @@ class TestVocabEmbeddingLauncherConditions:
         global cursor; if we accidentally used the same one, the two
         launchers would reset each other's progress.
         """
-        launcher, cur, fake_client = _build_launcher_with_state(
-            vocab_change_counter=42, last_processed=10
-        )
-        with patch("api.app.launchers.vocab_embedding.AGEClient", return_value=fake_client):
+        with _patched_launcher(vocab_change_counter=42, last_processed=10) as (launcher, cur):
             launcher.check_conditions()
 
-        # Exactly one query should hit the per-component cursor
+        # The per-component cursor is queried, with the component name as a param.
+        # Count assertion intentional: regression guard against either duplicating
+        # the query (e.g., accidental re-fetch on retry) or hitting the global cursor.
         per_component_queries = [
-            sql for sql, _params in cur.queries
+            (sql, params) for sql, params in cur.queries
             if "last_processed_vocab_change_counter" in sql
         ]
         assert len(per_component_queries) == 1
-        # And it should include the component name as a parameter
-        component_params = [
-            params for sql, params in cur.queries
-            if "last_processed_vocab_change_counter" in sql
-        ]
-        assert component_params[0] == ("builtin_vocabulary_embeddings",)
+        assert per_component_queries[0][1] == ("builtin_vocabulary_embeddings",)
 
         # The global cursor function (used by epistemic launcher) is NOT called
         assert not any("get_counter_delta" in sql for sql, _ in cur.queries)

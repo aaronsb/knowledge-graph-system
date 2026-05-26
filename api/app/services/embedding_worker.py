@@ -193,6 +193,18 @@ class EmbeddingWorker:
         # Find types that need embeddings. Any active type without an
         # embedding is in scope — this covers both builtin types (seeded
         # by migrations) and LLM-discovered types.
+        #
+        # Race-window note: a new vocab row can arrive between the counter
+        # snapshot at line 168 and this fetch. That row will land in
+        # target_types AND it will have advanced the counter past our
+        # snapshot. After this run completes, last_processed gets set to
+        # the snapshot value (not the current counter), so the next launcher
+        # tick observes a residual delta of 1 and dispatches another run.
+        # That follow-up run reaches the "no types missing" no-op branch
+        # below (since the row we just processed is now embedded), advances
+        # last_processed to the new counter, and the loop closes. Net cost
+        # of the race: one extra worker dispatch per concurrent vocab add.
+        # Acceptable at hourly cadence.
         target_types = await self._get_types_without_embeddings()
 
         if not target_types:

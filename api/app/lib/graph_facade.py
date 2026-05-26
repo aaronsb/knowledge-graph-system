@@ -25,9 +25,15 @@ ConfidenceAnalyzer, both backed by the two-tier cache described below.
 ## Two-tier grounding cache
 
 Tier 1 — Polarity axis: derived from vocabulary embeddings, shared
-across all concepts. Cached against `graph_metrics.vocabulary_change_counter`.
-Invalidates when vocabulary mutates (synonym collapse, embedding
-regeneration). One axis computation amortizes across every concept.
+across all concepts. Cached against
+`graph_metrics.vocabulary_embedding_generation_counter` (migration 069).
+Invalidates when embeddings are generated or regenerated — including via
+the inline path in age_client/vocabulary.py:add_edge_type and via
+`kg admin embedding regenerate`. Distinct from
+`vocabulary_change_counter`, which tracks row membership (add/remove/
+categorize) — the polarity axis is built from embedding vectors, so
+membership changes that don't touch embeddings aren't enough to
+invalidate it. One axis computation amortizes across every concept.
 
 Tier 2 — Per-concept grounding: cached against `graph_accel.generation`.
 Each concept's grounding depends only on its own incoming edges (no
@@ -35,7 +41,9 @@ cross-concept dependency), making independent caching safe. Invalidates
 when graph_accel_invalidate() bumps the generation after ingestion,
 edits, or vocabulary merges. A "warm cache" call (all requested
 concepts already cached at the current generation) returns without
-acquiring a pool connection — see #278 Phase 0 short-circuit.
+acquiring a pool connection — see #278 Phase 0 short-circuit. Staleness
+in the warm path is bounded by the next cold-path call in this process,
+not by wall-clock time.
 
 ## Connection architecture
 

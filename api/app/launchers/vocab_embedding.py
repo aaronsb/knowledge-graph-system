@@ -80,21 +80,27 @@ class VocabEmbeddingLauncher(JobLauncher):
             conn = client.pool.getconn()
             try:
                 with conn.cursor() as cur:
+                    # Read both counters in one round-trip. Two separate
+                    # SELECTs would be transactionally inconsistent if the
+                    # membership counter advanced between them; the CTE keeps
+                    # the comparison atomic on the read side and saves a
+                    # round-trip on every hourly tick.
                     cur.execute(
-                        "SELECT counter FROM graph_metrics "
-                        "WHERE metric_name = 'vocabulary_change_counter'"
-                    )
-                    row = cur.fetchone()
-                    current_counter = int(row[0]) if row else 0
-
-                    cur.execute(
-                        "SELECT last_processed_vocab_change_counter "
-                        "FROM kg_api.system_initialization_status "
-                        "WHERE component = %s",
+                        """
+                        SELECT
+                            (SELECT counter FROM graph_metrics
+                             WHERE metric_name = 'vocabulary_change_counter')
+                                AS current_counter,
+                            (SELECT last_processed_vocab_change_counter
+                             FROM kg_api.system_initialization_status
+                             WHERE component = %s)
+                                AS last_processed
+                        """,
                         (self.component,)
                     )
                     row = cur.fetchone()
-                    last_processed = int(row[0]) if row else 0
+                    current_counter = int(row[0]) if row and row[0] is not None else 0
+                    last_processed = int(row[1]) if row and row[1] is not None else 0
 
                 if current_counter > last_processed:
                     logger.info(
