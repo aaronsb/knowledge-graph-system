@@ -331,7 +331,14 @@ async def list_ontologies(
 
 
 def _row_to_proposal(row) -> AnnealingProposal:
-    """Map a RealDictCursor row to a AnnealingProposal model."""
+    """
+    Map a RealDictCursor row to an AnnealingProposal.
+
+    Routes through AnnealingProposal.from_row so historical `promotion` /
+    `demotion` rows surface as their canonical ADR-206 verbs (CLEAVE /
+    DISSOLVE) in API responses. JSONB columns are decoded if the driver
+    returned them as raw strings.
+    """
     execution_result_raw = row.get("execution_result")
     if isinstance(execution_result_raw, str):
         try:
@@ -339,32 +346,41 @@ def _row_to_proposal(row) -> AnnealingProposal:
         except (ValueError, TypeError):
             pass
 
-    return AnnealingProposal(
-        id=row["id"],
-        proposal_type=row["proposal_type"],
-        ontology_name=row["ontology_name"],
-        anchor_concept_id=row.get("anchor_concept_id"),
-        target_ontology=row.get("target_ontology"),
-        reasoning=row["reasoning"],
-        mass_score=float(row["mass_score"]) if row.get("mass_score") is not None else None,
-        coherence_score=float(row["coherence_score"]) if row.get("coherence_score") is not None else None,
-        protection_score=float(row["protection_score"]) if row.get("protection_score") is not None else None,
-        status=row["status"],
-        created_at=row["created_at"],
-        created_at_epoch=row.get("created_at_epoch", 0),
-        reviewed_at=row.get("reviewed_at"),
-        reviewed_by=row.get("reviewed_by"),
-        reviewer_notes=row.get("reviewer_notes"),
-        executed_at=row.get("executed_at"),
-        execution_result=execution_result_raw,
-        suggested_name=row.get("suggested_name"),
-        suggested_description=row.get("suggested_description"),
-    )
+    params_raw = row.get("params")
+    if isinstance(params_raw, str):
+        try:
+            params_raw = _json.loads(params_raw)
+        except (ValueError, TypeError):
+            params_raw = None
+
+    return AnnealingProposal.from_row({
+        "id": row["id"],
+        "proposal_type": row["proposal_type"],
+        "proposal_kind": row.get("proposal_kind", "ontology"),
+        "ontology_name": row["ontology_name"],
+        "anchor_concept_id": row.get("anchor_concept_id"),
+        "target_ontology": row.get("target_ontology"),
+        "reasoning": row["reasoning"],
+        "params": params_raw,
+        "mass_score": float(row["mass_score"]) if row.get("mass_score") is not None else None,
+        "coherence_score": float(row["coherence_score"]) if row.get("coherence_score") is not None else None,
+        "protection_score": float(row["protection_score"]) if row.get("protection_score") is not None else None,
+        "status": row["status"],
+        "created_at": row["created_at"],
+        "created_at_epoch": row.get("created_at_epoch", 0),
+        "reviewed_at": row.get("reviewed_at"),
+        "reviewed_by": row.get("reviewed_by"),
+        "reviewer_notes": row.get("reviewer_notes"),
+        "executed_at": row.get("executed_at"),
+        "execution_result": execution_result_raw,
+        "suggested_name": row.get("suggested_name"),
+        "suggested_description": row.get("suggested_description"),
+    })
 
 @router.get("/proposals", response_model=AnnealingProposalListResponse)
 async def list_proposals(
     status: str = QueryParam(None, description="Filter by status: pending, approved, rejected, expired"),
-    proposal_type: str = QueryParam(None, description="Filter by type: promotion, demotion"),
+    proposal_type: str = QueryParam(None, description="Filter by type: CLEAVE, DISSOLVE, MERGE, RENAME, NO_ACTION, ESCALATE, ADJUST_CONTROL (legacy: promotion, demotion)"),
     ontology: str = QueryParam(None, description="Filter by ontology name"),
     limit: int = QueryParam(50, ge=1, le=200),
     current_user: CurrentUser = None,

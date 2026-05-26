@@ -1174,7 +1174,14 @@ class TestListProposalsRoute:
         assert data["proposals"] == []
 
     def test_list_with_proposals(self, api_client, auth_headers_user):
-        """List returns proposal data."""
+        """
+        List normalizes legacy proposal_type names on read (ADR-206).
+
+        Historical rows stored as `demotion`/`promotion` surface as their
+        canonical 6-verb vocabulary in API responses (DISSOLVE / CLEAVE).
+        The alias delta for `promotion` injects the implicit
+        source_ontology='primordial' into params.
+        """
         client = mock_proposals_cursor([SAMPLE_PROPOSAL_ROW, SAMPLE_PROMOTION_ROW])
 
         with patch('api.app.routes.ontology.get_age_client', return_value=client):
@@ -1183,8 +1190,9 @@ class TestListProposalsRoute:
         assert response.status_code == 200
         data = response.json()
         assert data["count"] == 2
-        assert data["proposals"][0]["proposal_type"] == "demotion"
-        assert data["proposals"][1]["proposal_type"] == "promotion"
+        assert data["proposals"][0]["proposal_type"] == "DISSOLVE"
+        assert data["proposals"][1]["proposal_type"] == "CLEAVE"
+        assert data["proposals"][1]["params"] == {"source_ontology": "primordial"}
 
     def test_list_filter_by_status(self, api_client, auth_headers_user):
         """Status filter is passed to query."""
@@ -1214,7 +1222,8 @@ class TestGetProposalRoute:
         assert response.status_code == 200
         data = response.json()
         assert data["id"] == 1
-        assert data["proposal_type"] == "demotion"
+        # Legacy 'demotion' surfaces as DISSOLVE per ADR-206 (#416)
+        assert data["proposal_type"] == "DISSOLVE"
         assert data["ontology_name"] == "test-ontology"
         assert data["target_ontology"] == "parent-ontology"
         assert data["status"] == "pending"
