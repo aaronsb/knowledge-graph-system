@@ -16,6 +16,7 @@ from typing import Dict, Any, List, Optional, Set, Tuple
 from psycopg2.extras import Json
 
 from api.app.lib.ontology_scorer import OntologyScorer
+from api.app.lib.aggressiveness_curve import AGGRESSIVENESS_CURVES
 from .annealing_decision_service import (
     AnnealingDecisionService,
     AnnealingContext,
@@ -27,6 +28,19 @@ from .annealing_decision_service import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+# Ecological-pressure thresholds (avg concepts per ontology). The healthy
+# band is empirically wide — operators with different ingestion volumes hit
+# very different "comfortable" ratios. These defaults match ADR-200 §9's
+# resolution-limit discussion: below ~10 the graph is over-fragmented
+# (many stubs), above ~80 ontologies are bloated and need CLEAVE. The
+# Bezier-derived score smoothly interpolates between these endpoints
+# rather than imposing sharp cutoffs.
+_PRESSURE_COMFORT_MIN = 10.0
+_PRESSURE_COMFORT_MAX = 80.0
+_PRESSURE_EMERGENCY = 150.0
+_PRESSURE_CURVE = AGGRESSIVENESS_CURVES["aggressive"]
 
 
 class AnnealingManager:
@@ -95,8 +109,18 @@ class AnnealingManager:
         ecological = self._get_ecological_snapshot(all_scores)
         logger.info(
             f"Ecological snapshot: {ecological['total_ontologies']} ontologies, "
-            f"~{ecological['avg_concepts_per_ontology']:.0f} concepts/ontology"
+            f"~{ecological['avg_concepts_per_ontology']:.0f} concepts/ontology, "
+            f"pressure={ecological['pressure_score']:.2f} ({ecological['pressure_zone']})"
         )
+        # Surface Bezier-derived control recommendations for operator review
+        # (commit 9 turns these into ADJUST_CONTROL proposals).
+        for key, block in ecological["pressure_recommendation"].items():
+            if block["delta"] != 0:
+                logger.info(
+                    f"  pressure_recommendation: {key} "
+                    f"{block['current']} → {block['recommended']} "
+                    f"(delta {block['delta']:+d})"
+                )
 
         # 2. Recompute centroids
         centroids_updated = self.scorer.recompute_all_centroids()
@@ -827,23 +851,158 @@ class AnnealingManager:
         self, all_scores: List[Dict]
     ) -> Dict[str, Any]:
         """
-        Compute ecological ratio metrics for the annealing cycle.
+        Compute ecological ratio metrics + Bezier-derived control
+        recommendations for the annealing cycle (#249 Part 1, ADR-206 §Phase 3).
 
-        Observational only — logged and returned but does not yet adjust
-        promotion/demotion thresholds. Threshold feedback is deferred (#249).
+        Observational only — the `pressure_recommendation` block is logged
+        and returned so operators can eyeball calibration. Part 2 (#249,
+        commit 9 of this PR) turns recommendations into ADJUST_CONTROL
+        proposals when they diverge from current settings beyond a deadband.
 
         Returns:
-            {total_ontologies, total_concepts, avg_concepts_per_ontology}
+            {
+              total_ontologies, total_concepts, avg_concepts_per_ontology,
+              pressure_score, pressure_zone,
+              pressure_recommendation: {control_key: {current, recommended, zone}}
+            }
         """
         total_ontologies = len(all_scores)
-
-        # Sum concept counts already carried in scores (from scorer's stats fetch)
         total_concepts = sum(s.get("concept_count", 0) for s in all_scores)
-
         avg = total_concepts / total_ontologies if total_ontologies > 0 else 0
+
+        pressure_score, pressure_zone = _ecological_pressure(avg)
+        pressure_recommendation = _build_pressure_recommendation(
+            pressure_score=pressure_score,
+            current_options=self._load_phase3_controls(),
+        )
 
         return {
             "total_ontologies": total_ontologies,
             "total_concepts": total_concepts,
             "avg_concepts_per_ontology": avg,
+            "pressure_score": pressure_score,
+            "pressure_zone": pressure_zone,
+            "pressure_recommendation": pressure_recommendation,
         }
+
+    def _load_phase3_controls(self) -> Dict[str, str]:
+        """Snapshot the tuneable Phase-3 options keyed in the recommendation."""
+        keys = (
+            "failure_cooldown_epochs",
+            "max_proposals_per_cycle",
+            "min_activity_for_cycle",
+        )
+        out: Dict[str, str] = {}
+        try:
+            conn = self.client.pool.getconn()
+            try:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        "SELECT key, value FROM kg_api.annealing_options WHERE key = ANY(%s)",
+                        (list(keys),),
+                    )
+                    for key, value in cur.fetchall():
+                        out[key] = value
+            finally:
+                self.client.pool.putconn(conn)
+        except Exception as exc:
+            logger.warning(f"Could not load Phase-3 controls for snapshot: {exc}")
+        return out
+
+
+def _ecological_pressure(avg_concepts_per_ontology: float) -> Tuple[float, str]:
+    """
+    Map current ecological ratio to a pressure score in [0,1] + zone label.
+
+    Pressure rises monotonically as the average drifts from the comfort
+    band toward emergency. Below `_PRESSURE_COMFORT_MIN` the ratio also
+    contributes pressure (over-fragmented graphs need cycle-throttling
+    too), but the recommended *direction* of adjustment differs from
+    over-pressure — see `_build_pressure_recommendation`.
+
+    Returns:
+        (pressure_score in [0,1], zone in {"comfort", "watch", "tight",
+        "over", "emergency"})
+    """
+    if avg_concepts_per_ontology <= 0:
+        return (0.0, "comfort")
+
+    if _PRESSURE_COMFORT_MIN <= avg_concepts_per_ontology <= _PRESSURE_COMFORT_MAX:
+        return (0.0, "comfort")
+
+    if avg_concepts_per_ontology < _PRESSURE_COMFORT_MIN:
+        position = (_PRESSURE_COMFORT_MIN - avg_concepts_per_ontology) / _PRESSURE_COMFORT_MIN
+        score = _PRESSURE_CURVE.get_y_for_x(max(0.0, min(1.0, position)))
+        zone = "tight" if score < 0.5 else "over"
+        return (score, zone)
+
+    if avg_concepts_per_ontology >= _PRESSURE_EMERGENCY:
+        return (1.0, "emergency")
+
+    position = (avg_concepts_per_ontology - _PRESSURE_COMFORT_MAX) / (
+        _PRESSURE_EMERGENCY - _PRESSURE_COMFORT_MAX
+    )
+    score = _PRESSURE_CURVE.get_y_for_x(max(0.0, min(1.0, position)))
+    if score < 0.3:
+        zone = "watch"
+    elif score < 0.7:
+        zone = "tight"
+    elif score < 0.9:
+        zone = "over"
+    else:
+        zone = "emergency"
+    return (score, zone)
+
+
+def _build_pressure_recommendation(
+    pressure_score: float,
+    current_options: Dict[str, str],
+) -> Dict[str, Dict[str, Any]]:
+    """
+    Derive recommended values for each Phase-3 tuneable knob.
+
+    Heuristics:
+      - failure_cooldown_epochs scales UP with pressure — back off harder
+        on the same (anchor, action, target) triple when the graph is
+        already in distress.
+      - max_proposals_per_cycle scales DOWN with pressure — throttle
+        decision volume when too much is happening.
+      - min_activity_for_cycle scales UP modestly with pressure — raise
+        the no-op floor so quiet cycles do not run when the graph is
+        already churning.
+
+    Per-control deadband logic is *not* applied here; commit 9
+    (ADJUST_CONTROL) gates emission of proposals against the deadband.
+    """
+    def _parse(key: str, default: int) -> int:
+        raw = current_options.get(key)
+        try:
+            return int(raw) if raw is not None else default
+        except (TypeError, ValueError):
+            return default
+
+    cur_cooldown = _parse("failure_cooldown_epochs", 5)
+    cur_max_prop = _parse("max_proposals_per_cycle", 10)
+    cur_min_act = _parse("min_activity_for_cycle", 1)
+
+    recommended_cooldown = round(5 + pressure_score * 10)
+    recommended_max_prop = max(2, round(10 - pressure_score * 6))
+    recommended_min_act = round(1 + pressure_score * 2)
+
+    return {
+        "failure_cooldown_epochs": {
+            "current": cur_cooldown,
+            "recommended": recommended_cooldown,
+            "delta": recommended_cooldown - cur_cooldown,
+        },
+        "max_proposals_per_cycle": {
+            "current": cur_max_prop,
+            "recommended": recommended_max_prop,
+            "delta": recommended_max_prop - cur_max_prop,
+        },
+        "min_activity_for_cycle": {
+            "current": cur_min_act,
+            "recommended": recommended_min_act,
+            "delta": recommended_min_act - cur_min_act,
+        },
+    }
