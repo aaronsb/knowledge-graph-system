@@ -865,8 +865,13 @@ class QueryMixin:
 
         # --- Phase 2: process misses in chunks ---
         # Each chunk gets its own connection, keeping IN-clause lists
-        # small and releasing connections between chunks.
+        # small and releasing connections between chunks. Per-chunk failures
+        # are logged and isolated (#281): the failing chunk's concepts default
+        # to 0.0 in the result (matching per-concept failure behavior at
+        # calculate_grounding_strength_semantic line 772), but earlier and
+        # later chunks' computed results survive and are cached.
         total_edges = 0
+        failed_chunks: List[List[str]] = []
         for i in range(0, len(misses), BATCH_CHUNK_SIZE):
             chunk = misses[i:i + BATCH_CHUNK_SIZE]
             conn = self.pool.getconn()
@@ -974,19 +979,34 @@ class QueryMixin:
                             _grounding_cache[(cid, graph_gen)] = grounding
 
             except Exception as e:
-                logger.error(
-                    f"Batch grounding chunk failed: {e}"
+                # ADR-201 Phase 5f #281: per-chunk failure isolation.
+                # Earlier chunks already wrote their results to _grounding_cache
+                # and the result dict above, so they survive this chunk's
+                # failure. The failing chunk's concept_ids stay at their
+                # initial 0.0 default (set at line 823) — same value the
+                # per-concept method returns on error, so callers can't tell
+                # the difference between "computed as 0.0" and "failed and
+                # defaulted." Concept IDs are logged so operators can dig
+                # into transient batch failures without losing the whole
+                # response.
+                logger.warning(
+                    f"Batch grounding chunk failed ({len(chunk)} concepts "
+                    f"affected, defaulting to 0.0): {e}. "
+                    f"Failed concept_ids: {chunk}"
                 )
-                raise
+                failed_chunks.append(chunk)
             finally:
                 self.pool.putconn(conn)
 
+        successful_chunks = (
+            (len(misses) + BATCH_CHUNK_SIZE - 1) // BATCH_CHUNK_SIZE
+            - len(failed_chunks)
+        )
         logger.debug(
             f"Grounding batch: {len(concept_ids)} concepts, "
             f"{len(concept_ids) - len(misses)} cached, "
-            f"{len(misses)} computed in "
-            f"{(len(misses) + BATCH_CHUNK_SIZE - 1) // BATCH_CHUNK_SIZE} "
-            f"chunks ({total_edges} edges total)"
+            f"{len(misses)} computed in {successful_chunks} chunks "
+            f"({len(failed_chunks)} chunks failed, {total_edges} edges total)"
         )
 
         return result

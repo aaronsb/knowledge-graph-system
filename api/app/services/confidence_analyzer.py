@@ -305,6 +305,7 @@ class ConfidenceAnalyzer:
             'relationship_type_diversity': 0.0,
         }
 
+        failed_chunks: List[List[str]] = []
         for i in range(0, len(misses), BATCH_CHUNK_SIZE):
             chunk = misses[i:i + BATCH_CHUNK_SIZE]
             conn = self.client.pool.getconn()
@@ -342,17 +343,28 @@ class ConfidenceAnalyzer:
                             _confidence_cache[(cid, graph_gen)] = entry
 
             except Exception as e:
-                logger.error(f"Batch confidence chunk failed: {e}")
-                raise
+                # ADR-201 Phase 5f #281: per-chunk failure isolation.
+                # Mirror of the grounding batch path in query.py — earlier
+                # chunks' results are already in `result` and the cache, so
+                # they survive. Failed chunk's concept_ids are absent from
+                # the result dict; callers using .get(cid, {}) get an empty
+                # signals shape (same as a legitimately-no-signals concept).
+                logger.warning(
+                    f"Batch confidence chunk failed ({len(chunk)} concepts "
+                    f"affected, no entry returned): {e}. "
+                    f"Failed concept_ids: {chunk}"
+                )
+                failed_chunks.append(chunk)
             finally:
                 self.client.pool.putconn(conn)
 
+        total_chunks = (len(misses) + BATCH_CHUNK_SIZE - 1) // BATCH_CHUNK_SIZE
+        successful_chunks = total_chunks - len(failed_chunks)
         logger.debug(
             f"Confidence batch: {len(concept_ids)} concepts, "
             f"{len(concept_ids) - len(misses)} cached, "
-            f"{len(misses)} computed in "
-            f"{(len(misses) + BATCH_CHUNK_SIZE - 1) // BATCH_CHUNK_SIZE} "
-            f"chunks"
+            f"{len(misses)} computed in {successful_chunks} chunks "
+            f"({len(failed_chunks)} chunks failed)"
         )
 
         return result
