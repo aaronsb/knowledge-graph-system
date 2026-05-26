@@ -389,18 +389,22 @@ const relatedCommand = setCommandHelp(
       .option('-t, --types <types...>', 'Filter by relationship types (IMPLIES, ENABLES, SUPPORTS, etc. - see kg vocab list)')
       .option('--include-epistemic <statuses...>', 'Only include relationships with these epistemic statuses (ADR-065): AFFIRMATIVE, CONTESTED, CONTRADICTORY, HISTORICAL')
       .option('--exclude-epistemic <statuses...>', 'Exclude relationships with these epistemic statuses (ADR-065)')
+      .option('--no-grounding', 'Disable grounding strength calculation (ADR-044 probabilistic truth convergence) for faster results')
       .option('--json', 'Output raw JSON instead of formatted text for scripting')
       .action(async (conceptId, options, command) => {
         try {
           const client = createClientFromEnv();
           const jsonOutput = options.json || command.parent?.opts()?.json;
+          const includeGrounding = options.grounding !== false; // Default: true
           const result = await client.findRelatedConcepts({
             concept_id: conceptId,
             max_depth: parseInt(options.depth),
             relationship_types: options.types,
             // ADR-065: Epistemic status filtering
             include_epistemic_status: options.includeEpistemic,
-            exclude_epistemic_status: options.excludeEpistemic
+            exclude_epistemic_status: options.excludeEpistemic,
+            // ADR-044: hydrate grounding for parity with search/connect (#280)
+            include_grounding: includeGrounding,
           });
 
           // JSON output mode
