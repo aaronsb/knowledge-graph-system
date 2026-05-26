@@ -110,17 +110,18 @@ When deploying the knowledge graph system for the first time, you need to initia
 
 ### Prerequisites
 
-1. PostgreSQL container running: `./scripts/services/start-database.sh`
-2. API server running: `./scripts/services/start-api.sh`
-3. kg CLI installed: `cd client && ./install.sh`
+1. Platform running: `./operator.sh start` (PostgreSQL + API)
+2. kg CLI installed: `cd cli && npm run build && ./install.sh`
 
 ### Initialization Steps
 
-**Run the initialization script:**
+**Run the platform initializer (creates admin user, generates secrets, sets defaults):**
 
 ```bash
-./scripts/setup/initialize-platform.sh
+./operator.sh init
 ```
+
+To reset the admin password later, run `./operator.sh admin --username admin --password '<new password>'` from the operator container, or use the password-reset script described in [04-PASSWORD_RECOVERY.md](04-PASSWORD_RECOVERY.md).
 
 **What this does:**
 
@@ -172,7 +173,7 @@ Admin Credentials:
   Password: (the password you just set)
 
 Next Steps:
-  1. Restart API server: ./scripts/services/stop-api.sh && ./scripts/services/start-api.sh
+  1. Restart API server: ./operator.sh restart api
   2. Login: kg login
   3. View users: kg admin user list
 ```
@@ -441,7 +442,8 @@ kg admin user update 3 --role admin
 kg admin user update 3 --password
 
 # Or use the out-of-band reset script
-./scripts/setup/initialize-platform.sh  # Select existing admin user
+# From the operator container (./operator.sh shell), then:
+configure.py admin --username admin --password '<new password>'
 ```
 
 ---
@@ -480,13 +482,19 @@ kg login
 
 ### Forgot Admin Password
 
-Use the initialization script to reset:
+Use the password reset script (bypasses the API; talks directly to PostgreSQL):
 
 ```bash
-./scripts/setup/initialize-platform.sh
+./operator/admin/reset-password.sh
 ```
 
-The script detects existing admin user and offers password reset.
+Or from inside the operator container shell (`./operator.sh shell`):
+
+```bash
+configure.py admin --username admin --password '<new password>'
+```
+
+See [04-PASSWORD_RECOVERY.md](04-PASSWORD_RECOVERY.md) for details.
 
 ### OAuth Client Not Working
 
@@ -524,7 +532,7 @@ tail -f ~/Library/Logs/Claude/mcp*.log
 |-------|-------|-----|
 | `Invalid client credentials` | Wrong client_id or client_secret | Verify credentials in Claude Desktop config |
 | `Client not found` | OAuth client was revoked | Create new client: `kg oauth create-mcp` |
-| `401 Unauthorized` | API server not running | Start API: `./scripts/services/start-api.sh` |
+| `401 Unauthorized` | API server not running | Start platform: `./operator.sh start` |
 
 ---
 

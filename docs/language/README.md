@@ -79,7 +79,7 @@ and execute them. See [security.md](security.md) for the full trust model.
 Client ──> POST /programs/validate ──> Validation result (dry-run)
 Client ──> POST /programs          ──> Validate + store (notarize)
 Client ──> GET  /programs/{id}     ──> Retrieve notarized program
-Client ──> Execute locally         ──> Per-statement API calls
+Client ──> POST /programs/execute  ──> Server-side execution (inline AST or by program_id)
 ```
 
 ## Executable Specification
@@ -90,7 +90,7 @@ or the full platform:
 ```bash
 # Models: api/app/models/program.py
 # Validator: api/app/services/program_validator.py
-# Tests (105 cases): tests/unit/test_program_validation.py
+# Tests (109 cases): tests/unit/test_program_validation.py
 
 # Run in container
 docker exec kg-api-dev pytest tests/unit/test_program_validation.py -v

@@ -8,25 +8,26 @@
 
 ## Overview
 
-Semantic role filtering allows you to query relationships based on their **epistemic status** - a classification derived from grounding patterns that indicates whether a relationship type tends to be affirmative, contested, contradictory, or historical.
+Semantic role filtering allows you to query relationships based on their **epistemic status** - a classification derived from grounding patterns that indicates whether a relationship type tends to be well-grounded, mixed, weakly supported, contradicted, or historical.
 
 This enables powerful dialectical queries such as:
-- "Show me only high-confidence relationships" (AFFIRMATIVE)
-- "Show me points of tension and contradiction" (CONTESTED + CONTRADICTORY)
+- "Show me only high-confidence relationships" (WELL_GROUNDED)
+- "Show me points of tension and contradiction" (MIXED_GROUNDING + CONTRADICTED)
 - "Exclude outdated relationships" (exclude HISTORICAL)
-- "Find relationships that are actively debated" (CONTESTED only)
+- "Find relationships with mixed evidence" (MIXED_GROUNDING only)
 
 ### Epistemic Status Classifications
 
-Roles are automatically detected by measuring grounding patterns across vocabulary types:
+Statuses are automatically detected by measuring grounding patterns across vocabulary types:
 
-| Role | Avg Grounding | Meaning | Example Use Case |
-|------|---------------|---------|------------------|
-| **AFFIRMATIVE** | > 0.8 | High-confidence, well-supported relationships | Building consensus views, finding established connections |
-| **CONTESTED** | 0.2 to 0.8 | Mixed grounding, actively debated | Exploring uncertainty, finding areas needing investigation |
-| **CONTRADICTORY** | < -0.5 | Negative grounding, oppositional | Dialectical analysis, identifying conflicts |
+| Status | Avg Grounding | Meaning | Example Use Case |
+|--------|---------------|---------|------------------|
+| **WELL_GROUNDED** | > 0.8 | High-confidence, well-supported relationships | Building consensus views, finding established connections |
+| **MIXED_GROUNDING** | 0.15 to 0.8 | Mixed grounding, variable validation | Exploring uncertainty, finding areas needing investigation |
+| **WEAK_GROUNDING** | 0.0 to 0.15 | Weak positive grounding, emerging evidence | Spotting developing patterns |
+| **POORLY_GROUNDED** | -0.5 to 0.0 | Weak negative grounding, uncertain | Liminal zone; cautious inclusion |
+| **CONTRADICTED** | < -0.5 | Strong negative grounding, refuted | Dialectical analysis, identifying conflicts |
 | **HISTORICAL** | N/A | Temporal vocabulary (detected by name) | Time-based filtering, evolution tracking |
-| **UNCLASSIFIED** | Other | Doesn't fit known patterns | Default fallback |
 | **INSUFFICIENT_DATA** | N/A | < 3 measurements | Need more data |
 
 ### How It Works
@@ -67,11 +68,11 @@ Epistemic Status Measurement Report
 =================================
 
 Summary:
-  CONTESTED: 1
-  UNCLASSIFIED: 6
+  MIXED_GROUNDING: 1
+  POORLY_GROUNDED: 6
   INSUFFICIENT_DATA: 28
 
-CONTESTED (1)
+MIXED_GROUNDING (1)
   • ENABLES
     8 measurements from 8/8 edges | avg grounding: +0.232
 
@@ -82,7 +83,7 @@ CONTESTED (1)
 
 ### Step 2: Verify Storage
 
-Check that epistemic statuss were stored:
+Check that epistemic statuses were stored:
 
 ```python
 from api.app.lib.age_client import AGEClient
@@ -90,7 +91,7 @@ from api.app.lib.age_client import AGEClient
 client = AGEClient()
 facade = client.facade
 
-# List vocabulary types with epistemic statuss
+# List vocabulary types with epistemic statuses
 vocab_types = facade.match_vocab_types(
     where="v.epistemic_status IS NOT NULL"
 )
@@ -102,9 +103,9 @@ for vt in vocab_types:
 
 **Example Output:**
 ```
-ENABLES: CONTESTED (avg: +0.232)
-SUPPORTS: UNCLASSIFIED (avg: +0.165)
-INFLUENCES: UNCLASSIFIED (avg: -0.049)
+ENABLES: MIXED_GROUNDING (avg: +0.232)
+SUPPORTS: POORLY_GROUNDED (avg: +0.165)
+INFLUENCES: POORLY_GROUNDED (avg: -0.049)
 ```
 
 ---
@@ -119,9 +120,9 @@ from api.app.lib.age_client import AGEClient
 client = AGEClient()
 facade = client.facade
 
-# Include only AFFIRMATIVE relationships (high confidence)
+# Include only WELL_GROUNDED relationships (high confidence)
 affirmative = facade.match_concept_relationships(
-    include_epistemic_status=["AFFIRMATIVE"],
+    include_epistemic_status=["WELL_GROUNDED"],
     limit=10
 )
 
@@ -137,18 +138,18 @@ current = facade.match_concept_relationships(
 ```python
 # Explore areas of tension and contradiction
 dialectical = facade.match_concept_relationships(
-    include_epistemic_status=["CONTESTED", "CONTRADICTORY"],
+    include_epistemic_status=["MIXED_GROUNDING", "CONTRADICTED"],
     limit=20
 )
 
 # Find well-established connections (thesis)
 thesis = facade.match_concept_relationships(
-    include_epistemic_status=["AFFIRMATIVE"]
+    include_epistemic_status=["WELL_GROUNDED"]
 )
 
 # Find points of disagreement (antithesis)
 antithesis = facade.match_concept_relationships(
-    include_epistemic_status=["CONTESTED", "CONTRADICTORY"]
+    include_epistemic_status=["MIXED_GROUNDING", "CONTRADICTED"]
 )
 ```
 
@@ -158,14 +159,14 @@ antithesis = facade.match_concept_relationships(
 # Specific relationship type + epistemic status
 enables_contested = facade.match_concept_relationships(
     rel_types=["ENABLES"],
-    include_epistemic_status=["CONTESTED"],
+    include_epistemic_status=["MIXED_GROUNDING"],
     limit=10
 )
 
 # Multiple types + role filter
 causal_affirmative = facade.match_concept_relationships(
     rel_types=["ENABLES", "CAUSES", "REQUIRES"],
-    include_epistemic_status=["AFFIRMATIVE"]
+    include_epistemic_status=["WELL_GROUNDED"]
 )
 
 # Type filter + exclude historical
@@ -196,9 +197,9 @@ all_rels = facade.match_concept_relationships(limit=100)
 **Goal:** Find well-established, high-confidence connections
 
 ```python
-# Get only AFFIRMATIVE relationships
+# Get only WELL_GROUNDED relationships
 consensus = facade.match_concept_relationships(
-    include_epistemic_status=["AFFIRMATIVE"]
+    include_epistemic_status=["WELL_GROUNDED"]
 )
 
 # Build consensus graph
@@ -223,7 +224,7 @@ for rel in consensus:
 ```python
 # Find contested relationships (mixed evidence)
 contested = facade.match_concept_relationships(
-    include_epistemic_status=["CONTESTED"],
+    include_epistemic_status=["MIXED_GROUNDING"],
     where="r.confidence > 0.5"  # Still reasonably confident despite mixed grounding
 )
 
@@ -250,12 +251,12 @@ for rel in contested:
 ```python
 # Thesis: Established connections
 thesis_rels = facade.match_concept_relationships(
-    include_epistemic_status=["AFFIRMATIVE"]
+    include_epistemic_status=["WELL_GROUNDED"]
 )
 
 # Antithesis: Points of contradiction
 antithesis_rels = facade.match_concept_relationships(
-    include_epistemic_status=["CONTESTED", "CONTRADICTORY"]
+    include_epistemic_status=["MIXED_GROUNDING", "CONTRADICTED"]
 )
 
 # Analyze dialectical tension
@@ -303,19 +304,19 @@ print(f"Historical relationships: {len(historical_context)}")
 ```python
 # High confidence + high grounding
 reliable = facade.match_concept_relationships(
-    include_epistemic_status=["AFFIRMATIVE"],
+    include_epistemic_status=["WELL_GROUNDED"],
     where="r.confidence > 0.8"
 )
 
 # Mixed evidence but still valuable
 uncertain = facade.match_concept_relationships(
-    include_epistemic_status=["CONTESTED"],
+    include_epistemic_status=["MIXED_GROUNDING"],
     where="r.confidence > 0.5"
 )
 
 # Low confidence relationships (may need review)
 low_confidence = facade.match_concept_relationships(
-    include_epistemic_status=["UNCLASSIFIED"],
+    include_epistemic_status=["POORLY_GROUNDED"],
     where="r.confidence < 0.5"
 )
 ```
@@ -336,7 +337,7 @@ low_confidence = facade.match_concept_relationships(
 def analyze_concept_roles(concept_id: str):
     """Analyze epistemic status distribution for a specific concept."""
 
-    roles = ["AFFIRMATIVE", "CONTESTED", "CONTRADICTORY", "HISTORICAL"]
+    roles = ["WELL_GROUNDED", "MIXED_GROUNDING", "CONTRADICTED", "HISTORICAL"]
     role_counts = {}
 
     for role in roles:
@@ -350,9 +351,9 @@ def analyze_concept_roles(concept_id: str):
 
 # Example
 counts = analyze_concept_roles("sha256:abc123...")
-print(f"AFFIRMATIVE: {counts['AFFIRMATIVE']}")
-print(f"CONTESTED: {counts['CONTESTED']}")
-print(f"CONTRADICTORY: {counts['CONTRADICTORY']}")
+print(f"WELL_GROUNDED: {counts['WELL_GROUNDED']}")
+print(f"MIXED_GROUNDING: {counts['MIXED_GROUNDING']}")
+print(f"CONTRADICTED: {counts['CONTRADICTED']}")
 ```
 
 ### Pattern 2: Dialectical Subgraph Extraction
@@ -363,13 +364,13 @@ def extract_dialectical_subgraph(topic_concept_id: str):
 
     # Thesis (well-supported)
     thesis = facade.match_concept_relationships(
-        include_epistemic_status=["AFFIRMATIVE"],
+        include_epistemic_status=["WELL_GROUNDED"],
         where=f"c1.concept_id = '{topic_concept_id}'"
     )
 
     # Antithesis (contested/contradictory)
     antithesis = facade.match_concept_relationships(
-        include_epistemic_status=["CONTESTED", "CONTRADICTORY"],
+        include_epistemic_status=["MIXED_GROUNDING", "CONTRADICTED"],
         where=f"c1.concept_id = '{topic_concept_id}'"
     )
 
@@ -421,7 +422,7 @@ Role filtering adds a VocabType lookup query before the main relationship query:
 
 ```python
 # Two queries executed:
-# 1. MATCH (v:VocabType) WHERE v.epistemic_status IN ['AFFIRMATIVE'] RETURN v.name
+# 1. MATCH (v:VocabType) WHERE v.epistemic_status IN ['WELL_GROUNDED'] RETURN v.name
 # 2. MATCH (c1:Concept)-[r:TYPE1|TYPE2|...]->(c2:Concept) RETURN c1, r, c2
 ```
 
@@ -459,8 +460,8 @@ Role filtering adds a VocabType lookup query before the main relationship query:
 
 ```python
 # Roles change as graph evolves
-# Measurement 1 (Week 1): ENABLES is CONTESTED (+0.232)
-# Measurement 2 (Week 4): ENABLES is AFFIRMATIVE (+0.856)  # More supporting evidence added
+# Measurement 1 (Week 1): ENABLES is MIXED_GROUNDING (+0.232)
+# Measurement 2 (Week 4): ENABLES is WELL_GROUNDED (+0.856)  # More supporting evidence added
 ```
 
 **Implication:** Re-run measurement periodically to keep roles current.
@@ -497,7 +498,7 @@ Role filtering adds a VocabType lookup query before the main relationship query:
 # Cannot reliably classify with < 3 measurements
 ```
 
-**Implication:** Some types may be INSUFFICIENT_DATA or UNCLASSIFIED until more data exists.
+**Implication:** Some types may be INSUFFICIENT_DATA or POORLY_GROUNDED until more data exists.
 
 ### 5. No Automatic Updates
 
@@ -520,14 +521,14 @@ Role filtering adds a VocabType lookup query before the main relationship query:
 2. **Check timestamps** to know when roles were last measured (`v.status_measured_at`)
 3. **Use appropriate sample sizes** for your use case (default 100 is usually fine)
 4. **Combine with confidence filtering** for robust queries (`include_epistemic_status + where="r.confidence > 0.8"`)
-5. **Document role-based decisions** (e.g., "Used AFFIRMATIVE filter for consensus view on 2025-11-16")
+5. **Document role-based decisions** (e.g., "Used WELL_GROUNDED filter for consensus view on 2025-11-16")
 
 ### ❌ Don't
 
 1. **Don't treat roles as permanent** - they're temporal measurements
 2. **Don't over-optimize sample size** - default 100 is sufficient for most cases
 3. **Don't rely solely on roles** - combine with other signals (confidence, edge_count, etc.)
-4. **Don't expect 100% coverage** - some types will be INSUFFICIENT_DATA or UNCLASSIFIED
+4. **Don't expect 100% coverage** - some types will be INSUFFICIENT_DATA or POORLY_GROUNDED
 5. **Don't skip --verbose** when investigating anomalies - it shows uncertainty metrics
 
 ---
@@ -539,7 +540,7 @@ Role filtering adds a VocabType lookup query before the main relationship query:
 ```python
 # Query returns empty
 results = facade.match_concept_relationships(
-    include_epistemic_status=["AFFIRMATIVE"]
+    include_epistemic_status=["WELL_GROUNDED"]
 )
 # → []
 ```
@@ -547,7 +548,7 @@ results = facade.match_concept_relationships(
 **Solution:**
 1. Check if epistemic statuses are stored: `facade.match_vocab_types(where="v.epistemic_status IS NOT NULL")`
 2. Run measurement: `kg vocab epistemic-status measure`
-3. Check if any types have that status: `facade.match_vocab_types(where="v.epistemic_status = 'AFFIRMATIVE'")`
+3. Check if any types have that status: `facade.match_vocab_types(where="v.epistemic_status = 'WELL_GROUNDED'")`
 
 ### Problem: All relationships are INSUFFICIENT_DATA
 
@@ -565,7 +566,7 @@ results = facade.match_concept_relationships(
 ### Problem: Semantic roles seem incorrect
 
 ```python
-# ENABLES shows AFFIRMATIVE, but you expected CONTESTED
+# ENABLES shows WELL_GROUNDED, but you expected MIXED_GROUNDING
 ```
 
 **Solution:**
@@ -596,7 +597,7 @@ pytest tests/test_query_facade.py::TestEpistemicStatusFiltering -v
 - ✅ exclude_epistemic_status
 - ✅ Combined rel_types + include_epistemic_status
 - ✅ Backward compatibility (no role parameters)
-- ✅ Dialectical queries (CONTESTED + CONTRADICTORY)
+- ✅ Dialectical queries (MIXED_GROUNDING + CONTRADICTED)
 
 ---
 
@@ -606,7 +607,7 @@ pytest tests/test_query_facade.py::TestEpistemicStatusFiltering -v
 - **ADR-044:** Probabilistic Truth Convergence (grounding calculation)
 - **ADR-058:** Polarity Axis Triangulation (grounding methodology)
 - **VALIDATION-RESULTS.md:** Phase 1 validation results
-- **GraphQueryFacade:** `api/api/lib/query_facade.py`
+- **GraphQueryFacade:** `api/app/lib/query_facade.py`
 
 ---
 
@@ -620,7 +621,7 @@ Potential future work:
 4. **Role-weighted grounding:** Adjust grounding calculation based on relationship roles
 5. **Visualization:** Graph coloring by epistemic status
 6. **API endpoints:** REST API support for role filtering
-7. **CLI commands:** `kg search --role AFFIRMATIVE` syntax
+7. **CLI commands:** `kg search --role WELL_GROUNDED` syntax
 
 These await further validation with real-world usage patterns.
 
@@ -631,10 +632,10 @@ These await further validation with real-world usage patterns.
 **Semantic role filtering enables powerful, nuanced queries** that go beyond traditional graph traversal:
 
 - **Dialectical analysis** (thesis/antithesis)
-- **Confidence-based filtering** (AFFIRMATIVE only)
+- **Confidence-based filtering** (WELL_GROUNDED only)
 - **Temporal analysis** (exclude HISTORICAL)
-- **Research prioritization** (find CONTESTED areas)
+- **Research prioritization** (find MIXED_GROUNDING areas)
 
 The feature is **fully backward compatible**, **well-tested**, and **production-ready**. Roles are **temporal measurements** that embrace bounded locality and satisficing rather than claiming perfect knowledge.
 
-For questions or issues, see `docs/architecture/ADR-065-vocabulary-based-provenance-relationships.md`.
+For questions or issues, see `docs/architecture/vocabulary-relationships/ADR-065-vocabulary-based-provenance-relationships.md`.

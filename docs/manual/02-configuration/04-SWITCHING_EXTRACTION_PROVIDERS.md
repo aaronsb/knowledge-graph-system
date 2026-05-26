@@ -4,6 +4,8 @@
 
 > **📊 Before switching:** See [Extraction Quality Comparison](./06-EXTRACTION_QUALITY_COMPARISON.md) for empirical comparison of extraction quality, canonical adherence, and cost-benefit analysis across providers.
 
+> **⚠️ Ollama scripts:** Older Ollama setup scripts (`./scripts/start-ollama.sh`, `./scripts/stop-ollama.sh`) referenced below have been **removed**. Install Ollama on the host (`https://ollama.com`) or wire up your own container, then use `kg admin extraction set --provider ollama ...`. The conceptual flow remains the same; substitute `ollama serve` / `systemctl stop ollama` for the legacy scripts.
+
 ---
 
 ## What's the Default?
@@ -49,19 +51,21 @@ You'll see something like:
 
 1. **Get API key** from [OpenAI Platform](https://platform.openai.com/)
 
-2. **Add to `.env` file:**
+2. **Store the key (encrypted in the database):**
    ```bash
-   OPENAI_API_KEY=sk-your-key-here
+   kg admin keys set openai
+   # Or via operator:
+   ./operator.sh api-key openai
    ```
 
-3. **Restart API:**
+3. **Confirm the active extraction provider:**
    ```bash
-   ./scripts/services/stop-api.sh && ./scripts/services/start-api.sh
+   kg admin extraction config
    ```
 
 4. **Test it:**
    ```bash
-   kg ingest file -o "Test" -y test-document.txt
+   kg ingest file test-document.txt -o "Test"
    ```
 
 ✅ **Done!** You're using OpenAI.
@@ -76,12 +80,10 @@ You'll see something like:
 
 1. **Get API key** from [Anthropic Console](https://console.anthropic.com/)
 
-2. **Add to `.env` file:**
+2. **Store API keys (Anthropic for extraction, OpenAI still needed for embeddings unless you use a local embedding profile):**
    ```bash
-   ANTHROPIC_API_KEY=sk-ant-your-key-here
-
-   # You still need OpenAI for embeddings
-   OPENAI_API_KEY=sk-your-openai-key-here
+   kg admin keys set anthropic
+   kg admin keys set openai     # only if embedding profile is OpenAI
    ```
 
 3. **Switch the provider:**
@@ -89,12 +91,7 @@ You'll see something like:
    kg admin extraction set --provider anthropic --model claude-sonnet-4-20250514
    ```
 
-4. **Restart API:**
-   ```bash
-   ./scripts/services/stop-api.sh && ./scripts/services/start-api.sh
-   ```
-
-5. **Test it:**
+4. **Test it:**
    ```bash
    kg admin extraction config  # Verify it says "anthropic"
    kg ingest file -o "Test" -y test-document.txt
@@ -114,14 +111,12 @@ You'll see something like:
 
 #### Step 1: Start Ollama Service
 
-```bash
-./scripts/start-ollama.sh -y
-```
+> **Note:** The legacy `./scripts/start-ollama.sh` script has been removed. Ollama integration is now expected to be managed externally (host install or your own `docker-compose` overlay pointing at `OLLAMA_BASE_URL`) and pointed at via the provider config. Use `kg admin extraction set --provider ollama --model <model>` once your Ollama instance is reachable from the API container.
 
-**What this does:**
-- Auto-detects your GPU (NVIDIA, AMD, Intel, or CPU-only)
-- Starts Ollama Docker container
-- Tells you next steps
+**Quick approach (host install):**
+- Install Ollama from https://ollama.com/
+- Run `ollama serve` (defaults to `http://localhost:11434`)
+- Make sure the API container can reach it (configure `OLLAMA_BASE_URL` if not on localhost)
 
 **Output:**
 ```
@@ -171,13 +166,13 @@ kg admin extraction set --provider ollama --model mistral:7b-instruct
     3. Test extraction: kg admin extraction test
 
   ⚠️  API restart required to apply changes
-  Run: ./scripts/services/stop-api.sh && ./scripts/services/start-api.sh
+  Run: ./operator.sh restart api
 ```
 
 #### Step 4: Restart API
 
 ```bash
-./scripts/services/stop-api.sh && ./scripts/services/start-api.sh
+./operator.sh restart api
 ```
 
 #### Step 5: Test It
@@ -204,7 +199,7 @@ kg ingest file -o "Test" -y test-document.txt
 kg admin extraction set --provider openai --model gpt-4o
 
 # 2. Restart API
-./scripts/services/stop-api.sh && ./scripts/services/start-api.sh
+./operator.sh restart api
 
 # 3. Optional: Stop Ollama to free resources
 ./scripts/stop-ollama.sh -y
@@ -221,7 +216,7 @@ kg admin extraction set --provider openai --model gpt-4o
 kg admin extraction set --provider anthropic --model claude-sonnet-4-20250514
 
 # 2. Restart API
-./scripts/services/stop-api.sh && ./scripts/services/start-api.sh
+./operator.sh restart api
 
 # 3. Optional: Stop Ollama
 ./scripts/stop-ollama.sh -y
@@ -243,7 +238,7 @@ docker exec kg-ollama ollama pull qwen2.5:14b-instruct
 kg admin extraction set --provider ollama --model qwen2.5:14b-instruct
 
 # Restart API
-./scripts/services/stop-api.sh && ./scripts/services/start-api.sh
+./operator.sh restart api
 ```
 
 **Want fastest local?** Try a smaller model:
@@ -251,7 +246,7 @@ kg admin extraction set --provider ollama --model qwen2.5:14b-instruct
 ```bash
 docker exec kg-ollama ollama pull phi3.5:3.8b-mini-instruct
 kg admin extraction set --provider ollama --model phi3.5:3.8b-mini-instruct
-./scripts/services/stop-api.sh && ./scripts/services/start-api.sh
+./operator.sh restart api
 ```
 
 ---
@@ -287,7 +282,7 @@ kg admin extraction set \
   --thinking-mode low
 
 # 3. Restart API
-./scripts/services/stop-api.sh && ./scripts/services/start-api.sh
+./operator.sh restart api
 
 # 4. Test it
 kg ingest file -o "Test" -y complex-document.txt
@@ -338,7 +333,7 @@ kg admin extraction set \
   --model gpt-oss:20b \
   --thinking-mode high
 
-./scripts/services/stop-api.sh && ./scripts/services/start-api.sh
+./operator.sh restart api
 ```
 
 ### Performance Comparison
@@ -423,7 +418,7 @@ nvidia-smi  # Should show ollama process
 # Use smaller model
 docker exec kg-ollama ollama pull mistral:7b-instruct
 kg admin extraction set --provider ollama --model mistral:7b-instruct
-./scripts/services/stop-api.sh && ./scripts/services/start-api.sh
+./operator.sh restart api
 ```
 
 ---
@@ -440,14 +435,14 @@ kg admin extraction config  # Shows: openai, gpt-4o
 ./scripts/start-ollama.sh -y
 docker exec kg-ollama ollama pull mistral:7b-instruct
 kg admin extraction set --provider ollama --model mistral:7b-instruct
-./scripts/services/stop-api.sh && ./scripts/services/start-api.sh
+./operator.sh restart api
 
 # Test it
 kg ingest file -o "Test" -y test.txt  # Slower, but free
 
 # Go back to OpenAI (need speed)
 kg admin extraction set --provider openai --model gpt-4o
-./scripts/services/stop-api.sh && ./scripts/services/start-api.sh
+./operator.sh restart api
 ./scripts/stop-ollama.sh -y  # Free up resources
 
 # Test it
@@ -464,23 +459,23 @@ kg admin extraction config
 
 # Switch to OpenAI
 kg admin extraction set --provider openai --model gpt-4o
-./scripts/services/stop-api.sh && ./scripts/services/start-api.sh
+./operator.sh restart api
 
 # Switch to Anthropic
 kg admin extraction set --provider anthropic --model claude-sonnet-4-20250514
-./scripts/services/stop-api.sh && ./scripts/services/start-api.sh
+./operator.sh restart api
 
 # Switch to Ollama (local)
 ./scripts/start-ollama.sh -y
 docker exec kg-ollama ollama pull mistral:7b-instruct
 kg admin extraction set --provider ollama --model mistral:7b-instruct
-./scripts/services/stop-api.sh && ./scripts/services/start-api.sh
+./operator.sh restart api
 
 # Stop Ollama (free resources)
 ./scripts/stop-ollama.sh -y
 ```
 
-**Remember:** After every switch, you must restart the API!
+**Note:** Extraction config is read from the database when each ingestion job starts, so switches apply to the next submitted job — no API restart needed. Ollama setup steps (pull a model, start the service) are still required before the first job using a new local model.
 
 ---
 

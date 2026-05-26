@@ -6,51 +6,74 @@ Protecting your knowledge graph data.
 
 | Component | Contains | Backup Method |
 |-----------|----------|---------------|
-| PostgreSQL | Concepts, relationships, users, config | `pg_dump` |
+| PostgreSQL | Concepts, relationships, users, config (incl. Apache AGE graph) | `pg_dump --format=custom` |
 | Garage | Original documents | S3-compatible tools |
+
+Backups use the PostgreSQL custom binary format because Apache AGE graph data
+relies on schema OIDs and is best preserved by `pg_dump`/`pg_restore`.
 
 ## Quick Backup
 
+Backup and restore run inside the operator container (which has the right
+`psql`/`pg_dump` versions and credentials). From the host:
+
 ```bash
-./operator.sh backup
+./operator.sh shell
+/workspace/operator/database/backup-database.sh -y
 ```
 
-Creates a timestamped SQL dump in the backups directory.
+The dump lands at `./backups/backup_knowledge_graph_<timestamp>.dump` on the
+host (the directory is mounted into the operator as `/project/backups`).
+
+You can also drive backup/restore from outside the shell via `docker exec`:
+
+```bash
+docker exec -it kg-operator /workspace/operator/database/backup-database.sh -y
+docker exec -it kg-operator /workspace/operator/database/backup-database.sh \
+  -y -o /project/backups/my-backup.dump
+```
 
 ## Backup Locations
 
-Default backup location: `./backups/`
+Default backup location: `./backups/` (on the host, inside your install dir).
 
 ```bash
 ls -la backups/
-# knowledge_graph_2026-01-18_120000.sql
+# backup_knowledge_graph_2026-05-25_120000.dump
 ```
 
 ## Manual Database Backup
 
 ```bash
-# Backup to file
-docker exec kg-postgres pg_dump -U admin -d knowledge_graph > backup.sql
+# Resolve the postgres container name (kg-postgres or knowledge-graph-postgres)
+PG=$(docker ps --format '{{.Names}}' | grep postgres | head -1)
 
-# Compressed
-docker exec kg-postgres pg_dump -U admin -d knowledge_graph | gzip > backup.sql.gz
+# Backup (custom format - preserves AGE graph data)
+docker exec "$PG" pg_dump -U admin -d knowledge_graph --format=custom > backup.dump
 ```
 
 ## Restore
 
+Restore also runs inside the operator container:
+
 ```bash
-./operator.sh restore /path/to/backup.sql
+./operator.sh shell
+/workspace/operator/database/restore-database.sh /project/backups/<file>.dump
 ```
 
-Or manually:
+Or from the host:
 
 ```bash
-# Drop and recreate database
-docker exec -i kg-postgres psql -U admin -c "DROP DATABASE IF EXISTS knowledge_graph;"
-docker exec -i kg-postgres psql -U admin -c "CREATE DATABASE knowledge_graph;"
+docker exec -it kg-operator \
+  /workspace/operator/database/restore-database.sh /project/backups/<file>.dump
+```
 
-# Restore
-docker exec -i kg-postgres psql -U admin -d knowledge_graph < backup.sql
+Manual restore (advanced — note that AGE graphs are OID-coupled and may need
+careful handling across PostgreSQL major versions; see ADR-205):
+
+```bash
+PG=$(docker ps --format '{{.Names}}' | grep postgres | head -1)
+docker exec -i "$PG" pg_restore -U admin -d knowledge_graph --clean < backup.dump
 ```
 
 ## Garage (Document Storage) Backup
@@ -79,7 +102,7 @@ Set up a cron job for regular backups:
 crontab -e
 
 # Add daily backup at 2 AM
-0 2 * * * cd /path/to/knowledge-graph-system && ./operator.sh backup
+0 2 * * * docker exec kg-operator /workspace/operator/database/backup-database.sh -y
 ```
 
 ## Backup Retention
@@ -88,7 +111,7 @@ Clean up old backups periodically:
 
 ```bash
 # Keep last 7 days
-find ./backups -name "*.sql" -mtime +7 -delete
+find ./backups -name "*.dump" -mtime +7 -delete
 ```
 
 ## Disaster Recovery
@@ -109,7 +132,8 @@ Full recovery procedure:
 
 3. **Restore database:**
    ```bash
-   ./operator.sh restore /path/to/backup.sql
+   docker exec -it kg-operator \
+     /workspace/operator/database/restore-database.sh /project/backups/<file>.dump
    ```
 
 4. **Restore Garage data:**
@@ -130,17 +154,20 @@ Full recovery procedure:
 
 ## Testing Backups
 
-Regularly verify backups work:
+Regularly verify backups work. Use an image with Apache AGE installed (the
+stock `postgres:18` image lacks the AGE extension that knowledge-graph dumps
+depend on):
 
 ```bash
-# Create test environment
-docker run -d --name backup-test -e POSTGRES_PASSWORD=test postgres:16
+# Create test environment (apache/age provides PostgreSQL + AGE)
+docker run -d --name backup-test -e POSTGRES_PASSWORD=test apache/age
 
-# Restore to test
-docker exec -i backup-test psql -U postgres < backup.sql
+# Restore to test (custom-format dump)
+docker exec -i backup-test pg_restore -U postgres -d postgres --create < backup.dump
 
-# Verify
-docker exec backup-test psql -U postgres -d knowledge_graph -c "SELECT COUNT(*) FROM concepts;"
+# Verify (AGE graphs live in named schemas; concepts is a label inside a graph)
+docker exec backup-test psql -U postgres -d knowledge_graph \
+  -c "SELECT count(*) FROM ag_catalog.ag_graph;"
 
 # Cleanup
 docker rm -f backup-test

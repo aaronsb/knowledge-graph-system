@@ -282,11 +282,12 @@ kg config set aliases.cat '["bat"]'
 **Options:**
 - `-o, --ontology <name>` - **REQUIRED** - Ontology/collection name
 - `-f, --force` - Force re-ingestion even if duplicate (default: false)
-- `-y, --yes` - Auto-approve job, skip approval step (default: false)
+- `--no-approve` - Require manual approval (default: auto-approve is on; pass this flag to disable it)
+- `--parallel` - Process chunks in parallel (faster, may duplicate concepts); default serial
 - `--filename <name>` - Override filename for tracking
 - `--target-words <n>` - Target words per chunk (default: 1000)
 - `--overlap-words <n>` - Overlap between chunks (default: 200)
-- `--no-wait` - Submit and exit (don't wait for completion)
+- `-w, --wait` - Wait for job completion (default: submit and exit)
 
 **States:**
 1. File validation
@@ -298,8 +299,8 @@ kg config set aliases.cat '["bat"]'
    - New job → Submit job
 
 3. Wait behavior
-   - With --wait (default) → Poll job with progress
-   - With --no-wait → Return immediately with job ID
+   - Default (no `-w`) → Submit and exit immediately with job ID
+   - With `-w/--wait` → Poll job with progress until completion
 
 **Flow:**
 ```
@@ -323,13 +324,35 @@ kg ingest file doc.txt -o "My Ontology"
 **Options:**
 - `-o, --ontology <name>` - **REQUIRED**
 - `-f, --force` - Force re-ingestion
-- `-y, --yes` - Auto-approve job
+- `--no-approve` - Require manual approval (default: auto-approve is on)
+- `--parallel` - Process chunks in parallel
 - `--filename <name>` - Filename for tracking (default: "text_input")
 - `--target-words <n>` - Target words per chunk (default: 1000)
-- `--no-wait` - Submit and exit
+- `-w, --wait` - Wait for job completion (default: submit and exit)
 
 **States:**
 - Same as `kg ingest file` above
+
+### 3.3 `kg ingest directory <dir>`
+
+**Purpose:** Batch-ingest matching files from a directory (and optionally subdirectories)
+
+**Key options:**
+- `-o, --ontology <name>` - Single target ontology (required unless `--directories-as-ontologies`)
+- `-p, --pattern <patterns...>` - File patterns (default `*.md *.txt *.png *.jpg *.jpeg *.gif *.webp *.bmp`)
+- `-r, --recurse` - Enable recursive scan (must combine with `--depth`)
+- `-d, --depth <n>` - Max recursion depth (`0` = current dir only, `all` = unlimited)
+- `--directories-as-ontologies` - Auto-create ontologies from subdirectory names
+- `--dry-run` - Preview without submitting
+
+### 3.4 `kg ingest image <path>`
+
+**Purpose:** Ingest an image via the vision pipeline (ADR-057)
+
+**Key options:**
+- `-o, --ontology <name>` (required)
+- `--vision-provider <provider>` - `openai` (default), `anthropic`, `ollama`
+- `--vision-model <model>` - Optional; defaults to provider's vision model
 
 ---
 
@@ -372,9 +395,11 @@ kg job status job_123 --watch
 **Purpose:** List recent jobs
 
 **Options:**
-- `-s, --status <status>` - Filter by status
-- `-c, --client <client-id>` - Filter by client ID
-- `-l, --limit <n>` - Maximum jobs to return (default: 20)
+- `-s, --status <status>` - Filter by status (pending|approved|queued|running|completed|failed|cancelled)
+- `-c, --client <user-id>` - Filter by user ID
+- `-l, --limit <n>` - Maximum jobs to return (max: 500, default: 100)
+- `-o, --offset <n>` - Offset for pagination (default: 0)
+- `--full-id` - Show full job IDs without truncation
 
 **States:**
 - No jobs → "No jobs found"

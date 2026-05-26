@@ -178,7 +178,7 @@ kg vocab list                          # Show all types with categories, edges, 
 kg vocab consolidate                   # Execute merges + prune (live)
 kg vocab consolidate --dry-run         # Preview candidates without executing
 kg vocab consolidate --target N        # Set target vocab size (default 90)
-kg vocab consolidate --threshold 0.85  # LLM auto-execute threshold
+kg vocab consolidate --threshold 0.90  # LLM auto-execute threshold
 kg vocab merge TYPE_A TYPE_B           # Manual merge
 
 kg job list -s pending                 # Status aliases: pending, running, done, failed

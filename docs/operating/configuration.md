@@ -113,28 +113,39 @@ Created during initialization. Controls operator behavior.
 
 Container names follow these patterns:
 
-| Service | Development | Production |
-|---------|-------------|------------|
-| PostgreSQL | `knowledge-graph-postgres` | `kg-postgres` |
-| Garage | `knowledge-graph-garage` | `kg-garage` |
-| API | `kg-api-dev` | `kg-api` |
-| Web | `kg-web-dev` | `kg-web` |
-| Operator | `kg-operator` | `kg-operator` |
+| Service | Development | Standalone (curl install) | Production (`--container-prefix=kg`) |
+|---------|-------------|---------------------------|--------------------------------------|
+| PostgreSQL | `knowledge-graph-postgres` | `knowledge-graph-postgres` | `kg-postgres` |
+| Garage | `knowledge-graph-garage` | `knowledge-graph-garage` | `kg-garage` |
+| API | `kg-api-dev` | `kg-api` | `kg-api` |
+| Web | `kg-web-dev` | `kg-web` | `kg-web` |
+| Operator | `kg-operator` | `kg-operator` | `kg-operator` |
 
-The `--container-prefix=kg` flag gives production naming.
+The standalone overlay (`docker-compose.standalone.yml`, used by `install.sh`)
+renames only the application containers. The production overlay
+(`docker-compose.prod.yml`, used when `--container-prefix=kg` is set during
+`operator.sh init`) renames the infrastructure containers too.
 
 ## Compose File Selection
 
 The operator automatically selects compose files based on configuration:
 
-| Configuration | Compose Files Used |
-|---------------|-------------------|
-| Default | `docker-compose.yml` |
-| GHCR images | `docker-compose.yml` + `docker-compose.ghcr.yml` |
-| Production | `docker-compose.prod.yml` |
-| NVIDIA GPU | + `docker-compose.gpu-nvidia.yml` |
-| AMD GPU | + `docker-compose.gpu-amd.yml` |
-| Dev mode | + `docker-compose.dev.yml` |
+| Configuration | Compose Files Used (added in order) |
+|---------------|-------------------------------------|
+| Always | `docker-compose.yml` (base) |
+| `IMAGE_SOURCE=ghcr` | + `docker-compose.ghcr.yml` |
+| Standalone install | + `docker-compose.standalone.yml` |
+| SSL configured | + `docker-compose.ssl.yml` |
+| `DEV_MODE=true` | + `docker-compose.dev.yml` |
+| `GPU_MODE=nvidia` | + `docker-compose.gpu-nvidia.yml` |
+| `GPU_MODE=amd` | + `docker-compose.gpu-amd.yml` |
+| `GPU_MODE=amd-host` | + `docker-compose.gpu-amd-host.yml` |
+| `GPU_MODE=mac` | + `docker-compose.override.mac.yml` |
+
+`docker-compose.prod.yml` is selected by `operator.sh init` when
+`--container-prefix=kg` or `--image-source=ghcr` is set, in which case it
+replaces `docker-compose.standalone.yml` as the source of production-style
+container names (`kg-postgres`, `kg-garage`, `kg-api`, `kg-web`).
 
 ## Runtime Configuration
 
@@ -148,27 +159,32 @@ Some settings are configured at runtime via the operator shell:
 
 ```bash
 # Set extraction provider
-configure.py ai-provider --provider anthropic --model claude-sonnet-4
+configure.py ai-provider anthropic --model claude-sonnet-4
 
 # Store API key (encrypted in database)
 configure.py api-key anthropic --key "sk-ant-..."
 
+# Select an embedding profile
+configure.py embedding --provider local
+
 # View current configuration
-configure.py show
+configure.py status
 ```
 
-### User Management
+### Admin User
 
 ```bash
-# Create user
-configure.py create-user --username alice --email alice@example.com
+# Set or rotate the admin password (creates the user if missing)
+configure.py admin --username admin --password <new-password>
 
-# Reset password
-configure.py reset-password --username admin
-
-# List users
-configure.py list-users
+# Omit --password to be prompted
+configure.py admin --username admin
 ```
+
+`configure.py` manages the admin user, extraction/embedding providers, API
+keys, the model catalog (`models`), and OAuth clients (`oauth`). For broader
+user/role management, use the kg-auth RBAC tables directly via
+`./operator.sh query 'SQL'` or the web admin UI.
 
 ## Nginx Configuration
 

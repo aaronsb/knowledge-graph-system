@@ -7,20 +7,21 @@ Reference documentation for the Knowledge Graph System's tools and REST API.
 ### [CLI Commands](cli/)
 Complete reference for all `kg` command-line interface commands.
 
-**Coverage:** 8 commands (health, config, ingest, search, database, ontology, vocabulary, admin)
+**Coverage:** commands include `health`, `config`, `login`, `logout`, `oauth`,
+`ingest`, `search`, `job`, `database`, `ontology`, `vocabulary`, and `admin`
+(see [cli/commands/](cli/commands/) for the current generated list).
 
 All CLI commands are auto-generated from the actual command definitions, ensuring documentation stays synchronized with the code.
 
 ### [MCP Tools](mcp/)
-Complete reference for all Model Context Protocol (MCP) tools exposed to Claude Desktop.
+Complete reference for all Model Context Protocol (MCP) tools exposed to
+Claude Desktop / Claude Code.
 
-**Coverage:** 19 tools across 6 categories
-- Search & Query (5 tools)
-- Database (3 tools)
-- Ontology (4 tools)
-- Job Management (4 tools)
-- Ingestion (1 tool)
-- System (2 tools)
+The generated set lives under [mcp/tools/](mcp/tools/) and covers
+search/query, ingestion, concept and graph inspection, ontology, job
+management, polarity / epistemic-status analysis, source/document/artifact
+inspection, programs (executable graph operations), epoch tracking, and
+session context.
 
 All MCP tool documentation is auto-generated from the tool schemas, ensuring accuracy and completeness.
 
@@ -29,15 +30,20 @@ All MCP tool documentation is auto-generated from the tool schemas, ensuring acc
 ### [REST API](api/)
 Interactive OpenAPI/Swagger documentation for the Knowledge Graph HTTP API.
 
-**Coverage:** All REST endpoints organized by tag
-- Authentication - User registration, login, API keys
-- Ingestion - Document submission and processing
-- Jobs - Async job management and monitoring
-- Queries - Graph exploration and concept search
-- Ontology - Knowledge domain organization
-- Vocabulary - Relationship type management
-- Admin - System administration
-- RBAC - Role-based access control
+**Coverage:** All REST endpoints organized by tag (see `openapi.json` for the
+authoritative list). Current top-level tags:
+- health - Liveness/readiness probes
+- authentication - OAuth 2.0 login, tokens, API keys (ADR-054)
+- ingestion - Document submission and processing
+- jobs - Async job management and monitoring
+- queries - Graph exploration and concept search
+- database - Database introspection and admin
+- ontology - Knowledge domain organization
+- vocabulary - Relationship type management
+- embedding - Embedding configuration and inspection
+- extraction - Extraction configuration
+- admin - System administration
+- rbac - Role-based access control
 
 API documentation uses industry-standard Swagger UI for interactive exploration, testing, and schema browsing.
 
@@ -47,25 +53,26 @@ API documentation uses industry-standard Swagger UI for interactive exploration,
 Generated during the build process:
 
 ```bash
-cd client && npm run build
+cd cli && npm run build
 ```
 
 **Features:**
-- ✅ Extracts from source code (CLI commands, MCP tool schemas)
-- ✅ Git churn prevention (only writes if content changed)
-- ✅ Synchronized with code changes
-- ✅ No manual maintenance required
+- Extracts from source code (CLI commands, MCP tool schemas)
+- Git churn prevention (only writes if content changed)
+- Synchronized with code changes
+- No manual maintenance required
 
-**Generators:**
-- `client/scripts/simple-doc-gen.mjs` - CLI documentation
-- `client/scripts/generate-mcp-docs.mjs` - MCP documentation
-- `client/scripts/doc-utils.mjs` - Smart write utilities
+**Generators (in `cli/scripts/`):**
+- `simple-doc-gen.mjs` - CLI documentation
+- `generate-mcp-docs.mjs` - MCP documentation
+- `doc-utils.mjs` - Smart write utilities
+- `check-docs.js` - Lint/check rendered docs
 
 ### API Documentation
 Exported from running API server:
 
 ```bash
-curl http://localhost:8000/openapi.json > docs/openapi.json
+curl http://localhost:8000/openapi.json > docs/reference/openapi.json
 ```
 
 **Features:**
@@ -78,17 +85,24 @@ curl http://localhost:8000/openapi.json > docs/openapi.json
 
 ```
 reference/
-├── README.md                   (this file)
+├── README.md                       (this file)
+├── ARCHITECTURE_OVERVIEW.md        (system architecture)
+├── OPERATOR_ARCHITECTURE.md        (install.sh + operator.sh + kg-operator)
+├── RECURSIVE_UPSERT_ARCHITECTURE.md (concept matching pattern)
+├── STORAGE-ARCHITECTURE.md         (PostgreSQL + Garage + AGE tiers)
+├── openapi.json                    (exported FastAPI schema)
 ├── cli/
-│   ├── README.md              (CLI index)
-│   ├── commands/              (auto-generated)
-│   └── media/                 (screenshots, diagrams)
+│   ├── README.md                   (CLI index)
+│   ├── commands/                   (auto-generated)
+│   └── media/                      (screenshots, diagrams)
 ├── mcp/
-│   ├── README.md              (MCP index)
-│   ├── tools/                 (auto-generated)
-│   └── media/                 (screenshots, diagrams)
+│   ├── README.md                   (MCP index)
+│   ├── tools/                      (auto-generated)
+│   └── media/                      (screenshots, diagrams)
+├── fuse/
+│   └── README.md                   (FUSE driver reference)
 └── api/
-    └── README.md              (REST API with embedded Swagger UI)
+    └── README.md                   (REST API with embedded Swagger UI)
 ```
 
 ## 🔗 Related Documentation

@@ -28,6 +28,8 @@ These tools enable semantic search, concept exploration, and graph traversal dir
 - [`document`](#document) - Work with documents: list all, show content, or get concepts (ADR-084).
 - [`graph`](#graph) - Create, edit, delete, and list concepts and edges in the knowledge graph (ADR-089).
 - [`program`](#program) - Compose and execute GraphProgram queries against the knowledge graph (ADR-500).
+- [`session_context`](tools/session_context.md) - Read recent concepts at the start of a session (cross-session memory for MCP agents).
+- [`session_ingest`](tools/session_context.md) - Save a session summary before disconnect/compaction so the next session sees the context.
 - [`epoch`](#epoch) - Read the graph epoch event log (ADR-203).
 
 ---

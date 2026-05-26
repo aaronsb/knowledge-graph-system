@@ -23,7 +23,7 @@ The `kg` command-line interface provides full access.
 kg login
 
 # Check configuration and auth status
-kg config show
+kg config list
 
 # Logout
 kg logout
@@ -36,11 +36,10 @@ kg logout
 kg search "your query"
 
 # With options
-kg search --limit 20 --ontology "research" "machine learning"
+kg search --limit 20 "machine learning"
 
-# Output formats
-kg search --format json "query"
-kg search --format table "query"
+# JSON output for scripting
+kg search "query" --json
 ```
 
 ### Concept Operations
@@ -51,7 +50,7 @@ kg search details <concept-id>
 
 # Find related concepts
 kg search related <concept-id>
-kg search related <concept-id> --depth 2 --type SUPPORTS
+kg search related <concept-id> --depth 2 --types SUPPORTS
 
 # Find paths between concepts
 kg search connect "concept A" "concept B"
@@ -94,22 +93,23 @@ Direct HTTP access for custom applications.
 
 ### Authentication
 
-Get an OAuth token first:
+Get an OAuth token first. The CLI stores tokens in
+`~/.config/kg/config.json` after `kg login`. For scripts, run the OAuth
+client-credentials or device-code flow against the API directly:
 
 ```bash
-# Using the CLI token
-TOKEN=$(kg auth token)
-
-# Or via OAuth flow
-curl -X POST "http://localhost:8000/auth/oauth/token" \
-  -d "grant_type=authorization_code&code=..."
+# Example: client-credentials grant
+curl -X POST "http://localhost:8000/oauth/token" \
+  -d "grant_type=client_credentials&client_id=...&client_secret=..."
 ```
 
 ### Search Endpoint
 
 ```bash
-curl "http://localhost:8000/concepts/search?query=climate+change&limit=10" \
-  -H "Authorization: Bearer $TOKEN"
+curl -X POST "http://localhost:8000/query/search" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"query": "climate change", "limit": 10, "min_similarity": 0.7}'
 ```
 
 **Response:**
@@ -186,10 +186,23 @@ Add to your Claude Desktop config (`~/.config/claude/claude_desktop_config.json`
   "mcpServers": {
     "knowledge-graph": {
       "command": "node",
-      "args": ["/path/to/knowledge-graph-system/mcp/dist/index.js"],
+      "args": ["/path/to/knowledge-graph-system/cli/dist/mcp-server.js"],
       "env": {
         "KG_API_URL": "http://localhost:8000"
       }
+    }
+  }
+}
+```
+
+Or, if installed via npm:
+
+```json
+{
+  "mcpServers": {
+    "knowledge-graph": {
+      "command": "kg-mcp-server",
+      "env": { "KG_API_URL": "http://localhost:8000" }
     }
   }
 }

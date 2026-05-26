@@ -242,7 +242,7 @@ kg vocab generate-embeddings  # Incorrectly showed: "via OpenAI API..."
 ```
 
 ### Fix Applied
-**File:** `client/src/cli/vocabulary.ts:300-306`
+**File:** `cli/src/cli/vocabulary/config.ts` (formerly `client/src/cli/vocabulary.ts`)
 - Dynamically fetch active embedding config via `client.getEmbeddingConfig()`
 - Display correct provider name and model
 - Updated message format: `"Generating embeddings via {provider} ({model})..."`
@@ -1586,8 +1586,8 @@ WHERE job_id = 'job_a49cd0638b5e'
 - `api/app/lib/age_client.py` - Removed duplicate embedding code (119 lines)
 - `api/app/routes/vocabulary.py` - Unified with EmbeddingWorker
 - `api/app/routes/embedding.py` - Added hot reload reset
-- `client/src/cli/vocabulary.ts` - Dynamic provider display
-- `client/src/mcp/formatters.ts` - Grounding formatting (unchanged, validated)
+- `cli/src/cli/vocabulary/config.ts` - Dynamic provider display (formerly `client/src/cli/vocabulary.ts`)
+- `cli/src/mcp/formatters/` - Grounding formatting (unchanged, validated)
 
 ### System Status: PRODUCTION READY
 

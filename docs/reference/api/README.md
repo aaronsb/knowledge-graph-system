@@ -6,8 +6,8 @@ Interactive REST API documentation for the Knowledge Graph System.
 
 The Knowledge Graph API provides RESTful endpoints for:
 
-- **Authentication** - User registration, login, API key management
-- **Ingestion** - Document submission and text processing
+- **Authentication** - User registration and OAuth 2.0 token flows (ADR-054)
+- **Ingestion** - Document, text, and image submission
 - **Jobs** - Async job management and monitoring
 - **Queries** - Graph querying and concept exploration
 - **Ontology** - Knowledge domain organization
@@ -23,19 +23,17 @@ http://localhost:8000
 
 ## Authentication
 
-The API supports two authentication methods:
+The API uses OAuth 2.0 (ADR-054). All authentication flows issue bearer
+tokens via `/auth/oauth/token`:
 
-1. **JWT Tokens** - Bearer tokens from `/auth/login`
-2. **API Keys** - Long-lived keys from `/auth/api-keys`
+- **Client credentials** - CLI personal clients and MCP servers
+- **Authorization code + PKCE** - viz-app browser sign-in
+- **Device authorization** - third-party tools (`/auth/oauth/device`)
 
-Include authentication in requests:
+Include the bearer token in requests:
 
 ```bash
-# JWT Token
 curl -H "Authorization: Bearer <token>" http://localhost:8000/jobs
-
-# API Key
-curl -H "X-API-Key: <key>" http://localhost:8000/jobs
 ```
 
 ## Interactive Documentation

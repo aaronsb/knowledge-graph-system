@@ -6,15 +6,17 @@ Common issues and how to fix them.
 
 ### Containers Won't Start
 
-**Check logs:**
+**Check logs** (substitute the correct container name — see
+[Configuration > Container Naming](configuration.md#container-naming)):
 ```bash
-./operator.sh logs
-docker logs kg-api
-docker logs kg-postgres
+./operator.sh logs api
+docker logs kg-api                          # or kg-api-dev in dev mode
+docker logs knowledge-graph-postgres        # or kg-postgres with --container-prefix=kg
 ```
 
 **Check container status:**
 ```bash
+./operator.sh status
 docker ps -a
 ```
 
@@ -89,13 +91,13 @@ Connection refused
 **Check PostgreSQL is running:**
 ```bash
 docker ps | grep postgres
-docker logs kg-postgres
+docker logs $(docker ps --format '{{.Names}}' | grep postgres)
 ```
 
 **Check network:**
 ```bash
 docker network ls
-docker network inspect kg-internal
+docker network inspect knowledge-graph-network
 ```
 
 ### Migration Errors
@@ -112,27 +114,29 @@ Migration failed
 **Run migrations manually:**
 ```bash
 ./operator.sh shell
-python -m api.database.migrate
+/workspace/operator/database/migrate-db.sh -y
 ```
 
 ### Database Corrupted
 
 If PostgreSQL won't start due to corruption:
 
-1. **Try recovery mode:**
+1. **Try recovery mode** (use the postgres container name shown by
+   `./operator.sh status`):
    ```bash
-   docker exec -it kg-postgres psql -U admin -d knowledge_graph
-   # If this works, backup immediately
+   ./operator.sh query 'SELECT version();'
+   # If this works, back up immediately
    ```
 
-2. **Restore from backup:**
+2. **Restore from backup** (uses `pg_restore` inside the operator container):
    ```bash
-   ./operator.sh restore /path/to/backup.sql
+   ./operator.sh shell
+   /workspace/operator/database/restore-database.sh /project/backups/<file>.dump
    ```
 
 3. **Last resort - reinitialize:**
    ```bash
-   ./operator.sh teardown  # WARNING: Destroys data
+   ./operator.sh teardown --full  # WARNING: Destroys data (removes volumes)
    ./operator.sh init
    ```
 
@@ -142,7 +146,7 @@ If PostgreSQL won't start due to corruption:
 
 **Check OAuth client exists:**
 ```bash
-docker exec kg-postgres psql -U admin -d knowledge_graph -c \
+./operator.sh query \
   "SELECT client_id, redirect_uris FROM kg_auth.oauth_clients;"
 ```
 
@@ -151,8 +155,7 @@ The registered redirect URI must match your `WEB_HOSTNAME`.
 
 **Reset admin password:**
 ```bash
-./operator.sh shell
-configure.py reset-password --username admin
+./operator.sh admin --username admin --password <new-password>
 ```
 
 ### 500 Error on Login
@@ -215,7 +218,7 @@ The `apiUrl` should use `https://` if your site uses HTTPS.
 
 **Fix:** Set correct `WEB_HOSTNAME` and restart:
 ```bash
-docker compose -f docker/docker-compose.prod.yml up -d web
+./operator.sh restart web
 ```
 
 ## GPU Issues
@@ -312,12 +315,14 @@ which kg
 
 **Re-authenticate:**
 ```bash
-kg auth login
+kg logout
+kg login
 ```
 
 **Check API URL:**
 ```bash
-kg config show
+kg config get
+kg config get api_url
 ```
 
 ## Getting More Help
@@ -326,7 +331,8 @@ kg config show
 
 ```bash
 ./operator.sh status
-./operator.sh logs > logs.txt 2>&1
+./operator.sh versions
+./operator.sh logs api > logs.txt 2>&1
 docker ps -a
 docker version
 cat .env | grep -v KEY | grep -v SECRET | grep -v PASSWORD

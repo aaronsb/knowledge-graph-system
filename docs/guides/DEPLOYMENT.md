@@ -633,8 +633,7 @@ docker stats
 # Review database profile
 cat operator/DATABASE_PROFILES.md
 
-# Apply appropriate profile
-docker exec kg-operator python /workspace/operator/setup/configure-db-profile.sh medium
+# Apply appropriate profile (see DATABASE_PROFILES.md for current procedure)
 ```
 
 ## See Also

@@ -22,7 +22,8 @@ The system uses a multi-tier storage architecture with clear separation of conce
 │    • Job queue, scheduled jobs (kg_api.*)                           │
 │    • Artifact metadata, small inline payloads (kg_api.artifacts)    │
 │    • Query definitions (kg_api.query_definitions)                   │
-│    • Configuration and API keys (kg_api.*)                          │
+│    • Configuration and encrypted API keys (kg_api.*)                │
+│    • Audit trail, observability (kg_logs.*)                         │
 │                                                                     │
 │  Garage S3 (Object Storage)                                         │
 │    • Original source documents (pre-chunking)                       │
@@ -38,10 +39,13 @@ Garage object storage is organized into namespaces by content type:
 
 | Namespace | Purpose | Key Pattern | ADR |
 |-----------|---------|-------------|-----|
-| `sources/` | Full original documents | `sources/{ontology}/{filename}` | ADR-081 |
-| `images/` | Original image files | `images/{hash}.{ext}` | ADR-057 |
+| `sources/` | Full original documents | `sources/{ontology}/{hash32}.{ext}` (first 32 hex chars of SHA-256) | ADR-081 |
+| `images/` | Original image files | `images/{ontology}/{source_id}.{ext}` | ADR-057 |
 | `artifacts/` | Computed results | `artifacts/{type}/{id}.json` | ADR-083 |
-| `projections/` | Legacy projections | `projections/{ontology}/...` | ADR-079 |
+| `projections/` | Projection snapshots (latest + historical) | `projections/{ontology}/{embedding_source}/latest.json` and `.../{timestamp}.json` | ADR-079 |
+
+All namespaces live inside a single Garage bucket (`kg-storage` by default,
+configurable via `GARAGE_BUCKET`).
 
 ## Data Flow: Document Ingestion
 

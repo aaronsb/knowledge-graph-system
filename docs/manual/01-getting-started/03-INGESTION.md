@@ -24,42 +24,46 @@ Ingestion is how documents become knowledge. When you ingest a document:
 
 ## Using the CLI
 
-### Basic Ingestion
+The `kg ingest` command has three subcommands: `file`, `directory`, and `text`. The `--ontology` (`-o`) flag is **required** for `file` and `text`.
+
+### Basic File Ingestion
 
 ```bash
-kg ingest /path/to/document.pdf
+kg ingest file /path/to/document.pdf -o "research-papers"
 ```
 
-This creates a job that requires approval (to confirm cost estimate).
+By default, jobs auto-approve and processing starts immediately. Use `--no-approve` to require manual approval (job enters `awaiting_approval` until you run `kg job approve <id>`).
 
-### Auto-Approve
-
-Skip the approval step:
+### Require Manual Approval
 
 ```bash
-kg ingest --auto-approve /path/to/document.pdf
+kg ingest file /path/to/document.pdf -o "research-papers" --no-approve
+```
+
+### Wait for Completion
+
+By default, ingestion submits the job and returns immediately. Pass `-w` to wait and stream progress:
+
+```bash
+kg ingest file /path/to/document.pdf -o "research-papers" -w
 ```
 
 ### Specify an Ontology
 
-Organize documents into collections:
-
-```bash
-kg ingest --ontology "research-papers" /path/to/paper.pdf
-```
-
-If the ontology doesn't exist, it's created automatically.
-
-### Ingest Multiple Files
-
-```bash
-kg ingest --ontology "project-docs" doc1.md doc2.md doc3.pdf
-```
+The `-o`/`--ontology` flag groups concepts into a named collection. If the ontology doesn't exist, it's created automatically.
 
 ### Ingest a Directory
 
 ```bash
-kg ingest --ontology "codebase" --recursive /path/to/docs/
+kg ingest directory /path/to/docs/ -o "codebase" -r --depth all
+```
+
+Use `-r/--recurse` with `--depth <n>` (or `--depth all`) for recursive scans. Pass `--directories-as-ontologies` to auto-create an ontology per subdirectory.
+
+### Ingest Raw Text
+
+```bash
+kg ingest text "Some text content" -o "notes"
 ```
 
 ### Check Job Status
@@ -67,6 +71,7 @@ kg ingest --ontology "codebase" --recursive /path/to/docs/
 ```bash
 kg job list
 kg job status <job-id>
+kg job status <job-id> --watch    # live updates
 ```
 
 ## Using the Web Interface
@@ -145,13 +150,13 @@ Ontologies are collections of related knowledge. Use them to:
 
 ```bash
 # Create by ingesting with a new name
-kg ingest --ontology "climate-research" paper1.pdf
+kg ingest file paper1.pdf -o "climate-research"
 
 # List ontologies
 kg ontology list
 
-# Query specific ontology
-kg search --ontology "climate-research" "temperature effects"
+# View ontology details (file count, concepts, evidence)
+kg ontology info "climate-research"
 ```
 
 ## Tips
@@ -166,22 +171,22 @@ You'll query by ontology later. Names like "research-2024" are clearer than "stu
 After ingesting, search for concepts and verify they match what you expected. This helps you understand how the system interprets your documents.
 
 ### Re-ingest if Needed
-If extraction quality improves (new models, updated prompts), you can re-ingest documents. The system deduplicates based on content hashes.
+If extraction quality improves (new models, updated prompts), you can re-ingest documents (use `--force` to bypass duplicate detection). The system deduplicates based on content hashes.
 
 ## Troubleshooting
 
-### Job Stuck in Pending
+### Job Stuck in `awaiting_approval`
 Approve it:
 ```bash
 kg job approve <job-id>
 ```
 
-Or use `--auto-approve` when ingesting.
+Auto-approve is the default; jobs only enter `awaiting_approval` when `--no-approve` was passed.
 
 ### Extraction Seems Wrong
-Check which AI provider you're using:
+Check the active AI extraction provider/model:
 ```bash
-kg config show
+kg admin extraction config
 ```
 
 Different models have different extraction quality.
@@ -194,5 +199,6 @@ Large documents with many chunks can exhaust memory. Try:
 
 ## Next Steps
 
-- [Exploring Knowledge](../../guides/exploring.md) - Navigate what you've ingested
-- [Understanding Grounding](../../guides/understanding-grounding.md) - Interpret confidence scores
+- [CLI Usage Guide](02-CLI_USAGE.md) - All `kg` commands for querying and managing the graph
+- [Examples](../06-reference/03-EXAMPLES.md) - Real queries against an ingested corpus
+- [Schema Reference](../06-reference/01-SCHEMA_REFERENCE.md) - Underlying graph and table structure

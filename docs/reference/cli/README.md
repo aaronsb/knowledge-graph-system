@@ -11,14 +11,29 @@
 
 - [`health`](#health) - Check API server health and retrieve service information. Verifies the server is running and responsive. Use this as a first diagnostic step before running other commands.
 - [`config` (cfg)](#config) - Manage kg CLI configuration settings. Controls API connection, authentication tokens, MCP tool preferences, and job auto-approval. Configuration stored in JSON file (typically ~/.kg/config.json).
+- [`mcp-config`](commands/) - Manage MCP server configuration (allowlists, server settings).
 - [`login`](#login) - Authenticate with username and password - creates personal OAuth client credentials (required for admin commands)
 - [`logout`](#logout) - End authentication session - revokes OAuth client and clears credentials (use --forget to also clear saved username)
 - [`oauth`](#oauth) - Manage OAuth clients (list, create for MCP, revoke)
 - [`ingest`](#ingest) - Ingest documents into the knowledge graph. Processes documents and extracts concepts, relationships, and evidence. Supports three modes: single file (one document), directory (batch ingest multiple files), and raw text (ingest text directly without a file). All operations create jobs (ADR-014) that can be monitored via "kg job" commands. Workflow: submit → chunk (semantic boundaries ~1000 words with overlap) → create job → optional approval → process (LLM extract, embed concepts, match existing, insert graph) → complete.
 - [`job` (jobs)](#job) - Manage and monitor ingestion jobs through their lifecycle (pending → approval → processing → completed/failed)
 - [`search`](#search) - Search and explore the knowledge graph using vector similarity, graph traversal, and path finding
+- [`document`](commands/) - Document search and content retrieval (ADR-084).
 - [`database` (db)](#database) - Database operations and information. Provides read-only queries for PostgreSQL + Apache AGE database health, statistics, and connection details.
 - [`ontology` (onto)](#ontology) - Manage ontologies (knowledge domains). Ontologies are named collections that organize concepts into knowledge domains. Each ontology groups related documents and concepts together, making it easier to organize and query knowledge by topic or project.
+- [`source`](commands/) - Retrieve source content (text or image).
+- [`vocabulary` (vocab)](commands/vocabulary.md) - Edge vocabulary management and consolidation (ADR-032/047/053).
+- [`concept`](commands/) - Deterministic concept CRUD (ADR-089).
+- [`edge`](commands/) - Deterministic edge CRUD (ADR-089).
+- [`batch`](commands/) - Batch graph operations (ADR-089).
+- [`admin`](commands/admin.md) - System administration: status, backup/restore, scheduler, workers, users, RBAC, embedding/extraction/keys.
+- [`polarity`](commands/) - Polarity-axis analysis (ADR-070).
+- [`projection`](commands/) - Embedding landscape projection (ADR-078).
+- [`artifact`](commands/) - Manage saved artifacts (ADR-083).
+- [`group`](commands/) - Groups and resource grants (ADR-082).
+- [`query-def`](commands/) - Stored query definitions (ADR-083).
+- [`program`](commands/) - GraphProgram notarization (ADR-500).
+- [`storage`](commands/) - Garage S3 storage diagnostics.
 
 ---
 

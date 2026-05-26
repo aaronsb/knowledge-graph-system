@@ -14,10 +14,11 @@ kg admin [options]
 **Subcommands:**
 
 - `status` - Show comprehensive system health status (Docker containers, database connections, environment configuration, job scheduler)
-- `backup` - Create database backup (ADR-036) - full system or per-ontology, in restorable JSON or Gephi GEXF format
+- `backup` - Create database backup (ADR-036) - full system or per-ontology, in restorable archive/JSON or Gephi GEXF format
 - `list-backups` - List available backup files from configured directory
-- `restore` - Restore a database backup (requires authentication)
+- `restore` - Restore a database backup (uses OAuth authentication)
 - `scheduler` - Job scheduler management (ADR-014 job queue) - monitor worker status, cleanup stale jobs
+- `workers` - Worker lane management (ADR-100) - monitor slot utilization, queue depth, active jobs
 - `user` - User management commands (admin only)
 - `rbac` - Manage roles, permissions, and access control (ADR-028)
 - `embedding` - Manage embedding model configuration (ADR-039)
@@ -51,7 +52,7 @@ kg backup [options]
 | `--type <type>` | Backup type: "full" (entire graph) or "ontology" (single namespace) | - |
 | `--ontology <name>` | Ontology name (required if --type ontology) | - |
 | `--output <filename>` | Custom output filename (auto-generated if not specified) | - |
-| `--format <format>` | Export format: "json" (native, restorable) or "gexf" (Gephi visualization - not restorable) | `"json"` |
+| `--format <format>` | Export format: "archive" (tar.gz with documents, default), "json" (graph only), or "gexf" (Gephi visualization - not restorable) | `"archive"` |
 
 ### list-backups
 
@@ -64,7 +65,7 @@ kg list-backups [options]
 
 ### restore
 
-Restore a database backup (requires authentication)
+Restore a database backup (uses OAuth authentication)
 
 **Usage:**
 ```bash
@@ -79,6 +80,7 @@ kg restore [options]
 | `--path <path>` | Custom backup file path (overrides configured directory) | - |
 | `--merge` | Merge into existing ontology if it exists (default: error if ontology exists) | `false` |
 | `--deps <action>` | How to handle external dependencies: prune, stitch, defer | `"prune"` |
+| `--confirm` | Confirm restore operation (required for non-interactive use) | `false` |
 
 ### scheduler
 
@@ -112,6 +114,32 @@ Manually trigger scheduler cleanup (cancels expired jobs, deletes old jobs)
 **Usage:**
 ```bash
 kg cleanup [options]
+```
+
+### workers
+
+Worker lane management (ADR-100) - monitor slot utilization, queue depth, active jobs.
+Running `kg admin workers` shows the current worker status (slots, lanes, active jobs,
+queue depth).
+
+**Usage:**
+```bash
+kg admin workers [subcommand]
+```
+
+**Subcommands:**
+
+- `lanes` - Show detailed worker lane configuration (job types, slots, poll interval, stale timeout)
+
+---
+
+#### lanes
+
+Show worker lane configuration and utilization
+
+**Usage:**
+```bash
+kg admin workers lanes
 ```
 
 ### user
@@ -498,7 +526,7 @@ kg remove <assignment-id>
 
 ### embedding
 
-Manage embedding model configuration (ADR-039)
+Manage embedding profiles (text + image model configuration) (ADR-039)
 
 **Usage:**
 ```bash
@@ -507,13 +535,14 @@ kg embedding [options]
 
 **Subcommands:**
 
-- `list` - List all embedding configurations
-- `create` - Create a new embedding configuration (inactive)
-- `activate` - Activate an embedding configuration (with automatic protection)
+- `list` - List all embedding profiles
+- `create` - Create a new embedding profile (inactive)
+- `export` - Export an embedding profile as JSON
+- `activate` - Activate an embedding profile (with automatic protection)
 - `reload` - Hot reload embedding model (zero-downtime)
-- `protect` - Enable protection flags on an embedding configuration
-- `unprotect` - Disable protection flags on an embedding configuration
-- `delete` - Delete an embedding configuration
+- `protect` - Enable protection flags on an embedding profile
+- `unprotect` - Disable protection flags on an embedding profile
+- `delete` - Delete an embedding profile
 - `status` - Show comprehensive embedding coverage across all graph text entities with hash verification
 - `regenerate` - Regenerate vector embeddings for all graph text entities: concepts, sources, vocabulary (ADR-068 Phase 4) - useful after changing embedding model or repairing missing embeddings
 
@@ -530,7 +559,7 @@ kg list [options]
 
 #### create
 
-Create a new embedding configuration (inactive)
+Create a new embedding profile (inactive)
 
 **Usage:**
 ```bash
@@ -541,18 +570,51 @@ kg create [options]
 
 | Option | Description | Default |
 |--------|-------------|---------|
-| `--provider <provider>` | Provider: local or openai | - |
-| `--model <model>` | Model name | - |
-| `--dimensions <dims>` | Embedding dimensions | - |
-| `--precision <precision>` | Precision: float16, float32, int8 | - |
+| `--name <name>` | Profile name | - |
+| `--vector-space <tag>` | Vector space compatibility tag | - |
+| `--multimodal` | Text model handles both text and image | `false` |
+| `--provider <provider>` | Text provider: local or openai (shorthand for --text-provider) | - |
+| `--model <model>` | Text model name (shorthand for --text-model) | - |
+| `--dimensions <dims>` | Text embedding dimensions (shorthand for --text-dimensions) | - |
+| `--precision <precision>` | Text precision: float16 or float32 | - |
+| `--text-provider <provider>` | Text provider: local or openai | - |
+| `--text-model <model>` | Text model name | - |
+| `--text-dimensions <dims>` | Text embedding dimensions | - |
+| `--text-loader <loader>` | Text loader: sentence-transformers, transformers, api | - |
+| `--text-revision <rev>` | Text model revision/commit hash | - |
+| `--text-trust-remote-code` | Trust remote code for text model | `false` |
+| `--image-provider <provider>` | Image provider | - |
+| `--image-model <model>` | Image model name | - |
+| `--image-dimensions <dims>` | Image embedding dimensions | - |
+| `--image-loader <loader>` | Image loader: sentence-transformers, transformers, api | - |
+| `--image-revision <rev>` | Image model revision/commit hash | - |
+| `--image-trust-remote-code` | Trust remote code for image model | `false` |
+| `--text-query-prefix <prefix>` | Text prefix for search queries (e.g. "search_query: ") | - |
+| `--text-document-prefix <prefix>` | Text prefix for document ingestion (e.g. "search_document: ") | - |
 | `--device <device>` | Device: cpu, cuda, mps | - |
 | `--memory <mb>` | Max memory in MB | - |
 | `--threads <n>` | Number of threads | - |
 | `--batch-size <n>` | Batch size | - |
+| `--from-json <file>` | Import profile from JSON file | - |
+
+#### export
+
+Export an embedding profile as JSON
+
+**Usage:**
+```bash
+kg export <config-id> [options]
+```
+
+**Options:**
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--profile-only` | Strip metadata (id, timestamps) | `false` |
 
 #### activate
 
-Activate an embedding configuration (with automatic protection)
+Activate an embedding profile (with automatic protection)
 
 **Usage:**
 ```bash

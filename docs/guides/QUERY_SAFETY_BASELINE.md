@@ -139,7 +139,7 @@ The restore worker assumes it owns the entire graph. Once vocabulary metadata li
 ## Phase Completion Status
 
 ### Phase 1: Foundation ✅
-1. ✅ Create query linter (`scripts/lint_queries.py`)
+1. ✅ Create query linter (`scripts/development/lint/lint_queries.py`)
 2. ✅ Add linter to CI workflow
 3. ✅ Create GraphQueryFacade with safe abstractions
 4. ✅ Document baseline technical debt

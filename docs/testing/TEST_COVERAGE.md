@@ -31,47 +31,63 @@ Functional test coverage map for the knowledge graph system. This document outli
 ### Python/FastAPI Backend
 
 **Framework:** pytest 8.0+ with pytest-asyncio, httpx, pytest-cov
-**Test Location:** `tests/`
+**Test Location:** `tests/` (with `tests/api/`, `tests/unit/`, `tests/security/`, `tests/manual/`).
+Root-level `tests/test_*.py` files cover library/services unit tests (chunker, vocabulary,
+synonym detector, query facade, pruning, clustering, etc.).
 **Configuration:** `pytest.ini`
 
 **Key Features:**
-- Mock AI provider (no API keys needed)
-- In-memory job queue for fast tests
-- Test markers: `smoke`, `integration`, `api`
-- Coverage reporting (HTML + terminal)
+- Mock AI provider (no API keys needed) — `AI_PROVIDER=mock` set in `pytest.ini`
+- Test markers: `unit`, `smoke`, `integration`, `api`, `slow` (registered in `pytest.ini`).
+  `security` is registered dynamically in `tests/conftest.py::pytest_configure`.
+- Auto-marking based on test location (see `tests/conftest.py::pytest_collection_modifyitems`)
+- Coverage reporting (HTML + terminal) against `api/app`
+- `tests/manual/` ignored during automated collection (`pytest_ignore_collect` + `norecursedirs`)
 
-**Run Tests:**
+**Run Tests (canonical — inside container):**
 ```bash
-source venv/bin/activate
+# Platform must be running: ./operator.sh start
 
-# All tests
-pytest
+# Convenience wrapper (auto-detects kg-api-dev / kg-api container)
+./tests/run.sh                           # Full suite
+./tests/run.sh tests/api/                # Just API tests
+./tests/run.sh tests/unit/               # Just unit tests
+./tests/run.sh -k "concept"              # Pattern match
+./tests/run.sh -m "not slow"             # Skip slow tests
+
+# Equivalent direct invocations (per CLAUDE.md)
+docker exec kg-api-dev pytest tests/ -x -q          # full suite
+docker exec kg-api-dev pytest tests/unit/ -x -q     # unit tests only
+docker exec kg-api-dev pytest tests/api/ -x -q      # route tests only
 
 # By category
-pytest -m smoke          # Fast, no database (16 tests)
-pytest -m integration    # Full workflows (35 tests)
-pytest -m api           # API endpoints (all tests)
+./tests/run.sh -m smoke           # Quick sanity checks
+./tests/run.sh -m integration     # Integration (require DB)
+./tests/run.sh -m api             # All API endpoint tests
+./tests/run.sh -m unit            # Unit tests
+./tests/run.sh -m security        # Auth/security tests
 
-# With coverage
-pytest --cov=src --cov-report=html
-open htmlcov/index.html
+# Coverage (configured in pytest.ini: --cov=api/app)
+./tests/run.sh --cov-report=html
 ```
 
 ### TypeScript/Jest CLI Client
 
-**Framework:** Jest 29.7+ with ts-jest
-**Test Location:** `client/tests/`
-**Configuration:** `client/jest.config.js`
+**Framework:** Jest 29.x with ts-jest
+**Test Location:** `cli/tests/` (sub-dirs: `cli/`, `lib/`, `mcp/`, plus `helpers/`)
+**Configuration:** `cli/jest.config.js`
+**Test roots:** `<rootDir>/src` and `<rootDir>/tests`
 
 **Key Features:**
-- Auto-starts API server for tests
+- Auto-starts API server for tests (`globalSetup.ts`/`globalTeardown.ts`)
 - Real integration (no mocks)
 - Global setup/teardown
-- TypeScript support
+- TypeScript support (`ts-jest` preset)
+- `testTimeout: 30000`
 
 **Run Tests:**
 ```bash
-cd client
+cd cli
 
 # Build first (required)
 npm run build
@@ -322,7 +338,8 @@ def test_cancel_job(api_client):
 
 ### ⏳ 2.3 Graph Queries (Pending - Requires Database)
 
-**Status:** PLACEHOLDER TESTS
+**Status:** PLACEHOLDER TESTS — no `tests/api/test_queries.py` exists yet.
+Related current files: `tests/api/test_concepts.py`, `tests/api/test_edges.py`.
 
 **Future Test:** Semantic Search
 ```python
@@ -388,7 +405,8 @@ def test_find_connection(api_client):
 
 ### ⏳ 2.4 Database Operations (Pending)
 
-**Status:** PLACEHOLDER TESTS
+**Status:** PLACEHOLDER TESTS — no `tests/api/test_database.py` exists.
+`tests/api/test_database_counters.py` exists but is currently empty (no test functions).
 
 **Future Test:** Database Statistics
 ```python
@@ -451,7 +469,7 @@ def test_ontology_list(api_client):
 
 **Test:** CLI Health Check
 ```typescript
-// client/tests/cli/health.test.ts
+// cli/tests/cli/health.test.ts
 describe('kg health', () => {
   it('should return healthy status', async () => {
     const { stdout } = await execAsync(`${KG_CLI} health`);
@@ -561,15 +579,15 @@ def test_mock_provider_modes():
 
 **Test Database Setup:**
 ```bash
-# Start PostgreSQL + AGE via Docker
-docker-compose up -d
+# Start the platform (PostgreSQL + AGE + API + Web + Garage)
+./operator.sh start
 
 # Verify AGE extension
 docker exec -it knowledge-graph-postgres psql -U admin -d knowledge_graph \
   -c "SELECT extname FROM pg_extension WHERE extname = 'age';"
 
-# Run integration tests
-pytest -m integration
+# Run integration tests inside the API container
+./tests/run.sh -m integration
 ```
 
 **Graph Schema (Unchanged from Neo4j):**
@@ -592,53 +610,67 @@ CREATE (:Instance {instance_id, quote})
 
 ### Current Status
 
-**Python/FastAPI:**
-```
-Total Tests: 51
-- Smoke: 16 (passing) ✅
-- Integration: 35 (passing) ✅
-Code Coverage: 28-31% (functional coverage complete)
-```
+**Python/pytest:** The suite has grown substantially since the original 51-test snapshot.
+A recent collection count (excluding `tests/manual/`) puts total test functions at well over
+a thousand, spread across:
 
-**TypeScript/Jest:**
-```
-Total Tests: 2
-- CLI health: 2 (passing) ✅
-Code Coverage: TBD
-```
+- `tests/api/` — ~22 files covering health, root, jobs, ingest, ontology, ontology_routes,
+  concepts, edges, batch, programs, providers_routes, polarity_axis, backup (streaming +
+  integrity), database_counters, auth, auth_utils, auth_dependencies, oauth_utils,
+  endpoint_security, job_permissions
+- `tests/unit/` — `test_cypher_guard.py`, `test_program_validation.py`,
+  `test_program_executor.py`, `test_program_operators.py`, plus subtrees `lib/`,
+  `services/`, `workers/`
+- `tests/security/` — `test_api_auth_audit.py`, `test_auth_patterns.py`
+- `tests/test_*.py` (root) — `test_mock_provider.py`, `test_aggressiveness_curve.py`,
+  `test_category_classifier.py`, `test_clustering.py`, `test_datetime_utils.py`,
+  `test_hash_utils.py`, `test_pruning_strategies.py`, `test_query_facade.py`,
+  `test_query_linter.py`, `test_source_chunker.py`, `test_synonym_detector.py`,
+  `test_vocabulary_manager_integration.py`, `test_vocabulary_scoring.py`
+
+Code coverage: configured against `api/app` in `pytest.ini`; current numbers vary by
+environment (database fixtures impact integration coverage).
+
+**TypeScript/Jest (`cli/tests/`):**
+- `cli/health.test.ts` (2 tests)
+- `lib/mcp-allowlist.test.ts` (~36 cases)
+- `mcp/graph-operations.test.ts` (~8 cases)
 
 ### Functional Coverage by Feature
 
 | Feature | Tests | Status |
 |---------|-------|--------|
-| API Health | 4 Python + 2 TS | ✅ Complete |
-| API Status | 5 Python | ✅ Complete |
-| Job Management | 13 Python | ✅ Complete |
-| Ingestion | 14 Python | ✅ Complete |
-| Mock AI Provider | Comprehensive | ✅ Complete |
-| Semantic Search | Placeholder | ⏳ Needs DB |
-| Concept Details | Placeholder | ⏳ Needs DB |
-| Graph Traversal | Placeholder | ⏳ Needs DB |
-| Path Finding | Placeholder | ⏳ Needs DB |
-| Ontology Mgmt | Placeholder | ⏳ Needs DB |
-| Database Stats | Placeholder | ⏳ Needs DB |
+| API Health | `tests/api/test_health.py` (+ CLI `health.test.ts`) | Implemented |
+| API Status | `tests/api/test_root.py` | Implemented |
+| Job Management | `tests/api/test_jobs.py`, `test_job_permissions.py` | Implemented |
+| Ingestion | `tests/api/test_ingest.py` | Implemented |
+| Auth / OAuth | `tests/api/test_auth*.py`, `test_oauth_utils.py`, `test_endpoint_security.py` | Implemented |
+| Backup | `tests/api/test_backup_streaming.py`, `test_backup_integrity.py` | Implemented |
+| Polarity axis | `tests/api/test_polarity_axis.py` | Implemented |
+| Programs (ADR-089) | `tests/api/test_programs.py` + `tests/unit/test_program_*.py` | Implemented (api tests file currently empty) |
+| Concepts / Edges (ADR-089) | `tests/api/test_concepts.py`, `test_edges.py` | Files exist, currently empty placeholders |
+| Mock AI Provider | `tests/test_mock_provider.py` | Implemented |
+| Vocabulary | `tests/test_vocabulary_*.py`, `test_synonym_detector.py` | Implemented |
+| Pruning / Clustering | `tests/test_pruning_strategies.py`, `test_clustering.py` | Implemented |
+| Query facade / linter | `tests/test_query_facade.py`, `test_query_linter.py` | Implemented |
+| Ontology routes | `tests/api/test_ontology.py` (DB-skipped), `test_ontology_routes.py` (empty) | Partial |
+| Semantic Search | — | Pending (no `test_queries.py` yet) |
+| Database Stats | — | Pending (`test_database_counters.py` empty) |
 
 ### Coverage Metrics (Python)
 
-**High Coverage (Tested Modules):**
-- `api/app/routes/jobs.py` - 95%
-- `api/app/services/job_analysis.py` - 92%
-- `api/app/main.py` - 86%
-- `api/app/routes/ingest.py` - 85%
-- `api/app/services/job_queue.py` - 82%
+Coverage numbers below are historical and have not been re-measured. Run the suite
+in-container to get current metrics:
 
-**Low Coverage (Needs Database):**
-- `api/app/routes/queries.py` - 18%
-- `api/app/routes/database.py` - 17%
-- `api/app/routes/ontology.py` - 21%
-- `api/app/lib/age_client.py` - 14%
+```bash
+./tests/run.sh --cov=api/app --cov-report=term-missing
+```
 
-**Overall:** 28-31% (expected given database-dependent features not yet tested)
+Older snapshot (pre-OAuth / pre-ADR-089 expansion):
+- High coverage: `routes/jobs.py` (~95%), `services/job_analysis.py` (~92%),
+  `main.py` (~86%), `routes/ingest.py` (~85%), `services/job_queue.py` (~82%)
+- Low coverage (DB-dependent): `routes/queries.py`, `routes/database.py`,
+  `routes/ontology.py`, `lib/age_client.py`
 
 ---
 
@@ -646,58 +678,75 @@ Code Coverage: TBD
 
 ```
 tests/                          # Python/pytest tests
-├── conftest.py                 # Shared fixtures
+├── conftest.py                 # Shared fixtures + marker registration
+├── helpers.py                  # Shared test helpers
+├── run.sh                      # Container test runner (kg-api-dev/kg-api)
 ├── README.md                   # Testing guide
-├── api/                        # API endpoint tests
-│   ├── __init__.py
-│   ├── test_health.py          # 4 smoke tests ✅
-│   ├── test_root.py            # 5 smoke tests ✅
-│   ├── test_jobs.py            # 13 integration tests ✅
-│   ├── test_ingest.py          # 14 integration tests ✅
-│   └── test_ontology.py        # Placeholders (skip)
-└── test_mock_provider.py       # Mock provider tests ✅
+├── api/                        # API endpoint tests (~22 files)
+│   ├── test_health.py, test_root.py, test_jobs.py, test_ingest.py
+│   ├── test_ontology.py, test_ontology_routes.py
+│   ├── test_auth.py, test_auth_utils.py, test_auth_dependencies.py
+│   ├── test_oauth_utils.py, test_endpoint_security.py, test_job_permissions.py
+│   ├── test_backup_streaming.py, test_backup_integrity.py
+│   ├── test_polarity_axis.py, test_programs.py, test_concepts.py,
+│   │   test_edges.py, test_batch.py, test_database_counters.py,
+│   │   test_providers_routes.py
+├── unit/                       # Unit tests (fast, isolated)
+│   ├── test_cypher_guard.py, test_program_*.py
+│   └── lib/, services/, workers/
+├── security/                   # Auth/security tests
+│   ├── test_api_auth_audit.py, test_auth_patterns.py
+├── manual/                     # Excluded from automated collection
+└── test_*.py                   # Root-level lib/service unit tests
+    (mock_provider, vocabulary_*, synonym_detector, pruning_strategies,
+     clustering, query_facade, query_linter, source_chunker,
+     aggressiveness_curve, category_classifier, datetime_utils, hash_utils)
 
-client/tests/                   # TypeScript/Jest tests
+cli/tests/                      # TypeScript/Jest tests
 ├── setup.ts                    # Global configuration
 ├── globalSetup.ts              # Start API server
 ├── globalTeardown.ts           # Stop API server
-├── helpers/
-│   └── api-server.ts           # Server management
-└── cli/
-    └── health.test.ts          # 2 tests ✅
+├── helpers/                    # Server management helpers
+├── cli/
+│   └── health.test.ts
+├── lib/
+│   └── mcp-allowlist.test.ts
+└── mcp/
+    └── graph-operations.test.ts
 ```
 
 ---
 
 ## 8. Running Tests
 
-### Python Tests
+### Python Tests (run inside `kg-api-dev` container)
 
 ```bash
-# From project root
-source venv/bin/activate
+# Platform must be running in dev mode first
+./operator.sh start
 
-# All tests
-pytest -v
+# Via wrapper (auto-detects kg-api-dev / kg-api)
+./tests/run.sh                           # All tests
+./tests/run.sh tests/api/                # API tests only
+./tests/run.sh tests/api/test_jobs.py    # Single file
+./tests/run.sh -k "concept"              # Pattern match
+./tests/run.sh -m "not slow"             # Skip slow tests
+./tests/run.sh -m smoke                  # Only smoke tests
 
-# By category
-pytest -m smoke          # Fast tests (16 passing)
-pytest -m integration    # Full workflows (35 passing)
-pytest -m api           # All API tests (51 passing)
+# Equivalent direct docker exec (per CLAUDE.md)
+docker exec kg-api-dev pytest tests/ -x -q
+docker exec kg-api-dev pytest tests/unit/ -x -q
+docker exec kg-api-dev pytest tests/api/ -x -q
 
-# By file
-pytest tests/api/test_jobs.py -v
-pytest tests/api/test_ingest.py -v
-
-# With coverage
-pytest --cov=src --cov-report=html
-open htmlcov/index.html
+# Coverage (configured against api/app in pytest.ini)
+./tests/run.sh --cov-report=html
+# HTML report: htmlcov/index.html inside the container
 ```
 
 ### TypeScript Tests
 
 ```bash
-# From client/
+# From cli/
 npm run build            # Required before tests
 
 # All tests
@@ -780,13 +829,13 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Install Node dependencies
-        run: cd client && npm install
+        run: cd cli && npm install
 
       - name: Build CLI
-        run: cd client && npm run build
+        run: cd cli && npm run build
 
       - name: Run CLI tests
-        run: cd client && npm test
+        run: cd cli && npm test
         env:
           AI_PROVIDER: mock
 ```
@@ -913,11 +962,11 @@ def test_internal_queue_state():
 # Check API
 curl http://localhost:8000/health
 
-# Check PostgreSQL
-docker ps | grep postgres
+# Check container status
+./operator.sh status
 
-# Start services
-docker-compose up -d
+# Start the platform
+./operator.sh start
 ```
 
 ### Mock Provider Not Working
@@ -940,18 +989,18 @@ grep AI_PROVIDER .env
 
 **Solution:**
 ```bash
-# Check Python venv
-source venv/bin/activate
-python -m uvicorn api.app.main:app --version
+# Check the API container is up and healthy
+./operator.sh status
+docker exec kg-api-dev python -m uvicorn api.app.main:app --version
 
-# Increase timeout in jest.config.js
-testTimeout: 60000
+# Increase timeout in cli/jest.config.js
+# testTimeout: 60000
 ```
 
 ---
 
-**Last Updated:** 2025-10-08
-**Test Framework:** pytest 8.0+, Jest 29.7+
-**Database:** PostgreSQL 16 + Apache AGE 1.5.0
+**Last Updated:** 2026-05-25 (doc/code alignment review)
+**Test Framework:** pytest 8.0+, Jest 29.x
+**Database:** PostgreSQL 16 + Apache AGE
 **Mock Provider:** Deterministic hash-based (no API keys needed)
 **Philosophy:** Functional coverage > Line coverage

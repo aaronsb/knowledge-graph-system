@@ -78,7 +78,7 @@ Planned checks that require deeper analysis:
 |---------|-------------|----------|-----------------|
 | V001 | Version must be 1 | error | `"version": 2` |
 | V002 | Statements must be non-empty | error | `"statements": []` (also caught by V000) |
-| V003 | Statement structure invalid | error | Reserved for future operator-level checks |
+| V003 | Statement structure invalid | error | Reserved. Operator and operation-type checks are currently enforced by Pydantic at Layer 1 (surfaces as V000). |
 | V004 | Duplicate parameter names | error | Two params both named `"x"` |
 | V005 | Conditional then-branch empty | error | `"then": []` in ConditionalOp |
 
@@ -255,4 +255,4 @@ A program that passes client-side checks may still fail server-side validation
 
 - **Models**: `api/app/models/program.py`
 - **Validator**: `api/app/services/program_validator.py`
-- **Tests**: `tests/unit/test_program_validation.py` (105 tests, executable specification)
+- **Tests**: `tests/unit/test_program_validation.py` (109 tests, executable specification)

@@ -2,119 +2,83 @@
 
 ## Overview
 
-The Knowledge Graph System uses a modular AI provider architecture that supports:
-- **OpenAI** (GPT-4, embeddings)
+The Knowledge Graph System uses a modular AI provider architecture (`api/app/lib/ai_providers.py`) that supports:
+- **OpenAI** (GPT-4o family + embeddings)
 - **Anthropic** (Claude models)
+- **Ollama** (local LLMs - Mistral, Llama, Qwen, etc.)
+- **OpenRouter** (unified gateway to many providers)
+- **llama.cpp** (server-mode local inference, OpenAI-compatible)
 
-Both providers can be used for concept extraction, with OpenAI providing embeddings for both.
+Embeddings come from either OpenAI (`text-embedding-3-small`) or a local sentence-transformers model (e.g. `nomic-embed-text-v1.5`). Embeddings are configured separately via `kg admin embedding` — see [Embedding Configuration](03-EMBEDDING_CONFIGURATION.md).
 
 ## Configuration
 
-### Environment Variables
+All provider configuration is stored in PostgreSQL (encrypted for API keys) and managed via the operator container or the `kg` CLI. Do not edit `.env` directly.
+
+### Configure the Extraction Provider
 
 ```bash
-# Provider Selection
-AI_PROVIDER=openai  # or "anthropic"
+# Via operator (operator container)
+./operator.sh ai-provider <provider> [--model <model>] [--max-tokens <n>]
 
-# OpenAI Configuration
-OPENAI_API_KEY=sk-...
-OPENAI_EXTRACTION_MODEL=gpt-4o  # optional override
-OPENAI_EMBEDDING_MODEL=text-embedding-3-small  # optional override
-
-# Anthropic Configuration (optional)
-ANTHROPIC_API_KEY=sk-ant-...
-ANTHROPIC_EXTRACTION_MODEL=claude-sonnet-4-20250514  # optional override
+# Via kg CLI
+kg admin extraction set --provider <provider> --model <model>
 ```
+
+Supported providers: `openai`, `anthropic`, `ollama`, `openrouter`.
+
+### Store API Keys (Encrypted)
+
+```bash
+# Via operator
+./operator.sh api-key <provider>          # prompts for the key
+./operator.sh api-key <provider> --key <key>
+
+# Via kg CLI
+kg admin keys set <provider>
+```
+
+Keys are validated against the provider before being stored encrypted in `kg_api.system_api_keys` (ADR-031).
 
 ## Supported Models
 
+The catalog is driven by a database table (`kg_api.provider_model_catalog`, ADR-800). The defaults below are what `./operator.sh ai-provider <provider>` selects if you omit `--model`. Use `./operator.sh models list <provider>` to see the live catalog and `./operator.sh models refresh <provider>` to pull the latest list from the provider.
+
 ### OpenAI
 
-**Extraction Models:**
-- `gpt-4o` (default) - Latest GPT-4 Omni, recommended for concept extraction
-- `gpt-4o-mini` - Faster, cheaper variant
-- `o1-preview` - Reasoning model for complex analysis
-- `o1-mini` - Smaller reasoning model
+**Extraction defaults:** `gpt-4o`
 
-**Embedding Models:**
-- `text-embedding-3-small` (default) - 1536 dimensions, fast and efficient
-- `text-embedding-3-large` - 3072 dimensions, more accurate
-- `text-embedding-ada-002` - Legacy model
+**Embedding:** `text-embedding-3-small` (1536-dim) by default; `text-embedding-3-large` (3072-dim) also supported.
 
 ### Anthropic
 
-**Extraction Models:**
-- `claude-sonnet-4-20250514` (default) - Latest Claude Sonnet 4.5 (SOTA)
-- `claude-3-5-sonnet-20241022` - Claude 3.5 Sonnet
-- `claude-3-opus-20240229` - Claude 3 Opus (most capable)
-- `claude-3-sonnet-20240229` - Claude 3 Sonnet (balanced)
-- `claude-3-haiku-20240307` - Claude 3 Haiku (fastest)
+**Extraction defaults:** `claude-sonnet-4-20250514`
 
-**Note:** Anthropic doesn't provide embeddings, so `OPENAI_API_KEY` is required even when using Anthropic for extraction.
+**Note:** Anthropic does not provide embeddings, so a working embedding provider (OpenAI or local) must still be configured.
 
-## Interactive Configuration
+### Ollama
 
-Use the configuration script:
+**Extraction defaults:** `mistral:7b-instruct`
+
+Requires a running Ollama service. See [Switching Extraction Providers](04-SWITCHING_EXTRACTION_PROVIDERS.md) and [Local Inference Implementation](05-LOCAL_INFERENCE_IMPLEMENTATION.md) for setup.
+
+### OpenRouter
+
+**Extraction defaults:** `openai/gpt-4o`
+
+OpenRouter exposes models from many providers under one API. Set the routed slug (e.g. `anthropic/claude-3.5-sonnet`) via `--model`.
+
+## Status / Validation
 
 ```bash
-./scripts/configure-ai.sh
-```
+# Show currently active extraction config
+kg admin extraction config
 
-Options:
-1. Test current provider
-2. Test OpenAI
-3. Test Anthropic
-4. Switch to OpenAI
-5. Switch to Anthropic
-6. Configure OpenAI models
-7. Configure Anthropic models
-8. Exit
+# Show which provider keys are configured (no plaintext is ever returned)
+kg admin keys list
 
-## Provider Architecture
-
-### OpenAIProvider
-
-```python
-from ingest.ai_providers import OpenAIProvider
-
-provider = OpenAIProvider(
-    extraction_model="gpt-4o",
-    embedding_model="text-embedding-3-small"
-)
-
-# Validate API key
-if provider.validate_api_key():
-    print("✓ OpenAI configured")
-
-# Extract concepts
-result = provider.extract_concepts(
-    text="your text",
-    system_prompt=EXTRACTION_PROMPT,
-    existing_concepts=[]
-)
-
-# Generate embeddings
-embedding = provider.generate_embedding("your text")
-```
-
-### AnthropicProvider
-
-```python
-from ingest.ai_providers import AnthropicProvider, OpenAIProvider
-
-# Anthropic requires an embedding provider
-embedding_provider = OpenAIProvider(
-    embedding_model="text-embedding-3-small"
-)
-
-provider = AnthropicProvider(
-    extraction_model="claude-sonnet-4-20250514",
-    embedding_provider=embedding_provider
-)
-
-# Same interface as OpenAI
-result = provider.extract_concepts(...)
-embedding = provider.generate_embedding(...)  # delegates to OpenAI
+# Operator-side status
+./operator.sh status
 ```
 
 ## Choosing a Provider
@@ -183,51 +147,32 @@ embedding = provider.generate_embedding(...)  # delegates to OpenAI
 **High Accuracy:**
 - `text-embedding-3-large` - 2x dimensions, better similarity
 
-**Legacy:**
-- `text-embedding-ada-002` - Older model, still works
-
 ## Testing and Validation
 
 ### Validate API Keys
 
 ```bash
-# Via script
-./scripts/configure-ai.sh  # Option 1
+# Show key status (validity, last validated)
+kg admin keys list
 
-# Via Python
-python -c "
-from ingest.ai_providers import get_provider
-provider = get_provider('openai')
-print('✓ Valid' if provider.validate_api_key() else '✗ Invalid')
-"
+# Operator status (all components)
+./operator.sh status
 ```
 
 ### List Available Models
 
 ```bash
-python -c "
-from ingest.ai_providers import get_provider
-provider = get_provider('openai')
-models = provider.list_available_models()
-print('Extraction:', models['extraction'][:5])
-print('Embedding:', models['embedding'])
-"
+./operator.sh models list openai
+./operator.sh models list anthropic
+./operator.sh models list ollama
 ```
 
 ### Test Extraction
 
 ```bash
-python -c "
-from ingest.llm_extractor import extract_concepts
-
-result = extract_concepts(
-    text='The universe is vast and complex.',
-    source_id='test-1',
-    existing_concepts=[]
-)
-
-print('Concepts:', [c['label'] for c in result['concepts']])
-"
+# Submit a small test ingestion; the active provider is used end-to-end
+kg ingest text "The universe is vast and complex." -o "test"
+kg job list done -l 1
 ```
 
 ## Troubleshooting
@@ -235,13 +180,11 @@ print('Concepts:', [c['label'] for c in result['concepts']])
 ### "API key invalid"
 
 ```bash
-# Check environment
-echo $OPENAI_API_KEY
-cat .env | grep API_KEY
+# Re-store the key (validated against the provider before being saved)
+kg admin keys set openai
 
-# Test directly
-curl https://api.openai.com/v1/models \
-  -H "Authorization: Bearer $OPENAI_API_KEY"
+# Confirm
+kg admin keys list
 ```
 
 ### "Rate limit exceeded"
@@ -266,43 +209,8 @@ curl https://api.openai.com/v1/models \
 
 ### Custom Provider
 
-Extend the base `AIProvider` class:
-
-```python
-from ingest.ai_providers import AIProvider
-
-class CustomProvider(AIProvider):
-    def extract_concepts(self, text, system_prompt, existing_concepts):
-        # Your implementation
-        pass
-
-    def generate_embedding(self, text):
-        # Your implementation
-        pass
-
-    # Implement all abstract methods
-```
-
-### Provider Switching
-
-```python
-# Switch providers at runtime
-from ingest.ai_providers import get_provider
-
-openai_result = get_provider('openai').extract_concepts(...)
-anthropic_result = get_provider('anthropic').extract_concepts(...)
-```
+Provider classes live in `api/app/lib/ai_providers.py` and extend the `AIProvider` abstract base class. Add a new subclass there, register it in `get_provider()`, and add a row in `kg_api.provider_model_catalog` for any models it exposes (ADR-800).
 
 ### Hybrid Approach
 
-```python
-# Use Claude for extraction, OpenAI for embeddings
-from ingest.ai_providers import AnthropicProvider, OpenAIProvider
-
-provider = AnthropicProvider(
-    extraction_model="claude-sonnet-4-20250514",
-    embedding_provider=OpenAIProvider(
-        embedding_model="text-embedding-3-large"
-    )
-)
-```
+The extraction provider and embedding provider are configured independently. For example, you can run extraction on Anthropic Claude and embeddings on local sentence-transformers — switch extraction with `kg admin extraction set --provider anthropic ...` and embeddings with `kg admin embedding activate <profile-id>`.

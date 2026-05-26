@@ -47,10 +47,13 @@ Run `./operator.sh init --headless` with command-line flags. Good for:
 - Scripted configuration
 
 ### Development
-Run `./operator.sh init` with dev mode enabled. Adds:
-- Hot reload for code changes
+Run `./operator.sh init` (interactive) and choose dev mode, or use
+`./operator.sh init --headless --container-mode=dev --password-mode=simple`.
+Adds:
+- Hot reload for code changes (via `docker-compose.dev.yml`)
 - Simple default passwords
-- Local image builds
+- Local image builds (`IMAGE_SOURCE=local`)
+- Container suffix `-dev` (so containers are `kg-api-dev`, `kg-web-dev`)
 
 ### Production
 Deploy with GHCR images, HTTPS, and proper secrets. Covered in [Production Deployment](production.md).
@@ -81,16 +84,20 @@ Deploy with GHCR images, HTTPS, and proper secrets. Covered in [Production Deplo
 
 # Check status
 ./operator.sh status
+./operator.sh versions      # Show image/version info per container
 
-# View logs
+# View logs (default service: api)
 ./operator.sh logs api      # API logs
-./operator.sh logs          # All logs
+./operator.sh logs api -f   # Follow API logs
 
 # Maintenance
-./operator.sh upgrade       # Pull updates and migrate
-./operator.sh backup        # Backup database
-./operator.sh shell         # Enter operator shell for admin tasks
+./operator.sh update        # Pull images (no restart)
+./operator.sh upgrade       # Pull, migrate, restart
+./operator.sh shell         # Enter operator container for admin tasks
 ```
+
+Backup/restore run inside the operator container. See
+[Backup & Restore](backup-restore.md).
 
 ## Next Steps
 

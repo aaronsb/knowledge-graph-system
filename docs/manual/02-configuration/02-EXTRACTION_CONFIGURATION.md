@@ -27,17 +27,16 @@ During ingestion, extraction models:
 
 ### Supported Providers
 
-**OpenAI** (ADR-041)
-- `gpt-4o` - Latest GPT-4 Omni (recommended, supports vision)
-- `gpt-4o-mini` - Faster, cheaper variant
-- `gpt-4-turbo` - Previous generation
-- JSON mode support
+**OpenAI** (ADR-041, default model `gpt-4o`)
+- Model catalog is sourced from the live OpenAI API and stored in `kg_api.provider_model_catalog` (ADR-800).
+- Refresh: `./operator.sh models refresh openai`
+- JSON mode support.
 
-**Anthropic** (ADR-041)
-- `claude-sonnet-4` - Latest Claude Sonnet (recommended)
-- `claude-3-5-sonnet-20241022` - Previous generation
-- `claude-opus-4` - Most capable (higher cost)
-- Native JSON support
+**Anthropic** (ADR-041, default model `claude-sonnet-4-20250514`)
+- Catalog also stored in `kg_api.provider_model_catalog`.
+- Native JSON output.
+
+**Ollama** (default model `mistral:7b-instruct`) and **OpenRouter** (default `openai/gpt-4o`) are also supported as extraction providers.
 
 ### Configuration vs API Keys
 
@@ -77,11 +76,11 @@ Output:
 
 | Parameter | Description | Values | Default |
 |-----------|-------------|--------|---------|
-| `provider` | AI provider | `openai`, `anthropic` | `openai` |
-| `model` | Model name | See model lists below | `gpt-4o` |
+| `provider` | AI provider | `openai`, `anthropic`, `ollama`, `openrouter` | `openai` |
+| `model` | Model name | See model catalog (`./operator.sh models list <provider>`) | `gpt-4o` |
 | `supports_vision` | Vision API support | `true`, `false` | `true` (for gpt-4o) |
 | `supports_json_mode` | JSON mode | `true`, `false` | `true` |
-| `max_tokens` | Max output tokens | 1024-8192 | 4096 |
+| `max_tokens` | Max output tokens | 1024-16384 | 16384 |
 
 ### Recommended Models
 
@@ -232,13 +231,13 @@ kg admin keys list
 kg admin extraction set --provider anthropic --model claude-sonnet-4
 
 # 4. Restart API to apply changes
-./scripts/services/stop-api.sh && ./scripts/services/start-api.sh
+./operator.sh restart api
 
 # 5. Test with ingestion
 kg ingest file -o "Test Ontology" -y test-document.txt
 ```
 
-**Note:** Unlike embedding configs, extraction changes require API restart (no hot reload yet).
+**Note:** Extraction configuration is loaded from the database at the start of each ingestion job, so changes apply to the next job submitted. The API does not need to be restarted.
 
 ### Workflow 3: Switch to Cost-Optimized Model
 
@@ -252,7 +251,7 @@ kg admin extraction set \
   --max-tokens 2048
 
 # Restart API
-./scripts/services/stop-api.sh && ./scripts/services/start-api.sh
+./operator.sh restart api
 
 # Switch back to gpt-4o for production
 kg admin extraction set \
@@ -261,7 +260,7 @@ kg admin extraction set \
   --max-tokens 4096
 
 # Restart API
-./scripts/services/stop-api.sh && ./scripts/services/start-api.sh
+./operator.sh restart api
 ```
 
 ### Workflow 4: Enable/Disable Features
@@ -279,7 +278,7 @@ kg admin extraction set --no-vision
 kg admin extraction set --max-tokens 8192
 
 # Restart API to apply
-./scripts/services/stop-api.sh && ./scripts/services/start-api.sh
+./operator.sh restart api
 ```
 
 ### Workflow 5: Fix Invalid API Key
@@ -298,7 +297,7 @@ kg admin keys set openai
 # Enter new key when prompted
 
 # 4. Restart API (picks up new key automatically)
-./scripts/services/stop-api.sh && ./scripts/services/start-api.sh
+./operator.sh restart api
 
 # 5. Verify
 kg admin keys list
@@ -347,10 +346,7 @@ kg admin extraction set --json-mode
 kg admin extraction set --no-vision
 ```
 
-**Important:** Extraction config changes require API restart (no hot reload yet):
-```bash
-./scripts/services/stop-api.sh && ./scripts/services/start-api.sh
-```
+**Note:** Extraction config is read from the database when each ingestion job starts, so changes apply to the next submitted job. The API does not need to be restarted.
 
 ### API Key Management
 
@@ -423,7 +419,7 @@ No API key configured for provider: openai
 kg admin keys set openai
 
 # Restart API
-./scripts/services/stop-api.sh && ./scripts/services/start-api.sh
+./operator.sh restart api
 ```
 
 ### Error: "API key validation failed"
@@ -543,13 +539,13 @@ Rate limit exceeded: 429 Too Many Requests
    kg admin extraction set --provider anthropic --model claude-opus-4
 
    # Restart API
-   ./scripts/services/stop-api.sh && ./scripts/services/start-api.sh
+   ./operator.sh restart api
    ```
 
 2. **Increase max_tokens:**
    ```bash
    kg admin extraction set --max-tokens 8192
-   ./scripts/services/stop-api.sh && ./scripts/services/start-api.sh
+   ./operator.sh restart api
    ```
 
 3. **Re-ingest with better config:**
@@ -582,7 +578,7 @@ kg admin keys delete anthropic
 kg admin keys set anthropic
 
 # Restart API
-./scripts/services/stop-api.sh && ./scripts/services/start-api.sh
+./operator.sh restart api
 ```
 
 ### Config Changes Not Applied
@@ -594,7 +590,7 @@ kg admin keys set anthropic
 **Solution:**
 ```bash
 # Extraction config changes require restart
-./scripts/services/stop-api.sh && ./scripts/services/start-api.sh
+./operator.sh restart api
 
 # Verify new config is active
 kg admin extraction config
@@ -718,7 +714,7 @@ openssl rand -hex 32
 ENCRYPTION_KEY=your-generated-key-here
 
 # Restart API to use new key
-./scripts/services/stop-api.sh && ./scripts/services/start-api.sh
+./operator.sh restart api
 ```
 
 **Warning:** Changing ENCRYPTION_KEY invalidates all stored API keys!
@@ -758,7 +754,7 @@ ENCRYPTION_KEY=your-generated-key-here
 | Set OpenAI key | `kg admin keys set openai` |
 | Set Anthropic key | `kg admin keys set anthropic` |
 | Delete API key | `kg admin keys delete <provider>` |
-| Restart API | `./scripts/services/stop-api.sh && ./scripts/services/start-api.sh` |
+| Restart API | `./operator.sh restart api` |
 | Test configuration | `kg ingest file -o "Test" -y test.txt` |
 
 **Common workflows:**

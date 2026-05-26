@@ -150,10 +150,12 @@ within the API worker. They do **not** generate HTTP requests. The executor
 invokes the underlying service function directly (vector search, source search,
 epistemic status, etc.).
 
-### 2.7 ConditionalOp (Phase 2)
+### 2.7 ConditionalOp
 
-> **Status:** Phase 2. Defined here for forward compatibility. Implementations
-> SHOULD reject `ConditionalOp` until Phase 2 is active.
+> **Status:** Implemented. The Pydantic model, validator (V005, V007), and
+> executor (all six condition tests in `_evaluate_condition`) are live in
+> `api/app/{models,services}/program*.py`. The `else_` field on the
+> Python model uses `alias='else'` to map to the JSON `else` key.
 
 ```typescript
 interface ConditionalOp {
@@ -173,9 +175,10 @@ interface ConditionalOp {
 
 Nested conditionals are permitted up to a maximum depth (default: 3).
 
-### 2.8 Condition (Phase 2)
+### 2.8 Condition
 
-> **Status:** Phase 2.
+> **Status:** Implemented. All six tests below are evaluated by
+> `_evaluate_condition` in `api/app/services/program_executor.py`.
 
 ```typescript
 type Condition =
@@ -201,7 +204,12 @@ Conditions are pure predicates. They read W but never modify it.
 
 ### 2.9 ParamDeclaration (Phase 2)
 
-> **Status:** Phase 2.
+> **Status:** Partially implemented. The Pydantic model accepts `params`
+> declarations and `POST /programs/execute` accepts a `params` payload, but
+> the executor does **not** yet substitute `$name` references into queries.
+> Only the implicit `$W_IDS` binding (the current node IDs in W) is wired
+> through `program_dispatch.dispatch_cypher`. V004 (duplicate parameter
+> names) is enforced.
 
 ```typescript
 interface ParamDeclaration {
@@ -211,9 +219,9 @@ interface ParamDeclaration {
 }
 ```
 
-Parameters declared here can be referenced as `$name` in `CypherOp.query`
-strings and `ApiOp.params` values. They are resolved once at execution time
-before any statement runs.
+Parameters declared here are intended to be referenced as `$name` in
+`CypherOp.query` strings and `ApiOp.params` values, resolved once at
+execution time before any statement runs.
 
 ### 2.10 BlockAnnotation (Phase 3)
 
@@ -256,9 +264,12 @@ interface WorkingGraph {
 ```
 
 > **Implementation note:** `WorkingGraph` corresponds to `RawGraphData` in the
-> current web codebase (`cypherResultMapper.ts`). `RawNode` corresponds to
-> `RawGraphNode` and `RawLink` to `RawGraphLink`. The spec names are the
-> canonical names for cross-document reference; implementations may alias them.
+> current web codebase (`cypherResultMapper.ts`). The server-side Pydantic
+> models live in `api/app/models/program.py` and collapse most concept-specific
+> fields into a generic `properties: Dict[str, Any]` bag; the web's
+> `RawGraphNode` / `RawGraphLink` interfaces enumerate the well-known
+> properties for display. The spec names are the canonical names for
+> cross-document reference; implementations may alias them.
 
 **Node identity** is determined by `concept_id` (string). Two nodes are
 considered the same node if and only if they share the same `concept_id`.
@@ -269,10 +280,13 @@ interface RawNode {
   label: string;
   ontology?: string;
   description?: string;
+  // Web-side conveniences extracted from `properties` by the result mapper:
   search_terms?: string[];
   grounding_strength?: number;
   diversity_score?: number;
   evidence_count?: number;
+  // Server-side model carries all extra fields here:
+  properties?: Record<string, unknown>;
 }
 ```
 
@@ -287,7 +301,10 @@ interface RawLink {
   relationship_type: string; // e.g. "IMPLIES", "SUPPORTS", "CONTRADICTS"
   category?: string;
   confidence?: number;
+  // Web-side conveniences extracted from `properties` by the result mapper:
   grounding_strength?: number;
+  // Server-side model carries all extra fields here:
+  properties?: Record<string, unknown>;
 }
 ```
 
@@ -446,13 +463,14 @@ execution, no jumps, and no back-references.
 For each statement at index `i`:
 
 1. **Resolve parameters** -- substitute `$name` references in `CypherOp.query`
-   and `ApiOp.params` with provided or default values (Phase 2).
+   and `ApiOp.params` with provided or default values (Phase 2; not yet
+   implemented -- the executor currently only binds the implicit `$W_IDS`).
 2. **Evaluate condition** -- if `operation.type === 'conditional'`, evaluate
-   the condition against current W and select the `then` or `else` branch
-   (Phase 2).
+   the condition against current W and select the `then` or `else` branch.
 3. **Execute operation** -- dispatch on `operation.type`:
-   - `cypher`: Execute `query` against H via the query facade. Apply `limit`
-     if specified.
+   - `cypher`: Execute `query` against H via `AGEClient._execute_cypher`
+     (the executor does not currently route through `GraphQueryFacade` --
+     see security.md Layer 4). Apply `limit` if specified.
    - `api`: Call the internal service function for `endpoint` with `params`.
    - `conditional`: Execute the selected branch's statements recursively.
 4. **Map result** -- convert the raw query/API response to `WorkingGraph`
@@ -871,35 +889,82 @@ And adds the `version: 1` field to the root.
 
 ## 9. API Endpoints
 
+The program endpoints are mounted under `/programs` (see
+`api/app/routes/programs.py`).
+
 ### 9.1 Validate
 
 ```
 POST /programs/validate
 
-Request:  GraphProgram (JSON body)
+Request:  ProgramSubmission { name?: string, program: GraphProgram (as dict) }
 Response: ValidationResult
 ```
 
-Validates the program AST without executing it. Returns structured errors.
+Validates the program AST without executing it. Always returns HTTP 200;
+inspect `valid`, `errors`, and `warnings` on the response.
 
-### 9.2 Execute
+### 9.2 Notarize and Store
+
+```
+POST /programs
+
+Request:  ProgramSubmission { name?: string, program: GraphProgram (as dict) }
+Response: 201 ProgramCreateResponse { id, name, program, valid, created_at, updated_at }
+```
+
+Validates and stores the program as a `program`-type query definition.
+On validation failure returns HTTP 400 with
+`{ detail: { error, validation: ValidationResult } }`.
+
+### 9.3 List
+
+```
+GET /programs?search=<text>&limit=<n>
+
+Response: ProgramListItem[]
+```
+
+Returns lightweight summaries (id, name, description, statement_count,
+created_at) for programs visible to the caller (own + system-owned;
+admins see all). `limit` is 1-100 (default 20).
+
+### 9.4 Retrieve
+
+```
+GET /programs/{id}
+
+Response: ProgramReadResponse { id, name, program, owner_id, created_at, updated_at }
+```
+
+Returns the full notarized program. Access requires ownership or admin role
+(system-owned programs with `owner_id IS NULL` are visible to all
+authenticated users).
+
+### 9.5 Execute
 
 ```
 POST /programs/execute
 
-Request: {
-  program: GraphProgram,
-  params?: Record<string, string | number>   // Phase 2
-}
+Request: ProgramExecuteRequest -- one of the following modes:
+  Single (inline):   { program: GraphProgram (as dict), params?: Record<string, string | number> }
+  Single (by ID):    { program_id: int, params?: Record<string, string | number> }
+  Chain (deck):      { deck: DeckEntry[] }   // 1-10 entries; each entry has program_id or program
 
-Response: ProgramResult
+Response: ProgramResult (single) or BatchProgramResult (deck)
 ```
 
-Validates and executes the program. Returns the final W and step log.
+Re-validates the program(s) before execution (defense in depth).
+If validation fails, returns HTTP 400 with the `ValidationResult`.
+If an assert (`!`) fails during execution, returns HTTP 200 with the
+`aborted` field populated and W in its state prior to the failing statement.
+Program execution is bounded by `PROGRAM_TIMEOUT_SECONDS` (default 60s in
+`api/app/services/program_executor.py`); a timeout produces the same
+`aborted` shape with reason `"Program execution timed out"`.
 
-If validation fails, returns the `ValidationResult` with HTTP 400.
-If an assert (`!`) fails during execution, returns HTTP 200 with the `aborted`
-field populated and W in its state prior to the failing statement.
+In deck mode, programs run sequentially with W threaded forward; if any
+program aborts, the chain stops and the partial `BatchProgramResult` is
+returned.
 
 ---
 

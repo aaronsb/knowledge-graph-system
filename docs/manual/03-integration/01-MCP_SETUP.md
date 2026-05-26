@@ -5,10 +5,9 @@ The Knowledge Graph MCP (Model Context Protocol) server enables Claude to query 
 ## Prerequisites
 
 - Node.js 18+ installed
-- PostgreSQL + Apache AGE database running (see `docs/guides/QUICKSTART.md`)
-- FastAPI server running (`./scripts/services/start-api.sh`)
-- kg CLI installed globally (`cd client && ./install.sh`)
-- **User account created** - Run `kg login` to create an admin account if you haven't already
+- Platform running (`./operator.sh start`) - includes PostgreSQL + Apache AGE + the FastAPI server
+- kg CLI installed globally (`cd cli && npm run build && ./install.sh`)
+- **User account created** - The admin user is created by `./operator.sh init`. Run `kg login` to obtain OAuth client credentials.
 
 ## Authentication
 
@@ -141,7 +140,7 @@ open -a TextEdit ~/Library/Application\ Support/Claude/claude_desktop_config.jso
 }
 ```
 
-**If you already have other MCP servers configured, add the `knowledge-graph` entry:**
+**If you already have other MCP servers configured, add the `knowledge-graph` entry.** Use the OAuth client credentials from `kg oauth create-mcp`:
 
 ```json
 {
@@ -149,31 +148,29 @@ open -a TextEdit ~/Library/Application\ Support/Claude/claude_desktop_config.jso
     "existing-server": {
       "command": "some-other-mcp-server"
     },
-    "knowledge-graph": {  
-        "command": "kg-mcp-server",  
-        "args": [],  
-        "env": {  
-          "KG_API_URL": "http://localhost:8000",  
-          "KG_USERNAME": "claude",  
-          "KG_PASSWORD": "Password1!"  
-        }  
-     }
+    "knowledge-graph": {
+      "command": "kg-mcp-server",
+      "args": [],
+      "env": {
+        "KG_API_URL": "http://localhost:8000",
+        "KG_OAUTH_CLIENT_ID": "kg-mcp-server-admin-20251102",
+        "KG_OAUTH_CLIENT_SECRET": "oauth_secret_abc123..."
+      }
+    }
   }
 }
 ```
 
 **Configuration Breakdown:**
-- `command`: `kg-mcp-server` - The globally installed MCP server command
-- `env.KG_USERNAME`: Your username (same as what you used for `kg login`)
-- `env.KG_PASSWORD`: Your password
-- The MCP server will automatically login on startup using these credentials
-- Authentication happens transparently - Claude is not aware of it
+- `command`: `kg-mcp-server` - the globally installed MCP server command
+- `env.KG_OAUTH_CLIENT_ID` / `env.KG_OAUTH_CLIENT_SECRET`: from `kg oauth create-mcp`; the MCP server exchanges these for short-lived access tokens via OAuth 2.0 client credentials grant
+- Authentication is transparent to Claude
 
 **Important Checklist:**
-- ✅ Replace `your-password-here` with your actual password
+- ✅ Paste the exact `KG_OAUTH_CLIENT_ID` and `KG_OAUTH_CLIENT_SECRET` from `kg oauth create-mcp` (client secret is shown once)
 - ✅ Ensure JSON syntax is valid (use a JSON validator if needed)
-- ✅ The `kg-mcp-server` command must be globally installed: `cd client && ./install.sh`
-- ✅ The API server must be running: `./scripts/services/start-api.sh`
+- ✅ The `kg-mcp-server` command must be globally installed: `cd cli && npm run build && ./install.sh`
+- ✅ The platform must be running: `./operator.sh start`
 
 ### Step 4: Restart Claude Desktop
 
@@ -262,7 +259,7 @@ which kg-mcp-server
 
 **Reinstall if needed:**
 ```bash
-cd client
+cd cli
 ./uninstall.sh
 ./install.sh
 ```
@@ -273,9 +270,9 @@ curl http://localhost:8000/health
 # Should return: {"status":"healthy"}
 ```
 
-**Start API server if needed:**
+**Start platform if needed:**
 ```bash
-./scripts/services/start-api.sh
+./operator.sh start
 ```
 
 **Check PostgreSQL is running:**
@@ -349,7 +346,7 @@ MCP server stderr is captured in Claude Code session logs.
 ### Rebuilding After Code Changes
 
 ```bash
-cd client
+cd cli
 npm run build
 ./install.sh  # Reinstall globally
 
@@ -372,10 +369,10 @@ The kg CLI uses the same REST API as the MCP server.
 ### Adding New Tools
 
 1. Add API endpoint to `api/app/routes/` (if needed)
-2. Add client method to `client/src/api/client.ts`
-3. Add tool definition to `client/src/mcp-server.ts` (ListToolsRequestSchema handler)
+2. Add client method to `cli/src/api/client.ts`
+3. Add tool definition to `cli/src/mcp-server.ts` (ListToolsRequestSchema handler)
 4. Add case handler to CallToolRequestSchema handler
-5. Rebuild: `cd client && npm run build && ./install.sh`
+5. Rebuild: `cd cli && npm run build && ./install.sh`
 6. Restart Claude
 
 ## Configuration Examples

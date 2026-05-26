@@ -10,7 +10,7 @@ At its heart is **recursive upsert** - a unique process where:
 2. **Graph relationships** connect concepts through typed edges like IMPLIES, CONTRADICTS, ENABLES (the "graph" part)
 3. **Recursive enhancement** means each new document doesn't just add data - it enriches existing concepts, discovers new connections, and builds understanding over time (the "recursive" part)
 
-When you ingest a second document mentioning concepts from the first, the system recognizes them through semantic similarity (≥0.85 cosine threshold), merges evidence, and discovers new relationships. By the tenth document, the graph knows your domain - concept hit rates climb from 0% to 60%+ as the system learns.
+When you ingest a second document mentioning concepts from the first, the system recognizes them through semantic similarity (vector cosine similarity, default 0.75 search threshold), merges evidence, and discovers new relationships. By the tenth document, the graph knows your domain - concept hit rates climb from 0% to 60%+ as the system learns.
 
 ## Why This Matters for AI Systems
 
@@ -219,8 +219,6 @@ The infrastructure (auth, RBAC, API, visualizer) exists to support the recursive
 
 ## Next Steps
 
-Ready to try it? Start with [Quickstart](../01-getting-started/02-CLI_USAGE.md) to get running in 5 minutes.
+Ready to try it? Start with the [CLI Usage Guide](../01-getting-started/02-CLI_USAGE.md) to get running in 5 minutes.
 
-Want to understand the architecture? See [Architecture Overview](../../reference/ARCHITECTURE_OVERVIEW.md) and [ADR-016: Apache AGE Migration](../../architecture/database-schema/ADR-016-apache-age-migration.md).
-
-Curious about the recursive upsert pattern in depth? See [Recursive Upsert Architecture](../../reference/RECURSIVE_UPSERT_ARCHITECTURE.md) (referenced in the knowledge graph) and [Enrichment Journey](../06-reference/07-ENRICHMENT_JOURNEY.md) for a real example.
+Curious about the recursive upsert pattern in depth? See [Enrichment Journey](../06-reference/07-ENRICHMENT_JOURNEY.md) for a real example, and the ADR index at `docs/architecture/ARCHITECTURE_DECISIONS.md` (notably ADR-016 Apache AGE Migration).

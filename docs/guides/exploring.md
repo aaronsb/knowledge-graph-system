@@ -27,11 +27,11 @@ Returns concepts semantically similar to your query, even if they use different 
 # Limit results
 kg search --limit 20 "economic policy"
 
-# Filter by ontology
-kg search --ontology "research" "neural networks"
+# Search source documents within a specific ontology
+kg search sources "neural networks" --ontology "research"
 
-# Show more detail
-kg search --verbose "machine learning"
+# Adjust similarity threshold (default 0.7)
+kg search --min-similarity 0.5 "machine learning"
 ```
 
 ### Web Interface
@@ -89,8 +89,8 @@ Returns concepts directly connected, grouped by relationship type:
 ### Filter by Relationship Type
 
 ```bash
-kg search related <concept-id> --type SUPPORTS
-kg search related <concept-id> --type CONTRADICTS
+kg search related <concept-id> --types SUPPORTS
+kg search related <concept-id> --types CONTRADICTS
 ```
 
 ### Explore Deeper
@@ -162,10 +162,12 @@ The evidence section shows which sources support and which contradict.
 ### Filter by Epistemic Status
 
 ```bash
-kg vocabulary list --status CONTESTED
+kg vocab epistemic-status list --status MIXED_GROUNDING
 ```
 
-Shows relationship types that have mixed evidence across the graph.
+Shows relationship types that have mixed evidence across the graph. Valid
+statuses: `WELL_GROUNDED`, `MIXED_GROUNDING`, `WEAK_GROUNDING`,
+`POORLY_GROUNDED`, `CONTRADICTED`, `HISTORICAL`, `INSUFFICIENT_DATA`.
 
 ## Exploring by Source
 

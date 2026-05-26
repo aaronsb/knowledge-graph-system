@@ -13,19 +13,21 @@ Uses Docker containers with the operator pattern (ADR-061). No local Python inst
 ### `manual/`
 User manual organized into numbered sections for reading order.
 
-- **01-getting-started/** - Quickstart, CLI usage, ingestion basics
+- **00-introduction/** - What and why
+- **01-getting-started/** - CLI usage, ingestion basics
 - **02-configuration/** - AI providers, extraction, embeddings
 - **03-integration/** - MCP setup, vocabulary management
-- **04-security-and-access/** - Authentication, RBAC, security
+- **04-security-and-access/** - Authentication, RBAC, security, password recovery
 - **05-maintenance/** - Backup/restore, migrations
 - **06-reference/** - Schema, concepts, examples, query patterns
 
-See `manual/README.md` for detailed navigation.
+See `manual/README.md` for detailed navigation. Platform install/upgrade lives
+in `operating/`, not in `manual/`.
 
 ### `architecture/`
 Architecture decisions and design documents.
 
-- **INDEX.md** - ADR index (96 decisions)
+- **INDEX.md** - ADR index (107 decisions)
 - **ADR-###-*.md** - Individual architecture decision records (organized in subdirectories)
 
 Key ADRs for understanding the system:

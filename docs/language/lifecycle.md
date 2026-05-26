@@ -132,17 +132,30 @@ API confirms it is structurally sound, safe to execute, and bounded.
 POST /programs/validate
 Content-Type: application/json
 
-{ "version": 1, "statements": [...], "params": [...] }
+{
+  "name": "optional name",
+  "program": { "version": 1, "statements": [...], "params": [...] }
+}
 ```
 
-Returns `200` with `{ "valid": true }` or `400` with structured errors:
+The request body is a `ProgramSubmission` wrapper around the raw program
+AST (see `api/app/models/program.py`). The endpoint always returns `200`
+with the structured `ValidationResult`; the `valid` flag and `errors`
+array communicate pass/fail:
 
 ```json
 {
   "valid": false,
   "errors": [
-    { "statement": 3, "field": "query", "message": "MATCH without LIMIT on unbounded pattern" }
-  ]
+    {
+      "rule_id": "V030",
+      "severity": "error",
+      "statement": 3,
+      "field": "operation.query",
+      "message": "Variable-length path depth 10 exceeds maximum 6: [*1..10]"
+    }
+  ],
+  "warnings": []
 }
 ```
 
@@ -152,11 +165,18 @@ This is a dry-run — the program is not stored.
 
 ```
 POST /programs
+Content-Type: application/json
+
+{
+  "name": "optional name (falls back to metadata.name or 'Untitled program')",
+  "program": { "version": 1, "statements": [...] }
+}
 ```
 
-Validates the program and, if valid, stores it as a query definition in one
-atomic operation. Returns the created definition ID. If validation fails, no
-storage occurs and the response is the same `400` error format.
+Validates the program and, if valid, stores it as a `program`-type query
+definition in one atomic operation. Returns `201` with the
+`ProgramCreateResponse` (`{ id, name, program, valid, created_at, updated_at }`).
+If validation fails the response is `400` with `{ "detail": { "error": ..., "validation": ValidationResult } }`.
 
 ### 2.3 What Validation Checks
 
@@ -217,15 +237,17 @@ control:
 
 ### 3.3 CRUD Operations
 
-All clients use the same REST API for storage management:
+Programs have a dedicated REST surface that wraps notarization (validate +
+store) in a single endpoint. The generic `/query-definitions` surface is
+still available for compatibility with other definition types:
 
-| Operation | Endpoint | Notes |
-|-----------|----------|-------|
-| Create | `POST /query-definitions` | Accepts `{ name, definition_type: 'program', definition: { ... } }` |
-| List | `GET /query-definitions?definition_type=program` | Paginated, filtered by owner |
-| Get | `GET /query-definitions/{id}` | Returns full definition including AST |
-| Update | `PUT /query-definitions/{id}` | Partial update of name, definition, or metadata |
-| Delete | `DELETE /query-definitions/{id}` | Ownership check enforced |
+| Operation | Programs endpoint | Generic endpoint | Notes |
+|-----------|-------------------|------------------|-------|
+| Create | `POST /programs` | `POST /query-definitions` | The `/programs` route validates the AST before insert (returns 400 on validation failure); the generic route does not. |
+| List | `GET /programs` | `GET /query-definitions?definition_type=program` | `/programs` returns lightweight items (id, name, description, statement_count). |
+| Get | `GET /programs/{id}` | `GET /query-definitions/{id}` | `/programs/{id}` re-validates and returns a typed `ProgramReadResponse`. |
+| Update | (none) | `PUT /query-definitions/{id}` | Programs are updated via the generic endpoint. Re-validation on update is a known gap (see security.md T6). |
+| Delete | (none) | `DELETE /query-definitions/{id}` | Ownership check enforced. |
 
 The web client wraps these through `apiClient.createQueryDefinition()`,
 `apiClient.listQueryDefinitions()`, etc. in `web/src/api/client.ts`. The CLI
@@ -304,14 +326,23 @@ Content-Type: application/json
 }
 ```
 
-Or by reference to a stored program:
+Or by reference to a stored program (the same endpoint accepts either an
+inline `program` AST or a `program_id` referencing a stored notarized program):
 
 ```
-POST /programs/{id}/execute
+POST /programs/execute
 Content-Type: application/json
 
-{ "params": { "concept_name": "organizational" } }
+{
+  "program_id": 42,
+  "params": { "concept_name": "organizational" }
+}
 ```
+
+The endpoint also supports a `deck` chain mode that threads W through a
+sequence of programs (`{ "deck": [{ program_id }, { program }, ...] }`,
+maximum 10 entries). See `ProgramExecuteRequest` in
+`api/app/models/program.py`.
 
 **Execution flow:**
 
@@ -482,8 +513,8 @@ definition.
 
 ### 7.3 Definition Type Registry
 
-The `DEFINITION_TYPES` list in `api/app/models/query_definition.py` will be
-extended to include `'program'`:
+The `DEFINITION_TYPES` list in `api/app/models/query_definition.py` already
+includes `'program'`:
 
 ```python
 DEFINITION_TYPES = [
@@ -574,17 +605,20 @@ POST /programs/validate
 --> { "valid": true }
 ```
 
-### 8.4 Storage
+### 8.4 Storage (Notarize)
 
 ```
-POST /query-definitions
+POST /programs
 {
   "name": "Organizational Patterns",
-  "definition_type": "program",
-  "definition": { ... the GraphProgram above ... }
+  "program": { ... the GraphProgram above ... }
 }
---> { "id": 42, "name": "Organizational Patterns", ... }
+--> { "id": 42, "name": "Organizational Patterns", "program": {...}, "valid": true, ... }
 ```
+
+This single call validates the AST and stores it as a `program`-type
+query definition. If validation fails it returns HTTP 400 with the
+structured `ValidationResult` and stores nothing.
 
 ### 8.5 Retrieval (CLI)
 
@@ -599,8 +633,8 @@ Displays the stored program definition.
 An agent loads and executes the stored program with a parameter override:
 
 ```
-POST /programs/42/execute
-{ "params": { "concept_name": "governance" } }
+POST /programs/execute
+{ "program_id": 42, "params": { "concept_name": "governance" } }
 ```
 
 The API returns the final W (`WorkingGraph` containing `RawNode[]` and
