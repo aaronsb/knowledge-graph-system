@@ -30,7 +30,7 @@ from .services.job_scheduler import init_job_scheduler, get_job_scheduler
 from .services.scheduled_jobs_manager import JobScheduler as ScheduledJobsManager
 from .services.worker_registry import register_all_workers, get_all_job_types, validate_lane_uniqueness
 from .services.lane_manager import LaneManager
-from .launchers import CategoryRefreshLauncher, VocabConsolidationLauncher, EpistemicRemeasurementLauncher, ProjectionLauncher, ArtifactCleanupLauncher, AnnealingLauncher
+from .launchers import CategoryRefreshLauncher, VocabConsolidationLauncher, EpistemicRemeasurementLauncher, VocabEmbeddingLauncher, ProjectionLauncher, ArtifactCleanupLauncher, AnnealingLauncher
 from .routes import ingest, ingest_image, jobs, queries, database, ontology, admin, auth, rbac, vocabulary, vocabulary_config, embedding, extraction, oauth, sources, projection, artifacts, grants, query_definitions, documents, concepts, edges, graph, storage_admin, programs, admin_workers, models, epochs
 from .services.embedding_worker import get_embedding_worker
 from .lib.age_client import AGEClient
@@ -350,6 +350,7 @@ async def startup_event():
             'CategoryRefreshLauncher': CategoryRefreshLauncher,
             'VocabConsolidationLauncher': VocabConsolidationLauncher,
             'EpistemicRemeasurementLauncher': EpistemicRemeasurementLauncher,
+            'VocabEmbeddingLauncher': VocabEmbeddingLauncher,  # Migration 069: vocab embedding regen
             'ProjectionLauncher': ProjectionLauncher,  # ADR-078: Embedding projections
             'ArtifactCleanupLauncher': ArtifactCleanupLauncher,  # ADR-083: Artifact cleanup
             'AnnealingLauncher': AnnealingLauncher,  # ADR-200: Ontology annealing cycle
