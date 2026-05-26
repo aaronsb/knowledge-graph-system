@@ -562,15 +562,38 @@ export interface OntologyEdgesResponse {
   edges: OntologyEdge[];
 }
 
-// ========== ADR-200 Phase 3b: Annealing Proposals ==========
+// ========== ADR-200 Phase 3b / ADR-206: Annealing Proposals ==========
+
+/**
+ * ADR-206 closed action vocabulary plus the Opus-tier meta-action.
+ * Server may also return the deprecated `promotion` / `demotion`
+ * strings for historical rows; they normalize to CLEAVE / DISSOLVE
+ * before reaching the CLI, but the type stays as `string` to remain
+ * permissive on inbound payloads.
+ */
+export type ProposalType =
+  | 'CLEAVE'
+  | 'DISSOLVE'
+  | 'MERGE'
+  | 'RENAME'
+  | 'NO_ACTION'
+  | 'ESCALATE'
+  | 'ADJUST_CONTROL'
+  | string;
+
+export type ProposalKind = 'ontology' | 'control' | string;
 
 export interface AnnealingProposal {
   id: number;
-  proposal_type: string;
+  proposal_type: ProposalType;
+  proposal_kind?: ProposalKind;
   ontology_name: string;
   anchor_concept_id?: string;
   target_ontology?: string;
   reasoning: string;
+  /** ADR-206 §1 verb-specific parameter shape (cluster_selection,
+   *  routing_map, donor_ontologies, force_primordial, control_key, …). */
+  params?: Record<string, unknown> | null;
   mass_score?: number;
   coherence_score?: number;
   protection_score?: number;
