@@ -9798,8 +9798,8 @@
 <li><code>proposal_id</code> (<code>number</code>) - Proposal ID (for proposal_review action)</li>
 <li><code>status</code> (<code>string</code>) - Filter proposals by status, or review status (approved/rejected)</li>
 <li>Allowed values: <code>pending</code>, <code>approved</code>, <code>rejected</code>, <code>executing</code>, <code>executed</code>, <code>failed</code></li>
-<li><code>proposal_type</code> (<code>string</code>) - Filter proposals by type</li>
-<li>Allowed values: <code>promotion</code>, <code>demotion</code></li>
+<li><code>proposal_type</code> (<code>string</code>) - Filter proposals by ADR-206 verb (legacy promotion/demotion still accepted)</li>
+<li>Allowed values: <code>CLEAVE</code>, <code>DISSOLVE</code>, <code>MERGE</code>, <code>RENAME</code>, <code>NO_ACTION</code>, <code>ESCALATE</code>, <code>ADJUST_CONTROL</code>, <code>promotion</code>, <code>demotion</code></li>
 <li><code>notes</code> (<code>string</code>) - Review notes (for proposal_review action)</li>
 <li><code>dry_run</code> (<code>boolean</code>) - Preview candidates without proposals (for annealing_cycle)</li>
 <li>Default: <code>false</code></li>

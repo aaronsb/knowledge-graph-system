@@ -10419,16 +10419,16 @@ As documents are ingested, the graph's natural structure diverges from human-imp
     Manager-&gt;&gt;DB: Recompute centroids
     Manager-&gt;&gt;DB: Derive ontology-to-ontology edges
 
-    Manager-&gt;&gt;DB: Find demotion candidates (protection &lt; threshold)
-    Manager-&gt;&gt;DB: Find promotion candidates (degree &gt;= min)
+    Manager-&gt;&gt;DB: Find dissolution candidates (low protection / coherence)
+    Manager-&gt;&gt;DB: Find cleave candidates (high-degree anchor concepts)
 
     loop For each candidate (up to max_proposals)
-        Manager-&gt;&gt;LLM: Evaluate with scores + context
-        LLM--&gt;&gt;Manager: Decision (promote/demote/reject + reasoning)
-        alt Decision confirmed
-            Manager-&gt;&gt;DB: INSERT proposal (status='pending')
-        end
+        Manager-&gt;&gt;LLM: AnnealingDecisionService.decide_async — offer&lt;br/&gt;6-verb tool schemas (ADR-206)
+        LLM--&gt;&gt;Manager: Tool call: one of CLEAVE / DISSOLVE / MERGE /&lt;br/&gt;RENAME / NO_ACTION / ESCALATE + verb-specific params
+        Manager-&gt;&gt;DB: INSERT proposal (proposal_type=&lt;verb&gt;,&lt;br/&gt;proposal_kind='ontology', params JSONB)
     end
+
+    Note over Manager,DB: After candidates: check pressure_recommendation;&lt;br/&gt;emit ADJUST_CONTROL proposals when delta exceeds deadband
 
     Manager--&gt;&gt;Worker: {proposal_ids, scores, ...}
 
