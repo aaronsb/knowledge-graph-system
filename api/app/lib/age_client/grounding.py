@@ -192,31 +192,53 @@ class GroundingMixin:
     ) -> float:
         """
         Calculate grounding strength using polarity axis projection (ADR-044).
+        @verified 53b820d5
 
-        Uses multiple opposing relationship pairs to triangulate a robust semantic
-        polarity axis (support ↔ contradict). Edge embeddings are projected onto
-        this axis via dot product to determine their grounding contribution.
+        Computes one number per concept that says how much its incoming
+        edges lean toward support-like vs contradict-like semantics. The
+        polarity axis is built from opposing relationship-type pairs
+        (SUPPORTS/CONTRADICTS, ENABLES/PREVENTS, etc.); each edge's
+        embedding is dot-product-projected onto this axis, confidence-
+        weighted, and averaged.
 
-        Two-tier caching (ADR-201 Phase 5f):
-          Tier 1 — Polarity axis: Vocabulary-level, shared across all concepts.
-          Cached against graph_metrics.vocabulary_change_counter. Recomputed only
-          when vocabulary mutates (synonym collapse, embedding regeneration).
+        ## Two-tier cache (ADR-201 Phase 5f)
 
-          Tier 2 — Per-concept grounding: Cached against graph generation
-          (graph_accel.generation). Each concept's grounding depends only on its
-          own incoming edges — no cross-concept dependency — so per-concept
-          caching is safe. Recomputed only when the graph mutates.
+        Tier 1 — Polarity axis (vocabulary-level): derived from
+        relationship-type embeddings, shared across every concept. Cached
+        against graph_metrics.vocabulary_change_counter. Invalidates only
+        when vocabulary mutates (synonym collapse, embedding regeneration).
+        One axis computation amortizes across the entire concept space.
+
+        Tier 2 — Per-concept grounding: cached against
+        graph_accel.generation. A concept's grounding depends only on its
+        own incoming edges (no cross-concept coupling), so per-key caching
+        is sound. The whole tier-2 cache is wiped when the generation
+        bumps — every concept potentially has new edges so we don't try to
+        be clever about which entries survive.
+
+        Warm-cache short-circuit (#278): if `_grounding_cache_generation`
+        is set and `(concept_id, _grounding_cache_generation)` is already
+        in the cache, this method returns without acquiring a pool
+        connection. Soundness: we might serve up-to-one-call-stale data
+        right after a graph mutation, but the next miss reseeds.
 
         Args:
-            concept_id: Target concept to calculate grounding for
-            include_types: Optional list of relationship types to include
-            exclude_types: Optional list of relationship types to exclude
+            concept_id: Target concept to calculate grounding for.
+            include_types: Optional whitelist of relationship types to
+                consider in the projection. Cached values include all
+                types; filtering happens during projection.
+            exclude_types: Optional blacklist of relationship types.
 
         Returns:
-            Grounding strength float in range approximately [-1.0, 1.0]:
+            Grounding strength float in approximately [-1.0, 1.0]:
             - Positive = Edge types align with support-like semantics
-            - Zero = Edge types are neutral or balanced
+            - Zero = Edge types are neutral, balanced, or absent
             - Negative = Edge types align with contradict-like semantics
+
+            On any DB error during cold-path computation, returns 0.0
+            and logs the failure — callers cannot distinguish "computed
+            as 0.0" from "failed and defaulted." See calculate_grounding_strength_batch's
+            #281 chunk-recovery comment for the same trade-off at scale.
 
         References:
             - ADR-044: Probabilistic Truth Convergence
