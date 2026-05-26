@@ -11497,6 +11497,14 @@
 </tbody>
 </table>
 <h2 id="decision">Decision</h2>
+<blockquote>
+<p><strong>Clarified 2026-05-25 (post-ADR-206):</strong> Verb vocabulary and decision flow have been generalized by ADR-206. Quick mapping:
+- "Promotion" → <code>CLEAVE</code> of any ontology (including primordial, which is what this ADR historically called promotion).
+- "Demotion" → <code>DISSOLVE</code> with affinity routing as default. The per-source reassignment table in §8 is the executor's natural behavior; <code>force_primordial</code> is a defended override the LLM can pass when it has reason to declare a domain wholesale-dead.
+- Dual <code>promotion_threshold</code>/<code>demotion_threshold</code> in §7 → single refractory function <code>P(epochs_since_change)</code> applied uniformly to every ontology. Hysteresis emerges from refractory recovery, not from twin thresholds.
+- Primordial is just another ontology. It receives the same scoring, the same refractory protection, and the same <code>CLEAVE</code>-candidacy as any named ontology. Carve-outs: it cannot be the subject of <code>DISSOLVE</code>, <code>MERGE</code>, or <code>RENAME</code> (it is the floor and cannot be relocated below itself). Sub-ontology hierarchy emerges from <code>CLEAVE</code> applied to a named ontology — no separate pathway.</p>
+<p>The data model, lifecycle states, mass/coherence/exposure scoring, the self-correcting attractor argument, and the no-deletion-only-movement principle in this ADR remain authoritative. The 6-verb closed action menu (<code>CLEAVE</code>, <code>DISSOLVE</code>, <code>MERGE</code>, <code>RENAME</code>, <code>NO_ACTION</code>, <code>ESCALATE</code>) and the decision flow are authoritative in ADR-206. Sections below are unchanged in substance; only the verb vocabulary and the dual-threshold framing are recast.</p>
+</blockquote>
 <h3 id="1-ontologies-as-graph-nodes">1. Ontologies as Graph Nodes</h3>
 <p>Introduce <code>:Ontology</code> nodes in the Apache AGE graph with the same core properties as concepts:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="p">(:</span><span class="n">Ontology</span><span class="w"> </span><span class="p">{</span>
@@ -11629,6 +11637,9 @@
 </table>
 <p><strong>Stable vs Failed</strong>: Both have high exposure. The difference is mass AND coherence. A stable ontology has high internal edge density and sharp boundaries. A failed ontology has its concepts more connected to other ontologies than to each other. The mass component of the protection function must include coherence (boundary sharpness, internal grounding) not just concept count.</p>
 <h4 id="hysteresis-separate-promotion-and-demotion-thresholds">Hysteresis: Separate Promotion and Demotion Thresholds</h4>
+<blockquote>
+<p><em>Superseded 2026-05-25 by ADR-206:</em> the dual-threshold framing below is replaced by a single refractory function <code>P(epochs_since_change)</code> applied uniformly to every ontology. Hysteresis emerges from the recovery shape of the refractory curve rather than from twin thresholds. The Bezier infrastructure called out here is the same shape used for the refractory curve.</p>
+</blockquote>
 <p>A concept hovering near the promotion threshold must not flicker between concept and ontology status across annealing cycles. The promotion threshold must be significantly higher than the demotion threshold, creating a <strong>hysteresis band</strong>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>promotion_threshold = 0.8   (high bar to become an ontology)
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>demotion_threshold  = 0.5   (lower bar to remain one)
@@ -12067,6 +12078,9 @@
 </code></pre></div>
 <p>When the primordial pool grows too large relative to named ontologies, promotion pressure increases. When ontologies get too small, absorption pressure increases. The Bezier curve infrastructure from vocabulary aggressiveness profiles (ADR-046) drives this — same mechanism, different domain.</p>
 <h4 id="graduated-automation">Graduated Automation</h4>
+<blockquote>
+<p><em>Superseded 2026-05-25 by ADR-206:</em> the HITL → AITL → Autonomous progression is replaced by a tiered escalation cascade (Sonnet → Opus → Human) configured per platform via <code>escalation_chain</code>. See ADR-206 §Phase 2. The "high-confidence threshold" below is now <code>golden_path_confidence</code>, and the "multiple consecutive cycles" safety bound is now <code>failure_cooldown_epochs</code> plus failure-aware prompt input.</p>
+</blockquote>
 <table>
 <thead>
 <tr>

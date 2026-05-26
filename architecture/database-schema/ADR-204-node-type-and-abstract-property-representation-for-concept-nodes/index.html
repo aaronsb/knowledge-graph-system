@@ -10188,8 +10188,9 @@ fidelity alone.</p>
   the real agent access patterns at scale. Resolving open question 4 is
   therefore a <em>gate on this proposal</em>, not a detail.</li>
 <li>The facet is a property, not a label — so it can emerge, change, and be
-  demoted exactly like ontology membership under ADR-200. It does not create
-  a TBox.</li>
+  dissolved exactly like ontology membership under ADR-200 (see ADR-206 for
+  the closed action vocabulary that governs these transitions). It does not
+  create a TBox.</li>
 <li>It is optional and defaulted: absent ⇒ the node is an ordinary concept and
   the visualization falls back to ontology-derived shape/colour. No
   migration backfill is forced.</li>
@@ -10211,7 +10212,8 @@ fidelity alone.</p>
 <ol>
 <li>Is <code>node_class</code> single-valued or a set (a concept may be many things)?</li>
 <li>Who writes it — the extraction/AI layer, an operator action, or an
-   emergent annealing process like ADR-200's promotion/demotion?</li>
+   emergent annealing process like ADR-200's CLEAVE/DISSOLVE cycle
+   (see ADR-206)?</li>
 <li>How does it interact with the ontology facet — orthogonal axes, or does
    one subsume the other?</li>
 <li><strong>(Gating)</strong> Does AGE property indexing + an MCP <code>node_class</code> filter
@@ -10272,13 +10274,14 @@ fidelity alone.</p>
   property+MCP can't match this for agents, the consumer priority says
   <em>labels win and ADR-200 must bend</em>, not the reverse.</li>
 <li><strong>Hybrid: emergent property as source of truth, a derived label kept in
-  sync.</strong> <code>node_class</code> stays the mutable/demotable property ADR-200 wants;
-  a projection process (the same annealing that promotes/demotes) writes a
-  matching Cypher label so agents get <code>MATCH (n:Kind)</code> while emergence
-  still owns the truth. Buys both halves of the dual constraint at the
-  price of a sync mechanism and relabel churn on change (bounded — ADR-200
-  promotion/demotion already mutates the graph). This is the natural
-  fallback if Q4 fails, and may deserve promotion to the leading proposal.</li>
+  sync.</strong> <code>node_class</code> stays the mutable/dissolvable property ADR-200 wants;
+  a projection process (the same annealing that issues CLEAVE/DISSOLVE
+  actions, per ADR-206) writes a matching Cypher label so agents get
+  <code>MATCH (n:Kind)</code> while emergence still owns the truth. Buys both halves
+  of the dual constraint at the price of a sync mechanism and relabel
+  churn on change (bounded — the annealing executor already mutates the
+  graph). This is the natural fallback if Q4 fails, and may deserve
+  promotion to the leading proposal.</li>
 <li><strong>No schema change — derive shape purely from the existing <code>ontology</code>
   string.</strong> Zero risk, ships immediately, and is the recommended <em>first</em> PR.
   Rejected as the <em>end state</em> only because it conflates "which bucket" with
