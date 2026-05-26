@@ -83,7 +83,9 @@ def run_proposal_execution_worker(
         #    for promotions). v2 rows pass through unchanged.
         try:
             canonical, merged_params = normalize_proposal_type(
-                proposal["proposal_type"], proposal.get("params")
+                proposal["proposal_type"],
+                proposal.get("params"),
+                ontology_name=proposal.get("ontology_name"),
             )
         except ValueError as exc:
             return {

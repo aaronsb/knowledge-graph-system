@@ -174,8 +174,12 @@ class ProposalExecutor:
             target_name = existing_name
 
         # ---- Cluster materialization ----
+        # first_order takes no strategy params; embedding_radius / named_concepts
+        # would consume params.cluster_params, but both early-return as
+        # not-yet-implemented below, so the field stays in the proposal's
+        # params blob (the executor's contract is to declare intent in the
+        # proposal even when the dispatch isn't wired yet).
         cluster_selection = params.get("cluster_selection", "first_order")
-        cluster_params = params.get("cluster_params") or {}
 
         if cluster_selection == "first_order":
             source_ids = self.client.get_first_order_source_ids(
@@ -904,30 +908,32 @@ class ProposalExecutor:
             "escalation_recorded": True,
         }
 
-    # ADR-206 §Phase 3 safety rails. Operators may tune these from the
-    # admin UI; Opus is NEVER allowed to via ADJUST_CONTROL. Listed
-    # explicitly rather than "everything except this set" because adding a
-    # new safety rail without amending this list would silently widen
-    # autonomy — the system cannot widen its own autonomy is the
-    # self-regulation invariant.
-    _SAFETY_RAIL_KEYS = frozenset({
-        "automation_level",
-        "escalation_chain",
-        "opus_confidence",
-        "phone_a_friend_cost_budget",
+    # ADR-206 §Phase 3 — tunable control allow-list.
+    #
+    # Encodes the self-regulation invariant correctly: Opus may only tune
+    # keys explicitly listed here. Any other key — including any new
+    # `kg_api.annealing_options` row added in a future migration — is
+    # rejected by default. The inverse (a deny-list of safety rails)
+    # silently widens autonomy whenever a new safety-sensitive option is
+    # added without amending the list; an allow-list fails closed instead.
+    # Mirrors the three keys both `_load_phase3_controls` and
+    # `_build_pressure_recommendation` operate on — single source of truth.
+    _TUNABLE_CONTROL_KEYS = frozenset({
+        "failure_cooldown_epochs",
+        "max_proposals_per_cycle",
+        "min_activity_for_cycle",
     })
 
     def execute_adjust_control(self, proposal: Dict[str, Any]) -> Dict[str, Any]:
         """
         Execute an approved ADJUST_CONTROL proposal (ADR-206 §Phase 3).
 
-        Updates one row in kg_api.annealing_options. Rejects any control_key
-        that lives on the safety-rail list — Opus may tune operational
-        knobs (cadence, cooldowns, eligibility thresholds) but never
-        safety knobs (automation_level, escalation_chain, opus_confidence,
-        phone_a_friend_cost_budget). The self-regulation invariant: the
-        system can regulate its own cadence, but cannot widen its own
-        autonomy.
+        Updates one row in kg_api.annealing_options if and only if the
+        control_key is on the Opus-tunable allow-list (cadence, cooldowns,
+        eligibility thresholds). Safety knobs (automation_level,
+        escalation_chain, opus_confidence, phone_a_friend_cost_budget) and
+        any future un-listed option reject by default — the system can
+        regulate its own cadence, but cannot widen its own autonomy.
         """
         params = proposal.get("params") or {}
         control_key = params.get("control_key")
@@ -938,15 +944,15 @@ class ProposalExecutor:
         if recommended_value is None:
             return {"success": False, "error": "ADJUST_CONTROL missing recommended_value"}
 
-        if control_key in self._SAFETY_RAIL_KEYS:
+        if control_key not in self._TUNABLE_CONTROL_KEYS:
             return {
                 "success": False,
                 "error": (
-                    f"control_key '{control_key}' is a safety rail — "
-                    f"only operators can tune it (ADR-206 §Phase 3 self-regulation invariant)"
+                    f"control_key '{control_key}' is not Opus-tunable — "
+                    f"only operators may tune it (ADR-206 §Phase 3 self-regulation invariant)"
                 ),
                 "control_key": control_key,
-                "rejected_reason": "safety_rail",
+                "rejected_reason": "not_allow_listed",
             }
 
         try:

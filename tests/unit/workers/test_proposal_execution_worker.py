@@ -259,10 +259,12 @@ class TestLegacyAliasNormalization:
         )
         executor_instance.execute_cleave.assert_called_once()
         # The proposal handed to execute_cleave carries the canonical verb
-        # and the merged params (source_ontology=primordial from alias delta).
+        # and the merged params: the alias threads the row's `ontology_name`
+        # ('parent') through as `source_ontology` rather than the previously
+        # hardcoded 'primordial' — the fix for must-fix #2 on PR #418.
         call_proposal = executor_instance.execute_cleave.call_args[0][0]
         assert call_proposal["proposal_type"] == "CLEAVE"
-        assert call_proposal["params"].get("source_ontology") == "primordial"
+        assert call_proposal["params"].get("source_ontology") == "parent"
         assert result["status"] == "completed"
 
     def test_legacy_demotion_routed_to_execute_dissolve(self):

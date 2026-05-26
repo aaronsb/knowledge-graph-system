@@ -17,6 +17,7 @@ from psycopg2.extras import Json
 
 from api.app.lib.ontology_scorer import OntologyScorer
 from api.app.lib.aggressiveness_curve import AGGRESSIVENESS_CURVES
+from api.app.models.ontology import ProposalType, ProposalKind
 from .annealing_decision_service import (
     AnnealingDecisionService,
     AnnealingContext,
@@ -485,8 +486,10 @@ class AnnealingManager:
                         WHERE proposal_type IN (
                                 'promotion', 'CLEAVE',
                                 'demotion', 'DISSOLVE',
-                                'MERGE', 'RENAME'
+                                'MERGE', 'RENAME',
+                                'NO_ACTION', 'ESCALATE'
                               )
+                          AND proposal_kind = 'ontology'
                           AND status IN ('pending', 'approved', 'executing')
                     """)
                     rows = cur.fetchall()
@@ -517,6 +520,18 @@ class AnnealingManager:
                     target_name = params.get("ontology") or ontology_name
                     if target_name:
                         open_demotions.add(target_name)
+                elif proposal_type in ("NO_ACTION", "ESCALATE"):
+                    # No-op outcomes are recorded against the candidate that
+                    # produced them — the anchor_concept_id column for
+                    # promotion-shaped signals, ontology_name otherwise.
+                    # Until the row goes terminal it blocks re-emission for
+                    # the same target. Epoch-windowed cooldown (the deeper
+                    # fix per failure_cooldown_epochs) is a follow-up — for
+                    # now, terminal-state gating matches every other verb.
+                    if anchor_concept_id:
+                        open_promotions.add(anchor_concept_id)
+                    elif ontology_name:
+                        open_demotions.add(ontology_name)
         except Exception as e:
             logger.error(f"Failed to read open proposals for dedup: {e}")
         return open_promotions, open_demotions
@@ -657,11 +672,11 @@ class AnnealingManager:
                 f"below threshold (no LLM available for evaluation)"
             )
             return self._store_proposal(
-                proposal_type="DISSOLVE",
+                proposal_type=ProposalType.DISSOLVE.value,
                 ontology_name=name,
                 target_ontology=best_target,
                 reasoning=reasoning,
-                proposal_kind="ontology",
+                proposal_kind=ProposalKind.ONTOLOGY.value,
                 params={"source_ontology": name, "rationale": reasoning},
                 mass_score=candidate.get("mass_score"),
                 coherence_score=candidate.get("coherence_score"),
@@ -766,11 +781,11 @@ class AnnealingManager:
                 "reasoning": reasoning,
             }
             return self._store_proposal(
-                proposal_type="CLEAVE",
+                proposal_type=ProposalType.CLEAVE.value,
                 ontology_name=ontology_name,
                 anchor_concept_id=concept_id,
                 reasoning=reasoning,
-                proposal_kind="ontology",
+                proposal_kind=ProposalKind.ONTOLOGY.value,
                 params=params,
                 suggested_name=label,
                 suggested_description=f"Domain anchored by concept '{label}'",
@@ -951,11 +966,11 @@ class AnnealingManager:
                 "defense": defense,
             }
             proposal_id = self._store_proposal(
-                proposal_type="ADJUST_CONTROL",
+                proposal_type=ProposalType.ADJUST_CONTROL.value,
                 ontology_name="(control)",
                 reasoning=defense,
                 epoch=epoch,
-                proposal_kind="control",
+                proposal_kind=ProposalKind.CONTROL.value,
                 params=params,
             )
             if proposal_id:

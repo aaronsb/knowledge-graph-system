@@ -50,17 +50,24 @@ class TestExecuteAdjustControlHappyPath:
         assert update_call.args[1] == ("7", "failure_cooldown_epochs")
 
 
-class TestExecuteAdjustControlSafetyRails:
+class TestExecuteAdjustControlAllowList:
+    """ADR-206 §Phase 3 self-regulation: allow-list, not deny-list."""
+
     @pytest.mark.parametrize(
         "rail_key",
         [
+            # The four historic safety rails
             "automation_level",
             "escalation_chain",
             "opus_confidence",
             "phone_a_friend_cost_budget",
+            # And — critically — any future un-listed option also rejects.
+            # The deny-list version would silently admit this one.
+            "some_future_safety_sensitive_option",
+            "embedding_provider_override",
         ],
     )
-    def test_safety_rail_keys_rejected_without_db_touch(self, rail_key):
+    def test_un_listed_keys_rejected_without_db_touch(self, rail_key):
         client = MagicMock()
         executor = ProposalExecutor(client)
         result = executor.execute_adjust_control({
@@ -72,9 +79,34 @@ class TestExecuteAdjustControlSafetyRails:
             },
         })
         assert result["success"] is False
-        assert result["rejected_reason"] == "safety_rail"
+        assert result["rejected_reason"] == "not_allow_listed"
         # Never touched the pool — rejected before opening a connection
         client.pool.getconn.assert_not_called()
+
+    @pytest.mark.parametrize(
+        "tunable_key",
+        [
+            "failure_cooldown_epochs",
+            "max_proposals_per_cycle",
+            "min_activity_for_cycle",
+        ],
+    )
+    def test_allow_listed_keys_proceed_to_db(self, tunable_key):
+        """The three Opus-tunable knobs pass the gate and reach the UPDATE."""
+        client, cur = _mock_client_with_cursor(update_returning="9")
+        executor = ProposalExecutor(client)
+        result = executor.execute_adjust_control({
+            "params": {
+                "control_key": tunable_key,
+                "current_value": "5",
+                "recommended_value": "9",
+                "defense": "Bezier recommended",
+            },
+        })
+        assert result["success"] is True
+        assert result["control_key"] == tunable_key
+        # The SELECT + UPDATE both happened
+        assert cur.execute.call_count == 2
 
 
 class TestExecuteAdjustControlMissingParams:
@@ -93,11 +125,19 @@ class TestExecuteAdjustControlMissingParams:
         assert "recommended_value" in result["error"]
 
 
-class TestExecuteAdjustControlUnknownKey:
-    def test_unknown_control_key_rejected(self):
+class TestExecuteAdjustControlAllowListedKeyMissingFromDb:
+    """
+    Allow-listed key whose row was removed from `kg_api.annealing_options`
+    still rejects — defends against the rare state where the operator
+    deleted a row but left the key on `_TUNABLE_CONTROL_KEYS`. Allow-list
+    rejection happens first for un-listed keys; this is the post-gate
+    fallback for the in-list case.
+    """
+
+    def test_allow_listed_key_with_missing_row_rejected(self):
         client = MagicMock()
         cur = MagicMock()
-        # The SELECT returns no row — key doesn't exist
+        # The SELECT returns no row — key allow-listed but the row was deleted
         cur.fetchone.return_value = None
         conn = MagicMock()
         conn.cursor.return_value.__enter__ = MagicMock(return_value=cur)
@@ -108,10 +148,10 @@ class TestExecuteAdjustControlUnknownKey:
         executor = ProposalExecutor(client)
         result = executor.execute_adjust_control({
             "params": {
-                "control_key": "not_a_real_key",
-                "current_value": "1",
-                "recommended_value": "2",
-                "defense": "bogus",
+                "control_key": "failure_cooldown_epochs",  # allow-listed
+                "current_value": "5",
+                "recommended_value": "8",
+                "defense": "row missing scenario",
             },
         })
         assert result["success"] is False

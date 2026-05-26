@@ -32,22 +32,32 @@ class TestNormalizeProposalType:
             assert canonical.value == verb
             assert params == {}
 
-    def test_promotion_alias_maps_to_cleave_with_primordial_source(self):
+    def test_promotion_alias_maps_to_cleave_with_parent_as_source(self):
+        # v1 promotion's parent ontology lived in the row's ontology_name
+        # column — could be any ontology, not only primordial.
+        canonical, params = normalize_proposal_type(
+            "promotion", None, ontology_name="philosophy"
+        )
+        assert canonical is ProposalType.CLEAVE
+        assert params == {"source_ontology": "philosophy"}
+
+    def test_promotion_alias_without_ontology_name_leaves_source_unset(self):
         canonical, params = normalize_proposal_type("promotion", None)
         assert canonical is ProposalType.CLEAVE
-        assert params == {"source_ontology": "primordial"}
+        assert params == {}
 
-    def test_demotion_alias_maps_to_dissolve_with_no_extra_params(self):
-        canonical, params = normalize_proposal_type("demotion", {"rationale": "x"})
+    def test_demotion_alias_threads_ontology_name_to_source(self):
+        canonical, params = normalize_proposal_type(
+            "demotion", {"rationale": "x"}, ontology_name="philosophy"
+        )
         assert canonical is ProposalType.DISSOLVE
-        # caller-supplied rationale preserved; no spurious fields added
-        assert params == {"rationale": "x"}
+        assert params == {"rationale": "x", "source_ontology": "philosophy"}
 
     def test_caller_params_win_over_alias_delta(self):
         # Stored row claims source_ontology='alpha' — alias should NOT
-        # overwrite that with 'primordial'.
+        # overwrite that with the row's ontology_name.
         canonical, params = normalize_proposal_type(
-            "promotion", {"source_ontology": "alpha"}
+            "promotion", {"source_ontology": "alpha"}, ontology_name="philosophy"
         )
         assert canonical is ProposalType.CLEAVE
         assert params == {"source_ontology": "alpha"}
@@ -80,24 +90,29 @@ class TestAnnealingProposalFromRow:
         assert proposal.params == {"force_primordial": True}
         assert proposal.proposal_kind == ProposalKind.ONTOLOGY.value
 
-    def test_legacy_promotion_row_normalized_with_implicit_source(self):
-        # Historical row with no params JSONB — alias should populate it.
-        row = _row(proposal_type="promotion", params=None)
+    def test_legacy_promotion_row_threads_ontology_name_as_source(self):
+        # Historical row with no params JSONB — alias should populate
+        # source_ontology from the row's parent ontology, not a hardcoded
+        # primordial. The reviewer's failure case: a non-primordial
+        # promotion executes as a zero-source no-op under the hardcoded
+        # default.
+        row = _row(proposal_type="promotion", ontology_name="philosophy", params=None)
         proposal = AnnealingProposal.from_row(row)
         assert proposal.proposal_type == ProposalType.CLEAVE.value
-        assert proposal.params == {"source_ontology": "primordial"}
+        assert proposal.params == {"source_ontology": "philosophy"}
 
-    def test_legacy_demotion_row_normalized_without_overwriting_params(self):
+    def test_legacy_demotion_row_threads_ontology_name_as_source(self):
         row = _row(
             proposal_type="demotion",
+            ontology_name="ml-ops",
             params={"force_primordial": True, "rationale": "low affinity"},
         )
         proposal = AnnealingProposal.from_row(row)
         assert proposal.proposal_type == ProposalType.DISSOLVE.value
-        # demotion alias adds no fields; existing params preserved
         assert proposal.params == {
             "force_primordial": True,
             "rationale": "low affinity",
+            "source_ontology": "ml-ops",
         }
 
     def test_adjust_control_kind_preserved(self):

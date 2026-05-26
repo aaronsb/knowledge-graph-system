@@ -421,7 +421,8 @@ async def list_proposals(
                 params.append(limit)
 
                 cur.execute(f"""
-                    SELECT id, proposal_type, ontology_name, anchor_concept_id,
+                    SELECT id, proposal_type, proposal_kind, params,
+                           ontology_name, anchor_concept_id,
                            target_ontology, reasoning, mass_score, coherence_score,
                            protection_score, status, created_at, created_at_epoch,
                            reviewed_at, reviewed_by, reviewer_notes,
@@ -460,7 +461,8 @@ async def get_proposal(
         try:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute("""
-                    SELECT id, proposal_type, ontology_name, anchor_concept_id,
+                    SELECT id, proposal_type, proposal_kind, params,
+                           ontology_name, anchor_concept_id,
                            target_ontology, reasoning, mass_score, coherence_score,
                            protection_score, status, created_at, created_at_epoch,
                            reviewed_at, reviewed_by, reviewer_notes,
@@ -531,7 +533,8 @@ async def review_proposal(
                     UPDATE kg_api.annealing_proposals
                     SET status = %s, reviewed_at = NOW(), reviewed_by = %s, reviewer_notes = %s
                     WHERE id = %s
-                    RETURNING id, proposal_type, ontology_name, anchor_concept_id,
+                    RETURNING id, proposal_type, proposal_kind, params,
+                              ontology_name, anchor_concept_id,
                               target_ontology, reasoning, mass_score, coherence_score,
                               protection_score, status, created_at, created_at_epoch,
                               reviewed_at, reviewed_by, reviewer_notes,

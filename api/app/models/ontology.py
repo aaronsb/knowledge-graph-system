@@ -46,30 +46,32 @@ class ProposalKind(str, Enum):
 
 # ADR-206 §Aliases — historical names → 6-verb vocabulary.
 #
-# Each entry yields the canonical ProposalType plus a params delta that
-# materializes the implicit context the old name carried. Callers merge
-# the delta into the row's params JSONB before treating the row as a
-# v2 proposal.
-_DEPRECATED_ALIASES: Dict[str, Tuple[ProposalType, Dict[str, Any]]] = {
-    # promotion: CLEAVE applied to the primordial pool.
-    "promotion": (ProposalType.CLEAVE, {"source_ontology": "primordial"}),
-    # demotion: DISSOLVE of a named ontology.
-    "demotion": (ProposalType.DISSOLVE, {}),
+# v1 promotion's `source_ontology` was the *parent* ontology the anchor
+# concept lived in — carried in the row's `ontology_name` column, not a
+# fixed "primordial" pool. v1 demotion carried the donor in `ontology_name`
+# as well. Both aliases therefore need the row context to fill the v2
+# `source_ontology` slot correctly; the table below records only the
+# canonical verb and the *static* parts of the delta.
+_DEPRECATED_VERBS: Dict[str, ProposalType] = {
+    "promotion": ProposalType.CLEAVE,
+    "demotion": ProposalType.DISSOLVE,
 }
 
 
 def normalize_proposal_type(
     proposal_type: str,
     params: Optional[Dict[str, Any]] = None,
+    ontology_name: Optional[str] = None,
 ) -> Tuple[ProposalType, Dict[str, Any]]:
     """
     Map a stored proposal_type string to (canonical ProposalType, params).
 
     Historical rows carry `promotion` / `demotion` strings (pre-ADR-206).
-    This collapses them onto the 6-verb vocabulary and merges the implicit
-    parameters the old name carried (`source_ontology=primordial` for
-    promotions; nothing extra for demotions, since DISSOLVE's per-source
-    routing is read from the graph at execution time, not stored).
+    This collapses them onto the 6-verb vocabulary and threads the parent
+    ontology (`ontology_name`) through to the v2 `source_ontology` slot
+    when no explicit value is present in `params`. v1 promotions could
+    target any parent — not just primordial — so the alias must use the
+    row's context rather than a hardcoded default.
 
     Current 6-verb names pass through unchanged. Unknown names raise
     ValueError so corrupted rows surface loudly instead of silently
@@ -77,12 +79,12 @@ def normalize_proposal_type(
     """
     out_params: Dict[str, Any] = dict(params) if params else {}
 
-    if proposal_type in _DEPRECATED_ALIASES:
-        canonical, delta = _DEPRECATED_ALIASES[proposal_type]
-        # Caller-supplied params win — never overwrite a v2 row that already
-        # carries a contradicting field.
-        for key, value in delta.items():
-            out_params.setdefault(key, value)
+    if proposal_type in _DEPRECATED_VERBS:
+        canonical = _DEPRECATED_VERBS[proposal_type]
+        # Caller-supplied params always win; only fill the v2 source_ontology
+        # slot when the row didn't carry one explicitly.
+        if "source_ontology" not in out_params and ontology_name is not None:
+            out_params["source_ontology"] = ontology_name
         return canonical, out_params
 
     try:
@@ -334,15 +336,17 @@ class AnnealingProposal(BaseModel):
         """
         Build an AnnealingProposal from a DB row, normalizing legacy verbs.
 
-        Historical rows carrying `promotion`/`demotion` are mapped to the
-        canonical ADR-206 vocabulary, and the alias's implicit parameters
-        are merged into `params` (e.g. promotion → CLEAVE with
-        source_ontology=primordial).
+        Historical `promotion`/`demotion` rows map to CLEAVE/DISSOLVE and the
+        row's `ontology_name` is threaded through as the v2 `source_ontology`
+        — v1 promotions could target any parent ontology, not only primordial,
+        so the alias must use the row context.
         """
         proposal_type_raw = row.get("proposal_type", "")
         params_raw = row.get("params")
         canonical, merged_params = normalize_proposal_type(
-            proposal_type_raw, params_raw
+            proposal_type_raw,
+            params_raw,
+            ontology_name=row.get("ontology_name"),
         )
         payload = dict(row)
         payload["proposal_type"] = canonical.value

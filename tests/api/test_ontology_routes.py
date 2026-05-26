@@ -1114,6 +1114,8 @@ def mock_proposals_cursor(proposals):
 SAMPLE_PROPOSAL_ROW = {
     "id": 1,
     "proposal_type": "demotion",
+    "proposal_kind": "ontology",
+    "params": None,
     "ontology_name": "test-ontology",
     "anchor_concept_id": None,
     "target_ontology": "parent-ontology",
@@ -1136,6 +1138,8 @@ SAMPLE_PROPOSAL_ROW = {
 SAMPLE_PROMOTION_ROW = {
     "id": 2,
     "proposal_type": "promotion",
+    "proposal_kind": "ontology",
+    "params": None,
     "ontology_name": "big-domain",
     "anchor_concept_id": "c_abc123",
     "target_ontology": None,
@@ -1146,6 +1150,102 @@ SAMPLE_PROMOTION_ROW = {
     "status": "pending",
     "created_at": "2026-01-30T18:01:00+00:00",
     "created_at_epoch": 13,
+    "reviewed_at": None,
+    "reviewed_by": None,
+    "reviewer_notes": None,
+    "executed_at": None,
+    "execution_result": None,
+    "suggested_name": None,
+    "suggested_description": None,
+}
+
+# ADR-206 v2 row shapes — verb-specific params JSONB. Distinct from the
+# v1 alias-synthesized rows so the SELECTs are exercised against the real
+# column set rather than the columns the alias delta would fabricate.
+
+SAMPLE_CLEAVE_ROW = {
+    "id": 3,
+    "proposal_type": "CLEAVE",
+    "proposal_kind": "ontology",
+    "params": {
+        "source_ontology": "philosophy",
+        "anchor_concept_id": "c_dialectic",
+        "cluster_selection": "first_order",
+        "cluster_params": {},
+        "target": {
+            "kind": "new",
+            "new_name": "dialectics",
+            "new_description": "Methods of structured disagreement.",
+        },
+        "reasoning": "High-degree anchor, coherent neighborhood.",
+    },
+    "ontology_name": "philosophy",
+    "anchor_concept_id": "c_dialectic",
+    "target_ontology": None,
+    "reasoning": "High-degree anchor, coherent neighborhood.",
+    "mass_score": None,
+    "coherence_score": None,
+    "protection_score": None,
+    "status": "pending",
+    "created_at": "2026-05-26T00:00:00+00:00",
+    "created_at_epoch": 50,
+    "reviewed_at": None,
+    "reviewed_by": None,
+    "reviewer_notes": None,
+    "executed_at": None,
+    "execution_result": None,
+    "suggested_name": "dialectics",
+    "suggested_description": "Methods of structured disagreement.",
+}
+
+SAMPLE_MERGE_ROW = {
+    "id": 4,
+    "proposal_type": "MERGE",
+    "proposal_kind": "ontology",
+    "params": {
+        "donor_ontologies": ["stoicism", "epicureanism"],
+        "target": {"kind": "existing", "existing_ontology": "hellenistic-schools"},
+        "reasoning": "Both donors share >60% concepts with target.",
+    },
+    "ontology_name": "stoicism",
+    "anchor_concept_id": None,
+    "target_ontology": None,
+    "reasoning": "Both donors share >60% concepts with target.",
+    "mass_score": None,
+    "coherence_score": None,
+    "protection_score": None,
+    "status": "pending",
+    "created_at": "2026-05-26T00:01:00+00:00",
+    "created_at_epoch": 50,
+    "reviewed_at": None,
+    "reviewed_by": None,
+    "reviewer_notes": None,
+    "executed_at": None,
+    "execution_result": None,
+    "suggested_name": None,
+    "suggested_description": None,
+}
+
+SAMPLE_ADJUST_CONTROL_ROW = {
+    "id": 5,
+    "proposal_type": "ADJUST_CONTROL",
+    "proposal_kind": "control",
+    "params": {
+        "control_key": "failure_cooldown_epochs",
+        "current_value": "5",
+        "recommended_value": "8",
+        "defense": "Pressure score 0.83 (over); back off harder.",
+    },
+    "ontology_name": "(control)",
+    "anchor_concept_id": None,
+    "target_ontology": None,
+    "reasoning": "Pressure score 0.83 (over); back off harder.",
+    "mass_score": None,
+    "coherence_score": None,
+    "protection_score": None,
+    "status": "pending",
+    "created_at": "2026-05-26T00:02:00+00:00",
+    "created_at_epoch": 50,
     "reviewed_at": None,
     "reviewed_by": None,
     "reviewer_notes": None,
@@ -1178,9 +1278,10 @@ class TestListProposalsRoute:
         List normalizes legacy proposal_type names on read (ADR-206).
 
         Historical rows stored as `demotion`/`promotion` surface as their
-        canonical 6-verb vocabulary in API responses (DISSOLVE / CLEAVE).
-        The alias delta for `promotion` injects the implicit
-        source_ontology='primordial' into params.
+        canonical 6-verb vocabulary (DISSOLVE / CLEAVE). The alias threads
+        the row's `ontology_name` through as `source_ontology` so legacy
+        non-primordial promotions execute against the right parent
+        (the fix that landed for the must-fix #2 finding on PR #418).
         """
         client = mock_proposals_cursor([SAMPLE_PROPOSAL_ROW, SAMPLE_PROMOTION_ROW])
 
@@ -1190,9 +1291,49 @@ class TestListProposalsRoute:
         assert response.status_code == 200
         data = response.json()
         assert data["count"] == 2
+        # demotion → DISSOLVE; alias threads ontology_name as source_ontology
         assert data["proposals"][0]["proposal_type"] == "DISSOLVE"
+        assert data["proposals"][0]["params"] == {"source_ontology": "test-ontology"}
+        # promotion → CLEAVE; same threading — NOT hardcoded primordial
         assert data["proposals"][1]["proposal_type"] == "CLEAVE"
-        assert data["proposals"][1]["params"] == {"source_ontology": "primordial"}
+        assert data["proposals"][1]["params"] == {"source_ontology": "big-domain"}
+
+    def test_list_preserves_v2_params_through_select(self, api_client, auth_headers_user):
+        """
+        v2 rows (with structural `params` JSONB) round-trip through the
+        SELECT untouched. Distinct from the legacy-alias path — this
+        directly exercises that the SELECT includes the `params` and
+        `proposal_kind` columns, the regression the code reviewer caught.
+        """
+        client = mock_proposals_cursor([
+            SAMPLE_CLEAVE_ROW, SAMPLE_MERGE_ROW, SAMPLE_ADJUST_CONTROL_ROW,
+        ])
+
+        with patch('api.app.routes.ontology.get_age_client', return_value=client):
+            response = api_client.get("/ontology/proposals", headers=auth_headers_user)
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["count"] == 3
+
+        cleave = data["proposals"][0]
+        assert cleave["proposal_type"] == "CLEAVE"
+        assert cleave["proposal_kind"] == "ontology"
+        assert cleave["params"]["cluster_selection"] == "first_order"
+        assert cleave["params"]["target"]["kind"] == "new"
+        assert cleave["params"]["target"]["new_name"] == "dialectics"
+
+        merge = data["proposals"][1]
+        assert merge["proposal_type"] == "MERGE"
+        assert merge["params"]["donor_ontologies"] == ["stoicism", "epicureanism"]
+        assert merge["params"]["target"]["kind"] == "existing"
+        assert merge["params"]["target"]["existing_ontology"] == "hellenistic-schools"
+
+        adjust = data["proposals"][2]
+        assert adjust["proposal_type"] == "ADJUST_CONTROL"
+        assert adjust["proposal_kind"] == "control"
+        assert adjust["params"]["control_key"] == "failure_cooldown_epochs"
+        assert adjust["params"]["recommended_value"] == "8"
 
     def test_list_filter_by_status(self, api_client, auth_headers_user):
         """Status filter is passed to query."""
