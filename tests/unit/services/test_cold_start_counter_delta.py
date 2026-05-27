@@ -157,6 +157,14 @@ class TestRegenerateMissingIfVocabChanged:
         assert db.init_status_updates[0]["vocab_change_counter"] == 42
         assert db.init_status_updates[0]["count"] == 3
         assert db.init_status_updates[0]["component"] == "builtin_vocabulary_embeddings"
+        # Normal path: a job_id IS provided, and _create_job_record was
+        # called before _mark_initialization_complete — the FK target
+        # row exists, the audit trail stays intact.
+        assert db.init_status_updates[0]["job_id"] is not None
+        assert any(
+            "INSERT INTO kg_api.embedding_generation_jobs" in sql
+            for sql, _ in db.queries
+        )
 
     def test_no_op_when_counter_unchanged(self):
         """
@@ -208,6 +216,14 @@ class TestRegenerateMissingIfVocabChanged:
         no types are actually missing embeddings. The method still updates
         last_processed so it doesn't keep re-checking the same delta on
         every launcher tick.
+
+        Critically, no row was inserted into embedding_generation_jobs in
+        this branch — so `initialization_job_id` must be None in the UPDATE
+        params. Setting it to a tracking UUID that has no matching row in
+        the FK target would violate
+        system_initialization_status_initialization_job_id_fkey and roll
+        back the cursor advance, producing a quietly-stuck embedding
+        worker that re-fires the same warning on every startup.
         """
         db = FakeDb(
             vocab_change_counter=42,
@@ -224,6 +240,15 @@ class TestRegenerateMissingIfVocabChanged:
         assert len(db.init_status_updates) == 1
         assert db.init_status_updates[0]["vocab_change_counter"] == 42
         assert db.init_status_updates[0]["count"] == 0
+        # FK-safe: job_id is None when no row was inserted into
+        # embedding_generation_jobs (the SQL uses COALESCE so the column
+        # keeps its prior value).
+        assert db.init_status_updates[0]["job_id"] is None
+        # Also: no embedding_generation_jobs INSERT in this branch.
+        assert not any(
+            "INSERT INTO kg_api.embedding_generation_jobs" in sql
+            for sql, _ in db.queries
+        )
 
     def test_initialize_builtin_embeddings_delegates_to_regenerate(self):
         """

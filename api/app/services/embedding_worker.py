@@ -213,8 +213,12 @@ class EmbeddingWorker:
                 f"likely a category-only change. Marking last_processed={current_counter}."
             )
             # Record the counter value so we don't keep re-checking the same delta.
+            # No work was performed, so no row was inserted into
+            # embedding_generation_jobs — pass job_id=None to leave the
+            # FK column unchanged rather than violating the constraint
+            # with a tracking UUID that has no matching row.
             await self._mark_initialization_complete(
-                job_id, count=0, component=component,
+                job_id=None, count=0, component=component,
                 vocab_change_counter=current_counter
             )
             return EmbeddingJobResult(
@@ -936,7 +940,7 @@ class EmbeddingWorker:
 
     async def _mark_initialization_complete(
         self,
-        job_id: str,
+        job_id: Optional[str],
         count: int,
         component: str = "builtin_vocabulary_embeddings",
         vocab_change_counter: Optional[int] = None,
@@ -949,7 +953,13 @@ class EmbeddingWorker:
         `last_processed_vocab_change_counter` — the new counter-delta gate.
 
         Args:
-            job_id: embedding_generation_jobs.job_id for the audit trail.
+            job_id: embedding_generation_jobs.job_id for the audit trail,
+                or None when this call advances the cursor without doing
+                any work (the "category-only change" path). The FK column
+                is COALESCEd, so passing None leaves the previously-stored
+                job_id in place rather than violating the FK constraint
+                with a tracking UUID that was never inserted into
+                embedding_generation_jobs.
             count: how many types were processed in this run.
             component: which row of system_initialization_status to update.
             vocab_change_counter: snapshot of vocabulary_change_counter at
@@ -961,7 +971,9 @@ class EmbeddingWorker:
             UPDATE kg_api.system_initialization_status
             SET initialized = TRUE,
                 initialized_at = CURRENT_TIMESTAMP,
-                initialization_job_id = %s,
+                initialization_job_id = COALESCE(
+                    %s::uuid, initialization_job_id
+                ),
                 last_processed_vocab_change_counter = COALESCE(
                     %s, last_processed_vocab_change_counter
                 ),
