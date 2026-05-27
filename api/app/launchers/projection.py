@@ -38,6 +38,7 @@ class ProjectionLauncher(JobLauncher):
         job_queue,
         max_retries: int = 3,
         change_threshold: int = 5,
+        min_concepts: int = 5,
         ontology: Optional[str] = None
     ):
         """
@@ -47,10 +48,17 @@ class ProjectionLauncher(JobLauncher):
             job_queue: JobQueue instance
             max_retries: Maximum retry attempts
             change_threshold: Minimum concept count change to trigger recompute
+            min_concepts: Minimum concept count required to project an ontology.
+                Ontologies below this floor are skipped. Matches the practical
+                t-SNE lower bound (sklearn requires perplexity < n_samples, and
+                a perplexity of ~5 is the smallest that produces meaningful
+                structure). Without this floor, tiny ontologies fail every
+                tick and the cache never lands, looping forever.
             ontology: Specific ontology to check (None = check all)
         """
         super().__init__(job_queue, max_retries)
         self.change_threshold = change_threshold
+        self.min_concepts = min_concepts
         self.ontology = ontology
         self._stale_ontologies: List[str] = []
 
@@ -83,6 +91,13 @@ class ProjectionLauncher(JobLauncher):
                 self._stale_ontologies = []
 
                 for ontology, count in current_counts.items():
+                    if count < self.min_concepts:
+                        logger.info(
+                            f"Ontology '{ontology}' has {count} concepts "
+                            f"(< min_concepts={self.min_concepts}); skipping projection"
+                        )
+                        continue
+
                     cached = self._get_cached_concept_count(ontology)
 
                     if cached is None:

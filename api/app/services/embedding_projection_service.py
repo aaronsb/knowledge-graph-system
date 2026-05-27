@@ -668,8 +668,11 @@ class EmbeddingProjectionService:
         """
         n_samples = len(embeddings)
 
-        if n_samples < 2:
-            raise ValueError(f"Need at least 2 samples, got {n_samples}")
+        if n_samples < 3:
+            raise ValueError(
+                f"Need at least 3 samples for projection, got {n_samples}. "
+                f"(t-SNE requires perplexity < n_samples with perplexity >= 1.)"
+            )
 
         # Center embeddings by subtracting mean (removes common component/anisotropy)
         # This breaks apart the "nested meatball" artifact where all embeddings
@@ -691,6 +694,10 @@ class EmbeddingProjectionService:
         effective_perplexity = min(perplexity, (n_samples - 1) // 3)
         if effective_perplexity < 5:
             effective_perplexity = max(2, effective_perplexity)
+        # Sklearn requires perplexity < n_samples. The formula above produces
+        # values that satisfy this for n_samples >= 3, but pin the invariant
+        # explicitly so any future change to the heuristic cannot regress.
+        effective_perplexity = min(effective_perplexity, n_samples - 1)
 
         logger.info(
             f"Computing {algorithm.upper()} projection ({metric} metric, "
