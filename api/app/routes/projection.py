@@ -273,6 +273,20 @@ async def regenerate_projection(
 
     concept_count = len(concepts)
 
+    # Reject before doing any projection work: the service's hard floor
+    # (perplexity < n_samples for t-SNE, n_neighbors < n_samples for UMAP)
+    # produces an opaque ValueError if reached. A 422 here gives the
+    # caller a clear message instead of bubbling a 500 from sklearn.
+    if concept_count < EmbeddingProjectionService.MIN_SAMPLES_FOR_PROJECTION:
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                f"Ontology '{ontology}' has {concept_count} {body.embedding_source} "
+                f"with embeddings; projection needs at least "
+                f"{EmbeddingProjectionService.MIN_SAMPLES_FOR_PROJECTION}."
+            )
+        )
+
     # For small/medium ontologies, compute synchronously (t-SNE is fast)
     # Only queue for very large ontologies (>500 concepts) where t-SNE takes >10s
     if concept_count < 500:

@@ -92,6 +92,10 @@ def run_projection_worker(
         include_diversity = job_data.get("include_diversity", False)
         include_degree = job_data.get("include_degree", True)
         embedding_source = job_data.get("embedding_source", "concepts")
+        # Floor threaded by ProjectionLauncher (mirrors annealing_worker).
+        # None means "no launcher gate" (out-of-band trigger like a manual
+        # API call) — the route applies its own validation in that case.
+        min_ontology_concept_count = job_data.get("min_ontology_concept_count")
 
         logger.info(
             f"Projection params: ontology={ontology}, algorithm={algorithm}, "
@@ -136,6 +140,21 @@ def run_projection_worker(
         # Check for errors
         if "error" in dataset:
             raise ValueError(dataset["error"])
+
+        # Defensive floor check: any non-launcher caller that enqueued this
+        # job (a future retry path, a manual queue insert, a misbehaving
+        # client) shouldn't be able to bypass the launcher's gate. The
+        # launcher threads min_ontology_concept_count through job_data;
+        # the worker re-checks against the actual count returned by
+        # generate_projection_dataset.
+        if min_ontology_concept_count is not None:
+            actual_count = dataset.get("statistics", {}).get("concept_count", 0)
+            if actual_count < min_ontology_concept_count:
+                raise ValueError(
+                    f"Ontology '{ontology}' has {actual_count} {embedding_source} "
+                    f"(< min_ontology_concept_count={min_ontology_concept_count}); "
+                    f"refusing to project"
+                )
 
         # Update progress
         concept_count = dataset.get("statistics", {}).get("concept_count", 0)

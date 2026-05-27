@@ -54,6 +54,15 @@ class EmbeddingProjectionService:
     while preserving local/global structure for visualization.
     """
 
+    # Absolute floor for any projection. t-SNE requires perplexity < n_samples
+    # with perplexity >= 1, and UMAP requires n_neighbors >= 2 with
+    # n_neighbors < n_samples; both algorithms need at least 3 points to
+    # produce anything other than a degenerate output. This is the hard
+    # constraint enforced by the service. Quality floors (e.g. "perplexity
+    # must reach 5 for meaningful structure") are policy applied by the
+    # launcher, not this layer.
+    MIN_SAMPLES_FOR_PROJECTION = 3
+
     def __init__(self, age_client):
         """
         Initialize with AGE client.
@@ -668,8 +677,11 @@ class EmbeddingProjectionService:
         """
         n_samples = len(embeddings)
 
-        if n_samples < 2:
-            raise ValueError(f"Need at least 2 samples, got {n_samples}")
+        if n_samples < self.MIN_SAMPLES_FOR_PROJECTION:
+            raise ValueError(
+                f"Need at least {self.MIN_SAMPLES_FOR_PROJECTION} samples for "
+                f"projection, got {n_samples}."
+            )
 
         # Center embeddings by subtracting mean (removes common component/anisotropy)
         # This breaks apart the "nested meatball" artifact where all embeddings
@@ -691,6 +703,10 @@ class EmbeddingProjectionService:
         effective_perplexity = min(perplexity, (n_samples - 1) // 3)
         if effective_perplexity < 5:
             effective_perplexity = max(2, effective_perplexity)
+        # Sklearn requires perplexity < n_samples. The formula above produces
+        # values that satisfy this for n_samples >= 3, but pin the invariant
+        # explicitly so any future change to the heuristic cannot regress.
+        effective_perplexity = min(effective_perplexity, n_samples - 1)
 
         logger.info(
             f"Computing {algorithm.upper()} projection ({metric} metric, "
@@ -996,11 +1012,14 @@ class EmbeddingProjectionService:
                 "concept_count": 0
             }
 
-        if len(items) < 2:
+        if len(items) < self.MIN_SAMPLES_FOR_PROJECTION:
             return {
                 "ontology": ontology,
                 "embedding_source": embedding_source,
-                "error": f"Need at least 2 {embedding_source} for projection",
+                "error": (
+                    f"Need at least {self.MIN_SAMPLES_FOR_PROJECTION} "
+                    f"{embedding_source} for projection"
+                ),
                 "concept_count": len(items)
             }
 
