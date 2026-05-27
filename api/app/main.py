@@ -73,6 +73,50 @@ def _try_acquire_dispatch_lock(queue) -> bool:
         logger.warning(f"Failed to acquire dispatch leader lock: {e}")
         return False
 
+
+# Held for the lifetime of the cold-start owner process — releasing it
+# drops the advisory lock and would let another worker claim cold-start
+# on a future restart, which is the intended behavior. During this
+# process's lifetime, the lock stays held so subsequent startup_event
+# runs (if any) skip cold-start.
+_cold_start_lock_conn = None
+
+
+def _try_acquire_cold_start_lock(queue) -> bool:
+    """Try to acquire the cold-start advisory lock.
+
+    Cold-start fires `regenerate_missing_if_vocab_changed` which inserts
+    into embedding_generation_jobs and calls the LLM provider for every
+    missing type. With --workers N, every uvicorn process would otherwise
+    do this in parallel — doubling LLM spend on fresh boots after a
+    migration that seeded new builtin types.
+
+    Returns True if this process owns cold-start (and should run it),
+    False if another worker holds the lock (and we should skip).
+    """
+    global _cold_start_lock_conn
+    LOCK_ID = 100_000_002  # PR #425 cold-start owner lock
+
+    try:
+        conn = queue._get_connection()
+        with conn.cursor() as cur:
+            cur.execute("SELECT pg_try_advisory_lock(%s)", (LOCK_ID,))
+            acquired = cur.fetchone()[0]
+
+        if acquired:
+            _cold_start_lock_conn = conn
+            logger.info(f"Acquired cold-start owner lock (advisory lock {LOCK_ID})")
+            return True
+        else:
+            queue._return_connection(conn)
+            logger.info("Cold-start owner lock held by another worker — skipping")
+            return False
+    except Exception as e:
+        logger.warning(f"Failed to acquire cold-start owner lock: {e}")
+        # Fall through to running cold-start: a missing lock is a softer
+        # failure than skipping cold-start entirely on a fresh DB.
+        return True
+
 # Initialize FastAPI app
 app = FastAPI(
     title="Knowledge Graph API",
@@ -245,25 +289,44 @@ async def startup_event():
         embedding_worker = get_embedding_worker(age_client, ai_provider)
 
         if embedding_worker:
-            # Perform cold start initialization for builtin vocabulary types
-            logger.info("🌡️  Checking builtin vocabulary embeddings (cold start)...")
-            cold_start_result = await embedding_worker.initialize_builtin_embeddings()
+            # With --workers N, gate cold-start behind a session-level
+            # advisory lock so only one process fires the LLM-heavy
+            # initialize_builtin_embeddings path.
+            if _try_acquire_cold_start_lock(queue):
+                logger.info("🌡️  Checking builtin vocabulary embeddings (cold start)...")
+                cold_start_result = await embedding_worker.initialize_builtin_embeddings()
 
-            if cold_start_result.target_count > 0:
-                logger.info(
-                    f"✅ Cold start complete: {cold_start_result.processed_count}/{cold_start_result.target_count} "
-                    f"builtin types initialized in {cold_start_result.duration_ms}ms"
-                )
-                if cold_start_result.failed_count > 0:
-                    logger.warning(f"⚠️  {cold_start_result.failed_count} types failed during cold start")
+                if cold_start_result.target_count > 0:
+                    logger.info(
+                        f"✅ Cold start complete: {cold_start_result.processed_count}/{cold_start_result.target_count} "
+                        f"builtin types initialized in {cold_start_result.duration_ms}ms"
+                    )
+                    if cold_start_result.failed_count > 0:
+                        logger.warning(f"⚠️  {cold_start_result.failed_count} types failed during cold start")
+                else:
+                    logger.info("✓  Builtin vocabulary embeddings already initialized")
             else:
-                logger.info("✓  Builtin vocabulary embeddings already initialized")
+                logger.info("✓  Cold start owned by another worker — skipping")
         else:
             logger.warning("⚠️  EmbeddingWorker initialization failed - embedding features may be limited")
 
     except Exception as e:
-        logger.warning(f"⚠️  EmbeddingWorker initialization failed: {e}")
-        logger.info("   System will continue without embedding worker (manual initialization may be needed)")
+        # Integrity errors (FK / NOT NULL / unique violations — SQLSTATE
+        # class 23xxx) at startup leave the embedding subsystem in a
+        # stuck state, not a softly-degraded one. Surface those at ERROR
+        # with a full traceback so the next analogous regression isn't
+        # masked as a benign warning for months the way PR #425's bug was.
+        import psycopg2.errors
+        if isinstance(e, psycopg2.errors.IntegrityError):
+            logger.error(
+                f"❌ EmbeddingWorker initialization failed with integrity violation: {e}. "
+                f"This indicates a schema/data drift — cold-start cannot proceed and "
+                f"embedding-dependent features will not work until resolved.",
+                exc_info=True,
+            )
+        else:
+            logger.warning(f"⚠️  EmbeddingWorker initialization failed: {e}")
+            logger.info("   System will continue without embedding worker (manual initialization may be needed)")
 
     # Resume interrupted jobs (jobs that were processing when server stopped)
     # Note: SQLite queue uses "processing", PostgreSQL queue uses "running"
