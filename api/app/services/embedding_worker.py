@@ -160,8 +160,21 @@ class EmbeddingWorker:
             when no work was needed (counter hadn't advanced or all types
             already embedded).
         """
-        job_id = str(uuid4())
         start_time = datetime.now()
+        # job_id is allocated only when we actually do work and INSERT a
+        # row into embedding_generation_jobs (line further down). The
+        # earlier "always generate, sometimes use" shape produced the
+        # bug PR #425 fixes: a tracking UUID got smuggled into the FK
+        # column without a matching row in the FK target. Keep it scoped.
+        empty_result_args = dict(
+            job_type=job_type,
+            target_count=0,
+            processed_count=0,
+            failed_count=0,
+            duration_ms=0,
+            embedding_model=self.provider.model_name if hasattr(self.provider, 'model_name') else "unknown",
+            embedding_provider=self.provider_name,
+        )
 
         # Counter-delta gate. If we've already processed at or beyond the
         # current vocab counter, there's nothing new to do.
@@ -170,24 +183,14 @@ class EmbeddingWorker:
 
         if current_counter <= last_processed:
             logger.info(
-                f"[{job_id}] No vocab changes since last embedding run "
+                f"[no-op:{component}] No vocab changes since last embedding run "
                 f"(counter={current_counter}, last_processed={last_processed}) — skipping"
             )
-            return EmbeddingJobResult(
-                job_id=job_id,
-                job_type=job_type,
-                target_count=0,
-                processed_count=0,
-                failed_count=0,
-                duration_ms=0,
-                embedding_model=self.provider.model_name if hasattr(self.provider, 'model_name') else "unknown",
-                embedding_provider=self.provider_name
-            )
+            return EmbeddingJobResult(job_id="", **empty_result_args)
 
         logger.info(
-            f"[{job_id}] Starting embedding regen: vocab_change_counter "
-            f"advanced from {last_processed} to {current_counter} "
-            f"(component={component})"
+            f"[{component}] Starting embedding regen: vocab_change_counter "
+            f"advanced from {last_processed} to {current_counter}"
         )
 
         # Find types that need embeddings. Any active type without an
@@ -195,44 +198,37 @@ class EmbeddingWorker:
         # by migrations) and LLM-discovered types.
         #
         # Race-window note: a new vocab row can arrive between the counter
-        # snapshot at line 168 and this fetch. That row will land in
-        # target_types AND it will have advanced the counter past our
-        # snapshot. After this run completes, last_processed gets set to
-        # the snapshot value (not the current counter), so the next launcher
-        # tick observes a residual delta of 1 and dispatches another run.
-        # That follow-up run reaches the "no types missing" no-op branch
-        # below (since the row we just processed is now embedded), advances
+        # snapshot above and this fetch. That row will land in target_types
+        # AND it will have advanced the counter past our snapshot. After
+        # this run completes, last_processed gets set to the snapshot value
+        # (not the current counter), so the next launcher tick observes a
+        # residual delta of 1 and dispatches another run. That follow-up
+        # run reaches the "no types missing" cursor-advance branch below
+        # (since the row we just processed is now embedded), advances
         # last_processed to the new counter, and the loop closes. Net cost
         # of the race: one extra worker dispatch per concurrent vocab add.
-        # Acceptable at hourly cadence.
+        # GREATEST in the cursor-advance SQL also prevents backward motion
+        # when two workers race with different snapshots.
         target_types = await self._get_types_without_embeddings()
 
         if not target_types:
             logger.info(
-                f"[{job_id}] Counter advanced but no types are missing embeddings — "
-                f"likely a category-only change. Marking last_processed={current_counter}."
+                f"[no-op:{component}] Counter advanced but no types are missing embeddings — "
+                f"likely a category-only change (refresh_graph_metrics in migration "
+                f"033 sums type+category counts). Advancing cursor to {current_counter}."
             )
-            # Record the counter value so we don't keep re-checking the same delta.
-            # No work was performed, so no row was inserted into
-            # embedding_generation_jobs — pass job_id=None to leave the
-            # FK column unchanged rather than violating the constraint
-            # with a tracking UUID that has no matching row.
-            await self._mark_initialization_complete(
-                job_id=None, count=0, component=component,
-                vocab_change_counter=current_counter
+            # No work to claim → use the cursor-advance helper, which does
+            # not touch initialization_job_id / initialized_at / metadata.
+            # Those describe "the run that initialized this component"; a
+            # no-work tick is not such a run.
+            await self._advance_vocab_cursor(
+                component=component,
+                vocab_change_counter=current_counter,
             )
-            return EmbeddingJobResult(
-                job_id=job_id,
-                job_type=job_type,
-                target_count=0,
-                processed_count=0,
-                failed_count=0,
-                duration_ms=0,
-                embedding_model=self.provider.model_name if hasattr(self.provider, 'model_name') else "unknown",
-                embedding_provider=self.provider_name
-            )
+            return EmbeddingJobResult(job_id="", **empty_result_args)
 
-        # Create job record
+        # Real work — allocate audit ID and create the FK target row.
+        job_id = str(uuid4())
         await self._create_job_record(
             job_id=job_id,
             job_type=job_type,
@@ -940,42 +936,53 @@ class EmbeddingWorker:
 
     async def _mark_initialization_complete(
         self,
-        job_id: Optional[str],
+        job_id: str,
         count: int,
         component: str = "builtin_vocabulary_embeddings",
         vocab_change_counter: Optional[int] = None,
     ) -> None:
         """
-        Mark embedding work complete for the given component.
+        Mark embedding work complete for the given component (work-was-done path).
 
-        Updates the binary `initialized` flag (kept for non-counter
-        components) AND, when `vocab_change_counter` is provided, updates
-        `last_processed_vocab_change_counter` — the new counter-delta gate.
+        Updates the binary `initialized` flag, the audit FK
+        `initialization_job_id`, the `initialized_at` timestamp, the
+        metadata snapshot, and the cursor. The cursor advance uses
+        GREATEST so two concurrent workers with stale snapshots cannot
+        roll the cursor backward.
+
+        Use `_advance_vocab_cursor` for the no-work case — passing a real
+        job_id here is a contract that `_create_job_record(job_id)` was
+        called first, so the FK target row exists.
 
         Args:
-            job_id: embedding_generation_jobs.job_id for the audit trail,
-                or None when this call advances the cursor without doing
-                any work (the "category-only change" path). The FK column
-                is COALESCEd, so passing None leaves the previously-stored
-                job_id in place rather than violating the FK constraint
-                with a tracking UUID that was never inserted into
-                embedding_generation_jobs.
+            job_id: embedding_generation_jobs.job_id for the audit trail.
+                Must reference an existing row (caller is responsible for
+                the INSERT). Not Optional — the no-work case has its own
+                helper.
             count: how many types were processed in this run.
             component: which row of system_initialization_status to update.
             vocab_change_counter: snapshot of vocabulary_change_counter at
                 the start of this run. Stored so the next call's delta
                 check sees "we processed up to N." Pass None to skip the
                 counter update (legacy callers).
+
+        Note on schema coupling: the FK column initialization_job_id is
+        nullable in migration 012. _advance_vocab_cursor relies on that
+        nullability — if a future migration adds NOT NULL, both helpers
+        break in different ways (this one is fine; the cursor helper
+        can't COALESCE around a NOT NULL).
         """
+        # GREATEST guards against concurrency: two workers with stale
+        # snapshots cannot roll the cursor backward. COALESCE handles
+        # legacy callers passing None.
         query = """
             UPDATE kg_api.system_initialization_status
             SET initialized = TRUE,
                 initialized_at = CURRENT_TIMESTAMP,
-                initialization_job_id = COALESCE(
-                    %s::uuid, initialization_job_id
-                ),
-                last_processed_vocab_change_counter = COALESCE(
-                    %s, last_processed_vocab_change_counter
+                initialization_job_id = %s::uuid,
+                last_processed_vocab_change_counter = GREATEST(
+                    last_processed_vocab_change_counter,
+                    COALESCE(%s, last_processed_vocab_change_counter)
                 ),
                 metadata = jsonb_build_object(
                     'types_initialized', %s,
@@ -995,6 +1002,45 @@ class EmbeddingWorker:
                 component,
             )
         )
+
+    async def _advance_vocab_cursor(
+        self,
+        component: str,
+        vocab_change_counter: int,
+    ) -> None:
+        """
+        Advance the per-component cursor without claiming any work.
+
+        Used when the counter has moved but no embedding work is needed
+        (e.g. a category-only vocab change still bumps
+        vocabulary_change_counter — see migration 033's
+        refresh_graph_metrics, which sums type_count + category_count
+        even though the metric's COMMENT in migration 025 names only
+        types). The cursor must still advance so the launcher doesn't
+        keep re-firing the same delta.
+
+        Deliberately does NOT touch initialization_job_id, initialized_at,
+        or metadata. Those columns describe "the run that initialized
+        this component"; a no-work advance is not such a run, and
+        rewriting them would decouple the (when, what, by-which-job) tuple
+        the row is supposed to carry.
+
+        GREATEST prevents two concurrent workers with stale snapshots
+        from rolling the cursor backward (one of them could have a lower
+        snapshot than what another already committed).
+
+        Args:
+            component: which row of system_initialization_status to advance.
+            vocab_change_counter: snapshot to record as last_processed.
+        """
+        query = """
+            UPDATE kg_api.system_initialization_status
+            SET last_processed_vocab_change_counter = GREATEST(
+                last_processed_vocab_change_counter, %s
+            )
+            WHERE component = %s
+        """
+        await self.db.execute_query(query, (vocab_change_counter, component))
 
     async def _create_job_record(
         self,
