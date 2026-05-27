@@ -127,6 +127,39 @@ class OntologyScoringMixin:
             logger.error(f"Failed to get ontology stats for {name}: {e}")
             return stats  # Return partial stats rather than None
 
+    def list_ontology_concept_counts(self) -> Dict[str, int]:
+        """
+        Return concept count per ontology in a single query.
+
+        Counts only Concept nodes that have an embedding (NULL embeddings
+        are excluded because the projection layer needs them downstream).
+        Uses the canonical SCOPED_BY edge — keep this aligned with
+        get_ontology_stats so the two helpers don't drift apart on a
+        schema change.
+
+        Returns:
+            Dict mapping ontology name to concept count. Ontologies with
+            zero embedded concepts are omitted.
+        """
+        query = """
+        MATCH (c:Concept)-->(s:Source)-[:SCOPED_BY]->(o:Ontology)
+        WHERE c.embedding IS NOT NULL
+        RETURN o.name as ontology, count(DISTINCT c) as concept_count
+        """
+
+        try:
+            results = self._execute_cypher(query)
+            counts: Dict[str, int] = {}
+            for row in results:
+                name = row.get("ontology")
+                if not name:
+                    continue
+                counts[str(name)] = int(str(row.get("concept_count", 0)))
+            return counts
+        except Exception as e:
+            logger.error(f"Failed to list ontology concept counts: {e}")
+            return {}
+
     def get_concept_degree_ranking(
         self, ontology_name: str, limit: int = 20
     ) -> List[Dict[str, Any]]:

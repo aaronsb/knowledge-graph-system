@@ -54,6 +54,15 @@ class EmbeddingProjectionService:
     while preserving local/global structure for visualization.
     """
 
+    # Absolute floor for any projection. t-SNE requires perplexity < n_samples
+    # with perplexity >= 1, and UMAP requires n_neighbors >= 2 with
+    # n_neighbors < n_samples; both algorithms need at least 3 points to
+    # produce anything other than a degenerate output. This is the hard
+    # constraint enforced by the service. Quality floors (e.g. "perplexity
+    # must reach 5 for meaningful structure") are policy applied by the
+    # launcher, not this layer.
+    MIN_SAMPLES_FOR_PROJECTION = 3
+
     def __init__(self, age_client):
         """
         Initialize with AGE client.
@@ -668,10 +677,10 @@ class EmbeddingProjectionService:
         """
         n_samples = len(embeddings)
 
-        if n_samples < 3:
+        if n_samples < self.MIN_SAMPLES_FOR_PROJECTION:
             raise ValueError(
-                f"Need at least 3 samples for projection, got {n_samples}. "
-                f"(t-SNE requires perplexity < n_samples with perplexity >= 1.)"
+                f"Need at least {self.MIN_SAMPLES_FOR_PROJECTION} samples for "
+                f"projection, got {n_samples}."
             )
 
         # Center embeddings by subtracting mean (removes common component/anisotropy)
@@ -1003,11 +1012,14 @@ class EmbeddingProjectionService:
                 "concept_count": 0
             }
 
-        if len(items) < 2:
+        if len(items) < self.MIN_SAMPLES_FOR_PROJECTION:
             return {
                 "ontology": ontology,
                 "embedding_source": embedding_source,
-                "error": f"Need at least 2 {embedding_source} for projection",
+                "error": (
+                    f"Need at least {self.MIN_SAMPLES_FOR_PROJECTION} "
+                    f"{embedding_source} for projection"
+                ),
                 "concept_count": len(items)
             }
 
