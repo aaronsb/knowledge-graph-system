@@ -7082,6 +7082,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#update-2026-05-28-rocm6x-wheel-path-removed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Update — 2026-05-28: rocm6.x wheel path removed
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -10148,6 +10159,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#update-2026-05-28-rocm6x-wheel-path-removed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Update — 2026-05-28: rocm6.x wheel path removed
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -10438,6 +10460,41 @@ ship variants.</p>
 a local build; users with AMD hardware reasonably expect the published
 images to support them too. The marginal cost of publishing variants is
 worth the marginal user.</p>
+<h2 id="update-2026-05-28-rocm6x-wheel-path-removed">Update — 2026-05-28: rocm6.x wheel path removed</h2>
+<p>The wheel-based ROCm variants (<code>rocm60</code> / <code>rocm61</code>) defined in this ADR
+were never published. Operationally they were a paper specification —
+the build args existed in <code>api/Dockerfile</code>, the <code>derive_kg_api_image_tag</code>
+helper routed <code>GPU_MODE=amd</code> to <code>:latest</code> as a stub, and ADR-043's CPU
+fallback caught the inevitable failure on every AMD install that picked
+that path. The init wizard advertised an option ("AMD GPU (ROCm 6.x —
+preview)") that resolved to a CUDA-bundled CPU image — exactly the
+silent-broken state this ADR was supposed to close.</p>
+<p>The removal:</p>
+<ul>
+<li><strong>Deleted</strong>: <code>docker/docker-compose.gpu-amd.yml</code>, the <code>PYTORCH_VARIANT</code>
+  arg + ROCm wheel install conditional in <code>api/Dockerfile</code>.</li>
+<li><strong>Renamed in wizard</strong>: option <code>[3] Linux with AMD GPU (ROCm 6.x — preview)</code>
+  removed; option <code>[4] Linux with AMD GPU (host ROCm)</code> becomes <code>[3]
+  Linux with AMD GPU (ROCm)</code>. CPU is now <code>[4]</code>.</li>
+<li><strong>Backward compatibility</strong>: existing <code>.operator.conf</code> files with
+  <code>GPU_MODE=amd</code> are treated as a deprecated alias for <code>amd-host</code>. The
+  image-tag helper emits a one-line stderr warning; the compose-cmd
+  builders route both modes to <code>docker-compose.gpu-amd-host.yml</code>;
+  <code>start-app.sh</code> prints the alias warning at platform startup.</li>
+<li><strong><code>derive_kg_api_image_tag</code> signature change</strong>: the second positional
+  arg (<code>ROCM_VERSION</code>) is now ignored. Kept for back-compat with older
+  callers that still pass it.</li>
+</ul>
+<p>What stays: the <code>amd-host</code> path (rocm/pytorch official base image, ROCm
+7.x), the ADR-043 CPU fallback, and the multi-GPU <code>ROCR_VISIBLE_DEVICES</code>
+note in the wizard.</p>
+<p>Rationale for the change: ADR-101's original "Drop ROCm support and
+document 'CPU only on AMD'" alternative was rejected on the grounds that
+"the platform already has working <code>amd-host</code> and <code>amd</code> paths from a local
+build." That premise was wrong for <code>amd</code> — the wheel-based path was
+build-arg-only, never producing a working ROCm install. The <code>amd-host</code>
+path delivers what <code>amd</code> was supposed to. One supported AMD path beats
+two paths where one is a footgun.</p>
 
 
 

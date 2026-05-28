@@ -10453,10 +10453,6 @@
 <td><code>ROCR_VISIBLE_DEVICES</code></td>
 <td>Limit visible GPUs (e.g., <code>0</code>)</td>
 </tr>
-<tr>
-<td><code>ROCM_VERSION</code></td>
-<td>ROCm wheel version (<code>rocm60</code>, <code>rocm61</code>)</td>
-</tr>
 </tbody>
 </table>
 <h2 id="operator-configuration-operatorconf">Operator Configuration (.operator.conf)</h2>
@@ -10580,11 +10576,7 @@ renames only the application containers. The production overlay
 <td>+ <code>docker-compose.gpu-nvidia.yml</code></td>
 </tr>
 <tr>
-<td><code>GPU_MODE=amd</code></td>
-<td>+ <code>docker-compose.gpu-amd.yml</code></td>
-</tr>
-<tr>
-<td><code>GPU_MODE=amd-host</code></td>
+<td><code>GPU_MODE=amd-host</code> (or legacy <code>amd</code>)</td>
 <td>+ <code>docker-compose.gpu-amd-host.yml</code></td>
 </tr>
 <tr>
