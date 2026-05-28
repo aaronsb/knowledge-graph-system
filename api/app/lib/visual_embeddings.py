@@ -87,6 +87,7 @@ class VisualEmbeddingGenerator:
     def _load_transformers(self):
         """Load model via transformers AutoModel + AutoProcessor."""
         from transformers import AutoModel, AutoProcessor
+        import torch
 
         load_kwargs = {
             "trust_remote_code": self.trust_remote_code,
@@ -94,62 +95,72 @@ class VisualEmbeddingGenerator:
         if self.model_revision:
             load_kwargs["revision"] = self.model_revision
 
+        # On GPU, load weights in fp16 to halve VRAM footprint. The vision
+        # tower's accuracy is unaffected at fp16 for embedding extraction.
+        # CPU stays fp32 — fp16 on CPU is slower, not smaller in any way
+        # that matters here.
+        on_accelerator = self.device in ('cuda', 'mps')
+        if on_accelerator:
+            load_kwargs["torch_dtype"] = torch.float16
+        else:
+            # Preserve the pre-refactor CPU semantics: HF transformers'
+            # low_cpu_mem_usage default has flipped between releases. Pin
+            # it explicitly so behavior doesn't drift with the dependency.
+            load_kwargs["low_cpu_mem_usage"] = False
+
+        processor_kwargs = {"trust_remote_code": self.trust_remote_code, "use_fast": True}
+        if self.model_revision:
+            processor_kwargs["revision"] = self.model_revision
+
         try:
             # Try loading from local cache first
             try:
-                if self.device in ('cuda', 'mps'):
-                    self.model = AutoModel.from_pretrained(
-                        self.model_name,
-                        device_map="auto",
-                        local_files_only=True,
-                        **load_kwargs
-                    )
-                else:
-                    self.model = AutoModel.from_pretrained(
-                        self.model_name,
-                        low_cpu_mem_usage=False,
-                        local_files_only=True,
-                        **load_kwargs
-                    )
-
-                processor_kwargs = {"trust_remote_code": self.trust_remote_code, "use_fast": True}
-                if self.model_revision:
-                    processor_kwargs["revision"] = self.model_revision
+                self.model = AutoModel.from_pretrained(
+                    self.model_name,
+                    local_files_only=True,
+                    **load_kwargs,
+                )
                 self.processor = AutoProcessor.from_pretrained(
                     self.model_name,
                     local_files_only=True,
-                    **processor_kwargs
+                    **processor_kwargs,
                 )
                 logger.info(f"  Loaded vision model from cache")
 
             except (OSError, ValueError):
                 logger.warning(f"  Vision model not in cache, downloading...")
-
-                if self.device in ('cuda', 'mps'):
-                    self.model = AutoModel.from_pretrained(
-                        self.model_name,
-                        device_map="auto",
-                        **load_kwargs
-                    )
-                else:
-                    self.model = AutoModel.from_pretrained(
-                        self.model_name,
-                        low_cpu_mem_usage=False,
-                        **load_kwargs
-                    )
-
-                processor_kwargs = {"trust_remote_code": self.trust_remote_code, "use_fast": True}
-                if self.model_revision:
-                    processor_kwargs["revision"] = self.model_revision
+                self.model = AutoModel.from_pretrained(
+                    self.model_name,
+                    **load_kwargs,
+                )
                 self.processor = AutoProcessor.from_pretrained(
                     self.model_name,
-                    **processor_kwargs
+                    **processor_kwargs,
                 )
                 logger.info(f"  Downloaded and cached vision model")
 
+            # Explicit .to(device) instead of device_map="auto": the auto
+            # path goes through accelerate, which keeps hook + buffer
+            # machinery resident for sharding we don't need on a sub-GB
+            # single-tower vision model. The text loader uses .to(device)
+            # too (see embedding_model_manager.py); the dtype side
+            # diverges because the text loader's tokenizer outputs are
+            # integer token IDs that don't need recasting, while the
+            # vision processor outputs fp32 pixel_values that must match
+            # the (possibly fp16) model weights — see _to_model_inputs.
+            if on_accelerator:
+                self.model = self.model.to(self.device)
             self.model.eval()
+
+            # Cache the model dtype for input casting on every forward.
+            # When the model loaded at fp16, the processor will still
+            # produce fp32 pixel_values; passing them through without a
+            # cast raises RuntimeError("Input type ... and weight type
+            # ... should be the same") on the conv stem.
+            self._model_dtype = next(self.model.parameters()).dtype
+
             logger.info(
-                f"Vision model loaded: {self.model_name} on {self.device}"
+                f"Vision model loaded: {self.model_name} on {self.device} (dtype={self._model_dtype})"
             )
 
         except Exception as e:
@@ -187,6 +198,21 @@ class VisualEmbeddingGenerator:
             logger.error(f"Failed to load vision model: {e}")
             raise
 
+    def _to_model_inputs(self, inputs):
+        """Move processor outputs to device, casting floating tensors to model dtype.
+
+        The processor produces fp32 pixel_values regardless of model precision.
+        When the model is loaded at fp16, that mismatch raises at the conv
+        stem. Cast only floating-point tensors — integer attention masks
+        etc. must stay integer.
+        """
+        import torch
+        target_dtype = getattr(self, '_model_dtype', None) or torch.float32
+        return {
+            k: (v.to(self.device, dtype=target_dtype) if v.is_floating_point() else v.to(self.device))
+            for k, v in inputs.items()
+        }
+
     def generate_embedding(self, image_bytes: bytes) -> np.ndarray:
         """
         Generate embedding for an image.
@@ -203,12 +229,20 @@ class VisualEmbeddingGenerator:
             image = Image.open(BytesIO(image_bytes)).convert('RGB')
 
             if self.loader == 'transformers':
-                inputs = self.processor(images=image, return_tensors='pt').to(self.device)
+                inputs = self._to_model_inputs(
+                    self.processor(images=image, return_tensors='pt')
+                )
 
                 with torch.no_grad():
                     outputs = self.model(**inputs)
-                    # CLS token (first token) as embedding
-                    embedding = outputs.last_hidden_state[:, 0, :].squeeze().cpu().numpy()
+                    # CLS token (first token) as embedding. Cast to fp32 on
+                    # GPU before .cpu() so the numpy array we hand back to
+                    # callers is fp32 regardless of the model's compute
+                    # dtype — preserves the output contract that pre-dates
+                    # the fp16-on-GPU change.
+                    embedding = (
+                        outputs.last_hidden_state[:, 0, :].squeeze().float().cpu().numpy()
+                    )
 
                 # L2 normalize
                 norm = np.linalg.norm(embedding)
@@ -248,11 +282,15 @@ class VisualEmbeddingGenerator:
             ]
 
             if self.loader == 'transformers':
-                inputs = self.processor(images=pil_images, return_tensors='pt').to(self.device)
+                inputs = self._to_model_inputs(
+                    self.processor(images=pil_images, return_tensors='pt')
+                )
 
                 with torch.no_grad():
                     outputs = self.model(**inputs)
-                    embeddings = outputs.last_hidden_state[:, 0, :].cpu().numpy()
+                    # Cast to fp32 on GPU (see generate_embedding's note on
+                    # output contract).
+                    embeddings = outputs.last_hidden_state[:, 0, :].float().cpu().numpy()
 
                 norms = np.linalg.norm(embeddings, axis=1, keepdims=True)
                 embeddings = embeddings / np.maximum(norms, 1e-10)

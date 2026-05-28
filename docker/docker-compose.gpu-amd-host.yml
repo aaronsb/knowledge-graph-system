@@ -40,3 +40,14 @@ services:
     ipc: host
     # Note: HSA_OVERRIDE_GFX_VERSION and ROCR_VISIBLE_DEVICES can be set in .env
     # if needed, but empty values break ROCm initialization
+    environment:
+      # Reduce VRAM fragmentation under PyTorch's caching allocator.
+      # expandable_segments lets the allocator grow a single segment instead
+      # of reserving large contiguous chunks up front; on long-running API
+      # processes this typically cuts reserved-but-unallocated VRAM materially.
+      - PYTORCH_HIP_ALLOC_CONF=expandable_segments:True
+    # Single uvicorn worker on the GPU variant: each worker is a separate
+    # Python process and would load its own copy of the embedding model(s)
+    # + ROCm runtime context into VRAM. One process is enough for the API's
+    # async workload; ingestion runs in the job queue regardless.
+    command: ["uvicorn", "api.app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
