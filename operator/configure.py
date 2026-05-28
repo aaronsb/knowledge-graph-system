@@ -110,6 +110,58 @@ class OperatorConfig:
         finally:
             conn.close()
 
+    def cmd_platform_config(self, args):
+        """
+        Get/set/list platform_config flags (operator control plane, ADR-061).
+
+        Used by the prod init path to disable open self-registration
+        (registration_enabled=false, ADR-400/#431) and available to operators
+        for flipping deployment flags later. Backed by the kg_api
+        get/set_platform_config helpers (migration 031), so values upsert
+        whether or not the seeding migration has run.
+        """
+        action = (args.action or "list").lower()
+        conn = self.get_connection()
+        try:
+            with conn.cursor() as cur:
+                if action == "set":
+                    if not args.key or args.value is None:
+                        print("❌ Usage: platform-config set <key> <value>")
+                        return False
+                    cur.execute(
+                        "SELECT kg_api.set_platform_config(%s, %s, %s)",
+                        (args.key, args.value, "operator"),
+                    )
+                    conn.commit()
+                    print(f"✅ Set {args.key} = {args.value}")
+                    return True
+                elif action == "get":
+                    if not args.key:
+                        print("❌ Usage: platform-config get <key>")
+                        return False
+                    cur.execute(
+                        "SELECT kg_api.get_platform_config(%s) AS value", (args.key,)
+                    )
+                    row = cur.fetchone()
+                    print(row["value"] if row and row["value"] is not None else "")
+                    return True
+                elif action == "list":
+                    cur.execute(
+                        "SELECT key, value FROM kg_api.platform_config ORDER BY key"
+                    )
+                    for row in cur.fetchall():
+                        print(f"{row['key']} = {row['value']}")
+                    return True
+                else:
+                    print(f"❌ Unknown action: {action} (use set, get, or list)")
+                    return False
+        except Exception as e:
+            print(f"❌ platform-config {action} failed: {e}")
+            conn.rollback()
+            return False
+        finally:
+            conn.close()
+
     def cmd_ai_provider(self, args):
         """Configure AI extraction provider"""
         provider = args.provider
@@ -789,6 +841,12 @@ def main():
     models_parser.add_argument('--category', default='extraction', help='Filter by category (default: extraction)')
     models_parser.add_argument('--limit', type=int, default=0, help='Limit number of results (0=unlimited)')
 
+    # platform-config (operator control plane, ADR-061)
+    pc_parser = subparsers.add_parser('platform-config', help='Get/set/list platform configuration flags')
+    pc_parser.add_argument('action', nargs='?', default='list', help='set, get, or list')
+    pc_parser.add_argument('key', nargs='?', help='Config key (for set/get)')
+    pc_parser.add_argument('value', nargs='?', help='Value (for set)')
+
     # status
     subparsers.add_parser('status', help='Show configuration status')
 
@@ -813,6 +871,7 @@ def main():
         'embedding': config.cmd_embedding,
         'api-key': config.cmd_api_key,
         'models': config.cmd_models,
+        'platform-config': config.cmd_platform_config,
         'status': config.cmd_status,
         'oauth': config.cmd_oauth,
     }

@@ -478,6 +478,16 @@ EOF
     docker exec "$OPERATOR_CONTAINER" python /workspace/operator/configure.py admin --password "$ADMIN_PASSWORD"
     echo -e "${GREEN}✓ Admin user created${NC}"
 
+    # Production hardening (ADR-400, #431): the prod path disables open
+    # self-registration. From here the seeded admin (and the users:create-gated
+    # admin API) is the account-creation root. The dev/simple path leaves the
+    # migration default (registration_enabled=true) untouched, so the dev/prod
+    # distinction is explicit.
+    if [ "$PASSWORD_MODE" = "random" ]; then
+        docker exec "$OPERATOR_CONTAINER" python /workspace/operator/configure.py platform-config set registration_enabled false
+        echo -e "${GREEN}✓ Open self-registration disabled (production)${NC}"
+    fi
+
     # Register OAuth client for web app with configured hostname
     local POSTGRES_CONTAINER=$(get_container_name postgres)
     local REDIRECT_URI="http://${WEB_HOSTNAME}/callback"
