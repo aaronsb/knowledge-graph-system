@@ -18,7 +18,7 @@ from ..services.content_hasher import ContentHasher
 from ..services.job_analysis import JobAnalyzer
 from ..models.ingest import IngestionOptions
 from ..models.job import JobSubmitResponse, DuplicateJobResponse
-from ..dependencies.auth import CurrentUser
+from ..dependencies.auth import CurrentUser, require_permission
 
 router = APIRouter(prefix="/ingest", tags=["ingestion"])
 
@@ -115,6 +115,7 @@ async def run_job_analysis(job_id: str, auto_approve: bool = False):
 async def ingest_document(
     background_tasks: BackgroundTasks,
     current_user: CurrentUser,
+    _: None = Depends(require_permission("ingest", "create")),
     file: UploadFile = File(..., description="Document file to ingest"),
     ontology: str = Form(..., description="Ontology/collection name"),
     filename: Optional[str] = Form(None, description="Override filename"),
@@ -311,6 +312,7 @@ async def ingest_document(
 async def ingest_text(
     background_tasks: BackgroundTasks,
     current_user: CurrentUser,
+    _: None = Depends(require_permission("ingest", "create")),
     text: str = Form(..., min_length=1, description="Text content to ingest"),
     ontology: str = Form(..., description="Ontology/collection name"),
     filename: Optional[str] = Form(None, description="Filename for source tracking"),
