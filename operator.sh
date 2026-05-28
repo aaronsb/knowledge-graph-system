@@ -442,31 +442,30 @@ cmd_upgrade() {
 cmd_teardown() {
     check_env
     load_config
-    cd "$DOCKER_DIR"
 
-    # Teardown is simple enough for host
-    local remove_volumes=false
-    local auto_yes=false
-
-    while [[ $# -gt 0 ]]; do
-        case $1 in
-            --full) remove_volumes=true; shift ;;
-            -y|--yes) auto_yes=true; shift ;;
-            *) shift ;;
-        esac
-    done
-
-    echo -e "${RED}${BOLD}TEARDOWN${NC}"
-    if [ "$auto_yes" = false ]; then
-        read -p "Type 'yes' to confirm: " -r
-        [[ "$REPLY" != "yes" ]] && echo "Cancelled" && exit 0
+    # Delegate to operator/lib/teardown.sh, which has the full
+    # implementation: overlay-aware compose down (honors GPU_MODE etc.),
+    # --remove-orphans, kg-owned vs. unrelated dangling-volume
+    # classification (PR #427), plus --keep-env / --remove-images /
+    # --include-operator flags that this entry point used to silently
+    # ignore.
+    #
+    # Pre-fix history: this function inlined a simplified `run_compose
+    # down -v` that left SHA-named anonymous volumes (e.g. the PG18
+    # cluster at /var/lib/postgresql/18/docker) orphaned after teardown
+    # --full. The lib script's dangling sweep was the actual fix; we
+    # were just bypassing it from the user-facing entry point.
+    local lib_teardown="$SCRIPT_DIR/operator/lib/teardown.sh"
+    if [ ! -x "$lib_teardown" ]; then
+        echo -e "${RED}✗ Cannot find $lib_teardown${NC}"
+        echo -e "${YELLOW}  Falling back to inline teardown${NC}"
+        cd "$DOCKER_DIR"
+        run_compose down -v --remove-orphans
+        echo -e "${GREEN}✓ Teardown complete (fallback path)${NC}"
+        return
     fi
 
-    local flags=""
-    [ "$remove_volumes" = true ] && flags="-v"
-
-    run_compose down $flags
-    echo -e "${GREEN}✓ Teardown complete${NC}"
+    exec "$lib_teardown" "$@"
 }
 
 # ============================================================================
@@ -780,7 +779,13 @@ ${BOLD}Lifecycle:${NC}
   restart <service|all>  Restart a service (or all)
   upgrade            Pull, migrate, restart
   update             Pull images only
-  teardown [--full]  Remove containers (--full: +volumes)
+  teardown [opts]    Remove platform (delegates to operator/lib/teardown.sh)
+                     --full              Containers + volumes + images + operator
+                     --remove-volumes    Volumes only (incl. dangling-volume sweep)
+                     --remove-images     Force image rebuild on next start
+                     --include-operator  Also remove the operator container
+                     --keep-env          Keep .env (default deletes secrets)
+                     -y, --yes           Skip confirmation prompts
 
 ${BOLD}Management:${NC}
   status             Show container status
