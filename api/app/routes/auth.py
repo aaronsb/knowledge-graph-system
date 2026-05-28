@@ -119,7 +119,9 @@ async def register_user(user: RegisterRequest):
             # that have not applied migration 071 keep working.
             cur.execute("SELECT kg_api.get_platform_config('registration_enabled')")
             flag_row = cur.fetchone()
-            if flag_row and str(flag_row[0]).strip().lower() == "false":
+            # Treat any common falsy spelling as disabled (operators may set
+            # false/0/no/off). Missing / anything else = enabled (default).
+            if flag_row and str(flag_row[0]).strip().lower() in ("false", "0", "no", "off"):
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="Open self-registration is disabled. Contact an administrator to create an account."

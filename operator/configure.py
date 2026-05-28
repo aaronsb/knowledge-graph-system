@@ -128,11 +128,24 @@ class OperatorConfig:
                     if not args.key or args.value is None:
                         print("❌ Usage: platform-config set <key> <value>")
                         return False
+                    # Surface typos: all legitimate keys are seeded by migrations,
+                    # so setting a brand-new key is almost always a misspelling that
+                    # would otherwise silently fail open (e.g. a hardening flag that
+                    # never takes effect). Warn loudly but still upsert.
+                    cur.execute(
+                        "SELECT 1 FROM kg_api.platform_config WHERE key = %s", (args.key,)
+                    )
+                    is_new_key = cur.fetchone() is None
                     cur.execute(
                         "SELECT kg_api.set_platform_config(%s, %s, %s)",
                         (args.key, args.value, "operator"),
                     )
                     conn.commit()
+                    if is_new_key:
+                        print(
+                            f"⚠️  '{args.key}' was not an existing config key — created it. "
+                            f"Check for typos (see `platform-config list` for known keys)."
+                        )
                     print(f"✅ Set {args.key} = {args.value}")
                     return True
                 elif action == "get":
