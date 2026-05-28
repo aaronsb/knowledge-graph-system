@@ -87,6 +87,7 @@ class VisualEmbeddingGenerator:
     def _load_transformers(self):
         """Load model via transformers AutoModel + AutoProcessor."""
         from transformers import AutoModel, AutoProcessor
+        import torch
 
         load_kwargs = {
             "trust_remote_code": self.trust_remote_code,
@@ -94,59 +95,52 @@ class VisualEmbeddingGenerator:
         if self.model_revision:
             load_kwargs["revision"] = self.model_revision
 
+        # On GPU, load weights in fp16 to halve VRAM footprint. The vision
+        # tower's accuracy is unaffected at fp16 for embedding extraction.
+        # CPU stays fp32 — fp16 on CPU is slower, not smaller in any way
+        # that matters here.
+        on_accelerator = self.device in ('cuda', 'mps')
+        if on_accelerator:
+            load_kwargs["torch_dtype"] = torch.float16
+
+        processor_kwargs = {"trust_remote_code": self.trust_remote_code, "use_fast": True}
+        if self.model_revision:
+            processor_kwargs["revision"] = self.model_revision
+
         try:
             # Try loading from local cache first
             try:
-                if self.device in ('cuda', 'mps'):
-                    self.model = AutoModel.from_pretrained(
-                        self.model_name,
-                        device_map="auto",
-                        local_files_only=True,
-                        **load_kwargs
-                    )
-                else:
-                    self.model = AutoModel.from_pretrained(
-                        self.model_name,
-                        low_cpu_mem_usage=False,
-                        local_files_only=True,
-                        **load_kwargs
-                    )
-
-                processor_kwargs = {"trust_remote_code": self.trust_remote_code, "use_fast": True}
-                if self.model_revision:
-                    processor_kwargs["revision"] = self.model_revision
+                self.model = AutoModel.from_pretrained(
+                    self.model_name,
+                    local_files_only=True,
+                    **load_kwargs,
+                )
                 self.processor = AutoProcessor.from_pretrained(
                     self.model_name,
                     local_files_only=True,
-                    **processor_kwargs
+                    **processor_kwargs,
                 )
                 logger.info(f"  Loaded vision model from cache")
 
             except (OSError, ValueError):
                 logger.warning(f"  Vision model not in cache, downloading...")
-
-                if self.device in ('cuda', 'mps'):
-                    self.model = AutoModel.from_pretrained(
-                        self.model_name,
-                        device_map="auto",
-                        **load_kwargs
-                    )
-                else:
-                    self.model = AutoModel.from_pretrained(
-                        self.model_name,
-                        low_cpu_mem_usage=False,
-                        **load_kwargs
-                    )
-
-                processor_kwargs = {"trust_remote_code": self.trust_remote_code, "use_fast": True}
-                if self.model_revision:
-                    processor_kwargs["revision"] = self.model_revision
+                self.model = AutoModel.from_pretrained(
+                    self.model_name,
+                    **load_kwargs,
+                )
                 self.processor = AutoProcessor.from_pretrained(
                     self.model_name,
-                    **processor_kwargs
+                    **processor_kwargs,
                 )
                 logger.info(f"  Downloaded and cached vision model")
 
+            # Explicit .to(device) instead of device_map="auto": the auto
+            # path goes through accelerate, which keeps hook + buffer
+            # machinery resident for sharding we don't need on a sub-GB
+            # single-tower vision model. The text loader uses the same
+            # explicit pattern (see embedding_model_manager.py).
+            if on_accelerator:
+                self.model = self.model.to(self.device)
             self.model.eval()
             logger.info(
                 f"Vision model loaded: {self.model_name} on {self.device}"

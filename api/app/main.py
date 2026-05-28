@@ -227,6 +227,15 @@ async def startup_event():
     register_all_workers(queue)
     logger.info(f"✅ Workers registered: {', '.join(get_all_job_types())}")
 
+    # ADR-100: elect the dispatch leader early — before model load — so the
+    # non-leader (under --workers N) can skip GPU-heavy resources it would
+    # never use. The leader runs ingestion jobs (which need the visual
+    # model); non-leaders only handle HTTP, which uses text embeddings for
+    # query encoding. Skipping visual on non-leaders saves ~350MB weights
+    # + accelerate/processor overhead per non-leader process.
+    global _is_dispatch_leader
+    _is_dispatch_leader = _try_acquire_dispatch_lock(queue)
+
     # IMPORTANT: Initialize embedding infrastructure BEFORE starting any jobs
     # (fixes race condition where jobs start before EmbeddingWorker is ready)
 
@@ -251,25 +260,32 @@ async def startup_event():
             "or repair the local model configuration."
         )
 
-    # Initialize visual embedding generator (profile-driven, migration 055)
-    try:
-        from .lib.visual_embeddings import init_visual_embedding_generator
-        visual_gen = await init_visual_embedding_generator()
-        if visual_gen:
-            logger.info(f"✅ Visual embedding generator initialized: {visual_gen.get_model_name()} ({visual_gen.get_embedding_dimension()} dims)")
-        else:
-            logger.info("📍 Visual embeddings: disabled (text-only profile or API-based)")
-    except Exception as e:
-        # ADR-101: parity with the text-embedding honesty fix at line 199.
-        # "Features may be limited" obscured the actual state — the profile
-        # asks for visual embeddings, the load failed, so every image ingest
-        # will raise. State that, instead of softening.
-        logger.error(f"❌ Failed to initialize visual embedding generator: {e}")
-        logger.error(
-            "   Visual embedding profile is active but the generator could not load. "
-            "Image ingestion will fail until this is resolved. "
-            "Fix: switch to a text-only profile, or repair the visual model configuration."
-        )
+    # Initialize visual embedding generator (profile-driven, migration 055).
+    # Only the dispatch leader loads this: visual embeddings are produced by
+    # ingestion jobs, which only run on the leader. Non-leader workers would
+    # claim ~350MB+ of VRAM (weights + processor + accelerate runtime) for a
+    # model they would never call.
+    if _is_dispatch_leader:
+        try:
+            from .lib.visual_embeddings import init_visual_embedding_generator
+            visual_gen = await init_visual_embedding_generator()
+            if visual_gen:
+                logger.info(f"✅ Visual embedding generator initialized: {visual_gen.get_model_name()} ({visual_gen.get_embedding_dimension()} dims)")
+            else:
+                logger.info("📍 Visual embeddings: disabled (text-only profile or API-based)")
+        except Exception as e:
+            # ADR-101: parity with the text-embedding honesty fix at line 199.
+            # "Features may be limited" obscured the actual state — the profile
+            # asks for visual embeddings, the load failed, so every image ingest
+            # will raise. State that, instead of softening.
+            logger.error(f"❌ Failed to initialize visual embedding generator: {e}")
+            logger.error(
+                "   Visual embedding profile is active but the generator could not load. "
+                "Image ingestion will fail until this is resolved. "
+                "Fix: switch to a text-only profile, or repair the visual model configuration."
+            )
+    else:
+        logger.info("ℹ️  Non-leader worker — skipping visual embedding generator (ingestion runs on leader)")
 
     # ADR-041: Validate API keys at startup (non-blocking)
     try:
@@ -390,11 +406,9 @@ async def startup_event():
         logger.error(f"⚠️  Failed to resume interrupted jobs: {e}", exc_info=True)
 
     # ADR-100: Only one uvicorn worker should run the lane manager, scheduler,
-    # and scheduled jobs manager. With --workers 2, each process calls startup_event().
-    # Use a PostgreSQL advisory lock (non-blocking) to elect a leader.
-    global _is_dispatch_leader
-    _is_dispatch_leader = _try_acquire_dispatch_lock(queue)
-
+    # and scheduled jobs manager. Leader was elected earlier (before model
+    # load) so non-leaders can skip GPU-heavy resources; here we just branch
+    # on the existing election result.
     if _is_dispatch_leader:
         # ADR-100: Start lane manager (poll-and-claim dispatch)
         global lane_manager

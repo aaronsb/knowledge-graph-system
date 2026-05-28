@@ -42,10 +42,12 @@ services:
   api:
     # Override standalone container_name back to dev name
     container_name: kg-api-dev
-    # Multi-worker for concurrent request handling (matches production).
-    # Hot reload (--reload) is incompatible with --workers, so restart
+    # Single worker (matches production). Each uvicorn worker is a separate
+    # process and would load its own copy of any local embedding model; the
+    # API workload is async and doesn't benefit from extra workers on this
+    # box. Hot reload (--reload) is incompatible with --workers, so restart
     # the container after code changes: ./operator.sh restart api
-    command: ["uvicorn", "api.app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]
+    command: ["uvicorn", "api.app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
     build:
       context: ..
       dockerfile: api/Dockerfile

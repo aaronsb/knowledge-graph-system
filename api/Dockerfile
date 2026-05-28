@@ -112,5 +112,9 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD curl -f http://localhost:8000/health || exit 1
 
-# Start FastAPI server with uvicorn (multi-worker in both dev and prod)
-CMD ["uvicorn", "api.app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]
+# Start FastAPI server with uvicorn.
+# Single worker: each uvicorn worker is a separate Python process and would
+# load its own copy of any local embedding model (and ROCm/CUDA runtime
+# context on GPU variants) — 2 workers ≈ 2× memory for no async-throughput
+# gain on this workload. Ingestion runs in the queue, not the request path.
+CMD ["uvicorn", "api.app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
