@@ -21,35 +21,34 @@
 # scheme rationale.
 # ============================================================================
 
-# Derive the kg-api image tag for a given GPU_MODE / ROCM_VERSION.
+# Derive the kg-api image tag for a given GPU_MODE.
 #
 # Args:
-#   $1 = GPU_MODE       (amd | amd-host | nvidia | mac | cpu)
-#   $2 = ROCM_VERSION   (optional override, e.g. rocm60 | rocm61)
+#   $1 = GPU_MODE       (amd-host | nvidia | mac | cpu)
+#   $2 = ROCM_VERSION   (legacy; ignored — kept for backward-compatible
+#                        signature with older callers that still pass it)
 #
 # Echoes the tag to stdout. Defaults to "latest" for unknown modes —
 # kg-api:latest carries PyPI's default torch wheel (CUDA runtime bundled,
 # works on NVIDIA + CPU).
 #
-# Behavior for amd mode: until ROCm 6.x wheel-based variants (rocm60/rocm61)
-# are built and published, the amd path resolves to :latest. ADR-101's CPU
-# fallback then absorbs the inevitable cuda-init failure (no NVIDIA driver
-# on AMD hosts) and the install runs CPU embeddings instead of silent-
-# breaking. Once a tester confirms a wheel variant builds, set
-# ROCM_VERSION=rocm60 (or rocm61) in .operator.conf to switch over.
+# AMD ROCm: only the host-ROCm variant (amd-host -> rocm72-host) is
+# supported. The previous wheel-based amd variants (rocm60/rocm61) were
+# never published; ADR-101 update 2026-05-28 removed that path. Legacy
+# values of GPU_MODE=amd in older .operator.conf files are treated as
+# an alias for amd-host with a warning.
 derive_kg_api_image_tag() {
     local mode="${1:-cpu}"
-    local rocm_ver="$2"
 
     case "$mode" in
-        amd)
-            if [ -n "$rocm_ver" ]; then
-                echo "$rocm_ver"
-            else
-                echo "latest"
-            fi
-            ;;
         amd-host)
+            echo "rocm72-host"
+            ;;
+        amd)
+            # Deprecated alias. Emit warning to stderr so it shows up
+            # in logs without polluting the stdout tag value.
+            echo "GPU_MODE=amd is deprecated; treating as amd-host" >&2
+            echo "Edit .operator.conf or re-run ./operator.sh init" >&2
             echo "rocm72-host"
             ;;
         *)

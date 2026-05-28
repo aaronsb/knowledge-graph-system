@@ -97,10 +97,9 @@ get_compose_cmd() {
 
     # GPU overlays
     case "$GPU_MODE" in
-        nvidia)   [ -f "$DOCKER_DIR/docker-compose.gpu-nvidia.yml" ]   && cmd="$cmd -f $DOCKER_DIR/docker-compose.gpu-nvidia.yml" ;;
-        amd)      [ -f "$DOCKER_DIR/docker-compose.gpu-amd.yml" ]      && cmd="$cmd -f $DOCKER_DIR/docker-compose.gpu-amd.yml" ;;
-        amd-host) [ -f "$DOCKER_DIR/docker-compose.gpu-amd-host.yml" ] && cmd="$cmd -f $DOCKER_DIR/docker-compose.gpu-amd-host.yml" ;;
-        mac)      [ -f "$DOCKER_DIR/docker-compose.override.mac.yml" ] && cmd="$cmd -f $DOCKER_DIR/docker-compose.override.mac.yml" ;;
+        nvidia)        [ -f "$DOCKER_DIR/docker-compose.gpu-nvidia.yml" ]   && cmd="$cmd -f $DOCKER_DIR/docker-compose.gpu-nvidia.yml" ;;
+        amd|amd-host)  [ -f "$DOCKER_DIR/docker-compose.gpu-amd-host.yml" ] && cmd="$cmd -f $DOCKER_DIR/docker-compose.gpu-amd-host.yml" ;;
+        mac)           [ -f "$DOCKER_DIR/docker-compose.override.mac.yml" ] && cmd="$cmd -f $DOCKER_DIR/docker-compose.override.mac.yml" ;;
     esac
 
     echo "$cmd --env-file $ENV_FILE"

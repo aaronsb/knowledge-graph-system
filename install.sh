@@ -1707,7 +1707,7 @@ download_files() {
         "docker-compose.ghcr.yml"
         "docker-compose.standalone.yml"
         "docker-compose.gpu-nvidia.yml"
-        "docker-compose.gpu-amd.yml"
+        "docker-compose.gpu-amd-host.yml"
     )
 
     for file in "${compose_files[@]}"; do
@@ -2301,8 +2301,9 @@ build_compose_command() {
         nvidia)
             cmd+=" -f $install_dir/docker-compose.gpu-nvidia.yml"
             ;;
-        amd)
-            cmd+=" -f $install_dir/docker-compose.gpu-amd.yml"
+        amd|amd-host)
+            # `amd` is a deprecated alias for `amd-host` (see image-tag.sh).
+            cmd+=" -f $install_dir/docker-compose.gpu-amd-host.yml"
             ;;
         auto)
             # Detect GPU
@@ -2310,7 +2311,7 @@ build_compose_command() {
                 cmd+=" -f $install_dir/docker-compose.gpu-nvidia.yml"
                 log_info "Detected NVIDIA GPU"
             elif [[ -d /dev/dri ]] && command -v rocm-smi &>/dev/null; then
-                cmd+=" -f $install_dir/docker-compose.gpu-amd.yml"
+                cmd+=" -f $install_dir/docker-compose.gpu-amd-host.yml"
                 log_info "Detected AMD GPU"
             else
                 log_info "No GPU detected, using CPU"
