@@ -1,12 +1,19 @@
 ---
-status: Proposed
+status: Superseded
 date: 2025-10-11
 deciders:
   - aaronsb
   - claude
+related:
+  - ADR-400
 ---
 
 # ADR-028: Dynamic Role-Based Access Control (RBAC) System
+
+> **Superseded by [ADR-400](ADR-400-operative-rbac-and-endpoint-security-baseline.md).**
+> Retained for historical context. Note in particular that the SQL `kg_auth.has_permission()`
+> described here is non-operative; the authoritative check is the Python `PermissionChecker`
+> (see ADR-400).
 
 ## Overview
 

@@ -75,15 +75,16 @@ _RBAC, OAuth, API keys, endpoint security_
 
 | ADR | Title | Status |
 |-----|-------|--------|
-| [ADR-017](./authentication-security/ADR-017-sensitive-auth-verification.md) | Client-Initiated Token Revocation for Elevated Operations | Proposed |
+| [ADR-017](./authentication-security/ADR-017-sensitive-auth-verification.md) | Client-Initiated Token Revocation for Elevated Operations | Superseded |
 | [ADR-027](./authentication-security/ADR-027-user-management-api.md) | User Management API with Lightweight JWT Authentication | Superseded |
-| [ADR-028](./authentication-security/ADR-028-dynamic-rbac-system.md) | Dynamic Role-Based Access Control (RBAC) System | Proposed |
+| [ADR-028](./authentication-security/ADR-028-dynamic-rbac-system.md) | Dynamic Role-Based Access Control (RBAC) System | Superseded |
 | [ADR-031](./authentication-security/ADR-031-encrypted-api-key-storage.md) | Encrypted API Key Storage with Container Secrets | Accepted |
 | [ADR-054](./authentication-security/ADR-054-oauth-client-management.md) | OAuth 2.0 Client Management for Multi-Client Authentication | Accepted |
-| [ADR-060](./authentication-security/ADR-060-endpoint-security-architecture.md) | API Endpoint Security Architecture | Proposed |
+| [ADR-060](./authentication-security/ADR-060-endpoint-security-architecture.md) | API Endpoint Security Architecture | Superseded |
 | [ADR-062](./authentication-security/ADR-062-mcp-file-ingestion-security.md) | MCP File Ingestion Security Model | Draft |
-| [ADR-074](./authentication-security/ADR-074-platform-admin-role.md) | Platform Admin Role | Proposed |
+| [ADR-074](./authentication-security/ADR-074-platform-admin-role.md) | Platform Admin Role | Superseded |
 | [ADR-082](./authentication-security/ADR-082-user-scoping-artifact-ownership.md) | User Scoping and Artifact Ownership Model | Accepted |
+| [ADR-400](./authentication-security/ADR-400-operative-rbac-and-endpoint-security-baseline.md) | Operative RBAC and Endpoint Security Baseline | Accepted |
 
 ## Query/Search
 _Pathfinding, projections, diversity, search_

@@ -7,9 +7,15 @@ deciders:
 related:
   - ADR-024
   - ADR-054
+  - ADR-400
 ---
 
 # ADR-027: User Management API with Lightweight JWT Authentication
+
+> **Superseded.** The operative user-management and RBAC model is defined in
+> [ADR-400](ADR-400-operative-rbac-and-endpoint-security-baseline.md). Note that
+> `POST /auth/register` accepting a client-supplied role (described here) is a security
+> defect tracked in the `internet-hardening` issue cluster, not intended behavior.
 
 ## Overview
 

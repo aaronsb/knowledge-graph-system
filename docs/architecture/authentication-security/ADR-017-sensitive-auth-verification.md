@@ -1,11 +1,16 @@
 ---
-status: Proposed
+status: Superseded
 date: 2025-10-09
 deciders:
   - Engineering Team
+related:
+  - ADR-400
 ---
 
 # ADR-017: Client-Initiated Token Revocation for Elevated Operations
+
+> **Superseded by [ADR-400](ADR-400-operative-rbac-and-endpoint-security-baseline.md).**
+> Retained for historical context; the operative auth model is defined in ADR-400.
 
 **Technical Story:** Implement a secure authentication flow for destructive administrative operations (database wipe, restore, configuration changes) that balances security with operational robustness.
 

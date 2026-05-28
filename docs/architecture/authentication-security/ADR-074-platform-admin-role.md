@@ -1,12 +1,19 @@
 ---
-status: Proposed
+status: Superseded
 date: 2025-12-09
 deciders:
   - aaronsb
   - claude
+related:
+  - ADR-400
 ---
 
 # ADR-074: Platform Admin Role
+
+> **Superseded by [ADR-400](ADR-400-operative-rbac-and-endpoint-security-baseline.md).**
+> Retained for historical context. The admin/platform_admin split described here was
+> partially re-merged by later migrations (037/040/057 re-granted critical ops to admin);
+> the operative role capabilities are defined in ADR-400.
 
 ## Context
 

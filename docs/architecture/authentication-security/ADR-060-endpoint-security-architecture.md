@@ -1,11 +1,19 @@
 ---
-status: Proposed
+status: Superseded
 date: 2025-01-05
 deciders:
   - Engineering Team
+related:
+  - ADR-400
 ---
 
 # ADR-060: API Endpoint Security Architecture
+
+> **Superseded by [ADR-400](ADR-400-operative-rbac-and-endpoint-security-baseline.md).**
+> Retained for historical context. The `require_role`-based, three-level model described
+> here does not match the operative system: authorization is `require_permission` against
+> seeded grants with `parent_role` inheritance, and `require_role` is a legacy/trap path
+> (see ADR-400).
 
 ## Overview
 
