@@ -64,8 +64,9 @@ def mock_db_connection():
 class TestGetDatabaseCounters:
     """Tests for GET /database/counters endpoint."""
 
-    def test_returns_200_on_success(self, api_client, mock_db_connection, mock_oauth_validation, auth_headers_user):
-        """Test that /database/counters returns 200 OK."""
+    def test_returns_200_on_success(self, api_client, mock_db_connection, mock_oauth_validation, bypass_permission_check, auth_headers_user):
+        """Test that /database/counters returns 200 OK (handler logic; RBAC is
+        bypassed here and covered separately in test_database_auth.py)."""
         mock_client, mock_cursor = mock_db_connection
 
         # Mock counter query results
@@ -118,8 +119,9 @@ class TestGetDatabaseCounters:
 class TestRefreshDatabaseCounters:
     """Tests for POST /database/counters/refresh endpoint."""
 
-    def test_returns_200_on_success(self, api_client, mock_oauth_validation, auth_headers_admin):
-        """Test that refresh returns 200 OK."""
+    def test_returns_200_on_success(self, api_client, mock_oauth_validation, bypass_permission_check, auth_headers_admin):
+        """Test that refresh returns 200 OK (handler logic; RBAC bypassed here and
+        covered separately in test_database_auth.py)."""
         with patch('api.app.routes.database.refresh_graph_counters') as mock_refresh:
             mock_refresh.return_value = MOCK_REFRESH_RESULT
 
@@ -135,7 +137,7 @@ class TestRefreshDatabaseCounters:
         # Should return 401 or 403 without auth
         assert response.status_code in [401, 403]
 
-    def test_refresh_returns_updated_count(self, api_client, mock_oauth_validation, auth_headers_admin):
+    def test_refresh_returns_updated_count(self, api_client, mock_oauth_validation, bypass_permission_check, auth_headers_admin):
         """Test that refresh returns count of updated counters."""
         with patch('api.app.routes.database.refresh_graph_counters') as mock_refresh:
             mock_refresh.return_value = MOCK_REFRESH_RESULT
