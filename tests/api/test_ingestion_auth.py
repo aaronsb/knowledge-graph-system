@@ -21,29 +21,6 @@ ENDPOINTS = [
 ]
 
 
-@pytest.fixture
-def read_only_headers(create_test_oauth_token):
-    """A read_only user (id=102) in the DB + a matching token. read_only does
-    NOT hold ingest:create, so it exercises the authZ denial path."""
-    from api.app.dependencies.auth import get_db_connection
-
-    conn = get_db_connection()
-    try:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
-                INSERT INTO kg_auth.users (id, username, password_hash, primary_role, created_at)
-                VALUES (102, '_test_readonly', '$2b$12$mock', 'read_only', NOW())
-                ON CONFLICT (id) DO NOTHING
-                """
-            )
-            conn.commit()
-    finally:
-        conn.close()
-    token = create_test_oauth_token(user_id=102, role="read_only")
-    return {"Authorization": f"Bearer {token}"}
-
-
 @pytest.mark.api
 @pytest.mark.security
 @pytest.mark.parametrize("path,files,data", ENDPOINTS)
@@ -59,13 +36,14 @@ def test_ingest_rejects_anonymous(api_client, path, files, data):
 @pytest.mark.security
 @pytest.mark.parametrize("path,files,data", ENDPOINTS)
 def test_ingest_denied_for_read_only(
-    api_client, mock_oauth_validation, read_only_headers, path, files, data
+    api_client, mock_oauth_validation, ensure_test_users_in_db, auth_headers_readonly,
+    path, files, data
 ):
     """
     read_only lacks ingest:create, so every ingestion entry point must reject it
     with 403 — closing the denial-of-wallet path for the lowest-privilege account.
     """
-    response = api_client.post(path, files=files, data=data, headers=read_only_headers)
+    response = api_client.post(path, files=files, data=data, headers=auth_headers_readonly)
     assert response.status_code == 403, (
         f"read_only POST {path} returned {response.status_code} — ingest:create not enforced"
     )
