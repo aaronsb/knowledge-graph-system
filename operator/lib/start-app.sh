@@ -148,7 +148,8 @@ case "$GPU_MODE" in
         echo -e "${BLUE}→ Using NVIDIA GPU configuration (CUDA acceleration)${NC}"
         ;;
     amd)
-        echo -e "${BLUE}→ Using AMD GPU configuration (ROCm wheels)${NC}"
+        echo -e "${YELLOW}→ GPU_MODE=amd is deprecated; treating as amd-host${NC}"
+        echo -e "${BLUE}→ Using AMD GPU configuration (host ROCm libraries)${NC}"
         ;;
     amd-host)
         echo -e "${BLUE}→ Using AMD GPU configuration (host ROCm libraries)${NC}"

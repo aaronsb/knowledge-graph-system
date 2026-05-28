@@ -158,12 +158,9 @@ get_compose_cmd() {
                 cmd="$cmd -f $DOCKER_DIR/docker-compose.gpu-nvidia.yml"
             fi
             ;;
-        amd)
-            if [ -f "$DOCKER_DIR/docker-compose.gpu-amd.yml" ]; then
-                cmd="$cmd -f $DOCKER_DIR/docker-compose.gpu-amd.yml"
-            fi
-            ;;
-        amd-host)
+        amd|amd-host)
+            # `amd` is a deprecated alias for `amd-host` (see image-tag.sh
+            # warning). Both modes resolve to the host-ROCm compose overlay.
             if [ -f "$DOCKER_DIR/docker-compose.gpu-amd-host.yml" ]; then
                 cmd="$cmd -f $DOCKER_DIR/docker-compose.gpu-amd-host.yml"
             fi

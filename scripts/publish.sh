@@ -87,7 +87,7 @@ Version Management:
 
 Publishing:
   images [api|web|operator] Publish Docker images to GHCR
-  images-rocm [variant...]  Publish kg-api ROCm variants (rocm60|rocm61|rocm72-host)
+  images-rocm [variant...]  Publish kg-api ROCm variants (rocm72-host)
                             Defaults to rocm72-host only; --force enables deferred variants
   cli                       Publish npm package (@aaronsb/kg-cli)
   fuse                      Publish Python package (kg-fuse) to PyPI
@@ -138,7 +138,7 @@ while [[ $# -gt 0 ]]; do
             fi
             shift
             ;;
-        api|web|operator|postgres|rocm60|rocm61|rocm72-host)
+        api|web|operator|postgres|rocm72-host)
             TARGETS+=("$1")
             shift
             ;;
@@ -763,14 +763,14 @@ cmd_images() {
 # runtime bundled, works for NVIDIA + CPU). AMD ROCm needs separate wheels
 # from PyTorch's ROCm index OR AMD's official rocm/pytorch base image.
 #
-# Variants — only the ones with a confirmed tester ship by default. The
-# deferred variants (rocm60, rocm61) require explicit invocation:
-#   ./publish.sh images-rocm rocm60 --force
-# See ADR-101.
-#
-#   rocm60      api/Dockerfile + PYTORCH_VARIANT=rocm60        ROCm 6.0 wheels
-#   rocm61      api/Dockerfile + PYTORCH_VARIANT=rocm61        ROCm 6.1 wheels
+# Variants:
 #   rocm72-host api/Dockerfile.rocm-host                       ROCm 7.x via base image
+#
+# The wheel-based variants (rocm60, rocm61) were never published and were
+# removed in ADR-101's 2026-05-28 update — see the addendum there for the
+# rationale. Adding a future variant: tested-by-maintainer goes in
+# DEFAULT_VARIANTS, untested goes in DEFERRED_VARIANTS (gated behind
+# --force).
 #
 # Single-arch (linux/amd64). ROCm has no production arm64 build path.
 # Tagged as kg-api:<variant> and kg-api:<VERSION>-<variant>; does NOT touch
@@ -783,11 +783,10 @@ cmd_images_rocm() {
     # adding a variant after testing, append to this list. Untested variants
     # belong in DEFERRED_VARIANTS until someone runs them on real hardware.
     local DEFAULT_VARIANTS=(rocm72-host)
-    local DEFERRED_VARIANTS=(rocm60 rocm61)
+    local DEFERRED_VARIANTS=()
 
     local variants=("${DEFAULT_VARIANTS[@]}")
-    # TARGETS may carry explicit variant names from CLI (e.g.
-    # `publish.sh images-rocm rocm60 rocm61`).
+    # TARGETS may carry explicit variant names from CLI.
     if [ ${#TARGETS[@]} -gt 0 ]; then
         variants=("${TARGETS[@]}")
     fi
@@ -817,21 +816,13 @@ cmd_images_rocm() {
         local build_arg=""
 
         case "$variant" in
-            rocm60)
-                dockerfile="./api/Dockerfile"
-                build_arg="PYTORCH_VARIANT=rocm60"
-                ;;
-            rocm61)
-                dockerfile="./api/Dockerfile"
-                build_arg="PYTORCH_VARIANT=rocm61"
-                ;;
             rocm72-host)
                 dockerfile="./api/Dockerfile.rocm-host"
-                build_arg=""  # base image pins torch; PYTORCH_VARIANT is N/A
+                build_arg=""  # base image pins torch
                 ;;
             *)
                 echo -e "${RED}Unknown ROCm variant: $variant${NC}"
-                echo -e "  Known variants: rocm60, rocm61, rocm72-host"
+                echo -e "  Known variants: rocm72-host"
                 continue
                 ;;
         esac

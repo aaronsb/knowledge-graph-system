@@ -30,9 +30,11 @@
 # Stage 1: Build stage with development dependencies
 FROM python:3.13-slim AS builder
 
-# GPU variant: cpu (default), rocm60, rocm61
-# For AMD GPUs, set PYTORCH_VARIANT=rocm60 or rocm61
-ARG PYTORCH_VARIANT=cpu
+# AMD ROCm: use the dedicated Dockerfile.rocm-host with the
+# rocm/pytorch official base image (selected by GPU_MODE=amd-host).
+# The previous wheel-based variants (PYTORCH_VARIANT=rocm60/rocm61)
+# were never published — ADR-101 update 2026-05-28 removed that path
+# in favor of the single host-ROCm image.
 
 WORKDIR /build
 
@@ -51,17 +53,12 @@ COPY requirements.txt .
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-# Use BuildKit mount cache for faster rebuilds while keeping images small
-# For ROCm variants, install PyTorch from ROCm wheel index first
+# Use BuildKit mount cache for faster rebuilds while keeping images small.
+# CPU and NVIDIA hosts both use the default PyPI torch wheel (CUDA runtime
+# bundled, ignored when no NVIDIA driver is present). AMD hosts should use
+# Dockerfile.rocm-host instead.
 RUN --mount=type=cache,target=/root/.cache/pip \
     pip install --upgrade pip && \
-    if [ "$PYTORCH_VARIANT" = "rocm60" ]; then \
-        echo "Installing PyTorch with ROCm 6.0 support..." && \
-        pip install torch torchvision --index-url https://download.pytorch.org/whl/rocm6.0; \
-    elif [ "$PYTORCH_VARIANT" = "rocm61" ]; then \
-        echo "Installing PyTorch with ROCm 6.1 support..." && \
-        pip install torch torchvision --index-url https://download.pytorch.org/whl/rocm6.1; \
-    fi && \
     pip install -r requirements.txt
 
 # Stage 2: Production runtime

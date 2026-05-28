@@ -249,3 +249,42 @@ Reject: the platform already has working `amd-host` and `amd` paths from
 a local build; users with AMD hardware reasonably expect the published
 images to support them too. The marginal cost of publishing variants is
 worth the marginal user.
+
+## Update — 2026-05-28: rocm6.x wheel path removed
+
+The wheel-based ROCm variants (`rocm60` / `rocm61`) defined in this ADR
+were never published. Operationally they were a paper specification —
+the build args existed in `api/Dockerfile`, the `derive_kg_api_image_tag`
+helper routed `GPU_MODE=amd` to `:latest` as a stub, and ADR-043's CPU
+fallback caught the inevitable failure on every AMD install that picked
+that path. The init wizard advertised an option ("AMD GPU (ROCm 6.x —
+preview)") that resolved to a CUDA-bundled CPU image — exactly the
+silent-broken state this ADR was supposed to close.
+
+The removal:
+
+- **Deleted**: `docker/docker-compose.gpu-amd.yml`, the `PYTORCH_VARIANT`
+  arg + ROCm wheel install conditional in `api/Dockerfile`.
+- **Renamed in wizard**: option `[3] Linux with AMD GPU (ROCm 6.x — preview)`
+  removed; option `[4] Linux with AMD GPU (host ROCm)` becomes `[3]
+  Linux with AMD GPU (ROCm)`. CPU is now `[4]`.
+- **Backward compatibility**: existing `.operator.conf` files with
+  `GPU_MODE=amd` are treated as a deprecated alias for `amd-host`. The
+  image-tag helper emits a one-line stderr warning; the compose-cmd
+  builders route both modes to `docker-compose.gpu-amd-host.yml`;
+  `start-app.sh` prints the alias warning at platform startup.
+- **`derive_kg_api_image_tag` signature change**: the second positional
+  arg (`ROCM_VERSION`) is now ignored. Kept for back-compat with older
+  callers that still pass it.
+
+What stays: the `amd-host` path (rocm/pytorch official base image, ROCm
+7.x), the ADR-043 CPU fallback, and the multi-GPU `ROCR_VISIBLE_DEVICES`
+note in the wizard.
+
+Rationale for the change: ADR-101's original "Drop ROCm support and
+document 'CPU only on AMD'" alternative was rejected on the grounds that
+"the platform already has working `amd-host` and `amd` paths from a local
+build." That premise was wrong for `amd` — the wheel-based path was
+build-arg-only, never producing a working ROCm install. The `amd-host`
+path delivers what `amd` was supposed to. One supported AMD path beats
+two paths where one is a footgun.

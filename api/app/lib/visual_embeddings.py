@@ -99,9 +99,13 @@ class VisualEmbeddingGenerator:
         # tower's accuracy is unaffected at fp16 for embedding extraction.
         # CPU stays fp32 — fp16 on CPU is slower, not smaller in any way
         # that matters here.
+        # `dtype` (not `torch_dtype`): transformers 4.42+ renamed the kwarg;
+        # the old name still works but emits a deprecation warning every
+        # load. Floor is 4.41 per requirements.txt — kwarg `dtype` is
+        # supported there too.
         on_accelerator = self.device in ('cuda', 'mps')
         if on_accelerator:
-            load_kwargs["torch_dtype"] = torch.float16
+            load_kwargs["dtype"] = torch.float16
         else:
             # Preserve the pre-refactor CPU semantics: HF transformers'
             # low_cpu_mem_usage default has flipped between releases. Pin

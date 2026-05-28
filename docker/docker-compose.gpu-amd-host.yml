@@ -45,7 +45,11 @@ services:
       # expandable_segments lets the allocator grow a single segment instead
       # of reserving large contiguous chunks up front; on long-running API
       # processes this typically cuts reserved-but-unallocated VRAM materially.
-      - PYTORCH_HIP_ALLOC_CONF=expandable_segments:True
+      # `PYTORCH_ALLOC_CONF` is the unified env var added in PyTorch 2.5+
+      # (supersedes both PYTORCH_HIP_ALLOC_CONF and PYTORCH_CUDA_ALLOC_CONF).
+      # Our amd-host base ships torch 2.9.1; the old name still works but
+      # warns on every process start.
+      - PYTORCH_ALLOC_CONF=expandable_segments:True
     # Single uvicorn worker on the GPU variant: each worker is a separate
     # Python process and would load its own copy of the embedding model(s)
     # + ROCm runtime context into VRAM. One process is enough for the API's

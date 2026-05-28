@@ -1324,7 +1324,7 @@ step_gpu() {
     gpu_choice=$(prompt_select "GPU acceleration" \
         "auto (detect)" \
         "nvidia (NVIDIA GPU)" \
-        "amd (AMD GPU)" \
+        "amd-host (AMD GPU via host ROCm)" \
         "cpu (no GPU)")
 
     GPU_MODE="${gpu_choice%% *}"
@@ -1499,12 +1499,14 @@ validate_config() {
     fi
 
     # --- GPU validation ---
+    # `amd` retained as deprecated alias for `amd-host` (see ADR-101
+    # 2026-05-28 update); both route to the host-ROCm overlay downstream.
     case "$GPU_MODE" in
-        auto|nvidia|amd|cpu)
+        auto|nvidia|amd|amd-host|cpu)
             # Valid
             ;;
         *)
-            add_validation_error "Invalid GPU mode: $GPU_MODE (must be: auto, nvidia, amd, cpu)"
+            add_validation_error "Invalid GPU mode: $GPU_MODE (must be: auto, nvidia, amd-host, cpu; 'amd' accepted as deprecated alias)"
             ;;
     esac
 
@@ -1707,7 +1709,7 @@ download_files() {
         "docker-compose.ghcr.yml"
         "docker-compose.standalone.yml"
         "docker-compose.gpu-nvidia.yml"
-        "docker-compose.gpu-amd.yml"
+        "docker-compose.gpu-amd-host.yml"
     )
 
     for file in "${compose_files[@]}"; do
@@ -2301,8 +2303,9 @@ build_compose_command() {
         nvidia)
             cmd+=" -f $install_dir/docker-compose.gpu-nvidia.yml"
             ;;
-        amd)
-            cmd+=" -f $install_dir/docker-compose.gpu-amd.yml"
+        amd|amd-host)
+            # `amd` is a deprecated alias for `amd-host` (see image-tag.sh).
+            cmd+=" -f $install_dir/docker-compose.gpu-amd-host.yml"
             ;;
         auto)
             # Detect GPU
@@ -2310,7 +2313,7 @@ build_compose_command() {
                 cmd+=" -f $install_dir/docker-compose.gpu-nvidia.yml"
                 log_info "Detected NVIDIA GPU"
             elif [[ -d /dev/dri ]] && command -v rocm-smi &>/dev/null; then
-                cmd+=" -f $install_dir/docker-compose.gpu-amd.yml"
+                cmd+=" -f $install_dir/docker-compose.gpu-amd-host.yml"
                 log_info "Detected AMD GPU"
             else
                 log_info "No GPU detected, using CPU"
