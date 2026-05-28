@@ -440,30 +440,67 @@ cmd_upgrade() {
 }
 
 cmd_teardown() {
-    check_env
+    # Delegate to operator/lib/teardown.sh when present (dev / git
+    # checkout install). That script has the full implementation:
+    # overlay-aware compose down (honors GPU_MODE etc.), --remove-
+    # orphans, kg-owned vs. unrelated dangling-volume classification
+    # (PR #427), plus --keep-env / --remove-images / --include-operator
+    # flags that the inline fallback below doesn't support.
+    #
+    # Pre-fix history: this function inlined a simplified `run_compose
+    # down -v` that left SHA-named anonymous volumes (e.g. the PG18
+    # cluster at /var/lib/postgresql/18/docker) orphaned after teardown
+    # --full. The lib script's dangling sweep was the actual fix; we
+    # were just bypassing it from the user-facing entry point.
+    #
+    # Deliberately NOT calling check_env here — the lib script handles
+    # missing .env explicitly (one of the things PR #427 added), and
+    # check_env's hard-exit would defeat that path. The inline fallback
+    # below also tolerates missing .env via run_compose's lazy load.
+    local lib_teardown="$SCRIPT_DIR/operator/lib/teardown.sh"
+    if [ -x "$lib_teardown" ]; then
+        exec "$lib_teardown" "$@"
+    fi
+
+    # Inline fallback — used by curl-installer / standalone deployments
+    # where install.sh doesn't ship operator/lib/. MUST match the
+    # safety profile of the lib script (preserve volumes by default,
+    # prompt before destructive action). DO NOT make this `down -v`
+    # by default: a user typing `./operator.sh teardown` (no args)
+    # expects a stop, not a data wipe.
     load_config
     cd "$DOCKER_DIR"
 
-    # Teardown is simple enough for host
     local remove_volumes=false
     local auto_yes=false
-
     while [[ $# -gt 0 ]]; do
         case $1 in
-            --full) remove_volumes=true; shift ;;
+            --full|--remove-volumes) remove_volumes=true; shift ;;
             -y|--yes) auto_yes=true; shift ;;
+            -h|--help)
+                echo "Usage: $0 teardown [--full|--remove-volumes] [-y|--yes]"
+                echo ""
+                echo "Note: standalone fallback path. For --keep-env, --remove-images,"
+                echo "--include-operator, install the full git checkout."
+                return 0
+                ;;
             *) shift ;;
         esac
     done
 
     echo -e "${RED}${BOLD}TEARDOWN${NC}"
+    if [ "$remove_volumes" = true ]; then
+        echo -e "${RED}⚠️  All database data and uploaded files will be LOST!${NC}"
+    else
+        echo -e "${GREEN}✓ Volumes will be preserved${NC}"
+    fi
     if [ "$auto_yes" = false ]; then
         read -p "Type 'yes' to confirm: " -r
         [[ "$REPLY" != "yes" ]] && echo "Cancelled" && exit 0
     fi
 
-    local flags=""
-    [ "$remove_volumes" = true ] && flags="-v"
+    local flags="--remove-orphans"
+    [ "$remove_volumes" = true ] && flags="$flags -v"
 
     run_compose down $flags
     echo -e "${GREEN}✓ Teardown complete${NC}"
@@ -780,7 +817,13 @@ ${BOLD}Lifecycle:${NC}
   restart <service|all>  Restart a service (or all)
   upgrade            Pull, migrate, restart
   update             Pull images only
-  teardown [--full]  Remove containers (--full: +volumes)
+  teardown [opts]    Remove platform (delegates to operator/lib/teardown.sh)
+                     --full              Containers + volumes + images + operator
+                     --remove-volumes    Volumes only (incl. dangling-volume sweep)
+                     --remove-images     Force image rebuild on next start
+                     --include-operator  Also remove the operator container
+                     --keep-env          Keep .env (default deletes secrets)
+                     -y, --yes           Skip confirmation prompts
 
 ${BOLD}Management:${NC}
   status             Show container status
