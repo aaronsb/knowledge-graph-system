@@ -182,7 +182,9 @@ def get_database_info(
 
 
 @router.get("/health", response_model=DatabaseHealthResponse)
-def check_database_health():
+def check_database_health(
+    current_user: CurrentUser,
+):
     """
     Check database health and connectivity.
 
@@ -190,6 +192,13 @@ def check_database_health():
     - Basic connectivity (ping test)
     - AGE extension availability
     - Graph schema existence
+
+    **Authorization:** Authenticated-by-design (ADR-400, #444 review). This is a
+    deeper diagnostic than the public liveness probe GET /health: it discloses
+    AGE-extension and graph-schema existence. It is NOT anonymous (closing the
+    pre-exposure hole) but is intentionally not permission-gated — any
+    authenticated user / the CLI may check DB health. The detailed /database/stats
+    and /database/info remain database:read-gated.
 
     Returns:
         DatabaseHealthResponse with overall status and check results

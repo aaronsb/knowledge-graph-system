@@ -62,12 +62,25 @@ def test_health_endpoint_public(api_client, mock_oauth_validation):
 
 @pytest.mark.api
 @pytest.mark.security
-def test_database_health_endpoint_public(api_client, mock_oauth_validation):
-    """Test /database/health is accessible without authentication"""
+def test_database_health_requires_authentication(api_client, mock_oauth_validation):
+    """
+    /database/health is authenticated-by-design (ADR-400, #444 review): unlike
+    the public liveness probe /health, it discloses AGE-extension/schema-existence
+    and must reject anonymous callers. It is NOT permission-gated — any
+    authenticated user may check it.
+    """
     response = api_client.get("/database/health")
+    assert response.status_code in (401, 403)
 
-    # May return 200 (healthy) or 503 (unhealthy) depending on DB state
-    assert response.status_code in [200, 503]
+
+@pytest.mark.api
+@pytest.mark.security
+def test_database_health_allowed_for_authenticated(
+    api_client, mock_oauth_validation, ensure_test_users_in_db, auth_headers_readonly
+):
+    """Any authenticated user (even read_only) may check /database/health."""
+    response = api_client.get("/database/health", headers=auth_headers_readonly)
+    assert response.status_code not in (401, 403)
 
 
 @pytest.mark.api
