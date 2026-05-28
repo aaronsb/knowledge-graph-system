@@ -5521,7 +5521,7 @@
     
   
   
-    <span class="md-status md-status--Proposed"></span>
+    <span class="md-status md-status--Superseded"></span>
   
 
   
@@ -5591,7 +5591,7 @@
     
   
   
-    <span class="md-status md-status--Proposed"></span>
+    <span class="md-status md-status--Superseded"></span>
   
 
   
@@ -5705,7 +5705,7 @@
     
   
   
-    <span class="md-status md-status--Proposed"></span>
+    <span class="md-status md-status--Superseded"></span>
   
 
   
@@ -5730,7 +5730,7 @@
     
   
   
-    <span class="md-status md-status--Proposed"></span>
+    <span class="md-status md-status--Superseded"></span>
   
 
   
@@ -6253,7 +6253,7 @@
     
   
   
-    <span class="md-status md-status--Proposed"></span>
+    <span class="md-status md-status--Superseded"></span>
   
 
   
@@ -6279,6 +6279,41 @@
     
   
     ADR-082: User Scoping and Artifact Ownership Model
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--Accepted"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-400-operative-rbac-and-endpoint-security-baseline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-400: Operative RBAC and Endpoint Security Baseline
   
 
     
@@ -10625,6 +10660,13 @@
 
 
 <h1 id="adr-060-api-endpoint-security-architecture">ADR-060: API Endpoint Security Architecture</h1>
+<blockquote>
+<p><strong>Superseded by <a href="../ADR-400-operative-rbac-and-endpoint-security-baseline/">ADR-400</a>.</strong>
+Retained for historical context. The <code>require_role</code>-based, three-level model described
+here does not match the operative system: authorization is <code>require_permission</code> against
+seeded grants with <code>parent_role</code> inheritance, and <code>require_role</code> is a legacy/trap path
+(see ADR-400).</p>
+</blockquote>
 <h2 id="overview">Overview</h2>
 <p>Imagine building a house room by room, deciding whether each room needs a lock as you build it. You might remember to lock the front door and your bedroom, but forget about the window in the garage or the basement entrance. That's essentially what happened with our API - we built 112 endpoints, remembered to secure 6 of them, and left 52 completely unprotected. Anyone could delete ontologies, grant themselves admin privileges, or reset the entire database.</p>
 <p>This isn't a made-up scenario - this was the actual state discovered in a security audit. We had OAuth 2.0 authentication (ADR-054) and a sophisticated RBAC system (ADR-028), but they were optional components that developers had to remember to use. Most didn't. The admin database reset endpoint? No authentication. User management? Open to everyone. Critical RBAC operations? Completely unprotected.</p>

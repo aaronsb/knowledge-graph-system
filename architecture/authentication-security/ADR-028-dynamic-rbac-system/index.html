@@ -5521,7 +5521,7 @@
     
   
   
-    <span class="md-status md-status--Proposed"></span>
+    <span class="md-status md-status--Superseded"></span>
   
 
   
@@ -5600,7 +5600,7 @@
     
   
   
-    <span class="md-status md-status--Proposed"></span>
+    <span class="md-status md-status--Superseded"></span>
   
 
   
@@ -5625,7 +5625,7 @@
     
   
   
-    <span class="md-status md-status--Proposed"></span>
+    <span class="md-status md-status--Superseded"></span>
   
 
   
@@ -6054,7 +6054,7 @@
     
   
   
-    <span class="md-status md-status--Proposed"></span>
+    <span class="md-status md-status--Superseded"></span>
   
 
   
@@ -6124,7 +6124,7 @@
     
   
   
-    <span class="md-status md-status--Proposed"></span>
+    <span class="md-status md-status--Superseded"></span>
   
 
   
@@ -6150,6 +6150,41 @@
     
   
     ADR-082: User Scoping and Artifact Ownership Model
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--Accepted"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-400-operative-rbac-and-endpoint-security-baseline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-400: Operative RBAC and Endpoint Security Baseline
   
 
     
@@ -10367,6 +10402,12 @@
 
 
 <h1 id="adr-028-dynamic-role-based-access-control-rbac-system">ADR-028: Dynamic Role-Based Access Control (RBAC) System</h1>
+<blockquote>
+<p><strong>Superseded by <a href="../ADR-400-operative-rbac-and-endpoint-security-baseline/">ADR-400</a>.</strong>
+Retained for historical context. Note in particular that the SQL <code>kg_auth.has_permission()</code>
+described here is non-operative; the authoritative check is the Python <code>PermissionChecker</code>
+(see ADR-400).</p>
+</blockquote>
 <h2 id="overview">Overview</h2>
 <p>Think about permissions on your computer. You might have "admin" access, which sounds powerful - but what does that actually mean? Can you delete system files? Install software? Read other users' private files? The answer depends on what operations the system supports. As software evolves and adds new features, hardcoding permission rules becomes a nightmare.</p>
 <p>This is the challenge we face as the knowledge graph system grows. We started with four simple roles (read-only, contributor, curator, admin) and hardcoded permissions like "curators can approve vocabulary." That works fine initially, but what happens when we add AI-generated ontologies? Collaboration workspaces? Tool execution? Do we keep adding if-statements for every new feature? That approach doesn't scale and creates a tangled mess of permission logic.</p>

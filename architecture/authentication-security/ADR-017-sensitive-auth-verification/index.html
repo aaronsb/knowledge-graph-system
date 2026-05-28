@@ -5530,7 +5530,7 @@
     
   
   
-    <span class="md-status md-status--Proposed"></span>
+    <span class="md-status md-status--Superseded"></span>
   
 
   
@@ -5555,7 +5555,7 @@
     
   
   
-    <span class="md-status md-status--Proposed"></span>
+    <span class="md-status md-status--Superseded"></span>
   
 
   
@@ -6045,7 +6045,7 @@
     
   
   
-    <span class="md-status md-status--Proposed"></span>
+    <span class="md-status md-status--Superseded"></span>
   
 
   
@@ -6150,7 +6150,7 @@
     
   
   
-    <span class="md-status md-status--Proposed"></span>
+    <span class="md-status md-status--Superseded"></span>
   
 
   
@@ -6220,7 +6220,7 @@
     
   
   
-    <span class="md-status md-status--Proposed"></span>
+    <span class="md-status md-status--Superseded"></span>
   
 
   
@@ -6246,6 +6246,41 @@
     
   
     ADR-082: User Scoping and Artifact Ownership Model
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--Accepted"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-400-operative-rbac-and-endpoint-security-baseline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-400: Operative RBAC and Endpoint Security Baseline
   
 
     
@@ -10559,6 +10594,10 @@
 
 
 <h1 id="adr-017-client-initiated-token-revocation-for-elevated-operations">ADR-017: Client-Initiated Token Revocation for Elevated Operations</h1>
+<blockquote>
+<p><strong>Superseded by <a href="../ADR-400-operative-rbac-and-endpoint-security-baseline/">ADR-400</a>.</strong>
+Retained for historical context; the operative auth model is defined in ADR-400.</p>
+</blockquote>
 <p><strong>Technical Story:</strong> Implement a secure authentication flow for destructive administrative operations (database wipe, restore, configuration changes) that balances security with operational robustness.</p>
 <h2 id="overview">Overview</h2>
 <p>Imagine you're logged into your banking app, browsing your transaction history. You can do that all day without extra verification. But the moment you try to wire transfer $10,000 to someone? The app asks you to re-enter your password, or maybe use a fingerprint. That's "step-up authentication" - proving you're really you before doing something potentially dangerous.</p>

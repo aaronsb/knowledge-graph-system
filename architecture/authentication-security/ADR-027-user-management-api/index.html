@@ -5521,7 +5521,7 @@
     
   
   
-    <span class="md-status md-status--Proposed"></span>
+    <span class="md-status md-status--Superseded"></span>
   
 
   
@@ -6178,7 +6178,7 @@
     
   
   
-    <span class="md-status md-status--Proposed"></span>
+    <span class="md-status md-status--Superseded"></span>
   
 
   
@@ -6283,7 +6283,7 @@
     
   
   
-    <span class="md-status md-status--Proposed"></span>
+    <span class="md-status md-status--Superseded"></span>
   
 
   
@@ -6353,7 +6353,7 @@
     
   
   
-    <span class="md-status md-status--Proposed"></span>
+    <span class="md-status md-status--Superseded"></span>
   
 
   
@@ -6379,6 +6379,41 @@
     
   
     ADR-082: User Scoping and Artifact Ownership Model
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--Accepted"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-400-operative-rbac-and-endpoint-security-baseline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-400: Operative RBAC and Endpoint Security Baseline
   
 
     
@@ -10825,6 +10860,12 @@
 
 
 <h1 id="adr-027-user-management-api-with-lightweight-jwt-authentication">ADR-027: User Management API with Lightweight JWT Authentication</h1>
+<blockquote>
+<p><strong>Superseded.</strong> The operative user-management and RBAC model is defined in
+<a href="../ADR-400-operative-rbac-and-endpoint-security-baseline/">ADR-400</a>. Note that
+<code>POST /auth/register</code> accepting a client-supplied role (described here) is a security
+defect tracked in the <code>internet-hardening</code> issue cluster, not intended behavior.</p>
+</blockquote>
 <h2 id="overview">Overview</h2>
 <p>Every multi-user application eventually faces the same questions: How do users log in? How do we know they're allowed to perform certain actions? How do we let automated tools (like CI/CD pipelines) access the API without passwords? This ADR was our first attempt to answer those questions with a lightweight authentication system.</p>
 <p>We chose JWT (JSON Web Tokens) as our foundation - think of them like digital boarding passes that prove who you are without requiring the API to check a database on every request. Password-based login would give you a JWT that's valid for an hour. For automated tools, we'd issue long-lived API keys. Both approaches are stateless, meaning the API can verify credentials without database lookups, which keeps things fast and scalable.</p>
