@@ -400,16 +400,18 @@ export class AuthClient {
   /**
    * Create user (admin only)
    *
-   * Note: Uses /auth/register endpoint since there's no dedicated admin create endpoint.
-   * Admins can create users with any role.
+   * Uses the gated admin endpoint POST /users (require_permission('users','create')),
+   * which honors the requested role. This is the correct path for privileged user
+   * creation — unlike POST /auth/register (self-registration), which forces
+   * read_only and may be disabled on internet deployments (ADR-400, #431).
    *
-   * @param token JWT access token (must be admin role)
-   * @param request User creation details
+   * @param token OAuth access token (caller must hold users:create — admin/platform_admin)
+   * @param request User creation details (username, password, role)
    * @returns Created user details
-   * @throws 401 if token invalid/expired, 403 if not admin, 400 if validation fails
+   * @throws 401 if token invalid/expired, 403 if lacking users:create, 409 if username taken
    */
   async createUser(token: string, request: UserCreateRequest): Promise<UserResponse> {
-    const response = await this.client.post<UserResponse>('/auth/register', request, {
+    const response = await this.client.post<UserResponse>('/users', request, {
       headers: {
         Authorization: `Bearer ${token}`
       }

@@ -43,6 +43,29 @@ class UserCreate(UserBase):
     }
 
 
+class RegisterRequest(BaseModel):
+    """
+    Schema for open self-registration via POST /auth/register.
+
+    Deliberately has NO role field: self-registered accounts are always created
+    with the least-privilege 'read_only' role server-side (ADR-400,
+    internet-hardening #431). Elevated roles are assigned only through the
+    users:create-gated admin path (POST /users -> UserCreate), never by the
+    self-registering client.
+    """
+    username: str = Field(..., min_length=3, max_length=100, description="Unique username")
+    password: str = Field(..., min_length=8, description="Password (will be hashed)")
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [{
+                "username": "alice",
+                "password": "SecurePass123!"
+            }]
+        }
+    }
+
+
 class UserRead(UserBase):
     """Schema for reading user data (excludes password)"""
     id: int = Field(..., description="User ID")

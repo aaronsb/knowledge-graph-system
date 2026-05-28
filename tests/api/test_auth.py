@@ -25,13 +25,12 @@ from fastapi.testclient import TestClient
 @pytest.mark.api
 @pytest.mark.smoke
 def test_register_user_success(api_client):
-    """Test successful user registration"""
+    """Test successful user registration (self-registered users are read_only)"""
     # NOTE: This test requires a clean database. If the user already exists
     # from a previous run, it will get 409 Conflict. Marked for review.
     response = api_client.post("/auth/register", json={
         "username": "testuser",
-        "password": "SecurePass123!",
-        "role": "contributor"
+        "password": "SecurePass123!"
     })
 
     # Accept both 201 (new user) and 409 (user exists from previous run)
@@ -42,7 +41,9 @@ def test_register_user_success(api_client):
     assert response.status_code == 201
     data = response.json()
     assert data["username"] == "testuser"
-    assert data["role"] == "contributor"
+    # ADR-400 / #431: self-registration always yields least-privilege read_only,
+    # regardless of any client input.
+    assert data["role"] == "read_only"
     assert "id" in data
     assert "password" not in data  # Should not return password
 
@@ -84,15 +85,35 @@ def test_register_user_duplicate_username(api_client):
 
 
 @pytest.mark.api
-def test_register_user_invalid_role(api_client):
-    """Test registration fails with invalid role"""
-    response = api_client.post("/auth/register", json={
-        "username": "invalidrole",
-        "password": "SecurePass123!",
-        "role": "superadmin"  # Invalid role
-    })
+@pytest.mark.security
+def test_register_user_cannot_self_assign_privileged_role(api_client):
+    """
+    Regression for the ADR-400 / #431 privilege-escalation blocker.
 
-    assert response.status_code == 422  # Validation error
+    POST /auth/register must IGNORE any client-supplied role. A request asking
+    for 'platform_admin' (or 'admin') must never produce a privileged account —
+    the self-registered user is created as read_only. Elevated roles are only
+    assignable through the users:create-gated admin path.
+    """
+    for attempted_role in ("platform_admin", "admin", "curator", "superadmin"):
+        response = api_client.post("/auth/register", json={
+            "username": f"escalate_{attempted_role}",
+            "password": "SecurePass123!",
+            "role": attempted_role,  # extra field — must be ignored, not honored
+        })
+
+        if response.status_code == 409:
+            # User exists from a previous run; the invariant still holds for them.
+            continue
+
+        assert response.status_code == 201, (
+            f"register with role={attempted_role!r} returned {response.status_code}"
+        )
+        data = response.json()
+        assert data["role"] == "read_only", (
+            f"PRIVILEGE ESCALATION: register honored role={attempted_role!r} "
+            f"and created a {data['role']!r} account"
+        )
 
 
 # =============================================================================

@@ -47,6 +47,7 @@ from api.app.lib.auth import (
 )
 from api.app.models.auth import (
     UserCreate,
+    RegisterRequest,
     UserRead,
     UserUpdate,
     UserInDB,
@@ -78,9 +79,20 @@ admin_router = APIRouter(prefix="/users", tags=["admin"])
 # =============================================================================
 
 @router.post("/register", response_model=UserRead, status_code=status.HTTP_201_CREATED)
-async def register_user(user: UserCreate):
+async def register_user(user: RegisterRequest):
     """
-    Register a new user account.
+    Open self-registration for a new user account.
+
+    Self-registered accounts are ALWAYS created with the least-privilege
+    'read_only' role (ADR-400, internet-hardening #431); the client cannot
+    choose a role. Elevated roles are assigned only through the
+    users:create-gated admin path (POST /users), which — together with the
+    operator-seeded root admin and, for bespoke deployments, custom SQL
+    migrations — is the canonical way to provision accounts.
+
+    Open registration can be disabled per-deployment via the
+    'registration_enabled' platform-config flag (operators set it false for
+    internet-facing deployments). When disabled this endpoint returns 403.
 
     Password requirements:
     - Minimum 8 characters
@@ -88,7 +100,10 @@ async def register_user(user: UserCreate):
 
     Returns user details (password hash excluded).
     """
-    # Validate password strength
+    # Self-registration role is fixed to least privilege; never client-controlled.
+    SELF_REGISTRATION_ROLE = "read_only"
+
+    # Validate password strength (cheap, no DB) before any DB work.
     is_valid, error_message = validate_password_strength(user.password)
     if not is_valid:
         raise HTTPException(
@@ -96,13 +111,22 @@ async def register_user(user: UserCreate):
             detail=error_message
         )
 
-    # Hash password
-    password_hash = get_password_hash(user.password)
-
-    # Insert user into database
     conn = get_db_connection()
     try:
         with conn.cursor() as cur:
+            # Respect the open-registration flag (ADR-400, internet-hardening #431).
+            # Missing / non-'false' value is treated as enabled, so environments
+            # that have not applied migration 071 keep working.
+            cur.execute("SELECT kg_api.get_platform_config('registration_enabled')")
+            flag_row = cur.fetchone()
+            # Treat any common falsy spelling as disabled (operators may set
+            # false/0/no/off). Missing / anything else = enabled (default).
+            if flag_row and str(flag_row[0]).strip().lower() in ("false", "0", "no", "off"):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Open self-registration is disabled. Contact an administrator to create an account."
+                )
+
             # Check if username already exists
             cur.execute(
                 "SELECT id FROM kg_auth.users WHERE username = %s",
@@ -114,12 +138,17 @@ async def register_user(user: UserCreate):
                     detail=f"Username '{user.username}' already exists"
                 )
 
-            # Insert new user
+            # Hash password (after cheap rejections, to avoid needless bcrypt work
+            # on an unauthenticated endpoint).
+            password_hash = get_password_hash(user.password)
+
+            # Insert new user. The role is FORCED to read_only — it is never taken
+            # from client input (the request model has no role field).
             cur.execute("""
                 INSERT INTO kg_auth.users (username, password_hash, primary_role, created_at)
                 VALUES (%s, %s, %s, NOW())
                 RETURNING id, username, primary_role, created_at, last_login, disabled
-            """, (user.username, password_hash, user.role))
+            """, (user.username, password_hash, SELF_REGISTRATION_ROLE))
 
             row = cur.fetchone()
             conn.commit()

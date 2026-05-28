@@ -11,10 +11,11 @@ Admin endpoints for managing the provider model catalog:
 """
 
 import logging
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
 from typing import Optional
 
+from ..dependencies.auth import require_permission
 from ..lib.age_client import AGEClient
 from ..lib.model_catalog import (
     list_catalog,
@@ -26,6 +27,12 @@ from ..lib.model_catalog import (
 
 admin_router = APIRouter(prefix="/admin/models", tags=["admin", "models"])
 
+# Authorization (ADR-400, internet-hardening #432): this router was entirely
+# unauthenticated. Reads require extraction_config:read (admin + platform_admin);
+# every mutation requires extraction_config:write (platform_admin only) — both
+# pairs are seeded in migration 028. require_permission also forces an
+# authenticated, non-disabled user, closing the anonymous access hole.
+
 logger = logging.getLogger(__name__)
 
 
@@ -34,8 +41,9 @@ async def get_catalog(
     provider: Optional[str] = Query(None, description="Filter by provider"),
     category: Optional[str] = Query(None, description="Filter by category"),
     enabled_only: bool = Query(False, description="Only show enabled models"),
+    _: None = Depends(require_permission("extraction_config", "read")),
 ):
-    """List model catalog entries with optional filters."""
+    """List model catalog entries with optional filters. Requires extraction_config:read."""
     try:
         client = AGEClient()
         conn = client.pool.getconn()
@@ -54,11 +62,15 @@ class RefreshRequest(BaseModel):
 
 
 @admin_router.post("/catalog/refresh")
-async def refresh_catalog(request: RefreshRequest):
+async def refresh_catalog(
+    request: RefreshRequest,
+    _: None = Depends(require_permission("extraction_config", "write")),
+):
     """
     Fetch fresh model catalog from a provider's API and upsert into database.
 
     Supported providers: openai, anthropic, ollama, openrouter.
+    Requires extraction_config:write (platform_admin).
     """
     from ..lib.ai_providers import get_provider
 
@@ -98,8 +110,11 @@ async def refresh_catalog(request: RefreshRequest):
 
 
 @admin_router.put("/catalog/{catalog_id}/enable")
-async def enable_model(catalog_id: int):
-    """Enable a model in the catalog for use."""
+async def enable_model(
+    catalog_id: int,
+    _: None = Depends(require_permission("extraction_config", "write")),
+):
+    """Enable a model in the catalog for use. Requires extraction_config:write."""
     try:
         client = AGEClient()
         conn = client.pool.getconn()
@@ -116,8 +131,11 @@ async def enable_model(catalog_id: int):
 
 
 @admin_router.put("/catalog/{catalog_id}/disable")
-async def disable_model(catalog_id: int):
-    """Disable a model in the catalog."""
+async def disable_model(
+    catalog_id: int,
+    _: None = Depends(require_permission("extraction_config", "write")),
+):
+    """Disable a model in the catalog. Requires extraction_config:write."""
     try:
         client = AGEClient()
         conn = client.pool.getconn()
@@ -134,8 +152,11 @@ async def disable_model(catalog_id: int):
 
 
 @admin_router.put("/catalog/{catalog_id}/default")
-async def set_default_model(catalog_id: int):
-    """Set a model as the default for its provider+category."""
+async def set_default_model(
+    catalog_id: int,
+    _: None = Depends(require_permission("extraction_config", "write")),
+):
+    """Set a model as the default for its provider+category. Requires extraction_config:write."""
     try:
         client = AGEClient()
         conn = client.pool.getconn()
@@ -157,8 +178,12 @@ class PriceUpdateRequest(BaseModel):
 
 
 @admin_router.put("/catalog/{catalog_id}/price")
-async def update_price(catalog_id: int, request: PriceUpdateRequest):
-    """Manually override pricing for a catalog entry."""
+async def update_price(
+    catalog_id: int,
+    request: PriceUpdateRequest,
+    _: None = Depends(require_permission("extraction_config", "write")),
+):
+    """Manually override pricing for a catalog entry. Requires extraction_config:write."""
     try:
         client = AGEClient()
         conn = client.pool.getconn()

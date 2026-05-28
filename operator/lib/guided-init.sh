@@ -354,6 +354,16 @@ fi
 docker exec kg-operator python /workspace/operator/configure.py admin --password "$ADMIN_PASSWORD"
 echo ""
 
+# Production hardening (ADR-400, #431): the prod (random-password) path disables
+# open self-registration so the seeded admin / users:create-gated admin API is
+# the account-creation root. The simple/dev path leaves the migration default
+# (registration_enabled=true) untouched — making the dev/prod split explicit.
+if [ "$USE_RANDOM_PASSWORDS" = true ]; then
+    docker exec kg-operator python /workspace/operator/configure.py platform-config set registration_enabled false
+    echo -e "${GREEN}→${NC} Open self-registration disabled (production)"
+    echo ""
+fi
+
 # Step 4: Configure local embedding profile (GPU_MODE-aware)
 # This runs BEFORE AI provider selection because the embedding model is
 # system-level infrastructure that the API container loads at startup. It
