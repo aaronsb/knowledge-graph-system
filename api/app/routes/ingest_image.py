@@ -307,7 +307,8 @@ async def ingest_image(
 
 @router.get(
     "/image/health",
-    summary="Check visual embedding system health"
+    summary="Check visual embedding system health",
+    dependencies=[Depends(require_permission("admin", "status"))],
 )
 async def check_image_ingestion_health():
     """
