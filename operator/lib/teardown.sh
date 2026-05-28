@@ -71,7 +71,10 @@ while [[ $# -gt 0 ]]; do
             echo "  --remove-volumes    Also remove ALL volumes including caches"
             echo "  --include-operator  Also teardown the operator container (default: preserve)"
             echo "  --full              Complete teardown: images + volumes + operator"
-            echo "  -y, --yes           Skip confirmation prompt"
+            echo "  -y, --yes           Skip the initial confirmation AND the"
+            echo "                      dangling-volume prompt for kg-owned"
+            echo "                      volumes. Volumes that look unrelated"
+            echo "                      to this project are still skipped."
             echo "  -h, --help          Show this help"
             echo ""
             echo "Default Behavior:"
@@ -208,14 +211,48 @@ fi
 # left services unreferenced from compose's perspective — and their
 # anonymous volumes orphaned as SHA-named leftovers that the manual sweep
 # below can't grep for.
+COMPOSE_DOWN_RAN=false
 if [ -f "$SCRIPT_DIR/common.sh" ]; then
+    # Source under `set +e` so a malformed .operator.conf from an interrupted
+    # init doesn't abort the whole teardown before any cleanup runs. The
+    # fallback path below covers the case where sourcing or config load fails.
+    set +e
     # shellcheck source=operator/lib/common.sh
-    source "$SCRIPT_DIR/common.sh"
-    load_operator_config
-    COMPOSE_CMD=$(get_compose_cmd)
-    $COMPOSE_CMD down $DOWN_FLAGS 2>/dev/null || true
-else
-    # Fallback: best-effort base + dev overlay, no env file
+    source "$SCRIPT_DIR/common.sh" 2>/dev/null
+    src_rc=$?
+    if [ $src_rc -eq 0 ]; then
+        load_operator_config 2>/dev/null
+        cfg_rc=$?
+    else
+        cfg_rc=1
+    fi
+    set -e
+
+    if [ $src_rc -eq 0 ] && [ $cfg_rc -eq 0 ]; then
+        COMPOSE_CMD=$(get_compose_cmd 2>/dev/null)
+        # get_compose_cmd unconditionally appends `--env-file $ENV_FILE`. If
+        # the .env was already removed (e.g. a prior partial teardown without
+        # --keep-env), `docker compose` will refuse with non-zero exit and
+        # `|| true` would silently mask the failure — leaving services up and
+        # their anonymous volumes orphaned. Strip the missing env-file flag
+        # rather than fail the whole teardown.
+        if [ ! -f "$PROJECT_ROOT/.env" ]; then
+            COMPOSE_CMD=$(echo "$COMPOSE_CMD" | sed -E 's| --env-file [^ ]+||')
+            echo -e "  ${YELLOW}Note: .env missing, running compose without --env-file${NC}"
+        fi
+        if [ -n "$COMPOSE_CMD" ]; then
+            $COMPOSE_CMD down $DOWN_FLAGS 2>/dev/null || true
+            COMPOSE_DOWN_RAN=true
+        fi
+    else
+        echo -e "  ${YELLOW}Could not source common.sh / load .operator.conf — using fallback${NC}"
+    fi
+fi
+
+if [ "$COMPOSE_DOWN_RAN" = false ]; then
+    # Fallback: best-effort base + dev overlay, no env file. We deliberately
+    # don't `cd` (we're already in $DOCKER_DIR) and don't pass --env-file
+    # since we can't trust .operator.conf in this path.
     docker compose -f docker-compose.yml down $DOWN_FLAGS 2>/dev/null || true
     if [ -f "$DOCKER_DIR/docker-compose.dev.yml" ]; then
         docker compose -f docker-compose.yml -f docker-compose.dev.yml down $DOWN_FLAGS 2>/dev/null || true
@@ -277,44 +314,106 @@ if [ "$REMOVE_VOLUMES" = true ]; then
     # shared host may belong to other projects (this developer's box had
     # sable_sable-pgdata and whisper-service_whisper-temp sitting alongside
     # ours).
+    # Classify each dangling volume as kg-owned vs. unrelated, by:
+    #   (a) compose project label matching a known kg project name
+    #       ("docker" = dev layout, "kg" = standalone/prod, or basename
+    #       of $DOCKER_DIR if those somehow differ)
+    #   (b) anonymous (no compose label) AND mountpoint contains evidence
+    #       of one of our known schemas: PG18 cluster (18/docker/PG_VERSION),
+    #       postgres legacy path (data/PG_VERSION), garage metadata
+    #       (meta/data.db / db/), or HuggingFace hub cache (hub/models--).
+    # Volumes that fall into neither bucket are flagged as "unrelated" and
+    # are NEVER auto-deleted under -y/--yes; user must opt-in interactively.
     DANGLING_VOLS=$(docker volume ls -qf dangling=true 2>/dev/null || true)
     if [ -n "$DANGLING_VOLS" ]; then
         echo ""
         echo -e "${BLUE}→ Dangling volumes detected (not referenced by any container):${NC}"
-        # Show each with a peek at what's inside (Docker compose project label
-        # if present, otherwise first-level contents). This is how the user
-        # decides whether it's a kg leftover or an unrelated project.
+
+        KNOWN_PROJECTS_REGEX="^(docker|kg|$(basename "$DOCKER_DIR"))\$"
+        KG_OWNED=()
+        UNRELATED=()
+
         while IFS= read -r vol; do
+            [ -z "$vol" ] && continue
             label=$(docker volume inspect "$vol" --format '{{index .Labels "com.docker.compose.project"}}' 2>/dev/null)
             mount=$(docker volume inspect "$vol" --format '{{.Mountpoint}}' 2>/dev/null)
+
+            owned=false
+            reason=""
             if [ -n "$label" ] && [ "$label" != "<no value>" ]; then
-                echo -e "  • ${YELLOW}$vol${NC}  (compose project: $label)"
+                if echo "$label" | grep -qE "$KNOWN_PROJECTS_REGEX"; then
+                    owned=true
+                    reason="compose project: $label"
+                else
+                    reason="compose project: $label (unrelated)"
+                fi
             else
-                echo -e "  • ${YELLOW}$vol${NC}  (anonymous; mount: $mount)"
+                # Anonymous volume — check mountpoint for our known schemas.
+                # Use a single test command (don't shell-out per check) to
+                # keep this fast on hosts with many dangling volumes. The
+                # paths probed are intentionally cheap: directory existence,
+                # not content.
+                if [ -d "$mount/18/docker" ] || [ -d "$mount/data/base" ] \
+                   || [ -f "$mount/meta/data.db" ] || [ -d "$mount/db" ] \
+                   || [ -d "$mount/hub" ]; then
+                    owned=true
+                    reason="anonymous; kg-shaped contents at $mount"
+                else
+                    reason="anonymous; unknown contents at $mount"
+                fi
+            fi
+
+            if [ "$owned" = true ]; then
+                echo -e "  • ${YELLOW}$vol${NC}  ($reason)"
+                KG_OWNED+=("$vol")
+            else
+                echo -e "  • ${YELLOW}$vol${NC}  ${RED}[unrelated]${NC} ($reason)"
+                UNRELATED+=("$vol")
             fi
         done <<< "$DANGLING_VOLS"
         echo ""
 
-        if [ "$AUTO_YES" = true ]; then
-            echo -e "${YELLOW}→ --yes specified, removing all dangling volumes${NC}"
-            REMOVE_DANGLING=true
-        else
-            read -p "Remove all dangling volumes listed above? Type 'yes' to confirm (or anything else to skip): " -r
-            if [ "$REPLY" = "yes" ]; then
-                REMOVE_DANGLING=true
+        # kg-owned: removable under -y/--yes (preserves the "nuclear option"
+        # promise of --full for our own data).
+        if [ ${#KG_OWNED[@]} -gt 0 ]; then
+            if [ "$AUTO_YES" = true ]; then
+                echo -e "${YELLOW}→ --yes specified, removing ${#KG_OWNED[@]} kg-owned dangling volume(s)${NC}"
+                REMOVE_KG_OWNED=true
             else
-                REMOVE_DANGLING=false
-                echo -e "${YELLOW}→ Skipped dangling-volume cleanup${NC}"
-                echo -e "${YELLOW}  Remove manually with: docker volume rm <volume-id>${NC}"
+                read -p "Remove the ${#KG_OWNED[@]} kg-owned dangling volume(s) above? Type 'yes' to confirm: " -r
+                if [ "$REPLY" = "yes" ]; then
+                    REMOVE_KG_OWNED=true
+                else
+                    REMOVE_KG_OWNED=false
+                    echo -e "${YELLOW}→ Skipped — remove manually with: docker volume rm <volume-id>${NC}"
+                fi
+            fi
+            if [ "$REMOVE_KG_OWNED" = true ]; then
+                for vol in "${KG_OWNED[@]}"; do
+                    echo -e "  ${YELLOW}Removing:${NC} $vol"
+                    docker volume rm "$vol" 2>/dev/null || true
+                done
+                echo -e "${GREEN}✓ Removed kg-owned dangling volumes${NC}"
             fi
         fi
 
-        if [ "$REMOVE_DANGLING" = true ]; then
-            while IFS= read -r vol; do
-                echo -e "  ${YELLOW}Removing:${NC} $vol"
-                docker volume rm "$vol" 2>/dev/null || true
-            done <<< "$DANGLING_VOLS"
-            echo -e "${GREEN}✓ Removed dangling volumes${NC}"
+        # Unrelated: NEVER auto-deleted, even under -y. Belongs to another
+        # project on the host (or contents we can't recognize). Interactive
+        # confirmation only, to avoid surprise data loss on shared boxes.
+        if [ ${#UNRELATED[@]} -gt 0 ]; then
+            echo ""
+            echo -e "${YELLOW}${#UNRELATED[@]} dangling volume(s) appear unrelated to this project.${NC}"
+            echo -e "${YELLOW}Skipping by default (even with -y/--yes) to avoid touching other projects.${NC}"
+            if [ "$AUTO_YES" = false ]; then
+                read -p "Review and remove those too? Type 'yes' to confirm (otherwise skip): " -r
+                if [ "$REPLY" = "yes" ]; then
+                    for vol in "${UNRELATED[@]}"; do
+                        echo -e "  ${YELLOW}Removing:${NC} $vol"
+                        docker volume rm "$vol" 2>/dev/null || true
+                    done
+                    echo -e "${GREEN}✓ Removed unrelated dangling volumes${NC}"
+                fi
+            fi
         fi
     else
         echo -e "${GREEN}✓ No dangling volumes${NC}"
