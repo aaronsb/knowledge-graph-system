@@ -324,7 +324,7 @@ def _get_concepts_for_documents(client: AGEClient, document_ids: List[str]) -> D
 # Query Routes
 # ============================================================================
 
-@query_router.post("/search", response_model=DocumentSearchResponse)
+@query_router.post("/search", response_model=DocumentSearchResponse, dependencies=[Depends(require_permission("graph", "read"))])
 async def search_documents(
     request: DocumentSearchRequest,
     current_user: UserInDB = Depends(get_current_active_user)
@@ -484,7 +484,7 @@ async def search_documents(
         raise HTTPException(status_code=500, detail=f"Search failed: {str(e)}")
 
 
-@query_router.post("/by-concepts", response_model=DocumentSearchResponse)
+@query_router.post("/by-concepts", response_model=DocumentSearchResponse, dependencies=[Depends(require_permission("graph", "read"))])
 async def find_documents_by_concepts(
     request: DocumentsByConceptsRequest,
     current_user: UserInDB = Depends(get_current_active_user)
@@ -606,7 +606,7 @@ async def find_documents_by_concepts(
 # Document Routes
 # ============================================================================
 
-@router.get("/{document_id}/content", response_model=DocumentContentResponse)
+@router.get("/{document_id}/content", response_model=DocumentContentResponse, dependencies=[Depends(require_permission("sources", "read"))])
 async def get_document_content(
     document_id: str,
     current_user: UserInDB = Depends(get_current_active_user)
@@ -756,7 +756,7 @@ async def get_document_content(
         client.close()
 
 
-@router.get("", response_model=DocumentListResponse)
+@router.get("", response_model=DocumentListResponse, dependencies=[Depends(require_permission("graph", "read"))])
 async def list_documents(
     ontology: Optional[str] = Query(None, description="Filter by ontology name"),
     limit: int = Query(50, ge=1, le=200, description="Maximum results"),
@@ -871,7 +871,7 @@ async def list_documents(
         client.close()
 
 
-@router.get("/{document_id}/concepts", response_model=DocumentConceptsResponse)
+@router.get("/{document_id}/concepts", response_model=DocumentConceptsResponse, dependencies=[Depends(require_permission("graph", "read"))])
 async def get_document_concepts(
     document_id: str,
     current_user: UserInDB = Depends(get_current_active_user)
@@ -957,7 +957,7 @@ async def get_document_concepts(
         client.close()
 
 
-@router.post("/concepts/bulk", response_model=BulkDocumentConceptsResponse)
+@router.post("/concepts/bulk", response_model=BulkDocumentConceptsResponse, dependencies=[Depends(require_permission("graph", "read"))])
 async def get_document_concepts_bulk(
     request: BulkDocumentConceptsRequest,
     current_user: UserInDB = Depends(get_current_active_user)
