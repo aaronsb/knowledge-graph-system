@@ -191,30 +191,35 @@ if [ -n "$RUNNING_SERVICES" ]; then
 fi
 
 # Stop and remove containers (but NOT volumes by default)
-echo -e "${BLUE}→ Running docker-compose down...${NC}"
+echo -e "${BLUE}→ Running docker compose down...${NC}"
 
-# Determine docker-compose down flags
-DOWN_FLAGS=""
+# Determine docker compose down flags
+DOWN_FLAGS="--remove-orphans"  # always catch services no longer in the active overlay set
 if [ "$REMOVE_VOLUMES" = true ]; then
-    DOWN_FLAGS="-v"  # Remove volumes
+    DOWN_FLAGS="$DOWN_FLAGS -v"  # also remove (named + anonymous) volumes attached to containers
     echo -e "  ${YELLOW}Including volumes (--remove-volumes specified)${NC}"
 else
     echo -e "  ${GREEN}Preserving volumes (default)${NC}"
 fi
 
-# Try with dev override first (in case services were started with --dev)
-if [ -f "$PROJECT_ROOT/.env" ]; then
-    if [ -f "$DOCKER_DIR/docker-compose.dev.yml" ]; then
-        echo -e "  ${YELLOW}Checking dev mode containers...${NC}"
-        docker-compose -f docker-compose.yml -f docker-compose.dev.yml --env-file "$PROJECT_ROOT/.env" down $DOWN_FLAGS 2>/dev/null || true
-    fi
-    # Then run regular teardown (catches any remaining)
-    docker-compose --env-file "$PROJECT_ROOT/.env" down $DOWN_FLAGS 2>/dev/null || true
+# Run compose down using the SAME overlay stack the platform was started with
+# (sources common.sh -> get_compose_cmd, which honors GPU_MODE / DEV_MODE /
+# IMAGE_SOURCE from .operator.conf). Doing this with the wrong overlay set
+# left services unreferenced from compose's perspective — and their
+# anonymous volumes orphaned as SHA-named leftovers that the manual sweep
+# below can't grep for.
+if [ -f "$SCRIPT_DIR/common.sh" ]; then
+    # shellcheck source=operator/lib/common.sh
+    source "$SCRIPT_DIR/common.sh"
+    load_operator_config
+    COMPOSE_CMD=$(get_compose_cmd)
+    $COMPOSE_CMD down $DOWN_FLAGS 2>/dev/null || true
 else
+    # Fallback: best-effort base + dev overlay, no env file
+    docker compose -f docker-compose.yml down $DOWN_FLAGS 2>/dev/null || true
     if [ -f "$DOCKER_DIR/docker-compose.dev.yml" ]; then
-        docker-compose -f docker-compose.yml -f docker-compose.dev.yml down $DOWN_FLAGS 2>/dev/null || true
+        docker compose -f docker-compose.yml -f docker-compose.dev.yml down $DOWN_FLAGS 2>/dev/null || true
     fi
-    docker-compose down $DOWN_FLAGS 2>/dev/null || true
 fi
 echo -e "${GREEN}✓ Docker Compose services stopped and removed${NC}"
 
@@ -243,18 +248,76 @@ if [ "$INCLUDE_OPERATOR" = false ]; then
     fi
 fi
 
-# Only manually remove volumes if --remove-volumes specified and docker-compose down didn't catch them
+# Only manually remove volumes if --remove-volumes specified and docker compose down didn't catch them
 if [ "$REMOVE_VOLUMES" = true ]; then
     echo -e "${BLUE}→ Cleaning up volumes...${NC}"
-    VOLUMES=$(docker volume ls -q | grep -E "knowledge-graph|docker_postgres|docker_garage|docker_hf" || true)
+
+    # Pass 1: named volumes matching our project's naming patterns.
+    # The kg- prefix catches the standalone/prod layout (kg_postgres_data
+    # etc.); knowledge-graph and docker_ catch dev-mode and curl-installer
+    # layouts. This pass never touches SHA-named anonymous volumes — those
+    # are handled in pass 2.
+    VOLUMES=$(docker volume ls -q | grep -E "knowledge-graph|docker_postgres|docker_garage|docker_hf|^kg_" || true)
     if [ -n "$VOLUMES" ]; then
         while IFS= read -r volume; do
             echo -e "  ${YELLOW}Removing:${NC} $volume"
             docker volume rm "$volume" 2>/dev/null || true
         done <<< "$VOLUMES"
-        echo -e "${GREEN}✓ Removed volumes${NC}"
+        echo -e "${GREEN}✓ Removed named volumes${NC}"
     else
-        echo -e "${GREEN}✓ No volumes to remove${NC}"
+        echo -e "${GREEN}✓ No named volumes to remove${NC}"
+    fi
+
+    # Pass 2: detect dangling (no container references) volumes and prompt.
+    # Past compose versions / partial teardowns left anonymous volumes with
+    # SHA names containing the PG18 cluster (/_data/18/docker/) — those
+    # don't match pass 1's grep, and `compose down --remove-orphans` only
+    # reaches volumes attached to containers compose still knows about.
+    # Listing rather than auto-deleting because dangling volumes on a
+    # shared host may belong to other projects (this developer's box had
+    # sable_sable-pgdata and whisper-service_whisper-temp sitting alongside
+    # ours).
+    DANGLING_VOLS=$(docker volume ls -qf dangling=true 2>/dev/null || true)
+    if [ -n "$DANGLING_VOLS" ]; then
+        echo ""
+        echo -e "${BLUE}→ Dangling volumes detected (not referenced by any container):${NC}"
+        # Show each with a peek at what's inside (Docker compose project label
+        # if present, otherwise first-level contents). This is how the user
+        # decides whether it's a kg leftover or an unrelated project.
+        while IFS= read -r vol; do
+            label=$(docker volume inspect "$vol" --format '{{index .Labels "com.docker.compose.project"}}' 2>/dev/null)
+            mount=$(docker volume inspect "$vol" --format '{{.Mountpoint}}' 2>/dev/null)
+            if [ -n "$label" ] && [ "$label" != "<no value>" ]; then
+                echo -e "  • ${YELLOW}$vol${NC}  (compose project: $label)"
+            else
+                echo -e "  • ${YELLOW}$vol${NC}  (anonymous; mount: $mount)"
+            fi
+        done <<< "$DANGLING_VOLS"
+        echo ""
+
+        if [ "$AUTO_YES" = true ]; then
+            echo -e "${YELLOW}→ --yes specified, removing all dangling volumes${NC}"
+            REMOVE_DANGLING=true
+        else
+            read -p "Remove all dangling volumes listed above? Type 'yes' to confirm (or anything else to skip): " -r
+            if [ "$REPLY" = "yes" ]; then
+                REMOVE_DANGLING=true
+            else
+                REMOVE_DANGLING=false
+                echo -e "${YELLOW}→ Skipped dangling-volume cleanup${NC}"
+                echo -e "${YELLOW}  Remove manually with: docker volume rm <volume-id>${NC}"
+            fi
+        fi
+
+        if [ "$REMOVE_DANGLING" = true ]; then
+            while IFS= read -r vol; do
+                echo -e "  ${YELLOW}Removing:${NC} $vol"
+                docker volume rm "$vol" 2>/dev/null || true
+            done <<< "$DANGLING_VOLS"
+            echo -e "${GREEN}✓ Removed dangling volumes${NC}"
+        fi
+    else
+        echo -e "${GREEN}✓ No dangling volumes${NC}"
     fi
 else
     echo -e "${GREEN}✓ Preserved volumes (use --remove-volumes to delete)${NC}"
