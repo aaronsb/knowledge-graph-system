@@ -95,7 +95,6 @@ Only set if needed for AMD GPU detection:
 |----------|-------------|
 | `HSA_OVERRIDE_GFX_VERSION` | Override GPU architecture (e.g., `10.3.0`) |
 | `ROCR_VISIBLE_DEVICES` | Limit visible GPUs (e.g., `0`) |
-| `ROCM_VERSION` | ROCm wheel version (`rocm60`, `rocm61`) |
 
 ## Operator Configuration (.operator.conf)
 
@@ -138,8 +137,7 @@ The operator automatically selects compose files based on configuration:
 | SSL configured | + `docker-compose.ssl.yml` |
 | `DEV_MODE=true` | + `docker-compose.dev.yml` |
 | `GPU_MODE=nvidia` | + `docker-compose.gpu-nvidia.yml` |
-| `GPU_MODE=amd` | + `docker-compose.gpu-amd.yml` |
-| `GPU_MODE=amd-host` | + `docker-compose.gpu-amd-host.yml` |
+| `GPU_MODE=amd-host` (or legacy `amd`) | + `docker-compose.gpu-amd-host.yml` |
 | `GPU_MODE=mac` | + `docker-compose.override.mac.yml` |
 
 `docker-compose.prod.yml` is selected by `operator.sh init` when

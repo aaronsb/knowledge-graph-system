@@ -1324,7 +1324,7 @@ step_gpu() {
     gpu_choice=$(prompt_select "GPU acceleration" \
         "auto (detect)" \
         "nvidia (NVIDIA GPU)" \
-        "amd (AMD GPU)" \
+        "amd-host (AMD GPU via host ROCm)" \
         "cpu (no GPU)")
 
     GPU_MODE="${gpu_choice%% *}"
@@ -1499,12 +1499,14 @@ validate_config() {
     fi
 
     # --- GPU validation ---
+    # `amd` retained as deprecated alias for `amd-host` (see ADR-101
+    # 2026-05-28 update); both route to the host-ROCm overlay downstream.
     case "$GPU_MODE" in
-        auto|nvidia|amd|cpu)
+        auto|nvidia|amd|amd-host|cpu)
             # Valid
             ;;
         *)
-            add_validation_error "Invalid GPU mode: $GPU_MODE (must be: auto, nvidia, amd, cpu)"
+            add_validation_error "Invalid GPU mode: $GPU_MODE (must be: auto, nvidia, amd-host, cpu; 'amd' accepted as deprecated alias)"
             ;;
     esac
 
