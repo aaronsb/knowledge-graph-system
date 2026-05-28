@@ -7,11 +7,11 @@ Provides REST API access to:
 - Health checks
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 import logging
 import os
 
-from ..dependencies.auth import CurrentUser
+from ..dependencies.auth import CurrentUser, require_permission
 from ..models.database import (
     DatabaseStatsResponse,
     DatabaseInfoResponse,
@@ -35,7 +35,8 @@ def get_age_client() -> AGEClient:
 
 @router.get("/stats", response_model=DatabaseStatsResponse)
 def get_database_stats(
-    current_user: CurrentUser
+    current_user: CurrentUser,
+    _: None = Depends(require_permission("database", "read")),
 ):
     """
     Get database statistics including node and relationship counts (ADR-060).
@@ -125,7 +126,8 @@ def get_database_stats(
 
 @router.get("/info", response_model=DatabaseInfoResponse)
 def get_database_info(
-    current_user: CurrentUser
+    current_user: CurrentUser,
+    _: None = Depends(require_permission("database", "read")),
 ):
     """
     Get database connection information (ADR-060).
@@ -277,6 +279,12 @@ def get_graph_epoch(
     Designed for polling by clients that need to detect graph changes
     without the overhead of full counter queries.
 
+    **Authorization:** Authenticated-by-design (ADR-400). Unlike the other
+    /database/* endpoints, this is intentionally NOT gated on database:read:
+    it is a cache-invalidation poll used by all authenticated clients (any role,
+    incl. read_only) and exposes only a single opaque monotonic integer. Gating
+    it admin-only would break non-admin pollers. Keep it CurrentUser-only.
+
     Returns:
         {"epoch": <integer>}
     """
@@ -299,7 +307,8 @@ def get_graph_epoch(
 
 @router.get("/counters")
 def get_graph_counters(
-    current_user: CurrentUser
+    current_user: CurrentUser,
+    _: None = Depends(require_permission("database", "read")),
 ):
     """
     Get all graph metrics counters with categorization (ADR-079).
@@ -378,7 +387,8 @@ def get_graph_counters(
 
 @router.post("/counters/refresh")
 def refresh_graph_counters(
-    current_user: CurrentUser
+    current_user: CurrentUser,
+    _: None = Depends(require_permission("database", "execute")),
 ):
     """
     Refresh all graph metrics counters from current graph state (ADR-079).
@@ -438,7 +448,8 @@ def refresh_graph_counters(
 @router.post("/query", response_model=CypherQueryResponse)
 def execute_cypher_query(
     request: CypherQueryRequest,
-    current_user: CurrentUser
+    current_user: CurrentUser,
+    _: None = Depends(require_permission("database", "execute")),
 ):
     """
     Execute a custom openCypher/GQL query (ADR-048).
