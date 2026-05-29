@@ -47,8 +47,6 @@ import {
   ListBackupsResponse,
   RestoreRequest,
   RestoreResponse,
-  ResetRequest,
-  ResetResponse,
   ResourceCreate,
   ResourceRead,
   ResourceUpdate,
@@ -1305,14 +1303,6 @@ export class KnowledgeGraphClient {
       }
     });
 
-    return response.data;
-  }
-
-  /**
-   * Reset database (destructive - requires authentication)
-   */
-  async resetDatabase(request: ResetRequest): Promise<ResetResponse> {
-    const response = await this.client.post('/admin/reset', request);
     return response.data;
   }
 
