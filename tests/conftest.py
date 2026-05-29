@@ -355,6 +355,21 @@ def auth_headers_admin(create_test_oauth_token):
 
 
 @pytest.fixture
+def auth_headers_readonly(create_test_oauth_token):
+    """
+    Provide authorization headers for a read_only role (user_id=102).
+
+    read_only is the standalone least-privilege role — it holds only
+    concepts:read / vocabulary:read / jobs:read{owner=self} and deliberately
+    lacks graph:read, ingest:create, sources:read, etc. Use it to exercise the
+    authZ-denial path. Pair with ensure_test_users_in_db so PermissionChecker
+    resolves the role from the DB row.
+    """
+    token = create_test_oauth_token(user_id=102, role="read_only")
+    return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture
 def expired_oauth_token(create_test_oauth_token):
     """
     Provide an expired OAuth token for testing token expiration.
@@ -503,7 +518,8 @@ def ensure_test_users_in_db():
                 INSERT INTO kg_auth.users (id, username, password_hash, primary_role, created_at)
                 VALUES
                     (100, '_test_user', '$2b$12$mock', 'contributor', NOW()),
-                    (101, '_test_admin', '$2b$12$mock', 'admin', NOW())
+                    (101, '_test_admin', '$2b$12$mock', 'admin', NOW()),
+                    (102, '_test_readonly', '$2b$12$mock', 'read_only', NOW())
                 ON CONFLICT (id) DO NOTHING
             """)
             conn.commit()

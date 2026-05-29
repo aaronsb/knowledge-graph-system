@@ -1377,7 +1377,7 @@ async def get_epistemic_status(
 # Category Flows (ADR-077 - Vocabulary Explorers)
 # =============================================================================
 
-@router.get("/category-flows", response_model=CategoryFlowsResponse)
+@router.get("/category-flows", response_model=CategoryFlowsResponse, dependencies=[Depends(require_permission("vocabulary", "read"))])
 async def get_category_flows():
     """
     Get inter-category flow matrix for chord diagram visualization.

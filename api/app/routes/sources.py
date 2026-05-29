@@ -14,7 +14,7 @@ from typing import Optional
 
 from ..lib.age_client import AGEClient
 from ..lib.garage import get_image_storage, get_source_storage
-from ..dependencies.auth import get_current_active_user
+from ..dependencies.auth import get_current_active_user, require_permission
 from ..models.auth import UserInDB
 
 router = APIRouter(prefix="/sources", tags=["sources"])
@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 @router.get(
     "",
     summary="List source nodes",
+    dependencies=[Depends(require_permission("sources", "read"))],
 )
 async def list_sources(
     ontology: Optional[str] = None,
@@ -131,6 +132,7 @@ async def list_sources(
 @router.get(
     "/{source_id}/image",
     summary="Retrieve image from source (ADR-057)",
+    dependencies=[Depends(require_permission("sources", "read"))],
     responses={
         200: {
             "content": {
@@ -272,6 +274,7 @@ async def get_source_image(
 @router.get(
     "/{source_id}/document",
     summary="Retrieve original document from Garage (ADR-081)",
+    dependencies=[Depends(require_permission("sources", "read"))],
     responses={
         200: {
             "content": {
@@ -417,6 +420,7 @@ async def get_source_document(
 @router.get(
     "/{source_id}",
     summary="Get source metadata and content",
+    dependencies=[Depends(require_permission("sources", "read"))],
 )
 async def get_source(
     source_id: str,

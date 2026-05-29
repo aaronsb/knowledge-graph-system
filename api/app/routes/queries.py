@@ -8,7 +8,7 @@ Provides REST API access to:
 - Path finding between concepts
 """
 
-from fastapi import APIRouter, HTTPException, Query, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from pydantic import BaseModel
 from typing import Optional, List, Dict
 import asyncio
@@ -17,7 +17,7 @@ import numpy as np
 import os
 import psycopg2
 
-from ..dependencies.auth import CurrentUser
+from ..dependencies.auth import CurrentUser, require_permission
 from ..models.queries import (
     SearchRequest,
     SearchResponse,
@@ -525,7 +525,7 @@ def _build_source_search_result(
     )
 
 
-@router.post("/search", response_model=SearchResponse)
+@router.post("/search", response_model=SearchResponse, dependencies=[Depends(require_permission("graph", "read"))])
 async def search_concepts(
     current_user: CurrentUser,
     request: SearchRequest
@@ -855,7 +855,7 @@ async def search_concepts(
         raise HTTPException(status_code=500, detail=f"Search failed: {str(e)}")
 
 
-@router.post("/sources/search", response_model=SourceSearchResponse)
+@router.post("/sources/search", response_model=SourceSearchResponse, dependencies=[Depends(require_permission("graph", "read"))])
 async def search_sources(
     current_user: CurrentUser,
     request: SourceSearchRequest
@@ -1005,7 +1005,7 @@ async def search_sources(
         raise HTTPException(status_code=500, detail=f"Source search failed: {str(e)}")
 
 
-@router.get("/concept/{concept_id}", response_model=ConceptDetailsResponse)
+@router.get("/concept/{concept_id}", response_model=ConceptDetailsResponse, dependencies=[Depends(require_permission("graph", "read"))])
 async def get_concept_details(
     concept_id: str,
     current_user: CurrentUser,
@@ -1291,7 +1291,7 @@ async def get_concept_details(
         client.close()
 
 
-@router.post("/related", response_model=RelatedConceptsResponse)
+@router.post("/related", response_model=RelatedConceptsResponse, dependencies=[Depends(require_permission("graph", "read"))])
 async def find_related_concepts(
     current_user: CurrentUser,
     request: RelatedConceptsRequest
@@ -1404,7 +1404,7 @@ async def find_related_concepts(
         client.close()
 
 
-@router.post("/connect", response_model=FindConnectionResponse)
+@router.post("/connect", response_model=FindConnectionResponse, dependencies=[Depends(require_permission("graph", "read"))])
 async def find_connection(
     current_user: CurrentUser,
     request: FindConnectionRequest
@@ -1483,7 +1483,7 @@ async def find_connection(
         client.close()
 
 
-@router.post("/connect-by-search", response_model=FindConnectionBySearchResponse)
+@router.post("/connect-by-search", response_model=FindConnectionBySearchResponse, dependencies=[Depends(require_permission("graph", "read"))])
 async def find_connection_by_search(
     current_user: CurrentUser,
     request: FindConnectionBySearchRequest
@@ -1646,7 +1646,7 @@ async def find_connection_by_search(
         client.close()
 
 
-@router.post("/cypher", response_model=CypherQueryResponse)
+@router.post("/cypher", response_model=CypherQueryResponse, dependencies=[Depends(require_permission("graph", "execute"))])
 async def execute_cypher_query(
     current_user: CurrentUser,
     request: CypherQueryRequest
@@ -1783,7 +1783,7 @@ async def execute_cypher_query(
         client.close()
 
 
-@router.post("/polarity-axis", response_model=PolarityAxisResponse)
+@router.post("/polarity-axis", response_model=PolarityAxisResponse, dependencies=[Depends(require_permission("graph", "read"))])
 async def analyze_polarity_axis_endpoint(
     current_user: CurrentUser,
     request: PolarityAxisRequest
@@ -1903,7 +1903,7 @@ class PolarityJobResponse(BaseModel):
     message: str
 
 
-@router.post("/polarity-axis/jobs", response_model=PolarityJobResponse)
+@router.post("/polarity-axis/jobs", response_model=PolarityJobResponse, dependencies=[Depends(require_permission("graph", "read"))])
 async def submit_polarity_job(
     current_user: CurrentUser,
     request: PolarityJobRequest,

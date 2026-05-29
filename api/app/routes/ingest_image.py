@@ -22,7 +22,7 @@ from ..services.content_hasher import ContentHasher
 from ..services.job_analysis import JobAnalyzer
 from ..models.ingest import IngestionOptions
 from ..models.job import JobSubmitResponse, DuplicateJobResponse
-from ..dependencies.auth import CurrentUser
+from ..dependencies.auth import CurrentUser, require_permission
 
 # ADR-057: Only health check remains in endpoint (heavy work moved to worker)
 from ..lib.visual_embeddings import check_visual_embedding_health
@@ -144,6 +144,7 @@ async def run_image_job_analysis(job_id: str, auto_approve: bool = False):
 async def ingest_image(
     background_tasks: BackgroundTasks,
     current_user: CurrentUser,
+    _: None = Depends(require_permission("ingest", "create")),
     file: UploadFile = File(..., description="Image file to ingest (PNG, JPEG, GIF, WebP, BMP)"),
     ontology: str = Form(..., description="Ontology/collection name"),
     filename: Optional[str] = Form(None, description="Override filename"),
@@ -306,7 +307,8 @@ async def ingest_image(
 
 @router.get(
     "/image/health",
-    summary="Check visual embedding system health"
+    summary="Check visual embedding system health",
+    dependencies=[Depends(require_permission("admin", "status"))],
 )
 async def check_image_ingestion_health():
     """
