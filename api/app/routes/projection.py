@@ -6,7 +6,7 @@ Endpoints for embedding landscape visualization:
 - POST /projection/{ontology}/regenerate - Trigger projection recomputation
 """
 
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Request, Response
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, Response
 from pydantic import BaseModel, Field
 from typing import Optional, Literal, List, Dict, Any
 import logging
@@ -18,7 +18,7 @@ from api.app.workers.projection_worker import (
     invalidate_cached_projection
 )
 from api.app.services.job_queue import get_job_queue
-from api.app.dependencies.auth import CurrentUser
+from api.app.dependencies.auth import CurrentUser, require_permission
 
 logger = logging.getLogger(__name__)
 
@@ -172,7 +172,7 @@ class AlgorithmInfoResponse(BaseModel):
     default: str = "tsne"
 
 
-@router.get("/algorithms", response_model=AlgorithmInfoResponse)
+@router.get("/algorithms", response_model=AlgorithmInfoResponse, dependencies=[Depends(require_permission("graph", "read"))])
 async def get_available_algorithms(
     current_user: CurrentUser
 ):
@@ -187,7 +187,7 @@ async def get_available_algorithms(
     )
 
 
-@router.get("/{ontology}", response_model=ProjectionDatasetResponse)
+@router.get("/{ontology}", response_model=ProjectionDatasetResponse, dependencies=[Depends(require_permission("graph", "read"))])
 async def get_projection(
     ontology: str,
     request: Request,
@@ -225,7 +225,7 @@ async def get_projection(
     return ProjectionDatasetResponse(**dataset)
 
 
-@router.post("/{ontology}/regenerate", response_model=RegenerateResponse)
+@router.post("/{ontology}/regenerate", response_model=RegenerateResponse, dependencies=[Depends(require_permission("graph", "create"))])
 async def regenerate_projection(
     ontology: str,
     background_tasks: BackgroundTasks,
@@ -394,7 +394,7 @@ async def regenerate_projection(
     )
 
 
-@router.delete("/{ontology}")
+@router.delete("/{ontology}", dependencies=[Depends(require_permission("graph", "delete"))])
 async def invalidate_projection(
     ontology: str,
     current_user: CurrentUser
