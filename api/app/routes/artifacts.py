@@ -20,7 +20,7 @@ from ..models.artifact import (
     REPRESENTATIONS
 )
 from ..models.auth import UserInDB
-from ..dependencies.auth import get_current_user, get_db_connection
+from ..dependencies.auth import get_current_active_user, get_db_connection
 from ..lib.garage import get_artifact_storage
 
 logger = logging.getLogger(__name__)
@@ -47,7 +47,7 @@ async def list_artifacts(
     owner_id: Optional[int] = Query(None, description="Filter by owner (admin only)"),
     limit: int = Query(50, ge=1, le=500, description="Maximum artifacts to return"),
     offset: int = Query(0, ge=0, description="Number to skip for pagination"),
-    current_user: UserInDB = Depends(get_current_user)
+    current_user: UserInDB = Depends(get_current_active_user)
 ):
     """
     List artifacts with optional filtering.
@@ -156,7 +156,7 @@ async def list_artifacts(
 )
 async def get_artifact(
     artifact_id: int,
-    current_user: UserInDB = Depends(get_current_user)
+    current_user: UserInDB = Depends(get_current_active_user)
 ):
     """
     Get artifact metadata by ID.
@@ -229,7 +229,7 @@ async def get_artifact(
 )
 async def get_artifact_payload(
     artifact_id: int,
-    current_user: UserInDB = Depends(get_current_user)
+    current_user: UserInDB = Depends(get_current_active_user)
 ):
     """
     Get artifact with full payload.
@@ -328,7 +328,7 @@ async def get_artifact_payload(
 )
 async def create_artifact(
     artifact: ArtifactCreate,
-    current_user: UserInDB = Depends(get_current_user)
+    current_user: UserInDB = Depends(get_current_active_user)
 ):
     """
     Create a new artifact.
@@ -447,7 +447,7 @@ async def create_artifact(
 )
 async def delete_artifact(
     artifact_id: int,
-    current_user: UserInDB = Depends(get_current_user)
+    current_user: UserInDB = Depends(get_current_active_user)
 ):
     """
     Delete an artifact.
@@ -479,8 +479,11 @@ async def delete_artifact(
             user_id = current_user.id
             user_role = current_user.role
 
-            if owner_id is not None and owner_id != user_id:
-                if user_role not in ("admin", "platform_admin"):
+            # Non-admins may act only on their OWN artifacts; system-owned
+            # artifacts (owner_id IS NULL) are admin-only (#439 — the previous
+            # `owner_id is not None` guard skipped the check for NULL owners).
+            if user_role not in ("admin", "platform_admin"):
+                if owner_id is None or owner_id != user_id:
                     raise HTTPException(
                         status_code=status.HTTP_403_FORBIDDEN,
                         detail="Access denied to delete this artifact"
@@ -524,7 +527,7 @@ class RegenerateResponse(BaseModel):
 async def regenerate_artifact(
     artifact_id: int,
     background_tasks: BackgroundTasks,
-    current_user: UserInDB = Depends(get_current_user)
+    current_user: UserInDB = Depends(get_current_active_user)
 ):
     """
     Regenerate an artifact using its stored parameters.
@@ -563,8 +566,10 @@ async def regenerate_artifact(
             artifact_type, parameters, owner_id, ontology, query_def_id = row
 
             # Check ownership
-            if owner_id is not None and owner_id != current_user.id:
-                if current_user.role not in ("admin", "platform_admin"):
+            # Non-admins may act only on their OWN artifacts; system-owned
+            # artifacts (owner_id IS NULL) are admin-only (#439).
+            if current_user.role not in ("admin", "platform_admin"):
+                if owner_id is None or owner_id != current_user.id:
                     raise HTTPException(
                         status_code=status.HTTP_403_FORBIDDEN,
                         detail="Access denied to regenerate this artifact"

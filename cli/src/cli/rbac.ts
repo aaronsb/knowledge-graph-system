@@ -87,7 +87,7 @@ export function createRbacCommand(client: KnowledgeGraphClient): Command {
       } catch (error: any) {
         console.error(colors.status.error('\n✗ Failed to list resources'));
         if (error.response?.status === 401 || error.response?.status === 403) {
-          console.error(colors.status.warning('  Requires admin or curator role\n'));
+          console.error(colors.status.warning('  Requires admin or platform_admin role\n'));
         } else {
           console.error(`  ${error.response?.data?.detail || error.message}\n`);
         }
@@ -123,7 +123,7 @@ export function createRbacCommand(client: KnowledgeGraphClient): Command {
       } catch (error: any) {
         console.error(colors.status.error('\n✗ Failed to create resource type'));
         if (error.response?.status === 401 || error.response?.status === 403) {
-          console.error(colors.status.warning('  Requires admin role\n'));
+          console.error(colors.status.warning('  Requires platform_admin role\n'));
         } else if (error.response?.status === 409) {
           console.error(`  Resource type '${options.type}' already exists\n`);
         } else {
@@ -201,7 +201,7 @@ export function createRbacCommand(client: KnowledgeGraphClient): Command {
       } catch (error: any) {
         console.error(colors.status.error('\n✗ Failed to list roles'));
         if (error.response?.status === 401 || error.response?.status === 403) {
-          console.error(colors.status.warning('  Requires admin or curator role\n'));
+          console.error(colors.status.warning('  Requires admin or platform_admin role\n'));
         } else {
           console.error(`  ${error.response?.data?.detail || error.message}\n`);
         }
@@ -246,7 +246,7 @@ export function createRbacCommand(client: KnowledgeGraphClient): Command {
         if (error.response?.status === 404) {
           console.error(`  Role '${roleName}' not found\n`);
         } else if (error.response?.status === 401 || error.response?.status === 403) {
-          console.error(colors.status.warning('  Requires admin or curator role\n'));
+          console.error(colors.status.warning('  Requires admin or platform_admin role\n'));
         } else {
           console.error(`  ${error.response?.data?.detail || error.message}\n`);
         }
@@ -283,7 +283,7 @@ export function createRbacCommand(client: KnowledgeGraphClient): Command {
       } catch (error: any) {
         console.error(colors.status.error('\n✗ Failed to create role'));
         if (error.response?.status === 401 || error.response?.status === 403) {
-          console.error(colors.status.warning('  Requires admin role\n'));
+          console.error(colors.status.warning('  Requires platform_admin role\n'));
         } else if (error.response?.status === 409) {
           console.error(`  Role '${options.name}' already exists\n`);
         } else {
@@ -408,7 +408,7 @@ export function createRbacCommand(client: KnowledgeGraphClient): Command {
       } catch (error: any) {
         console.error(colors.status.error('\n✗ Failed to list permissions'));
         if (error.response?.status === 401 || error.response?.status === 403) {
-          console.error(colors.status.warning('  Requires admin or curator role\n'));
+          console.error(colors.status.warning('  Requires admin or platform_admin role\n'));
         } else {
           console.error(`  ${error.response?.data?.detail || error.message}\n`);
         }
@@ -446,7 +446,7 @@ export function createRbacCommand(client: KnowledgeGraphClient): Command {
       } catch (error: any) {
         console.error(colors.status.error('\n✗ Failed to grant permission'));
         if (error.response?.status === 401 || error.response?.status === 403) {
-          console.error(colors.status.warning('  Requires admin role\n'));
+          console.error(colors.status.warning('  Requires platform_admin role\n'));
         } else if (error.response?.status === 404) {
           console.error('  Role or resource type not found\n');
         } else if (error.response?.status === 409) {
@@ -471,7 +471,7 @@ export function createRbacCommand(client: KnowledgeGraphClient): Command {
         if (error.response?.status === 404) {
           console.error(`  Permission ${permissionId} not found\n`);
         } else if (error.response?.status === 401 || error.response?.status === 403) {
-          console.error(colors.status.warning('  Requires admin role\n'));
+          console.error(colors.status.warning('  Requires platform_admin role\n'));
         } else {
           console.error(`  ${error.response?.data?.detail || error.message}\n`);
         }
@@ -545,7 +545,7 @@ export function createRbacCommand(client: KnowledgeGraphClient): Command {
       } catch (error: any) {
         console.error(colors.status.error('\n✗ Failed to list user roles'));
         if (error.response?.status === 401 || error.response?.status === 403) {
-          console.error(colors.status.warning('  Requires admin or curator role\n'));
+          console.error(colors.status.warning('  Requires admin or platform_admin role\n'));
         } else {
           console.error(`  ${error.response?.data?.detail || error.message}\n`);
         }
@@ -578,7 +578,7 @@ export function createRbacCommand(client: KnowledgeGraphClient): Command {
       } catch (error: any) {
         console.error(colors.status.error('\n✗ Failed to assign role'));
         if (error.response?.status === 401 || error.response?.status === 403) {
-          console.error(colors.status.warning('  Requires admin role\n'));
+          console.error(colors.status.warning('  Requires platform_admin role\n'));
         } else if (error.response?.status === 404) {
           console.error('  User or role not found\n');
         } else if (error.response?.status === 409) {
@@ -603,7 +603,7 @@ export function createRbacCommand(client: KnowledgeGraphClient): Command {
         if (error.response?.status === 404) {
           console.error(`  Assignment ${assignmentId} not found\n`);
         } else if (error.response?.status === 401 || error.response?.status === 403) {
-          console.error(colors.status.warning('  Requires admin role\n'));
+          console.error(colors.status.warning('  Requires platform_admin role\n'));
         } else {
           console.error(`  ${error.response?.data?.detail || error.message}\n`);
         }

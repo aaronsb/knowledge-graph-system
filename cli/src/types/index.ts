@@ -730,28 +730,6 @@ export interface RestoreResponse {
   external_deps_handled?: string;
 }
 
-export interface ResetRequest {
-  username: string;
-  password: string;
-  confirm: boolean;
-  clear_logs?: boolean;
-  clear_checkpoints?: boolean;
-}
-
-export interface SchemaValidation {
-  constraints_count: number;
-  vector_index_exists: boolean;
-  node_count: number;
-  schema_test_passed: boolean;
-}
-
-export interface ResetResponse {
-  success: boolean;
-  schema_validation: SchemaValidation;
-  message: string;
-  warnings: string[];
-}
-
 // ========== RBAC Types (ADR-028) ==========
 
 // Resource Types

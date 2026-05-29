@@ -122,7 +122,7 @@ def get_vocabulary_manager() -> VocabularyManager:
 # Status and Information Endpoints
 # =============================================================================
 
-@router.get("/status", response_model=VocabularyStatusResponse)
+@router.get("/status", response_model=VocabularyStatusResponse, dependencies=[Depends(require_permission("vocabulary", "read"))])
 async def get_vocabulary_status(
     current_user: CurrentUser
 ):
@@ -196,7 +196,7 @@ async def get_vocabulary_status(
         raise HTTPException(status_code=500, detail=f"Failed to get vocabulary status: {str(e)}")
 
 
-@router.get("/types", response_model=EdgeTypeListResponse)
+@router.get("/types", response_model=EdgeTypeListResponse, dependencies=[Depends(require_permission("vocabulary", "read"))])
 async def list_edge_types(
     current_user: CurrentUser,
     include_inactive: bool = Query(False, description="Include inactive types"),
@@ -682,7 +682,7 @@ async def generate_embeddings(
         raise HTTPException(status_code=500, detail=f"Failed to generate embeddings: {str(e)}")
 
 
-@router.get("/category-scores/{relationship_type}", response_model=CategoryScoresResponse)
+@router.get("/category-scores/{relationship_type}", response_model=CategoryScoresResponse, dependencies=[Depends(require_permission("vocabulary", "read"))])
 async def get_category_scores(
     relationship_type: str,
     current_user: CurrentUser
@@ -852,7 +852,7 @@ async def refresh_categories(
 
 # ========== Similarity Analysis Endpoints (ADR-053) ==========
 
-@router.get("/similar/{relationship_type}", response_model=VocabularySimilarityResponse)
+@router.get("/similar/{relationship_type}", response_model=VocabularySimilarityResponse, dependencies=[Depends(require_permission("vocabulary", "read"))])
 async def get_similar_types(
     relationship_type: str,
     current_user: CurrentUser,
@@ -990,7 +990,7 @@ async def get_similar_types(
         raise HTTPException(status_code=500, detail=f"Failed to compute similarities: {str(e)}")
 
 
-@router.get("/analyze/{relationship_type}", response_model=VocabularyAnalysisDetailResponse)
+@router.get("/analyze/{relationship_type}", response_model=VocabularyAnalysisDetailResponse, dependencies=[Depends(require_permission("vocabulary", "read"))])
 async def analyze_vocabulary_type(
     relationship_type: str,
     current_user: CurrentUser
@@ -1194,6 +1194,7 @@ async def measure_epistemic_status(
 @router.get(
     "/epistemic-status",
     response_model=EpistemicStatusListResponse,
+    dependencies=[Depends(require_permission("vocabulary", "read"))],
     summary="List vocabulary types with epistemic status",
     description="Get all vocabulary types with their epistemic status classifications and statistics."
 )
@@ -1293,6 +1294,7 @@ async def list_epistemic_status(
 @router.get(
     "/epistemic-status/{relationship_type}",
     response_model=EpistemicStatusInfo,
+    dependencies=[Depends(require_permission("vocabulary", "read"))],
     summary="Get epistemic status for specific vocabulary type",
     description="Get detailed epistemic status information for a specific relationship type."
 )

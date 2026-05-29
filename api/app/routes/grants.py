@@ -21,7 +21,7 @@ from ..models.grants import (
     GrantCreateResponse
 )
 from ..models.auth import UserInDB
-from ..dependencies.auth import get_current_user, get_db_connection
+from ..dependencies.auth import get_current_active_user, get_db_connection
 
 logger = logging.getLogger(__name__)
 
@@ -123,7 +123,7 @@ def _get_resource_owner(cur, resource_type: str, resource_id: str) -> Optional[i
 async def list_groups(
     include_system: bool = Query(True, description="Include system groups (public, admins)"),
     include_member_count: bool = Query(True, description="Include member count for each group"),
-    current_user: UserInDB = Depends(get_current_user)
+    current_user: UserInDB = Depends(get_current_active_user)
 ):
     """
     List all groups.
@@ -185,7 +185,7 @@ async def list_groups(
 )
 async def create_group(
     group: GroupCreate,
-    current_user: UserInDB = Depends(get_current_user)
+    current_user: UserInDB = Depends(get_current_active_user)
 ):
     """
     Create a new group.
@@ -262,7 +262,7 @@ async def create_group(
 async def list_group_members(
     group_id: int,
     include_implicit: bool = Query(False, description="For public group, include all users (implicit members)"),
-    current_user: UserInDB = Depends(get_current_user)
+    current_user: UserInDB = Depends(get_current_active_user)
 ):
     """
     List members of a group.
@@ -359,7 +359,7 @@ async def list_group_members(
 async def add_group_member(
     group_id: int,
     request: AddMemberRequest,
-    current_user: UserInDB = Depends(get_current_user)
+    current_user: UserInDB = Depends(get_current_active_user)
 ):
     """
     Add a user to a group.
@@ -453,7 +453,7 @@ async def add_group_member(
 async def remove_group_member(
     group_id: int,
     user_id: int,
-    current_user: UserInDB = Depends(get_current_user)
+    current_user: UserInDB = Depends(get_current_active_user)
 ):
     """
     Remove a user from a group.
@@ -505,7 +505,7 @@ async def remove_group_member(
 )
 async def create_grant(
     grant: GrantCreate,
-    current_user: UserInDB = Depends(get_current_user)
+    current_user: UserInDB = Depends(get_current_active_user)
 ):
     """
     Create a resource access grant.
@@ -616,7 +616,7 @@ async def create_grant(
 async def list_resource_grants(
     resource_type: str,
     resource_id: str,
-    current_user: UserInDB = Depends(get_current_user)
+    current_user: UserInDB = Depends(get_current_active_user)
 ):
     """
     List all grants for a specific resource.
@@ -672,7 +672,7 @@ async def list_resource_grants(
 )
 async def revoke_grant(
     grant_id: int,
-    current_user: UserInDB = Depends(get_current_user)
+    current_user: UserInDB = Depends(get_current_active_user)
 ):
     """
     Revoke (delete) a resource access grant.

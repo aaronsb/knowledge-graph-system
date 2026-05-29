@@ -259,7 +259,7 @@ async def create_ontology(
         client.close()
 
 
-@router.get("/", response_model=OntologyListResponse)
+@router.get("/", response_model=OntologyListResponse, dependencies=[Depends(require_permission("ontologies", "read"))])
 async def list_ontologies(
     current_user: CurrentUser
 ):
@@ -383,7 +383,7 @@ def _row_to_proposal(row) -> AnnealingProposal:
         "suggested_description": row.get("suggested_description"),
     })
 
-@router.get("/proposals", response_model=AnnealingProposalListResponse)
+@router.get("/proposals", response_model=AnnealingProposalListResponse, dependencies=[Depends(require_permission("ontologies", "read"))])
 async def list_proposals(
     status: str = QueryParam(None, description="Filter by status: pending, approved, rejected, expired"),
     proposal_type: str = QueryParam(None, description="Filter by type: CLEAVE, DISSOLVE, MERGE, RENAME, NO_ACTION, ESCALATE, ADJUST_CONTROL (legacy: promotion, demotion)"),
@@ -449,7 +449,7 @@ async def list_proposals(
         client.close()
 
 
-@router.get("/proposals/{proposal_id}", response_model=AnnealingProposal)
+@router.get("/proposals/{proposal_id}", response_model=AnnealingProposal, dependencies=[Depends(require_permission("ontologies", "read"))])
 async def get_proposal(
     proposal_id: int,
     current_user: CurrentUser = None,
@@ -930,7 +930,7 @@ async def get_ecological_pressure_history(
 # Ontology CRUD (paths with {ontology_name} parameter)
 # =========================================================================
 
-@router.get("/{ontology_name}", response_model=OntologyInfoResponse)
+@router.get("/{ontology_name}", response_model=OntologyInfoResponse, dependencies=[Depends(require_permission("ontologies", "read"))])
 async def get_ontology_info(
     ontology_name: str,
     current_user: CurrentUser
@@ -1047,7 +1047,7 @@ async def get_ontology_info(
         client.close()
 
 
-@router.get("/{ontology_name}/node", response_model=OntologyNodeResponse)
+@router.get("/{ontology_name}/node", response_model=OntologyNodeResponse, dependencies=[Depends(require_permission("ontologies", "read"))])
 async def get_ontology_node(
     ontology_name: str,
     current_user: CurrentUser
@@ -1102,7 +1102,7 @@ async def get_ontology_node(
         client.close()
 
 
-@router.get("/{ontology_name}/files", response_model=OntologyFilesResponse)
+@router.get("/{ontology_name}/files", response_model=OntologyFilesResponse, dependencies=[Depends(require_permission("ontologies", "read"))])
 async def get_ontology_files(
     ontology_name: str,
     current_user: CurrentUser
@@ -1560,7 +1560,7 @@ async def rename_ontology(
 # =========================================================================
 
 
-@router.get("/{ontology_name}/scores", response_model=OntologyScores)
+@router.get("/{ontology_name}/scores", response_model=OntologyScores, dependencies=[Depends(require_permission("ontologies", "read"))])
 async def get_ontology_scores(
     ontology_name: str,
     current_user: CurrentUser,
@@ -1683,7 +1683,7 @@ async def compute_all_ontology_scores(
         client.close()
 
 
-@router.get("/{ontology_name}/candidates", response_model=ConceptDegreeResponse)
+@router.get("/{ontology_name}/candidates", response_model=ConceptDegreeResponse, dependencies=[Depends(require_permission("ontologies", "read"))])
 async def get_ontology_candidates(
     ontology_name: str,
     current_user: CurrentUser,
@@ -1726,7 +1726,7 @@ async def get_ontology_candidates(
         client.close()
 
 
-@router.get("/{ontology_name}/affinity", response_model=AffinityResponse)
+@router.get("/{ontology_name}/affinity", response_model=AffinityResponse, dependencies=[Depends(require_permission("ontologies", "read"))])
 async def get_ontology_affinity(
     ontology_name: str,
     current_user: CurrentUser,
@@ -1776,7 +1776,7 @@ async def get_ontology_affinity(
 # =========================================================================
 
 
-@router.get("/{ontology_name}/edges", response_model=OntologyEdgesResponse)
+@router.get("/{ontology_name}/edges", response_model=OntologyEdgesResponse, dependencies=[Depends(require_permission("ontologies", "read"))])
 async def get_ontology_edges(
     ontology_name: str,
     current_user: CurrentUser,

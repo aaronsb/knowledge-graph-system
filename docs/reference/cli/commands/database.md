@@ -4,7 +4,7 @@
 
 ## database (db)
 
-Database operations and information. Provides read-only queries for PostgreSQL + Apache AGE database health, statistics, and connection details.
+Database operations and information for PostgreSQL + Apache AGE: health, statistics, and connection details. Note: `db query` executes arbitrary openCypher (including mutations) and requires database:execute (platform_admin); the stats/info/health reads require database:read (admin).
 
 **Usage:**
 ```bash
