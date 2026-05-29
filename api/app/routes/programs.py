@@ -36,7 +36,7 @@ from ..services.program_validator import (
 )
 from ..services.program_executor import execute_program
 from ..models.auth import UserInDB
-from ..dependencies.auth import get_current_user, get_db_connection
+from ..dependencies.auth import get_current_active_user, get_db_connection
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +51,7 @@ router = APIRouter(prefix="/programs", tags=["programs"])
 )
 async def create_program(
     submission: ProgramSubmission,
-    current_user: UserInDB = Depends(get_current_user),
+    current_user: UserInDB = Depends(get_current_active_user),
 ):
     """
     Validate a GraphProgram and store it as a notarized program.
@@ -132,7 +132,7 @@ async def create_program(
 )
 async def validate_program_endpoint(
     submission: ProgramSubmission,
-    current_user: UserInDB = Depends(get_current_user),
+    current_user: UserInDB = Depends(get_current_active_user),
 ):
     """
     Validate a GraphProgram without storing it.
@@ -149,7 +149,7 @@ async def validate_program_endpoint(
 )
 async def execute_program_endpoint(
     request: ProgramExecuteRequest,
-    current_user: UserInDB = Depends(get_current_user),
+    current_user: UserInDB = Depends(get_current_active_user),
 ):
     """
     Execute a GraphProgram or chain of programs server-side.
@@ -327,7 +327,7 @@ def _load_program_definition(program_id: int, current_user: UserInDB) -> dict:
 async def list_programs(
     search: Optional[str] = Query(None, description="Search name/description"),
     limit: int = Query(20, ge=1, le=100),
-    current_user: UserInDB = Depends(get_current_user),
+    current_user: UserInDB = Depends(get_current_active_user),
 ):
     """
     List stored programs with optional text search.
@@ -393,7 +393,7 @@ async def list_programs(
 )
 async def get_program(
     program_id: int,
-    current_user: UserInDB = Depends(get_current_user),
+    current_user: UserInDB = Depends(get_current_active_user),
 ):
     """
     Retrieve a notarized program by ID.
