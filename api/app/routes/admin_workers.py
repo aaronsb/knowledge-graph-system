@@ -16,6 +16,7 @@ from psycopg2.extras import RealDictCursor
 
 from ..dependencies.auth import CurrentUser
 from ..services.job_queue import get_job_queue
+from ..lib.job_permissions import JobPermissionContext
 
 
 class LaneUpdate(BaseModel):
@@ -197,35 +198,53 @@ def cancel_running_job(job_id: str, current_user: CurrentUser):
     Unlike DELETE /jobs/{id} which only works on queued jobs, this targets
     jobs already executing.
 
-    **Authorization:** Requires `workers:manage` permission
+    **Authorization:** Requires `workers:manage`, and additionally the job-level
+    `jobs:cancel` authorization via JobPermissionChecker — the same check the
+    user-facing DELETE /jobs/{id} uses. This aligns the two cancel paths on one
+    authorization function (defense-in-depth): a future role granted
+    workers:manage without jobs:cancel would be correctly restricted here too.
+
+    Note (ADR-400, #441): admin and platform_admin both hold a *global*
+    jobs:cancel grant (migration 041), so they can cancel any running job
+    including system-lane housekeeping (restore, vocab_consolidate, cleanup).
+    That is intended per the seeded model — it is NOT a privilege gap. The
+    audit's earlier claim that this path let admin exceed DELETE /jobs was
+    incorrect: DELETE /jobs allows admin to cancel system jobs too, via the same
+    global grant.
     """
     _check_permission(current_user, "manage")
 
     queue = get_job_queue()
+
+    # Existence + per-job authorization (mirrors DELETE /jobs/{id}): a system-lane
+    # job requires the jobs:cancel {is_system} scope reserved for platform_admin.
+    job = queue.get_job(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail=f"Job not found: {job_id}")
+
+    with JobPermissionContext() as checker:
+        if not checker.can_access_job(current_user.id, "cancel", job):
+            raise HTTPException(
+                status_code=403,
+                detail="Not authorized to cancel this job (system-lane jobs require platform_admin)"
+            )
+
+    if job["status"] != "running":
+        raise HTTPException(
+            status_code=409,
+            detail=f"Job not running (status: {job['status']}). Use DELETE /jobs/{job_id} for queued jobs."
+        )
+
     conn = queue._get_connection()
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            cur.execute(
-                "SELECT job_id, status, job_type FROM kg_api.jobs WHERE job_id = %s",
-                (job_id,)
-            )
-            job = cur.fetchone()
-            if not job:
-                raise HTTPException(status_code=404, detail=f"Job not found: {job_id}")
-
-            if job["status"] != "running":
-                raise HTTPException(
-                    status_code=409,
-                    detail=f"Job not running (status: {job['status']}). Use DELETE /jobs/{job_id} for queued jobs."
-                )
-
             cur.execute(
                 "UPDATE kg_api.jobs SET cancelled = TRUE WHERE job_id = %s",
                 (job_id,)
             )
             conn.commit()
 
-        logger.info(f"Cancelled running job {job_id} ({job['job_type']}) by {current_user.username}")
+        logger.info(f"Cancelled running job {job_id} ({job.get('job_type')}) by {current_user.username}")
         return {"job_id": job_id, "cancelled": True, "message": "Cancellation flag set. Worker will stop at next yield point."}
     finally:
         queue._return_connection(conn)
