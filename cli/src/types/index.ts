@@ -1461,3 +1461,37 @@ export interface ProgramListItem {
   statement_count: number;
   created_at: string;
 }
+
+// ===========================================================================
+// ADR-501: Catalog browse facade
+// ===========================================================================
+
+/** A single node in the catalog hierarchy (ontology | document | concept). */
+export interface CatalogNode {
+  kind: 'ontology' | 'document' | 'concept';
+  id: string;
+  name: string;
+  parent_id?: string | null;
+  child_count?: number | null;
+  content_type?: string | null;
+  properties: Record<string, any>;
+}
+
+/** Paginated listing of a node's children (GET /catalog/children). */
+export interface CatalogChildrenResponse {
+  parent_id?: string | null;
+  parent_kind?: 'ontology' | 'document' | 'concept' | null;
+  child_kind: 'ontology' | 'document' | 'concept';
+  nodes: CatalogNode[];
+  total: number;
+  limit: number;
+  offset: number;
+  query?: string | null;
+  stale: boolean;
+}
+
+/** Single node with full metadata (GET /catalog/node/{id}). */
+export interface CatalogNodeResponse extends CatalogNode {
+  graph_epoch?: number | null;
+  indexed_at?: string | null;
+}
