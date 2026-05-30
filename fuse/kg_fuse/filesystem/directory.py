@@ -364,16 +364,28 @@ class DirectoryMixin:
 
         # Get documents from the catalog facade (ADR-501). The catalog addresses
         # the document level by the parent ontology's id, so resolve the name
-        # via the map populated by _list_ontologies; fall back to listing
-        # ontologies if this is a cold path (e.g. direct lookup before readdir).
+        # via the map populated by _list_ontologies.
         try:
             ontology_id = self._ontology_id_by_name.get(ontology)
             if ontology_id is None:
-                await self._list_ontologies()
+                # Cold path or stale map (e.g. annealing renamed this ontology,
+                # ADR-200). Refresh the name->id map directly from the catalog
+                # root — bypassing _list_ontologies' dir-cache early return,
+                # which would otherwise leave a stale/empty map in place.
+                try:
+                    root = await self._api.catalog_children(limit=500)
+                    self._ontology_id_by_name = catalog_adapter.ontology_name_to_id(root)
+                except Exception as e:
+                    log.warning(f"Failed to refresh ontology name->id map: {e}")
                 ontology_id = self._ontology_id_by_name.get(ontology)
 
             if ontology_id is None:
-                log.warning(f"No ontology id for '{ontology}' — cannot list documents")
+                # Genuinely absent — the ontology was renamed or removed
+                # out-of-band. Surface it rather than silently showing empty.
+                log.warning(
+                    f"Ontology '{ontology}' not found in catalog (renamed or "
+                    f"removed?) — listing no documents"
+                )
                 documents = []
             else:
                 data = await self._api.catalog_children(

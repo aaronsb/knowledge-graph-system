@@ -39,7 +39,7 @@ _CATALOG_REBUILD_LOCK = 0x0CA7A106  # "CATALOG" mnemonic
 _SORT_SQL = {
     "name": "n.name ASC",
     "child_count": "n.child_count DESC, n.name ASC",
-    "created": "(n.properties->>'creation_epoch') NULLS LAST, n.indexed_at ASC, n.name ASC",
+    "created": "(n.properties->>'creation_epoch')::bigint DESC NULLS LAST, n.indexed_at ASC, n.name ASC",
 }
 
 
@@ -85,47 +85,47 @@ class CatalogFacade:
         """
         conn = self.client.pool.getconn()
         try:
+            # Fast path: read epochs without the lock.
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 current = self._current_epoch(cur)
                 indexed = self._index_epoch(cur)
-                conn.commit()
+            conn.rollback()  # close the read txn cleanly
 
             if indexed is not None and indexed >= current:
                 return (False, current)
 
-            # Stale (or empty). Try to claim the rebuild lock; if another worker
-            # holds it, serve what we have.
-            with conn.cursor() as cur:
+            # Stale (or empty). Claim a TRANSACTION-scoped advisory lock: it is
+            # released automatically when this transaction commits or rolls back
+            # (including on exception), so there is no orphaned-lock risk and no
+            # dependency on a manual unlock or on reusing one connection. The
+            # rebuild's TRUNCATE+INSERT runs in this same transaction, so the
+            # lock is held for exactly the rebuild's duration and the single
+            # commit both publishes the new index and frees the lock.
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(
-                    "SELECT pg_try_advisory_lock(%s)", (_CATALOG_REBUILD_LOCK,)
+                    "SELECT pg_try_advisory_xact_lock(%s) AS got", (_CATALOG_REBUILD_LOCK,)
                 )
-                got_lock = cur.fetchone()[0]
-                conn.commit()
+                got_lock = cur.fetchone()["got"]
+                if not got_lock:
+                    # Another worker is rebuilding — serve what we have.
+                    conn.rollback()
+                    return (indexed is not None, current)
 
-            if not got_lock:
-                return (indexed is not None, current)
-
-            try:
                 # Re-check under lock: another worker may have just rebuilt.
-                with conn.cursor(cursor_factory=RealDictCursor) as cur:
-                    indexed = self._index_epoch(cur)
-                    current = self._current_epoch(cur)
-                    conn.commit()
+                indexed = self._index_epoch(cur)
+                current = self._current_epoch(cur)
                 if indexed is not None and indexed >= current:
+                    conn.rollback()  # releases the lock
                     return (False, current)
 
-                self._rebuild(conn, current)
-                return (False, current)
-            finally:
-                with conn.cursor() as cur:
-                    cur.execute(
-                        "SELECT pg_advisory_unlock(%s)", (_CATALOG_REBUILD_LOCK,)
-                    )
-                    conn.commit()
+            # Same transaction (lock still held): rebuild, then commit once.
+            self._rebuild(conn, current)
+            conn.commit()  # publishes the index and releases the xact lock
+            return (False, current)
         except Exception as e:
             logger.error(f"catalog ensure_fresh failed: {e}", exc_info=True)
-            conn.rollback()
-            # Best-effort: report not-stale with epoch 0 so callers still serve
+            conn.rollback()  # releases the lock if held
+            # Best-effort: report stale with epoch 0 so callers still serve
             # whatever index exists rather than erroring the browse request.
             return (True, 0)
         finally:
@@ -160,7 +160,10 @@ class CatalogFacade:
                 f"absent from document drill-down"
             )
 
-        # Atomic swap: truncate + bulk insert in one transaction.
+        # Atomic swap: truncate + bulk insert. The caller (ensure_fresh) owns
+        # the transaction and the advisory lock — it commits once after this
+        # returns, which both publishes the index and releases the lock. We do
+        # NOT commit here, so a failure leaves the prior index intact on rollback.
         from psycopg2.extras import execute_values, Json
 
         with conn.cursor() as cur:
@@ -192,7 +195,6 @@ class CatalogFacade:
                     edges,
                     page_size=1000,
                 )
-            conn.commit()
 
         logger.info(
             f"catalog rebuild complete: {len(nodes)} nodes, {len(edges)} edges "
@@ -297,20 +299,29 @@ class CatalogFacade:
         return rows
 
     def _fetch_documents(self) -> List[Dict[str, Any]]:
-        """DocumentMeta nodes with parent ontology ids and concept counts."""
+        """DocumentMeta nodes with parent ontology ids and concept counts.
+
+        The parent-ontology and concept legs are aggregated in SEPARATE WITH
+        stages rather than two OPTIONAL MATCHes off the same Source. Combining
+        them produces a sources×ontologies×concepts Cartesian fan-out that
+        DISTINCT/count collapse to the right values but only after materializing
+        the product — pathological on large documents. Sequential aggregation
+        keeps each leg's cost additive.
+        """
         rows = self.client._execute_cypher("""
             MATCH (d:DocumentMeta)
-            OPTIONAL MATCH (d)-[:HAS_SOURCE]->(s:Source)
-            OPTIONAL MATCH (s)-[:SCOPED_BY]->(o:Ontology)
-            OPTIONAL MATCH (s)<-[:APPEARS]-(c:Concept)
+            OPTIONAL MATCH (d)-[:HAS_SOURCE]->(s:Source)-[:SCOPED_BY]->(o:Ontology)
+            WITH d, collect(DISTINCT o.ontology_id) AS parent_ontology_ids
+            OPTIONAL MATCH (d)-[:HAS_SOURCE]->(s2:Source)<-[:APPEARS]-(c:Concept)
+            WITH d, parent_ontology_ids, count(DISTINCT c) AS concept_count
             RETURN d.document_id AS id,
                    d.filename AS name,
                    d.content_type AS content_type,
                    d.source_count AS source_count,
                    d.source_type AS source_type,
                    d.ontology AS ontology,
-                   collect(DISTINCT o.ontology_id) AS parent_ontology_ids,
-                   count(DISTINCT c) AS concept_count
+                   parent_ontology_ids,
+                   concept_count
         """) or []
         return rows
 
