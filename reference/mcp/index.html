@@ -4106,6 +4106,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#catalog" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        catalog
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -4293,6 +4304,34 @@
     
   
     artifact
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="tools/catalog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    catalog
   
 
     
@@ -7895,6 +7934,41 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/query-search/ADR-501-catalog-browse-facade/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-501: Catalog Browse Facade
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--Proposed"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -10103,6 +10177,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#catalog" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        catalog
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -10132,7 +10217,7 @@
 <blockquote>
 <p><strong>Auto-Generated Documentation</strong></p>
 <p>Generated from MCP server tool schemas.
-Last updated: 2026-05-26</p>
+Last updated: 2026-05-30</p>
 </blockquote>
 <hr />
 <h2 id="overview">Overview</h2>
@@ -10153,9 +10238,8 @@ These tools enable semantic search, concept exploration, and graph traversal dir
 <li><a href="#document"><code>document</code></a> - Work with documents: list all, show content, or get concepts (ADR-084).</li>
 <li><a href="#graph"><code>graph</code></a> - Create, edit, delete, and list concepts and edges in the knowledge graph (ADR-089).</li>
 <li><a href="#program"><code>program</code></a> - Compose and execute GraphProgram queries against the knowledge graph (ADR-500).</li>
-<li><a href="tools/session_context/"><code>session_context</code></a> - Read recent concepts at the start of a session (cross-session memory for MCP agents).</li>
-<li><a href="tools/session_context/"><code>session_ingest</code></a> - Save a session summary before disconnect/compaction so the next session sees the context.</li>
 <li><a href="#epoch"><code>epoch</code></a> - Read the graph epoch event log (ADR-203).</li>
+<li><a href="#catalog"><code>catalog</code></a> - Browse what is actually stored in the knowledge graph (ADR-501).</li>
 </ul>
 <hr />
 <h3 id="search">search</h3>
@@ -10588,6 +10672,34 @@ Each statement applies an operator to merge/filter results into a mutable Workin
 <li><code>cursor</code> (<code>number</code>) - Pagination cursor — returns events with event_id &lt; cursor. Omit for the first page.</li>
 <li><code>limit</code> (<code>number</code>) - Max events per page (1-500, default 50)</li>
 <li>Default: <code>50</code></li>
+</ul>
+<hr />
+<h3 id="catalog">catalog</h3>
+<p>Browse what is actually stored in the knowledge graph (ADR-501).</p>
+<p>A deterministic, filesystem-like view of the ontology -&gt; document -&gt; concept hierarchy. Use this to answer "what's in here?" structurally — by document or domain — as opposed to the 'search' tool, which finds concepts by semantic similarity. This is the right tool when you want to enumerate the corpus, drill into a specific document's concepts, or let a reasoning chain navigate by source rather than by meaning.</p>
+<p>The hierarchy is fixed and self-describing via each node's 'kind':
+  root      -&gt; ontology   (knowledge domains)
+  ontology  -&gt; document   (ingested sources; may be text or image)
+  document  -&gt; concept    (leaf — extracted concepts appearing in that document)</p>
+<p>A concept can appear under many documents (the graph is a DAG, not a tree). Membership is read from the graph's canonical edges, so it stays correct even as autonomous annealing (ADR-200) reorganizes ontologies.</p>
+<p>Actions:
+  - ls:   list children of a node (or root ontologies if no id). Supports a name fragment filter.
+  - stat: full metadata for one node by id.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>action</code> (<code>string</code>) <strong>(required)</strong> - 'ls' to list children, 'stat' for single-node detail</li>
+<li>Allowed values: <code>ls</code>, <code>stat</code></li>
+<li><code>id</code> (<code>string</code>) - For ls: parent node id (omit to list root ontologies). For stat: the node id to inspect.</li>
+<li><code>kind</code> (<code>string</code>) - Optional kind hint to disambiguate an id that collides across kinds.</li>
+<li>Allowed values: <code>ontology</code>, <code>document</code>, <code>concept</code></li>
+<li><code>query</code> (<code>string</code>) - ls only: case-insensitive name fragment to filter children by.</li>
+<li><code>sort</code> (<code>string</code>) - ls only: sort order for children (default name).</li>
+<li>Allowed values: <code>name</code>, <code>child_count</code>, <code>created</code></li>
+<li>Default: <code>"name"</code></li>
+<li><code>limit</code> (<code>number</code>) - ls only: max children per page (1-1000, default 100).</li>
+<li>Default: <code>100</code></li>
+<li><code>offset</code> (<code>number</code>) - ls only: pagination offset (default 0).</li>
+<li>Default: <code>0</code></li>
 </ul>
 <hr />
 
