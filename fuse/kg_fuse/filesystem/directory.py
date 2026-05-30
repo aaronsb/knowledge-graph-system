@@ -12,6 +12,7 @@ from typing import Optional
 
 import pyfuse3
 
+from .. import catalog_adapter
 from ..models import InodeEntry
 from .ingestion import _is_image_file
 
@@ -270,13 +271,18 @@ class DirectoryMixin:
             return cached
 
         try:
-            data = await self._api.get("/ontology/")
-            ontologies = data.get("ontologies", [])
+            # ADR-501: read the ontology level from the shared catalog facade
+            # (canonical :SCOPED_BY edges) rather than /ontology/. Cache the
+            # name->id map so _list_documents can resolve the next level, which
+            # the catalog addresses by id (FUSE addresses by name).
+            data = await self._api.catalog_children(limit=500)
+            ontologies = catalog_adapter.ontology_entries(data)
+            self._ontology_id_by_name = catalog_adapter.ontology_name_to_id(data)
 
             entries = []
             seen_names = set()
             for ont in ontologies:
-                name = ont.get("ontology", "unknown")
+                name = ont["name"]
                 seen_names.add(name)
                 # Allocate inode for this ontology
                 inode = self._get_or_create_ontology_inode(name)
@@ -356,15 +362,29 @@ class DirectoryMixin:
         info_inode = self._get_or_create_info_inode(".documents", parent_inode, ontology)
         entries.append((info_inode, ".documents"))
 
-        # Get documents from API
+        # Get documents from the catalog facade (ADR-501). The catalog addresses
+        # the document level by the parent ontology's id, so resolve the name
+        # via the map populated by _list_ontologies; fall back to listing
+        # ontologies if this is a cold path (e.g. direct lookup before readdir).
         try:
-            data = await self._api.get("/documents", params={"ontology": ontology, "limit": 100})
-            documents = data.get("documents", [])
+            ontology_id = self._ontology_id_by_name.get(ontology)
+            if ontology_id is None:
+                await self._list_ontologies()
+                ontology_id = self._ontology_id_by_name.get(ontology)
+
+            if ontology_id is None:
+                log.warning(f"No ontology id for '{ontology}' — cannot list documents")
+                documents = []
+            else:
+                data = await self._api.catalog_children(
+                    parent=ontology_id, parent_kind="ontology", limit=200
+                )
+                documents = catalog_adapter.document_entries(data)
 
             for doc in documents:
-                filename = doc.get("filename", doc.get("document_id", "unknown"))
-                document_id = doc.get("document_id")
-                content_type = doc.get("content_type", "document")
+                filename = doc["filename"]
+                document_id = doc["document_id"]
+                content_type = doc["content_type"]
 
                 if content_type == "image":
                     # Image: two entries — raw image bytes + companion .md

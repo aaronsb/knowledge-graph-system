@@ -121,6 +121,27 @@ class KnowledgeGraphClient:
             log.warning(f"Failed to fetch graph epoch: {e}")
             return -1
 
+    async def catalog_children(
+        self,
+        parent: Optional[str] = None,
+        parent_kind: Optional[str] = None,
+        q: Optional[str] = None,
+        limit: int = 200,
+    ) -> dict:
+        """List children of a catalog node, or root ontologies if parent is None.
+
+        Thin wrapper over GET /catalog/children (ADR-501). Returns the raw
+        response dict; mapping to FUSE shapes is done by catalog_adapter.
+        """
+        params: dict = {"limit": limit}
+        if parent:
+            params["parent"] = parent
+        if parent_kind:
+            params["parent_kind"] = parent_kind
+        if q:
+            params["q"] = q
+        return await self.get("/catalog/children", params=params)
+
     async def close(self) -> None:
         """Close the HTTP client."""
         if self._client is not None:
