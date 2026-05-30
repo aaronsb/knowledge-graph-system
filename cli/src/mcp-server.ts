@@ -1399,6 +1399,63 @@ For the per-concept re-evidence stream (which Concepts were touched in which epo
           },
         },
       },
+      {
+        name: 'catalog',
+        description: `Browse what is actually stored in the knowledge graph (ADR-501).
+
+A deterministic, filesystem-like view of the ontology -> document -> concept hierarchy. Use this to answer "what's in here?" structurally — by document or domain — as opposed to the 'search' tool, which finds concepts by semantic similarity. This is the right tool when you want to enumerate the corpus, drill into a specific document's concepts, or let a reasoning chain navigate by source rather than by meaning.
+
+The hierarchy is fixed and self-describing via each node's 'kind':
+  root      -> ontology   (knowledge domains)
+  ontology  -> document   (ingested sources; may be text or image)
+  document  -> concept    (leaf — extracted concepts appearing in that document)
+
+A concept can appear under many documents (the graph is a DAG, not a tree). Membership is read from the graph's canonical edges, so it stays correct even as autonomous annealing (ADR-200) reorganizes ontologies.
+
+Actions:
+  - ls:   list children of a node (or root ontologies if no id). Supports a name fragment filter.
+  - stat: full metadata for one node by id.`,
+        inputSchema: {
+          type: 'object',
+          properties: {
+            action: {
+              type: 'string',
+              enum: ['ls', 'stat'],
+              description: "'ls' to list children, 'stat' for single-node detail",
+            },
+            id: {
+              type: 'string',
+              description: "For ls: parent node id (omit to list root ontologies). For stat: the node id to inspect.",
+            },
+            kind: {
+              type: 'string',
+              enum: ['ontology', 'document', 'concept'],
+              description: 'Optional kind hint to disambiguate an id that collides across kinds.',
+            },
+            query: {
+              type: 'string',
+              description: 'ls only: case-insensitive name fragment to filter children by.',
+            },
+            sort: {
+              type: 'string',
+              enum: ['name', 'child_count', 'created'],
+              description: 'ls only: sort order for children (default name).',
+              default: 'name',
+            },
+            limit: {
+              type: 'number',
+              description: 'ls only: max children per page (1-1000, default 100).',
+              default: 100,
+            },
+            offset: {
+              type: 'number',
+              description: 'ls only: pagination offset (default 0).',
+              default: 0,
+            },
+          },
+          required: ['action'],
+        },
+      },
     ],
   };
 });
@@ -3227,6 +3284,34 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         });
         return {
           content: [{ type: 'text', text: formatEpochList(result) }],
+        };
+      }
+
+      case 'catalog': {
+        const action = toolArgs.action as string;
+        if (action === 'stat') {
+          if (!toolArgs.id) {
+            throw new Error("catalog 'stat' requires an 'id'");
+          }
+          const node = await client.getCatalogNode(
+            toolArgs.id as string,
+            toolArgs.kind as string | undefined
+          );
+          return {
+            content: [{ type: 'text', text: JSON.stringify(node, null, 2) }],
+          };
+        }
+        // default: ls
+        const result = await client.listCatalogChildren({
+          parent: toolArgs.id as string | undefined,
+          parent_kind: toolArgs.kind as string | undefined,
+          q: toolArgs.query as string | undefined,
+          sort: toolArgs.sort as string | undefined,
+          limit: toolArgs.limit as number | undefined,
+          offset: toolArgs.offset as number | undefined,
+        });
+        return {
+          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
         };
       }
 

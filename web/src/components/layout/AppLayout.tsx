@@ -33,6 +33,7 @@ import {
   Waypoints,
   PieChart,
   Layers,
+  FolderTree,
   AlertTriangle,
   X,
 } from 'lucide-react';
@@ -75,6 +76,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     if (path === '/') return 'Home';
     if (path.startsWith('/explore/graph')) return 'Force Graph';
     if (path.startsWith('/explore/documents')) return 'Document Explorer';
+    if (path.startsWith('/explore/catalog')) return 'Catalog Explorer';
     if (path.startsWith('/blocks')) return 'Block Editor';
     if (path.startsWith('/ingest')) return 'Ingest';
     if (path.startsWith('/jobs')) return 'Jobs';
@@ -135,6 +137,12 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               label="Document Explorer"
               isActive={isActive('/explore/documents')}
               onClick={() => navigate('/explore/documents')}
+            />
+            <SidebarItem
+              icon={FolderTree}
+              label="Catalog Explorer"
+              isActive={isActive('/explore/catalog')}
+              onClick={() => navigate('/explore/catalog')}
             />
             <SidebarItem
               icon={GitBranch}

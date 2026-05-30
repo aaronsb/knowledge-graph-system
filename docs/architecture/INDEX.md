@@ -100,6 +100,7 @@ _Pathfinding, projections, diversity, search_
 | [ADR-076.1](./query-search/ADR-076.1-pathfinding-baseline.md) | Pathfinding Performance Baseline | Accepted |
 | [ADR-084](./query-search/ADR-084-document-search.md) | Document-Level Search | Proposed |
 | [ADR-500](./query-search/ADR-500-graph-program-dsl-and-ast-architecture.md) | Graph Program DSL and AST Architecture | Draft |
+| [ADR-501](./query-search/ADR-501-catalog-browse-facade.md) | Catalog Browse Facade | Proposed |
 
 ## Vocabulary
 _Relationships, grounding, categorization_

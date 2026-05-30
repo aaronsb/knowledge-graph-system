@@ -76,6 +76,9 @@ class BaseMixin(pyfuse3.Operations):
 
         # Write support: pending ontologies and ingestion buffers
         self._pending_ontologies: set[str] = set()  # Ontologies created but no documents yet
+        # ADR-501: ontology name -> id, populated by _list_ontologies from the
+        # catalog facade so the document level (addressed by id) can resolve.
+        self._ontology_id_by_name: dict[str, str] = {}
         self._write_buffers: dict[int, bytes] = {}  # inode -> content being written
         self._write_info: dict[int, dict] = {}  # inode -> {ontology, filename}
 

@@ -7,6 +7,7 @@
 
 import axios, { type AxiosInstance, type InternalAxiosRequestConfig } from 'axios';
 import type { SubgraphResponse } from '../types/graph';
+import type { CatalogChildrenResponse, CatalogNodeResponse } from '../types/catalog';
 import type {
   JobStatus,
   JobListFilters,
@@ -2011,6 +2012,37 @@ class APIClient {
     }>;
   }> {
     const response = await this.client.get(`/documents/${encodeURIComponent(documentId)}/content`);
+    return response.data;
+  }
+
+  // ===========================================================================
+  // Catalog browse (ADR-501)
+  // ===========================================================================
+
+  /**
+   * List the children of a catalog node, or root ontologies when `parent` is
+   * omitted. Deterministic ontology -> document -> concept browse (ADR-501).
+   */
+  async listCatalogChildren(params?: {
+    parent?: string;
+    parent_kind?: string;
+    q?: string;
+    sort?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<CatalogChildrenResponse> {
+    const response = await this.client.get('/catalog/children', { params });
+    return response.data;
+  }
+
+  /**
+   * Get a single catalog node's full metadata (the stat/detail call).
+   */
+  async getCatalogNode(nodeId: string, kind?: string): Promise<CatalogNodeResponse> {
+    const response = await this.client.get(
+      `/catalog/node/${encodeURIComponent(nodeId)}`,
+      { params: kind ? { kind } : undefined }
+    );
     return response.data;
   }
 }
