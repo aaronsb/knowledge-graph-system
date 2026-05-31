@@ -192,19 +192,36 @@ ingestion started at id 6 may finish after a short one at id 7). Therefore the
 naive accessor `MAX(event_id) WHERE status = 'completed'` is **not a safe
 progress cursor**: with 6 in-flight and 7 done it returns 7, and 6's eventual
 commit is never re-surfaced — re-introducing the very false-FRESH it is meant to
-kill. The contract instead resolves freshness against the **contiguous committed
+kill. The contract instead resolves freshness against the **contiguous resolved
 prefix**:
 
 ```text
-get_committed_epoch() := the highest N such that EVERY event_id <= N
-                         has status = 'completed'
-                         (i.e. the high-water mark below which no job is in flight)
+get_committed_epoch() := MIN(event_id WHERE status = 'in_progress') - 1
+                         if any job is in flight, else
+                         MAX(event_id) over all resolved events
+                         (the high-water mark below which no job is in flight)
 ```
 
 This makes **#384 (epoch `status` column) a hard prerequisite** — without a
-commit/fail status the sequence reflects *attempts*, not *commits*. The watermark
-advances only past gap-free committed runs, so an in-flight job at id N holds the
-watermark at N-1 and every derivation correctly reads stale until it commits.
+commit/fail status the sequence reflects *attempts*, not *commits*. An in-flight
+job at id N holds the watermark at N-1, so every derivation correctly reads stale
+until it resolves; sequence gaps (a `BIGSERIAL` rolled-back transaction) are
+tolerated because the watermark keys on the lowest in-flight id, not contiguity
+of values.
+
+**Both `completed` and `failed` events count toward the watermark** — only
+`in_progress` blocks it. This is load-bearing, and it is *why the watermark is
+not `MAX(event_id WHERE completed)`*: ingestion commits **per-chunk**, so a job
+that aborted or was cancelled mid-run may have already committed partial graph
+changes. Excluding it would hide those commits and read false-FRESH. A cleanly-
+rolled-back failed event that committed nothing costs at most one benign no-op
+rebuild — the safe direction to err. The `completed`/`failed` distinction is
+therefore for *analytics* (#384's original motive: drop zero-instance jobs from
+hot/stale signals), **not** for this watermark. Correspondingly, the epoch must
+be resolved on **every** exit path of a mutation — success, cancel, *and*
+exception — or one crashed job holds the watermark behind a phantom in-flight
+event and freezes freshness platform-wide. (Verified end-to-end against the
+ingestion worker, the only epoch-recording path.)
 
 **`graph_epoch` columns are typed `BIGINT`** to match the sequence — the existing
 `INTEGER` columns (`artifacts.graph_epoch`, `catalog_node.graph_epoch`) and the
