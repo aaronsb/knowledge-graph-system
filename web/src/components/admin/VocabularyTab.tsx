@@ -19,12 +19,14 @@ import {
   Sparkles,
   Layers,
   Play,
+  History,
 } from 'lucide-react';
 import { apiClient } from '../../api/client';
 import { useAuthStore } from '../../store/authStore';
 import { Section, InfoCard, formatDateTime } from './components';
 import { VocabularyPressurePanel } from './VocabularyPressurePanel';
 import type { VocabularyStatus, VocabularyConfig, VocabJobKind } from '../../types/vocabulary';
+import type { JobStatus } from '../../types/jobs';
 
 interface VocabularyTabProps {
   onError: (error: string) => void;
@@ -65,12 +67,32 @@ const ACTIONS: VocabAction[] = [
   },
 ];
 
+// The four vocabulary worker job_types, mapped to friendly labels. Mirrors the
+// server-side VOCAB_JOB_KIND_TO_TYPE — used to filter the jobs feed into a
+// "previous runs" log (reuses the ADR-100 jobs the Actions panel dispatches).
+const VOCAB_JOB_LABELS: Record<string, string> = {
+  vocab_consolidate: 'Consolidate',
+  vocab_refresh: 'Refresh categories',
+  epistemic_remeasurement: 'Remeasure epistemic',
+  vocab_embedding: 'Generate embeddings',
+};
+
+const JOB_STATUS_STYLES: Record<string, string> = {
+  completed: 'bg-status-active/20 text-status-active',
+  processing: 'bg-status-info/20 text-status-info',
+  approved: 'bg-status-info/20 text-status-info',
+  pending: 'bg-muted text-muted-foreground',
+  failed: 'bg-destructive/20 text-destructive',
+  cancelled: 'bg-muted text-muted-foreground',
+};
+
 export const VocabularyTab: React.FC<VocabularyTabProps> = ({ onError, onSuccess }) => {
   const { hasPermission } = useAuthStore();
   const canManage = hasPermission('vocabulary', 'write');
 
   const [status, setStatus] = useState<VocabularyStatus | null>(null);
   const [config, setConfig] = useState<VocabularyConfig | null>(null);
+  const [recentJobs, setRecentJobs] = useState<JobStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [dispatching, setDispatching] = useState<VocabJobKind | null>(null);
 
@@ -84,6 +106,13 @@ export const VocabularyTab: React.FC<VocabularyTabProps> = ({ onError, onSuccess
         setConfig(await apiClient.getVocabularyConfig());
       } catch {
         setConfig(null);
+      }
+      // Previous-runs log: pull recent jobs and keep the vocabulary ones.
+      try {
+        const jobs = await apiClient.listJobs({ limit: 50 });
+        setRecentJobs(jobs.filter((j) => j.job_type in VOCAB_JOB_LABELS).slice(0, 10));
+      } catch {
+        setRecentJobs([]);
       }
     } catch (err) {
       onError(err instanceof Error ? err.message : 'Failed to load vocabulary status');
@@ -229,6 +258,47 @@ export const VocabularyTab: React.FC<VocabularyTabProps> = ({ onError, onSuccess
             </button>
           ))}
         </div>
+      </Section>
+
+      {/* Recent runs — the previous-runs log, sourced from the jobs the Actions
+          panel dispatches (analogous to the ontology proposals log, but for vocab
+          the natural record is the job history). */}
+      <Section title="Recent Runs" icon={<History className="w-5 h-5" />}>
+        {recentJobs.length === 0 ? (
+          <p className="text-sm text-muted-foreground py-2">
+            No vocabulary jobs have run yet. Dispatch one from Actions above.
+          </p>
+        ) : (
+          <div className="space-y-1.5">
+            {recentJobs.map((job) => {
+              const statusClass =
+                JOB_STATUS_STYLES[job.status] ?? 'bg-muted text-muted-foreground';
+              return (
+                <div
+                  key={job.job_id}
+                  className="flex items-center justify-between gap-3 px-3 py-2 bg-muted/40 rounded text-sm"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="text-foreground">
+                      {VOCAB_JOB_LABELS[job.job_type] ?? job.job_type}
+                    </span>
+                    <code className="font-mono text-xs text-muted-foreground truncate">
+                      {job.job_id}
+                    </code>
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <span className="text-xs text-muted-foreground">
+                      {formatDateTime(job.completed_at ?? job.created_at ?? null)}
+                    </span>
+                    <span className={`px-2 py-0.5 text-xs rounded-full font-medium ${statusClass}`}>
+                      {job.status}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </Section>
     </div>
   );
