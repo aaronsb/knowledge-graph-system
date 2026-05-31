@@ -105,41 +105,20 @@ function generateMarkdown(cmd, depth = 2) {
 async function main() {
   console.log('🔍 Generating CLI documentation (simple mode)...\n');
 
-  // Import command definitions directly
-  const modules = [
-    { name: 'health', path: '../dist/cli/health.js' },
-    { name: 'config', path: '../dist/cli/config.js' },
-    { name: 'login', path: '../dist/cli/login.js' },
-    { name: 'logout', path: '../dist/cli/logout.js' },
-    { name: 'oauth', path: '../dist/cli/oauth.js' },
-    { name: 'ingest', path: '../dist/cli/ingest.js' },
-    { name: 'jobs', path: '../dist/cli/jobs.js' },
-    { name: 'search', path: '../dist/cli/search.js' },
-    { name: 'database', path: '../dist/cli/database.js' },
-    { name: 'ontology', path: '../dist/cli/ontology.js' },
-    { name: 'vocabulary', path: '../dist/cli/vocabulary.js' },
-    { name: 'admin', path: '../dist/cli/admin.js' },
-  ];
-
-  const commands = [];
-
-  for (const mod of modules) {
-    try {
-      const imported = await import(mod.path);
-      const cmdExport = imported[`${mod.name}Command`] || imported[`${mod.name}Command_obj`] || imported.default || imported[mod.name + 'Cmd'];
-
-      if (cmdExport) {
-        commands.push(extractMetadata(cmdExport));
-        console.log(`✓ Loaded ${mod.name}`);
-      } else {
-        console.log(`⚠ Could not find command export in ${mod.name}`);
-      }
-    } catch (err) {
-      console.log(`✗ Failed to import ${mod.name}:`, err.message);
-    }
+  // Drive the docs from the CLI's own command registry so the two never drift.
+  // (This previously kept a hardcoded module list that went stale and dropped
+  // commands such as `catalog`.) `documentedCommands` is the array of Command
+  // objects the CLI registers under `kg`, exported from commands.ts.
+  let documentedCommands;
+  try {
+    ({ documentedCommands } = await import('../dist/cli/commands.js'));
+  } catch (err) {
+    console.error('✗ Could not load ../dist/cli/commands.js — run `npm run build` first.');
+    throw err;
   }
+  const commands = documentedCommands.map(cmd => extractMetadata(cmd));
 
-  console.log(`\n📋 Extracted ${commands.length} commands\n`);
+  console.log(`📋 Extracted ${commands.length} commands from the registry\n`);
 
   // Create output directory
   const outDir = path.join(__dirname, '../../docs/reference/cli');

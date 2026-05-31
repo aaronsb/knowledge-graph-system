@@ -30,9 +30,9 @@ import { batchCommand } from './batch';
 import { storageCommand } from './storage';
 import { catalogCommand } from './catalog';
 import { programCommand } from './program';
-import { registerLoginCommand } from './login';
-import { registerLogoutCommand } from './logout';
-import { registerOAuthCommand } from './oauth';
+import { registerLoginCommand, loginCommand_obj } from './login';
+import { registerLogoutCommand, logoutCommand_obj } from './logout';
+import { registerOAuthCommand, oauthCommand } from './oauth';
 import { createVerbRouter } from './verb-router';
 import { createHelpCommand } from './help';
 import { createClientFromEnv } from '../api/client';
@@ -81,6 +81,57 @@ async function showBanner() {
   console.log(); // Empty line
 }
 
+/**
+ * Subcommands registered under `kg`, in display order.
+ *
+ * Module-level and exported so the doc generator
+ * (cli/scripts/simple-doc-gen.mjs) derives the command list from the same
+ * source the CLI registers — this is what prevents the two from drifting (the
+ * generator previously kept its own hardcoded list, which silently went stale
+ * and dropped commands like `catalog`).
+ */
+export const subcommands: Command[] = [
+  healthCommand,
+  configCommand,
+  mcpConfigCommand,
+  ingestCommand,
+  jobsCommand,
+  searchCommand,
+  documentCommand,  // ADR-084: Document search
+  databaseCommand,
+  ontologyCommand,
+  sourceCommand,
+  vocabularyCommand,
+  conceptCommand,   // ADR-089: Concept CRUD
+  edgeCommand,      // ADR-089: Edge CRUD
+  batchCommand,     // ADR-089: Batch operations
+  adminCommand,
+  polarityCommand,
+  projectionCommand,
+  artifactCommand,
+  groupCommand,
+  queryDefCommand,
+  programCommand,   // ADR-500: GraphProgram notarization
+  storageCommand,
+  catalogCommand,   // ADR-501: Catalog browse facade
+];
+
+/**
+ * Full set of top-level commands for documentation: the subcommands plus the
+ * auth commands. The auth commands are wired into the program via their own
+ * register*() functions (which attach actions/options), but they also expose
+ * Command objects so the doc generator can describe them.
+ *
+ * Order mirrors runtime registration (subcommands first, then auth) so the
+ * generated docs match `kg --help`; keep them aligned if registration moves.
+ */
+export const documentedCommands: Command[] = [
+  ...subcommands,
+  loginCommand_obj,
+  logoutCommand_obj,
+  oauthCommand,
+];
+
 export async function registerCommands(program: Command) {
   // Show banner ONLY if kg is run without any arguments
   if (process.argv.length === 2) {
@@ -100,33 +151,8 @@ export async function registerCommands(program: Command) {
   // Create client for command that need it
   const client = createClientFromEnv();
 
-  // Register subcommands with colored help
-  const subcommands = [
-    healthCommand,
-    configCommand,
-    mcpConfigCommand,
-    ingestCommand,
-    jobsCommand,
-    searchCommand,
-    documentCommand,  // ADR-084: Document search
-    databaseCommand,
-    ontologyCommand,
-    sourceCommand,
-    vocabularyCommand,
-    conceptCommand,   // ADR-089: Concept CRUD
-    edgeCommand,      // ADR-089: Edge CRUD
-    batchCommand,     // ADR-089: Batch operations
-    adminCommand,
-    polarityCommand,
-    projectionCommand,
-    artifactCommand,
-    groupCommand,
-    queryDefCommand,
-    programCommand,   // ADR-500: GraphProgram notarization
-    storageCommand,
-    catalogCommand,   // ADR-501: Catalog browse facade
-  ];
-
+  // Register subcommands with colored help (see the exported `subcommands`
+  // registry above — single source of truth shared with the doc generator).
   subcommands.forEach(cmd => {
     configureColoredHelp(cmd);
     program.addCommand(cmd);

@@ -194,7 +194,7 @@ class ReadMixin:
             except Exception as e:
                 log.debug(f"Could not fetch concepts for document: {e}")
 
-        return self._format_document(data, concepts)
+        return self._format_document(data, concepts, entry.ontology)
 
     async def _read_concept(self, entry: InodeEntry) -> str:
         """Read and format a concept file."""
@@ -242,9 +242,9 @@ class ReadMixin:
 
         return format_job(data)
 
-    def _format_document(self, data: dict, concepts: list = None) -> str:
+    def _format_document(self, data: dict, concepts: list = None, ontology: str = None) -> str:
         """Format document data as markdown with optional YAML frontmatter."""
-        return format_document(data, concepts, self.tags_config)
+        return format_document(data, concepts, self.tags_config, ontology=ontology)
 
     def _format_concept(self, data: dict) -> str:
         """Format concept data as markdown with YAML frontmatter."""

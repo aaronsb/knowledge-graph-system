@@ -6,17 +6,29 @@ from .config import TagsConfig
 from .query_store import Query
 
 
-def format_document(data: dict, concepts: list = None, tags_config: TagsConfig = None) -> str:
-    """Format document data as markdown with optional YAML frontmatter."""
+def format_document(data: dict, concepts: list = None, tags_config: TagsConfig = None,
+                    ontology: str = None) -> str:
+    """Format document data as markdown with optional YAML frontmatter.
+
+    Args:
+        data: The /documents/{id}/content API response.
+        concepts: Concepts linked to the document (drives tag frontmatter).
+        tags_config: Controls whether YAML frontmatter/tags are emitted.
+        ontology: The ontology the document was browsed under. FUSE knows this
+            from the mount path; the content response does not carry it, so it
+            is passed in here rather than falling back to "unknown".
+    """
     concepts = concepts or []
     tags_config = tags_config or TagsConfig()
+    # Prefer the path-derived ontology FUSE knows over the (absent) API value.
+    ont = ontology or data.get("ontology") or "unknown"
     lines = []
 
     # Add YAML frontmatter if tags are enabled and we have concepts
     if tags_config.enabled and concepts:
         lines.append("---")
         lines.append(f"document_id: {data.get('document_id', 'unknown')}")
-        lines.append(f"ontology: {data.get('ontology', 'unknown')}")
+        lines.append(f"ontology: {ont}")
 
         # Add concept tags
         tags = []
@@ -35,7 +47,7 @@ def format_document(data: dict, concepts: list = None, tags_config: TagsConfig =
         lines.append("")
 
     lines.append(f"# {data.get('filename', 'Document')}\n")
-    lines.append(f"**Ontology:** {data.get('ontology', 'unknown')}\n")
+    lines.append(f"**Ontology:** {ont}\n")
     lines.append(f"**Document ID:** {data.get('document_id', 'unknown')}\n")
     lines.append("")
 
