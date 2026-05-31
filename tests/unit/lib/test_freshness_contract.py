@@ -23,8 +23,14 @@ from api.app.lib.freshness import (
     registered_derivations,
 )
 
-# Importing this registers CatalogFacade as the reference CollectionDerivation.
+# Importing these registers the shipped derivations (the @register_derivation
+# decorator runs on import), so the registry reflects what actually ships.
 from api.app.lib.catalog_facade import CatalogFacade
+from api.app.lib.age_client.grounding import (
+    GroundingCacheDerivation,
+    PolarityAxisDerivation,
+)
+from api.app.services.confidence_analyzer import ConfidenceCacheDerivation
 
 
 # --------------------------------------------------------------------- registry
@@ -32,6 +38,18 @@ from api.app.lib.catalog_facade import CatalogFacade
 def test_registry_includes_the_catalog_reference_implementation():
     """CatalogFacade registers itself as the reference derivation."""
     assert CatalogFacade in registered_derivations()
+
+
+def test_registry_includes_both_grounding_tiers_separately():
+    """The grounding cluster registers as two derivations on two clocks (D3)."""
+    registered = registered_derivations()
+    assert GroundingCacheDerivation in registered
+    assert PolarityAxisDerivation in registered
+
+
+def test_registry_includes_the_confidence_cache():
+    """The confidence cache registers as its own derivation."""
+    assert ConfidenceCacheDerivation in registered_derivations()
 
 
 def test_every_registered_derivation_conforms():

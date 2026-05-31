@@ -106,10 +106,15 @@ class FreshnessContract(ABC):
 
     @abstractmethod
     def current_version(self) -> int:
-        """The canonical clock now. Implementations open a connection (their own
-        pool/cursor) and return `read_committed_epoch(cur)` — the shared helper
-        keeps the SQL in exactly one place so no derivation drifts onto a
-        different signal."""
+        """The monotonic version this derivation tracks, read now.
+
+        Graph-topology derivations return `read_committed_epoch(cur)` — the
+        shared helper keeps the canonical-clock SQL in one place so no
+        graph-derived surface drifts onto a different signal. A derivation whose
+        source-of-truth is a narrower scope returns *that* monotonic sub-counter
+        instead (e.g. the polarity axis is derived from vocabulary embeddings, so
+        it tracks `vocabulary_embedding_generation_counter`, not the graph tick).
+        Either way it must be monotonic and advance when the source changes."""
         raise NotImplementedError
 
 

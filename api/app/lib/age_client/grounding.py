@@ -42,7 +42,12 @@ import numpy as np
 from psycopg2 import extras
 
 from api.app.constants import BATCH_CHUNK_SIZE
-from .graph_generation import get_graph_generation
+from api.app.lib.freshness import (
+    Budget,
+    CollectionDerivation,
+    read_committed_epoch,
+    register_derivation,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -269,25 +274,19 @@ class GroundingMixin:
         """
         global _grounding_cache, _grounding_cache_generation
 
-        # Warm-cache short-circuit (ADR-201 Phase 5f #278) — see the longer
-        # comment on calculate_grounding_strength_batch for the soundness
-        # rationale. Per-concept callers benefit even more from this:
-        # rendering a search result page typically calls this method
-        # serially per concept, so the bulk of repeat queries land here.
-        with _grounding_cache_lock:
-            cached_gen = _grounding_cache_generation
-            if cached_gen is not None:
-                cache_hit = _grounding_cache.get((concept_id, cached_gen))
-                if cache_hit is not None:
-                    return cache_hit
-
         conn = self.pool.getconn()
         try:
             with conn.cursor(cursor_factory=extras.RealDictCursor) as cur:
                 # ---- Tier 2 cache check: per-concept grounding ----
-                # Read graph generation from graph_accel if available,
-                # otherwise fall back to a simple counter.
-                graph_gen = get_graph_generation(cur)
+                # ADR-207 D2: read the canonical freshness clock (the committed-
+                # epoch tick) on EVERY call. The previous connection-free warm-
+                # path short-circuit skipped this re-read, leaving staleness
+                # unbounded in wall-clock time (#422). The cache still saves the
+                # expensive edge fetch + projection — it just no longer skips the
+                # clock read. graph_gen here is the universal tick, not
+                # graph_accel.generation (which co-advances with it as a
+                # sub-counter, ADR-207 D1).
+                graph_gen = read_committed_epoch(cur)
 
                 # Evict entire cache if graph generation changed
                 with _grounding_cache_lock:
@@ -437,45 +436,17 @@ class GroundingMixin:
 
         result = {cid: 0.0 for cid in concept_ids}
 
-        # --- Phase 0: warm-cache short-circuit (ADR-201 Phase 5f #278) ---
-        # If every requested concept is in the cache at the last-known graph
-        # generation, return without acquiring a pool connection. Saves one
-        # round-trip per call when callers are reading the same neighborhood
-        # repeatedly (search-then-render, paginated UIs, etc.).
-        #
-        # Soundness trade-off: skipping the get_graph_generation() probe
-        # means staleness is bounded by the next cold-path call in this
-        # process, NOT by wall-clock time. A workload that keeps hitting
-        # the same warm working set will keep returning pre-mutation values
-        # until something else (a different concept set, an unrelated
-        # endpoint, the API restart) takes the cold path and re-reads the
-        # generation. For the read-heavy steady state this targets that's
-        # the right trade — but callers needing linearizable freshness
-        # should opt out of the cache entirely. Worth it
-        # for the read-heavy steady state.
-        with _grounding_cache_lock:
-            cached_gen = _grounding_cache_generation
-            if cached_gen is not None:
-                cached_values = {}
-                for cid in concept_ids:
-                    cache_entry = _grounding_cache.get((cid, cached_gen))
-                    if cache_entry is None:
-                        cached_values = None
-                        break
-                    cached_values[cid] = cache_entry
-                if cached_values is not None:
-                    logger.debug(
-                        f"Grounding batch: warm-cache short-circuit, "
-                        f"{len(concept_ids)} concepts served without "
-                        f"acquiring a pool connection"
-                    )
-                    return cached_values
-
-        # --- Phase 1: cache check + polarity axis (one connection) ---
+        # --- Cache check + polarity axis (one connection) ---
+        # ADR-207 D2: read the canonical freshness clock on EVERY call. An
+        # earlier connection-free "Phase 0" warm-cache short-circuit served the
+        # whole batch from cache WITHOUT re-reading the generation, leaving
+        # staleness unbounded in wall-clock time (#422). The single clock read +
+        # connection per batch is cheap and amortizes across all concept_ids; the
+        # cache still saves the expensive per-concept edge fetch + projection.
         conn = self.pool.getconn()
         try:
             with conn.cursor(cursor_factory=extras.RealDictCursor) as cur:
-                graph_gen = get_graph_generation(cur)
+                graph_gen = read_committed_epoch(cur)
 
                 misses = []
                 with _grounding_cache_lock:
@@ -658,3 +629,104 @@ class GroundingMixin:
         )
 
         return result
+
+
+# ---------------------------------------------------------------------------
+# ADR-207 freshness-contract registration
+#
+# The grounding cluster is TWO derivations on two different clocks (ADR-207 D3),
+# so they register separately rather than being forced behind one interface. The
+# on-read detection and cache live in GroundingMixin above; these objects expose
+# each tier to the freshness registry — for the conformance test (CI catches a
+# tier that forgets the contract) and the operator surface (list / show
+# freshness / reconcile). Each is constructed with an AGEClient for its clock
+# read; the cache state itself is process-global (above).
+# ---------------------------------------------------------------------------
+
+
+@register_derivation
+class GroundingCacheDerivation(CollectionDerivation):
+    """Tier 2 — per-concept grounding cache (ADR-207 CollectionDerivation).
+
+    Whole-tier stamp: one generation covers every cached concept, and reconcile
+    clears the lot (a graph mutation may have changed any concept's edges). Its
+    clock is the **universal committed-epoch tick** — #386 makes that advance for
+    every mutation kind, so the tier invalidates on ingestion, edits, and
+    annealing alike. graph_accel.generation co-advances with the tick as a
+    sub-counter (ADR-207 D1); this derivation reads the tick, not the sub-counter.
+    """
+
+    name = "grounding_cache"
+    budget = Budget.strict()
+
+    def __init__(self, client):
+        """Store the AGE client for the clock read; cache state is module-global."""
+        self.client = client
+
+    def version_stamp(self):
+        """The committed-epoch tick the cache was last filled at (None if cold)."""
+        return _grounding_cache_generation
+
+    def current_version(self) -> int:
+        """The canonical clock now: the committed-epoch tick."""
+        conn = self.client.pool.getconn()
+        try:
+            with conn.cursor(cursor_factory=extras.RealDictCursor) as cur:
+                v = read_committed_epoch(cur)
+            conn.rollback()
+            return v
+        finally:
+            self.client.pool.putconn(conn)
+
+    def reconcile(self) -> None:
+        """Invalidate the whole tier; it refills lazily on the next read."""
+        global _grounding_cache, _grounding_cache_generation
+        with _grounding_cache_lock:
+            _grounding_cache.clear()
+            _grounding_cache_generation = None
+
+
+@register_derivation
+class PolarityAxisDerivation(CollectionDerivation):
+    """Tier 1 — polarity-axis cache (ADR-207 CollectionDerivation).
+
+    Distinct clock from the graph tick: the axis is derived from VOCABULARY
+    embeddings, so its source-of-truth is `vocabulary_embedding_generation_counter`
+    (migration 069) — a declared sub-counter that changes only on embedding
+    (re)generation, far more rarely than the graph. Tracking the graph tick here
+    would needlessly recompute the axis on every concept edit.
+    """
+
+    name = "polarity_axis"
+    budget = Budget.strict()
+
+    def __init__(self, client):
+        """Store the AGE client for the clock read; cache state is module-global."""
+        self.client = client
+
+    def version_stamp(self):
+        """The vocab-embedding generation the axis was built at (None if cold)."""
+        cached = _polarity_axis_cache
+        return cached[0] if cached is not None else None
+
+    def current_version(self) -> int:
+        """The polarity axis's clock: vocabulary_embedding_generation_counter."""
+        conn = self.client.pool.getconn()
+        try:
+            with conn.cursor(cursor_factory=extras.RealDictCursor) as cur:
+                cur.execute(
+                    "SELECT counter FROM graph_metrics "
+                    "WHERE metric_name = 'vocabulary_embedding_generation_counter'"
+                )
+                row = cur.fetchone()
+                v = int(row["counter"]) if row else 0
+            conn.rollback()
+            return v
+        finally:
+            self.client.pool.putconn(conn)
+
+    def reconcile(self) -> None:
+        """Invalidate the axis; it recomputes lazily on the next grounding call."""
+        global _polarity_axis_cache
+        with _polarity_axis_cache_lock:
+            _polarity_axis_cache = None
