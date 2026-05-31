@@ -11,10 +11,23 @@ import { coloredCount, separator } from './colors';
 import { Table } from '../lib/table';
 import { setCommandHelp } from './help-formatter';
 
+/**
+ * Standard hint shown when an artifact is stale, pointing at the reconcile path.
+ * "Stale" means the graph has advanced past the epoch the artifact was computed
+ * at (ADR-207) — the payload is still readable, just no longer current.
+ */
+const STALE_HINT = (id: string | number) =>
+  colors.status.dim(`  Stale: the graph changed since this was computed. ` +
+    `Recompute with "kg artifact regenerate ${id}".`);
+
 export const artifactCommand = setCommandHelp(
   new Command('artifact'),
-  'Manage artifacts (stored computation results)',
-  'Manage artifacts - persistent storage for computed results like polarity analyses, projections, and query results. Artifacts support multi-tier storage: small payloads inline in PostgreSQL, large payloads in Garage S3. Each artifact tracks its graph_epoch for freshness detection.'
+  'Manage your artifacts (stored computation results)',
+  'Manage artifacts - persistent storage for computed results like polarity analyses, projections, and query results. ' +
+  'Each artifact records the graph epoch it was computed at, so the platform can tell you when one has gone stale ' +
+  '(the graph changed underneath it) and recompute it on request (ADR-207).\n\n' +
+  'This is the user-facing surface for the results you create. For backend object-storage diagnostics ' +
+  '(S3 buckets, stored objects, integrity, retention) see the admin command "kg storage".'
 )
   .alias('art')
   .showHelpAfterError('(add --help for additional information)')
@@ -27,6 +40,7 @@ export const artifactCommand = setCommandHelp(
       .option('-o, --ontology <name>', 'Filter by ontology')
       .option('-l, --limit <n>', 'Maximum artifacts to return', '20')
       .option('--offset <n>', 'Skip N artifacts (for pagination)', '0')
+      .option('-v, --verbose', 'Show storage tier (inline/garage) — an implementation detail hidden by default')
       .option('-j, --json', 'Output raw JSON instead of formatted table')
       .action(async (options) => {
         try {
@@ -55,49 +69,54 @@ export const artifactCommand = setCommandHelp(
           console.log('\n' + colors.ui.title('📦 Artifacts'));
           console.log(colors.status.dim(`  Showing ${result.artifacts.length} of ${result.total} artifacts\n`));
 
-          const table = new Table({
-            columns: [
-              {
-                header: 'ID',
-                field: 'id',
-                type: 'count',
-                width: 8,
-                align: 'right'
-              },
-              {
-                header: 'Type',
-                field: 'artifact_type',
-                type: 'heading',
-                width: 20
-              },
-              {
-                header: 'Name',
-                field: 'name',
-                type: 'text',
-                width: 'flex',
-                priority: 2
-              },
-              {
-                header: 'Fresh',
-                field: 'is_fresh',
-                type: 'text',
-                width: 8,
-                customFormat: (val: boolean) => val ? colors.status.success('✓') : colors.status.warning('○')
-              },
-              {
-                header: 'Storage',
-                field: 'storage',
-                type: 'text',
-                width: 10
-              },
-              {
-                header: 'Created',
-                field: 'created_at',
-                type: 'timestamp',
-                width: 12
-              }
-            ]
-          });
+          const columns: any[] = [
+            {
+              header: 'ID',
+              field: 'id',
+              type: 'count',
+              width: 8,
+              align: 'right'
+            },
+            {
+              header: 'Type',
+              field: 'artifact_type',
+              type: 'heading',
+              width: 20
+            },
+            {
+              header: 'Name',
+              field: 'name',
+              type: 'text',
+              width: 'flex',
+              priority: 2
+            },
+            {
+              header: 'Fresh',
+              field: 'is_fresh',
+              type: 'text',
+              width: 8,
+              customFormat: (val: boolean) => val ? colors.status.success('✓') : colors.status.warning('○')
+            },
+            {
+              header: 'Created',
+              field: 'created_at',
+              type: 'timestamp',
+              width: 12
+            }
+          ];
+
+          // Storage tier is an implementation detail (inline vs Garage), not a
+          // user concern — surface it only under --verbose (ADR-207 audience split).
+          if (options.verbose) {
+            columns.splice(4, 0, {
+              header: 'Storage',
+              field: 'storage',
+              type: 'text',
+              width: 10
+            });
+          }
+
+          const table = new Table({ columns });
 
           // Transform for display
           const displayData = result.artifacts.map(a => ({
@@ -108,6 +127,15 @@ export const artifactCommand = setCommandHelp(
           }));
 
           table.print(displayData);
+
+          // Point users at the reconcile path when any listed artifact is stale.
+          const staleCount = result.artifacts.filter(a => !a.is_fresh).length;
+          if (staleCount > 0) {
+            console.log(colors.status.dim(
+              `\n  ○ ${staleCount} stale (graph changed since computed). ` +
+              `Recompute one with "kg artifact regenerate <id>", or clear stale ones with "kg artifact cleanup".`
+            ));
+          }
 
           if (result.total > result.artifacts.length) {
             console.log(colors.status.dim(`\n  Use --offset ${result.offset + result.limit} to see more`));
@@ -123,7 +151,8 @@ export const artifactCommand = setCommandHelp(
     new Command('show')
       .description('Show artifact metadata by ID. Does not include the payload - use "payload" command for that.')
       .argument('<id>', 'Artifact ID')
-      .action(async (id) => {
+      .option('-v, --verbose', 'Show storage tier (inline/garage) — an implementation detail hidden by default')
+      .action(async (id, options) => {
         try {
           const client = createClientFromEnv();
           const artifact = await client.getArtifact(parseInt(id));
@@ -141,11 +170,18 @@ export const artifactCommand = setCommandHelp(
           console.log('\n' + colors.stats.section('Freshness'));
           console.log(`  ${colors.stats.label('Graph Epoch:')} ${artifact.graph_epoch}`);
           console.log(`  ${colors.stats.label('Is Fresh:')} ${artifact.is_fresh ? colors.status.success('Yes ✓') : colors.status.warning('No (graph has changed)')}`);
+          if (!artifact.is_fresh) {
+            console.log(STALE_HINT(artifact.id));
+          }
 
-          console.log('\n' + colors.stats.section('Storage'));
-          console.log(`  ${colors.stats.label('Location:')} ${artifact.has_inline_result ? 'Inline (PostgreSQL)' : 'Garage S3'}`);
-          if (artifact.garage_key) {
-            console.log(`  ${colors.stats.label('Garage Key:')} ${colors.status.dim(artifact.garage_key)}`);
+          // Storage tier is an implementation detail; show it only under --verbose
+          // (ADR-207 audience split — "kg storage" is the admin diagnostic surface).
+          if (options.verbose) {
+            console.log('\n' + colors.stats.section('Storage'));
+            console.log(`  ${colors.stats.label('Location:')} ${artifact.has_inline_result ? 'Inline (PostgreSQL)' : 'Garage S3'}`);
+            if (artifact.garage_key) {
+              console.log(`  ${colors.stats.label('Garage Key:')} ${colors.status.dim(artifact.garage_key)}`);
+            }
           }
 
           console.log('\n' + colors.stats.section('Timestamps'));
@@ -286,6 +322,112 @@ export const artifactCommand = setCommandHelp(
           console.log(separator());
         } catch (error: any) {
           console.error(colors.status.error('✗ Failed to delete artifact'));
+          console.error(colors.status.error(error.response?.data?.detail || error.message));
+          process.exit(1);
+        }
+      })
+  )
+  .addCommand(
+    new Command('regenerate')
+      .description('Recompute a stale artifact from its stored parameters (ADR-207). Enqueues an auto-approved job; the result is saved as a NEW artifact and the original is preserved. Supported types: polarity_analysis, projection.')
+      .alias('regen')
+      .argument('<id>', 'Artifact ID')
+      .action(async (id) => {
+        try {
+          const client = createClientFromEnv();
+          const result = await client.regenerateArtifact(parseInt(id));
+
+          console.log('\n' + separator());
+          console.log(colors.status.success(`✓ Regeneration queued for artifact ${id}`));
+          console.log(separator());
+          console.log(`  ${colors.stats.label('Job ID:')} ${result.job_id}`);
+          console.log(`  ${colors.stats.label('Status:')} ${result.status}`);
+          console.log(colors.status.dim(
+            `\n  Track it with "kg job status ${result.job_id}". ` +
+            `The recomputed result is saved as a new artifact — the original is preserved.`
+          ));
+          console.log(separator());
+        } catch (error: any) {
+          console.error(colors.status.error('✗ Failed to regenerate artifact'));
+          console.error(colors.status.error(error.response?.data?.detail || error.message));
+          process.exit(1);
+        }
+      })
+  )
+  .addCommand(
+    new Command('cleanup')
+      .description('Remove stale artifacts in bulk — those whose graph epoch is behind the current graph (ADR-207). Previews by default; pass --force to delete. Regeneratable types can be recomputed afterward with "kg artifact regenerate".')
+      .option('-t, --type <type>', 'Only clean up artifacts of this type')
+      .option('-o, --ontology <name>', 'Only clean up artifacts in this ontology')
+      .option('-f, --force', 'Actually delete (default is a dry-run preview)')
+      .action(async (options) => {
+        try {
+          const client = createClientFromEnv();
+
+          // Page through all matching artifacts (list returns max 500 per page)
+          // and collect the stale ones. Freshness is computed server-side per row.
+          const pageSize = 500;
+          const stale: any[] = [];
+          let offset = 0;
+          let total = Infinity;
+          while (offset < total) {
+            const page = await client.listArtifacts({
+              artifact_type: options.type,
+              ontology: options.ontology,
+              limit: pageSize,
+              offset,
+            });
+            total = page.total;
+            for (const a of page.artifacts) {
+              if (!a.is_fresh) stale.push(a);
+            }
+            if (page.artifacts.length === 0) break;
+            offset += page.artifacts.length;
+          }
+
+          if (stale.length === 0) {
+            console.log(colors.status.success('\n✓ No stale artifacts to clean up'));
+            return;
+          }
+
+          console.log('\n' + separator());
+          console.log(colors.ui.title(`🧹 ${options.force ? 'Cleaning up' : 'Stale artifacts (preview)'}`));
+          console.log(separator());
+          for (const a of stale) {
+            const label = a.name ? `${a.name} ` : '';
+            console.log(`  ${colors.concept.label('#' + a.id)} ${colors.status.dim(a.artifact_type)} ${label}${colors.status.dim('(epoch ' + a.graph_epoch + ')')}`);
+          }
+
+          if (!options.force) {
+            console.log('\n' + colors.status.warning(`⚠ ${stale.length} stale artifact(s) would be deleted.`));
+            console.log(colors.status.dim('  Re-run with --force to delete them, or recompute one with "kg artifact regenerate <id>".'));
+            console.log(separator());
+            return;
+          }
+
+          let deleted = 0;
+          const failures: Array<{ id: number; error: string }> = [];
+          for (const a of stale) {
+            try {
+              await client.deleteArtifact(a.id);
+              deleted++;
+            } catch (err: any) {
+              failures.push({ id: a.id, error: err.response?.data?.detail || err.message });
+            }
+          }
+
+          console.log('\n' + separator());
+          console.log(colors.status.success(`✓ Deleted ${deleted} stale artifact(s)`));
+          if (failures.length > 0) {
+            console.log(colors.status.error(`✗ Failed to delete ${failures.length}:`));
+            for (const f of failures) {
+              console.log(colors.status.error(`  #${f.id}: ${f.error}`));
+            }
+          }
+          console.log(separator());
+          if (failures.length > 0) process.exit(1);
+        } catch (error: any) {
+          console.error(colors.status.error('✗ Failed to clean up artifacts'));
           console.error(colors.status.error(error.response?.data?.detail || error.message));
           process.exit(1);
         }

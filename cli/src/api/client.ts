@@ -2182,6 +2182,23 @@ export class KnowledgeGraphClient {
     await this.client.delete(`/artifacts/${artifactId}`);
   }
 
+  /**
+   * Regenerate an artifact from its stored parameters (ADR-207).
+   *
+   * Server-side reconcile path for a stale artifact: enqueues an auto-approved
+   * job that recomputes the artifact with the same parameters and stores the
+   * result as a new artifact (the original is preserved). Only artifact types
+   * with a recompute path (polarity_analysis, projection) are supported.
+   */
+  async regenerateArtifact(artifactId: number): Promise<{
+    job_id: string;
+    status: string;
+    message: string;
+  }> {
+    const response = await this.client.post(`/artifacts/${artifactId}/regenerate`);
+    return response.data;
+  }
+
   // ==========================================================================
   // Groups & Grants Methods (ADR-082)
   // ==========================================================================

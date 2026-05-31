@@ -34,7 +34,9 @@ Configuration stored in: ~/.config/kg/mcp-allowed-paths.json
 - [`admin`](#admin) - System administration and management - health monitoring, backup/restore, database operations, user/RBAC management, AI model configuration (requires authentication for destructive operations)
 - [`polarity`](#polarity) - Analyze bidirectional semantic dimensions between concept poles
 - [`projection` (proj)](#projection) - Manage t-SNE/UMAP projections of concept embeddings. Projections reduce high-dimensional embeddings to 3D coordinates for the Embedding Landscape Explorer visualization. Use this to compute, view, and manage projection datasets.
-- [`artifact` (art)](#artifact) - Manage artifacts - persistent storage for computed results like polarity analyses, projections, and query results. Artifacts support multi-tier storage: small payloads inline in PostgreSQL, large payloads in Garage S3. Each artifact tracks its graph_epoch for freshness detection.
+- [`artifact` (art)](#artifact) - Manage artifacts - persistent storage for computed results like polarity analyses, projections, and query results. Each artifact records the graph epoch it was computed at, so the platform can tell you when one has gone stale (the graph changed underneath it) and recompute it on request (ADR-207).
+
+This is the user-facing surface for the results you create. For backend object-storage diagnostics (S3 buckets, stored objects, integrity, retention) see the admin command "kg storage".
 - [`group` (grp)](#group) - Manage groups for collaborative access control. Groups allow sharing resources with multiple users. System groups (public, admins) are managed by the platform.
 - [`query-def` (qd)](#query-def) - Manage saved query definitions - recipes that can be re-executed to generate artifacts. Supports block diagrams, cypher queries, searches, polarity analyses, and connection paths.
 - [`program` (prog)](#program) - Validate, store, and retrieve GraphProgram ASTs (ADR-500). Programs are notarized server-side to ensure safety before execution.
@@ -3241,7 +3243,9 @@ kg algorithms [options]
 
 ## artifact (art)
 
-Manage artifacts - persistent storage for computed results like polarity analyses, projections, and query results. Artifacts support multi-tier storage: small payloads inline in PostgreSQL, large payloads in Garage S3. Each artifact tracks its graph_epoch for freshness detection.
+Manage artifacts - persistent storage for computed results like polarity analyses, projections, and query results. Each artifact records the graph epoch it was computed at, so the platform can tell you when one has gone stale (the graph changed underneath it) and recompute it on request (ADR-207).
+
+This is the user-facing surface for the results you create. For backend object-storage diagnostics (S3 buckets, stored objects, integrity, retention) see the admin command "kg storage".
 
 **Usage:**
 ```bash
@@ -3255,6 +3259,8 @@ kg artifact [options]
 - `payload` - Get artifact with full payload. For large artifacts stored in Garage, this fetches from object storage.
 - `create` - Create a test artifact (for API validation). Creates a simple artifact with provided parameters.
 - `delete` - Delete an artifact. Removes both database record and any Garage-stored payload.
+- `regenerate` (`regen`) - Recompute a stale artifact from its stored parameters (ADR-207). Enqueues an auto-approved job; the result is saved as a NEW artifact and the original is preserved. Supported types: polarity_analysis, projection.
+- `cleanup` - Remove stale artifacts in bulk — those whose graph epoch is behind the current graph (ADR-207). Previews by default; pass --force to delete. Regeneratable types can be recomputed afterward with "kg artifact regenerate".
 
 ---
 
@@ -3276,6 +3282,7 @@ kg list [options]
 | `-o, --ontology <name>` | Filter by ontology | - |
 | `-l, --limit <n>` | Maximum artifacts to return | `"20"` |
 | `--offset <n>` | Skip N artifacts (for pagination) | `"0"` |
+| `-v, --verbose` | Show storage tier (inline/garage) — an implementation detail hidden by default | - |
 | `-j, --json` | Output raw JSON instead of formatted table | - |
 
 ### show
@@ -3290,6 +3297,12 @@ kg show <id>
 **Arguments:**
 
 - `<id>` - Artifact ID
+
+**Options:**
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `-v, --verbose` | Show storage tier (inline/garage) — an implementation detail hidden by default | - |
 
 ### payload
 
@@ -3346,6 +3359,36 @@ kg delete <id>
 | Option | Description | Default |
 |--------|-------------|---------|
 | `-f, --force` | Skip confirmation prompt | - |
+
+### regenerate (regen)
+
+Recompute a stale artifact from its stored parameters (ADR-207). Enqueues an auto-approved job; the result is saved as a NEW artifact and the original is preserved. Supported types: polarity_analysis, projection.
+
+**Usage:**
+```bash
+kg regenerate <id>
+```
+
+**Arguments:**
+
+- `<id>` - Artifact ID
+
+### cleanup
+
+Remove stale artifacts in bulk — those whose graph epoch is behind the current graph (ADR-207). Previews by default; pass --force to delete. Regeneratable types can be recomputed afterward with "kg artifact regenerate".
+
+**Usage:**
+```bash
+kg cleanup [options]
+```
+
+**Options:**
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `-t, --type <type>` | Only clean up artifacts of this type | - |
+| `-o, --ontology <name>` | Only clean up artifacts in this ontology | - |
+| `-f, --force` | Actually delete (default is a dry-run preview) | - |
 
 
 ## group (grp)
