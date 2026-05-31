@@ -91,11 +91,16 @@ async def create_batch(
                 }
             )
 
-        # ADR-201: Invalidate graph_accel cache after graph mutations
+        # ADR-207/#386: announce the mutation so the universal freshness tick
+        # advances (record_mutation also invalidates graph_accel, co-advancing
+        # the sub-counter). Non-fatal — never fail the edit on a bookkeeping miss.
         try:
-            service.age_client.graph.invalidate()
+            service.age_client.record_mutation(
+                "edit",
+                actor=str(current_user.id) if current_user else None,
+            )
         except Exception:
-            pass  # Non-fatal — extension may not be installed
+            pass
 
         return response
 

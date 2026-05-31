@@ -1158,8 +1158,9 @@ async def delete_document(
             f"{sources_deleted} sources, {orphaned_count} orphaned concepts"
         )
 
-        # Refresh graph epoch so caches (FUSE, etc.) detect the change
-        client.refresh_epoch()
+        # ADR-207/#386: announce the mutation — advances the universal freshness
+        # tick (event_id), invalidates graph_accel, and refreshes the counter.
+        client.record_mutation("edit")
 
         return DocumentDeleteResponse(
             document_id=document_id,

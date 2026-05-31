@@ -87,8 +87,9 @@ async def create_edge(
             outcome="success"
         )
 
-        # Refresh graph epoch so caches (FUSE, etc.) detect the change
-        age_client.refresh_epoch()
+        # ADR-207/#386: announce the mutation — advances the universal freshness
+        # tick (event_id), invalidates graph_accel, and refreshes the counter.
+        age_client.record_mutation("edit")
 
         return result
     except ValueError as e:
@@ -238,8 +239,9 @@ async def delete_edge(
             relationship_type=relationship_type
         )
 
-        # Refresh graph epoch so caches (FUSE, etc.) detect the change
-        age_client.refresh_epoch()
+        # ADR-207/#386: announce the mutation — advances the universal freshness
+        # tick (event_id), invalidates graph_accel, and refreshes the counter.
+        age_client.record_mutation("edit")
 
         return None  # 204 No Content
     except ValueError as e:

@@ -1,24 +1,24 @@
 """
-Warm-cache pool connection short-circuit (ADR-201 Phase 5f #278).
+Warm-cache on-read freshness (ADR-207 #422, superseding ADR-201 #278).
 
-Pre-fix: every call to calculate_grounding_strength_semantic /
-calculate_grounding_strength_batch / calculate_confidence_batch acquired
-a pool connection just to read the graph generation counter — even when
-all the requested concepts were already in the in-process cache. The
-review note on PR #276 (finding #7) called this out: "warm cache should
-not pay a round-trip."
+History: #278 added a connection-free warm-cache short-circuit — when every
+requested concept was already cached, the grounding/confidence methods returned
+WITHOUT acquiring a pool connection or re-reading the graph generation. That
+saved a round-trip but left staleness unbounded in wall-clock time: a hot working
+set kept serving pre-mutation values until some unrelated cold-path call happened
+to re-read the generation.
 
-These tests prove the short-circuit: when all requested concepts have
-entries at `_grounding_cache_generation` / `_confidence_cache_generation`,
-the method returns without calling `pool.getconn`. This is a legitimate
-"method-call count IS the behavior" case — the optimization's whole
-point is to skip the connection acquisition.
+ADR-207 D2 forbids that: freshness must be detected ON READ. So the connection-
+free short-circuit is gone. The new invariant these tests pin:
 
-Soundness reminder: skipping the generation probe means the method can
-serve up-to-one-call-stale data right after a graph mutation. The next
-non-warm call reads the new generation and evicts. The tests below
-exercise the warm path; the cold path is already covered by the existing
-batch tests.
+  - A warm hit (clock unchanged) still avoids the *expensive recompute* (no edge
+    fetch / projection) — the cache's real value — but it DOES read the canonical
+    clock every call (a cheap query) to confirm it isn't stale.
+  - When the clock has advanced, the cache is evicted and the method recomputes —
+    no more serving stale values to a hot working set.
+
+The clock is the committed-epoch tick (kg_api.get_committed_epoch), read via
+freshness.read_committed_epoch.
 """
 
 from unittest.mock import MagicMock
@@ -52,110 +52,80 @@ def reset_confidence_cache():
         cmod._confidence_cache_generation = None
 
 
-class TestGroundingBatchWarmCacheShortcircuit:
-    """100% warm batch skips pool.getconn() entirely."""
+def _client_with_clock(tick: int):
+    """A MagicMock client whose pool connection reports `tick` as the committed
+    epoch (so read_committed_epoch(cur) returns it). Returns (client, cursor)."""
+    cur = MagicMock()
+    cur.fetchone.return_value = {"get_committed_epoch": tick}
+    ctx = MagicMock()
+    ctx.__enter__.return_value = cur
+    ctx.__exit__.return_value = False
+    conn = MagicMock()
+    conn.cursor.return_value = ctx
+    client = MagicMock()
+    client.pool.getconn.return_value = conn
+    return client, cur
 
-    def test_all_concepts_cached_no_pool_connection_acquired(self):
-        """
-        Pre-populate _grounding_cache for 5 IDs at generation=7. Set
-        _grounding_cache_generation=7. Call the batch method. Assert
-        pool.getconn is never called — the entire response comes from
-        the in-process cache without touching the DB.
-        """
+
+class TestGroundingBatchOnReadFreshness:
+    """The batch method reads the clock every call; a warm hit skips recompute."""
+
+    def test_warm_hit_reads_clock_but_skips_recompute(self):
+        """All 5 IDs cached at the current tick → cached values returned, the
+        clock IS read (getconn), but the expensive edge query is NOT run."""
         from api.app.lib.age_client import grounding as gmod
         from api.app.lib.age_client.grounding import GroundingMixin
 
-        # Seed cache: 5 concepts at generation 7
         with gmod._grounding_cache_lock:
             gmod._grounding_cache_generation = 7
             gmod._grounding_cache.update({
-                ("c_alpha", 7): 0.8,
-                ("c_beta", 7): 0.5,
-                ("c_gamma", 7): -0.2,
-                ("c_delta", 7): 0.3,
-                ("c_epsilon", 7): 0.9,
+                ("c_alpha", 7): 0.8, ("c_beta", 7): 0.5, ("c_gamma", 7): -0.2,
+                ("c_delta", 7): 0.3, ("c_epsilon", 7): 0.9,
             })
 
-        # Build a client with a pool that explodes if accessed
-        client = MagicMock()
-        client.pool = MagicMock()
+        client, _ = _client_with_clock(7)
+        client._execute_cypher = MagicMock()
 
         result = GroundingMixin.calculate_grounding_strength_batch(
             client,
             concept_ids=["c_alpha", "c_beta", "c_gamma", "c_delta", "c_epsilon"],
         )
 
-        # Cached values returned correctly
         assert result == {
-            "c_alpha": 0.8,
-            "c_beta": 0.5,
-            "c_gamma": -0.2,
-            "c_delta": 0.3,
-            "c_epsilon": 0.9,
+            "c_alpha": 0.8, "c_beta": 0.5, "c_gamma": -0.2,
+            "c_delta": 0.3, "c_epsilon": 0.9,
         }
-        # Pool was NEVER touched
-        client.pool.getconn.assert_not_called()
-        client.pool.putconn.assert_not_called()
+        client.pool.getconn.assert_called()          # clock WAS read (on-read freshness)
+        client._execute_cypher.assert_not_called()   # but no expensive recompute
 
-    def test_partial_warm_falls_through_to_normal_path(self):
-        """
-        3 of 5 IDs cached. The short-circuit only fires on 100% warm, so
-        the partially-warm case still acquires a pool connection (to hydrate
-        the 2 misses). This proves the optimization doesn't accidentally
-        skip work it's supposed to do.
-        """
+    def test_clock_advance_evicts_and_does_not_serve_stale(self):
+        """The #422 fix: cache says c_alpha=0.8 at tick 7, but the clock now
+        reports 8 (graph mutated). The stale 0.8 must NOT be served — the cache
+        is evicted and c_alpha recomputes (to the default here, since the mock
+        has no real graph data). The old connection-free short-circuit would have
+        returned the stale 0.8."""
         from api.app.lib.age_client import grounding as gmod
         from api.app.lib.age_client.grounding import GroundingMixin
 
         with gmod._grounding_cache_lock:
             gmod._grounding_cache_generation = 7
-            gmod._grounding_cache.update({
-                ("c_alpha", 7): 0.8,
-                ("c_beta", 7): 0.5,
-                ("c_gamma", 7): -0.2,
-                # c_delta, c_epsilon NOT cached
-            })
+            gmod._grounding_cache[("c_alpha", 7)] = 0.8
 
-        # Pool must be reachable now so the cold path can run. We just
-        # raise after the first getconn to short-circuit the rest of the
-        # path — proves only that getconn WAS called, which is the
-        # invariant the test guards.
-        client = MagicMock()
-        client.pool.getconn.side_effect = RuntimeError("pool reached on partial warm")
+        client, _ = _client_with_clock(8)  # graph mutated since the cache filled
+        client._get_polarity_axis = MagicMock(return_value=None)  # → clean 0.0
 
-        with pytest.raises(RuntimeError, match="pool reached on partial warm"):
-            GroundingMixin.calculate_grounding_strength_batch(
-                client,
-                concept_ids=["c_alpha", "c_beta", "c_gamma", "c_delta", "c_epsilon"],
-            )
+        result = GroundingMixin.calculate_grounding_strength_batch(
+            client, concept_ids=["c_alpha"]
+        )
 
-        client.pool.getconn.assert_called()
-
-    def test_no_cached_generation_skips_shortcircuit(self):
-        """
-        Fresh process: _grounding_cache_generation is None (nothing has
-        been cached yet). The short-circuit must NOT fire — there's
-        nothing valid to serve from.
-        """
-        from api.app.lib.age_client.grounding import GroundingMixin
-
-        client = MagicMock()
-        client.pool.getconn.side_effect = RuntimeError("cold-path reached")
-
-        with pytest.raises(RuntimeError, match="cold-path reached"):
-            GroundingMixin.calculate_grounding_strength_batch(
-                client, concept_ids=["c_alpha"]
-            )
-
-        client.pool.getconn.assert_called()
+        assert result["c_alpha"] == 0.0          # stale 0.8 NOT served
+        client.pool.getconn.assert_called()       # clock WAS read
 
 
-class TestGroundingSemanticWarmCacheShortcircuit:
-    """Per-concept method skips pool.getconn() on a cache hit."""
+class TestGroundingSemanticOnReadFreshness:
+    """Per-concept method: same on-read freshness."""
 
-    def test_cache_hit_returns_without_acquiring_connection(self):
-        """The hot path through the per-concept method (search-render-render
-        cycles). One cached concept at the current generation → no DB touch."""
+    def test_warm_hit_reads_clock_but_skips_recompute(self):
         from api.app.lib.age_client import grounding as gmod
         from api.app.lib.age_client.grounding import GroundingMixin
 
@@ -163,78 +133,72 @@ class TestGroundingSemanticWarmCacheShortcircuit:
             gmod._grounding_cache_generation = 3
             gmod._grounding_cache[("c_focus", 3)] = 0.42
 
-        client = MagicMock()
+        client, _ = _client_with_clock(3)
+        client._execute_cypher = MagicMock()
+
         result = GroundingMixin.calculate_grounding_strength_semantic(
             client, concept_id="c_focus"
         )
 
         assert result == 0.42
-        client.pool.getconn.assert_not_called()
+        client.pool.getconn.assert_called()
+        client._execute_cypher.assert_not_called()
 
-    def test_cache_miss_falls_through_to_cold_path(self):
-        """Different concept than what's cached → cold path acquires a conn."""
+    def test_clock_advance_does_not_serve_stale(self):
+        """Cache says c_focus=0.42 at tick 3, but the clock now reports 4 → the
+        stale value must not be served; it recomputes (default 0.0 here)."""
         from api.app.lib.age_client import grounding as gmod
         from api.app.lib.age_client.grounding import GroundingMixin
 
         with gmod._grounding_cache_lock:
             gmod._grounding_cache_generation = 3
-            gmod._grounding_cache[("c_other", 3)] = 0.1
+            gmod._grounding_cache[("c_focus", 3)] = 0.42
 
-        client = MagicMock()
-        client.pool.getconn.side_effect = RuntimeError("cold-path reached")
+        client, _ = _client_with_clock(4)  # graph mutated since the cache filled
+        client._get_polarity_axis = MagicMock(return_value=None)  # → clean 0.0
 
-        with pytest.raises(RuntimeError):
-            GroundingMixin.calculate_grounding_strength_semantic(
-                client, concept_id="c_focus"
-            )
+        result = GroundingMixin.calculate_grounding_strength_semantic(
+            client, concept_id="c_focus"
+        )
+
+        assert result == 0.0                # stale 0.42 NOT served
+        client.pool.getconn.assert_called()  # clock WAS read
 
 
-class TestConfidenceBatchWarmCacheShortcircuit:
-    """Same short-circuit on the confidence-side batch method."""
+class TestConfidenceBatchOnReadFreshness:
+    """Same on-read freshness on the confidence-side batch method."""
 
-    def test_all_concepts_cached_no_pool_connection_acquired(self):
-        """
-        All 3 IDs cached at the current generation. grounding_display gets
-        recomputed from the caller's grounding_map (a deliberate exception
-        to the cache-key invariant — display depends on call-time data
-        outside the graph). But level, score, signals, interpretation
-        all come from cache. No pool touch.
-        """
+    def test_warm_hit_reads_clock_and_returns_cached_levels(self):
+        """All 3 IDs cached at the current tick → cached levels returned and the
+        clock IS read. grounding_display is refreshed from the caller's
+        grounding_map (it depends on call-time data outside the graph)."""
         from api.app.services import confidence_analyzer as cmod
         from api.app.services.confidence_analyzer import ConfidenceAnalyzer
 
-        # Seed confidence cache for 3 concepts at generation 9
         with cmod._confidence_cache_lock:
             cmod._confidence_cache_generation = 9
             cmod._confidence_cache.update({
                 ("c_alpha", 9): {
-                    "level": "high",
-                    "confidence_score": 0.92,
+                    "level": "high", "confidence_score": 0.92,
                     "signals": {"relationship_count": 12},
                     "interpretation": "many supporting edges",
-                    "grounding_display": "Strong",  # will be overwritten
-                    "calculation_time_ms": 5,
+                    "grounding_display": "Strong", "calculation_time_ms": 5,
                 },
                 ("c_beta", 9): {
-                    "level": "medium",
-                    "confidence_score": 0.55,
+                    "level": "medium", "confidence_score": 0.55,
                     "signals": {"relationship_count": 4},
                     "interpretation": "moderate support",
-                    "grounding_display": "Moderate",
-                    "calculation_time_ms": 5,
+                    "grounding_display": "Moderate", "calculation_time_ms": 5,
                 },
                 ("c_gamma", 9): {
-                    "level": "low",
-                    "confidence_score": 0.18,
+                    "level": "low", "confidence_score": 0.18,
                     "signals": {"relationship_count": 1},
                     "interpretation": "thin",
-                    "grounding_display": "Weak",
-                    "calculation_time_ms": 5,
+                    "grounding_display": "Weak", "calculation_time_ms": 5,
                 },
             })
 
-        client = MagicMock()
-        client.pool = MagicMock()
+        client, _ = _client_with_clock(9)
         analyzer = ConfidenceAnalyzer(client)
 
         result = analyzer.calculate_confidence_batch(
@@ -242,9 +206,7 @@ class TestConfidenceBatchWarmCacheShortcircuit:
             grounding_map={"c_alpha": 0.9, "c_beta": 0.4, "c_gamma": -0.1},
         )
 
-        # Cached values came back
         assert result["c_alpha"]["level"] == "high"
         assert result["c_beta"]["level"] == "medium"
         assert result["c_gamma"]["level"] == "low"
-        # And no pool acquisition
-        client.pool.getconn.assert_not_called()
+        client.pool.getconn.assert_called()  # clock WAS read on the warm path

@@ -83,8 +83,9 @@ async def create_concept(
             outcome="success"
         )
 
-        # Refresh graph epoch so caches (FUSE, etc.) detect the change
-        age_client.refresh_epoch()
+        # ADR-207/#386: announce the mutation — advances the universal freshness
+        # tick (event_id), invalidates graph_accel, and refreshes the counter.
+        age_client.record_mutation("edit")
 
         return result
     except ValueError as e:
@@ -259,8 +260,9 @@ async def delete_concept(
     try:
         await service.delete_concept(concept_id=concept_id, cascade=cascade)
 
-        # Refresh graph epoch so caches (FUSE, etc.) detect the change
-        age_client.refresh_epoch()
+        # ADR-207/#386: announce the mutation — advances the universal freshness
+        # tick (event_id), invalidates graph_accel, and refreshes the counter.
+        age_client.record_mutation("edit")
 
         return None  # 204 No Content
     except ValueError as e:
@@ -378,7 +380,9 @@ async def add_evidence(
             outcome="success"
         )
 
-        age_client.refresh_epoch()
+        # ADR-207/#386: announce the mutation — advances the universal freshness
+        # tick (event_id), invalidates graph_accel, and refreshes the counter.
+        age_client.record_mutation("edit")
 
         return result
     except ValueError as e:

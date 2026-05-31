@@ -43,7 +43,12 @@ _confidence_cache: Dict[Tuple[str, int], Dict[str, Any]] = {}
 _confidence_cache_generation: Optional[int] = None
 
 from api.app.constants import BATCH_CHUNK_SIZE
-from api.app.lib.age_client.graph_generation import get_graph_generation
+from api.app.lib.freshness import (
+    Budget,
+    CollectionDerivation,
+    read_committed_epoch,
+    register_derivation,
+)
 
 
 # Confidence level thresholds
@@ -188,17 +193,18 @@ class ConfidenceAnalyzer:
 
     def _read_graph_generation_with_pool_conn(self) -> int:
         """
-        Acquire a pool connection just to read graph generation.
+        Acquire a pool connection just to read the canonical freshness clock.
 
-        Thin wrapper around `get_graph_generation` for callers that don't
-        already hold a cursor. Batch callers should use `get_graph_generation`
-        directly on the cursor they already have — avoid double-acquiring.
+        ADR-207: the confidence cache keys on the committed-epoch tick (the
+        universal clock), not graph_accel.generation. Thin wrapper around
+        `read_committed_epoch` for callers that don't already hold a cursor;
+        batch callers read it directly on their own cursor.
         """
         from psycopg2 import extras
         conn = self.client.pool.getconn()
         try:
             with conn.cursor(cursor_factory=extras.RealDictCursor) as cur:
-                return get_graph_generation(cur, savepoint_name="conf_gen_check")
+                return read_committed_epoch(cur)
         finally:
             self.client.pool.putconn(conn)
 
@@ -252,50 +258,17 @@ class ConfidenceAnalyzer:
 
         from psycopg2 import extras as pg_extras
 
-        # --- Phase 0: warm-cache short-circuit (ADR-201 Phase 5f #278) ---
-        # Mirror of the grounding-batch optimization in grounding.py — same
-        # staleness bound: bounded by the next cold-path call in this
-        # process, NOT by wall-clock time. See the long comment on
-        # grounding.py:calculate_grounding_strength_batch for the full
-        # rationale; the trade-off applies identically here.
-        #
-        # Caveat specific to confidence: grounding_display is recomputed
-        # even on a warm hit because it depends on the caller's current
-        # grounding_map (which can change call-to-call independently of
-        # the graph generation).
-        with _confidence_cache_lock:
-            cached_gen = _confidence_cache_generation
-            if cached_gen is not None:
-                cached_entries = {}
-                for cid in concept_ids:
-                    entry = _confidence_cache.get((cid, cached_gen))
-                    if entry is None:
-                        cached_entries = None
-                        break
-                    cached_entries[cid] = entry
-                if cached_entries is not None:
-                    # Replace grounding_display per current grounding_map
-                    refreshed = {}
-                    for cid, entry in cached_entries.items():
-                        refreshed_entry = dict(entry)
-                        refreshed_entry['grounding_display'] = (
-                            self._get_grounding_display(
-                                grounding_map.get(cid), entry.get('level')
-                            )
-                        )
-                        refreshed[cid] = refreshed_entry
-                    logger.debug(
-                        f"Confidence batch: warm-cache short-circuit, "
-                        f"{len(concept_ids)} concepts served without "
-                        f"acquiring a pool connection"
-                    )
-                    return refreshed
-
-        # --- Phase 1: cache check (one connection) ---
+        # --- Cache check (one connection) ---
+        # ADR-207 D2: read the canonical freshness clock on EVERY call. An
+        # earlier connection-free "Phase 0" warm short-circuit served the batch
+        # from cache WITHOUT re-reading the generation, leaving staleness
+        # unbounded in wall-clock time (#422). The single clock read + connection
+        # per batch is cheap and amortizes across all concept_ids; the cache
+        # still saves the expensive per-concept confidence computation.
         conn = self.client.pool.getconn()
         try:
             with conn.cursor(cursor_factory=pg_extras.RealDictCursor) as cur:
-                graph_gen = get_graph_generation(cur, savepoint_name="conf_gen_check_batch")
+                graph_gen = read_committed_epoch(cur)
 
                 misses = []
                 with _confidence_cache_lock:
@@ -723,3 +696,49 @@ class ConfidenceAnalyzer:
         }
 
         return display_matrix.get((grounding_cat, confidence), "Unknown")
+
+
+# ---------------------------------------------------------------------------
+# ADR-207 freshness-contract registration
+# ---------------------------------------------------------------------------
+
+
+@register_derivation
+class ConfidenceCacheDerivation(CollectionDerivation):
+    """Per-concept confidence cache as an ADR-207 CollectionDerivation.
+
+    Same shape as the grounding cache (Tier 2): a whole-tier stamp on the
+    universal committed-epoch tick, reconcile clears the lot. On-read detection
+    and the cache itself live in ConfidenceAnalyzer above; this exposes the tier
+    to the freshness registry (conformance test + operator reconcile).
+    """
+
+    name = "confidence_cache"
+    budget = Budget.strict()
+
+    def __init__(self, client):
+        """Store the AGE client for the clock read; cache state is module-global."""
+        self.client = client
+
+    def version_stamp(self):
+        """The committed-epoch tick the cache was last filled at (None if cold)."""
+        return _confidence_cache_generation
+
+    def current_version(self) -> int:
+        """The canonical clock now: the committed-epoch tick."""
+        from psycopg2 import extras
+        conn = self.client.pool.getconn()
+        try:
+            with conn.cursor(cursor_factory=extras.RealDictCursor) as cur:
+                v = read_committed_epoch(cur)
+            conn.rollback()
+            return v
+        finally:
+            self.client.pool.putconn(conn)
+
+    def reconcile(self) -> None:
+        """Invalidate the whole tier; it refills lazily on the next read."""
+        global _confidence_cache, _confidence_cache_generation
+        with _confidence_cache_lock:
+            _confidence_cache.clear()
+            _confidence_cache_generation = None

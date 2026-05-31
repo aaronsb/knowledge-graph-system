@@ -64,6 +64,12 @@ class FakeCursor:
             self._next_rows = []
             return
 
+        # ADR-207 canonical freshness clock (committed-epoch tick). The cache
+        # keys on this now; the test asserts entries at generation 1.
+        if "get_committed_epoch" in sql:
+            self._next_rows = [{"get_committed_epoch": 1}]
+            return
+
         # Tier-1 graph generation probe (graph_accel.generation)
         if "graph_accel.generation" in sql:
             self._next_rows = [{"current_generation": 1}]

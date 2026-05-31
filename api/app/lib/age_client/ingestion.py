@@ -60,32 +60,124 @@ class IngestionMixin:
 
         Grep target: `record_epoch failed`.
         """
+        conn = None
         try:
             conn = self.pool.getconn()
-            try:
-                with conn.cursor() as cur:
-                    cur.execute(
-                        "SELECT kg_api.record_graph_epoch(%s::text, %s::text, %s::jsonb)",
-                        (
-                            kind,
-                            str(actor) if actor is not None else None,
-                            json.dumps(metadata or {}),
-                        ),
-                    )
-                    row = cur.fetchone()
-                    return row[0] if row else None
-            finally:
-                conn.commit()
-                self.pool.putconn(conn)
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT kg_api.record_graph_epoch(%s::text, %s::text, %s::jsonb)",
+                    (
+                        kind,
+                        str(actor) if actor is not None else None,
+                        json.dumps(metadata or {}),
+                    ),
+                )
+                row = cur.fetchone()
+            conn.commit()
+            return row[0] if row else None
         except Exception as e:
             # ERROR (not WARNING) — see docstring. Any non-zero rate of
             # this in a healthy install indicates a real problem.
+            if conn is not None:
+                try:
+                    conn.rollback()
+                except Exception:
+                    pass
             logger.error(
                 "record_epoch failed (kind=%s, actor=%s): %s",
                 kind, actor, e,
                 exc_info=True,
             )
             return None
+        finally:
+            # Always return the connection — even if commit/rollback raised — so
+            # a steady failure rate cannot slowly exhaust the pool (review S1).
+            if conn is not None:
+                self.pool.putconn(conn)
+
+    def complete_epoch(self, event_id: int, status: str = "completed") -> None:
+        """
+        Resolve an epoch event recorded by record_epoch().
+
+        ADR-207/#384: record_epoch() inserts the event as `in_progress`. Call
+        this with `completed` when the mutation transaction commits, or `failed`
+        when it aborts/rolls back. Until resolved, the event holds the committed
+        watermark (kg_api.get_committed_epoch()) just below its event_id, so
+        every materialized derivation correctly reads stale until the job lands.
+
+        Best-effort, like record_epoch(): a failure here is logged at ERROR (a
+        steady-state rate means the watermark can stall on a phantom in-flight
+        event and should be investigated) but never masks the job's own outcome.
+
+        Grep target: `complete_epoch failed`.
+        """
+        if event_id is None:
+            return
+        conn = None
+        try:
+            conn = self.pool.getconn()
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT kg_api.complete_graph_epoch(%s::bigint, %s::text)",
+                    (event_id, status),
+                )
+            conn.commit()
+        except Exception as e:
+            if conn is not None:
+                try:
+                    conn.rollback()
+                except Exception:
+                    pass
+            logger.error(
+                "complete_epoch failed (event_id=%s, status=%s): %s",
+                event_id, status, e,
+                exc_info=True,
+            )
+        finally:
+            # Always return the connection (review S1).
+            if conn is not None:
+                self.pool.putconn(conn)
+
+    def record_mutation(
+        self,
+        kind: str,
+        actor: Optional[str] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> Optional[int]:
+        """Announce an already-committed atomic graph mutation (ADR-207, #386).
+
+        The universal freshness tick (kg_api.graph_epochs.event_id) only advances
+        when application code records an epoch event — AGE Cypher bypasses
+        PostgreSQL triggers, so there is no automatic backstop. Every path that
+        mutates the graph must call this (or, for long-running jobs, the
+        record_epoch/complete_epoch pair) or its changes are invisible to
+        freshness and every derivation serves stale data for them.
+
+        This does the two things that must co-advance, from one place:
+          1. records a *completed* epoch event of `kind` (advances the tick), and
+          2. invalidates the graph_accel sub-counter (+ its pg_notify),
+        so event_id and graph_accel.generation move together by construction.
+
+        For atomic, synchronous mutations (edit routes, proposal execution). Long
+        jobs that need to tag nodes with the event_id mid-run use record_epoch()
+        at the start and complete_epoch() at the end instead.
+
+        Returns the event_id, or None if the epoch could not be recorded.
+        """
+        event_id = self.record_epoch(kind, actor=actor, metadata=metadata)
+        if event_id is not None:
+            self.complete_epoch(event_id, "completed")
+        # Co-advance the in-memory accelerator's sub-counter. Non-fatal: the
+        # extension may not be loaded on this connection.
+        try:
+            self.graph.invalidate()
+        except Exception:
+            pass
+        # Keep the graph_change_counter snapshot fresh too — FUSE and other
+        # pollers read it (this subsumes the bare refresh_epoch() that mutation
+        # paths used to call).
+        self.refresh_epoch()
+        return event_id
 
     def create_source_node(
         self,
