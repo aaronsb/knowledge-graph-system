@@ -49,7 +49,8 @@ const queryClient = new QueryClient({
 
 const AppContent: React.FC = () => {
   const { setTypes, setLoading, setError } = useVocabularyStore();
-  const { checkAuth, isAuthenticated } = useAuthStore();
+  const { checkAuth, sessionStatus } = useAuthStore();
+  const isAuthenticated = sessionStatus === 'authenticated';  // ADR-705
   const { theme, setTheme } = useThemeStore();
 
   // Initialize theme harmony (applies stored color settings)

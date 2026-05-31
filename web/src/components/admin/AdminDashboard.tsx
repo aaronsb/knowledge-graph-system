@@ -20,6 +20,8 @@ import {
   CheckCircle,
 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
+import { useCapability } from '../../hooks/useCapability';
+import { SignInPrompt } from '../auth/SignInPrompt';
 import { TabButton } from './components';
 import { AccountTab } from './AccountTab';
 import { UsersTab } from './UsersTab';
@@ -30,7 +32,8 @@ import { VocabularyTab } from './VocabularyTab';
 import type { TabType } from './types';
 
 export const AdminDashboard: React.FC = () => {
-  const { isAuthenticated, permissions, hasPermission, isPlatformAdmin } = useAuthStore();
+  const { permissions, hasPermission, isPlatformAdmin } = useAuthStore();
+  const { can: canAccess, reason } = useCapability();  // ADR-705: session-aware gate
 
   // Permission-based access control (ADR-074)
   const canViewUsers = hasPermission('users', 'read');
@@ -54,21 +57,9 @@ export const AdminDashboard: React.FC = () => {
     }
   }, [successMessage]);
 
-  // Not authenticated
-  if (!isAuthenticated) {
-    return (
-      <div className="h-full flex items-center justify-center bg-background">
-        <div className="text-center">
-          <Shield className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-          <h2 className="text-lg font-semibold text-foreground">
-            Authentication Required
-          </h2>
-          <p className="text-muted-foreground mt-2">
-            Please log in to access admin settings.
-          </p>
-        </div>
-      </div>
-    );
+  // Not authenticated (or expired) - session-aware in-place prompt (ADR-705)
+  if (!canAccess) {
+    return <SignInPrompt reason={reason} detail="to access admin settings" />;
   }
 
   return (
