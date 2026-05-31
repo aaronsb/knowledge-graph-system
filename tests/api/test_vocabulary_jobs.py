@@ -67,8 +67,9 @@ class TestDispatchVocabularyJob:
         # Enqueued with the right worker job_type...
         queue.enqueue.assert_called_once()
         assert queue.enqueue.call_args.kwargs["job_type"] == expected_type
-        # ...then auto-approved so the lane manager claims it (ADR-100).
+        # ...then auto-approved (by job_id) so the lane manager claims it (ADR-100).
         queue.update_job.assert_called_once()
+        assert queue.update_job.call_args.args[0] == "job_test123"
         approve_updates = queue.update_job.call_args.args[1]
         assert approve_updates["status"] == "approved"
 

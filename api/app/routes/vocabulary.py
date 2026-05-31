@@ -615,6 +615,9 @@ async def dispatch_vocabulary_job(
 
     @verified e478cb25
     """
+    # `kind` is a Literal, so Pydantic rejects unknown values with 422 before
+    # we get here; this guard is belt-and-suspenders in case the enum and the
+    # mapping ever drift apart.
     job_type = VOCAB_JOB_KIND_TO_TYPE.get(request.kind)
     if not job_type:
         raise HTTPException(status_code=400, detail=f"Unknown vocabulary job kind: {request.kind}")

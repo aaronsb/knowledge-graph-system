@@ -87,7 +87,7 @@ const JOB_STATUS_STYLES: Record<string, string> = {
 };
 
 export const VocabularyTab: React.FC<VocabularyTabProps> = ({ onError, onSuccess }) => {
-  const { hasPermission } = useAuthStore();
+  const { hasPermission, isPlatformAdmin } = useAuthStore();
   const canManage = hasPermission('vocabulary', 'write');
 
   const [status, setStatus] = useState<VocabularyStatus | null>(null);
@@ -95,6 +95,8 @@ export const VocabularyTab: React.FC<VocabularyTabProps> = ({ onError, onSuccess
   const [recentJobs, setRecentJobs] = useState<JobStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [dispatching, setDispatching] = useState<VocabJobKind | null>(null);
+  // Consolidate executes merges (see handleActionClick); it gets a confirm step.
+  const [confirmKind, setConfirmKind] = useState<VocabJobKind | null>(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -125,10 +127,26 @@ export const VocabularyTab: React.FC<VocabularyTabProps> = ({ onError, onSuccess
     loadData();
   }, [loadData]);
 
+  const handleActionClick = (action: VocabAction) => {
+    // Consolidate executes merges (auto_mode below), so it gets a two-step
+    // confirm like the ontology "Run cycle". The other three are idempotent
+    // recomputations and fire immediately.
+    if (action.kind === 'consolidate' && confirmKind !== 'consolidate') {
+      setConfirmKind('consolidate');
+      return;
+    }
+    setConfirmKind(null);
+    void handleDispatch(action);
+  };
+
   const handleDispatch = async (action: VocabAction) => {
     setDispatching(action.kind);
     try {
-      const res = await apiClient.dispatchVocabularyJob(action.kind);
+      // Without auto_mode the consolidate worker runs a dry-run no-op
+      // (computes proposals, executes nothing). Opt into execution explicitly,
+      // mirroring OntologyTab's triggerAnnealingCycle(false).
+      const params = action.kind === 'consolidate' ? { auto_mode: true } : undefined;
+      const res = await apiClient.dispatchVocabularyJob(action.kind, params);
       onSuccess?.(`${action.label} job dispatched (#${res.job_id}). Track it in Jobs.`);
       await loadData();
     } catch (err) {
@@ -236,33 +254,48 @@ export const VocabularyTab: React.FC<VocabularyTabProps> = ({ onError, onSuccess
           {!canManage && ' Requires the vocabulary:write permission.'}
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {ACTIONS.map((action) => (
-            <button
-              key={action.kind}
-              onClick={() => handleDispatch(action)}
-              disabled={!canManage || dispatching !== null}
-              className="flex items-start gap-3 p-3 text-left bg-muted/40 rounded-lg hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              title={canManage ? action.description : 'Requires vocabulary:write'}
-            >
-              <span className="mt-0.5 text-muted-foreground">
-                {dispatching === action.kind ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  action.icon
-                )}
-              </span>
-              <span>
-                <span className="block text-sm font-medium text-foreground">{action.label}</span>
-                <span className="block text-xs text-muted-foreground">{action.description}</span>
-              </span>
-            </button>
-          ))}
+          {ACTIONS.map((action) => {
+            const awaitingConfirm = confirmKind === action.kind;
+            return (
+              <button
+                key={action.kind}
+                onClick={() => handleActionClick(action)}
+                disabled={!canManage || dispatching !== null}
+                className={`flex items-start gap-3 p-3 text-left rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors ${
+                  awaitingConfirm
+                    ? 'bg-status-warning/15 ring-1 ring-status-warning/40 hover:bg-status-warning/20'
+                    : 'bg-muted/40 hover:bg-muted'
+                }`}
+                title={canManage ? action.description : 'Requires vocabulary:write'}
+              >
+                <span className="mt-0.5 text-muted-foreground">
+                  {dispatching === action.kind ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    action.icon
+                  )}
+                </span>
+                <span>
+                  <span className="block text-sm font-medium text-foreground">
+                    {awaitingConfirm ? `Confirm — ${action.label} (executes merges)` : action.label}
+                  </span>
+                  <span className="block text-xs text-muted-foreground">
+                    {awaitingConfirm ? 'Click again to run, or pick another action to cancel.' : action.description}
+                  </span>
+                </span>
+              </button>
+            );
+          })}
         </div>
       </Section>
 
       {/* Recent runs — the previous-runs log, sourced from the jobs the Actions
           panel dispatches (analogous to the ontology proposals log, but for vocab
-          the natural record is the job history). */}
+          the natural record is the job history).
+          NOTE: GET /jobs is permission-scoped — non-admins see only their own
+          jobs, and vocab_consolidate runs in the "system" lane (excluded for
+          non-admins). So a non-admin's view here is partial; platform admins see
+          the full history including the hysteresis/cron auto-runs. */}
       <Section title="Recent Runs" icon={<History className="w-5 h-5" />}>
         {recentJobs.length === 0 ? (
           <p className="text-sm text-muted-foreground py-2">
@@ -298,6 +331,12 @@ export const VocabularyTab: React.FC<VocabularyTabProps> = ({ onError, onSuccess
               );
             })}
           </div>
+        )}
+        {recentJobs.length > 0 && !isPlatformAdmin && (
+          <p className="mt-3 text-xs text-muted-foreground">
+            Showing your jobs only. Platform admins see all vocabulary runs,
+            including automatic consolidation cycles.
+          </p>
         )}
       </Section>
     </div>
