@@ -39,7 +39,7 @@ autonomy *trustworthy* rather than merely *automatic*:
 | Graduated automation | #251 Autonomous safety bounds | Consecutive-cycle demotion gate, high-confidence promotion gate | `_auto_approve_and_dispatch()` approves all proposals unconditionally |
 | Adaptive control | #249 Bezier ecological pressure | Dynamic `demotion_threshold` / `promotion_min_degree` driven by the ecological ratio | `annealing_manager.py` carries the comment *"Threshold feedback is deferred (#249)"* — thresholds are static |
 | Execution fidelity | #252 Per-source affinity routing | Route each source in a dying ontology to its own best-affinity target | `proposal_executor.execute_demotion()` calls `dissolve_ontology()` with a single absorption target |
-| Execution fidelity | #241 Integrity worker | Detect and heal structural edge misuse (LLM emitting `SCOPED_BY`/`APPEARS` as semantic edges) | No structural-edge integrity worker exists |
+| Execution fidelity | #241 Integrity worker | Detect (not heal) structural edge misuse (LLM emitting `SCOPED_BY`/`APPEARS` as semantic edges); remediate non-destructively via classify/deactivate | No structural-edge detection exists; destructive healing rejected (see Integrity Tab) |
 
 These five are not five separate features. They are one body of work — the
 unfinished half of ADR-200 Phase 4 — and they have a dependency order:
@@ -193,20 +193,32 @@ concept trapped in a text interface. The same applies here.
 Data sources: `GET /ontology/annealing/ecology`, `GET`/`PUT` on the ecological
 pressure profile within `annealing_options`.
 
-#### Integrity Tab — structural guard (#241)
+#### Integrity Tab — structural guard (#241, detection/classify only)
 
-Surfaces the graph integrity worker.
+Surfaces structural-edge detection. **Detection and classification only — no
+destructive healing.** The original #241 proposal (rewrite illegal structural
+edges to `SIMILAR_TO` at low confidence, delete offending VocabType nodes) is
+**rejected** as inconsistent with the platform's append-only, no-destructive-
+delete posture (ADR-203 epoch event log, ADR-206 "no deletion, only movement")
+and its classify-don't-prune vocabulary stance (ADR-046, ADR-052). A destructive
+janitor would overwrite LLM-emitted signal and fabricate dishonest provenance.
+Crucially, the misuse it targeted is already neutralized by ADR-200 Design
+Principle 6 (edge-agnostic lifecycle): lifecycle queries match on node types,
+not edge labels, so a mislabeled semantic edge cannot break traversal. The
+operator-facing need is therefore **visibility and classification**, not repair.
 
 - **Violations table** — structural edge names (`SCOPED_BY`, `APPEARS`,
   `EVIDENCED_BY`, `FROM_SOURCE`) found connecting wrong node types, and
   structural names appearing as VocabType nodes (ADR-204 node-type pollution).
-- **Run check** — trigger detection on demand (detection is safe; available
-  before healing ships).
-- **Healing log** — replacements made (illegal structural edge → `SIMILAR_TO`
-  at low confidence), VocabType nodes removed, each logged as a warning per the
-  #241 design.
+  Read-only; flags for operator awareness.
+- **Run check** — trigger detection on demand (read-only; mutates nothing).
+- **Remediation (non-destructive)** — flagged VocabType names are *classified*
+  by epistemic status and may be **deactivated** (`is_active = false`,
+  preserving all edges and history), the same mechanism the vocabulary cycle
+  uses (ADR-701). No edge rewriting, no node deletion. Any remediation is logged
+  to the epoch event log (ADR-203).
 
-Data sources: the new `POST /ontology/integrity/check` and
+Data sources: the new `POST /ontology/integrity/check` (read-only detection) and
 `GET /ontology/integrity/report` (see §4).
 
 ### 3. CLI parity additions
@@ -409,9 +421,10 @@ present. The recommended order follows the backend dependency graph:
 2. **Dashboard + Proposals tabs** — buildable today against existing endpoints
    (`GET /ontology/`, `GET /ontology/proposals`). Delivers visibility into the
    already-running autonomous loop first — the most urgent gap.
-3. **#241 (integrity worker)** — detection-only first (safe, no graph
-   mutation), surfaced in the Integrity tab; healing follows once autonomous
-   execution is hardened. Worker and UI alerts panel ship together.
+3. **#241 (integrity worker)** — **detection/classify only** (safe, no graph
+   mutation), surfaced in the Integrity tab; destructive healing is rejected
+   (see Integrity Tab). Non-destructive remediation is deactivation, not
+   rewrite/delete. Worker and UI alerts panel ship together.
 4. **#249 (Bezier ecological feedback)** — backend feedback loop, then the
    Ecology tab curve editor.
 5. **#250 (AITL)** then **#251 (autonomous safety bounds)** — the Automation
@@ -420,9 +433,11 @@ present. The recommended order follows the backend dependency graph:
    issue, not as a separate pass.
 
 The integrity worker (#241) is treated here rather than in ADR-200 because its
-operator-facing half — detection reporting and the healing log — is part of this
-interface; ADR-200 Design Principle 6 already establishes the edge-agnostic
-principle the worker enforces.
+operator-facing half — detection reporting and non-destructive classification —
+is part of this interface; ADR-200 Design Principle 6 already establishes the
+edge-agnostic principle that makes the misuse benign (mislabeled edges cannot
+break node-type-based lifecycle queries), so the worker's job is visibility, not
+repair.
 
 ## Related ADRs
 

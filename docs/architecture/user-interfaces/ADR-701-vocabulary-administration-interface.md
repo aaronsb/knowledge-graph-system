@@ -4,229 +4,198 @@ date: 2026-01-29
 deciders:
   - aaronsb
   - claude
-related: [22, 25, 26, 46, 47, 53, 65, 77]
+related: [22, 25, 26, 32, 46, 47, 52, 53, 65, 77, 100, 200, 206, 703]
 ---
 
 # ADR-701: Vocabulary Administration Interface
 
 ## Context
 
-The vocabulary system is one of the platform's most sophisticated subsystems. It manages a dynamic, self-regulating set of relationship types that grow from LLM extraction, are categorized probabilistically via embeddings (ADR-047), scored by grounding contribution (ADR-046), classified by epistemic status (ADR-065), and consolidated through AI-assisted workflows (ADR-026). Tuning vocabulary parameters directly affects extraction quality, graph coherence, and system performance.
+The vocabulary system is a **self-regulating agentic cycle**, structurally the
+twin of ontology annealing (ADR-200). Relationship types grow from LLM
+extraction (ADR-025), are auto-categorized via embeddings (ADR-047), scored by
+grounding contribution (ADR-046), classified by epistemic status (ADR-065), and
+periodically **consolidated** — the expansion/consolidation "dreaming" cycle of
+ADR-052, driven by zone pressure (ADR-032: COMFORT/WATCH/DANGER/EMERGENCY) and
+an AITL consolidation worker that produces merge proposals. This is a loop that
+restructures the vocabulary on a heartbeat, much as the annealing worker
+restructures ontologies.
 
-Today, all vocabulary management happens through the CLI (`kg vocab` — 20 subcommands across 8 modules) or raw API calls (~20 REST endpoints). The web workstation has no vocabulary administration UI. The only web-side vocabulary awareness is `vocabularyStore.ts` (explorer color coding) and `OntologyFilterBlock` (query builder filter).
+Two facts frame this ADR:
 
-This creates several problems:
+**1. The vocabulary cycle is already live — and already surfaced everywhere
+except the web.** All vocabulary management happens through the CLI (`kg vocab`
+— 20 subcommands) or ~20 REST endpoints. The backend is mature: schema, workers,
+and endpoints for status/zones, types, profiles, config, consolidation, and
+epistemic measurement all exist (see *Backend Alignment Verification*). The web
+workstation has no vocabulary administration surface at all — only
+`vocabularyStore.ts` (explorer color coding) and `OntologyFilterBlock` (query
+filter).
 
-1. **Accessibility barrier.** Non-CLI users cannot see vocabulary health, adjust parameters, or respond to zone alerts (WATCH/DANGER/EMERGENCY). Vocabulary tuning requires terminal comfort and memorizing command options.
+**2. Its sibling cycle just got a web surface — and a pattern to follow.**
+ADR-703 ("Ontology Lifecycle Administration Interface") faced the structurally
+identical problem for ontology annealing: a self-regulating loop reachable only
+through the CLI. ADR-703 resolved it with an **operational cohort** in the Admin
+panel — the live `Ontology` tab in `AdminDashboard` (loop health / ecological
+pressure / read-only config / proposals queue) — shipped as an MVP tab first,
+with a dedicated `/admin/ontology-lifecycle` route as the deferred target state.
+The vocabulary cycle is the direct sibling (ADR-200 Design Principle 4:
+self-similarity across scale) and warrants **the same cohort, the same shape,
+the same incremental path.**
 
-2. **Curve blindness.** Aggressiveness profiles are defined by Bezier control points (x1, y1, x2, y2) — four floating point values that map to a curve shape. In the CLI, users set these numerically and see an ASCII approximation. This is a fundamentally visual concept trapped in a text interface.
-
-3. **Consolidation friction.** The AITL (AI-in-the-Loop) consolidation workflow produces merge recommendations with confidence scores. In the CLI, reviewing these is sequential and stateless — you cannot compare candidates, defer decisions, or return to a partially-reviewed batch.
-
-4. **Epistemic opacity.** Grounding measurements and epistemic classifications (WELL_GROUNDED through CONTRADICTED) are powerful data consistency signals, but the CLI presents them as flat tables. Trends, distributions, and anomalies are not visible.
-
-5. **Configuration coupling.** The 12 vocabulary config parameters interact — changing `vocab_max` shifts the zone, which changes effective aggressiveness, which changes consolidation behavior. In the CLI these are adjusted one at a time with no preview of cascading effects.
-
-Meanwhile, the existing Admin dashboard (`/admin`) has four tabs (Account, Users, Roles, System). The System tab is already 884 lines handling AI extraction, API keys, and embedding profiles. Vocabulary management is too deep to fit as another section there.
+> **Revision note (2026-05).** This ADR was originally drafted (2026-01-29) as a
+> six-tab, dedicated-route interface (Dashboard / Types / Profiles / Config /
+> Health / Merge) — before the ADR-703 OntologyTab pattern existed. That design
+> was over-scoped for a first increment: it led with a draggable Bézier curve
+> editor and chord diagrams rather than the operating loop. This revision
+> reframes the ADR around **parity with the ontology lifecycle cohort**, leads
+> with a lean MVP tab, and demotes the rich six-tab design to a clearly-deferred
+> target state. The backend verification below is unchanged and still valid.
 
 ## Decision
 
-### 1. Add "Vocabulary" as a Top-Level Admin Entry
+Surface the vocabulary consolidation cycle in the web workstation as a
+**first-class agentic-cycle cohort**, mirroring the ontology lifecycle interface
+(ADR-703). Ship it the same way ADR-703 shipped: an MVP tab in the existing
+`AdminDashboard` first, graduating to a dedicated route as richer surfaces
+accrete.
 
-Add a new sidebar entry under the Admin category:
+### 1. MVP — a "Vocabulary" tab in Administration, cohort to "Ontology"
 
-```
-Admin
-  ├── Administration    (existing: Account, Users, Roles, System)
-  └── Vocabulary        (new: dedicated vocabulary management)
-```
+Add a `Vocabulary` tab to the existing `AdminDashboard` (alongside Account /
+Users / Roles / System / **Ontology**), as the **direct cohort to the Ontology
+tab**. It reuses the OntologyTab structure (`web/src/components/admin/`,
+`components.tsx` shared `Section`/`InfoCard`/`StatusBadge`), so the two cycles
+read as siblings. Four panels map one-to-one onto the OntologyTab cohort:
 
-Route: `/admin/vocabulary`
+| Vocabulary panel (MVP) | Mirrors OntologyTab panel | Data source |
+|------------------------|---------------------------|-------------|
+| **Consolidation Loop** — pruning mode (Naive/HITL/AITL), enable state, last/next run, pending merge proposals, vocab size, "Run consolidation" | Annealing Loop | `GET /vocabulary/status`, consolidation worker status |
+| **Vocabulary Pressure** — zone badge (COMFORT/WATCH/DANGER/EMERGENCY), aggressiveness curve with current-position marker, effective aggressiveness | Ecological Pressure | `GET /vocabulary/status` (zone, size, thresholds, profile) |
+| **Configuration** — durable vocabulary config (thresholds, profile, pruning mode), **read-only here — adjust via `kg vocab` CLI** | Configuration (`annealing_options`) | `GET /admin/vocabulary/config` |
+| **Actions** — job-dispatch triggers for the four worker operations (consolidate / refresh categories / remeasure epistemic / generate embeddings); fire-and-poll, toast the `job_id` | Annealing Loop's "Run cycle" trigger | `POST /vocabulary/jobs {kind}` (new), job-status polling |
 
-This gives vocabulary its own full-page layout with room for multiple tabs and rich visualizations, rather than competing for space inside the existing System tab. The pattern mirrors how explorers each get dedicated workspace — vocabulary management deserves equivalent treatment given its complexity.
+The MVP is **present-information plus triggers** — it surfaces state and
+*dispatches jobs*, but does **not** review/approve individual proposals
+(per-proposal merge approval is deferred to the target-state Merge tab).
 
-### 2. Tab Structure
+This is **not** an explorer plugin (explorers visualize graph *data*; this
+operates the vocabulary *cycle* — the Edge Explorer, ADR-077, already covers
+visualization). It follows the non-explorer admin pattern of the Ontology tab.
 
-The vocabulary interface organizes into tabs by user intent:
+The aggressiveness curve renders read-only in the MVP (the CLI already produces
+an ASCII version; the web shows the real curve with the current-position
+marker). Interactive curve *editing* is target-state, below.
 
-```
-┌──────────────────────────────────────────────────────────────────────┐
-│  Vocabulary                                                          │
-├───────────┬──────────┬───────────┬────────────┬──────────┬──────────┤
-│ Dashboard │  Types   │ Profiles  │   Config   │  Health  │  Merge   │
-└───────────┴──────────┴───────────┴────────────┴──────────┴──────────┘
-```
+### 1a. Vocabulary operations dispatch as jobs (parity with annealing)
 
-#### Dashboard Tab
+The vocabulary subsystem predates the database-driven job system (ADR-100). Its
+four worker operations — `vocab_consolidate`, `vocab_refresh`,
+`epistemic_remeasurement`, `vocab_embedding` — already run as **jobs** when
+fired *automatically* by their launchers (hysteresis / cron), but their *manual*
+HTTP entry points (`POST /vocabulary/consolidate`, `/refresh-categories`,
+`/epistemic-status/measure`, `/generate-embeddings`) execute **synchronously
+inside the request** — a pre-jobs legacy. Ontology annealing, by contrast,
+triggers a job (`POST /ontology/annealing-cycle` → `queue.enqueue(...)`).
 
-At-a-glance vocabulary health. The landing view.
-
-- **Zone indicator** — Large, colored status badge (GREEN / WATCH / DANGER / EMERGENCY) with vocabulary size and threshold context (`142 types — max 150, emergency 200`).
-- **Summary cards** — Builtin vs custom count, active vs inactive, categories in use, last consolidation timestamp.
-- **Category distribution** — Bar or donut chart showing type counts per category (causation, logical, evidential, etc.) with confidence coloring (high/medium/low).
-- **Epistemic distribution** — Classification breakdown (WELL_GROUNDED, MIXED, WEAK, CONTRADICTED, INSUFFICIENT_DATA) as a stacked bar or pie.
-- **Staleness indicator** — Graph change counter delta since last measurement, with a "Remeasure" button if stale.
-- **Recent activity** — Last N vocabulary changes (merges, additions, category reassignments).
-
-Data sources: `GET /vocabulary/status`, `GET /vocabulary/types`, `GET /vocabulary/epistemic-status`
-
-#### Types Tab
-
-The workhorse. Browse, search, filter, and inspect all relationship types.
-
-- **Table view** — Sortable columns: type name, category, edge count, confidence, grounding (avg), epistemic status, active/builtin flags. Filterable by category, status, active/inactive.
-- **Type detail panel** — Click a row to expand or open a side panel showing:
-  - Category assignment with confidence score and similarity breakdown (bar chart of scores against all 11 categories, from `GET /vocabulary/category-scores/{type}`).
-  - Similar types (top 5 by embedding similarity, from `GET /vocabulary/similar/{type}`).
-  - Opposite types (least similar, from `GET /vocabulary/similar/{type}?reverse=true`).
-  - QA analysis (miscategorization warnings, from `GET /vocabulary/analyze/{type}`).
-  - Epistemic detail (grounding stats: avg, std, min, max, sample size).
-  - Quick actions: merge into another type, toggle active/inactive, refresh category.
-- **Search** — Natural language search across vocabulary (`GET /vocabulary/similar/{type}` with query mode).
-- **Bulk actions** — Multi-select for batch category refresh or deactivation.
-
-Data sources: `GET /vocabulary/types`, `GET /vocabulary/category-scores/{type}`, `GET /vocabulary/similar/{type}`, `GET /vocabulary/analyze/{type}`, `GET /vocabulary/epistemic-status/{type}`
-
-#### Profiles Tab
-
-Visual Bezier curve editor for aggressiveness profiles. This is where graphical controls replace numeric CLI input.
-
-- **Profile list** — All profiles (8 builtin + custom) as cards. Each shows a small curve thumbnail, name, and whether it's the active profile. Click to select.
-- **Curve editor** — The selected profile's Bezier curve rendered on a canvas:
-  - X-axis: normalized vocabulary utilization (0% to 100% of range).
-  - Y-axis: aggressiveness output (0.0 to 1.0, potentially overshooting to ~1.5 with aggressive profiles).
-  - **Draggable control point handles** (P1 and P2) — Drag to reshape the curve. Values update in real-time. The start point (0,0) and end point (1,1) are fixed; the two control points define the curve character.
-  - **Current position marker** — A dot on the curve showing where the vocabulary currently sits (based on current size vs min/max), with the effective aggressiveness value labeled.
-  - **Zone bands** — Background colored bands showing comfort/watch/merge/emergency zones along the X-axis.
-- **Profile metadata** — Name, description, created/updated timestamps, builtin flag.
-- **Actions** — Create new profile (set name, description, drag points or enter values), duplicate existing, delete custom profiles. Activate a profile (updates `aggressiveness_profile` in config).
-
-Data sources: `GET /admin/vocabulary/profiles`, `GET /admin/vocabulary/profiles/{name}`, `POST /admin/vocabulary/profiles`, `DELETE /admin/vocabulary/profiles/{name}`, `PUT /admin/vocabulary/config` (to activate)
-
-#### Config Tab
-
-All vocabulary configuration parameters with live preview of effects.
-
-- **Threshold sliders** — `vocab_min`, `vocab_max`, `vocab_emergency` as range sliders on a shared number line. Dragging one shows how the zone boundaries shift. Current vocabulary size marked as a reference point.
-- **Pruning mode** — Radio selector: Naive / HITL / AITL, with description of each mode's behavior.
-- **Similarity thresholds** — `synonym_threshold_strong` and `synonym_threshold_moderate` as sliders with visual indicator of what "strong" vs "moderate" similarity means (example pairs at each threshold).
-- **Other parameters** — `low_value_threshold`, `consolidation_similarity_threshold`, `auto_expand_enabled` toggle, `embedding_model` selector.
-- **Live preview panel** — As parameters are adjusted, show computed effects: new zone classification, new aggressiveness score, estimated types that would qualify for pruning at new thresholds. This addresses the "configuration coupling" problem — users see cascading effects before saving.
-- **Save / Reset** — Explicit save with diff summary of what changed. Reset to last saved state.
-
-Data sources: `GET /admin/vocabulary/config`, `PUT /admin/vocabulary/config`, `GET /vocabulary/status` (for live preview)
-
-#### Health Tab
-
-Epistemic status and data consistency — the diagnostic view.
-
-- **Measurement controls** — Run epistemic measurement with configurable sample size. Progress indicator during measurement. Last measurement timestamp and staleness delta.
-- **Classification table** — All types with epistemic status, sortable and filterable. Color-coded: green (WELL_GROUNDED), yellow (MIXED), orange (WEAK), red (CONTRADICTED), gray (INSUFFICIENT_DATA), blue (HISTORICAL).
-- **Distribution chart** — Stacked bar or sunburst showing classification counts. Trend over time if multiple measurements exist.
-- **Anomaly highlights** — Flag types where epistemic status and category confidence disagree (e.g., high-confidence category assignment but CONTRADICTED grounding), or where status changed since last measurement. These are the "conflicts or problems with data consistency" that need attention.
-- **Category flow diagram** — Chord diagram from `GET /vocabulary/category-flows` showing inter-category edge flow patterns. Reveals whether categories are well-separated or bleeding into each other.
-- **Sync status** — Missing types detected in graph but not in vocabulary table. One-click sync with dry-run preview.
-
-Data sources: `POST /vocabulary/epistemic-status/measure`, `GET /vocabulary/epistemic-status`, `GET /vocabulary/category-flows`, `POST /vocabulary/sync`
-
-#### Merge Tab
-
-AITL consolidation workflow and manual merge operations.
-
-- **Consolidation launcher** — Target vocabulary size slider (30-200), auto-execute threshold slider (0.0-1.0), dry-run toggle. "Run Consolidation" button.
-- **Recommendation review** — Results displayed as three groups:
-  - **Auto-executed** (confidence ≥ threshold) — Already merged, shown for audit. Expandable to see reasoning.
-  - **Needs review** (medium confidence) — Cards with source type, target type, similarity score, LLM reasoning. Approve/reject buttons per recommendation. Batch approve/reject.
-  - **Rejected** (low confidence or directional inverse) — Shown for transparency.
-- **Manual merge** — Select source type and target type from dropdowns (with similarity score preview). Reason text field (audit trail). Execute with confirmation showing affected edge count.
-- **Merge history** — Log of past merges with who, when, why, and how many edges moved. Enables audit and potential rollback investigation.
-- **Unused type pruning** — List of types with zero edges. Bulk deactivate with confirmation.
-
-Data sources: `POST /vocabulary/consolidate`, `POST /vocabulary/merge`, `GET /vocabulary/types` (for unused detection)
-
-### 3. Permission Model
-
-Vocabulary administration uses existing RBAC resources:
-
-| Tab | Read Permission | Write Permission |
-|-----|-----------------|------------------|
-| Dashboard | `vocabulary:read` | — |
-| Types | `vocabulary:read` | `vocabulary:write` (toggle active, refresh categories) |
-| Profiles | `vocabulary_config:read` | `vocabulary_config:write` (create/delete/activate profiles) |
-| Config | `vocabulary_config:read` | `vocabulary_config:write` (update parameters) |
-| Health | `vocabulary:read` | `vocabulary:write` (run measurements, sync) |
-| Merge | `vocabulary:read` | `vocabulary:write` (execute merges, consolidation) |
-
-The sidebar entry itself requires `vocabulary:read` to appear. Tabs without write permission show data read-only with action buttons hidden.
-
-### 4. Component Architecture
+To reach parity, manual vocabulary triggers move onto the job model. Add a
+single unified dispatch endpoint:
 
 ```
-web/src/components/admin/vocabulary/
-├── VocabularyDashboard.tsx       # Route component, tab orchestration
-├── DashboardTab.tsx              # Health overview
-├── TypesTab.tsx                  # Type browser + detail panel
-├── ProfilesTab.tsx               # Bezier curve editor
-├── BezierCurveEditor.tsx         # Reusable curve canvas component
-├── ConfigTab.tsx                 # Parameter form with live preview
-├── HealthTab.tsx                 # Epistemic status + diagnostics
-├── MergeTab.tsx                  # Consolidation workflow
-├── components.tsx                # Shared vocabulary UI components
-├── types.ts                     # TypeScript interfaces
-└── index.ts                     # Exports
+POST /vocabulary/jobs   { "kind": "consolidate" | "refresh" | "remeasure" | "embed", ...params }
+  → queue.enqueue(job_type=<worker for kind>, job_data=...) ; auto-approve ; return { job_id }
 ```
 
-New store (or extend existing `vocabularyStore`):
+This mirrors `/ontology/annealing-cycle` exactly (enqueue + auto-approve, client
+polls job status — ADR-100), reuses the four existing workers unchanged, and is
+gated `vocabulary:write`. One endpoint, four kinds — minimal new surface, no
+collision with the existing synchronous endpoints (which remain for the CLI and
+for callers that want inline results). The synchronous endpoints are **not**
+wired to the UI: a button must not block on an LLM consolidation, and dispatch
+is what gives the operation job-queue visibility.
 
-```typescript
-interface VocabularyAdminStore {
-  // Status
-  status: VocabStatus | null;
-  loadStatus(): Promise<void>;
+This is the only backend addition the MVP requires; the read panels
+(Consolidation Loop, Vocabulary Pressure, Configuration) consume endpoints that
+already exist.
 
-  // Types
-  types: EdgeTypeInfo[];
-  loadTypes(opts?: { inactive?: boolean }): Promise<void>;
+### 2. Target state — dedicated route with richer tabs (deferred)
 
-  // Profiles
-  profiles: AggressivenessProfile[];
-  activeProfile: string;
-  loadProfiles(): Promise<void>;
+As the cohort proves out, graduate to a dedicated `/admin/vocabulary` route with
+the fuller tab set the original draft described. These are **deferred target
+state**, not MVP scope, and should accrete one at a time the way ADR-703's tabs
+do:
 
-  // Config
-  config: VocabularyConfig | null;
-  loadConfig(): Promise<void>;
-  updateConfig(updates: Partial<VocabularyConfig>): Promise<void>;
+- **Types** — sortable/filterable table of all relationship types with a detail
+  panel (category scores, similar/opposite types, QA analysis, epistemic
+  detail). Data: `GET /vocabulary/types`, `/category-scores/{type}`,
+  `/similar/{type}`, `/analyze/{type}`, `/epistemic-status/{type}`.
+- **Profiles** — interactive Bézier curve editor for aggressiveness profiles
+  (draggable control points replacing numeric CLI input). The single most
+  complex UI element; deferred precisely because it is not load-bearing for
+  operating the loop. Data: `GET/POST/DELETE /admin/vocabulary/profiles`.
+- **Config (interactive)** — threshold sliders with live zone/aggressiveness
+  preview, addressing configuration coupling. Promotes the MVP's read-only
+  Configuration panel to editable. Data: `PUT /admin/vocabulary/config`.
+- **Health** — epistemic status diagnostics: classification table, distribution,
+  anomaly highlights, category-flow chord diagram, sync detection. Data:
+  `GET/POST /vocabulary/epistemic-status`, `/category-flows`, `/sync`.
+- **Merge (full)** — the consolidation workbench with comparison, deferral, and
+  persisted review state (see the *Consolidation Review Is Stateless* gap).
 
-  // Epistemic
-  epistemicStatuses: EpistemicStatusInfo[];
-  loadEpistemicStatuses(): Promise<void>;
-  runMeasurement(sampleSize: number): Promise<void>;
-}
+The MVP's four panels become the route's landing "Dashboard"; the rest are the
+progressive-disclosure tabs.
+
+### 3. CLI parity
+
+The CLI already carries the full vocabulary surface (`kg vocab status`, `list`,
+`consolidate`, `merge`, `similar`, `analyze`, profiles, config, epistemic), so
+the web MVP needs no new CLI commands — it is catching the CLI up, not the
+reverse. The read-only Configuration panel directs operators to `kg vocab` for
+mutation. One nuance follows from §1a: the web Actions panel *dispatches jobs*,
+whereas the existing CLI verbs (`kg vocab consolidate`, etc.) still run
+*synchronously*. Giving those CLI verbs an optional job-dispatch flag (so both
+surfaces enqueue identically) is a sensible follow-up but is not MVP-blocking —
+the synchronous CLI path remains valid.
+
+### 4. Permission model
+
+Reuses existing RBAC (ADR-028 / ADR-082), parallel to ADR-703's ontology gates:
+
+| Action | Minimum capability |
+|--------|-------------------|
+| View the Vocabulary tab / any panel | `vocabulary:read` |
+| Approve/reject a consolidation proposal, run consolidation, trigger merge | `vocabulary:write` |
+| Edit profiles / mutate config (target-state interactive tabs) | `vocabulary_config:write` |
+
+The tab requires `vocabulary:read` to appear; `hasPermission()` disables
+(not hides-then-rejects) controls a user cannot use.
+
+### 5. Component architecture
+
+MVP — one tab component mirroring `OntologyTab.tsx`:
+
+```
+web/src/components/admin/
+├── VocabularyTab.tsx              # MVP: 4-panel cohort (loop/pressure/config/proposals)
+└── VocabularyPressurePanel.tsx    # mirrors AnnealingPressurePanel.tsx (read-only curve)
 ```
 
-### 5. Sidebar Integration
+Registered in `AdminDashboard.tsx` exactly like the Ontology tab: add
+`'vocabulary'` to the `TabType` union (`types.ts`), a permission-gated
+`TabButton`, and a conditional render. A `vocabularyAdminStore` (Zustand,
+parallel to `ontologyLifecycleStore`) holds status/config/proposals; it may
+extend or sit beside the existing `vocabularyStore` (explorer coloring).
 
-In `AppLayout.tsx`, add a new `SidebarItem` under the Admin category:
-
-```typescript
-{
-  icon: Waypoints,  // lucide-react — represents connected vocabulary
-  label: 'Vocabulary',
-  description: 'Edge types, profiles, health',
-  path: '/admin/vocabulary',
-  requiredPermission: { resource: 'vocabulary', action: 'read' },
-}
-```
-
-Route in `App.tsx`:
-```typescript
-<Route path="/admin/vocabulary" element={<VocabularyDashboard />} />
-```
+Target-state route components (`VocabularyDashboard.tsx`, `TypesTab.tsx`,
+`ProfilesTab.tsx`, `BezierCurveEditor.tsx`, `HealthTab.tsx`, `MergeTab.tsx`)
+land with their respective deferred tabs.
 
 ## Backend Alignment Verification
 
-Before committing to this interface design, the database schema, API endpoints, and worker implementations were audited against the UI's expectations. The vocabulary backend has been built incrementally across 8+ ADRs and ~10 migrations. This section documents what's confirmed working, what has gaps, and what the UI must account for.
+The database schema, API endpoints, and worker implementations were audited
+against the UI's expectations. The vocabulary backend has been built
+incrementally across 8+ ADRs and ~10 migrations. This section documents what's
+confirmed working and the two gaps that affect only the deferred Merge tab.
 
 ### Confirmed: Schema Supports All UI Features
 
@@ -246,8 +215,9 @@ Before committing to this interface design, the database schema, API endpoints, 
 
 All ~20 vocabulary endpoints verified present and functional:
 
-- **Profiles**: `GET/POST/DELETE /admin/vocabulary/profiles` — Bezier control points accepted with validation (x: 0.0–1.0, y: -2.0–2.0). Profile creation, listing, deletion all work. Builtin profiles protected.
-- **Config**: `PUT /admin/vocabulary/config` — Supports all 11 parameters as optional partial updates. Returns computed zone/aggressiveness after update (enables live preview).
+- **Status**: `GET /vocabulary/status` — vocab size, zone, aggressiveness, builtin/custom/category counts, thresholds. Powers the MVP's Consolidation Loop and Vocabulary Pressure panels directly.
+- **Profiles**: `GET/POST/DELETE /admin/vocabulary/profiles` — Bézier control points accepted with validation (x: 0.0–1.0, y: -2.0–2.0). Profile creation, listing, deletion all work. Builtin profiles protected.
+- **Config**: `GET`/`PUT /admin/vocabulary/config` — Supports all 11 parameters as optional partial updates. Returns computed zone/aggressiveness after update (enables live preview).
 - **Types**: `GET /vocabulary/types` — Returns `EdgeTypeListResponse` with active/builtin/custom counts and full `EdgeTypeInfo` per type including category scoring and epistemic status.
 - **Category flows**: `GET /vocabulary/category-flows` — Returns inter-category chord diagram matrix. Ready for visualization.
 - **Merge**: `POST /vocabulary/merge` — Creates audit trail in `vocabulary_history` via `AGEClient.merge_edge_types()`.
@@ -263,113 +233,170 @@ All ~20 vocabulary endpoints verified present and functional:
 | `vocab_refresh_worker` | `api/app/workers/vocab_refresh_worker.py` | CategoryRefreshLauncher |
 | `epistemic_remeasurement_worker` | `api/app/workers/epistemic_remeasurement_worker.py` | EpistemicRemeasurementLauncher (change counter delta ≥ threshold) |
 
-All three workers are registered in `main.py` and integrated with the job queue system. The epistemic remeasurement runs on a cron schedule (`0 * * * *` — hourly) with hysteresis via the graph_metrics delta mechanism.
+All three workers are registered in `main.py` and integrated with the job queue
+system. The epistemic remeasurement runs on a cron schedule (`0 * * * *` —
+hourly) with hysteresis via the graph_metrics delta mechanism. The consolidation
+worker is the vocabulary analog of the annealing worker — the loop the MVP's
+Consolidation Loop panel observes.
 
-### Gap: Consolidation Review Is Stateless
+### Gap (Merge tab only): Consolidation Review Is Stateless
 
-The AITL consolidation endpoint (`POST /vocabulary/consolidate`) returns `needs_review` items in the HTTP response, but **does not persist them** for later retrieval. If the user navigates away from the Merge tab after running consolidation, deferred review items are lost.
+The AITL consolidation endpoint (`POST /vocabulary/consolidate`) returns
+`needs_review` items in the HTTP response, but **does not persist them**. If the
+user navigates away after running consolidation, deferred review items are lost.
 
-The schema infrastructure exists — `kg_api.pruning_recommendations` has a `status` column (pending/approved/rejected/executed) with `reviewed_by`, `reviewer_notes`, and `expires_at` fields — but the consolidation code path does not write to this table.
+The schema exists — `kg_api.pruning_recommendations` has a `status` column
+(pending/approved/rejected/executed) with `reviewed_by`, `reviewer_notes`, and
+`expires_at` — but the consolidation code path does not write to it. The correct
+long-term fix is to persist recommendations to that table (no schema change
+needed). This affects only the deferred full Merge tab, not the MVP.
 
-**UI implication for Merge tab:** Phase 3 should either:
-- (a) Hold consolidation results in component state and warn users that navigating away loses unreviewed items, or
-- (b) Require a backend change to persist recommendations to `pruning_recommendations` so they survive page navigation. This table is already designed for exactly this purpose — it just needs wiring.
+### Gap (Merge tab only): Prune and Deprecate Execution Are Stubbed
 
-Option (b) is the correct long-term fix and should be addressed during Phase 3 implementation. The table schema requires no changes.
+`VocabularyManager._execute_prune()` and `._execute_deprecate()`
+(vocabulary_manager.py lines ~1091-1150) contain TODO placeholders. Merge
+execution works fully, but hard-delete pruning and formal deprecation are
+incomplete. **Consistent with the platform's append-only / no-destructive-delete
+posture (ADR-203, ADR-206), the UI should never expose a hard-delete action.**
+Unused-type cleanup uses **deactivation** (`is_active = false`), which works
+today — types are deprecated, never destroyed, preserving the epistemic trail.
 
-### Gap: Prune and Deprecate Execution Are Stubbed
+### MVP Requires Zero Backend Changes
 
-`VocabularyManager._execute_prune()` and `._execute_deprecate()` (vocabulary_manager.py lines ~1091-1150) contain TODO placeholders. Merge execution works fully, but hard-delete pruning and formal deprecation workflows are incomplete.
-
-**UI implication for Merge tab:** The "Unused type pruning" section should use **deactivation** (set `is_active = false`) rather than deletion. This works today via the existing type update pathway. The UI should not expose a "permanently delete" action until the backend prune execution is implemented.
-
-### No Backend Changes Required for MVP
-
-Phases 1 and 2 (Dashboard, Types, Profiles, Config) require **zero backend changes**. All API endpoints, schema, and workers are in place. The two gaps above affect only Phase 3 (Merge tab), and both have viable workarounds until backend work catches up.
+The MVP cohort (Consolidation Loop / Vocabulary Pressure / read-only
+Configuration / Proposals) consumes only endpoints that already exist. The two
+gaps above are scoped entirely to the deferred full Merge tab.
 
 ## Consequences
 
 ### Positive
 
-- Vocabulary tuning becomes accessible to non-CLI users — the primary audience for the web workstation
-- Bezier curve editing transforms from "set four numbers" to "drag a curve shape" — a natural fit for the inherently visual aggressiveness model
-- Consolidation review becomes a batch workflow with comparison and deferral, instead of sequential CLI prompts
-- Live preview in Config eliminates trial-and-error parameter adjustment
-- Epistemic health gets a proper diagnostic view, making data consistency problems discoverable rather than hidden
-- Category flow visualization (already has API support) gets a permanent home
-- Backend verification confirms Phases 1-2 require zero backend changes — all API endpoints, schema, and workers are already in place
+- The vocabulary consolidation cycle becomes observable in the web workstation,
+  reading as the direct sibling of the ontology annealing cycle — one mental
+  model, two scales (ADR-200 self-similarity).
+- The MVP ships against today's backend with zero backend changes and minimal UI
+  (one tab mirroring OntologyTab) — fast path to value.
+- The interface degrades gracefully and accretes incrementally, exactly as
+  ADR-703 does; each deferred tab renders against whatever backend exists.
+- Non-CLI operators can finally see vocabulary zone/pressure and review
+  consolidation proposals without terminal access.
+- Reuses established patterns wholesale — OntologyTab cohort, `AdminDashboard`
+  tab registration, ADR-046 Bézier infrastructure (for the deferred Profiles
+  tab), ADR-028/082 permission gating.
 
 ### Negative
 
-- Adds a second admin route (`/admin/vocabulary`), breaking the single-dashboard pattern. This is intentional — the alternative (cramming into System tab) was evaluated and rejected.
-- The Bezier curve editor (`BezierCurveEditor.tsx`) is a non-trivial interactive canvas component — likely the most complex single UI element in the admin section.
-- The Merge tab's AITL workflow involves async job execution and polling, which adds state management complexity. Additionally, consolidation review is currently stateless on the backend — the `pruning_recommendations` table exists but isn't wired to the consolidation endpoint, so Phase 3 needs either client-side state management with navigation warnings or a backend fix to persist recommendations.
-- Unused type pruning is limited to deactivation (set `is_active = false`) because backend prune/deprecate execution is stubbed. Hard deletion requires backend completion before the UI can expose it.
-- Six tabs is a lot. If user testing shows overwhelm, Dashboard + Types + Profiles could be the initial set, with Health and Merge as progressive disclosure.
+- Two surfaces (the ontology and vocabulary cohorts) now share a maintenance
+  burden; changes to the shared admin `components.tsx` affect both.
+- The deferred Profiles tab's interactive Bézier editor remains non-trivial UI
+  work — but it is explicitly out of MVP scope, which removes it from the
+  critical path.
+- The full Merge tab depends on the two backend gaps above; until they land,
+  consolidation review is best-effort (component state) and pruning is
+  deactivation-only.
 
 ### Neutral
 
-- Requires extending `VisualizationType` or admin routing, but not the explorer plugin system (this is admin, not an explorer)
-- The `vocabularyStore` may need extension or a parallel `vocabularyAdminStore` to hold admin-specific state (config, profiles, epistemic data) separately from explorer state (type metadata for coloring)
-- New RBAC resources (`vocabulary:read/write`, `vocabulary_config:read/write`) need registration in the resource registry if not already present
-- The category flow chord diagram component could be shared with the Edge Explorer (ADR-077) if both use the same `GET /vocabulary/category-flows` endpoint
+- The MVP stays inside `AdminDashboard`; the dedicated `/admin/vocabulary` route
+  is deferred until the richer tabs justify it (mirrors ADR-703's MVP→route
+  graduation).
+- A `vocabularyAdminStore` may extend or sit beside the existing
+  `vocabularyStore` (explorer coloring vs admin state).
+- New RBAC resources (`vocabulary:read/write`, `vocabulary_config:read/write`)
+  need registration if not already present.
+- The category-flow chord diagram (deferred Health tab) could be shared with the
+  Edge Explorer (ADR-077).
 
 ## Alternatives Considered
 
-### A. Add a Vocabulary Section to the System Tab
+### A. Add a Vocabulary section to the System tab
 
-Put vocabulary management as another collapsible `<Section>` inside the existing System tab.
+Put vocabulary management as another collapsible `<Section>` inside the existing
+System tab.
 
-**Rejected because:** The System tab is already 884 lines with three major sections (AI extraction, API keys, embedding profiles). Vocabulary management has 6 distinct concern areas and needs interactive visualizations (curve editor, chord diagram, consolidation workflow). Cramming this in would make System tab unmaintainable and the UI cramped. The depth of vocabulary management warrants dedicated space.
+**Rejected because:** the System tab is already ~884 lines (AI extraction, API
+keys, embedding profiles). The vocabulary cycle deserves its own cohort, peer to
+the Ontology tab — not a section buried inside an unrelated tab. ADR-703 rejected
+the identical option for the annealing cohort.
 
-### B. Build as an Explorer Plugin
+### B. Build as an explorer plugin
 
-Register vocabulary management as an explorer in the workstation, alongside Force Graph, Document Explorer, etc.
+Register vocabulary management as an explorer alongside Force Graph, Document
+Explorer, etc.
 
-**Rejected because:** Vocabulary management is an administrative function, not a data exploration function. Explorers visualize graph data; vocabulary admin configures how the graph is built. Placing it in the explorer registry would confuse the mental model (explorers are for understanding data, admin is for tuning the system). The Edge Explorer (ADR-077) already handles vocabulary *visualization* — this ADR handles vocabulary *administration*.
+**Rejected because:** vocabulary administration *operates a cycle*; explorers
+*visualize data*. The Edge Explorer (ADR-077) already handles vocabulary
+visualization. ADR-703 drew the same boundary for ontologies (operate at
+`/admin`, explore at `/explore`).
 
-### C. Standalone Page Outside Admin
+### C. Lead with the dedicated six-tab route (the original 2026-01 draft)
 
-Create `/vocabulary-admin` as a top-level route, not nested under Admin.
+Ship the full `/admin/vocabulary` route with six intent-based tabs as the first
+increment.
 
-**Rejected because:** Vocabulary configuration is an administrative concern. Users expect admin functions grouped together. A standalone route fragments the admin experience and complicates sidebar organization.
+**Rejected because:** over-scoped for increment one, and it led with the wrong
+thing — a draggable Bézier editor and chord diagrams instead of the operating
+loop. It also predated the OntologyTab cohort pattern, so the two sibling cycles
+would not have rhymed. The six-tab design survives as **deferred target state**
+(§2); the MVP cohort (§1) is increment one, matching ADR-703's MVP→route path.
 
-### D. Fewer Tabs with Denser Layout
+### D. One combined "vocabulary + ontology lifecycle" admin surface
 
-Combine Dashboard + Health into one tab, Types + Merge into another, Profiles + Config into a third. Three tabs total.
+Fold both cycles into a single lifecycle admin page.
 
-**Not rejected, but deferred.** This is a valid simplification if six tabs proves overwhelming. The tab structure proposed here maps one concern per tab, which is clearest for documentation and initial implementation. Consolidation can happen after user testing reveals actual navigation patterns.
+**Rejected because:** they are distinct subsystems with distinct vocabularies,
+proposals, and configuration. ADR-703 keeps the ontology cohort its own tab;
+this ADR keeps vocabulary its own tab. They *rhyme* via a shared cohort shape and
+cross-link, but neither owns the other.
 
 ## Implementation Notes
 
-### Phase 1: Foundation + Dashboard + Types
+**MVP (increment one):** a single `Vocabulary` tab in `AdminDashboard`, peer to
+the `Ontology` tab, with the four-panel cohort (§1): Consolidation Loop,
+Vocabulary Pressure (read-only curve), read-only Configuration, Proposals queue.
+Backed entirely by existing endpoints — zero backend changes. Mirror
+`OntologyTab.tsx` / `AnnealingPressurePanel.tsx` structure and the
+`AdminDashboard` tab-registration steps.
 
-- Create route, sidebar entry, tab skeleton
-- Dashboard tab with zone status, summary cards, category/epistemic distribution charts
-- Types tab with sortable/filterable table and detail panel
-- Read-only — no write actions yet
+Recommended order, mirroring ADR-703's incremental graduation:
 
-### Phase 2: Profiles + Config
+1. **MVP cohort tab** — the four panels above. Delivers vocabulary-cycle
+   visibility against today's backend first; the most urgent gap.
+2. **Types tab** — buildable today against `GET /vocabulary/types`; promotes the
+   tab toward the dedicated route.
+3. **Interactive Config** — promote the read-only Configuration panel to editable
+   (`PUT /admin/vocabulary/config`) with live zone preview.
+4. **Profiles tab** — the Bézier curve editor (ADR-046 infrastructure). Deferred;
+   not load-bearing for operating the loop.
+5. **Health tab** — epistemic diagnostics and category-flow chord diagram.
+6. **Full Merge tab** — depends on the two backend gaps (persisted review,
+   deactivation-only cleanup) landing first.
 
-- Bezier curve editor component (canvas-based, draggable control points)
-- Profile list, selection, create/delete
-- Config form with threshold sliders and live zone preview
-
-### Phase 3: Health + Merge
-
-- Epistemic measurement controls and classification table
-- Category flow chord diagram
-- Sync detection and execution
-- AITL consolidation launcher and recommendation review
-- Manual merge workflow with audit trail
+Graduate from the `AdminDashboard` tab to the dedicated `/admin/vocabulary`
+route once tabs 2–6 justify the space — the §1 cohort becomes the route's
+landing Dashboard.
 
 ## Related ADRs
 
+- **ADR-200** — Annealing Ontologies (the sibling cycle; this ADR is its
+  vocabulary-scale twin — Design Principle 4, self-similarity across scale)
+- **ADR-206** — Closed-vocabulary annealing actions & epistemic ledger
+  (append-only / no-destructive-delete posture this interface honors)
+- **ADR-703** — Ontology Lifecycle Administration Interface (the cohort pattern,
+  MVP→route path, and permission model this ADR mirrors)
+- **ADR-100** — Database-driven job dispatch (the queue the §1a unified
+  `/vocabulary/jobs` endpoint enqueues onto; parity with `/ontology/annealing-cycle`)
+- **ADR-052** — Vocabulary Expansion-Consolidation Cycle (the "dreaming" loop
+  this interface operates)
+- **ADR-032** — Automatic edge vocabulary expansion with zones (COMFORT/WATCH/
+  DANGER/EMERGENCY pressure surfaced in the Vocabulary Pressure panel)
 - **ADR-022** — Original 30-type taxonomy (the vocabulary this interface manages)
 - **ADR-025** — Dynamic relationship vocabulary (capture and expansion model)
 - **ADR-026** — Autonomous vocabulary curation (AITL consolidation workflow)
-- **ADR-046** — Grounding-aware vocabulary management (scoring model)
-- **ADR-047** — Probabilistic vocabulary categorization (category confidence system)
-- **ADR-053** — Vocabulary embedding similarity (similar/opposite type detection)
+- **ADR-046** — Grounding-aware vocabulary management & Bézier profiles (scoring
+  model; curve infrastructure for the deferred Profiles tab)
+- **ADR-047** — Probabilistic vocabulary categorization (category confidence)
+- **ADR-053** — Vocabulary embedding similarity (similar/opposite detection)
 - **ADR-065** — Epistemic status classification (health measurement model)
-- **ADR-077** — Vocabulary explorers (visualization complement — explores data; this ADR administers configuration)
+- **ADR-077** — Vocabulary explorers (visualization complement — explores data;
+  this ADR operates the cycle)

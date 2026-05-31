@@ -69,6 +69,11 @@ from ..models.vocabulary import (
     ReviewInfo,
     RejectionInfo,
 
+    # Job dispatch (ADR-701 §1a)
+    VocabularyJobRequest,
+    VocabularyJobDispatchResponse,
+    VOCAB_JOB_KIND_TO_TYPE,
+
     # Epistemic Status (ADR-065 Phase 2)
     EpistemicStatusMeasureRequest,
     EpistemicStatusMeasureResponse,
@@ -94,28 +99,15 @@ from ..models.vocabulary import (
 
 from api.app.lib.age_client import AGEClient
 from api.app.lib.ai_providers import get_provider
-from api.app.services.vocabulary_manager import VocabularyManager
+from api.app.services.vocabulary_manager import VocabularyManager, get_vocabulary_manager
 from api.app.lib.aggressiveness_curve import calculate_aggressiveness
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/vocabulary", tags=["vocabulary"])
 
 
-def get_vocabulary_manager() -> VocabularyManager:
-    """Get VocabularyManager instance with current configuration"""
-    client = AGEClient()
-    provider = get_provider()
-
-    # Get configuration from database (with .env fallback)
-    mode = client.get_vocab_config('pruning_mode') or os.getenv("VOCAB_PRUNING_MODE", "aitl")
-    profile = client.get_vocab_config('aggressiveness_profile') or os.getenv("VOCAB_AGGRESSIVENESS", "aggressive")
-
-    return VocabularyManager(
-        db_client=client,
-        ai_provider=provider,
-        mode=mode,
-        aggressiveness_profile=profile
-    )
+# get_vocabulary_manager now lives in services.vocabulary_manager so the
+# vocab_consolidate worker and these routes share one factory (imported above).
 
 
 # =============================================================================
@@ -587,6 +579,71 @@ async def consolidate_vocabulary(
     except Exception as e:
         logger.error(f"Failed to consolidate vocabulary: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to consolidate vocabulary: {str(e)}")
+
+
+# =============================================================================
+# Job Dispatch (ADR-701 §1a — parity with ontology annealing job model)
+# =============================================================================
+
+@router.post(
+    "/jobs",
+    response_model=VocabularyJobDispatchResponse,
+    dependencies=[Depends(require_permission("vocabulary", "write"))],
+)
+async def dispatch_vocabulary_job(
+    current_user: CurrentUser,
+    request: VocabularyJobRequest,
+):
+    """
+    Dispatch a vocabulary maintenance operation as a background job (ADR-701 §1a).
+
+    The vocabulary subsystem predates the database-driven job system (ADR-100):
+    its worker operations run as jobs when fired automatically by their launchers
+    (hysteresis/cron), but the manual HTTP triggers historically ran synchronously
+    in-request. This endpoint brings manual triggers onto the job model, mirroring
+    `POST /ontology/annealing-cycle` — enqueue + auto-approve, then poll job status.
+
+    Supported `kind` values map to existing workers:
+      - `consolidate` → `vocab_consolidate`
+      - `refresh`     → `vocab_refresh`
+      - `remeasure`   → `epistemic_remeasurement`
+      - `embed`       → `vocab_embedding`
+
+    **Authorization:** Requires `vocabulary:write` permission.
+
+    Returns immediately with the `job_id`; the client polls job status.
+
+    @verified e478cb25
+    """
+    # `kind` is a Literal, so Pydantic rejects unknown values with 422 before
+    # we get here; this guard is belt-and-suspenders in case the enum and the
+    # mapping ever drift apart.
+    job_type = VOCAB_JOB_KIND_TO_TYPE.get(request.kind)
+    if not job_type:
+        raise HTTPException(status_code=400, detail=f"Unknown vocabulary job kind: {request.kind}")
+
+    from api.app.services.job_queue import get_job_queue
+
+    queue = get_job_queue()
+    triggered_by = current_user.username if current_user else "api"
+
+    job_data = dict(request.params or {})
+    job_data["triggered_by"] = triggered_by
+
+    job_id = queue.enqueue(job_type=job_type, job_data=job_data)
+
+    # Auto-approve so the ADR-100 lane manager claims it immediately
+    queue.update_job(job_id, {
+        "status": "approved",
+        "approved_by": triggered_by,
+    })
+
+    return VocabularyJobDispatchResponse(
+        job_id=job_id,
+        kind=request.kind,
+        job_type=job_type,
+        status="approved",
+    )
 
 
 # =============================================================================

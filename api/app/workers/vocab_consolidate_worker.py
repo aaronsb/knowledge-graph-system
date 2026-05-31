@@ -45,7 +45,7 @@ def run_vocab_consolidate_worker(
     """
     try:
         from api.app.lib.age_client import AGEClient
-        from api.app.lib.vocabulary_manager import get_vocabulary_manager
+        from api.app.services.vocabulary_manager import get_vocabulary_manager
 
         logger.info(f"🔄 Vocab consolidation worker started: {job_id}")
 

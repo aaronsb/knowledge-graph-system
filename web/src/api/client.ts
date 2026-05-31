@@ -36,6 +36,13 @@ import type {
   EcologicalPressureResponse,
   EcologicalPressureHistoryResponse,
 } from '../types/annealing';
+import type {
+  VocabularyStatus,
+  VocabularyConfig,
+  VocabJobKind,
+  VocabularyJobDispatchResponse,
+  AggressivenessProfile,
+} from '../types/vocabulary';
 import { getAuthState } from '../lib/auth/oauth-utils';
 
 // API configuration - runtime config takes precedence over build-time env vars
@@ -579,6 +586,55 @@ class APIClient {
     const response = await this.client.get<EcologicalPressureHistoryResponse>(
       '/ontology/annealing/pressure/history',
       { params: { limit } },
+    );
+    return response.data;
+  }
+
+  // ============================================================
+  // VOCABULARY LIFECYCLE METHODS (ADR-701)
+  // ============================================================
+
+  /**
+   * Get vocabulary status: size, zone, aggressiveness, profile, thresholds.
+   * Powers the Consolidation Loop and Vocabulary Pressure panels.
+   */
+  async getVocabularyStatus(): Promise<VocabularyStatus> {
+    const response = await this.client.get<VocabularyStatus>('/vocabulary/status');
+    return response.data;
+  }
+
+  /**
+   * Get the full durable vocabulary configuration (admin view). Read-only in
+   * the MVP — mutation flows through the kg vocab CLI.
+   */
+  async getVocabularyConfig(): Promise<VocabularyConfig> {
+    const response = await this.client.get<VocabularyConfig>('/admin/vocabulary/config');
+    return response.data;
+  }
+
+  /**
+   * Get an aggressiveness profile's Bézier control points, used to render the
+   * read-only aggressiveness curve in the Vocabulary Pressure panel.
+   */
+  async getVocabularyProfile(name: string): Promise<AggressivenessProfile> {
+    const response = await this.client.get<AggressivenessProfile>(
+      `/admin/vocabulary/profiles/${encodeURIComponent(name)}`,
+    );
+    return response.data;
+  }
+
+  /**
+   * Dispatch a vocabulary worker operation as a background job (ADR-701 §1a).
+   * Mirrors triggerAnnealingCycle — returns immediately with a job_id to poll
+   * via getJob(). Requires vocabulary:write.
+   */
+  async dispatchVocabularyJob(
+    kind: VocabJobKind,
+    params?: Record<string, unknown>,
+  ): Promise<VocabularyJobDispatchResponse> {
+    const response = await this.client.post<VocabularyJobDispatchResponse>(
+      '/vocabulary/jobs',
+      { kind, params: params ?? null },
     );
     return response.data;
   }
