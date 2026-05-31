@@ -162,3 +162,12 @@ class TestResolveVisionSelection:
              patch("api.app.lib.ai_extraction_config.load_active_extraction_config", return_value=None):
             with pytest.raises(ValueError, match="No vision provider could be resolved"):
                 vp.resolve_vision_selection()
+
+    def test_get_vision_provider_propagates_resolver_error(self):
+        # The headline #378 fix: get_vision_provider() with no explicit provider
+        # no longer defaults to 'openai' — it resolves, and an unresolvable
+        # config raises rather than silently picking a hardcoded provider.
+        with patch.object(vp, "resolve_vision_selection",
+                          side_effect=ValueError("No vision provider could be resolved")):
+            with pytest.raises(ValueError, match="No vision provider could be resolved"):
+                vp.get_vision_provider()

@@ -116,3 +116,13 @@ class TestVisionConfigRoundTrip:
         resp = api_client.post("/admin/vision/config", headers=auth_headers_admin,
                                json={"provider": "ollama", "active": True})
         assert resp.status_code == 400
+
+    def test_effective_source_is_extraction_default_when_no_vision_config(
+            self, api_client, mock_oauth_validation, auth_headers_admin):
+        # Zero-config deployment story: with no explicit vision row, the
+        # effective provider comes from the active extraction provider (when
+        # vision-capable) — source must report that, not 'vision_config'.
+        # restore_vision_config guarantees the table is empty here.
+        got = api_client.get("/admin/vision/config", headers=auth_headers_admin).json()
+        assert got["config"] is None
+        assert got["effective"]["source"] in ("extraction_default", "unresolved")

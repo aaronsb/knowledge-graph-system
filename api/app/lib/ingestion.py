@@ -49,8 +49,17 @@ def _retrieve_candidate_concepts(
     failure (empty graph, embedding worker down) — candidate retrieval is an
     optimisation, never a hard dependency of ingestion. Degrades silently so a
     retrieval hiccup never fails an ingest; the graph-adjacency seed still
-    provides context.  @verified b4106aac
+    provides context.
+
+    Cost: without pgvector, ``vector_search`` is a Python-side full scan over
+    all embedded concepts (see age_client.query.vector_search). This adds one
+    such scan per chunk, on top of the per-extracted-concept matching scans
+    already in the concept loop. Set ``EXTRACTION_CANDIDATE_K=0`` to disable
+    retrieval entirely (kill switch for very large graphs without pgvector).
+    @verified b4106aac
     """
+    if limit <= 0:
+        return []  # kill switch — skip the per-chunk full scan
     try:
         worker = get_embedding_worker()
         if worker is None:

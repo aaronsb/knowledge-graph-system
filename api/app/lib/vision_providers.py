@@ -138,7 +138,13 @@ def resolve_vision_selection(
     if explicit:
         return explicit.lower(), model
 
-    # 2. Active vision config pointer.
+    # 2. Active vision config pointer. Deliberately NO _catalog_vision_model_ids
+    #    check here (unlike step 3): an operator who explicitly activated this
+    #    provider chose it, and the POST /admin/vision/config guard already
+    #    rejected activation without a usable model. If the catalog later loses
+    #    that model, we still honour the explicit choice and fail loud at
+    #    _resolve_vision_model — a named, diagnosable error — rather than
+    #    silently overriding the operator's selection with a different provider.
     try:
         from .ai_vision_config import load_active_vision_config
         vc = load_active_vision_config()
