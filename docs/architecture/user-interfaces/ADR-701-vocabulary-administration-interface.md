@@ -4,7 +4,7 @@ date: 2026-01-29
 deciders:
   - aaronsb
   - claude
-related: [22, 25, 26, 32, 46, 47, 52, 53, 65, 77, 200, 206, 703]
+related: [22, 25, 26, 32, 46, 47, 52, 53, 65, 77, 100, 200, 206, 703]
 ---
 
 # ADR-701: Vocabulary Administration Interface
@@ -73,16 +73,50 @@ read as siblings. Four panels map one-to-one onto the OntologyTab cohort:
 | **Consolidation Loop** — pruning mode (Naive/HITL/AITL), enable state, last/next run, pending merge proposals, vocab size, "Run consolidation" | Annealing Loop | `GET /vocabulary/status`, consolidation worker status |
 | **Vocabulary Pressure** — zone badge (COMFORT/WATCH/DANGER/EMERGENCY), aggressiveness curve with current-position marker, effective aggressiveness | Ecological Pressure | `GET /vocabulary/status` (zone, size, thresholds, profile) |
 | **Configuration** — durable vocabulary config (thresholds, profile, pruning mode), **read-only here — adjust via `kg vocab` CLI** | Configuration (`annealing_options`) | `GET /admin/vocabulary/config` |
-| **Proposals** — merge/consolidation recommendations queue (AITL): auto-executed / needs-review / rejected, approve/reject | Proposals (CLEAVE/DISSOLVE/…) | `POST /vocabulary/consolidate`, `POST /vocabulary/merge` |
+| **Actions** — job-dispatch triggers for the four worker operations (consolidate / refresh categories / remeasure epistemic / generate embeddings); fire-and-poll, toast the `job_id` | Annealing Loop's "Run cycle" trigger | `POST /vocabulary/jobs {kind}` (new), job-status polling |
+
+The MVP is **present-information plus triggers** — it surfaces state and
+*dispatches jobs*, but does **not** review/approve individual proposals
+(per-proposal merge approval is deferred to the target-state Merge tab).
 
 This is **not** an explorer plugin (explorers visualize graph *data*; this
 operates the vocabulary *cycle* — the Edge Explorer, ADR-077, already covers
 visualization). It follows the non-explorer admin pattern of the Ontology tab.
-The MVP requires **zero backend changes** — every endpoint above already exists.
 
 The aggressiveness curve renders read-only in the MVP (the CLI already produces
 an ASCII version; the web shows the real curve with the current-position
 marker). Interactive curve *editing* is target-state, below.
+
+### 1a. Vocabulary operations dispatch as jobs (parity with annealing)
+
+The vocabulary subsystem predates the database-driven job system (ADR-100). Its
+four worker operations — `vocab_consolidate`, `vocab_refresh`,
+`epistemic_remeasurement`, `vocab_embedding` — already run as **jobs** when
+fired *automatically* by their launchers (hysteresis / cron), but their *manual*
+HTTP entry points (`POST /vocabulary/consolidate`, `/refresh-categories`,
+`/epistemic-status/measure`, `/generate-embeddings`) execute **synchronously
+inside the request** — a pre-jobs legacy. Ontology annealing, by contrast,
+triggers a job (`POST /ontology/annealing-cycle` → `queue.enqueue(...)`).
+
+To reach parity, manual vocabulary triggers move onto the job model. Add a
+single unified dispatch endpoint:
+
+```
+POST /vocabulary/jobs   { "kind": "consolidate" | "refresh" | "remeasure" | "embed", ...params }
+  → queue.enqueue(job_type=<worker for kind>, job_data=...) ; auto-approve ; return { job_id }
+```
+
+This mirrors `/ontology/annealing-cycle` exactly (enqueue + auto-approve, client
+polls job status — ADR-100), reuses the four existing workers unchanged, and is
+gated `vocabulary:write`. One endpoint, four kinds — minimal new surface, no
+collision with the existing synchronous endpoints (which remain for the CLI and
+for callers that want inline results). The synchronous endpoints are **not**
+wired to the UI: a button must not block on an LLM consolidation, and dispatch
+is what gives the operation job-queue visibility.
+
+This is the only backend addition the MVP requires; the read panels
+(Consolidation Loop, Vocabulary Pressure, Configuration) consume endpoints that
+already exist.
 
 ### 2. Target state — dedicated route with richer tabs (deferred)
 
@@ -114,12 +148,14 @@ progressive-disclosure tabs.
 ### 3. CLI parity
 
 The CLI already carries the full vocabulary surface (`kg vocab status`, `list`,
-`consolidate`, `merge`, `similar`, `analyze`, profiles, config, epistemic). No
-new CLI commands are required for the MVP — unlike ADR-703, which had to *add*
-automation-policy commands. The web surface is catching the CLI up, not the
-reverse. Every web control must keep a CLI equivalent (project norm); the
-read-only Configuration panel explicitly directs operators to `kg vocab` for
-mutation.
+`consolidate`, `merge`, `similar`, `analyze`, profiles, config, epistemic), so
+the web MVP needs no new CLI commands — it is catching the CLI up, not the
+reverse. The read-only Configuration panel directs operators to `kg vocab` for
+mutation. One nuance follows from §1a: the web Actions panel *dispatches jobs*,
+whereas the existing CLI verbs (`kg vocab consolidate`, etc.) still run
+*synchronously*. Giving those CLI verbs an optional job-dispatch flag (so both
+surfaces enqueue identically) is a sensible follow-up but is not MVP-blocking —
+the synchronous CLI path remains valid.
 
 ### 4. Permission model
 
@@ -348,6 +384,8 @@ landing Dashboard.
   (append-only / no-destructive-delete posture this interface honors)
 - **ADR-703** — Ontology Lifecycle Administration Interface (the cohort pattern,
   MVP→route path, and permission model this ADR mirrors)
+- **ADR-100** — Database-driven job dispatch (the queue the §1a unified
+  `/vocabulary/jobs` endpoint enqueues onto; parity with `/ontology/annealing-cycle`)
 - **ADR-052** — Vocabulary Expansion-Consolidation Cycle (the "dreaming" loop
   this interface operates)
 - **ADR-032** — Automatic edge vocabulary expansion with zones (COMFORT/WATCH/
