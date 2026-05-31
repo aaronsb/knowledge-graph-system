@@ -10802,15 +10802,23 @@ exit (success/cancel/exception) or it would freeze the clock behind a phantom
 in-flight event.</p>
 <h3 id="sub-counters">Sub-counters</h3>
 <p>Specialized invalidation scopes keep their own counters, <strong>subordinate</strong> to the
-universal tick:</p>
+universal tick. They are <strong>declared in code</strong> — <code>api/app/lib/freshness.py:SUBCOUNTERS</code>
+enumerates each with its scope, what advances it, and whether it co-advances with
+the tick — so the hierarchy is a code-backed fact, not just prose (ADR-207 step 4):</p>
 <ul>
 <li><code>graph_accel.generation</code> — the <code>graph_accel</code> pgrx extension's own generation,
-  advanced the same out-of-band way (<code>graph_accel_invalidate</code>). Same
-  eventual-consistency nature; a sub-counter, not a competing clock.</li>
-<li><code>vocabulary_change_counter</code> — vocabulary membership changes.</li>
+  advanced the same out-of-band way (<code>graph_accel_invalidate</code>). It is the one
+  <strong>co-advancing mirror</strong>: <code>AGEClient.record_mutation</code> advances the tick <em>and</em>
+  calls <code>graph.invalidate()</code> from one place, so the two move together <strong>by
+  construction</strong> (pinned by <code>tests/unit/lib/test_record_mutation_coadvance.py</code>).
+  A sub-counter, not a competing clock — it exists because the in-memory layer
+  needs a <code>pg_notify</code>-backed signal the SQL watermark can't push to API processes.</li>
+<li><code>vocabulary_change_counter</code> — vocabulary membership changes. An <strong>independent
+  narrower clock</strong> (does not co-advance with the tick).</li>
 <li><code>vocabulary_embedding_generation_counter</code> — vocabulary <em>embedding</em> regeneration
   (the polarity-axis cache keys on this; it changes far more rarely than the
-  graph, so scoping it separately avoids needless axis recompute).</li>
+  graph, so scoping it separately avoids needless axis recompute). Also
+  independent.</li>
 </ul>
 <h2 id="the-freshness-contract">The freshness contract</h2>
 <p><code>api/app/lib/freshness.py</code> is where the four freshness questions — <em>built at what

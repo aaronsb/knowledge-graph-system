@@ -11199,9 +11199,13 @@ yet record an event.</p>
    separately (<strong>#422</strong>); artifacts implement <code>InstanceDerivation</code>, expose
    <code>reconcile</code> via CLI/MCP, and hide the storage tier behind <code>--verbose</code>
    (<strong>#233</strong>).</li>
-<li><strong>Follow-up, separable:</strong> formalize <code>graph_accel.generation</code> as a declared
-   sub-counter under the tick (prove co-advance), and revisit IVM where it is
-   cheap. This can trail in its own PR without holding up the rest.</li>
+<li><strong>Follow-up, separable (done):</strong> <code>graph_accel.generation</code> is now a declared
+   sub-counter (<code>api/app/lib/freshness.py:SUBCOUNTERS</code>), and its co-advance with
+   the tick is pinned by <code>tests/unit/lib/test_record_mutation_coadvance.py</code>
+   (<code>record_mutation</code> advances the tick <em>and</em> calls <code>graph.invalidate()</code> from one
+   place, so they move together by construction). The IVM revisit found <strong>no
+   cheap win available today</strong> (see the IVM consequence below) — it stays
+   deferred with a concrete trigger condition rather than being implemented.</li>
 </ol>
 <p>The commits stand on their own in review — the clock fix is a correctness fix,
 the contract is an abstraction with a test, each conformance step closes a
@@ -11221,7 +11225,17 @@ standing issue — while together they tell the single story this ADR names.</p>
   data worth preserving.</li>
 <li><strong>Risk accepted:</strong> IVM is deferred — derivations full-recompute on staleness,
   which is correct but not always cheapest. Acceptable: correctness first, the
-  contract <em>permits</em> IVM later without re-litigation.</li>
+  contract <em>permits</em> IVM later without re-litigation. The step-4 revisit found no
+  cheap win today: the cache tiers (grounding, polarity, confidence) already
+  reconcile <strong>lazily on-read</strong>, so they re-derive only what is actually requested
+  at their natural granularity — IVM as a distinct mechanism buys nothing; and
+  artifacts are already per-row (<code>InstanceDerivation</code>). The only true
+  full-recompute is the <strong>catalog index rebuild</strong>, and incremental maintenance
+  there is blocked on a missing prerequisite: the epoch log records <em>that</em> a
+  mutation happened, not <em>what</em> changed. <strong>Trigger to revisit:</strong> when
+  <code>record_mutation</code> carries a structured per-event change-set (affected
+  ontology / document / concept ids), the catalog index can patch the changed
+  subtree incrementally instead of rebuilding wholesale.</li>
 <li><strong>Risk if not done:</strong> each new materialized derivation adds another parallel
   freshness hierarchy on an unsound signal — the drift this ADR names compounds.</li>
 </ul>

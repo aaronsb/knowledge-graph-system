@@ -9044,10 +9044,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#integrity-tab-structural-guard-241" class="md-nav__link">
+  <a href="#integrity-tab-structural-guard-241-detectionclassify-only" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Integrity Tab — structural guard (#241)
+        Integrity Tab — structural guard (#241, detection/classify only)
       
     </span>
   </a>
@@ -10779,10 +10779,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#integrity-tab-structural-guard-241" class="md-nav__link">
+  <a href="#integrity-tab-structural-guard-241-detectionclassify-only" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Integrity Tab — structural guard (#241)
+        Integrity Tab — structural guard (#241, detection/classify only)
       
     </span>
   </a>
@@ -11064,8 +11064,8 @@ autonomy <em>trustworthy</em> rather than merely <em>automatic</em>:</p>
 <tr>
 <td>Execution fidelity</td>
 <td>#241 Integrity worker</td>
-<td>Detect and heal structural edge misuse (LLM emitting <code>SCOPED_BY</code>/<code>APPEARS</code> as semantic edges)</td>
-<td>No structural-edge integrity worker exists</td>
+<td>Detect (not heal) structural edge misuse (LLM emitting <code>SCOPED_BY</code>/<code>APPEARS</code> as semantic edges); remediate non-destructively via classify/deactivate</td>
+<td>No structural-edge detection exists; destructive healing rejected (see Integrity Tab)</td>
 </tr>
 </tbody>
 </table>
@@ -11196,19 +11196,31 @@ concept trapped in a text interface. The same applies here.</p>
 </ul>
 <p>Data sources: <code>GET /ontology/annealing/ecology</code>, <code>GET</code>/<code>PUT</code> on the ecological
 pressure profile within <code>annealing_options</code>.</p>
-<h4 id="integrity-tab-structural-guard-241">Integrity Tab — structural guard (#241)</h4>
-<p>Surfaces the graph integrity worker.</p>
+<h4 id="integrity-tab-structural-guard-241-detectionclassify-only">Integrity Tab — structural guard (#241, detection/classify only)</h4>
+<p>Surfaces structural-edge detection. <strong>Detection and classification only — no
+destructive healing.</strong> The original #241 proposal (rewrite illegal structural
+edges to <code>SIMILAR_TO</code> at low confidence, delete offending VocabType nodes) is
+<strong>rejected</strong> as inconsistent with the platform's append-only, no-destructive-
+delete posture (ADR-203 epoch event log, ADR-206 "no deletion, only movement")
+and its classify-don't-prune vocabulary stance (ADR-046, ADR-052). A destructive
+janitor would overwrite LLM-emitted signal and fabricate dishonest provenance.
+Crucially, the misuse it targeted is already neutralized by ADR-200 Design
+Principle 6 (edge-agnostic lifecycle): lifecycle queries match on node types,
+not edge labels, so a mislabeled semantic edge cannot break traversal. The
+operator-facing need is therefore <strong>visibility and classification</strong>, not repair.</p>
 <ul>
 <li><strong>Violations table</strong> — structural edge names (<code>SCOPED_BY</code>, <code>APPEARS</code>,
   <code>EVIDENCED_BY</code>, <code>FROM_SOURCE</code>) found connecting wrong node types, and
-  structural names appearing as VocabType nodes (ADR-204 node-type pollution).</li>
-<li><strong>Run check</strong> — trigger detection on demand (detection is safe; available
-  before healing ships).</li>
-<li><strong>Healing log</strong> — replacements made (illegal structural edge → <code>SIMILAR_TO</code>
-  at low confidence), VocabType nodes removed, each logged as a warning per the
-  #241 design.</li>
+  structural names appearing as VocabType nodes (ADR-204 node-type pollution).
+  Read-only; flags for operator awareness.</li>
+<li><strong>Run check</strong> — trigger detection on demand (read-only; mutates nothing).</li>
+<li><strong>Remediation (non-destructive)</strong> — flagged VocabType names are <em>classified</em>
+  by epistemic status and may be <strong>deactivated</strong> (<code>is_active = false</code>,
+  preserving all edges and history), the same mechanism the vocabulary cycle
+  uses (ADR-701). No edge rewriting, no node deletion. Any remediation is logged
+  to the epoch event log (ADR-203).</li>
 </ul>
-<p>Data sources: the new <code>POST /ontology/integrity/check</code> and
+<p>Data sources: the new <code>POST /ontology/integrity/check</code> (read-only detection) and
 <code>GET /ontology/integrity/report</code> (see §4).</p>
 <h3 id="3-cli-parity-additions">3. CLI parity additions</h3>
 <p>The CLI already carries the manual and review controls. It is <strong>missing</strong> the
@@ -11447,9 +11459,10 @@ present. The recommended order follows the backend dependency graph:</p>
 <li><strong>Dashboard + Proposals tabs</strong> — buildable today against existing endpoints
    (<code>GET /ontology/</code>, <code>GET /ontology/proposals</code>). Delivers visibility into the
    already-running autonomous loop first — the most urgent gap.</li>
-<li><strong>#241 (integrity worker)</strong> — detection-only first (safe, no graph
-   mutation), surfaced in the Integrity tab; healing follows once autonomous
-   execution is hardened. Worker and UI alerts panel ship together.</li>
+<li><strong>#241 (integrity worker)</strong> — <strong>detection/classify only</strong> (safe, no graph
+   mutation), surfaced in the Integrity tab; destructive healing is rejected
+   (see Integrity Tab). Non-destructive remediation is deactivation, not
+   rewrite/delete. Worker and UI alerts panel ship together.</li>
 <li><strong>#249 (Bezier ecological feedback)</strong> — backend feedback loop, then the
    Ecology tab curve editor.</li>
 <li><strong>#250 (AITL)</strong> then <strong>#251 (autonomous safety bounds)</strong> — the Automation
@@ -11458,9 +11471,11 @@ present. The recommended order follows the backend dependency graph:</p>
    issue, not as a separate pass.</li>
 </ol>
 <p>The integrity worker (#241) is treated here rather than in ADR-200 because its
-operator-facing half — detection reporting and the healing log — is part of this
-interface; ADR-200 Design Principle 6 already establishes the edge-agnostic
-principle the worker enforces.</p>
+operator-facing half — detection reporting and non-destructive classification —
+is part of this interface; ADR-200 Design Principle 6 already establishes the
+edge-agnostic principle that makes the misuse benign (mislabeled edges cannot
+break node-type-based lifecycle queries), so the worker's job is visibility, not
+repair.</p>
 <h2 id="related-adrs">Related ADRs</h2>
 <ul>
 <li><strong>ADR-200</strong> — Annealing Ontologies (the lifecycle this interface operates;
