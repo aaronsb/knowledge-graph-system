@@ -136,17 +136,18 @@ The system also handles images. Feed it street view photos and the extracted rel
 
 ### How It Compares
 
-| Capability | kg | GraphRAG | Zep/Graphiti | Vector DBs |
-|------------|-------------|----------|--------------|------------|
-| Contradiction detection | Native (mathematical) | LLM-dependent | Limited | No |
-| Grounding scores | Continuous -1 to +1 | Source citations only | No | Similarity only |
-| Semantic diversity | Yes (authenticity signal) | No | No | No |
-| Epistemic status | Per-relationship | No | No | No |
-| FUSE filesystem | Yes | No | No | No |
-| Air-gapped operation | Yes (Ollama) | Cloud required | Cloud required | Some local |
-| Dynamic vocabulary | Emergent + consolidation | Fixed schema | Fixed schema | N/A |
+| Capability | kg | GraphRAG | Zep/Graphiti | Cognee | Vector DBs |
+|------------|-------------|----------|--------------|--------|------------|
+| Contradiction detection | Native (mathematical) | LLM-dependent | Limited | No | No |
+| Grounding scores | Continuous -1 to +1 | Source citations only | No | No | Similarity only |
+| Semantic diversity | Yes (authenticity signal) | No | No | No | No |
+| Epistemic status | Per-relationship | No | No | No | No |
+| Emergent ontologies | Continuous annealing | One-shot communities | Temporal facts | Partial (event-driven) | N/A |
+| Multimodal ingest | Prose-bridge (own vector space) | Text-centric | Text-centric | Images/audio | Embeddings only |
+| FUSE filesystem | Yes | No | No | No | No |
+| Air-gapped operation | Yes (Ollama) | Cloud required | Cloud required | Local-capable | Some local |
 
-Zep/Graphiti has better temporal tracking (bi-temporal model). GraphRAG has broader community adoption. kg fills the gap for epistemic metrics — measuring confidence rather than just retrieving content.
+Each neighbor leads on a different axis: Zep/Graphiti on temporal tracking (bi-temporal model), GraphRAG on adoption (its Leiden communities are the closest analog to annealing, but computed once at index time), and Cognee — the nearest architectural neighbor — on self-improving memory (though its refinement is event-driven and it carries no epistemic layer). What we haven't found a shipped peer for is the *combination*: a background worker that continuously anneals concepts into emergent ontologies, a semantic FUSE surface, and an epistemic layer that measures confidence rather than just retrieving content. A 2026 landscape scan turned up only research prototypes for autonomous ontology evolution and essentially no commercial knowledge-graph FUSE.
 
 ## Why Try It
 
