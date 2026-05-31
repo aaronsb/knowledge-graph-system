@@ -142,12 +142,13 @@ The system also handles images. Feed it street view photos and the extracted rel
 | Grounding scores | Continuous -1 to +1 | Source citations only | No | No | Similarity only |
 | Semantic diversity | Yes (authenticity signal) | No | No | No | No |
 | Epistemic status | Per-relationship | No | No | No | No |
+| Temporal tracking | Ingestion epoch | No | Bi-temporal | No | No |
 | Emergent ontologies | Continuous annealing | One-shot communities | Temporal facts | Partial (event-driven) | N/A |
 | Multimodal ingest | Prose-bridge (own vector space) | Text-centric | Text-centric | Images/audio | Embeddings only |
 | FUSE filesystem | Yes | No | No | No | No |
 | Air-gapped operation | Yes (Ollama) | Cloud required | Cloud required | Local-capable | Some local |
 
-Each neighbor leads on a different axis: Zep/Graphiti on temporal tracking (bi-temporal model), GraphRAG on adoption (its Leiden communities are the closest analog to annealing, but computed once at index time), and Cognee — the nearest architectural neighbor — on self-improving memory (though its refinement is event-driven and it carries no epistemic layer). What we haven't found a shipped peer for is the *combination*: a background worker that continuously anneals concepts into emergent ontologies, a semantic FUSE surface, and an epistemic layer that measures confidence rather than just retrieving content. A 2026 landscape scan turned up only research prototypes for autonomous ontology evolution and essentially no commercial knowledge-graph FUSE.
+Each neighbor leads on a different axis: Zep/Graphiti on *bi-temporal* fact tracking (valid-time + transaction-time — kg tracks temporal too, but by ingestion epoch: when a concept first appeared and was last reinforced), GraphRAG on adoption (its Leiden communities are the closest analog to annealing, but computed once at index time), and Cognee — the nearest architectural neighbor — on self-improving memory (though its refinement is event-driven and it carries no epistemic layer). What we haven't found a shipped peer for is the *combination*: a background worker that continuously anneals concepts into emergent ontologies, a semantic FUSE surface, and an epistemic layer that measures confidence rather than just retrieving content. A 2026 landscape scan turned up only research prototypes for autonomous ontology evolution and essentially no commercial knowledge-graph FUSE.
 
 ## Why Try It
 
