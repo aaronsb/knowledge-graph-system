@@ -151,7 +151,7 @@ async def ingest_image(
     force: bool = Form(False, description="Force re-ingestion even if duplicate"),
     auto_approve: bool = Form(False, description="Auto-approve job (skip approval step)"),
     processing_mode: str = Form("serial", description="Processing mode: serial or parallel"),
-    vision_provider: Optional[str] = Form(None, description="Vision provider: openai (default), anthropic, ollama"),
+    vision_provider: Optional[str] = Form(None, description="Vision provider override (openai/anthropic/ollama); unset resolves the active/default vision provider per ADR-802"),
     vision_model: Optional[str] = Form(None, description="Vision model name (optional, uses provider default)"),
     # ADR-051: Source metadata (optional)
     source_type: Optional[str] = Form(None, description="Source type: file, mcp, api"),
@@ -282,8 +282,10 @@ async def ingest_image(
         "content_type": "image",  # Mark as image for worker routing
         "original_filename": file.filename,
         "image_size_bytes": len(content),
-        # Vision config (worker will use these)
-        "vision_provider": vision_provider or "openai",
+        # Vision config (worker will use these). Pass the override through as-is
+        # (may be None) so the worker resolves the active/default vision
+        # provider per ADR-802 §2 / #378 — no hardcoded 'openai' here.
+        "vision_provider": vision_provider,
         "vision_model": vision_model,
         "uploaded_by": current_user.username,
     }

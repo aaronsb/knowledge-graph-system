@@ -162,6 +162,7 @@ _Providers, extraction, convergence, prompts_
 | [ADR-070](./ai-embeddings/ADR-070-polarity-axis-analysis.md) | Polarity Axis Analysis for Bidirectional Semantic Dimensions | Accepted |
 | [ADR-800](./ai-embeddings/ADR-800-dynamic-model-catalog-and-openrouter-support.md) | Dynamic Model Catalog and OpenRouter Support | Accepted |
 | [ADR-801](./ai-embeddings/ADR-801-uniform-provider-configuration-contract.md) | Uniform Provider Configuration Contract | Draft |
+| [ADR-802](./ai-embeddings/ADR-802-unify-vision-providers-under-the-uniform-provider-contract.md) | Unify Vision Providers Under the Uniform Provider Contract | Accepted |
 
 ## Meta/Process
 _Documentation, workflow, access models, ADR system_

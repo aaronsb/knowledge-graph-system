@@ -22,6 +22,77 @@ from api.app.lib.ai_providers import get_provider
 from api.app.services.embedding_worker import get_embedding_worker
 
 
+# --- Reasoner context: global candidate-concept retrieval (#453) -----------
+# The reasoner is seeded with existing concepts so it reuses them instead of
+# coining near-duplicates. The graph-adjacency seed (get_document_concepts,
+# ontology-scoped, arbitrary cap) is blind to the globally-similar concepts
+# the post-extraction merge (vector_search, global) will actually fold into —
+# so duplicates that fall just under the merge threshold fragment the graph.
+# We retrieve the top-K concepts most similar to the chunk embedding (the same
+# global space the merge uses) and prioritise them as candidates, bounded by K
+# to cap prompt size. Tunable so the relevance/over-merge trade-off can be
+# dialled per deployment (showing more candidates biases toward reuse, which at
+# the extreme over-merges similar-but-distinct concepts).
+CANDIDATE_CONCEPT_K = int(os.getenv("EXTRACTION_CANDIDATE_K", "30"))
+CANDIDATE_CONCEPT_THRESHOLD = float(os.getenv("EXTRACTION_CANDIDATE_THRESHOLD", "0.5"))
+
+
+def _retrieve_candidate_concepts(
+    age_client: AGEClient,
+    text: str,
+    limit: int = CANDIDATE_CONCEPT_K,
+    threshold: float = CANDIDATE_CONCEPT_THRESHOLD,
+) -> List[Dict[str, Any]]:
+    """Top-K existing concepts most similar to ``text`` (global, #453).
+
+    Returns [{concept_id, label}] ranked by embedding similarity, or [] on any
+    failure (empty graph, embedding worker down) — candidate retrieval is an
+    optimisation, never a hard dependency of ingestion. Degrades silently so a
+    retrieval hiccup never fails an ingest; the graph-adjacency seed still
+    provides context.
+
+    Cost: without pgvector, ``vector_search`` is a Python-side full scan over
+    all embedded concepts (see age_client.query.vector_search). This adds one
+    such scan per chunk, on top of the per-extracted-concept matching scans
+    already in the concept loop. Set ``EXTRACTION_CANDIDATE_K=0`` to disable
+    retrieval entirely (kill switch for very large graphs without pgvector).
+    @verified b4106aac
+    """
+    if limit <= 0:
+        return []  # kill switch — skip the per-chunk full scan
+    try:
+        worker = get_embedding_worker()
+        if worker is None:
+            return []
+        embedding = worker.generate_concept_embedding(text)["embedding"]
+        matches = age_client.vector_search(
+            embedding=embedding, threshold=threshold, top_k=limit)
+        return [{"concept_id": m["concept_id"], "label": m["label"]} for m in matches]
+    except Exception as e:
+        logger.debug(f"Candidate-concept retrieval failed (non-fatal): {e}",
+                     exc_info=True)
+        return []
+
+
+def _merge_context_concepts(
+    candidates: List[Dict[str, Any]],
+    existing: List[Dict[str, Any]],
+    limit: int = CANDIDATE_CONCEPT_K,
+) -> List[Dict[str, Any]]:
+    """Merge relevance-ranked candidates with the ontology seed, dedup by
+    concept_id, candidates first, bounded by ``limit``.  @verified b4106aac"""
+    seen: set = set()
+    merged: List[Dict[str, Any]] = []
+    for c in list(candidates) + list(existing):
+        cid = c.get("concept_id")
+        if cid and cid not in seen:
+            seen.add(cid)
+            merged.append(c)
+        if len(merged) >= limit:
+            break
+    return merged
+
+
 class ChunkedIngestionStats:
     """Track ingestion statistics for chunked processing."""
 
@@ -274,12 +345,24 @@ def process_chunk(
         logger.debug(f"  Source embedding error details:", exc_info=True)
         # Continue with ingestion - embeddings can be regenerated later
 
-    # Step 2: Extract concepts via LLM (with context from recent concepts)
+    # #453: build the reasoner context. Retrieve the concepts most similar to
+    # this chunk (global, the same space the post-extraction merge uses) and
+    # prioritise them over the ontology-adjacency seed, so the reasoner sees —
+    # and can reuse — exactly the concepts its output might merge into, instead
+    # of only an arbitrary same-ontology slice. Bounded by K to cap prompt size.
+    candidate_concepts = _retrieve_candidate_concepts(age_client, chunk.text)
+    context_concepts = _merge_context_concepts(candidate_concepts, existing_concepts)
+    if candidate_concepts:
+        logger.info(
+            f"  🔎 {len(candidate_concepts)} candidate concept(s) retrieved; "
+            f"{len(context_concepts)} in reasoner context")
+
+    # Step 2: Extract concepts via LLM (with context from relevant concepts)
     try:
         extraction_response = extract_concepts(
             text=chunk.text,
             source_id=source_id,
-            existing_concepts=existing_concepts,
+            existing_concepts=context_concepts,
             age_client=age_client  # ADR-049: Pass client for dynamic direction examples
         )
         extraction = extraction_response["result"]
@@ -309,8 +392,9 @@ def process_chunk(
     # Map LLM concept_ids to actual concept_ids for relationship processing
     concept_id_map = {}
 
-    # Pre-populate with existing concepts so LLM can reference them in relationships
-    for existing in existing_concepts:
+    # Pre-populate with the same context concepts shown to the reasoner so it
+    # can reference them in relationships (#453: candidates + ontology seed).
+    for existing in context_concepts:
         # Existing concepts already have their actual IDs
         concept_id_map[existing["concept_id"]] = existing["concept_id"]
 

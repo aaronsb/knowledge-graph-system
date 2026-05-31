@@ -690,11 +690,18 @@ async def list_providers(
     # in get_provider() yet — don't surface a card that can't function.
     unimplemented = {"vllm"}
 
+    # ADR-802: vision is a catalog-described capability. `supports_vision` is
+    # true when the provider has a supports_vision model in the catalog, so the
+    # UI can data-drive a vision selector without hardcoding which providers
+    # can do image->prose.
+    from ..lib.vision_providers import _catalog_vision_model_ids
+
     providers = [
         {
             "provider": name,
             "requires_key": name in API_KEY_PROVIDERS,
             "is_local": name in LOCAL_PROVIDERS,
+            "supports_vision": bool(_catalog_vision_model_ids(name)),
         }
         for name in sorted(EXTRACTION_PROVIDERS)
         if name not in unimplemented

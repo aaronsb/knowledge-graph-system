@@ -31,7 +31,7 @@ from .services.scheduled_jobs_manager import JobScheduler as ScheduledJobsManage
 from .services.worker_registry import register_all_workers, get_all_job_types, validate_lane_uniqueness
 from .services.lane_manager import LaneManager
 from .launchers import CategoryRefreshLauncher, VocabConsolidationLauncher, EpistemicRemeasurementLauncher, VocabEmbeddingLauncher, ProjectionLauncher, ArtifactCleanupLauncher, AnnealingLauncher
-from .routes import ingest, ingest_image, jobs, queries, database, ontology, admin, auth, rbac, vocabulary, vocabulary_config, embedding, extraction, oauth, sources, projection, artifacts, grants, query_definitions, documents, concepts, edges, graph, storage_admin, programs, admin_workers, models, epochs, catalog
+from .routes import ingest, ingest_image, jobs, queries, database, ontology, admin, auth, rbac, vocabulary, vocabulary_config, embedding, extraction, vision, oauth, sources, projection, artifacts, grants, query_definitions, documents, concepts, edges, graph, storage_admin, programs, admin_workers, models, epochs, catalog
 from .services.embedding_worker import get_embedding_worker
 from .lib.age_client import AGEClient
 from .lib.ai_providers import get_provider
@@ -517,6 +517,8 @@ app.include_router(embedding.public_router)  # ADR-039: Public embedding config
 app.include_router(embedding.admin_router)  # ADR-039: Admin embedding management
 app.include_router(extraction.public_router)  # ADR-041: Public extraction config
 app.include_router(extraction.admin_router)  # ADR-041: Admin extraction management
+app.include_router(vision.public_router)  # ADR-802: Public vision provider config
+app.include_router(vision.admin_router)  # ADR-802: Admin vision provider management
 app.include_router(projection.router)  # ADR-078: Embedding landscape projections
 app.include_router(artifacts.router)  # ADR-083: Artifact persistence
 app.include_router(grants.router)  # ADR-082: Groups and resource grants
