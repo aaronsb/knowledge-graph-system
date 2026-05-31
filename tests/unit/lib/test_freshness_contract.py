@@ -31,6 +31,7 @@ from api.app.lib.age_client.grounding import (
     PolarityAxisDerivation,
 )
 from api.app.services.confidence_analyzer import ConfidenceCacheDerivation
+from api.app.lib.artifact_freshness import ArtifactDerivation
 
 
 # --------------------------------------------------------------------- registry
@@ -50,6 +51,12 @@ def test_registry_includes_both_grounding_tiers_separately():
 def test_registry_includes_the_confidence_cache():
     """The confidence cache registers as its own derivation."""
     assert ConfidenceCacheDerivation in registered_derivations()
+
+
+def test_artifacts_register_as_the_instance_derivation():
+    """Artifacts are the one per-row (InstanceDerivation) surface."""
+    assert ArtifactDerivation in registered_derivations()
+    assert issubclass(ArtifactDerivation, InstanceDerivation)
 
 
 def test_every_registered_derivation_conforms():

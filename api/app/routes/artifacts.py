@@ -22,6 +22,8 @@ from ..models.artifact import (
 from ..models.auth import UserInDB
 from ..dependencies.auth import get_current_active_user, get_db_connection
 from ..lib.garage import get_artifact_storage
+# Registers ArtifactDerivation in the ADR-207 freshness registry on import.
+from ..lib.artifact_freshness import ArtifactDerivation  # noqa: F401
 
 logger = logging.getLogger(__name__)
 
@@ -29,9 +31,15 @@ router = APIRouter(prefix="/artifacts", tags=["artifacts"])
 
 
 def _get_current_epoch(conn) -> int:
-    """Get current graph epoch for freshness tracking."""
+    """Get the canonical freshness clock (ADR-207): the committed-epoch tick.
+
+    Was get_graph_epoch() (the non-injective graph_change_counter). Repointed to
+    get_committed_epoch() so artifact freshness uses the same universal tick as
+    every other materialized derivation; artifacts stamp this at creation and
+    compare against it for is_fresh.
+    """
     with conn.cursor() as cur:
-        cur.execute("SELECT kg_api.get_graph_epoch()")
+        cur.execute("SELECT kg_api.get_committed_epoch()")
         return cur.fetchone()[0] or 0
 
 
