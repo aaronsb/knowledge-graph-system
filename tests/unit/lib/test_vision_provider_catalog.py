@@ -60,26 +60,28 @@ class TestResolveVisionModel:
 
 
 # ===========================================================================
-# list_available_models — catalog-driven, no hardcoded fallback
+# _catalog_vision_model_ids — catalog-driven vision model enumeration
+# (the admin /vision/providers surface; no hardcoded fallback).
+#
+# #457: the parallel VisionProvider classes that wrapped this as
+# list_available_models() were collapsed into the AIProvider contract; the
+# enumeration policy survives here as the catalog helper the routes call.
 # ===========================================================================
 
-class TestListAvailableModelsCatalogOnly:
-    def test_openai_should_return_catalog_vision_ids_when_present(self):
-        p = object.__new__(vp.OpenAIVisionProvider)
-        with patch.object(vp, "_catalog_vision_model_ids",
-                          return_value=["gpt-4o", "o3"]):
-            assert p.list_available_models() == ["gpt-4o", "o3"]
+class TestCatalogVisionModelIds:
+    def test_should_return_catalog_vision_ids_when_present(self):
+        rows = [{"model_id": "gpt-4o"}, {"model_id": "o3"}]
+        with patch.object(vp, "_catalog_vision_models", return_value=rows):
+            assert vp._catalog_vision_model_ids("openai") == ["gpt-4o", "o3"]
 
-    def test_openai_should_return_empty_when_catalog_empty(self):
-        p = object.__new__(vp.OpenAIVisionProvider)
-        with patch.object(vp, "_catalog_vision_model_ids", return_value=[]):
-            assert p.list_available_models() == []
+    def test_should_return_empty_when_catalog_empty(self):
+        with patch.object(vp, "_catalog_vision_models", return_value=[]):
+            assert vp._catalog_vision_model_ids("openai") == []
 
-    def test_anthropic_should_prefer_catalog(self):
-        p = object.__new__(vp.AnthropicVisionProvider)
-        with patch.object(vp, "_catalog_vision_model_ids",
-                          return_value=["claude-sonnet-4-20250514"]):
-            assert p.list_available_models() == ["claude-sonnet-4-20250514"]
+    def test_should_map_anthropic_catalog_rows_to_ids(self):
+        rows = [{"model_id": "claude-sonnet-4-20250514"}]
+        with patch.object(vp, "_catalog_vision_models", return_value=rows):
+            assert vp._catalog_vision_model_ids("anthropic") == ["claude-sonnet-4-20250514"]
 
 
 # ===========================================================================
@@ -158,16 +160,13 @@ class TestResolveVisionSelection:
                 vp.resolve_vision_selection()
 
     def test_raises_when_nothing_resolves(self):
+        # The headline #378 fix, now the surviving guarantee after #457 collapsed
+        # the get_vision_provider() factory into the AIProvider contract: with no
+        # explicit provider, no active vision config, and no vision-capable
+        # extraction default, resolution RAISES rather than silently defaulting
+        # to a hardcoded 'openai'. The ingestion worker then never reaches
+        # get_provider()/describe_image with a bogus provider.
         with patch("api.app.lib.ai_vision_config.load_active_vision_config", return_value=None), \
              patch("api.app.lib.ai_extraction_config.load_active_extraction_config", return_value=None):
             with pytest.raises(ValueError, match="No vision provider could be resolved"):
                 vp.resolve_vision_selection()
-
-    def test_get_vision_provider_propagates_resolver_error(self):
-        # The headline #378 fix: get_vision_provider() with no explicit provider
-        # no longer defaults to 'openai' — it resolves, and an unresolvable
-        # config raises rather than silently picking a hardcoded provider.
-        with patch.object(vp, "resolve_vision_selection",
-                          side_effect=ValueError("No vision provider could be resolved")):
-            with pytest.raises(ValueError, match="No vision provider could be resolved"):
-                vp.get_vision_provider()

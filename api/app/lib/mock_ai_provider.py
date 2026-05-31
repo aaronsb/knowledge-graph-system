@@ -259,23 +259,39 @@ class MockAIProvider(AIProvider):
             "tokens": self._calculate_mock_tokens(prompt + code)
         }
 
-    def describe_image(self, image_data: bytes, prompt: str) -> Dict[str, Any]:
+    def describe_image(
+        self,
+        image_data: bytes,
+        prompt: str,
+        *,
+        model: Optional[str] = None,
+        detail: Optional[str] = "high",
+        temperature: float = 0.3,
+    ) -> Dict[str, Any]:
         """
         Mock image description.
 
-        Returns deterministic description based on image data size.
+        Returns deterministic description based on image data size. Mirrors the
+        unified describe_image contract (AIProvider.describe_image): a 'tokens'
+        dict plus 'model'/'provider'.
 
         Args:
             image_data: Raw image bytes
             prompt: Description prompt
+            model: Optional vision model override (echoed back as the model id)
+            detail: Accepted (ignored) for signature uniformity
+            temperature: Accepted (ignored) for signature uniformity
 
         Returns:
-            Dict with 'text' (description) and 'tokens' (usage info)
+            Dict with 'text', 'tokens' (dict), 'model', 'provider'
         """
         description = f"Mock image description ({len(image_data)} bytes). Prompt: {prompt[:100]}"
+        total = self._calculate_mock_tokens(prompt)
         return {
             "text": description,
-            "tokens": self._calculate_mock_tokens(prompt)
+            "tokens": {"input_tokens": total, "output_tokens": 0, "total_tokens": total},
+            "model": model or "mock-vision",
+            "provider": "mock",
         }
 
     def call_with_tools(

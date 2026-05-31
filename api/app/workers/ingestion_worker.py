@@ -224,24 +224,36 @@ def run_ingestion_worker(
             logger.error(f"Failed to generate visual embedding: {e}")
             raise Exception(f"Visual embedding generation failed: {str(e)}")
 
-        # Step 2: Convert image to prose description (Vision Provider)
+        # Step 2: Convert image to prose description (ADR-057 literal path).
+        #
+        # The vision capability slot resolves INDEPENDENTLY of extraction
+        # (ADR-802 §2 / #378): resolve_vision_selection picks the provider/model
+        # (per-job override → active vision config → vision-capable extraction
+        # default → fail loud), then we build that provider and call the unified
+        # describe_image. We deliberately do NOT call get_provider() bare —
+        # that returns the *extraction* provider and would re-slave vision to
+        # extraction. The explicit args reproduce the research-validated literal
+        # settings: LITERAL prompt, detail=None (OpenAI "auto"), temperature 0.1.
         logger.info("Converting image to prose with vision AI...")
-        from api.app.lib.vision_providers import get_vision_provider, LITERAL_DESCRIPTION_PROMPT
+        # NOTE: get_provider is already imported at module level (top of file).
+        # Do NOT re-import it locally here — a function-local `from ... import
+        # get_provider` would make get_provider a local for the WHOLE function,
+        # so the text-extraction path's get_provider() call (later in this same
+        # function) would hit UnboundLocalError on non-image code paths.
+        from api.app.lib.vision_providers import resolve_vision_selection, LITERAL_DESCRIPTION_PROMPT
         try:
-            # ADR-802 §2 / #378: pass the per-job override through (may be None);
-            # get_vision_provider resolves the active/default provider when unset
-            # rather than defaulting to a hardcoded 'openai'.
-            vision_provider_name = job_data.get("vision_provider")
-            vision_model_name = job_data.get("vision_model")
-
-            vision_provider = get_vision_provider(
-                provider=vision_provider_name,
-                model=vision_model_name
+            vision_provider_name, vision_model_name = resolve_vision_selection(
+                provider=job_data.get("vision_provider"),
+                model=job_data.get("vision_model"),
             )
 
+            vision_provider = get_provider(vision_provider_name)
             description_response = vision_provider.describe_image(
-                image_bytes=image_bytes,
-                prompt=LITERAL_DESCRIPTION_PROMPT
+                image_bytes,
+                LITERAL_DESCRIPTION_PROMPT,
+                model=vision_model_name,
+                detail=None,
+                temperature=0.1,
             )
 
             prose_description = description_response["text"]
@@ -297,8 +309,13 @@ def run_ingestion_worker(
         job_data["storage_key"] = storage_key
         job_data["visual_embedding"] = visual_embedding
         job_data["vision_metadata"] = {
-            "provider": vision_provider.get_provider_name(),
-            "model": vision_provider.get_model_name(),
+            # Record the provider/model that actually performed image->prose,
+            # straight from the describe_image response (#457). The collapsed
+            # AIProvider has no get_model_name(), and its get_provider_name()
+            # is capitalized; the response carries the real lowercase provider
+            # + resolved vision model, which is what we want stored.
+            "provider": description_response.get("provider"),
+            "model": description_response.get("model"),
             "vision_tokens": vision_tokens,
             "visual_embedding_model": visual_model_name,
             "visual_embedding_dimension": visual_model_dim,
