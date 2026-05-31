@@ -18,6 +18,8 @@ from api.app.lib.freshness import (
     CollectionDerivation,
     FreshnessContract,
     InstanceDerivation,
+    SubCounter,
+    subcounters,
     read_committed_epoch,
     register_derivation,
     registered_derivations,
@@ -102,6 +104,37 @@ def test_read_committed_epoch_handles_dict_and_empty_rows():
     empty_cur = MagicMock()
     empty_cur.fetchone.return_value = None
     assert read_committed_epoch(empty_cur) == 0
+
+
+# ------------------------------------------------------------------- sub-counters
+
+def test_subcounters_are_declared_and_well_formed():
+    """Every declared sub-counter (ADR-207 step 4) names itself, its scope, how
+    it advances, and its relationship to the tick — the hierarchy is code, not
+    just prose."""
+    declared = subcounters()
+    assert declared, "no sub-counters declared — the hierarchy is undocumented"
+    for sc in declared:
+        assert isinstance(sc, SubCounter)
+        assert sc.name and sc.scope and sc.advanced_by
+        assert isinstance(sc.coadvances_with_tick, bool)
+
+
+def test_exactly_graph_accel_coadvances_with_the_tick():
+    """graph_accel.generation is the one co-advancing mirror; the vocabulary
+    counters are independent narrower clocks, not lockstep with the tick."""
+    by_name = {s.name: s for s in subcounters()}
+    assert by_name["graph_accel.generation"].coadvances_with_tick is True
+    coadvancing = [s for s in subcounters() if s.coadvances_with_tick]
+    assert [s.name for s in coadvancing] == ["graph_accel.generation"]
+
+
+def test_universal_tick_is_not_listed_as_a_subcounter():
+    """The tick (event_id watermark) is the clock the sub-counters are
+    subordinate to, not a peer — it must not appear in the list."""
+    names = {s.name for s in subcounters()}
+    assert "event_id" not in names
+    assert "get_committed_epoch" not in names
 
 
 # ------------------------------------------------------------------------- budget
