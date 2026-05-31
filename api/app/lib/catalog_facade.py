@@ -4,7 +4,9 @@ Catalog Facade (ADR-501)
 Read surface for hierarchical browse of the ontology -> document -> concept
 hierarchy. The AGE graph is the source of truth; this facade maintains a
 materialized index (kg_api.catalog_node + kg_api.catalog_edge) that is rebuilt
-whenever the graph epoch (graph_change_counter) advances.
+whenever the committed-epoch watermark (kg_api.get_committed_epoch(), ADR-207)
+advances. It is a CollectionDerivation under the ADR-207 freshness contract and
+the contract's reference implementation.
 
 Membership is always derived from the graph's CANONICAL edges — never from the
 denormalized Source.document string, which lags during annealing reassignment
@@ -27,6 +29,13 @@ from typing import List, Dict, Any, Optional, Tuple
 
 from psycopg2.extras import RealDictCursor
 
+from .freshness import (
+    Budget,
+    CollectionDerivation,
+    read_committed_epoch,
+    register_derivation,
+)
+
 logger = logging.getLogger(__name__)
 
 # Advisory-lock key for serializing rebuilds across workers. Arbitrary constant,
@@ -43,13 +52,25 @@ _SORT_SQL = {
 }
 
 
-class CatalogFacade:
+@register_derivation
+class CatalogFacade(CollectionDerivation):
     """Materialized-index read surface for catalog browse (ADR-501).
 
     Constructed with an AGEClient; reuses its connection pool. Browse reads come
     from the relational index; the index is rebuilt from the graph on epoch
     advance via ensure_fresh().
+
+    A `CollectionDerivation` (ADR-207): one stamp for the whole index, reconcile
+    rebuilds the lot. It resolves freshness against the committed-epoch watermark
+    (`get_committed_epoch()`), not the graph_change_counter — and serves as the
+    contract's reference implementation, since its deferred / on-read /
+    serve-stale-under-lock behavior already matches the target shape.
     """
+
+    #: Registry name / operator label (ADR-207).
+    name = "catalog_index"
+    #: Strict freshness: the browse index must reflect the committed graph.
+    budget = Budget.strict()
 
     def __init__(self, client):
         """Store the AGE client and reuse its connection pool."""
@@ -58,14 +79,12 @@ class CatalogFacade:
     # ------------------------------------------------------------------ epochs
 
     def _current_epoch(self, cur) -> int:
-        """Current graph_change_counter — the same freshness signal artifacts use."""
-        cur.execute("SELECT kg_api.get_graph_epoch()")
-        row = cur.fetchone()
-        # RealDictCursor returns a dict; plain cursor a tuple.
-        if row is None:
-            return 0
-        val = list(row.values())[0] if isinstance(row, dict) else row[0]
-        return int(val) if val is not None else 0
+        """Canonical freshness clock: the committed-epoch watermark (ADR-207).
+
+        Was graph_change_counter (get_graph_epoch); migrated to the watermark so
+        the index stamps against a monotonic, false-FRESH-safe signal.
+        """
+        return read_committed_epoch(cur)
 
     def _index_epoch(self, cur) -> Optional[int]:
         """Epoch the index was last built at, or None if never built."""
@@ -130,6 +149,41 @@ class CatalogFacade:
             return (True, 0)
         finally:
             self.client.pool.putconn(conn)
+
+    # ------------------------------------------------ FreshnessContract surface
+
+    # ensure_fresh() above is the optimized combined detect+reconcile (single
+    # connection, advisory-locked, serve-stale-under-contention). The three
+    # methods below expose the same behavior through the ADR-207 contract so the
+    # catalog is enumerable/uniform with the other derivations; is_fresh() is
+    # inherited from CollectionDerivation.
+
+    def version_stamp(self) -> Optional[int]:
+        """The watermark the index was last built at (ADR-207). None if empty."""
+        conn = self.client.pool.getconn()
+        try:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                stamp = self._index_epoch(cur)
+            conn.rollback()
+            return stamp
+        finally:
+            self.client.pool.putconn(conn)
+
+    def current_version(self) -> int:
+        """The canonical clock now: the committed-epoch watermark (ADR-207)."""
+        conn = self.client.pool.getconn()
+        try:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                current = self._current_epoch(cur)
+            conn.rollback()
+            return current
+        finally:
+            self.client.pool.putconn(conn)
+
+    def reconcile(self) -> None:
+        """Rebuild the index if it lags the watermark (delegates to ensure_fresh,
+        which rebuilds under the advisory lock and is a no-op when fresh)."""
+        self.ensure_fresh()
 
     # ----------------------------------------------------------------- rebuild
 
