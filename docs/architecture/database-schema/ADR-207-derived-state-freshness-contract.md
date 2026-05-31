@@ -270,6 +270,19 @@ already committed partial changes, and excluding it would read false-FRESH. The
 exit path (success/cancel/exception) is what keeps a crashed job from freezing
 the watermark behind a phantom in-flight event. (Built and verified in step 1.)
 
+**Staleness bound (review S3).** Because the watermark holds at
+`MIN(in_flight) - 1`, a mutation committed *while a longer job is in flight* is
+not reflected until that job resolves. So the bound on detection latency is **the
+duration of the longest concurrent in-flight job**, not wall-clock. This is the
+deliberate price of the contiguous-prefix guarantee (no half-applied state ever
+shows as fresh), and it is acceptable because the dominant in-flight job is
+ingestion, after which a rebuild was going to happen anyway. An atomic edit's own
+`record_mutation` records a *completed* event, so in the common case (no long job
+running) it advances the tick immediately. The brief two-phase window inside
+`record_mutation` itself (record → complete) only *holds* the watermark at its
+prior value, never regresses it (S2), so it cannot surface stale-as-fresh — at
+worst a derivation rebuilt inside that window re-checks once the event completes.
+
 ### D2 — Mandatory maintenance discipline: deferred, on-read, bounded
 
 - **Deferred / on-read detection is the floor.** Every derivation re-reads the

@@ -161,21 +161,27 @@ def run_restore_worker(
             }
         })
 
-        # Refresh graph metrics after restore (ADR-079: cache invalidation)
-        # This is critical after restore since the entire graph may have changed
+        # ADR-207/#386: a restore wholesale replaces the graph — the single
+        # largest possible mutation. Announce it via record_mutation so the
+        # universal freshness tick (get_committed_epoch) advances past every
+        # derivation's stamp; otherwise the catalog index and the grounding /
+        # confidence / artifact caches keep serving pre-restore data as "fresh".
+        # record_mutation records a completed epoch event (advances the tick),
+        # invalidates graph_accel, AND refreshes the graph_change_counter
+        # snapshot — subsuming the bare refresh_graph_metrics() this replaced.
         try:
             metrics_client = AGEClient()
-            conn = metrics_client.pool.getconn()
             try:
-                with conn.cursor() as cur:
-                    cur.execute("SELECT refresh_graph_metrics()")
-                conn.commit()
-                logger.info(f"[{job_id}] Refreshed graph metrics after restore")
+                metrics_client.record_mutation(
+                    "ingestion",
+                    actor="restore",
+                    metadata={"restore": True, "job_id": job_id},
+                )
+                logger.info(f"[{job_id}] Recorded restore as a graph mutation (freshness tick advanced)")
             finally:
-                metrics_client.pool.putconn(conn)
                 metrics_client.close()
         except Exception as e:
-            logger.warning(f"[{job_id}] Failed to refresh graph metrics: {e}")
+            logger.warning(f"[{job_id}] Failed to record restore mutation: {e}")
 
         # Success: Delete checkpoint
         if checkpoint_path and checkpoint_path.exists():

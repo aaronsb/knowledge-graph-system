@@ -60,32 +60,40 @@ class IngestionMixin:
 
         Grep target: `record_epoch failed`.
         """
+        conn = None
         try:
             conn = self.pool.getconn()
-            try:
-                with conn.cursor() as cur:
-                    cur.execute(
-                        "SELECT kg_api.record_graph_epoch(%s::text, %s::text, %s::jsonb)",
-                        (
-                            kind,
-                            str(actor) if actor is not None else None,
-                            json.dumps(metadata or {}),
-                        ),
-                    )
-                    row = cur.fetchone()
-                    return row[0] if row else None
-            finally:
-                conn.commit()
-                self.pool.putconn(conn)
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT kg_api.record_graph_epoch(%s::text, %s::text, %s::jsonb)",
+                    (
+                        kind,
+                        str(actor) if actor is not None else None,
+                        json.dumps(metadata or {}),
+                    ),
+                )
+                row = cur.fetchone()
+            conn.commit()
+            return row[0] if row else None
         except Exception as e:
             # ERROR (not WARNING) — see docstring. Any non-zero rate of
             # this in a healthy install indicates a real problem.
+            if conn is not None:
+                try:
+                    conn.rollback()
+                except Exception:
+                    pass
             logger.error(
                 "record_epoch failed (kind=%s, actor=%s): %s",
                 kind, actor, e,
                 exc_info=True,
             )
             return None
+        finally:
+            # Always return the connection — even if commit/rollback raised — so
+            # a steady failure rate cannot slowly exhaust the pool (review S1).
+            if conn is not None:
+                self.pool.putconn(conn)
 
     def complete_epoch(self, event_id: int, status: str = "completed") -> None:
         """
@@ -105,23 +113,30 @@ class IngestionMixin:
         """
         if event_id is None:
             return
+        conn = None
         try:
             conn = self.pool.getconn()
-            try:
-                with conn.cursor() as cur:
-                    cur.execute(
-                        "SELECT kg_api.complete_graph_epoch(%s::bigint, %s::text)",
-                        (event_id, status),
-                    )
-            finally:
-                conn.commit()
-                self.pool.putconn(conn)
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT kg_api.complete_graph_epoch(%s::bigint, %s::text)",
+                    (event_id, status),
+                )
+            conn.commit()
         except Exception as e:
+            if conn is not None:
+                try:
+                    conn.rollback()
+                except Exception:
+                    pass
             logger.error(
                 "complete_epoch failed (event_id=%s, status=%s): %s",
                 event_id, status, e,
                 exc_info=True,
             )
+        finally:
+            # Always return the connection (review S1).
+            if conn is not None:
+                self.pool.putconn(conn)
 
     def record_mutation(
         self,
