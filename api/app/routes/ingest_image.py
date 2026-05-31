@@ -178,7 +178,11 @@ async def ingest_image(
     **Visual Embeddings:**
     - Nomic Embed Vision v1.5 (768-dim, local via transformers)
     - 0.847 clustering quality (27% better than CLIP)
-    - Same vector space as text embeddings
+    - Independent same-modality index for image search (ADR-803): stored on the
+      Source, never compared to the text/concept space. The prose (step 3-5),
+      not this vector, is what joins the image to the graph. (Historically
+      described as "same vector space as text"; that co-spatiality is neither
+      required nor used — corrected per ADR-803.)
 
     **Workflow (ADR-014):**
     1. Submit image → Job created with status `pending`
