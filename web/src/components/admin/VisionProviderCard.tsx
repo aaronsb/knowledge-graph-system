@@ -43,14 +43,17 @@ export const VisionProviderCard: React.FC<{ onError?: (msg: string) => void }> =
       setProviders(provResp.providers);
       setEffective(detail.effective);
       setActiveProvider(detail.config?.provider ?? null);
-      // Seed each provider's model draft with its currently-selected/first model.
+      // Seed each provider's model draft. Always re-sync the ACTIVE provider's
+      // draft to what's persisted (the server may resolve/normalize the model
+      // id); leave untouched drafts for inactive providers alone.
       setDrafts((prev) => {
         const next = { ...prev };
         for (const p of provResp.providers) {
-          if (next[p.provider] === undefined) {
-            next[p.provider] =
-              (detail.config?.provider === p.provider ? detail.config?.model_name : '') ||
-              p.vision_models[0] || '';
+          const isActive = detail.config?.provider === p.provider;
+          if (isActive && detail.config?.model_name) {
+            next[p.provider] = detail.config.model_name;
+          } else if (next[p.provider] === undefined) {
+            next[p.provider] = p.vision_models[0] || '';
           }
         }
         return next;
@@ -144,7 +147,7 @@ export const VisionProviderCard: React.FC<{ onError?: (msg: string) => void }> =
                       onChange={(e) => setDrafts((d) => ({ ...d, [p.provider]: e.target.value }))}
                     >
                       {p.vision_models.length === 0 ? (
-                        <option value="">(no vision model — run Get models)</option>
+                        <option value="">(no vision model in catalog — add one via AI Providers)</option>
                       ) : (
                         p.vision_models.map((m) => (
                           <option key={m} value={m}>{m}</option>

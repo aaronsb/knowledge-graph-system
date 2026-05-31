@@ -707,6 +707,9 @@ def export_embedding_profile(profile_id: int) -> Optional[Dict[str, Any]]:
             "dimensions": config["image_dimensions"],
             "precision": config.get("image_precision"),
             "trust_remote_code": config.get("image_trust_remote_code", False),
+            # ADR-803: the image index's own vector_space, independent of the
+            # profile-level (text) vector_space and never compared to it.
+            "vector_space": config.get("image_vector_space"),
         }
 
     return result
