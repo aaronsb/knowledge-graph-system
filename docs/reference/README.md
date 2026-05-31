@@ -90,6 +90,7 @@ reference/
 ├── OPERATOR_ARCHITECTURE.md        (install.sh + operator.sh + kg-operator)
 ├── RECURSIVE_UPSERT_ARCHITECTURE.md (concept matching pattern)
 ├── STORAGE-ARCHITECTURE.md         (PostgreSQL + Garage + AGE tiers)
+├── FRESHNESS-ARCHITECTURE.md       (derived-data freshness: the universal tick)
 ├── openapi.json                    (exported FastAPI schema)
 ├── cli/
 │   ├── README.md                   (CLI index)

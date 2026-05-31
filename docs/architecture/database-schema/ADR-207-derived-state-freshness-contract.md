@@ -177,68 +177,71 @@ derivation, resolved against **one canonical logical clock**, with the catalog
 facade's deferred / on-read / serve-stale-under-lock behavior as the reference
 shape. Three concrete decisions:
 
-### D1 — The canonical clock is a committed-prefix watermark over the ADR-203 epoch sequence
+### D1 — The canonical clock is one universal monotonic tick, with an eventual-consistency guarantee
 
-`kg_api.graph_epochs.event_id` is `BIGSERIAL PRIMARY KEY` — monotonic and unique
-*as a column*. That gives us a **monotonic high-water freshness signal** (not, as
-an earlier draft claimed, a bidirectionally-injective one — see the watermark
-caveat below). It is the property cache coherence requires of a version signal,
-and the property `graph_change_counter` provably lacks.
+The freshness clock is **one universal monotonic tick** that advances on every
+graph action. Sub-counters may exist for specialized cache scopes, but there is
+exactly one universal tick above them, and it is what every derivation stamps
+against.
 
-The subtlety is that epoch rows are inserted at job **start** (ADR-203's
-deliberate design, so the `event_id` can tag Instances created during the run),
-while a job *commits* at its end — and jobs complete **out of order** (a long
-ingestion started at id 6 may finish after a short one at id 7). Therefore the
-naive accessor `MAX(event_id) WHERE status = 'completed'` is **not a safe
-progress cursor**: with 6 in-flight and 7 done it returns 7, and 6's eventual
-commit is never re-surfaced — re-introducing the very false-FRESH it is meant to
-kill. The contract instead resolves freshness against the **contiguous resolved
-prefix**:
+**Why it is application-level, not a trigger.** The obvious implementation — a
+PostgreSQL trigger that bumps a sequence on every write — does not work here, and
+migration 033 already documents why: *Apache AGE's Cypher operations bypass
+PostgreSQL's trigger mechanism entirely* (AGE manipulates label tables via
+internal C functions that do not fire row-level triggers). That is the original
+reason `graph_change_counter` is a recomputed `COUNT(*)` checksum rather than a
+trigger counter — and the reason it is non-injective (ADR-203: delete one + add
+one leaves the sum unchanged). The universal tick therefore lives where it can
+actually see every mutation: the application choke point `refresh_epoch()` /
+`refresh_graph_metrics()`, which already declares the rule "every mutation path
+must call this, regardless of caller." The tick is a monotonic
+application-incremented counter (migration 033's "category B" pattern, already
+proven to survive AGE).
 
-```text
-get_committed_epoch() := MIN(event_id WHERE status = 'in_progress') - 1
-                         if any job is in flight, else
-                         MAX(event_id) over all resolved events
-                         (the high-water mark below which no job is in flight)
-```
+**Eventual consistency, guaranteed — not synchronous.** Because the tick is
+advanced out-of-band from the AGE write (not in the same trigger), there is a
+window where it lags the true graph state. We accept that and guarantee
+*convergence* instead of instantaneous accuracy:
 
-This makes **#384 (epoch `status` column) a hard prerequisite** — without a
-commit/fail status the sequence reflects *attempts*, not *commits*. An in-flight
-job at id N holds the watermark at N-1, so every derivation correctly reads stale
-until it resolves; sequence gaps (a `BIGSERIAL` rolled-back transaction) are
-tolerated because the watermark keys on the lowest in-flight id, not contiguity
-of values.
+- The periodic `refresh_graph_metrics()` background sync is the **backstop**: it
+  recomputes the snapshot and bumps the tick on any detected change, so a
+  count-changing mutation advances the tick within one interval **even if a
+  mutation path forgot the explicit call**. No mutation stays invisible forever.
+- **Count-preserving** AGE mutations (annealing edge re-scope, delete+add netting
+  zero) are invisible to a `COUNT` checksum and to triggers alike, so those paths
+  must **signal explicitly** — which is exactly what recording an epoch event for
+  every mutation kind buys (**#386**, now a prerequisite, not a follow-up). An
+  explicit signal bumps the tick directly.
+- This guarantee has interplay with the `graph_accel` pgrx extension, whose own
+  `generation` counter is advanced the same out-of-band way (`graph_accel_invalidate`).
+  It is a **sub-counter** under the universal tick with the same
+  eventual-consistency contract, not a competing clock.
 
-**Both `completed` and `failed` events count toward the watermark** — only
-`in_progress` blocks it. This is load-bearing, and it is *why the watermark is
-not `MAX(event_id WHERE completed)`*: ingestion commits **per-chunk**, so a job
-that aborted or was cancelled mid-run may have already committed partial graph
-changes. Excluding it would hide those commits and read false-FRESH. A cleanly-
-rolled-back failed event that committed nothing costs at most one benign no-op
-rebuild — the safe direction to err. The `completed`/`failed` distinction is
-therefore for *analytics* (#384's original motive: drop zero-instance jobs from
-hot/stale signals), **not** for this watermark. Correspondingly, the epoch must
-be resolved on **every** exit path of a mutation — success, cancel, *and*
-exception — or one crashed job holds the watermark behind a phantom in-flight
-event and freezes freshness platform-wide. (Verified end-to-end against the
-ingestion worker, the only epoch-recording path.)
+**Sub-counters stay subordinate.** `graph_accel.generation`,
+`vocabulary_change_counter`, and `vocabulary_embedding_generation_counter` remain
+for their narrower invalidation scopes (e.g. the polarity-axis tier keys on the
+vocab-embedding counter, which changes far more rarely than the graph). One
+universal tick above them; they do not substitute for it.
 
-**`graph_epoch` columns are typed `BIGINT`** to match the sequence — the existing
-`INTEGER` columns (`artifacts.graph_epoch`, `catalog_node.graph_epoch`) and the
-`get_graph_epoch()` return type are widened as part of this work.
+**`graph_change_counter` is demoted, not deleted.** The `COUNT` checksum keeps
+its statistics role and serves as the *change detector* that drives the
+backstop tick-bump, but it is **never** the freshness stamp itself —
+`counter == stamp` is meaningless (non-injective). Freshness reads the tick.
 
-**`graph_change_counter` is demoted, not deleted.** It remains a sound
-*one-directional dirty hint* — `counter != stamp` reliably means "changed", so
-it is a legal cheap fast-path to *prove staleness* — but it is **never trusted
-to prove freshness** (its non-injectivity, per ADR-203, makes `counter == stamp`
-meaningless). Existing `graph_epoch` columns that today store the counter are
-migrated to store the committed event-log sequence.
+**Keep both: tick for freshness, epoch log for analytics.** The `graph_epochs`
+event log and its `#384` `status` column remain — they are the richer
+logical-time / lifetime record (ADR-203), and `#386` extends event recording to
+all mutation kinds. They are *not* the freshness clock: the in-flight
+watermark machinery that an earlier draft put on the event log is unnecessary for
+freshness, because the universal tick is advanced *after* commit (each tick value
+is already a committed state, no phantom-in-flight problem). `status` stays for
+its original analytics motive (drop zero-instance failed jobs from hot/stale
+signals). `get_committed_epoch()` (and the contract's `read_committed_epoch`) is
+repointed to read the universal tick.
 
-**`graph_accel.generation`** is the in-memory acceleration layer's *own*
-invalidation signal, internal to the `graph_accel` extension — itself a
-materialized derivation. It is not a competing system clock; it is brought under
-the same contract as a separable follow-up, resolving against
-`get_committed_epoch()` or proven to co-advance with it.
+**`graph_epoch` stamp columns are typed `BIGINT`** to match the tick — the
+existing `INTEGER` columns (`artifacts.graph_epoch`, `catalog_node.graph_epoch`)
+and the relevant accessor return types are widened as part of this work.
 
 ### D2 — Mandatory maintenance discipline: deferred, on-read, bounded
 
@@ -306,25 +309,29 @@ Derivations **register** themselves, which buys two things:
 **Clean-rebuild assumption.** The platform carries no production data that must
 be preserved: it is wiped and re-initialized as part of landing this. That
 removes the riskiest piece a freshness-clock change would normally carry — there
-is **no back-fill and no migration machinery** to map old `graph_change_counter`
-stamps (a different number space) onto the new clock, and **no rollback-of-data
-hazard**. Columns are simply defined `BIGINT` from the reset forward; every
-derivation builds fresh against the watermark on first read. (If the platform
-ever holds data worth preserving, this execution section must be revisited —
-back-filling stamps across the counter→event-sequence number-space gap has no
-sound automatic answer.)
+is **no back-fill and no migration machinery** to map old stamps (a different
+number space) onto the new clock, and **no rollback-of-data hazard**. Columns are
+simply defined `BIGINT` from the reset forward; every derivation builds fresh
+against the universal tick on first read. (If the platform ever holds data worth
+preserving, this execution section must be revisited.)
 
 Given that, this is one body of work, best delivered as a single PR whose commits
 read in order as a coherent narrative. Only one ordering constraint is
-load-bearing: **the clock must be trustworthy before any derivation reads it.**
+load-bearing: **the universal tick must advance on every mutation kind before any
+derivation reads it** — otherwise a derivation goes blind to the kinds that don't
+yet bump it.
 
-1. **Make the clock trustworthy.** Land the epoch `status` column and the
-   contiguous-committed-prefix `kg_api.get_committed_epoch()` (D1); widen the
-   `graph_epoch` columns and `get_graph_epoch()` to `BIGINT`; re-comment
-   `graph_change_counter` as a one-directional dirty-hint (with a lint note so it
-   is never reintroduced as a freshness signal). Closes **#384**. Note this fixes
-   false-FRESH only *with* the watermark semantics — the `status` column alone is
-   necessary but not sufficient.
+1. **Make the clock trustworthy and universal.** Land the epoch `status` column
+   and widen the `graph_epoch` stamp columns to `BIGINT` (**#384**). Introduce
+   the **universal monotonic tick** (D1), advanced in `refresh_graph_metrics()`
+   (the choke point every mutation path already calls) and by the periodic
+   background sync as the eventual-consistency backstop; repoint
+   `get_committed_epoch()` to read it. Re-comment `graph_change_counter` as the
+   demoted change-detector, never a freshness stamp. **Record epoch events — and
+   bump the tick — for every mutation kind, not just ingestion (#386)**: this is
+   a prerequisite, because count-preserving AGE mutations (annealing) are
+   invisible to the checksum backstop and must signal explicitly. Without #386 a
+   derivation on the tick would miss annealing/edit mutations.
 2. **Establish the contract against the surface that already obeys it.** Define
    the `FreshnessContract` base + the two specializations + registry +
    conformance test, then bring the **catalog facade** on first — it already
@@ -335,9 +342,9 @@ load-bearing: **the clock must be trustworthy before any derivation reads it.**
    separately (**#422**); artifacts implement `InstanceDerivation`, expose
    `reconcile` via CLI/MCP, and hide the storage tier behind `--verbose`
    (**#233**).
-4. **Follow-up, separable:** bring `graph_accel.generation` under the contract or
-   prove co-advance, and revisit IVM where it is cheap. This can trail in its own
-   PR without holding up the rest.
+4. **Follow-up, separable:** formalize `graph_accel.generation` as a declared
+   sub-counter under the tick (prove co-advance), and revisit IVM where it is
+   cheap. This can trail in its own PR without holding up the rest.
 
 The commits stand on their own in review — the clock fix is a correctness fix,
 the contract is an abstraction with a test, each conformance step closes a
@@ -364,16 +371,24 @@ standing issue — while together they tell the single story this ADR names.
 
 ## Alternatives considered
 
-- **Repair `graph_change_counter` into a monotonic commit-bumped sequence.**
-  Rejected: ADR-203 already established the checksum is
-  the wrong primitive, and a *second* monotonic sequence alongside the epoch log
-  would be a redundant clock. The epoch `event_id` is already the monotonic
-  sequence we need.
-- **Reconcile the two existing clocks and prove co-advance (A.3).** Rejected as
-  the *primary* signal: it preserves two clocks and therefore the snapshot-skew
-  hazard, and proves a property the system would have to keep re-proving on every
-  schema change. Co-advance is retained only as the *follow-up fallback* for the
-  in-memory accel layer, where the generation counter is extension-internal.
+- **The committed-prefix watermark over the epoch event log (an earlier draft of
+  D1).** Rejected on implementation: the epoch event log is recorded only by
+  ingestion, so a watermark over it is blind to edits and annealing — and the
+  in-flight `in_progress`/`completed` watermark machinery only existed to paper
+  over epochs being recorded at job *start*. A tick advanced *after* commit at
+  the universal mutation hook needs none of that. The event log is kept for
+  analytics (D1, "keep both"), not as the freshness clock.
+- **A PostgreSQL trigger bumping a monotonic sequence on every write.** Infeasible
+  here: AGE Cypher bypasses row-level triggers (migration 033), which is the whole
+  reason `graph_change_counter` is a recomputed checksum. The universal tick
+  adopts the *monotonic-counter* idea but advances it in application code at the
+  `refresh_graph_metrics()` choke point, accepting eventual consistency with a
+  periodic backstop (D1).
+- **A second, fully-synchronous clock reconciled with `graph_accel.generation`.**
+  Rejected as primary: synchronous accuracy is unattainable against AGE's
+  trigger-bypass, and maintaining two co-equal clocks reintroduces snapshot skew.
+  `graph_accel.generation` is instead a declared *sub-counter* under the one
+  universal tick.
 - **Per-surface freshness with no shared contract (status quo).** Rejected: it
   is precisely the parallel-hierarchy drift this ADR exists to stop — the same
   anti-pattern ADR-802 collapsed for providers.
@@ -384,8 +399,11 @@ standing issue — while together they tell the single story this ADR names.
 
 ## Implementing / related issues
 
-- **#384** — `graph_epochs.status` (committed vs failed): foundation for the
-  trustworthy clock (D1).
+- **#384** — `graph_epochs.status` (committed vs failed): analytics signal +
+  part of the clock foundation (D1).
+- **#386** — record epoch events for annealing/reasoning/edit kinds, **and bump
+  the universal tick for them**: a *prerequisite* (D1). Without it the tick only
+  advances on ingestion and derivations go blind to count-preserving mutations.
 - **#422** — grounding-cache unbounded warm-path staleness: the on-read
   detection defect the contract forbids (D2).
 - **#233** — artifact lifecycle exposure + storage-tier transparency: the
