@@ -14,6 +14,7 @@ import {
   Users,
   Activity,
   Network,
+  BookOpen,
   AlertCircle,
   Loader2,
   CheckCircle,
@@ -25,6 +26,7 @@ import { UsersTab } from './UsersTab';
 import { RolesTab } from './RolesTab';
 import { SystemTab } from './SystemTab';
 import { OntologyTab } from './OntologyTab';
+import { VocabularyTab } from './VocabularyTab';
 import type { TabType } from './types';
 
 export const AdminDashboard: React.FC = () => {
@@ -35,6 +37,7 @@ export const AdminDashboard: React.FC = () => {
   const canViewRoles = hasPermission('rbac', 'read');
   const canViewSystemStatus = hasPermission('admin', 'status');
   const canViewOntology = hasPermission('ontologies', 'read');
+  const canViewVocabulary = hasPermission('vocabulary', 'read');
 
   // Tab state
   const [activeTab, setActiveTab] = useState<TabType>('account');
@@ -134,6 +137,15 @@ export const AdminDashboard: React.FC = () => {
                 label="Ontology"
               />
             )}
+            {/* Vocabulary lifecycle tab - requires vocabulary:read permission (ADR-701) */}
+            {canViewVocabulary && (
+              <TabButton
+                active={activeTab === 'vocabulary'}
+                onClick={() => setActiveTab('vocabulary')}
+                icon={<BookOpen className="w-4 h-4" />}
+                label="Vocabulary"
+              />
+            )}
           </div>
         </div>
       </div>
@@ -184,6 +196,9 @@ export const AdminDashboard: React.FC = () => {
 
           {activeTab === 'ontology' && canViewOntology && (
             <OntologyTab onError={setError} onSuccess={setSuccessMessage} />
+          )}
+          {activeTab === 'vocabulary' && canViewVocabulary && (
+            <VocabularyTab onError={setError} onSuccess={setSuccessMessage} />
           )}
         </div>
       </div>

@@ -1,7 +1,7 @@
 """Pydantic models for vocabulary management operations (ADR-032)"""
 
 from pydantic import BaseModel, Field
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Literal
 from datetime import datetime
 from enum import Enum
 
@@ -436,6 +436,39 @@ class ConsolidateVocabularyResponse(BaseModel):
     pruned: Optional[List[str]] = None  # List of pruned (deleted) unused types
     pruned_count: Optional[int] = None  # Number of types pruned
     message: str
+
+
+# =============================================================================
+# Job Dispatch (ADR-701 §1a — parity with ontology annealing job model)
+# =============================================================================
+
+# Maps the dispatch "kind" to the registered worker job_type. The four
+# vocabulary worker operations predate the job system (ADR-100); this is how
+# they are triggered manually as jobs instead of running synchronously in-request.
+VOCAB_JOB_KIND_TO_TYPE: Dict[str, str] = {
+    "consolidate": "vocab_consolidate",
+    "refresh": "vocab_refresh",
+    "remeasure": "epistemic_remeasurement",
+    "embed": "vocab_embedding",
+}
+
+
+class VocabularyJobRequest(BaseModel):
+    """Dispatch a vocabulary maintenance operation as a background job (ADR-701 §1a).  @verified e478cb25"""
+    kind: Literal["consolidate", "refresh", "remeasure", "embed"] = Field(
+        ..., description="Which vocabulary worker operation to dispatch"
+    )
+    params: Optional[Dict[str, Any]] = Field(
+        None, description="Optional kind-specific parameters passed through to the worker job_data"
+    )
+
+
+class VocabularyJobDispatchResponse(BaseModel):
+    """Result of dispatching a vocabulary job (returns immediately; poll job status).  @verified e478cb25"""
+    job_id: str
+    kind: str
+    job_type: str
+    status: str
 
 
 # =============================================================================

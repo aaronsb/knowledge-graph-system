@@ -167,4 +167,4 @@ export interface WorkerStatus {
   slots_in_use: number;
 }
 
-export type TabType = 'account' | 'users' | 'roles' | 'system' | 'ontology';
+export type TabType = 'account' | 'users' | 'roles' | 'system' | 'ontology' | 'vocabulary';
