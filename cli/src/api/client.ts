@@ -1934,6 +1934,38 @@ export class KnowledgeGraphClient {
   }
 
   /**
+   * Get effective vision provider/model summary (ADR-802; public endpoint)
+   */
+  async getVisionConfig(): Promise<any> {
+    const response = await this.client.get('/vision/config');
+    return response.data;
+  }
+
+  /**
+   * Get active vision config row + effective resolution (admin endpoint)
+   */
+  async getVisionConfigDetail(): Promise<any> {
+    const response = await this.client.get('/admin/vision/config');
+    return response.data;
+  }
+
+  /**
+   * Set/activate the vision provider (admin endpoint, ADR-802)
+   */
+  async updateVisionConfig(config: any): Promise<any> {
+    const response = await this.client.post('/admin/vision/config', config);
+    return response.data;
+  }
+
+  /**
+   * Per-provider vision-capability metadata from the catalog (admin endpoint)
+   */
+  async getVisionProviders(): Promise<{ providers: Array<{ provider: string; supports_vision: boolean; vision_models: string[] }> }> {
+    const response = await this.client.get('/admin/vision/providers');
+    return response.data;
+  }
+
+  /**
    * List API keys with validation status (admin endpoint)
    */
   async listApiKeys(): Promise<any[]> {

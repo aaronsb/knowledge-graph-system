@@ -8,7 +8,7 @@ import { createClientFromEnv } from '../../api/client';
 import { setCommandHelp, configureColoredHelp } from '../help-formatter';
 import { registerAuthAdminCommand } from '../auth-admin';
 import { createRbacCommand } from '../rbac';
-import { createEmbeddingCommand, createExtractionCommand, createKeysCommand } from '../ai-config';
+import { createEmbeddingCommand, createExtractionCommand, createVisionCommand, createKeysCommand } from '../ai-config';
 
 // Import split command modules
 import { createStatusCommand } from './status';
@@ -48,17 +48,20 @@ const rbacCommand = createRbacCommand(client);
 configureColoredHelp(rbacCommand);
 adminCommand.addCommand(rbacCommand);
 
-// ADR-039, ADR-041: Register AI configuration commands
+// ADR-039, ADR-041, ADR-802: Register AI configuration commands
 const embeddingCommand = createEmbeddingCommand(client);
 const extractionCommand = createExtractionCommand(client);
+const visionCommand = createVisionCommand(client);
 const keysCommand = createKeysCommand(client);
 
 configureColoredHelp(embeddingCommand);
 configureColoredHelp(extractionCommand);
+configureColoredHelp(visionCommand);
 configureColoredHelp(keysCommand);
 
 adminCommand.addCommand(embeddingCommand);
 adminCommand.addCommand(extractionCommand);
+adminCommand.addCommand(visionCommand);
 adminCommand.addCommand(keysCommand);
 
 // Configure colored help for all admin commands
