@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import { apiClient, API_BASE_URL } from '../../api/client';
 import { Section, StatusBadge } from './components';
+import { VisionProviderCard } from './VisionProviderCard';
 import type { SystemStatus, EmbeddingConfig, ExtractionConfig, ApiKeyInfo, SchedulerStatus, WorkerStatus } from './types';
 
 interface SystemTabProps {
@@ -1160,6 +1161,10 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
           </div>
         )}
       </Section>
+
+      {/* ADR-802: vision (image->prose) provider selection, resolved like a
+          first-class capability alongside extraction. Self-contained card. */}
+      <VisionProviderCard onError={onError} />
     </>
   );
 };
