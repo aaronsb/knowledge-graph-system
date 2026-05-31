@@ -104,3 +104,61 @@ class TestOpenAIVisionHeuristic:
         assert cat["gpt-5-preview"]["supports_vision"] is True
         # gpt-3.5 is genuinely not vision-capable.
         assert cat["gpt-3.5-turbo"]["supports_vision"] is False
+
+
+# ===========================================================================
+# resolve_vision_selection — ADR-802 §2 / #378
+# explicit → active vision config → vision-capable extraction default → raise
+# (no hardcoded 'openai' literal)
+# ===========================================================================
+
+class TestResolveVisionSelection:
+    @pytest.fixture(autouse=True)
+    def _no_env(self, monkeypatch):
+        # Default: no VISION_PROVIDER env so the config/default chain is exercised.
+        monkeypatch.delenv("VISION_PROVIDER", raising=False)
+
+    def test_explicit_override_is_honored_and_short_circuits(self):
+        # Explicit provider wins without consulting config/catalog at all.
+        with patch("api.app.lib.ai_vision_config.load_active_vision_config") as lv, \
+             patch("api.app.lib.ai_extraction_config.load_active_extraction_config") as le:
+            assert vp.resolve_vision_selection(provider="Anthropic", model="m") == ("anthropic", "m")
+            lv.assert_not_called()
+            le.assert_not_called()
+
+    def test_vision_provider_env_used_when_no_param(self, monkeypatch):
+        monkeypatch.setenv("VISION_PROVIDER", "ollama")
+        assert vp.resolve_vision_selection() == ("ollama", None)
+
+    def test_active_vision_config_used_when_present(self):
+        with patch("api.app.lib.ai_vision_config.load_active_vision_config",
+                   return_value={"provider": "openai", "model_name": "gpt-4o"}):
+            assert vp.resolve_vision_selection() == ("openai", "gpt-4o")
+
+    def test_explicit_model_overrides_vision_config_model(self):
+        with patch("api.app.lib.ai_vision_config.load_active_vision_config",
+                   return_value={"provider": "openai", "model_name": "gpt-4o"}):
+            assert vp.resolve_vision_selection(model="gpt-4o-mini") == ("openai", "gpt-4o-mini")
+
+    def test_defaults_to_extraction_provider_when_vision_capable(self):
+        with patch("api.app.lib.ai_vision_config.load_active_vision_config", return_value=None), \
+             patch("api.app.lib.ai_extraction_config.load_active_extraction_config",
+                   return_value={"provider": "anthropic"}), \
+             patch.object(vp, "_catalog_vision_model_ids", return_value=["claude-x"]):
+            assert vp.resolve_vision_selection() == ("anthropic", None)
+
+    def test_does_not_default_to_extraction_provider_without_vision_model(self):
+        # Extraction provider has no supports_vision catalog model → fail loud,
+        # rather than picking a provider that would error at the first image.
+        with patch("api.app.lib.ai_vision_config.load_active_vision_config", return_value=None), \
+             patch("api.app.lib.ai_extraction_config.load_active_extraction_config",
+                   return_value={"provider": "ollama"}), \
+             patch.object(vp, "_catalog_vision_model_ids", return_value=[]):
+            with pytest.raises(ValueError, match="No vision provider could be resolved"):
+                vp.resolve_vision_selection()
+
+    def test_raises_when_nothing_resolves(self):
+        with patch("api.app.lib.ai_vision_config.load_active_vision_config", return_value=None), \
+             patch("api.app.lib.ai_extraction_config.load_active_extraction_config", return_value=None):
+            with pytest.raises(ValueError, match="No vision provider could be resolved"):
+                vp.resolve_vision_selection()

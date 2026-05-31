@@ -228,7 +228,10 @@ def run_ingestion_worker(
         logger.info("Converting image to prose with vision AI...")
         from api.app.lib.vision_providers import get_vision_provider, LITERAL_DESCRIPTION_PROMPT
         try:
-            vision_provider_name = job_data.get("vision_provider", "openai")
+            # ADR-802 §2 / #378: pass the per-job override through (may be None);
+            # get_vision_provider resolves the active/default provider when unset
+            # rather than defaulting to a hardcoded 'openai'.
+            vision_provider_name = job_data.get("vision_provider")
             vision_model_name = job_data.get("vision_model")
 
             vision_provider = get_vision_provider(

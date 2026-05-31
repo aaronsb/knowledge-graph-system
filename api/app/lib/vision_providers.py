@@ -98,6 +98,79 @@ def _resolve_vision_model(provider: str, model: Optional[str] = None) -> str:
     )
 
 
+# --- Active vision provider resolution (ADR-802 §2, #378) ------------------
+# Vision is a first-class provider capability resolved independently like
+# embedding. The provider is no longer a hardcoded "openai" literal: it
+# resolves through a defined chain, and a chosen provider with no usable
+# vision model fails loud rather than silently misrouting image->prose.
+
+def resolve_vision_selection(
+    provider: Optional[str] = None,
+    model: Optional[str] = None,
+) -> tuple[str, Optional[str]]:
+    """Resolve which provider/model performs image->prose (ADR-802 §2).
+
+    Resolution order, fail-loud at the end:
+      1. Explicit override (per-job ``vision_provider`` / ``VISION_PROVIDER``
+         env) — unchanged behaviour for callers that name a provider.
+      2. The configured **active vision provider** (its own pointer in
+         ``kg_api.ai_vision_config``), and its stored model if the caller
+         gave none.
+      3. Default: the **active extraction provider**, but only when its
+         catalog has a ``supports_vision`` model — so single-provider
+         deployments need zero vision config, without re-introducing a bare
+         provider literal.
+      4. Otherwise raise — no silent fallback to a hardcoded provider.
+
+    Note this resolves only the provider *name* (and optionally a model).
+    The model is still resolved/validated against the catalog by
+    ``_resolve_vision_model`` inside the provider constructor, which is the
+    fail-loud point when a provider has no vision-capable model.
+
+    Returns:
+        (provider_name, model_or_None)
+
+    Raises:
+        ValueError: when no vision provider can be resolved.  @verified b4106aac
+    """
+    # 1. Explicit override (param or dev-mode env), parallel to AI_PROVIDER.
+    explicit = provider or os.getenv("VISION_PROVIDER")
+    if explicit:
+        return explicit.lower(), model
+
+    # 2. Active vision config pointer.
+    try:
+        from .ai_vision_config import load_active_vision_config
+        vc = load_active_vision_config()
+        if vc and vc.get("provider"):
+            return vc["provider"].lower(), (model or (vc.get("model_name") or None))
+    except Exception:
+        logger.debug("Active vision config lookup failed; trying extraction default",
+                     exc_info=True)
+
+    # 3. Default to the active extraction provider iff it is vision-capable.
+    try:
+        from .ai_extraction_config import load_active_extraction_config
+        ec = load_active_extraction_config()
+        ep = ec.get("provider") if ec else None
+        if ep and _catalog_vision_model_ids(ep):
+            logger.info(
+                "Vision provider unset; defaulting to active extraction "
+                f"provider '{ep}' (has a supports_vision catalog model)")
+            return ep.lower(), model
+    except Exception:
+        logger.debug("Extraction-default vision resolution failed", exc_info=True)
+
+    # 4. Fail loud — no hardcoded provider literal (the #378 bug).
+    raise ValueError(
+        "No vision provider could be resolved (ADR-802 §2): no explicit "
+        "override, no active vision config, and the active extraction provider "
+        "has no vision-capable model in the catalog. Configure a vision "
+        "provider (POST /admin/vision/config) or run the provider's 'Get "
+        "models' admin action so a supports_vision model is in the catalog."
+    )
+
+
 # Literal description prompt (validated in research, Nov 2025)
 # See docs/research/vision-testing/FINDINGS.md
 LITERAL_DESCRIPTION_PROMPT = """
@@ -674,8 +747,10 @@ def get_vision_provider(
     Factory function to get vision provider instance.
 
     Args:
-        provider: Provider name ('openai', 'anthropic', 'ollama')
-                 Defaults to VISION_PROVIDER env var or 'openai'
+        provider: Provider name ('openai', 'anthropic', 'ollama'). When None,
+                 it is resolved via resolve_vision_selection (ADR-802 §2):
+                 active vision config → active extraction provider if
+                 vision-capable → ValueError. No hardcoded 'openai' default.
         api_key: API key (optional, will use env vars if not provided)
         model: Model name (optional, will use env vars or provider defaults)
 
@@ -683,10 +758,11 @@ def get_vision_provider(
         VisionProvider instance
 
     Raises:
-        ValueError: If provider not recognized or configuration invalid
+        ValueError: If no provider can be resolved, the provider is not
+            recognized, or the configuration is invalid.
 
     Examples:
-        # Use default provider (OpenAI GPT-4o)
+        # Resolve the configured/active vision provider (ADR-802 §2)
         provider = get_vision_provider()
 
         # Use specific provider
@@ -695,8 +771,10 @@ def get_vision_provider(
         # Override model
         provider = get_vision_provider(provider="openai", model="gpt-4o-mini")
     """
-    provider = provider or os.getenv("VISION_PROVIDER", "openai")
-    provider = provider.lower()
+    # ADR-802 §2 / #378: resolve the provider through the defined chain rather
+    # than defaulting to a hardcoded 'openai'. An explicit `provider` arg is
+    # honoured as-is; None triggers config/catalog-aware resolution.
+    provider, model = resolve_vision_selection(provider=provider, model=model)
 
     logger.info(f"Initializing vision provider: {provider}")
 
