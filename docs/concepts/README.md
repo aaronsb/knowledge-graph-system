@@ -42,6 +42,7 @@ Future state: The knowledge graph becomes part of how AI thinks, not just someth
 ## Next Steps
 
 - [How It Works](how-it-works.md) - The conceptual model (still no code)
+- [Computed Evidence over Asserted Truth](computed-evidence-over-asserted-truth.md) - The engineering philosophy: why this system measures evidence instead of storing facts, and why it has no "valid time"
 - [Glossary](glossary.md) - Terms explained in plain language
 - [Using the System](../manual/README.md) - Getting started as a user
 - [Operating the System](../operating/README.md) - Deploying and maintaining
