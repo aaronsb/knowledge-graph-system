@@ -214,6 +214,22 @@ def _load_api_key(provider: str, explicit_key: Optional[str] = None, env_var: Op
     return None
 
 
+def _detect_image_mime(image_data: bytes) -> str:
+    """Detect image MIME type from magic bytes, defaulting to image/png.
+
+    Shared by the describe_image paths so the data-URL / media_type a model
+    receives matches the actual bytes (PNG/JPEG/GIF/WebP). Mislabeling a JPEG
+    as PNG is usually tolerated by providers that sniff the bytes, but sending
+    the right type is correct and keeps the paths consistent.  @verified ff971ab5"""
+    if image_data[:2] == b"\xff\xd8":
+        return "image/jpeg"
+    if image_data[:4] == b"GIF8":
+        return "image/gif"
+    if image_data[:4] == b"RIFF" and image_data[8:12] == b"WEBP":
+        return "image/webp"
+    return "image/png"
+
+
 def _openai_token_usage(response: Any) -> Dict[str, int]:
     """Normalize an OpenAI/OpenRouter chat usage object to the describe_image
     token shape ({input_tokens, output_tokens, total_tokens}). Zeros when the
@@ -855,8 +871,9 @@ class OpenAIProvider(AIProvider):
                 "openai", "vision", env_var="VISION_MODEL"
             )
 
+            mime_type = _detect_image_mime(image_data)
             image_url: Dict[str, Any] = {
-                "url": f"data:image/png;base64,{image_base64}"
+                "url": f"data:{mime_type};base64,{image_base64}"
             }
             if detail is not None:
                 image_url["detail"] = detail

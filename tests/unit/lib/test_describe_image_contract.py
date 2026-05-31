@@ -65,6 +65,23 @@ class TestOpenAIDescribeImageContract:
         p.describe_image(b"\x89PNGfake", "prompt", model="gpt-4o-mini")
         assert p.client.chat.completions.create.call_args.kwargs["model"] == "gpt-4o-mini"
 
+    def test_mime_detected_from_magic_bytes(self):
+        # Regression for the data-URL MIME: a JPEG must be labelled image/jpeg,
+        # not hardcoded image/png. The old vision path detected this; the
+        # collapsed path must too (PR #457 review item).
+        p = _make_openai()
+        p.describe_image(b"\xff\xd8\xff\xe0jpegfake", "prompt", model="gpt-4o")
+        url = p.client.chat.completions.create.call_args.kwargs[
+            "messages"][0]["content"][1]["image_url"]["url"]
+        assert url.startswith("data:image/jpeg;base64,")
+
+    def test_png_mime_default(self):
+        p = _make_openai()
+        p.describe_image(b"\x89PNG\r\n\x1a\n", "prompt", model="gpt-4o")
+        url = p.client.chat.completions.create.call_args.kwargs[
+            "messages"][0]["content"][1]["image_url"]["url"]
+        assert url.startswith("data:image/png;base64,")
+
     def test_unified_return_shape(self):
         p = _make_openai()
         out = p.describe_image(b"\x89PNGfake", "prompt", model="gpt-4o")
