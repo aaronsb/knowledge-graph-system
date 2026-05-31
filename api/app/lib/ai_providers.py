@@ -214,6 +214,23 @@ def _load_api_key(provider: str, explicit_key: Optional[str] = None, env_var: Op
     return None
 
 
+def _openai_token_usage(response: Any) -> Dict[str, int]:
+    """Normalize an OpenAI/OpenRouter chat usage object to the describe_image
+    token shape ({input_tokens, output_tokens, total_tokens}). Zeros when the
+    SDK omits usage.  @verified ff971ab5"""
+    usage = getattr(response, "usage", None)
+    if not usage:
+        return {"input_tokens": 0, "output_tokens": 0, "total_tokens": 0}
+    prompt = getattr(usage, "prompt_tokens", 0) or 0
+    completion = getattr(usage, "completion_tokens", 0) or 0
+    total = getattr(usage, "total_tokens", 0) or (prompt + completion)
+    return {
+        "input_tokens": prompt,
+        "output_tokens": completion,
+        "total_tokens": total,
+    }
+
+
 def _anthropic_drops_sampling_params(model_id: str) -> bool:
     """True if the model rejects temperature/top_p/top_k (Opus 4.7 family).
 
@@ -418,20 +435,44 @@ class AIProvider(ABC):
         pass
 
     @abstractmethod
-    def describe_image(self, image_data: bytes, prompt: str) -> Dict[str, Any]:
+    def describe_image(
+        self,
+        image_data: bytes,
+        prompt: str,
+        *,
+        model: Optional[str] = None,
+        detail: Optional[str] = "high",
+        temperature: float = 0.3,
+    ) -> Dict[str, Any]:
         """
-        Generate detailed description of an image using multimodal AI.
+        Generate detailed description of an image using multimodal AI (ADR-057).
 
-        Used for ingesting visual content (slides, diagrams, charts) into the
-        knowledge graph by converting them to text descriptions that can be
-        processed by the normal concept extraction pipeline.
+        The single image->prose capability for the whole system — both the
+        synchronous ingest route (`routes/ingest.py`) and the async image
+        worker (`workers/ingestion_worker.py`, the ADR-057-validated path)
+        call this method. The defaults reproduce the route's historical
+        behaviour; the worker passes explicit args to reproduce the literal
+        transcription path (ADR-057): LITERAL prompt, no high-detail, temp 0.1.
 
         Args:
             image_data: Raw image bytes (PNG, JPEG, etc.)
-            prompt: Description prompt (e.g., "Describe this slide in detail")
+            prompt: Description prompt (e.g. IMAGE_DESCRIPTION_PROMPT or the
+                worker's LITERAL_DESCRIPTION_PROMPT). Required — no hidden
+                default, so each call site declares its intent.
+            model: Vision model id. None resolves it from the catalog (ADR-800
+                /801); an explicit id is used as-is. Threading an explicit id is
+                what lets the vision capability slot resolve independently of
+                the extraction model (ADR-802 §2) without re-slaving vision to
+                extraction.
+            detail: OpenAI/OpenRouter image ``detail`` hint. None omits the key
+                (provider "auto"); "high"/"low"/"auto" set it. Ignored by
+                providers without a detail concept (Anthropic, Ollama).
+            temperature: Sampling temperature. Anthropic models in the
+                no-sampling family (Opus 4.7) drop it automatically.
 
         Returns:
-            Dict with 'text' (description) and 'tokens' (usage info)
+            Dict with 'text' (description), 'tokens'
+            ({input_tokens, output_tokens, total_tokens}), 'model', 'provider'.
         """
         pass
 
@@ -789,11 +830,20 @@ class OpenAIProvider(AIProvider):
         except Exception as e:
             raise Exception(f"OpenAI code translation failed: {e}") from e
 
-    def describe_image(self, image_data: bytes, prompt: str) -> Dict[str, Any]:
+    def describe_image(
+        self,
+        image_data: bytes,
+        prompt: str,
+        *,
+        model: Optional[str] = None,
+        detail: Optional[str] = "high",
+        temperature: float = 0.3,
+    ) -> Dict[str, Any]:
         """
-        Describe an image using GPT-4o vision capabilities.
+        Describe an image using GPT-4o vision capabilities.  @verified ff971ab5
 
-        Returns dict with 'text' (description) and 'tokens' (usage info)
+        See AIProvider.describe_image for the full contract. ``detail=None``
+        omits the key (OpenAI "auto"); the worker's literal path passes None.
         """
         import base64
 
@@ -801,9 +851,15 @@ class OpenAIProvider(AIProvider):
             # Encode image to base64
             image_base64 = base64.b64encode(image_data).decode('utf-8')
 
-            vision_model = _resolve_provider_model_id(
+            vision_model = model or _resolve_provider_model_id(
                 "openai", "vision", env_var="VISION_MODEL"
             )
+
+            image_url: Dict[str, Any] = {
+                "url": f"data:image/png;base64,{image_base64}"
+            }
+            if detail is not None:
+                image_url["detail"] = detail
 
             response = self.client.chat.completions.create(
                 model=vision_model,
@@ -812,18 +868,12 @@ class OpenAIProvider(AIProvider):
                         "role": "user",
                         "content": [
                             {"type": "text", "text": prompt},
-                            {
-                                "type": "image_url",
-                                "image_url": {
-                                    "url": f"data:image/png;base64,{image_base64}",
-                                    "detail": "high"  # High detail for better extraction
-                                }
-                            }
+                            {"type": "image_url", "image_url": image_url}
                         ]
                     }
                 ],
                 max_tokens=8192,
-                temperature=0.3   # Lower for consistency
+                temperature=temperature
             )
 
             choice = response.choices[0]
@@ -835,14 +885,11 @@ class OpenAIProvider(AIProvider):
                 )
             description = choice.message.content.strip()
 
-            # Extract token usage
-            tokens = 0
-            if hasattr(response, 'usage') and response.usage:
-                tokens = response.usage.total_tokens
-
             return {
                 "text": description,
-                "tokens": tokens
+                "tokens": _openai_token_usage(response),
+                "model": vision_model,
+                "provider": "openai",
             }
 
         except Exception as e:
@@ -1088,7 +1135,15 @@ class LocalEmbeddingProvider(AIProvider):
             "Use OpenAI or Anthropic for translation."
         )
 
-    def describe_image(self, image_data: bytes, prompt: str) -> Dict[str, Any]:
+    def describe_image(
+        self,
+        image_data: bytes,
+        prompt: str,
+        *,
+        model: Optional[str] = None,
+        detail: Optional[str] = "high",
+        temperature: float = 0.3,
+    ) -> Dict[str, Any]:
         """LocalEmbeddingProvider doesn't support image description (requires multimodal LLM)"""
         raise NotImplementedError(
             "LocalEmbeddingProvider only supports embeddings, not image description. "
@@ -1388,15 +1443,22 @@ class AnthropicProvider(AIProvider):
         except Exception as e:
             raise Exception(f"Anthropic code translation failed: {e}") from e
 
-    def describe_image(self, image_data: bytes, prompt: str) -> Dict[str, Any]:
+    def describe_image(
+        self,
+        image_data: bytes,
+        prompt: str,
+        *,
+        model: Optional[str] = None,
+        detail: Optional[str] = "high",
+        temperature: float = 0.3,
+    ) -> Dict[str, Any]:
         """
-        Describe an image using the configured Anthropic vision model.
+        Describe an image using the configured Anthropic vision model.  @verified ff971ab5
 
-        The vision model resolves via catalog → VISION_MODEL env → ValueError
-        (no literal fallback). The prior hardcoded "claude-3-5-sonnet-20241022"
-        was retired Oct 28, 2025 and ignored any configured vision model.
-
-        Returns dict with 'text' (description) and 'tokens' (usage info).
+        See AIProvider.describe_image for the full contract. ``detail`` has no
+        Anthropic equivalent and is accepted (ignored) for a uniform signature;
+        the vision model resolves via ``model`` → catalog → VISION_MODEL env →
+        ValueError (no literal fallback).
         """
         import base64
 
@@ -1413,7 +1475,7 @@ class AnthropicProvider(AIProvider):
             elif image_data[:4] == b'RIFF' and image_data[8:12] == b'WEBP':
                 image_type = "image/webp"
 
-            vision_model = _resolve_provider_model_id(
+            vision_model = model or _resolve_provider_model_id(
                 "anthropic", "vision", env_var="VISION_MODEL"
             )
 
@@ -1437,7 +1499,7 @@ class AnthropicProvider(AIProvider):
                 }],
             }
             if not _anthropic_drops_sampling_params(vision_model):
-                request_kwargs["temperature"] = 0.3
+                request_kwargs["temperature"] = temperature
 
             message = self.client.messages.create(**request_kwargs)
 
@@ -1459,14 +1521,18 @@ class AnthropicProvider(AIProvider):
                 )
             description = text_block.text.strip()
 
-            # Extract token usage
-            tokens = 0
-            if hasattr(message, 'usage') and message.usage:
-                tokens = message.usage.input_tokens + message.usage.output_tokens
+            usage = getattr(message, "usage", None)
+            tokens = {
+                "input_tokens": getattr(usage, "input_tokens", 0) if usage else 0,
+                "output_tokens": getattr(usage, "output_tokens", 0) if usage else 0,
+            }
+            tokens["total_tokens"] = tokens["input_tokens"] + tokens["output_tokens"]
 
             return {
                 "text": description,
-                "tokens": tokens
+                "tokens": tokens,
+                "model": vision_model,
+                "provider": "anthropic",
             }
 
         except Exception as e:
@@ -1839,8 +1905,21 @@ class OpenRouterProvider(AIProvider):
         except Exception as e:
             raise Exception(f"OpenRouter code translation failed: {e}") from e
 
-    def describe_image(self, image_data: bytes, prompt: str) -> Dict[str, Any]:
-        """Describe an image using a vision-capable model via OpenRouter."""
+    def describe_image(
+        self,
+        image_data: bytes,
+        prompt: str,
+        *,
+        model: Optional[str] = None,
+        detail: Optional[str] = "high",
+        temperature: float = 0.3,
+    ) -> Dict[str, Any]:
+        """Describe an image using a vision-capable model via OpenRouter.  @verified ff971ab5
+
+        See AIProvider.describe_image. ``model`` defaults to the configured
+        extraction model (OpenRouter routes a single model for both); pass an
+        explicit vision model id to override.
+        """
         import base64
 
         try:
@@ -1855,8 +1934,15 @@ class OpenRouterProvider(AIProvider):
             elif image_data[:4] == b"RIFF" and image_data[8:12] == b"WEBP":
                 mime_type = "image/webp"
 
-            # Use the extraction model if it supports vision, otherwise default
-            vision_model = self.extraction_model
+            # Use the explicit vision model when threaded through; otherwise the
+            # configured extraction model (OpenRouter routes one model per call).
+            vision_model = model or self.extraction_model
+
+            image_url: Dict[str, Any] = {
+                "url": f"data:{mime_type};base64,{image_base64}"
+            }
+            if detail is not None:
+                image_url["detail"] = detail
 
             response = self.client.chat.completions.create(
                 model=vision_model,
@@ -1865,18 +1951,12 @@ class OpenRouterProvider(AIProvider):
                         "role": "user",
                         "content": [
                             {"type": "text", "text": prompt},
-                            {
-                                "type": "image_url",
-                                "image_url": {
-                                    "url": f"data:{mime_type};base64,{image_base64}",
-                                    "detail": "high",
-                                },
-                            },
+                            {"type": "image_url", "image_url": image_url},
                         ],
                     }
                 ],
                 max_tokens=8192,
-                temperature=0.3,
+                temperature=temperature,
             )
 
             choice = response.choices[0]
@@ -1887,11 +1967,13 @@ class OpenRouterProvider(AIProvider):
                     "would receive partial text. Split the image or raise the cap."
                 )
             description = choice.message.content.strip()
-            tokens = 0
-            if hasattr(response, "usage") and response.usage:
-                tokens = response.usage.total_tokens
 
-            return {"text": description, "tokens": tokens}
+            return {
+                "text": description,
+                "tokens": _openai_token_usage(response),
+                "model": vision_model,
+                "provider": "openrouter",
+            }
 
         except Exception as e:
             raise Exception(f"OpenRouter image description failed: {e}") from e
@@ -2442,13 +2524,27 @@ class OllamaProvider(AIProvider):
         except Exception as e:
             raise Exception(f"Ollama code translation failed: {e}") from e
 
-    def describe_image(self, image_data: bytes, prompt: str) -> Dict[str, Any]:
+    def describe_image(
+        self,
+        image_data: bytes,
+        prompt: str,
+        *,
+        model: Optional[str] = None,
+        detail: Optional[str] = "high",
+        temperature: float = 0.3,
+    ) -> Dict[str, Any]:
         """
-        Describe an image using Ollama vision model (e.g., llava, bakllava).
+        Describe an image using Ollama vision model (e.g., llava, bakllava).  @verified ff971ab5
 
-        Returns dict with 'text' (description) and 'tokens' (always 0 for local).
+        See AIProvider.describe_image. ``detail`` has no Ollama equivalent and
+        is accepted (ignored) for a uniform signature. Local inference reports
+        no token usage, so 'tokens' is always zeros.
 
-        Note: Requires a vision-capable model like llava:7b, llava:13b, or bakllava.
+        Note: Ollama vision is the OPTIONAL / unvalidated path (ADR-057 found it
+        inconsistent); this method is kept functional behind the unified
+        contract but is not golden-tested.
+
+        Requires a vision-capable model like llava:7b, llava:13b, or bakllava.
         """
         import requests
         import base64
@@ -2457,8 +2553,9 @@ class OllamaProvider(AIProvider):
             # Encode image to base64
             image_base64 = base64.b64encode(image_data).decode('utf-8')
 
-            # Use vision model (override extraction model if it's not vision-capable)
-            vision_model = self.extraction_model
+            # Use the explicit vision model when threaded through (ADR-802 §2);
+            # otherwise the configured extraction model.
+            vision_model = model or self.extraction_model
             if "llava" not in vision_model.lower() and "bakllava" not in vision_model.lower():
                 logger.warning(
                     f"Model '{vision_model}' may not support vision. "
@@ -2476,9 +2573,12 @@ class OllamaProvider(AIProvider):
                         "images": [image_base64],
                         "stream": False,
                         "options": {
-                            "temperature": 0.3,  # Lower for consistency
+                            "temperature": temperature,
                             "top_p": self.top_p,
-                            "num_predict": 2000
+                            # Match the cloud paths' 8192 cap so dense literal
+                            # descriptions aren't silently truncated (the old
+                            # 2000 cap could clip a full-page transcription).
+                            "num_predict": 8192
                         }
                     },
                     timeout=180  # 3 minute timeout for vision
@@ -2492,7 +2592,9 @@ class OllamaProvider(AIProvider):
 
             return {
                 "text": description,
-                "tokens": 0  # No token costs for local inference
+                "tokens": {"input_tokens": 0, "output_tokens": 0, "total_tokens": 0},
+                "model": vision_model,
+                "provider": "ollama",
             }
 
         except Exception as e:

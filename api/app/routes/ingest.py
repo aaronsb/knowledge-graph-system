@@ -212,7 +212,9 @@ async def ingest_document(
                 # Replace image bytes with text description
                 original_size = len(content)
                 content = description_response["text"].encode('utf-8')
-                vision_tokens = description_response.get("tokens", 0)
+                # describe_image returns a normalized token dict
+                # ({input,output,total}); fall back gracefully if absent.
+                vision_tokens = (description_response.get("tokens") or {}).get("total_tokens", 0)
 
                 logger.info(
                     f"Image described successfully: {original_size} bytes → "
