@@ -1330,6 +1330,32 @@ def format_recommendations_summary(
     return "\n".join(lines)
 
 
+def get_vocabulary_manager() -> "VocabularyManager":
+    """Construct a VocabularyManager with current DB configuration.
+
+    Factory shared by the vocabulary routes and the vocab_consolidate worker so
+    both build the manager identically. Imports are deferred to keep the
+    services→lib dependency direction lazy and avoid import cycles.  @verified c1cdf76d
+    """
+    import os
+    from api.app.lib.age_client import AGEClient
+    from api.app.lib.ai_providers import get_provider
+
+    client = AGEClient()
+    provider = get_provider()
+
+    # Configuration from database (with .env fallback)
+    mode = client.get_vocab_config('pruning_mode') or os.getenv("VOCAB_PRUNING_MODE", "aitl")
+    profile = client.get_vocab_config('aggressiveness_profile') or os.getenv("VOCAB_AGGRESSIVENESS", "aggressive")
+
+    return VocabularyManager(
+        db_client=client,
+        ai_provider=provider,
+        mode=mode,
+        aggressiveness_profile=profile,
+    )
+
+
 if __name__ == "__main__":
     # Quick demonstration
     import asyncio

@@ -99,28 +99,15 @@ from ..models.vocabulary import (
 
 from api.app.lib.age_client import AGEClient
 from api.app.lib.ai_providers import get_provider
-from api.app.services.vocabulary_manager import VocabularyManager
+from api.app.services.vocabulary_manager import VocabularyManager, get_vocabulary_manager
 from api.app.lib.aggressiveness_curve import calculate_aggressiveness
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/vocabulary", tags=["vocabulary"])
 
 
-def get_vocabulary_manager() -> VocabularyManager:
-    """Get VocabularyManager instance with current configuration"""
-    client = AGEClient()
-    provider = get_provider()
-
-    # Get configuration from database (with .env fallback)
-    mode = client.get_vocab_config('pruning_mode') or os.getenv("VOCAB_PRUNING_MODE", "aitl")
-    profile = client.get_vocab_config('aggressiveness_profile') or os.getenv("VOCAB_AGGRESSIVENESS", "aggressive")
-
-    return VocabularyManager(
-        db_client=client,
-        ai_provider=provider,
-        mode=mode,
-        aggressiveness_profile=profile
-    )
+# get_vocabulary_manager now lives in services.vocabulary_manager so the
+# vocab_consolidate worker and these routes share one factory (imported above).
 
 
 # =============================================================================
