@@ -42,6 +42,18 @@ class IngestionMixin:
         that unit of work. `kind` discriminates whether wall-clock is
         semantically meaningful for the rows attributable to this event.
 
+        Co-advance caveat (ADR-207): this advances ONLY the universal tick.
+        `record_mutation()` advances the tick AND the `graph_accel` sub-counter
+        together, by construction — but the `record_epoch()`/`complete_epoch()`
+        pair (used by long-running jobs that must tag nodes mid-run) does not. A
+        caller using this pair directly owns the accelerator co-advance itself:
+        call `self.graph.invalidate()` when the mutation lands, or the in-memory
+        grounding/polarity cache stays fresh-looking past a graph that changed.
+        See `SUBCOUNTERS` in `api/app/lib/freshness.py` for the declared
+        relationship; only `record_mutation`'s path is pinned by a co-advance
+        test. Hardening this direct path (test/lint/lifecycle helper) is tracked
+        in issue #465.
+
         Returns None on failure — callers must treat that as "epoch
         tagging disabled for this run" rather than fatal. The downstream
         behavior is that Instances created during the run carry no

@@ -130,15 +130,23 @@ in-flight event.
 ### Sub-counters
 
 Specialized invalidation scopes keep their own counters, **subordinate** to the
-universal tick:
+universal tick. They are **declared in code** — `api/app/lib/freshness.py:SUBCOUNTERS`
+enumerates each with its scope, what advances it, and whether it co-advances with
+the tick — so the hierarchy is a code-backed fact, not just prose (ADR-207 step 4):
 
 - `graph_accel.generation` — the `graph_accel` pgrx extension's own generation,
-  advanced the same out-of-band way (`graph_accel_invalidate`). Same
-  eventual-consistency nature; a sub-counter, not a competing clock.
-- `vocabulary_change_counter` — vocabulary membership changes.
+  advanced the same out-of-band way (`graph_accel_invalidate`). It is the one
+  **co-advancing mirror**: `AGEClient.record_mutation` advances the tick *and*
+  calls `graph.invalidate()` from one place, so the two move together **by
+  construction** (pinned by `tests/unit/lib/test_record_mutation_coadvance.py`).
+  A sub-counter, not a competing clock — it exists because the in-memory layer
+  needs a `pg_notify`-backed signal the SQL watermark can't push to API processes.
+- `vocabulary_change_counter` — vocabulary membership changes. An **independent
+  narrower clock** (does not co-advance with the tick).
 - `vocabulary_embedding_generation_counter` — vocabulary *embedding* regeneration
   (the polarity-axis cache keys on this; it changes far more rarely than the
-  graph, so scoping it separately avoids needless axis recompute).
+  graph, so scoping it separately avoids needless axis recompute). Also
+  independent.
 
 ## The freshness contract
 

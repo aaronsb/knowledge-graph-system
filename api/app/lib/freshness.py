@@ -39,6 +39,9 @@ from typing import List, Optional, Type
 
 __all__ = [
     "read_committed_epoch",
+    "SubCounter",
+    "SUBCOUNTERS",
+    "subcounters",
     "Budget",
     "FreshnessContract",
     "CollectionDerivation",
@@ -61,6 +64,82 @@ def read_committed_epoch(cur) -> int:
         return 0
     val = list(row.values())[0] if isinstance(row, dict) else row[0]
     return int(val) if val is not None else 0
+
+
+# ----------------------------------------------------------------- sub-counters
+
+@dataclass(frozen=True)
+class SubCounter:
+    """A monotonic counter subordinate to the universal tick (ADR-207 D1, step 4).
+
+    The committed-epoch watermark (`read_committed_epoch`) is the ONE clock for
+    graph-topology freshness. A sub-counter is a narrower monotonic signal that
+    lives *under* it, of one of two kinds:
+
+    - a **co-advancing mirror** (`coadvances_with_tick=True`): moves in lockstep
+      with the tick, for a layer that needs its own invalidation channel.
+      `graph_accel.generation` is the only one — `AGEClient.record_mutation`
+      advances the tick AND calls `graph.invalidate()` from one place, so the two
+      move together *by construction* (pinned by the co-advance test). It is not a
+      second clock; it exists because the in-memory accelerator (ADR-201) needs a
+      `pg_notify`-backed signal the SQL watermark cannot deliver to API processes.
+      The "by construction" guarantee holds for `record_mutation` callers; a path
+      that uses the `record_epoch`/`complete_epoch` pair directly (long-running
+      jobs) advances only the tick and must invalidate the accelerator itself —
+      see the caveat on `AGEClient.record_epoch`.
+
+    - an **independent narrower scope** (`coadvances_with_tick=False`): advances
+      only when its own, narrower source-of-truth changes. A derivation whose
+      input is narrower than the whole graph tracks this *instead of* the tick —
+      the polarity axis is derived from vocabulary embeddings, so it keys on
+      `vocabulary_embedding_generation_counter` (which changes far more rarely than
+      the graph); keying it on the tick would force needless axis recompute.
+
+    Declaring them makes the hierarchy a code-backed fact, not just prose: there
+    is exactly one universal tick, and every other counter is enumerated here as
+    subordinate to it, each with its relationship stated.
+    """
+
+    #: SQL/identifier name of the counter.
+    name: str
+    #: What it invalidates / what it is the freshness signal for.
+    scope: str
+    #: True iff it advances in lockstep with the universal tick (every
+    #: record_mutation co-advances it); False for independent narrower clocks.
+    coadvances_with_tick: bool
+    #: The wiring that advances it (what keeps it monotonic).
+    advanced_by: str
+
+
+#: Every monotonic counter subordinate to the universal tick (ADR-207 step 4).
+#: The universal tick itself (the `event_id` watermark, read via
+#: `read_committed_epoch`) is deliberately NOT listed — it is the clock these are
+#: subordinate to, not a peer.
+SUBCOUNTERS: List["SubCounter"] = [
+    SubCounter(
+        name="graph_accel.generation",
+        scope="in-memory grounding/polarity accelerator (ADR-201, migration 051)",
+        coadvances_with_tick=True,
+        advanced_by="AGEClient.record_mutation → graph.invalidate() (+ pg_notify)",
+    ),
+    SubCounter(
+        name="vocabulary_change_counter",
+        scope="vocabulary (relationship-type) membership",
+        coadvances_with_tick=False,
+        advanced_by="vocabulary add/remove",
+    ),
+    SubCounter(
+        name="vocabulary_embedding_generation_counter",
+        scope="vocabulary embedding regeneration (the polarity axis keys on this)",
+        coadvances_with_tick=False,
+        advanced_by="vocabulary embedding regeneration (migration 069)",
+    ),
+]
+
+
+def subcounters() -> List["SubCounter"]:
+    """All declared sub-counters subordinate to the universal tick (ADR-207 step 4)."""
+    return list(SUBCOUNTERS)
 
 
 @dataclass(frozen=True)

@@ -382,9 +382,13 @@ yet record an event.
    separately (**#422**); artifacts implement `InstanceDerivation`, expose
    `reconcile` via CLI/MCP, and hide the storage tier behind `--verbose`
    (**#233**).
-4. **Follow-up, separable:** formalize `graph_accel.generation` as a declared
-   sub-counter under the tick (prove co-advance), and revisit IVM where it is
-   cheap. This can trail in its own PR without holding up the rest.
+4. **Follow-up, separable (done):** `graph_accel.generation` is now a declared
+   sub-counter (`api/app/lib/freshness.py:SUBCOUNTERS`), and its co-advance with
+   the tick is pinned by `tests/unit/lib/test_record_mutation_coadvance.py`
+   (`record_mutation` advances the tick *and* calls `graph.invalidate()` from one
+   place, so they move together by construction). The IVM revisit found **no
+   cheap win available today** (see the IVM consequence below) — it stays
+   deferred with a concrete trigger condition rather than being implemented.
 
 The commits stand on their own in review — the clock fix is a correctness fix,
 the contract is an abstraction with a test, each conformance step closes a
@@ -405,7 +409,17 @@ standing issue — while together they tell the single story this ADR names.
   data worth preserving.
 - **Risk accepted:** IVM is deferred — derivations full-recompute on staleness,
   which is correct but not always cheapest. Acceptable: correctness first, the
-  contract *permits* IVM later without re-litigation.
+  contract *permits* IVM later without re-litigation. The step-4 revisit found no
+  cheap win today: the cache tiers (grounding, polarity, confidence) already
+  reconcile **lazily on-read**, so they re-derive only what is actually requested
+  at their natural granularity — IVM as a distinct mechanism buys nothing; and
+  artifacts are already per-row (`InstanceDerivation`). The only true
+  full-recompute is the **catalog index rebuild**, and incremental maintenance
+  there is blocked on a missing prerequisite: the epoch log records *that* a
+  mutation happened, not *what* changed. **Trigger to revisit:** when
+  `record_mutation` carries a structured per-event change-set (affected
+  ontology / document / concept ids), the catalog index can patch the changed
+  subtree incrementally instead of rebuilding wholesale.
 - **Risk if not done:** each new materialized derivation adds another parallel
   freshness hierarchy on an unsound signal — the drift this ADR names compounds.
 
