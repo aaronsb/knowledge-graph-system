@@ -34,8 +34,9 @@ clocks were rejected on the merits, not deferred.
 
 Several read-heavy surfaces in the platform are not primary state — they are
 **caches of a graph computation**, persisted in some tier and expected to track
-the graph as it mutates. Three exist today, each built independently at a
-different time, for a different subsystem:
+the graph as it mutates. At least four exist today (the grounding row below is
+itself two cache tiers — see [Scope / inventory](#scope--inventory)), each built
+independently at a different time, for a different subsystem:
 
 | Derivation | Storage tier | Version signal it reads | Tracking issue |
 |---|---|---|---|
@@ -123,12 +124,39 @@ borrow solutions instead of inventing them:
 
 ### Structural precedent inside this repo
 
-This is the same *shape* of problem the provider work just resolved. Vision was
-a **parallel provider hierarchy** that duplicated the extraction hierarchy
+This shares its *motivation* with the provider work — not its difficulty. Vision
+was a **parallel provider hierarchy** that duplicated the extraction hierarchy
 (#379); ADR-801 defined a uniform provider contract and ADR-802 collapsed vision
-onto it. Here, each derivation is a **parallel freshness hierarchy** — its own
-stamp, its own clock, its own ad-hoc reconcile. The remedy rhymes: one contract,
-one trustworthy signal, existing implementations migrated onto it.
+onto it. Each derivation here is likewise a **parallel freshness hierarchy** —
+its own stamp, its own clock, its own ad-hoc reconcile — and the remedy rhymes:
+one contract, one trustworthy signal, existing implementations brought onto it.
+But the provider collapse unified objects that were *already the same kind of
+thing* behind one call signature, whereas these derivations are genuinely
+**heterogeneous in tier and cardinality** (per-process in-memory dict vs.
+per-row persisted blob vs. materialized relational table). The shared *motive*
+holds; do not expect the same clean collapse — which is exactly why D3 is a small
+hierarchy, not one interface.
+
+### Scope / inventory
+
+The contract governs **graph-topology-derived, server-maintained read surfaces**.
+By that rule the inventory is:
+
+- **Catalog index** (`catalog_node`) — collection-level. *Reference implementation.*
+- **Grounding cache, per-concept tier** — collection-level; keyed on the graph
+  generation. (#422)
+- **Grounding cache, polarity-axis tier** — collection-level but keyed on the
+  **vocabulary-embedding generation**, not the graph epoch; it changes only on
+  embedding regeneration, so it is registered and invalidated separately.
+- **Artifacts** — instance-level (per-row, user-parameterized). (#233)
+- **`graph_accel` in-memory generation layer** — in scope *in principle* (it is a
+  materialized derivation) but its version signal is internal to the Rust
+  extension; brought under the contract or proven to co-advance as a separable
+  follow-up, not in the first pass.
+
+Deliberately **excluded**: caches not derived from graph topology — e.g. the
+model catalog (provider/model metadata) — which have their own invalidation
+lifecycles and no graph-epoch relationship.
 
 ## Problem statement
 
@@ -149,25 +177,38 @@ derivation, resolved against **one canonical logical clock**, with the catalog
 facade's deferred / on-read / serve-stale-under-lock behavior as the reference
 shape. Three concrete decisions:
 
-### D1 — The canonical clock is the ADR-203 epoch event-log sequence
+### D1 — The canonical clock is a committed-prefix watermark over the ADR-203 epoch sequence
 
-`kg_api.graph_epochs.event_id` is `BIGSERIAL PRIMARY KEY` — **monotonic and
-unique by construction**, therefore injective in both directions: a stored stamp
-equal to the current value *proves* freshness, and an unequal stamp *proves*
-staleness. This is the property cache coherence requires of a version signal and
-the property `graph_change_counter` provably lacks.
+`kg_api.graph_epochs.event_id` is `BIGSERIAL PRIMARY KEY` — monotonic and unique
+*as a column*. That gives us a **monotonic high-water freshness signal** (not, as
+an earlier draft claimed, a bidirectionally-injective one — see the watermark
+caveat below). It is the property cache coherence requires of a version signal,
+and the property `graph_change_counter` provably lacks.
 
-The contract resolves freshness against a **commit-gated accessor** over this
-sequence:
+The subtlety is that epoch rows are inserted at job **start** (ADR-203's
+deliberate design, so the `event_id` can tag Instances created during the run),
+while a job *commits* at its end — and jobs complete **out of order** (a long
+ingestion started at id 6 may finish after a short one at id 7). Therefore the
+naive accessor `MAX(event_id) WHERE status = 'completed'` is **not a safe
+progress cursor**: with 6 in-flight and 7 done it returns 7, and 6's eventual
+commit is never re-surfaced — re-introducing the very false-FRESH it is meant to
+kill. The contract instead resolves freshness against the **contiguous committed
+prefix**:
 
-```sql
--- returns the highest event_id whose mutation actually committed
-kg_api.get_committed_epoch() := MAX(event_id) WHERE status = 'completed'
+```text
+get_committed_epoch() := the highest N such that EVERY event_id <= N
+                         has status = 'completed'
+                         (i.e. the high-water mark below which no job is in flight)
 ```
 
-This makes **#384 (epoch `status` column) a hard prerequisite** — without it the
-sequence reflects *attempts*, not *commits*, and a derivation could stamp itself
-against a mutation that rolled back.
+This makes **#384 (epoch `status` column) a hard prerequisite** — without a
+commit/fail status the sequence reflects *attempts*, not *commits*. The watermark
+advances only past gap-free committed runs, so an in-flight job at id N holds the
+watermark at N-1 and every derivation correctly reads stale until it commits.
+
+**`graph_epoch` columns are typed `BIGINT`** to match the sequence — the existing
+`INTEGER` columns (`artifacts.graph_epoch`, `catalog_node.graph_epoch`) and the
+`get_graph_epoch()` return type are widened as part of this work.
 
 **`graph_change_counter` is demoted, not deleted.** It remains a sound
 *one-directional dirty hint* — `counter != stamp` reliably means "changed", so
@@ -179,8 +220,8 @@ migrated to store the committed event-log sequence.
 **`graph_accel.generation`** is the in-memory acceleration layer's *own*
 invalidation signal, internal to the `graph_accel` extension — itself a
 materialized derivation. It is not a competing system clock; it is brought under
-the same contract (Phase 4), resolving against `get_committed_epoch()` or proven
-to co-advance with it.
+the same contract as a separable follow-up, resolving against
+`get_committed_epoch()` or proven to co-advance with it.
 
 ### D2 — Mandatory maintenance discipline: deferred, on-read, bounded
 
@@ -197,25 +238,47 @@ to co-advance with it.
   but is explicitly **out of scope** for the initial contract — the catalog
   index's full rebuild is the baseline all three adopt first.
 
-### D3 — One uniform surface: a `MaterializedDerivation` contract + registry
+### D3 — A small contract hierarchy: collection- vs instance-level derivations
 
-Every derivation implements a single interface (Python ABC / Protocol), so the
-four steps stop being re-implemented per surface:
+A *single* interface does not honestly fit the surfaces (architectural review,
+PR #462): a materialized table or in-memory cache is **collection-level** (one
+stamp for the whole derivation, reconcile = rebuild/invalidate the lot), whereas
+an artifact is **instance-level** (each row carries its own stamp and reconciles
+— regenerate — independently, against its own stored parameters). Forcing both
+behind one `version_stamp() -> int` is an ISP/LSP leak. So the contract is a
+shared base specialized into two shapes:
 
-```
-MaterializedDerivation:
-    version_stamp() -> int          # the clock value this derivation was built at
+```text
+FreshnessContract (shared):
     current_version() -> int        # get_committed_epoch()
-    is_fresh() -> bool              # deferred, on-read; honors the staleness budget
-    reconcile(strategy) -> None     # rebuild | regenerate | invalidate
-    staleness_budget -> Budget      # declared; default strict
+    staleness_budget -> Budget      # declared; default strict (0 versions / 0 ms)
+
+CollectionDerivation(FreshnessContract):   # catalog index, each grounding cache tier
+    version_stamp() -> int          # the clock value the whole derivation was built at
+    is_fresh() -> bool              # deferred, on-read; honors the budget
+    reconcile() -> None             # rebuild | invalidate (whole derivation)
+
+InstanceDerivation(FreshnessContract):     # artifacts
+    version_stamp(id) -> int        # per-row stamp
+    is_fresh(id) -> bool            # deferred, on-read, per row
+    reconcile(id) -> None           # regenerate one instance from its stored parameters
 ```
+
+The grounding cache is **not one derivation** — it is (at least) two registered
+`CollectionDerivation`s on two different signals: the per-concept grounding tier
+and the polarity-axis tier, the latter keyed on the vocabulary-embedding
+generation rather than the graph epoch (see [inventory](#scope--inventory)).
+Registering them separately keeps each one's invalidation honest rather than
+over-invalidating the rarely-changing axis on every graph mutation.
 
 Derivations **register** themselves, which buys two things:
 
-1. A **conformance test** asserting every registered derivation implements the
-   contract (the freshness analogue of `docstring_coverage` / `lint_queries`) —
-   so a *new* derivation that forgets on-read detection fails CI, not production.
+1. A **conformance test** asserting every registered derivation implements its
+   contract and pins the comparison semantics (strict `==` on the monotonic
+   clock — *not* the catalog's legacy `>=`, which only existed to tolerate the
+   regressing counter). This is the freshness analogue of `docstring_coverage` /
+   `lint_queries`: a *new* derivation that forgets on-read detection fails CI,
+   not production.
 2. A **uniform reconcile surface** across CLI/MCP/operator: list derivations,
    show freshness, trigger reconcile. This subsumes #233's regenerate/cleanup
    exposure and storage-tier-hiding items as fallout of conformance rather than
@@ -223,46 +286,59 @@ Derivations **register** themselves, which buys two things:
 
 ## Execution plan
 
-This is one body of work, best delivered as a single PR whose commits read in
-order as a coherent narrative — not a multi-phase project. Only one ordering
-constraint is load-bearing: **the clock must be made trustworthy before any
-derivation migrates onto it**, or we re-stamp everything against sand. Beyond
-that, the sequence below is the natural narrative, not a gate sequence.
+**Clean-rebuild assumption.** The platform carries no production data that must
+be preserved: it is wiped and re-initialized as part of landing this. That
+removes the riskiest piece a freshness-clock change would normally carry — there
+is **no back-fill and no migration machinery** to map old `graph_change_counter`
+stamps (a different number space) onto the new clock, and **no rollback-of-data
+hazard**. Columns are simply defined `BIGINT` from the reset forward; every
+derivation builds fresh against the watermark on first read. (If the platform
+ever holds data worth preserving, this execution section must be revisited —
+back-filling stamps across the counter→event-sequence number-space gap has no
+sound automatic answer.)
 
-1. **Make the clock trustworthy.** Land the epoch `status` column, add
-   `kg_api.get_committed_epoch()`, and re-comment `graph_change_counter` as a
-   one-directional dirty-hint (with a lint note so it is never reintroduced as a
-   freshness signal). This closes **#384** and fixes the false-FRESH class on its
-   own merit, independent of the rest.
+Given that, this is one body of work, best delivered as a single PR whose commits
+read in order as a coherent narrative. Only one ordering constraint is
+load-bearing: **the clock must be trustworthy before any derivation reads it.**
+
+1. **Make the clock trustworthy.** Land the epoch `status` column and the
+   contiguous-committed-prefix `kg_api.get_committed_epoch()` (D1); widen the
+   `graph_epoch` columns and `get_graph_epoch()` to `BIGINT`; re-comment
+   `graph_change_counter` as a one-directional dirty-hint (with a lint note so it
+   is never reintroduced as a freshness signal). Closes **#384**. Note this fixes
+   false-FRESH only *with* the watermark semantics — the `status` column alone is
+   necessary but not sufficient.
 2. **Establish the contract against the surface that already obeys it.** Define
-   the `MaterializedDerivation` interface, registry, and conformance test, then
-   migrate the **catalog facade** first — it already behaves correctly, so it is
-   the lowest-risk way to prove the interface is right before reshaping anything
-   that isn't.
-3. **Bring the misbehaving derivations into conformance.** The grounding cache
-   gains on-read re-reads and a declared staleness budget (**#422**); artifacts
-   stamp against the committed sequence, expose `reconcile` via CLI/MCP, and hide
-   the storage tier behind `--verbose` (**#233**).
+   the `FreshnessContract` base + the two specializations + registry +
+   conformance test, then bring the **catalog facade** on first — it already
+   behaves correctly, so it is the lowest-risk way to prove the interface is
+   right before reshaping anything that isn't.
+3. **Bring the misbehaving derivations into conformance.** The two grounding
+   cache tiers gain on-read re-reads and declared staleness budgets, registered
+   separately (**#422**); artifacts implement `InstanceDerivation`, expose
+   `reconcile` via CLI/MCP, and hide the storage tier behind `--verbose`
+   (**#233**).
 4. **Follow-up, separable:** bring `graph_accel.generation` under the contract or
    prove co-advance, and revisit IVM where it is cheap. This can trail in its own
    PR without holding up the rest.
 
 The commits stand on their own in review — the clock fix is a correctness fix,
-the contract is an abstraction with a test, each migration closes a standing
-issue — while together they tell the single story this ADR names.
+the contract is an abstraction with a test, each conformance step closes a
+standing issue — while together they tell the single story this ADR names.
 
 ## Consequences
 
 - **Positive:** silent-staleness defects become **contract violations the
   conformance test catches**, not production incidents; the false-FRESH class is
-  eliminated at the root (D1); new derivations inherit correct freshness behavior
-  by implementing one interface; cross-surface snapshot skew becomes a declared,
-  reasoned property (D2) rather than an accident of which clock a subsystem
-  happened to read.
-- **Cost:** touches three subsystems plus a schema-level clock change; **the
-  clock-trustworthiness work (#384) must land first**; the `graph_epoch`-column
-  data migration (counter → committed sequence) must be planned with the existing
-  artifact and catalog-index rows.
+  eliminated at the root (D1's watermark); new derivations inherit correct
+  freshness behavior by implementing the contract for their cardinality;
+  cross-surface snapshot skew becomes a declared, reasoned property (D2) rather
+  than an accident of which clock a subsystem happened to read.
+- **Cost:** touches the grounding, artifact, and catalog subsystems plus a
+  schema-level clock change; **the clock-trustworthiness work (#384) must land
+  first**. The data-migration cost is avoided only by the clean-rebuild
+  assumption above — it is a real, unsolved cost the moment the platform holds
+  data worth preserving.
 - **Risk accepted:** IVM is deferred — derivations full-recompute on staleness,
   which is correct but not always cheapest. Acceptable: correctness first, the
   contract *permits* IVM later without re-litigation.
@@ -271,8 +347,8 @@ issue — while together they tell the single story this ADR names.
 
 ## Alternatives considered
 
-- **Repair `graph_change_counter` into a monotonic commit-bumped sequence
-  (decision-space A.2).** Rejected: ADR-203 already established the checksum is
+- **Repair `graph_change_counter` into a monotonic commit-bumped sequence.**
+  Rejected: ADR-203 already established the checksum is
   the wrong primitive, and a *second* monotonic sequence alongside the epoch log
   would be a redundant clock. The epoch `event_id` is already the monotonic
   sequence we need.
