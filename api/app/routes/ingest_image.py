@@ -222,6 +222,15 @@ async def ingest_image(
     age_client = AGEClient()
     hasher = ContentHasher(queue, age_client)
 
+    # ADR-200 Phase 2: Frozen ontologies reject ingestion. The image route had
+    # drifted from the prose route (routes/ingest.py) and was missing this
+    # guard — align them so image ingestion respects lifecycle state too.
+    if age_client.is_ontology_frozen(ontology):
+        raise HTTPException(
+            status_code=403,
+            detail=f"Ontology '{ontology}' is frozen (read-only). Set lifecycle state to 'active' before ingesting."
+        )
+
     # Read image content
     content = await file.read()
 
@@ -255,6 +264,15 @@ async def ingest_image(
                 content=duplicate_info
             )
 
+    # #402 Defect B1: Record whether the target ontology existed at submit time
+    # (same as the prose route, routes/ingest.py). The worker uses this to tell
+    # "first ingest into a brand-new ontology, create it" apart from "ontology
+    # vanished between queue and execution." Without it the worker defaulted to
+    # existed_at_submit=True, so EVERY image ingest into a NEW ontology tripped
+    # the missing-target anomaly guard — the image route had simply never set
+    # this key. Aligning the two routes fixes it.
+    existed_at_submit = age_client.get_ontology_node(ontology) is not None
+
     # Step 2: Prepare job data with raw image bytes
     # Heavy work (embedding, vision, MinIO upload) happens in worker
     use_filename = filename or file.filename or "uploaded_image"
@@ -269,6 +287,7 @@ async def ingest_image(
         "image_bytes": base64.b64encode(content).decode('utf-8'),  # Store raw image
         "content_hash": content_hash,
         "ontology": ontology,
+        "ontology_existed_at_submit": existed_at_submit,  # #402 Defect B1 (see above)
         "filename": use_filename,
         "user_id": current_user.id,  # Track job owner (user ID from kg_auth.users)
         "processing_mode": processing_mode,
