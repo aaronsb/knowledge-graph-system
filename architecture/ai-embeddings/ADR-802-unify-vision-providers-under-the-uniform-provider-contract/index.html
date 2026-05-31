@@ -13,10 +13,10 @@
       
       
       
-        <link rel="prev" href="../ADR-068-source-text-embeddings/">
+        <link rel="prev" href="../ADR-801-uniform-provider-configuration-contract/">
       
       
-        <link rel="next" href="../ADR-800-dynamic-model-catalog-and-openrouter-support/">
+        <link rel="next" href="../media-ADR-058/README_VISUALIZATIONS/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>ADR-070: Polarity Axis Analysis for Bidirectional Semantic Dimensions - Knowledge Graph System</title>
+        <title>ADR-802: Unify Vision Providers Under the Uniform Provider Contract - Knowledge Graph System</title>
       
     
     
@@ -68,7 +68,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#adr-070-polarity-axis-analysis-for-bidirectional-semantic-dimensions" class="md-skip">
+        <a href="#adr-802-unify-vision-providers-under-the-uniform-provider-contract" class="md-skip">
           Skip to content
         </a>
       
@@ -104,7 +104,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              ADR-070: Polarity Axis Analysis for Bidirectional Semantic Dimensions
+              ADR-802: Unify Vision Providers Under the Uniform Provider Contract
             
           </span>
         </div>
@@ -5678,44 +5678,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-070: Polarity Axis Analysis for Bidirectional Semantic Dimensions
-  
-
-    
-  </span>
-  
-  
-    
-  
-  
-    <span class="md-status md-status--Accepted"></span>
-  
-
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../ADR-070-polarity-axis-analysis/" class="md-nav__link">
         
   
   
@@ -5738,519 +5704,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Overview
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#context" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Context
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Context">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#understanding-the-relationship-to-adr-058" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Understanding the Relationship to ADR-058
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#problem-statement" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Problem Statement
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#research-foundation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Research Foundation
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#decision" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Decision
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#consequences" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Consequences
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Consequences">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#positive" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Positive
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#negative" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Negative
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#neutral" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Neutral
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#example-use-cases-across-domains" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Example Use Cases Across Domains
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Example Use Cases Across Domains">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#software-architecture" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Software Architecture
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#political-philosophy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Political Philosophy
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#design-principles" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Design Principles
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#research-methodology" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Research Methodology
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#business-strategy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Business Strategy
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#environmental-science" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Environmental Science
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#education-philosophy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Education Philosophy
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#cognitive-science" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Cognitive Science
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#key-patterns-revealed" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Key Patterns Revealed
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#alternatives-considered" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Alternatives Considered
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Alternatives Considered">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#alternative-1-pre-compute-popular-axes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Alternative 1: Pre-compute Popular Axes
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#alternative-2-client-side-computation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Alternative 2: Client-Side Computation
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#alternative-3-persist-axis-definitions" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Alternative 3: Persist Axis Definitions
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#alternative-4-integrate-into-existing-search" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Alternative 4: Integrate into Existing Search
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#technical-design" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Technical Design
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Technical Design">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#polarity-axis-calculation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Polarity Axis Calculation
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#grounding-correlation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Grounding Correlation
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#implementation-phases" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Implementation Phases
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Implementation Phases">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#phase-1-core-analysis-function-api-endpoint-completed" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 1: Core Analysis Function &amp; API Endpoint ✅ COMPLETED
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-2-cli-command-completed" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 2: CLI Command ✅ COMPLETED
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-3-mcp-server-integration-completed" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 3: MCP Server Integration ✅ COMPLETED
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-4-documentation-web-ui-in-progress" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 4: Documentation &amp; Web UI ⏳ IN PROGRESS
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#user-interface-specifications" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        User Interface Specifications
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="User Interface Specifications">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#mcp-server-integration-implemented" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        MCP Server Integration ✅ IMPLEMENTED
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#cli-tool-kg-implemented" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        CLI Tool (kg) ✅ IMPLEMENTED
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#web-workstation-deferred" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Web Workstation ⏳ DEFERRED
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#success-criteria" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Success Criteria
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#risks-mitigations" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Risks &amp; Mitigations
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#references" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        References
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#decision-record" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Decision Record
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -6330,10 +5783,44 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../ADR-802-unify-vision-providers-under-the-uniform-provider-contract/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-802: Unify Vision Providers Under the Uniform Provider Contract
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--Accepted"></span>
+  
+
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -6356,6 +5843,159 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Decision">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-three-capability-slots-one-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Three capability slots, one contract
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-vision-resolves-an-active-provider-never-a-hardcoded-literal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Vision resolves an active provider — never a hardcoded literal
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-scope-boundary-vision-reasoning-is-decoupled-visual-embedding-is-not" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Scope boundary — vision-reasoning is decoupled; visual embedding is not
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-convergence-of-the-parallel-hierarchy-is-incremental-not-a-rewrite" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Convergence of the parallel hierarchy is incremental, not a rewrite
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Consequences">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#positive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Positive
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#negative" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Negative
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#neutral" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Neutral
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#alternatives-considered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alternatives Considered
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -10757,17 +10397,6 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Overview
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -10775,45 +10404,6 @@
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Context">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#understanding-the-relationship-to-adr-058" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Understanding the Relationship to ADR-058
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#problem-statement" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Problem Statement
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#research-foundation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Research Foundation
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -10825,6 +10415,56 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Decision">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-three-capability-slots-one-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Three capability slots, one contract
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-vision-resolves-an-active-provider-never-a-hardcoded-literal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Vision resolves an active provider — never a hardcoded literal
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-scope-boundary-vision-reasoning-is-decoupled-visual-embedding-is-not" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Scope boundary — vision-reasoning is decoupled; visual embedding is not
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-convergence-of-the-parallel-hierarchy-is-incremental-not-a-rewrite" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Convergence of the parallel hierarchy is incremental, not a rewrite
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -10879,370 +10519,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#example-use-cases-across-domains" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Example Use Cases Across Domains
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Example Use Cases Across Domains">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#software-architecture" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Software Architecture
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#political-philosophy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Political Philosophy
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#design-principles" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Design Principles
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#research-methodology" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Research Methodology
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#business-strategy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Business Strategy
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#environmental-science" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Environmental Science
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#education-philosophy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Education Philosophy
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#cognitive-science" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Cognitive Science
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#key-patterns-revealed" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Key Patterns Revealed
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#alternatives-considered" class="md-nav__link">
     <span class="md-ellipsis">
       
         Alternatives Considered
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Alternatives Considered">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#alternative-1-pre-compute-popular-axes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Alternative 1: Pre-compute Popular Axes
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#alternative-2-client-side-computation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Alternative 2: Client-Side Computation
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#alternative-3-persist-axis-definitions" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Alternative 3: Persist Axis Definitions
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#alternative-4-integrate-into-existing-search" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Alternative 4: Integrate into Existing Search
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#technical-design" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Technical Design
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Technical Design">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#polarity-axis-calculation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Polarity Axis Calculation
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#grounding-correlation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Grounding Correlation
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#implementation-phases" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Implementation Phases
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Implementation Phases">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#phase-1-core-analysis-function-api-endpoint-completed" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 1: Core Analysis Function &amp; API Endpoint ✅ COMPLETED
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-2-cli-command-completed" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 2: CLI Command ✅ COMPLETED
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-3-mcp-server-integration-completed" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 3: MCP Server Integration ✅ COMPLETED
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-4-documentation-web-ui-in-progress" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 4: Documentation &amp; Web UI ⏳ IN PROGRESS
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#user-interface-specifications" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        User Interface Specifications
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="User Interface Specifications">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#mcp-server-integration-implemented" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        MCP Server Integration ✅ IMPLEMENTED
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#cli-tool-kg-implemented" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        CLI Tool (kg) ✅ IMPLEMENTED
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#web-workstation-deferred" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Web Workstation ⏳ DEFERRED
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#success-criteria" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Success Criteria
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#risks-mitigations" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Risks &amp; Mitigations
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#references" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        References
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#decision-record" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Decision Record
       
     </span>
   </a>
@@ -11269,542 +10549,200 @@
   
 
 
-<h1 id="adr-070-polarity-axis-analysis-for-bidirectional-semantic-dimensions">ADR-070: Polarity Axis Analysis for Bidirectional Semantic Dimensions</h1>
-<h2 id="overview">Overview</h2>
-<p>Imagine asking your knowledge graph "Where does 'Agile' fall on the spectrum between modern and traditional approaches?" Your graph might have hundreds of concepts related to organizational practices, but there's no explicit MODERN or TRADITIONAL relationship type labeling each one. How do you answer this question? Traditional graph traversal won't help—there are no edges to follow. Full-text search won't help either—the word "modern" might not appear in the concept description.</p>
-<p>This is where semantic dimensions come in. Think of them as invisible spectrums that organize your concepts even when explicit relationships don't capture them. Your knowledge base might contain dozens of concepts that naturally vary along a modern-versus-traditional dimension, not because someone tagged them that way, but because their semantic embeddings reveal that pattern. "Agile" sits closer to "modern operating models" in vector space, while "waterfall methodology" sits closer to "traditional hierarchies."</p>
-<p>The challenge is making these implicit dimensions explicit and measurable. You can't just compare embeddings pairwise—that doesn't tell you where a concept falls on a spectrum, only that two concepts are similar. What you need is a ruler: take two opposing concepts (like "modern operating models" and "traditional hierarchies"), treat them as opposite ends of an axis, and project other concepts onto that axis to see where they land. Maybe "Agile" projects at +72% (strongly modern), "DevOps" at +58% (moderately modern), "matrix organization" at +8% (nearly neutral), and "command-and-control" at -81% (strongly traditional).</p>
-<p>This ADR implements polarity axis analysis as a query capability, building on the same mathematical technique from ADR-058 but applying it to concepts instead of relationships. The key difference: ADR-058 uses polarity axes to calculate how reliable a concept is (grounding), while this ADR uses them to explore where concepts fall on semantic spectrums (positioning). Both use vector projection, but they answer different questions: "how grounded is this?" versus "where does this fall on this dimension?" The result is a new way to navigate your knowledge graph—not by following explicit edges, but by discovering the emergent conceptual dimensions that organize your ideas.</p>
-<hr />
+<h1 id="adr-802-unify-vision-providers-under-the-uniform-provider-contract">ADR-802: Unify Vision Providers Under the Uniform Provider Contract</h1>
 <h2 id="context">Context</h2>
-<p>The knowledge graph captures concepts and relationships with semantic embeddings, but lacks tools to explore <strong>bidirectional semantic dimensions</strong> - conceptual spectrums along which concepts vary. While ADR-058 introduced polarity axes for calculating grounding strength by projecting relationship edges onto axes, this ADR explores a complementary capability: using polarity axes to discover and navigate semantic dimensions by projecting concept embeddings themselves.</p>
-<h3 id="understanding-the-relationship-to-adr-058">Understanding the Relationship to ADR-058</h3>
-<p>ADR-058 uses polarity axes formed by opposing relationship types (SUPPORTS/CONTRADICTS, VALIDATES/REFUTES) to calculate how grounded a concept is based on its incoming relationship edges. This ADR uses polarity axes formed by opposing concepts (Modern Operating Model ↔ Traditional Operating Models) to determine where concepts fall on semantic spectrums. Both use the same mathematical technique (vector projection onto an axis) but apply it to different problems: ADR-058 answers "how reliable is this concept?" while this ADR answers "where does this concept fall on this conceptual spectrum?"</p>
-<h3 id="problem-statement">Problem Statement</h3>
-<p>Users need capabilities beyond relationship traversal and grounding assessment. They need to understand the semantic landscape of their knowledge - discovering implicit dimensions that organize concepts even when explicit relationships don't capture them. For example, a knowledge base about organizational transformation might contain dozens of concepts that vary along a "modern versus traditional" spectrum, but this dimension emerges from semantic similarities rather than explicit MODERN_VS_TRADITIONAL relationship edges.</p>
-<p>Consider the question "Where does 'Agile' fall on the spectrum between modern and traditional approaches?" The graph might contain PREVENTS relationships (Legacy Systems -PREVENTS-&gt; Digital Transformation) that hint at this dimension, but there's no direct way to position concepts along it quantitatively. Similarly, users might want to find "middle ground" or "synthesis" concepts that balance two opposing poles, but relationship traversal alone can't identify these neutral positions.</p>
-<p>The grounding scores calculated by ADR-058 provide a clue - concepts with positive grounding tend to be beneficial while negative grounding suggests problems - but grounding is a measure of reliability, not semantic position. A highly reliable concept (strong grounding) might still sit anywhere on a modern-traditional spectrum. What's missing is the ability to project concepts onto semantic dimensions and measure their position explicitly</p>
-<h3 id="research-foundation">Research Foundation</h3>
-<p><strong>Experimental validation (<code>experiment/semantic-path-gradients</code> branch):</strong>
-- Polarity axis projection using vector mathematics works with real embeddings
-- Grounding correlates strongly with axis position (r &gt; 0.8 for PREVENTS relationships)
-- High curvature (sharp semantic pivots) is normal for technical concepts
-- PREVENTS/CONTRADICTS relationships create natural bidirectional axes</p>
-<p><strong>Large Concept Models (Meta, Dec 2024):</strong>
-- Operating in sentence-embedding space (not tokens) enables semantic reasoning
-- Gradient-based analysis reveals directional semantic flow
-- Multi-hop reasoning paths have measurable coherence</p>
-<p><strong>Key Finding:</strong>
-Projecting concepts onto polarity axes formed by opposing concepts (positive ↔ negative poles) reveals:
-- <strong>Position:</strong> Scalar location on spectrum (-1 to +1, 0 = midpoint)
-- <strong>Distance:</strong> Orthogonality (concepts far from axis are multi-dimensional)
-- <strong>Direction:</strong> Which pole the concept aligns with</p>
+<p>ADR-800 made <em>which models exist</em> catalog-driven; ADR-801 made <em>how a
+reasoning provider is configured and selected</em> a uniform four-surface
+contract (validate / enumerate / reasoning controls / persisted per-provider
+config, with a per-provider config row decoupled from a single <code>active</code>
+pointer). The catalog-driven vision work (task #13,
+<code>feat/adr-801-catalog-driven-vision-selection</code>) made vision selection of
+<em>which model</em> catalog-driven via the per-row <code>supports_vision</code> flag, but
+deliberately stopped there. Two gaps remain, filed as #378 and #379:</p>
+<ul>
+<li>
+<p><strong>#378 — vision provider default is a bare hardcoded policy.</strong>
+  <code>ingestion_worker.py</code> resolves the vision provider as
+  <code>job_data.get("vision_provider", "openai")</code>. The default is <code>"openai"</code>
+  independent of what is configured or active. A deployment running only
+  Anthropic or only a local model still sends image→prose to OpenAI unless
+  every job explicitly overrides it.</p>
+</li>
+<li>
+<p><strong>#379 — vision is a parallel hierarchy, not a unified one.</strong>
+  <code>api/app/lib/vision_providers.py</code> duplicates the reasoning hierarchy in
+  <code>api/app/lib/ai_providers.py</code>: separate <code>VisionProvider</code> ABC, separate
+  per-provider classes (OpenAI / Anthropic / Ollama), separate
+  <code>describe_image()</code> interface, separate <code>get_vision_provider</code> factory,
+  separate validation and enumeration. Task #13 made the two share the
+  <strong>model catalog</strong> only; they do <strong>not</strong> share the ADR-801 four-surface
+  contract, and there is no vision equivalent of the
+  per-provider-config-plus-active-pointer resolution that extraction has.</p>
+</li>
+</ul>
+<p>The system already runs <strong>two</strong> decoupled provider capabilities, not one:</p>
+<ul>
+<li><strong>Reasoning/extraction</strong> resolves its active provider from
+  <code>kg_api.ai_extraction_config</code> via <code>load_active_extraction_config()</code> — a
+  per-provider row plus a single <code>active</code> flag (ADR-801 §2).</li>
+<li><strong>Embedding</strong> resolves <em>independently</em> via <code>get_embedding_provider()</code>
+  (ADR-039/045). A local multimodal model can serve embeddings regardless of
+  which cloud provider does extraction. As the code states: "the embedder
+  stays separate (delegated), as with every reasoning provider."</li>
+</ul>
+<p>Vision is the third capability, but it was never given this treatment — it
+was left as a hardcoded default over a parallel hierarchy.</p>
 <h2 id="decision">Decision</h2>
-<p>Implement polarity axis analysis as a <strong>direct query pattern</strong> with on-demand calculation, similar to the <code>/query/connect</code> endpoint. This approach provides flexibility for user-defined axes while maintaining fast response times (~2-3 seconds).</p>
-<p><strong>Architecture Pattern - Direct Query (Not Job Queue):</strong></p>
-<p>After initial implementation and testing, we discovered that polarity axis analysis executes quickly enough (~2.36 seconds for 20 concepts) to use the direct query pattern instead of background workers. This decision was made after observing:
-- Fast execution time with existing embeddings (no external API calls)
-- Read-only operations with no side effects
-- Similar performance profile to <code>/query/connect</code> endpoint
-- User preference for immediate results over job tracking overhead</p>
-<p>The <code>/query/connect</code> endpoint serves as the architectural precedent - it performs similar embedding-heavy computations (multi-hop graph traversal with semantic matching) and returns results directly within 2-5 seconds. Polarity axis analysis fits the same performance envelope, making background workers unnecessary complexity.</p>
-<p><strong>Future Consideration:</strong> For large-scale analyses (100+ candidates, multiple concurrent requests), a "large polarity" job-based execution pattern could be added similar to how we might add "large connect" for expensive graph traversals. The current direct pattern handles typical use cases efficiently.</p>
-<p><strong>Primary API Endpoint:</strong></p>
-<p><code>POST /query/polarity-axis</code> analyzes a specific axis given two opposing concept IDs, returning positions of candidate concepts along that spectrum. Request includes:
-- <code>positive_pole_id</code>: Concept ID for positive pole
-- <code>negative_pole_id</code>: Concept ID for negative pole
-- <code>candidate_ids</code> (optional): Specific concepts to project
-- <code>auto_discover</code> (default: true): Automatically find related concepts if no candidates specified
-- <code>max_candidates</code> (default: 20): Limit for auto-discovery
-- <code>max_hops</code> (default: 2): Graph traversal depth for discovery</p>
-<p>Response includes axis metadata, concept projections with positions/directions/grounding, statistical summary, and grounding correlation analysis.</p>
-<p><strong>Reuse of existing infrastructure</strong> keeps implementation focused. The grounding correlation validation uses <code>AGEClient.calculate_grounding_strength_semantic()</code> (from ADR-058) to measure whether axes represent value polarities. Structured JSON responses follow established patterns from other query endpoints. Auto-discovery uses graph traversal patterns similar to related concepts queries.</p>
-<p><strong>Performance characteristics:</strong> Execution time ~2-3 seconds for 20 candidates with 768-dimensional embeddings. Fast enough for direct query pattern without job queue overhead. Future optimization through global embedding cache (if needed) would benefit all embedding-dependent queries holistically.</p>
+<p><strong>Vision is a first-class provider capability, resolved independently like
+embedding, under the ADR-801 uniform contract.</strong> Concretely:</p>
+<h3 id="1-three-capability-slots-one-contract">1. Three capability slots, one contract</h3>
+<p>A deployment selects an active provider per <strong>capability</strong> — reasoning,
+embedding, vision — independently. All three speak the ADR-801 four-surface
+contract (validate / enumerate / reasoning controls / persisted per-provider
+config) and draw their model lists from the ADR-800 catalog. A provider's
+<em>capabilities</em> are catalog-described: a model row's <code>supports_vision</code> flag
+declares it can serve the vision slot, exactly as it already gates vision
+model selection.</p>
+<p>This mirrors the established reasoning-vs-embedding split rather than
+inventing a new abstraction. Vision is decoupled from extraction the same
+way embedding is: choosing OpenAI for extraction does not force OpenAI for
+vision, and a locally hosted multimodal model can serve the vision slot
+while a cloud provider does extraction.</p>
+<p><strong>Independent does not mean different.</strong> The slots are configured
+independently but may freely <strong>coincide on one model</strong>. Reasoning is the
+higher-capability operation and is realistically cloud here
+(OpenAI / Anthropic / OpenRouter) — local hardware on this machine is not
+expected to host a reasoning-grade model. Within that, three shapes are all
+first-class and expressible by the same mechanism:</p>
+<ul>
+<li><strong>One model, both slots</strong> — a multimodal cloud model whose catalog row has
+  <code>supports_vision</code> true serves <em>both</em> the reasoning and vision slots. No
+  second configuration is needed; the single model's capability flags decide
+  it.</li>
+<li><strong>Two models, one provider</strong> — vision→prose handled by a vision-capable
+  model and reasoning by a stronger text model, both from the same provider.</li>
+<li><strong>Two providers</strong> — e.g. a local multimodal model for vision→prose, a
+  cloud provider for reasoning.</li>
+</ul>
+<p>The per-model <code>supports_vision</code> catalog flag is precisely what lets a single
+model satisfy both slots without special-casing: the vision slot resolves to
+"a model that can do vision," which may be the very model the reasoning slot
+already points at.</p>
+<h3 id="2-vision-resolves-an-active-provider-never-a-hardcoded-literal">2. Vision resolves an active provider — never a hardcoded literal</h3>
+<p><code>get_vision_provider()</code> resolves the provider the way extraction does:</p>
+<ol>
+<li>Explicit per-job override (<code>job_data["vision_provider"]</code>) — unchanged.</li>
+<li>Otherwise the <strong>configured active vision provider</strong> (its own pointer,
+   parallel to extraction's <code>active</code>).</li>
+<li>The chosen provider must have a <code>supports_vision</code> catalog model; if it
+   does not, resolution <strong>fails loud</strong> with a diagnosable error naming the
+   provider and the admin action that populates the catalog — consistent
+   with the existing <code>_resolve_vision_model</code> "no literal fallback" stance.</li>
+</ol>
+<p>The hardcoded <code>"openai"</code> default at <code>ingestion_worker.py</code> is removed. This
+closes #378: the default is no longer a bare provider literal independent of
+configuration, behaviour is defined when the chosen provider has no
+vision-capable model, and the resolution policy is testable.</p>
+<h3 id="3-scope-boundary-vision-reasoning-is-decoupled-visual-embedding-is-not">3. Scope boundary — vision-reasoning is decoupled; visual <em>embedding</em> is not</h3>
+<p>This ADR governs the <strong>vision-reasoning</strong> capability (image→prose,
+<code>describe_image()</code>), and <em>only</em> that. The image ingestion path is a hairpin:
+<code>image → prose → concepts</code> (<code>routes/ingest_image.py</code>). The vision slot can be
+any vision-capable provider precisely <strong>because its output is prose</strong> — a
+model-agnostic text string that rides the existing text-embedding path. By
+the time anything is embedded, it is text; no cross-modal vector comparison
+occurs. This is why the vision slot may be chosen as freely as the embedding
+slot is chosen relative to reasoning.</p>
+<p>The system <em>also</em> generates a <strong>direct visual embedding</strong> (currently Nomic
+Vision v1.5, 768-dim) stored alongside the prose-derived concepts and
+explicitly placed in the <strong>same vector space as the text embeddings</strong>. That
+co-spatiality is mandatory: an image vector is only comparable to a concept
+vector if both embedders share one space. The text and image embedders are
+therefore <strong>a matched pair, not independently selectable</strong> — either one
+multimodal model serves both (a multimodal profile), or a co-trained pair
+(e.g. Nomic text-v1.5 ↔ vision-v1.5) whose alignment <em>is</em> the guarantee.
+Mixing unrelated embedders (e.g. OpenAI <code>text-embedding-3</code> text + Nomic
+vision images) puts the vectors in different spaces and makes cross-modal
+similarity meaningless.</p>
+<p>This coupling is <strong>out of scope here</strong> — it belongs to the embedding
+<strong>profile</strong> abstraction (<code>kg_api.embedding_profile</code>, migration 055) and its
+pending decision record (issues #321, #325). The boundary is the point:</p>
+<blockquote>
+<p>Independence between capability slots is permitted exactly where their
+outputs later <strong>converge</strong> to a common representation (reasoning and vision
+both converge to prose/concepts). Coupling is mandatory where the outputs
+<strong>are themselves the comparison surface</strong> (text and visual embeddings are
+compared directly as vectors, with no later convergence step).</p>
+</blockquote>
+<p>ADR-802 sits on the "converge to prose" side; the embedding-profile decision
+owns the "vectors must be co-spatial" side. Conflating them — e.g. trying to
+make the visual embedder independently selectable the way the vision slot is
+— reintroduces the cross-modal mismatch this boundary exists to prevent.</p>
+<h3 id="4-convergence-of-the-parallel-hierarchy-is-incremental-not-a-rewrite">4. Convergence of the parallel hierarchy is incremental, not a rewrite</h3>
+<p>Unification is a direction, not a big-bang merge. The vision and reasoning
+hierarchies converge on the <strong>shared surfaces</strong> they can share now — the
+catalog (already shared), validation, enumeration, and per-provider config
+persistence — while <code>describe_image()</code> remains a distinct capability method
+(image→prose has a genuinely different request shape from text extraction,
+and that distinction is intentional, not accidental drift). The end state is
+one provider abstraction whose methods are capability-gated by the catalog;
+the migration path retires <code>get_vision_provider</code>'s parallel validation and
+config-loading in favour of the ADR-801 surfaces, capability by capability,
+behind the existing factory signature.</p>
 <h2 id="consequences">Consequences</h2>
 <h3 id="positive">Positive</h3>
-<p><strong>New semantic exploration capability:</strong>
-- Users can navigate conceptual dimensions, not just relationship graphs
-- "Show me where 'Agile' falls on the Modern ↔ Traditional spectrum"
-- "Find neutral concepts between 'Centralized' and 'Decentralized'"</p>
-<p><strong>Grounding correlation makes sense:</strong>
-- Positive grounding → aligns with positive pole
-- Negative grounding → aligns with negative pole
-- Grounding values now have spatial meaning</p>
-<p><strong>Missing link detection:</strong>
-- Concepts with high axis distance are orthogonal (different dimension)
-- Suggests they might bridge gaps or add new dimensions</p>
-<p><strong>Learning path optimization:</strong>
-- Order concepts along axis for pedagogical progression
-- Smooth semantic transitions (low curvature paths)</p>
-<p><strong>Relationship validation:</strong>
-- PREVENTS relationships should create strong axes
-- Weak axes suggest relationship might be incorrect or multi-dimensional</p>
+<ul>
+<li>Closes #378 and answers #379 with a single coherent model: vision is the
+  third capability slot, decoupled and catalog-described.</li>
+<li>A local multimodal model can serve vision independently of the cloud
+  extraction provider — the same flexibility embedding already has.</li>
+<li>No deployment silently routes image→prose to OpenAI; mis-selection fails
+  loud with a diagnosable error instead of an invisible default.</li>
+<li>Adding a vision-capable provider becomes a connector + catalog flag, not a
+  new parallel branch — the ADR-801 "connector + metadata, not surgery"
+  property extends to vision.</li>
+</ul>
 <h3 id="negative">Negative</h3>
-<p><strong>Performance cost:</strong>
-- Embedding operations are expensive (768-dimensional dot products across potentially hundreds of concepts)
-- Each axis calculation requires fetching embeddings and computing projections for all candidates
-- Background workers mitigate API blocking but don't eliminate computation cost
-- Note: A future global caching system for embedding-dependent queries would address this across all query types</p>
-<p><strong>Interpretation complexity:</strong>
-- Position values (-1 to +1) require explanation for users unfamiliar with vector projection
-- Axis distance needs context (what constitutes "high" orthogonality varies by domain)
-- Direction classification thresholds (±0.3) are somewhat arbitrary
-- Mitigated by: Clear documentation, diverse examples, visual aids in interfaces</p>
-<p><strong>API surface growth:</strong>
-- Adds 3 new endpoints to query layer
-- Introduces new worker type (<code>PolarityAxisWorker</code>)
-- Increases cognitive load for API users learning the system
-- Mitigated by: Clear separation from existing endpoints, consistent patterns with other query types</p>
+<ul>
+<li>A new active-vision pointer (and its admin surface) is configuration that
+  did not exist before; operators now have a third capability to set,
+  although it can sensibly default to "the active extraction provider if it
+  has a vision model" for zero-config single-provider deployments.</li>
+<li>Incremental convergence means the codebase carries <em>both</em> the unified
+  surfaces and the soon-to-be-retired parallel ones during migration; the
+  transitional state must be clearly flagged so it is not mistaken for the
+  end state.</li>
+</ul>
 <h3 id="neutral">Neutral</h3>
-<p><strong>Not a replacement for relationship traversal:</strong>
-- Polarity axes complement (don't replace) graph navigation
-- Relationships capture explicit knowledge, axes capture implicit dimensions</p>
-<p><strong>Dimensionality reduction:</strong>
-- Projects multi-dimensional embeddings onto 1D axis
-- Loses nuance, but gains interpretability
-- Future: Could extend to 2D projections (two orthogonal axes)</p>
-<h2 id="example-use-cases-across-domains">Example Use Cases Across Domains</h2>
-<p>To illustrate the versatility of polarity axis analysis, consider how it would apply to different knowledge domains:</p>
-<h3 id="software-architecture">Software Architecture</h3>
-<p><strong>Axis: Monolith ↔ Microservices</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Monolith ●────────────────────────────────────● Microservices
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>         │                                    │
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    Grounding: -0.15                    Grounding: +0.08
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    (problematic)                       (beneficial)
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>Projected Concepts:
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>  Modular Monolith        (+0.35) - Neutral/Synthesis
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>  Service-Oriented Arch   (+0.72) - Toward Microservices
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>  Layered Architecture    (-0.18) - Toward Monolith
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>  Serverless             (+0.91) - Strongly Microservices
-</code></pre></div>
-<p><strong>Insight:</strong> "Modular Monolith" positioned at +0.35 reveals it as a <strong>synthesis concept</strong> - borrowing from both paradigms. High axis distance would indicate it's introducing a third dimension (deployment model vs design pattern).</p>
-<h3 id="political-philosophy">Political Philosophy</h3>
-<p><strong>Axis: Individualism ↔ Collectivism</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Individualism ●────────────────────────────────● Collectivism
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>              │                                │
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>         Grounding: 0.0                   Grounding: 0.0
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>         (neutral)                        (neutral)
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>Projected Concepts:
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>  Libertarianism         (-0.82) - Strongly Individual
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>  Social Democracy       (+0.41) - Leaning Collective
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>  Communitarianism       (+0.68) - Toward Collective
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>  Anarchism              (-0.15) - Slightly Individual (surprising!)
-</code></pre></div>
-<p><strong>Insight:</strong> Anarchism's near-neutral position (-0.15) despite expectations reveals semantic nuance - anarchist philosophy contains both individualist and collective strains. The axis exposes this complexity that relationship-only navigation might miss.</p>
-<h3 id="design-principles">Design Principles</h3>
-<p><strong>Axis: Minimalism ↔ Maximalism</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>Minimalism ●──────────────────────────────────● Maximalism
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>           │                                  │
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>      Grounding: +0.22                  Grounding: -0.05
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>      (preferred)                       (contested)
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>Projected Concepts:
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>  Brutalism              (-0.91) - Strongly Minimal
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>  Bauhaus                (-0.73) - Toward Minimal
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>  Art Deco               (+0.58) - Toward Maximal
-<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>  Baroque                (+0.89) - Strongly Maximal
-<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>  Scandinavian Design    (-0.62) - Toward Minimal
-</code></pre></div>
-<p><strong>Insight:</strong> Grounding correlation (r=0.87) shows cultural preference for minimalism in this knowledge base. "Art Deco" at +0.58 but still having moderate grounding suggests it's valued maximalism - controlled ornamentation vs excess.</p>
-<h3 id="research-methodology">Research Methodology</h3>
-<p><strong>Axis: Empirical ↔ Theoretical</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>Empirical ●───────────────────────────────────● Theoretical
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>          │                                   │
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>     Grounding: +0.31                   Grounding: +0.18
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>     (valued)                           (valued)
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>Projected Concepts:
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>  Experimental Science   (-0.88) - Strongly Empirical
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>  Mathematical Proof     (+0.94) - Strongly Theoretical
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>  Case Study             (-0.42) - Toward Empirical
-<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>  Simulation             (+0.12) - Slightly Theoretical
-<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>  Meta-Analysis          (+0.03) - Nearly Neutral
-</code></pre></div>
-<p><strong>Insight:</strong> Both poles have positive grounding - <strong>not all axes are value polarities</strong>. "Meta-Analysis" at +0.03 is almost perfectly balanced, which matches its nature as synthesis of empirical studies with theoretical frameworks.</p>
-<h3 id="business-strategy">Business Strategy</h3>
-<p><strong>Axis: Exploitation ↔ Exploration</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>Exploitation ●────────────────────────────────● Exploration
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>             │                                │
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>        Grounding: +0.15                 Grounding: +0.28
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>        (stable)                         (growth-oriented)
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>Projected Concepts:
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>  Process Optimization   (-0.79) - Strongly Exploitation
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>  Market Research        (+0.67) - Toward Exploration
-<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>  Innovation             (+0.85) - Strongly Exploration
-<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>  Continuous Improvement (-0.33) - Leaning Exploitation
-<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>  Blue Ocean Strategy    (+0.92) - Extreme Exploration
-</code></pre></div>
-<p><strong>Insight:</strong> Weak axis distance for "Continuous Improvement" (-0.33 on axis but low axis distance) suggests it's <strong>on the spectrum</strong> rather than orthogonal. This validates it as an exploitation activity, not a third dimension.</p>
-<h3 id="environmental-science">Environmental Science</h3>
-<p><strong>Axis: Anthropocentric ↔ Ecocentric</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>Anthropocentric ●─────────────────────────────● Ecocentric
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>                │                             │
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>           Grounding: -0.42              Grounding: +0.51
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>           (problematic)                 (sustainable)
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>Projected Concepts:
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>  Human Supremacy        (-0.95) - Extreme Anthropocentric
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>  Sustainable Dev        (+0.38) - Leaning Ecocentric
-<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>  Deep Ecology           (+0.91) - Strongly Ecocentric
-<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>  Conservation           (+0.44) - Toward Ecocentric
-<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>  Wise Use               (-0.28) - Toward Anthropocentric
-</code></pre></div>
-<p><strong>Insight:</strong> Strong grounding correlation (r=0.91) reflects value shift in environmental discourse. "Sustainable Development" at +0.38 positions it as <strong>pragmatic ecocentrism</strong> - balancing human needs with ecological health.</p>
-<h3 id="education-philosophy">Education Philosophy</h3>
-<p><strong>Axis: Teacher-Centered ↔ Student-Centered</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>Teacher-Centered ●────────────────────────────● Student-Centered
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>                 │                            │
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>            Grounding: -0.18              Grounding: +0.37
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>            (traditional)                 (progressive)
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>Projected Concepts:
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>  Lecture-Based          (-0.81) - Strongly Teacher-Centered
-<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>  Socratic Method        (+0.15) - Slightly Student-Centered
-<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>  Project-Based Learning (+0.76) - Strongly Student-Centered
-<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>  Apprenticeship         (+0.42) - Leaning Student-Centered
-<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>  Montessori             (+0.88) - Extreme Student-Centered
-</code></pre></div>
-<p><strong>Insight:</strong> "Socratic Method" at +0.15 is surprisingly <strong>near neutral</strong> despite being ancient - reveals it has student-centered elements (questioning, dialogue) within teacher-controlled structure. Axis exposes this duality.</p>
-<h3 id="cognitive-science">Cognitive Science</h3>
-<p><strong>Axis: Nature ↔ Nurture</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>Nature ●──────────────────────────────────────● Nurture
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>       │                                      │
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>  Grounding: 0.0                         Grounding: 0.0
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>  (genetic)                              (environmental)
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>Projected Concepts:
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>  Nativism               (-0.89) - Strongly Nature
-<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>  Behaviorism            (+0.84) - Strongly Nurture
-<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>  Epigenetics            (+0.22) - Leaning Nurture (!)
-<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>  Gene-Environment       (+0.05) - Nearly Neutral
-<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>  Developmental Systems  (+0.18) - Slightly Nurture
-</code></pre></div>
-<p><strong>Insight:</strong> "Epigenetics" at +0.22 positioned toward Nurture despite involving genes - semantically correct because epigenetics studies how <strong>environment influences</strong> gene expression. Axis captures this subtle distinction that "genetics-related" tagging would miss.</p>
-<h3 id="key-patterns-revealed">Key Patterns Revealed</h3>
-<p><strong>1. Synthesis Concepts Cluster Near Zero</strong>
-- Modular Monolith, Meta-Analysis, Sustainable Development
-- Position ~0.0 to ±0.4 indicates <strong>integration of both poles</strong></p>
-<p><strong>2. Grounding Correlation Indicates Value Polarity</strong>
-- Strong correlation (r &gt; 0.7): Value-laden axis (good ↔ bad)
-- Weak correlation (r &lt; 0.3): Descriptive axis (two valid approaches)</p>
-<p><strong>3. High Axis Distance Reveals Orthogonal Concerns</strong>
-- Concept far from axis introduces <strong>third dimension</strong>
-- Example: "Secure by Default" might be orthogonal to Monolith ↔ Microservices axis (security ≠ architecture)</p>
-<p><strong>4. Unexpected Positions Expose Semantic Nuance</strong>
-- Anarchism near-neutral on Individualism ↔ Collectivism
-- Socratic Method near-neutral on Teacher ↔ Student-Centered
-- Reveals concepts are more complex than simple categorization</p>
+<ul>
+<li><code>describe_image()</code> stays a distinct capability method; unification is at
+  the configuration/contract layer, not a forced collapse of request shapes.</li>
+<li>The per-job <code>vision_provider</code> override is preserved unchanged — the
+  decision only changes the <em>default</em> resolution, not explicit selection.</li>
+<li>The vision active pointer can reuse the <code>ai_extraction_config</code> decoupled
+  pattern or a parallel table; the exact schema shape is an implementation
+  detail settled during #378, not by this ADR.</li>
+</ul>
 <h2 id="alternatives-considered">Alternatives Considered</h2>
-<h3 id="alternative-1-pre-compute-popular-axes">Alternative 1: Pre-compute Popular Axes</h3>
-<p><strong>Approach:</strong> Pre-calculate axes for known oppositions (Modern ↔ Traditional, etc.)</p>
-<p><strong>Pros:</strong>
-- Instant results (no computation delay)
-- Predictable performance</p>
-<p><strong>Cons:</strong>
-- Can't handle user-defined axes (major limitation for exploratory use)
-- Requires maintenance (which axes to pre-compute? how to update?)
-- Stale data if graph changes (embeddings regenerate, concepts added/removed)
-- Assumes we know what axes users want (contradicts exploratory nature)</p>
-<p><strong>Decision:</strong> ❌ Rejected
-<strong>Reason:</strong> On-demand calculation provides flexibility for arbitrary user-defined axes without maintenance burden of predicting interesting axes</p>
-<h3 id="alternative-2-client-side-computation">Alternative 2: Client-Side Computation</h3>
-<p><strong>Approach:</strong> Return embeddings to client, let them calculate projections</p>
-<p><strong>Pros:</strong>
-- No server load
-- Full flexibility for client</p>
-<p><strong>Cons:</strong>
-- Exposes 768-dimensional embeddings (large payloads, privacy concern)
-- Duplicates computation across clients (inefficient)
-- No central optimization or future caching possible</p>
-<p><strong>Decision:</strong> ❌ Rejected
-<strong>Reason:</strong> Server-side calculation keeps embeddings private, enables future optimization, and provides consistent results across all clients</p>
-<h3 id="alternative-3-persist-axis-definitions">Alternative 3: Persist Axis Definitions</h3>
-<p><strong>Approach:</strong> Store axes as graph vertices (<code>:PolarityAxis</code> node type)</p>
-<p><strong>Pros:</strong>
-- Historical tracking (axis evolution over time)
-- Faster retrieval (no re-computation)
-- Can link concepts to axes explicitly
-- Enables querying "which axes use this concept as a pole?"</p>
-<p><strong>Cons:</strong>
-- Schema complexity (new vertex type + edges)
-- Invalidation complexity when embeddings regenerate
-- Storage overhead for one-off exploratory axes
-- Premature commitment to persistence before understanding usage patterns</p>
-<p><strong>Decision:</strong> ⏸️ Deferred
-<strong>Reason:</strong> Start with on-demand computation only, add persistence if usage patterns reveal value. Can add later without breaking changes to API contracts.</p>
-<h3 id="alternative-4-integrate-into-existing-search">Alternative 4: Integrate into Existing Search</h3>
-<p><strong>Approach:</strong> Add <code>polarityAxis</code> parameter to <code>/queries/concepts/search</code></p>
-<p><strong>Pros:</strong>
-- No new endpoints
-- Integrated with existing workflows</p>
-<p><strong>Cons:</strong>
-- Overloads search endpoint (already complex)
-- Different performance characteristics (search is fast, axis analysis is slow)
-- Confusing parameter semantics</p>
-<p><strong>Decision:</strong> ❌ Rejected
-<strong>Reason:</strong> Dedicated endpoints provide clearer semantics and separate performance profiles</p>
-<h2 id="technical-design">Technical Design</h2>
-<h3 id="polarity-axis-calculation">Polarity Axis Calculation</h3>
-<p><strong>Input:</strong> Two concept IDs (positive pole, negative pole)</p>
-<p><strong>Algorithm:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># 1. Fetch embeddings</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="n">positive_emb</span> <span class="o">=</span> <span class="n">get_embedding</span><span class="p">(</span><span class="n">positive_pole_id</span><span class="p">)</span>  <span class="c1"># 768-dim vector</span>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="n">negative_emb</span> <span class="o">=</span> <span class="n">get_embedding</span><span class="p">(</span><span class="n">negative_pole_id</span><span class="p">)</span>  <span class="c1"># 768-dim vector</span>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="c1"># 2. Calculate axis vector (gradient from negative → positive)</span>
-<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="n">axis_vector</span> <span class="o">=</span> <span class="n">positive_emb</span> <span class="o">-</span> <span class="n">negative_emb</span>
-<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="n">axis_magnitude</span> <span class="o">=</span> <span class="o">||</span><span class="n">axis_vector</span><span class="o">||</span>  <span class="c1"># L2 norm</span>
-<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="n">axis_unit_vector</span> <span class="o">=</span> <span class="n">axis_vector</span> <span class="o">/</span> <span class="n">axis_magnitude</span>
-<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>
-<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="c1"># 3. For each candidate concept:</span>
-<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="n">candidate_emb</span> <span class="o">=</span> <span class="n">get_embedding</span><span class="p">(</span><span class="n">candidate_id</span><span class="p">)</span>
-<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a>
-<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a><span class="c1"># Vector from negative pole to candidate</span>
-<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a><span class="n">candidate_vector</span> <span class="o">=</span> <span class="n">candidate_emb</span> <span class="o">-</span> <span class="n">negative_emb</span>
-<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a>
-<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a><span class="c1"># Project onto axis (dot product)</span>
-<a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a><span class="n">projection_scalar</span> <span class="o">=</span> <span class="n">candidate_vector</span> <span class="err">·</span> <span class="n">axis_unit_vector</span>
-<a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a>
-<a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a><span class="c1"># Normalize to [-1, +1] (0 = midpoint)</span>
-<a id="__codelineno-8-20" name="__codelineno-8-20" href="#__codelineno-8-20"></a><span class="n">position</span> <span class="o">=</span> <span class="p">(</span><span class="n">projection_scalar</span> <span class="o">/</span> <span class="n">axis_magnitude</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">-</span> <span class="mi">1</span>
-<a id="__codelineno-8-21" name="__codelineno-8-21" href="#__codelineno-8-21"></a>
-<a id="__codelineno-8-22" name="__codelineno-8-22" href="#__codelineno-8-22"></a><span class="c1"># Calculate orthogonal distance (how far off-axis)</span>
-<a id="__codelineno-8-23" name="__codelineno-8-23" href="#__codelineno-8-23"></a><span class="n">projection_vector</span> <span class="o">=</span> <span class="n">projection_scalar</span> <span class="o">*</span> <span class="n">axis_unit_vector</span>
-<a id="__codelineno-8-24" name="__codelineno-8-24" href="#__codelineno-8-24"></a><span class="n">orthogonal_vector</span> <span class="o">=</span> <span class="n">candidate_vector</span> <span class="o">-</span> <span class="n">projection_vector</span>
-<a id="__codelineno-8-25" name="__codelineno-8-25" href="#__codelineno-8-25"></a><span class="n">axis_distance</span> <span class="o">=</span> <span class="o">||</span><span class="n">orthogonal_vector</span><span class="o">||</span>
-<a id="__codelineno-8-26" name="__codelineno-8-26" href="#__codelineno-8-26"></a>
-<a id="__codelineno-8-27" name="__codelineno-8-27" href="#__codelineno-8-27"></a><span class="c1"># 4. Determine direction</span>
-<a id="__codelineno-8-28" name="__codelineno-8-28" href="#__codelineno-8-28"></a><span class="k">if</span> <span class="n">position</span> <span class="o">&gt;</span> <span class="mf">0.3</span><span class="p">:</span>
-<a id="__codelineno-8-29" name="__codelineno-8-29" href="#__codelineno-8-29"></a>    <span class="n">direction</span> <span class="o">=</span> <span class="s2">&quot;positive&quot;</span>
-<a id="__codelineno-8-30" name="__codelineno-8-30" href="#__codelineno-8-30"></a><span class="k">elif</span> <span class="n">position</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mf">0.3</span><span class="p">:</span>
-<a id="__codelineno-8-31" name="__codelineno-8-31" href="#__codelineno-8-31"></a>    <span class="n">direction</span> <span class="o">=</span> <span class="s2">&quot;negative&quot;</span>
-<a id="__codelineno-8-32" name="__codelineno-8-32" href="#__codelineno-8-32"></a><span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-8-33" name="__codelineno-8-33" href="#__codelineno-8-33"></a>    <span class="n">direction</span> <span class="o">=</span> <span class="s2">&quot;neutral&quot;</span>
-</code></pre></div></p>
-<p><strong>Output:</strong>
-- Position: -1 (negative pole) to +1 (positive pole), 0 = midpoint
-- Axis distance: Orthogonal component (higher = more multi-dimensional)
-- Direction: Categorical alignment</p>
-<h3 id="grounding-correlation">Grounding Correlation</h3>
-<p><strong>Hypothesis:</strong> Grounding should correlate with axis position</p>
-<p><strong>Validation:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># For each projected concept:</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="n">positions</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">position</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">projections</span><span class="p">]</span>
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="n">groundings</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">grounding</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">projections</span><span class="p">]</span>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="c1"># Calculate Pearson correlation</span>
-<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="n">r</span><span class="p">,</span> <span class="n">p_value</span> <span class="o">=</span> <span class="n">pearsonr</span><span class="p">(</span><span class="n">positions</span><span class="p">,</span> <span class="n">groundings</span><span class="p">)</span>
-<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>
-<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="c1"># Interpret:</span>
-<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="c1"># r &gt; 0.7: Strong correlation (good axis)</span>
-<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="c1"># r &lt; 0.3: Weak correlation (weak axis or orthogonal concern)</span>
-</code></pre></div></p>
-<p><strong>Example (from experiments):</strong>
-- Legacy Systems (-0.075 grounding) → position -0.124 (toward negative pole)
-- Agile (+0.227 grounding) → position +0.194 (toward positive pole)
-- Correlation: r = 0.85 (strong!)</p>
-<h2 id="implementation-phases">Implementation Phases</h2>
-<h3 id="phase-1-core-analysis-function-api-endpoint-completed">Phase 1: Core Analysis Function &amp; API Endpoint ✅ COMPLETED</h3>
 <ul>
-<li>[x] Refactor experimental code into <code>api/lib/polarity_axis.py</code> as direct query function</li>
-<li>[x] Implement <code>analyze_polarity_axis()</code> with auto-discovery capability</li>
-<li>[x] Add <code>POST /query/polarity-axis</code> endpoint in <code>api/routes/queries.py</code></li>
-<li>[x] Create Pydantic models (<code>PolarityAxisRequest</code>, <code>PolarityAxisResponse</code>) in <code>api/models/queries.py</code></li>
-<li>[x] OpenAPI documentation (auto-generated from FastAPI schemas)</li>
-<li>[x] Testing with real embeddings (Modern Ways of Working ↔ Traditional Operating Models)</li>
-<li>[x] Validation: ~2.36 seconds for 20 concepts, confirmed direct query pattern viability</li>
+<li><strong>Vision inherits the active extraction provider</strong> (no independent
+  pointer). Rejected as the <em>primary</em> model: it couples image→prose to the
+  text provider and forbids the local-multimodal-for-vision +
+  cloud-for-extraction split that embedding already enjoys. Retained only as
+  a sensible <em>default</em> for the vision pointer when unset.</li>
+<li><strong>Keep the parallel hierarchy, just make the default catalog-aware</strong>
+  (pick the first provider with a <code>supports_vision</code> model). Rejected: it
+  patches #378 without answering #379, leaves two drifting hierarchies, and
+  makes provider selection implicit/order-dependent rather than configured.</li>
+<li><strong>Big-bang merge of <code>vision_providers.py</code> into <code>ai_providers.py</code>.</strong>
+  Rejected: high-risk rewrite of the working extraction path for no
+  immediate user benefit; the four-surface contract can be adopted
+  incrementally behind the existing factory.</li>
+<li><strong>Leave the hardcoded <code>"openai"</code> default and document it.</strong> Rejected:
+  silently wrong on Anthropic-only / local-only deployments, the exact bug
+  class ADR-801 §2–3 exists to eliminate.
+</content>
+</invoke></li>
 </ul>
-<p><strong>Implementation Notes:</strong>
-- Decision to use direct query pattern instead of background workers based on fast execution time
-- Followed <code>/query/connect</code> pattern for consistency
-- AGE Cypher syntax limitations required workarounds (no type filters in variable-length paths)</p>
-<h3 id="phase-2-cli-command-completed">Phase 2: CLI Command ✅ COMPLETED</h3>
-<ul>
-<li>[x] Add <code>kg polarity analyze</code> command in <code>cli/src/cli/polarity.ts</code></li>
-<li>[x] Client method <code>client.analyzePolarityAxis()</code> in <code>cli/src/api/client.ts</code></li>
-<li>[x] Colored output with formatted tables (positive/neutral/negative sections)</li>
-<li>[x] JSON mode support for scripting</li>
-<li>[x] Command registration in <code>cli/src/cli/commands.ts</code></li>
-</ul>
-<h3 id="phase-3-mcp-server-integration-completed">Phase 3: MCP Server Integration ✅ COMPLETED</h3>
-<ul>
-<li>[x] Add <code>analyze_polarity_axis</code> tool to MCP server (<code>cli/src/mcp-server.ts</code>)</li>
-<li>[x] Token-efficient markdown formatter (<code>formatPolarityAxisResults</code> in <code>cli/src/mcp/formatters.ts</code>)</li>
-<li>[x] Comprehensive tool description with use cases and performance characteristics</li>
-<li>[x] Testing via Claude Desktop integration</li>
-<li>[x] Rich output: axis metadata, statistics, grounding correlation, organized projections</li>
-</ul>
-<h3 id="phase-4-documentation-web-ui-in-progress">Phase 4: Documentation &amp; Web UI ⏳ IN PROGRESS</h3>
-<ul>
-<li>[x] Update ADR-070 with production implementation details (this document)</li>
-<li>[ ] Add usage examples and interpretation guide</li>
-<li>[ ] Update ARCHITECTURE_DECISIONS.md index</li>
-<li>[ ] Web workstation "Polarity Axis Explorer" panel (deferred - future enhancement)</li>
-</ul>
-<p><strong>Deferred Items:</strong>
-- <code>POST /queries/discover-polarity-axes</code> (auto-discover axes from relationships) - Could be added as future enhancement
-- <code>GET /queries/polarity-axis/{axis_id}/project/{concept_id}</code> (project onto saved axis) - Not needed without axis persistence
-- Axis persistence (<code>:PolarityAxis</code> nodes) - Deferred per Alternative 3 discussion</p>
-<h2 id="user-interface-specifications">User Interface Specifications</h2>
-<h3 id="mcp-server-integration-implemented">MCP Server Integration ✅ IMPLEMENTED</h3>
-<p><strong>Tool:</strong>
-<code>analyze_polarity_axis</code> - Analyze bidirectional semantic dimension between two concept poles</p>
-<p><strong>Parameters:</strong>
-- <code>positive_pole_id</code> (required): Concept ID for positive pole
-- <code>negative_pole_id</code> (required): Concept ID for negative pole
-- <code>candidate_ids</code> (optional): Specific concept IDs to project onto axis
-- <code>auto_discover</code> (default: true): Auto-discover related concepts if no candidates specified
-- <code>max_candidates</code> (default: 20): Maximum candidates for auto-discovery
-- <code>max_hops</code> (default: 2): Maximum graph hops for auto-discovery</p>
-<p><strong>Output Format:</strong> Token-efficient markdown optimized for AI consumption with:
-- Axis definition (poles, grounding, magnitude, quality indicator)
-- Statistical summary (position range, mean, distribution)
-- Grounding correlation with practical interpretation
-- Concept projections organized by direction (positive/neutral/negative)
-- Usage guide explaining positions and orthogonality</p>
-<p><strong>Example Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="n">analyze_polarity_axis</span><span class="p">(</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>  <span class="n">positive_pole_id</span><span class="o">=</span><span class="s2">&quot;sha256:0d5be_chunk1_a2ccadba&quot;</span><span class="p">,</span>  <span class="c1"># Modern Ways of Working</span>
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>  <span class="n">negative_pole_id</span><span class="o">=</span><span class="s2">&quot;sha256:0f72d_chunk1_9a13bb20&quot;</span><span class="p">,</span>  <span class="c1"># Traditional Operating Models</span>
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>  <span class="n">auto_discover</span><span class="o">=</span><span class="n">true</span><span class="p">,</span>
-<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>  <span class="n">max_candidates</span><span class="o">=</span><span class="mi">20</span>
-<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="p">)</span>
-</code></pre></div></p>
-<h3 id="cli-tool-kg-implemented">CLI Tool (kg) ✅ IMPLEMENTED</h3>
-<p><strong>Command:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>kg<span class="w"> </span>polarity<span class="w"> </span>analyze<span class="w"> </span>--positive<span class="w"> </span>&lt;concept-id&gt;<span class="w"> </span>--negative<span class="w"> </span>&lt;concept-id&gt;<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
-</code></pre></div></p>
-<p><strong>Options:</strong>
-- <code>--positive &lt;id&gt;</code> - Positive pole concept ID (required)
-- <code>--negative &lt;id&gt;</code> - Negative pole concept ID (required)
-- <code>--candidates &lt;ids...&gt;</code> - Specific concept IDs to project (space-separated)
-- <code>--no-auto-discover</code> - Disable auto-discovery of related concepts
-- <code>--max-candidates &lt;N&gt;</code> - Maximum candidates for auto-discovery (default: 20)
-- <code>--max-hops &lt;N&gt;</code> - Maximum graph hops for auto-discovery (default: 2)
-- <code>--json</code> - Output raw JSON instead of formatted text</p>
-<p><strong>Output Format:</strong> Colored terminal output with:
-- Axis header with pole labels and grounding strength
-- Axis quality indicator (strong/weak based on magnitude)
-- Statistics table (position range, mean, distribution, correlation)
-- Three sections: Positive Direction, Neutral, Negative Direction
-- Each concept shows: label, position, grounding, axis distance, concept ID</p>
-<p><strong>Example:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>kg<span class="w"> </span>polarity<span class="w"> </span>analyze<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">  </span>--positive<span class="w"> </span>sha256:0d5be_chunk1_a2ccadba<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">  </span>--negative<span class="w"> </span>sha256:0f72d_chunk1_9a13bb20<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">  </span>--max-candidates<span class="w"> </span><span class="m">20</span>
-</code></pre></div></p>
-<h3 id="web-workstation-deferred">Web Workstation ⏳ DEFERRED</h3>
-<p><strong>New Explorer Panel:</strong> "Polarity Axis Explorer" (future enhancement)</p>
-<p><strong>Deferred Features:</strong>
-- Interactive visualization with drag-and-drop
-- Custom axis creator with search
-- Concept integration tabs
-- Export options (JSON, PNG, SVG)</p>
-<p><strong>Reason for Deferral:</strong>
-Core functionality (API, CLI, MCP) provides complete access to polarity axis analysis. Web UI adds convenience but isn't required for feature adoption. Can be added based on user feedback and usage patterns.</p>
-<h2 id="success-criteria">Success Criteria</h2>
-<p><strong>Functional:</strong>
-- ✅ Polarity axis calculation produces stable results (±0.05 across runs)
-- ✅ Grounding correlation r &gt; 0.7 for PREVENTS/CONTRADICTS axes
-- ✅ Direction accuracy &gt;90% vs human spot checks
-- ✅ Graceful handling of edge cases (single concept, no candidates, invalid concept IDs)</p>
-<p><strong>Performance:</strong>
-- ✅ Axis calculation &lt;5s for 20 candidates (initial implementation without caching)
-- ✅ Background worker processing prevents API blocking
-- ✅ No performance regression on existing endpoints
-- ✅ Job queue handles concurrent polarity analysis requests</p>
-<p><strong>Adoption:</strong>
-- ✅ 10+ polarity axis analyses per week (within first month)
-- ✅ User feedback positive (clear value, understandable results)
-- ✅ Zero critical bugs or data corruption
-- ✅ Documentation enables self-service usage</p>
-<h2 id="risks-mitigations">Risks &amp; Mitigations</h2>
-<table>
-<thead>
-<tr>
-<th>Risk</th>
-<th>Impact</th>
-<th>Probability</th>
-<th>Mitigation</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Expensive computation affects user experience</td>
-<td>High</td>
-<td>Medium</td>
-<td>Background workers, job queue, progress tracking</td>
-</tr>
-<tr>
-<td>Results are unintuitive to users</td>
-<td>Medium</td>
-<td>Medium</td>
-<td>Clear docs, diverse examples, visual aids in interfaces</td>
-</tr>
-<tr>
-<td>Grounding correlation weak for some axes</td>
-<td>Medium</td>
-<td>Low</td>
-<td>Document when axes are weak, suggest alternatives, show correlation strength</td>
-</tr>
-<tr>
-<td>Users discover axes that don't make semantic sense</td>
-<td>Low</td>
-<td>Medium</td>
-<td>Provide correlation metrics, allow filtering by correlation strength</td>
-</tr>
-</tbody>
-</table>
-<h2 id="references">References</h2>
-<ul>
-<li><strong>Implementation:</strong> <code>api/app/lib/polarity_axis.py</code>, <code>api/app/routes/polarity.py</code>. The earlier prototype directory under <code>features/polarity-axis-analysis/</code> was removed when the feature shipped to production.</li>
-<li><strong>Experimental Findings:</strong> <a href="../../../research/vision-testing/FINDINGS/">Validation Results</a> from the original vision-testing run that informed the design.</li>
-<li><strong>Research papers:</strong></li>
-<li><a href="https://arxiv.org/abs/2412.08821">Large Concept Models</a> - Meta AI, Dec 2024</li>
-<li><a href="https://arxiv.org/html/2511.18313">Path-Constrained Retrieval</a></li>
-</ul>
-<h2 id="decision-record">Decision Record</h2>
-<p><strong>Status:</strong> Accepted &amp; Implemented
-<strong>Proposed By:</strong> System Architect
-<strong>Implementation Date:</strong> 2025-11-30
-<strong>Approval Date:</strong> 2025-11-30</p>
-<p><strong>Key Implementation Decisions:</strong>
-1. <strong>Direct Query Pattern:</strong> Chose direct query over background workers based on fast execution time (~2-3s)
-2. <strong>Simplified Scope:</strong> Implemented single endpoint (<code>POST /query/polarity-axis</code>) rather than three endpoints
-3. <strong>Auto-Discovery:</strong> Included graph traversal-based candidate discovery in initial release
-4. <strong>No Persistence:</strong> Deferred axis persistence (<code>:PolarityAxis</code> nodes) - compute on demand only
-5. <strong>Web UI Deferred:</strong> Core functionality (API/CLI/MCP) sufficient for initial adoption</p>
-<p><strong>Implementation Files:</strong>
-- <code>api/api/lib/polarity_axis.py</code> - Core analysis function (419 lines)
-- <code>api/api/models/queries.py</code> - Pydantic request/response models
-- <code>api/api/routes/queries.py</code> - FastAPI endpoint
-- <code>cli/src/cli/polarity.ts</code> - CLI command (166 lines)
-- <code>cli/src/api/client.ts</code> - Client method
-- <code>cli/src/mcp-server.ts</code> - MCP tool registration
-- <code>cli/src/mcp/formatters.ts</code> - Markdown formatter</p>
-<p><strong>Testing Results:</strong>
-- Execution time: ~2.36 seconds for 20 concepts
-- Axis quality: Strong (magnitude 0.9735)
-- Grounding correlation: Validated with real-world examples
-- MCP integration: Tested via Claude Desktop
-- CLI integration: Tested with multiple pole pairs</p>
-<hr />
-<p><strong>Completed:</strong>
-1. ✅ Core analysis function with auto-discovery
-2. ✅ API endpoint with comprehensive request/response models
-3. ✅ CLI command with colored output
-4. ✅ MCP tool with rich markdown formatting
-5. ✅ ADR documentation update
-6. ✅ Testing and validation</p>
-<p><strong>Future Enhancements:</strong>
-1. Web UI "Polarity Axis Explorer" panel
-2. Auto-discovery endpoint (<code>POST /queries/discover-polarity-axes</code>)
-3. Axis persistence if usage patterns warrant it
-4. Global embedding cache for performance optimization</p>
 
 
 
