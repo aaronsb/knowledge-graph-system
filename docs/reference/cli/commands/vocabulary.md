@@ -13,27 +13,27 @@ kg vocabulary [options]
 
 **Subcommands:**
 
-- `status` - Show current vocabulary status including size, zone (GREEN/WATCH/DANGER/EMERGENCY per ADR-032), aggressiveness (growth above minimum), and thresholds. Shows breakdown of builtin types, custom types, and categories. Use this to monitor vocabulary health, check zone before consolidation, track growth over time, and trigger consolidation workflows when needed.
-- `list` - List all edge types with statistics, categories, and confidence scores (ADR-047). Shows TYPE (colored by semantic), CATEGORY (composition, causation, logical, etc.), CONF (confidence score with ⚠ for ambiguous), GROUNDING (epistemic status avg_grounding), EDGES (usage count), STATUS (active ✓), and [B] flag for builtin types. Use this for vocabulary overview, finding consolidation candidates, reviewing auto-categorization accuracy, identifying unused types, and auditing quality.
-- `consolidate` - AI-assisted vocabulary consolidation workflow (AITL - AI-in-the-loop, ADR-032). Analyzes vocabulary via embeddings, identifies similar pairs above threshold, presents merge recommendations with confidence, and executes or prompts based on mode. Workflow: 1) analyze vocabulary, 2) identify candidates, 3) present recommendations, 4) execute or prompt, 5) apply merges (deprecate source, redirect edges), 6) prune unused types (default). Modes: interactive (default, prompts each), dry-run (shows candidates without executing), AITL auto (auto-executes high confidence). Threshold guidelines: 0.95+ very conservative, 0.90-0.95 balanced AITL, 0.85-0.90 aggressive requires review, <0.85 very aggressive manual review.
-- `merge` - Manually merge one edge type into another for consolidation or correction. Validates both types exist, redirects all edges from deprecated type to target type, marks deprecated type as inactive, records audit trail (reason, user, timestamp), and preserves edge provenance. This is a non-destructive, atomic operation useful for manual consolidation, fixing misnamed types from extraction, bulk scripted operations, and targeted category cleanup. Safety: edges preserved, atomic transaction, audit trail for compliance, can be reviewed in inactive types list.
-- `generate-embeddings` - Generate vector embeddings for vocabulary types (required for consolidation and categorization). Identifies types without embeddings, generates embeddings using configured embedding model, stores embeddings for similarity comparison, and enables consolidation and auto-categorization. Use after fresh install (bootstrap vocabulary embeddings), after ingestion introduces new custom types, when switching embedding models (regenerate), or for inconsistency fixes (force regeneration if corrupted). Performance: ~100-200ms per embedding (OpenAI), ~20-50ms per embedding (local models), parallel generation (batches of 10).
-- `category-scores` - Show category similarity scores for a specific relationship type (ADR-047). Displays assigned category, confidence score (calculated as max_score/second_max_score * 100), ambiguous flag (set when runner-up within 20% of winner), runner-up category if ambiguous, and similarity to all category seeds (0-100%) sorted by similarity with visual bar chart. Use this to verify auto-categorization makes sense, debug low confidence assignments, understand why confidence is low, resolve ambiguity between close categories, and audit all types for misassignments.
-- `refresh-categories` - Refresh category assignments for vocabulary types using latest embeddings (ADR-047, ADR-053). As of ADR-053, new edge types are automatically categorized during ingestion, so this command is primarily needed when category seeds change. Use when category seed definitions are updated (seeds currently defined in code, future: database-configurable), after embedding model changes, or for migrating pre-ADR-053 uncategorized types. This is a non-destructive operation (doesn't affect edges), preserves manual assignments, and records audit trail per type.
-- `similar` - Find similar edge types via embedding similarity (ADR-053). Shows types with highest cosine similarity - useful for synonym detection and consolidation. Use --limit to control results (1-100, default 10). Similar types with high similarity (>0.90) are strong merge candidates for vocabulary consolidation (ADR-052).
-- `opposite` - Find opposite (least similar) edge types via embedding similarity (ADR-053). Shows types with lowest cosine similarity - useful for understanding semantic range and antonyms. Use --limit to control results (1-100, default 5).
-- `analyze` - Detailed analysis of vocabulary type for quality assurance (ADR-053). Shows category fit, similar types in same/other categories, and detects potential miscategorization. Use this to verify auto-categorization accuracy and identify types that may need reclassification.
-- `search` - Search for vocabulary terms by natural language query (useful when creating edges to find the best relationship type).
-- `config` - Show or update vocabulary configuration. No args: display config table. With args: update properties directly using database key names (e.g., "kg vocab config vocab_max 275 vocab_emergency 350"). Property names shown in config table.
-- `profiles` - Manage aggressiveness profiles (Bezier curves for consolidation behavior). Has nested subcommands: `list`, `show`, `create`, `delete`.
-- `epistemic-status` - Epistemic status classification for vocabulary types (ADR-065 Phase 2). Shows knowledge validation state based on grounding patterns: WELL_GROUNDED (avg >0.8, well-established), MIXED_GROUNDING (0.15-0.8, variable validation), WEAK_GROUNDING (0.0-0.15, emerging evidence), POORLY_GROUNDED (-0.5-0.0, uncertain), CONTRADICTED (<-0.5, refuted), HISTORICAL (temporal vocabulary), INSUFFICIENT_DATA (<3 measurements). Results are temporal measurements that change as graph evolves. Use for filtering relationships by epistemic reliability, identifying contested knowledge, tracking knowledge validation trends, and curating high-confidence vs exploratory subgraphs.
+- `status` - Show current vocabulary status including size, zone (GREEN/WATCH/DANGER/EMERGENCY per ADR-032), aggressiveness, and thresholds.
+- `list` - List all edge types with statistics, categories, and confidence scores (ADR-047).
+- `consolidate` - AI-assisted vocabulary consolidation workflow (AITL - AI-in-the-loop, ADR-032). Analyzes vocabulary via embeddings, identifies similar pairs above threshold, presents merge recommendations.
+- `merge` - Manually merge one edge type into another. Redirects all edges from deprecated type to target type.
+- `generate-embeddings` - Generate vector embeddings for vocabulary types (required for consolidation and categorization).
+- `category-scores` - Show category similarity scores for a specific relationship type (ADR-047).
+- `refresh-categories` - Refresh category assignments for vocabulary types using latest embeddings (ADR-047, ADR-053).
+- `search` - Search for vocabulary terms by natural language query. Useful when creating edges to find the best relationship type.
+- `similar` - Find similar edge types via embedding similarity (ADR-053). Shows types with highest cosine similarity - useful for synonym detection and consolidation.
+- `opposite` - Find opposite (least similar) edge types via embedding similarity (ADR-053). Shows types with lowest cosine similarity.
+- `analyze` - Detailed analysis of vocabulary type for quality assurance (ADR-053). Shows category fit and potential miscategorization.
+- `config` - Show or update vocabulary configuration. No args: display config. With args: update properties (e.g., "kg vocab config vocab_max 275").
+- `profiles` - Manage aggressiveness profiles (Bezier curves for consolidation behavior)
+- `epistemic-status` - Epistemic status classification for vocabulary types (ADR-065). Shows knowledge validation state based on grounding patterns.
 - `sync` - Sync missing edge types from graph to vocabulary (ADR-077). Discovers edge types used in the graph but not registered in vocabulary table/VocabType nodes. Use --dry-run first to preview, then --execute to sync.
 
 ---
 
 ### status
 
-Show current vocabulary status including size, zone (GREEN/WATCH/DANGER/EMERGENCY per ADR-032), aggressiveness (growth above minimum), and thresholds. Shows breakdown of builtin types, custom types, and categories. Use this to monitor vocabulary health, check zone before consolidation, track growth over time, and trigger consolidation workflows when needed.
+Show current vocabulary status including size, zone (GREEN/WATCH/DANGER/EMERGENCY per ADR-032), aggressiveness, and thresholds.
 
 **Usage:**
 ```bash
@@ -42,7 +42,7 @@ kg status [options]
 
 ### list
 
-List all edge types with statistics, categories, and confidence scores (ADR-047). Shows TYPE (colored by semantic), CATEGORY (composition, causation, logical, etc.), CONF (confidence score with ⚠ for ambiguous), GROUNDING (epistemic status avg_grounding), EDGES (usage count), STATUS (active ✓), and [B] flag for builtin types. Use this for vocabulary overview, finding consolidation candidates, reviewing auto-categorization accuracy, identifying unused types, and auditing quality.
+List all edge types with statistics, categories, and confidence scores (ADR-047).
 
 **Usage:**
 ```bash
@@ -55,12 +55,12 @@ kg list [options]
 |--------|-------------|---------|
 | `--inactive` | Include inactive/deprecated types | - |
 | `--no-builtin` | Exclude builtin types | - |
-| `--sort <fields>` | Sort by comma-separated fields: edges, type, conf, grounding, category, status (case-insensitive). Default: edges (descending) | - |
+| `--sort <fields>` | Sort by comma-separated fields: edges, type, conf, grounding, category, status (default: edges) | - |
 | `--json` | Output as JSON for programmatic use | - |
 
 ### consolidate
 
-AI-assisted vocabulary consolidation workflow (AITL - AI-in-the-loop, ADR-032). Analyzes vocabulary via embeddings, identifies similar pairs above threshold, presents merge recommendations with confidence, and executes or prompts based on mode. Workflow: 1) analyze vocabulary, 2) identify candidates, 3) present recommendations, 4) execute or prompt, 5) apply merges (deprecate source, redirect edges), 6) prune unused types (default). Modes: interactive (default, prompts each), dry-run (shows candidates without executing), AITL auto (auto-executes high confidence). Threshold guidelines: 0.95+ very conservative, 0.90-0.95 balanced AITL, 0.85-0.90 aggressive requires review, <0.85 very aggressive manual review.
+AI-assisted vocabulary consolidation workflow (AITL - AI-in-the-loop, ADR-032). Analyzes vocabulary via embeddings, identifies similar pairs above threshold, presents merge recommendations.
 
 **Usage:**
 ```bash
@@ -73,13 +73,12 @@ kg consolidate [options]
 |--------|-------------|---------|
 | `-t, --target <size>` | Target vocabulary size | `"90"` |
 | `--threshold <value>` | Auto-execute threshold (0.0-1.0) | `"0.90"` |
-| `--dry-run` | Evaluate candidates without executing merges | - |
-| `--auto` | Auto-execute high confidence merges (AITL mode) | - |
-| `--no-prune-unused` | Skip pruning vocabulary types with 0 uses (default: prune enabled) | - |
+| `--dry-run` | Preview candidates without executing (no merges, no pruning) | - |
+| `--no-prune-unused` | Skip pruning vocabulary types with 0 uses | - |
 
 ### merge
 
-Manually merge one edge type into another for consolidation or correction. Validates both types exist, redirects all edges from deprecated type to target type, marks deprecated type as inactive, records audit trail (reason, user, timestamp), and preserves edge provenance. This is a non-destructive, atomic operation useful for manual consolidation, fixing misnamed types from extraction, bulk scripted operations, and targeted category cleanup. Safety: edges preserved, atomic transaction, audit trail for compliance, can be reviewed in inactive types list.
+Manually merge one edge type into another. Redirects all edges from deprecated type to target type.
 
 **Usage:**
 ```bash
@@ -100,7 +99,7 @@ kg merge <deprecated-type> <target-type>
 
 ### generate-embeddings
 
-Generate vector embeddings for vocabulary types (required for consolidation and categorization). Identifies types without embeddings, generates embeddings using configured embedding model, stores embeddings for similarity comparison, and enables consolidation and auto-categorization. Use after fresh install (bootstrap vocabulary embeddings), after ingestion introduces new custom types, when switching embedding models (regenerate), or for inconsistency fixes (force regeneration if corrupted). Performance: ~100-200ms per embedding (OpenAI), ~20-50ms per embedding (local models), parallel generation (batches of 10).
+Generate vector embeddings for vocabulary types (required for consolidation and categorization).
 
 **Usage:**
 ```bash
@@ -116,7 +115,7 @@ kg generate-embeddings [options]
 
 ### category-scores
 
-Show category similarity scores for a specific relationship type (ADR-047). Displays assigned category, confidence score (calculated as max_score/second_max_score * 100), ambiguous flag (set when runner-up within 20% of winner), runner-up category if ambiguous, and similarity to all category seeds (0-100%) sorted by similarity with visual bar chart. Use this to verify auto-categorization makes sense, debug low confidence assignments, understand why confidence is low, resolve ambiguity between close categories, and audit all types for misassignments.
+Show category similarity scores for a specific relationship type (ADR-047).
 
 **Usage:**
 ```bash
@@ -129,7 +128,7 @@ kg category-scores <type>
 
 ### refresh-categories
 
-Refresh category assignments for vocabulary types using latest embeddings (ADR-047, ADR-053). As of ADR-053, new edge types are automatically categorized during ingestion, so this command is primarily needed when category seeds change. Use when category seed definitions are updated (seeds currently defined in code, future: database-configurable), after embedding model changes, or for migrating pre-ADR-053 uncategorized types. This is a non-destructive operation (doesn't affect edges), preserves manual assignments, and records audit trail per type.
+Refresh category assignments for vocabulary types using latest embeddings (ADR-047, ADR-053).
 
 **Usage:**
 ```bash
@@ -140,58 +139,7 @@ kg refresh-categories [options]
 
 | Option | Description | Default |
 |--------|-------------|---------|
-| `--computed-only` | Refresh only types with category_source=computed (excludes manual assignments) | - |
-
-### similar
-
-Find similar edge types via embedding similarity (ADR-053). Shows types with highest cosine similarity - useful for synonym detection and consolidation. Use --limit to control results (1-100, default 10). Similar types with high similarity (>0.90) are strong merge candidates for vocabulary consolidation (ADR-052).
-
-**Usage:**
-```bash
-kg similar <type>
-```
-
-**Arguments:**
-
-- `<type>` - Relationship type to analyze (e.g., IMPLIES)
-
-**Options:**
-
-| Option | Description | Default |
-|--------|-------------|---------|
-| `--limit <n>` | Number of results to return (1-100) | `"10"` |
-
-### opposite
-
-Find opposite (least similar) edge types via embedding similarity (ADR-053). Shows types with lowest cosine similarity - useful for understanding semantic range and antonyms. Use --limit to control results (1-100, default 5).
-
-**Usage:**
-```bash
-kg opposite <type>
-```
-
-**Arguments:**
-
-- `<type>` - Relationship type to analyze (e.g., IMPLIES)
-
-**Options:**
-
-| Option | Description | Default |
-|--------|-------------|---------|
-| `--limit <n>` | Number of results to return (1-100) | `"5"` |
-
-### analyze
-
-Detailed analysis of vocabulary type for quality assurance (ADR-053). Shows category fit, similar types in same/other categories, and detects potential miscategorization. Use this to verify auto-categorization accuracy and identify types that may need reclassification.
-
-**Usage:**
-```bash
-kg analyze <type>
-```
-
-**Arguments:**
-
-- `<type>` - Relationship type to analyze (e.g., STORES)
+| `--computed-only` | Refresh only types with category_source=computed | - |
 
 ### search
 
@@ -213,26 +161,77 @@ kg search <query>
 | `--limit <n>` | Number of results to return (1-20) | `"5"` |
 | `--json` | Output as JSON for scripting | - |
 
-### config
+### similar
 
-Show or update vocabulary configuration. No args: display config table. With args: update properties directly using database key names (e.g., "kg vocab config vocab_max 275 vocab_emergency 350"). Property names shown in config table.
+Find similar edge types via embedding similarity (ADR-053). Shows types with highest cosine similarity - useful for synonym detection and consolidation.
 
 **Usage:**
 ```bash
-kg config [properties...]
+kg similar <type>
 ```
 
 **Arguments:**
 
-- `<properties...>` - Property assignments: key value [key value...]
+- `<type>` - Relationship type to analyze (e.g., IMPLIES)
 
-### profiles
+**Options:**
 
-Manage aggressiveness profiles (Bezier curves for consolidation behavior).
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--limit <n>` | Number of results to return (1-100) | `"10"` |
+
+### opposite
+
+Find opposite (least similar) edge types via embedding similarity (ADR-053). Shows types with lowest cosine similarity.
 
 **Usage:**
 ```bash
-kg profiles [subcommand]
+kg opposite <type>
+```
+
+**Arguments:**
+
+- `<type>` - Relationship type to analyze (e.g., IMPLIES)
+
+**Options:**
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--limit <n>` | Number of results to return (1-100) | `"5"` |
+
+### analyze
+
+Detailed analysis of vocabulary type for quality assurance (ADR-053). Shows category fit and potential miscategorization.
+
+**Usage:**
+```bash
+kg analyze <type>
+```
+
+**Arguments:**
+
+- `<type>` - Relationship type to analyze (e.g., STORES)
+
+### config
+
+Show or update vocabulary configuration. No args: display config. With args: update properties (e.g., "kg vocab config vocab_max 275").
+
+**Usage:**
+```bash
+kg config [properties]
+```
+
+**Arguments:**
+
+- `<properties>` - Property assignments: key value [key value...]
+
+### profiles
+
+Manage aggressiveness profiles (Bezier curves for consolidation behavior)
+
+**Usage:**
+```bash
+kg profiles [options]
 ```
 
 **Subcommands:**
@@ -246,11 +245,11 @@ kg profiles [subcommand]
 
 #### list
 
-List all aggressiveness profiles including builtin (8 predefined) and custom profiles.
+List all aggressiveness profiles including builtin (8 predefined) and custom profiles. Shows profile name, control points, description, and builtin flag.
 
 **Usage:**
 ```bash
-kg vocab profiles list
+kg list [options]
 ```
 
 #### show
@@ -259,7 +258,7 @@ Show details for a specific aggressiveness profile including Bezier parameters a
 
 **Usage:**
 ```bash
-kg vocab profiles show <name>
+kg show <name>
 ```
 
 **Arguments:**
@@ -272,7 +271,7 @@ Create a custom aggressiveness profile with Bezier curve parameters.
 
 **Usage:**
 ```bash
-kg vocab profiles create [options]
+kg create [options]
 ```
 
 **Options:**
@@ -292,7 +291,7 @@ Delete a custom aggressiveness profile. Cannot delete builtin profiles.
 
 **Usage:**
 ```bash
-kg vocab profiles delete <name>
+kg delete <name>
 ```
 
 **Arguments:**
@@ -301,7 +300,7 @@ kg vocab profiles delete <name>
 
 ### epistemic-status
 
-Epistemic status classification for vocabulary types (ADR-065 Phase 2). Shows knowledge validation state based on grounding patterns: WELL_GROUNDED (avg >0.8, well-established), MIXED_GROUNDING (0.15-0.8, variable validation), WEAK_GROUNDING (0.0-0.15, emerging evidence), POORLY_GROUNDED (-0.5-0.0, uncertain), CONTRADICTED (<-0.5, refuted), HISTORICAL (temporal vocabulary), INSUFFICIENT_DATA (<3 measurements). Results are temporal measurements that change as graph evolves. Use for filtering relationships by epistemic reliability, identifying contested knowledge, tracking knowledge validation trends, and curating high-confidence vs exploratory subgraphs.
+Epistemic status classification for vocabulary types (ADR-065). Shows knowledge validation state based on grounding patterns.
 
 **Usage:**
 ```bash
@@ -310,15 +309,15 @@ kg epistemic-status [options]
 
 **Subcommands:**
 
-- `list` - List all vocabulary types with their epistemic status classifications and statistics. Shows TYPE, STATUS (color-coded), AVG GROUNDING (reliability score), SAMPLED (edges analyzed), and MEASURED AT (timestamp). Filter by status using --status flag. Sorted by highest grounding first. Use for overview of epistemic landscape, finding high-confidence types for critical queries, identifying contested/contradictory types needing review, and tracking temporal evolution of knowledge validation.
-- `show` - Show detailed epistemic status for a specific vocabulary type including full grounding statistics, measurement timestamp, and rationale. Displays classification (WELL_GROUNDED/MIXED_GROUNDING/etc.), average grounding (reliability), standard deviation (consistency), min/max range (outliers), sample sizes (measurement scope), total edges (population), and measurement timestamp (temporal context). Use for deep-diving on specific types, understanding classification rationale, verifying measurement quality, and tracking individual type evolution.
-- `measure` - Run epistemic status measurement for all vocabulary types (ADR-065 Phase 2). Samples edges (default 100 per type), calculates grounding dynamically for target concepts (bounded recursion), classifies epistemic patterns (AFFIRMATIVE/CONTESTED/CONTRADICTORY/HISTORICAL), and optionally stores results to VocabType nodes. Measurement is temporal and observer-dependent - results change as graph evolves. Use --sample-size to control precision vs speed (larger samples = more accurate but slower), --no-store for analysis without persistence, --verbose for detailed statistics. This enables Phase 2 query filtering via GraphQueryFacade.match_concept_relationships().
+- `list` - List all vocabulary types with their epistemic status classifications and statistics.
+- `show` - Show detailed epistemic status for a specific vocabulary type.
+- `measure` - Run epistemic status measurement for all vocabulary types (ADR-065).
 
 ---
 
 #### list
 
-List all vocabulary types with their epistemic status classifications and statistics. Shows TYPE, STATUS (color-coded), AVG GROUNDING (reliability score), SAMPLED (edges analyzed), and MEASURED AT (timestamp). Filter by status using --status flag. Sorted by highest grounding first. Use for overview of epistemic landscape, finding high-confidence types for critical queries, identifying contested/contradictory types needing review, and tracking temporal evolution of knowledge validation.
+List all vocabulary types with their epistemic status classifications and statistics.
 
 **Usage:**
 ```bash
@@ -333,7 +332,7 @@ kg list [options]
 
 #### show
 
-Show detailed epistemic status for a specific vocabulary type including full grounding statistics, measurement timestamp, and rationale. Displays classification (WELL_GROUNDED/MIXED_GROUNDING/etc.), average grounding (reliability), standard deviation (consistency), min/max range (outliers), sample sizes (measurement scope), total edges (population), and measurement timestamp (temporal context). Use for deep-diving on specific types, understanding classification rationale, verifying measurement quality, and tracking individual type evolution.
+Show detailed epistemic status for a specific vocabulary type.
 
 **Usage:**
 ```bash
@@ -346,7 +345,7 @@ kg show <type>
 
 #### measure
 
-Run epistemic status measurement for all vocabulary types (ADR-065 Phase 2). Samples edges (default 100 per type), calculates grounding dynamically for target concepts (bounded recursion), classifies epistemic patterns (AFFIRMATIVE/CONTESTED/CONTRADICTORY/HISTORICAL), and optionally stores results to VocabType nodes. Measurement is temporal and observer-dependent - results change as graph evolves. Use --sample-size to control precision vs speed (larger samples = more accurate but slower), --no-store for analysis without persistence, --verbose for detailed statistics. This enables Phase 2 query filtering via GraphQueryFacade.match_concept_relationships().
+Run epistemic status measurement for all vocabulary types (ADR-065).
 
 **Usage:**
 ```bash

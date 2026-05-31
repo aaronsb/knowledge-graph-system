@@ -14,14 +14,14 @@ kg admin [options]
 **Subcommands:**
 
 - `status` - Show comprehensive system health status (Docker containers, database connections, environment configuration, job scheduler)
-- `backup` - Create database backup (ADR-036) - full system or per-ontology, in restorable archive/JSON or Gephi GEXF format
+- `backup` - Create database backup (ADR-036) - full system or per-ontology, in restorable JSON or Gephi GEXF format
 - `list-backups` - List available backup files from configured directory
 - `restore` - Restore a database backup (uses OAuth authentication)
 - `scheduler` - Job scheduler management (ADR-014 job queue) - monitor worker status, cleanup stale jobs
 - `workers` - Worker lane management (ADR-100) - monitor slot utilization, queue depth, active jobs
 - `user` - User management commands (admin only)
 - `rbac` - Manage roles, permissions, and access control (ADR-028)
-- `embedding` - Manage embedding model configuration (ADR-039)
+- `embedding` - Manage embedding profiles (text + image model configuration)
 - `extraction` - Manage AI extraction model configuration (ADR-041)
 - `keys` - Manage API keys for AI providers (ADR-031, ADR-041)
 
@@ -52,7 +52,7 @@ kg backup [options]
 | `--type <type>` | Backup type: "full" (entire graph) or "ontology" (single namespace) | - |
 | `--ontology <name>` | Ontology name (required if --type ontology) | - |
 | `--output <filename>` | Custom output filename (auto-generated if not specified) | - |
-| `--format <format>` | Export format: "archive" (tar.gz with documents, default), "json" (graph only), or "gexf" (Gephi visualization - not restorable) | `"archive"` |
+| `--format <format>` | Export format: "archive" (tar.gz with documents, default), "json" (graph only), or "gexf" (Gephi visualization) | `"archive"` |
 
 ### list-backups
 
@@ -118,18 +118,16 @@ kg cleanup [options]
 
 ### workers
 
-Worker lane management (ADR-100) - monitor slot utilization, queue depth, active jobs.
-Running `kg admin workers` shows the current worker status (slots, lanes, active jobs,
-queue depth).
+Worker lane management (ADR-100) - monitor slot utilization, queue depth, active jobs
 
 **Usage:**
 ```bash
-kg admin workers [subcommand]
+kg workers [options]
 ```
 
 **Subcommands:**
 
-- `lanes` - Show detailed worker lane configuration (job types, slots, poll interval, stale timeout)
+- `lanes` - Show worker lane configuration and utilization
 
 ---
 
@@ -139,7 +137,7 @@ Show worker lane configuration and utilization
 
 **Usage:**
 ```bash
-kg admin workers lanes
+kg lanes [options]
 ```
 
 ### user
@@ -526,7 +524,7 @@ kg remove <assignment-id>
 
 ### embedding
 
-Manage embedding profiles (text + image model configuration) (ADR-039)
+Manage embedding profiles (text + image model configuration)
 
 **Usage:**
 ```bash
@@ -550,7 +548,7 @@ kg embedding [options]
 
 #### list
 
-List all embedding configurations
+List all embedding profiles
 
 **Usage:**
 ```bash
@@ -603,8 +601,12 @@ Export an embedding profile as JSON
 
 **Usage:**
 ```bash
-kg export <config-id> [options]
+kg export <profile-id>
 ```
+
+**Arguments:**
+
+- `<profile-id>` - Profile ID
 
 **Options:**
 
@@ -623,7 +625,7 @@ kg activate <config-id>
 
 **Arguments:**
 
-- `<config-id>` - Configuration ID
+- `<config-id>` - Profile ID
 
 **Options:**
 
@@ -642,7 +644,7 @@ kg reload [options]
 
 #### protect
 
-Enable protection flags on an embedding configuration
+Enable protection flags on an embedding profile
 
 **Usage:**
 ```bash
@@ -651,7 +653,7 @@ kg protect <config-id>
 
 **Arguments:**
 
-- `<config-id>` - Configuration ID
+- `<config-id>` - Profile ID
 
 **Options:**
 
@@ -662,7 +664,7 @@ kg protect <config-id>
 
 #### unprotect
 
-Disable protection flags on an embedding configuration
+Disable protection flags on an embedding profile
 
 **Usage:**
 ```bash
@@ -671,7 +673,7 @@ kg unprotect <config-id>
 
 **Arguments:**
 
-- `<config-id>` - Configuration ID
+- `<config-id>` - Profile ID
 
 **Options:**
 
@@ -682,7 +684,7 @@ kg unprotect <config-id>
 
 #### delete
 
-Delete an embedding configuration
+Delete an embedding profile
 
 **Usage:**
 ```bash
@@ -691,7 +693,7 @@ kg delete <config-id>
 
 **Arguments:**
 
-- `<config-id>` - Configuration ID
+- `<config-id>` - Profile ID
 
 #### status
 
