@@ -52,7 +52,7 @@ _Apache AGE, migrations, schema design, PostgreSQL_
 | [ADR-204](./database-schema/ADR-204-node-type-and-abstract-property-representation-for-concept-nodes.md) | Node Type and Abstract Property Representation for Concept Nodes | Draft |
 | [ADR-205](./database-schema/ADR-205-postgresql-18-migration.md) | PostgreSQL 18 Migration | Draft |
 | [ADR-206](./database-schema/ADR-206-closed-vocabulary-annealing-actions-with-tiered-escalation-and-epistemic-ledger.md) | Closed-Vocabulary Annealing Actions with Tiered Escalation and Epistemic Ledger | Draft |
-| [ADR-207](./database-schema/ADR-207-derived-state-freshness-contract.md) | A Uniform Freshness Contract for Materialized Graph Derivations | Proposed |
+| [ADR-207](./database-schema/ADR-207-derived-state-freshness-contract.md) | A Uniform Freshness Contract for Materialized Graph Derivations | Accepted |
 
 ## Ingestion
 _Content processing, jobs, extraction, deduplication_
