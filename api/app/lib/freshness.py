@@ -83,6 +83,10 @@ class SubCounter:
       move together *by construction* (pinned by the co-advance test). It is not a
       second clock; it exists because the in-memory accelerator (ADR-201) needs a
       `pg_notify`-backed signal the SQL watermark cannot deliver to API processes.
+      The "by construction" guarantee holds for `record_mutation` callers; a path
+      that uses the `record_epoch`/`complete_epoch` pair directly (long-running
+      jobs) advances only the tick and must invalidate the accelerator itself —
+      see the caveat on `AGEClient.record_epoch`.
 
     - an **independent narrower scope** (`coadvances_with_tick=False`): advances
       only when its own, narrower source-of-truth changes. A derivation whose
