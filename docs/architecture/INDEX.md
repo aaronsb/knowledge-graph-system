@@ -145,6 +145,8 @@ _CLI, web, FUSE, MCP, visualization_
 | [ADR-701](./user-interfaces/ADR-701-vocabulary-administration-interface.md) | Vocabulary Administration Interface | Draft |
 | [ADR-702](./user-interfaces/ADR-702-unified-graph-rendering-engine.md) | Unified Graph Rendering Engine | Proposed |
 | [ADR-703](./user-interfaces/ADR-703-ontology-lifecycle-administration-interface.md) | Ontology Lifecycle Administration Interface | Draft |
+| [ADR-704](./user-interfaces/ADR-704-unified-user-scoped-resource-dispensing.md) | Unified User-Scoped Resource Dispensing | Draft |
+| [ADR-705](./user-interfaces/ADR-705-session-visibility-and-declarative-capability-gating.md) | Session Visibility and Declarative Capability Gating | Draft |
 
 ## AI/Embeddings
 _Providers, extraction, convergence, prompts_
