@@ -50,7 +50,9 @@ class IngestionMixin:
         call `self.graph.invalidate()` when the mutation lands, or the in-memory
         grounding/polarity cache stays fresh-looking past a graph that changed.
         See `SUBCOUNTERS` in `api/app/lib/freshness.py` for the declared
-        relationship; only `record_mutation`'s path is pinned by a co-advance test.
+        relationship; only `record_mutation`'s path is pinned by a co-advance
+        test. Hardening this direct path (test/lint/lifecycle helper) is tracked
+        in issue #465.
 
         Returns None on failure — callers must treat that as "epoch
         tagging disabled for this run" rather than fatal. The downstream
