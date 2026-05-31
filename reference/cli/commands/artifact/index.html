@@ -3528,6 +3528,28 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#regenerate-regen" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        regenerate (regen)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cleanup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        cleanup
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -10523,6 +10545,28 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#regenerate-regen" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        regenerate (regen)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cleanup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        cleanup
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -10553,7 +10597,8 @@
 <p>Auto-generated</p>
 </blockquote>
 <h2 id="artifact-art">artifact (art)</h2>
-<p>Manage artifacts - persistent storage for computed results like polarity analyses, projections, and query results. Artifacts support multi-tier storage: small payloads inline in PostgreSQL, large payloads in Garage S3. Each artifact tracks its graph_epoch for freshness detection.</p>
+<p>Manage artifacts - persistent storage for computed results like polarity analyses, projections, and query results. Each artifact records the graph epoch it was computed at, so the platform can tell you when one has gone stale (the graph changed underneath it) and recompute it on request (ADR-207).</p>
+<p>This is the user-facing surface for the results you create. For backend object-storage diagnostics (S3 buckets, stored objects, integrity, retention) see the admin command "kg storage".</p>
 <p><strong>Usage:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kg<span class="w"> </span>artifact<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
@@ -10564,6 +10609,8 @@
 <li><code>payload</code> - Get artifact with full payload. For large artifacts stored in Garage, this fetches from object storage.</li>
 <li><code>create</code> - Create a test artifact (for API validation). Creates a simple artifact with provided parameters.</li>
 <li><code>delete</code> - Delete an artifact. Removes both database record and any Garage-stored payload.</li>
+<li><code>regenerate</code> (<code>regen</code>) - Recompute a stale artifact from its stored parameters (ADR-207). Enqueues an auto-approved job; the result is saved as a NEW artifact and the original is preserved. Supported types: polarity_analysis, projection.</li>
+<li><code>cleanup</code> - Remove stale artifacts in bulk — those whose graph epoch is behind the current graph (ADR-207). Previews by default; pass --force to delete. Regeneratable types can be recomputed afterward with "kg artifact regenerate".</li>
 </ul>
 <hr />
 <h3 id="list">list</h3>
@@ -10607,6 +10654,11 @@
 <td><code>"0"</code></td>
 </tr>
 <tr>
+<td><code>-v, --verbose</code></td>
+<td>Show storage tier (inline/garage) — an implementation detail hidden by default</td>
+<td>-</td>
+</tr>
+<tr>
 <td><code>-j, --json</code></td>
 <td>Output raw JSON instead of formatted table</td>
 <td>-</td>
@@ -10622,6 +10674,23 @@
 <ul>
 <li><code>&lt;id&gt;</code> - Artifact ID</li>
 </ul>
+<p><strong>Options:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-v, --verbose</code></td>
+<td>Show storage tier (inline/garage) — an implementation detail hidden by default</td>
+<td>-</td>
+</tr>
+</tbody>
+</table>
 <h3 id="payload">payload</h3>
 <p>Get artifact with full payload. For large artifacts stored in Garage, this fetches from object storage.</p>
 <p><strong>Usage:</strong>
@@ -10707,6 +10776,47 @@
 <tr>
 <td><code>-f, --force</code></td>
 <td>Skip confirmation prompt</td>
+<td>-</td>
+</tr>
+</tbody>
+</table>
+<h3 id="regenerate-regen">regenerate (regen)</h3>
+<p>Recompute a stale artifact from its stored parameters (ADR-207). Enqueues an auto-approved job; the result is saved as a NEW artifact and the original is preserved. Supported types: polarity_analysis, projection.</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>kg<span class="w"> </span>regenerate<span class="w"> </span>&lt;id&gt;
+</code></pre></div></p>
+<p><strong>Arguments:</strong></p>
+<ul>
+<li><code>&lt;id&gt;</code> - Artifact ID</li>
+</ul>
+<h3 id="cleanup">cleanup</h3>
+<p>Remove stale artifacts in bulk — those whose graph epoch is behind the current graph (ADR-207). Previews by default; pass --force to delete. Regeneratable types can be recomputed afterward with "kg artifact regenerate".</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>kg<span class="w"> </span>cleanup<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<p><strong>Options:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-t, --type &lt;type&gt;</code></td>
+<td>Only clean up artifacts of this type</td>
+<td>-</td>
+</tr>
+<tr>
+<td><code>-o, --ontology &lt;name&gt;</code></td>
+<td>Only clean up artifacts in this ontology</td>
+<td>-</td>
+</tr>
+<tr>
+<td><code>-f, --force</code></td>
+<td>Actually delete (default is a dry-run preview)</td>
 <td>-</td>
 </tr>
 </tbody>
