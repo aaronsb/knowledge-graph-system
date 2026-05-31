@@ -13,25 +13,25 @@
       
       
       
-        <link rel="prev" href="../polarity-axis-findings/">
+        <link rel="prev" href="../ADR-802-unify-vision-providers-under-the-uniform-provider-contract/">
       
       
-        <link rel="next" href="../t-sne-viz/">
+        <link rel="next" href="../media-ADR-058/README_VISUALIZATIONS/">
       
       
         
       
       
-      <link rel="icon" href="../../assets/images/favicon.png">
+      <link rel="icon" href="../../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
-        <title>Polarity Axis Analysis Visualization - Knowledge Graph System</title>
+        <title>ADR-803: Modality Embedding Architecture — Universal Text Space and Independent Per-Modality Embedders - Knowledge Graph System</title>
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
       
       
 
@@ -50,7 +50,7 @@
       
     
     
-    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -68,7 +68,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#polarity-axis-analysis-visualization" class="md-skip">
+        <a href="#adr-803-modality-embedding-architecture-universal-text-space-and-independent-per-modality-embedders" class="md-skip">
           Skip to content
         </a>
       
@@ -84,7 +84,7 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../.." title="Knowledge Graph System" class="md-header__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+    <a href="../../.." title="Knowledge Graph System" class="md-header__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -104,7 +104,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Polarity Axis Analysis Visualization
+              ADR-803: Modality Embedding Architecture — Universal Text Space and Independent Per-Modality Embedders
             
           </span>
         </div>
@@ -194,7 +194,7 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="Knowledge Graph System" class="md-nav__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+    <a href="../../.." title="Knowledge Graph System" class="md-nav__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -224,7 +224,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../.." class="md-nav__link">
+      <a href="../../.." class="md-nav__link">
         
   
   
@@ -298,7 +298,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../concepts/" class="md-nav__link">
+      <a href="../../../concepts/" class="md-nav__link">
         
   
   
@@ -326,7 +326,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../concepts/glossary/" class="md-nav__link">
+      <a href="../../../concepts/glossary/" class="md-nav__link">
         
   
   
@@ -354,7 +354,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../concepts/how-it-works/" class="md-nav__link">
+      <a href="../../../concepts/how-it-works/" class="md-nav__link">
         
   
   
@@ -436,7 +436,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/" class="md-nav__link">
+      <a href="../../../features/" class="md-nav__link">
         
   
   
@@ -464,7 +464,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/web-workstation/" class="md-nav__link">
+      <a href="../../../features/web-workstation/" class="md-nav__link">
         
   
   
@@ -492,7 +492,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/cli/" class="md-nav__link">
+      <a href="../../../features/cli/" class="md-nav__link">
         
   
   
@@ -520,7 +520,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/mcp-server/" class="md-nav__link">
+      <a href="../../../features/mcp-server/" class="md-nav__link">
         
   
   
@@ -548,7 +548,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/fuse-driver/" class="md-nav__link">
+      <a href="../../../features/fuse-driver/" class="md-nav__link">
         
   
   
@@ -576,7 +576,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/rest-api/" class="md-nav__link">
+      <a href="../../../features/rest-api/" class="md-nav__link">
         
   
   
@@ -658,7 +658,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/" class="md-nav__link">
+      <a href="../../../guides/" class="md-nav__link">
         
   
   
@@ -686,7 +686,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/ASYNC-ARCHITECTURE/" class="md-nav__link">
+      <a href="../../../guides/ASYNC-ARCHITECTURE/" class="md-nav__link">
         
   
   
@@ -714,7 +714,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/CLI_DEVELOPMENT/" class="md-nav__link">
+      <a href="../../../guides/CLI_DEVELOPMENT/" class="md-nav__link">
         
   
   
@@ -742,7 +742,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/CONTAINER_IMAGES/" class="md-nav__link">
+      <a href="../../../guides/CONTAINER_IMAGES/" class="md-nav__link">
         
   
   
@@ -770,7 +770,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/CROSS_ONTOLOGY_LINKING/" class="md-nav__link">
+      <a href="../../../guides/CROSS_ONTOLOGY_LINKING/" class="md-nav__link">
         
   
   
@@ -798,7 +798,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/DEPLOYMENT/" class="md-nav__link">
+      <a href="../../../guides/DEPLOYMENT/" class="md-nav__link">
         
   
   
@@ -826,7 +826,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/DOCSTRING_COVERAGE/" class="md-nav__link">
+      <a href="../../../guides/DOCSTRING_COVERAGE/" class="md-nav__link">
         
   
   
@@ -854,7 +854,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/EPISTEMIC-STATUS-FILTERING/" class="md-nav__link">
+      <a href="../../../guides/EPISTEMIC-STATUS-FILTERING/" class="md-nav__link">
         
   
   
@@ -882,7 +882,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/FUSE_FILESYSTEM/" class="md-nav__link">
+      <a href="../../../guides/FUSE_FILESYSTEM/" class="md-nav__link">
         
   
   
@@ -910,7 +910,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/POLARITY_AXIS_ANALYSIS/" class="md-nav__link">
+      <a href="../../../guides/POLARITY_AXIS_ANALYSIS/" class="md-nav__link">
         
   
   
@@ -938,7 +938,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/QUERY_SAFETY_BASELINE/" class="md-nav__link">
+      <a href="../../../guides/QUERY_SAFETY_BASELINE/" class="md-nav__link">
         
   
   
@@ -966,7 +966,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/SAVED_QUERIES/" class="md-nav__link">
+      <a href="../../../guides/SAVED_QUERIES/" class="md-nav__link">
         
   
   
@@ -994,7 +994,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/SCHEDULED-JOBS/" class="md-nav__link">
+      <a href="../../../guides/SCHEDULED-JOBS/" class="md-nav__link">
         
   
   
@@ -1022,7 +1022,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/SEMANTIC_PATH_GRADIENTS/" class="md-nav__link">
+      <a href="../../../guides/SEMANTIC_PATH_GRADIENTS/" class="md-nav__link">
         
   
   
@@ -1050,7 +1050,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/VOCABULARY_LIFECYCLE/" class="md-nav__link">
+      <a href="../../../guides/VOCABULARY_LIFECYCLE/" class="md-nav__link">
         
   
   
@@ -1078,7 +1078,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/adr-045-046-migration-plan/" class="md-nav__link">
+      <a href="../../../guides/adr-045-046-migration-plan/" class="md-nav__link">
         
   
   
@@ -1106,7 +1106,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/adr-068-implementation-plan/" class="md-nav__link">
+      <a href="../../../guides/adr-068-implementation-plan/" class="md-nav__link">
         
   
   
@@ -1134,7 +1134,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/adr-074-implementation-checklist/" class="md-nav__link">
+      <a href="../../../guides/adr-074-implementation-checklist/" class="md-nav__link">
         
   
   
@@ -1162,7 +1162,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/exploring/" class="md-nav__link">
+      <a href="../../../guides/exploring/" class="md-nav__link">
         
   
   
@@ -1190,7 +1190,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/querying/" class="md-nav__link">
+      <a href="../../../guides/querying/" class="md-nav__link">
         
   
   
@@ -1218,7 +1218,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/understanding-grounding/" class="md-nav__link">
+      <a href="../../../guides/understanding-grounding/" class="md-nav__link">
         
   
   
@@ -1300,7 +1300,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/" class="md-nav__link">
+      <a href="../../../manual/" class="md-nav__link">
         
   
   
@@ -1375,7 +1375,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/00-introduction/01-WHAT_AND_WHY/" class="md-nav__link">
+      <a href="../../../manual/00-introduction/01-WHAT_AND_WHY/" class="md-nav__link">
         
   
   
@@ -1458,7 +1458,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/01-getting-started/02-CLI_USAGE/" class="md-nav__link">
+      <a href="../../../manual/01-getting-started/02-CLI_USAGE/" class="md-nav__link">
         
   
   
@@ -1486,7 +1486,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/01-getting-started/03-INGESTION/" class="md-nav__link">
+      <a href="../../../manual/01-getting-started/03-INGESTION/" class="md-nav__link">
         
   
   
@@ -1569,7 +1569,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/02-configuration/01-AI_PROVIDERS/" class="md-nav__link">
+      <a href="../../../manual/02-configuration/01-AI_PROVIDERS/" class="md-nav__link">
         
   
   
@@ -1597,7 +1597,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/02-configuration/02-EXTRACTION_CONFIGURATION/" class="md-nav__link">
+      <a href="../../../manual/02-configuration/02-EXTRACTION_CONFIGURATION/" class="md-nav__link">
         
   
   
@@ -1625,7 +1625,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/02-configuration/03-EMBEDDING_CONFIGURATION/" class="md-nav__link">
+      <a href="../../../manual/02-configuration/03-EMBEDDING_CONFIGURATION/" class="md-nav__link">
         
   
   
@@ -1653,7 +1653,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/02-configuration/04-SWITCHING_EXTRACTION_PROVIDERS/" class="md-nav__link">
+      <a href="../../../manual/02-configuration/04-SWITCHING_EXTRACTION_PROVIDERS/" class="md-nav__link">
         
   
   
@@ -1681,7 +1681,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/02-configuration/05-LOCAL_INFERENCE_IMPLEMENTATION/" class="md-nav__link">
+      <a href="../../../manual/02-configuration/05-LOCAL_INFERENCE_IMPLEMENTATION/" class="md-nav__link">
         
   
   
@@ -1709,7 +1709,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/02-configuration/06-EXTRACTION_QUALITY_COMPARISON/" class="md-nav__link">
+      <a href="../../../manual/02-configuration/06-EXTRACTION_QUALITY_COMPARISON/" class="md-nav__link">
         
   
   
@@ -1792,7 +1792,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/03-integration/01-MCP_SETUP/" class="md-nav__link">
+      <a href="../../../manual/03-integration/01-MCP_SETUP/" class="md-nav__link">
         
   
   
@@ -1820,7 +1820,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/03-integration/02-VOCABULARY_CONSOLIDATION/" class="md-nav__link">
+      <a href="../../../manual/03-integration/02-VOCABULARY_CONSOLIDATION/" class="md-nav__link">
         
   
   
@@ -1903,7 +1903,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/04-security-and-access/01-AUTHENTICATION/" class="md-nav__link">
+      <a href="../../../manual/04-security-and-access/01-AUTHENTICATION/" class="md-nav__link">
         
   
   
@@ -1931,7 +1931,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/04-security-and-access/02-RBAC/" class="md-nav__link">
+      <a href="../../../manual/04-security-and-access/02-RBAC/" class="md-nav__link">
         
   
   
@@ -1959,7 +1959,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/04-security-and-access/03-SECURITY/" class="md-nav__link">
+      <a href="../../../manual/04-security-and-access/03-SECURITY/" class="md-nav__link">
         
   
   
@@ -1987,7 +1987,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/04-security-and-access/04-PASSWORD_RECOVERY/" class="md-nav__link">
+      <a href="../../../manual/04-security-and-access/04-PASSWORD_RECOVERY/" class="md-nav__link">
         
   
   
@@ -2070,7 +2070,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/05-maintenance/01-BACKUP_RESTORE/" class="md-nav__link">
+      <a href="../../../manual/05-maintenance/01-BACKUP_RESTORE/" class="md-nav__link">
         
   
   
@@ -2098,7 +2098,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/05-maintenance/02-DATABASE_MIGRATIONS/" class="md-nav__link">
+      <a href="../../../manual/05-maintenance/02-DATABASE_MIGRATIONS/" class="md-nav__link">
         
   
   
@@ -2181,7 +2181,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/01-SCHEMA_REFERENCE/" class="md-nav__link">
+      <a href="../../../manual/06-reference/01-SCHEMA_REFERENCE/" class="md-nav__link">
         
   
   
@@ -2209,7 +2209,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/02-USE_CASES/" class="md-nav__link">
+      <a href="../../../manual/06-reference/02-USE_CASES/" class="md-nav__link">
         
   
   
@@ -2237,7 +2237,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/03-EXAMPLES/" class="md-nav__link">
+      <a href="../../../manual/06-reference/03-EXAMPLES/" class="md-nav__link">
         
   
   
@@ -2265,7 +2265,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/04-github_project_history/" class="md-nav__link">
+      <a href="../../../manual/06-reference/04-github_project_history/" class="md-nav__link">
         
   
   
@@ -2293,7 +2293,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/05-CONCEPTS_AND_TERMINOLOGY/" class="md-nav__link">
+      <a href="../../../manual/06-reference/05-CONCEPTS_AND_TERMINOLOGY/" class="md-nav__link">
         
   
   
@@ -2321,7 +2321,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/06-CONCEPT/" class="md-nav__link">
+      <a href="../../../manual/06-reference/06-CONCEPT/" class="md-nav__link">
         
   
   
@@ -2349,7 +2349,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/07-ENRICHMENT_JOURNEY/" class="md-nav__link">
+      <a href="../../../manual/06-reference/07-ENRICHMENT_JOURNEY/" class="md-nav__link">
         
   
   
@@ -2377,7 +2377,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/08-DISTRIBUTED_SHARDING_RESEARCH/" class="md-nav__link">
+      <a href="../../../manual/06-reference/08-DISTRIBUTED_SHARDING_RESEARCH/" class="md-nav__link">
         
   
   
@@ -2405,7 +2405,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/09-CYPHER_PATTERNS/" class="md-nav__link">
+      <a href="../../../manual/06-reference/09-CYPHER_PATTERNS/" class="md-nav__link">
         
   
   
@@ -2433,7 +2433,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/10-OPENCYPHER_QUERIES/" class="md-nav__link">
+      <a href="../../../manual/06-reference/10-OPENCYPHER_QUERIES/" class="md-nav__link">
         
   
   
@@ -2461,7 +2461,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../manual/06-reference/11-LLM_EDGE_DISCOVERY_FLOW/" class="md-nav__link">
+      <a href="../../../manual/06-reference/11-LLM_EDGE_DISCOVERY_FLOW/" class="md-nav__link">
         
   
   
@@ -2551,7 +2551,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../deployment/macvlan-dedicated-ip/" class="md-nav__link">
+      <a href="../../../deployment/macvlan-dedicated-ip/" class="md-nav__link">
         
   
   
@@ -2633,7 +2633,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../operating/" class="md-nav__link">
+      <a href="../../../operating/" class="md-nav__link">
         
   
   
@@ -2661,7 +2661,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../operating/backup-restore/" class="md-nav__link">
+      <a href="../../../operating/backup-restore/" class="md-nav__link">
         
   
   
@@ -2689,7 +2689,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../operating/client-tools/" class="md-nav__link">
+      <a href="../../../operating/client-tools/" class="md-nav__link">
         
   
   
@@ -2717,7 +2717,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../operating/configuration/" class="md-nav__link">
+      <a href="../../../operating/configuration/" class="md-nav__link">
         
   
   
@@ -2745,7 +2745,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../operating/macvlan-headless-install/" class="md-nav__link">
+      <a href="../../../operating/macvlan-headless-install/" class="md-nav__link">
         
   
   
@@ -2773,7 +2773,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../operating/production/" class="md-nav__link">
+      <a href="../../../operating/production/" class="md-nav__link">
         
   
   
@@ -2801,7 +2801,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../operating/quick-start/" class="md-nav__link">
+      <a href="../../../operating/quick-start/" class="md-nav__link">
         
   
   
@@ -2829,7 +2829,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../operating/troubleshooting/" class="md-nav__link">
+      <a href="../../../operating/troubleshooting/" class="md-nav__link">
         
   
   
@@ -2857,7 +2857,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../operating/upgrading/" class="md-nav__link">
+      <a href="../../../operating/upgrading/" class="md-nav__link">
         
   
   
@@ -2939,7 +2939,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/" class="md-nav__link">
+      <a href="../../../reference/" class="md-nav__link">
         
   
   
@@ -2967,7 +2967,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/ARCHITECTURE_OVERVIEW/" class="md-nav__link">
+      <a href="../../../reference/ARCHITECTURE_OVERVIEW/" class="md-nav__link">
         
   
   
@@ -2995,7 +2995,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/OPERATOR_ARCHITECTURE/" class="md-nav__link">
+      <a href="../../../reference/OPERATOR_ARCHITECTURE/" class="md-nav__link">
         
   
   
@@ -3023,7 +3023,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/RECURSIVE_UPSERT_ARCHITECTURE/" class="md-nav__link">
+      <a href="../../../reference/RECURSIVE_UPSERT_ARCHITECTURE/" class="md-nav__link">
         
   
   
@@ -3051,7 +3051,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/STORAGE-ARCHITECTURE/" class="md-nav__link">
+      <a href="../../../reference/STORAGE-ARCHITECTURE/" class="md-nav__link">
         
   
   
@@ -3126,7 +3126,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/api/" class="md-nav__link">
+      <a href="../../../reference/api/" class="md-nav__link">
         
   
   
@@ -3154,7 +3154,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/api/ADMIN-ENDPOINTS/" class="md-nav__link">
+      <a href="../../../reference/api/ADMIN-ENDPOINTS/" class="md-nav__link">
         
   
   
@@ -3237,7 +3237,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/" class="md-nav__link">
+      <a href="../../../reference/cli/" class="md-nav__link">
         
   
   
@@ -3312,7 +3312,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/admin/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/admin/" class="md-nav__link">
         
   
   
@@ -3340,7 +3340,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/artifact/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/artifact/" class="md-nav__link">
         
   
   
@@ -3368,7 +3368,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/batch/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/batch/" class="md-nav__link">
         
   
   
@@ -3396,7 +3396,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/catalog/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/catalog/" class="md-nav__link">
         
   
   
@@ -3424,7 +3424,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/concept/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/concept/" class="md-nav__link">
         
   
   
@@ -3452,7 +3452,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/config/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/config/" class="md-nav__link">
         
   
   
@@ -3480,7 +3480,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/database/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/database/" class="md-nav__link">
         
   
   
@@ -3508,7 +3508,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/document/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/document/" class="md-nav__link">
         
   
   
@@ -3536,7 +3536,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/edge/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/edge/" class="md-nav__link">
         
   
   
@@ -3564,7 +3564,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/group/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/group/" class="md-nav__link">
         
   
   
@@ -3592,7 +3592,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/health/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/health/" class="md-nav__link">
         
   
   
@@ -3620,7 +3620,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/ingest/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/ingest/" class="md-nav__link">
         
   
   
@@ -3648,7 +3648,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/job/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/job/" class="md-nav__link">
         
   
   
@@ -3676,7 +3676,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/login/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/login/" class="md-nav__link">
         
   
   
@@ -3704,7 +3704,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/logout/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/logout/" class="md-nav__link">
         
   
   
@@ -3732,7 +3732,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/mcp-config/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/mcp-config/" class="md-nav__link">
         
   
   
@@ -3760,7 +3760,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/oauth/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/oauth/" class="md-nav__link">
         
   
   
@@ -3788,7 +3788,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/ontology/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/ontology/" class="md-nav__link">
         
   
   
@@ -3816,7 +3816,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/polarity/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/polarity/" class="md-nav__link">
         
   
   
@@ -3844,7 +3844,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/program/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/program/" class="md-nav__link">
         
   
   
@@ -3872,7 +3872,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/projection/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/projection/" class="md-nav__link">
         
   
   
@@ -3900,7 +3900,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/query-def/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/query-def/" class="md-nav__link">
         
   
   
@@ -3928,7 +3928,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/search/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/search/" class="md-nav__link">
         
   
   
@@ -3956,7 +3956,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/source/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/source/" class="md-nav__link">
         
   
   
@@ -3984,7 +3984,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/storage/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/storage/" class="md-nav__link">
         
   
   
@@ -4012,7 +4012,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/commands/vocabulary/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/vocabulary/" class="md-nav__link">
         
   
   
@@ -4095,7 +4095,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli/media/" class="md-nav__link">
+      <a href="../../../reference/cli/media/" class="md-nav__link">
         
   
   
@@ -4186,7 +4186,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/fuse/" class="md-nav__link">
+      <a href="../../../reference/fuse/" class="md-nav__link">
         
   
   
@@ -4269,7 +4269,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/" class="md-nav__link">
+      <a href="../../../reference/mcp/" class="md-nav__link">
         
   
   
@@ -4344,7 +4344,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/media/" class="md-nav__link">
+      <a href="../../../reference/mcp/media/" class="md-nav__link">
         
   
   
@@ -4427,7 +4427,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/analyze_polarity_axis/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/analyze_polarity_axis/" class="md-nav__link">
         
   
   
@@ -4455,7 +4455,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/artifact/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/artifact/" class="md-nav__link">
         
   
   
@@ -4483,7 +4483,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/catalog/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/catalog/" class="md-nav__link">
         
   
   
@@ -4511,7 +4511,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/concept/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/concept/" class="md-nav__link">
         
   
   
@@ -4539,7 +4539,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/document/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/document/" class="md-nav__link">
         
   
   
@@ -4567,7 +4567,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/epistemic_status/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/epistemic_status/" class="md-nav__link">
         
   
   
@@ -4595,7 +4595,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/epoch/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/epoch/" class="md-nav__link">
         
   
   
@@ -4623,7 +4623,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/graph/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/graph/" class="md-nav__link">
         
   
   
@@ -4651,7 +4651,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/ingest/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/ingest/" class="md-nav__link">
         
   
   
@@ -4679,7 +4679,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/job/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/job/" class="md-nav__link">
         
   
   
@@ -4707,7 +4707,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/ontology/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/ontology/" class="md-nav__link">
         
   
   
@@ -4735,7 +4735,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/program/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/program/" class="md-nav__link">
         
   
   
@@ -4763,7 +4763,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/search/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/search/" class="md-nav__link">
         
   
   
@@ -4791,7 +4791,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/session_context/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/session_context/" class="md-nav__link">
         
   
   
@@ -4819,7 +4819,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/mcp/tools/source/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/source/" class="md-nav__link">
         
   
   
@@ -4867,18 +4867,20 @@
       
   
   
+    
   
   
+  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" checked>
         
           
           <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
@@ -4899,7 +4901,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_9">
             <span class="md-nav__icon md-icon"></span>
             
@@ -4917,7 +4919,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/INDEX/" class="md-nav__link">
+      <a href="../../INDEX/" class="md-nav__link">
         
   
   
@@ -4992,7 +4994,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/access-workflow/ADR-001-multi-tier-agent-access/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-001-multi-tier-agent-access/" class="md-nav__link">
         
   
   
@@ -5027,7 +5029,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/access-workflow/ADR-002-node-fitness-scoring/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-002-node-fitness-scoring/" class="md-nav__link">
         
   
   
@@ -5062,7 +5064,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/access-workflow/ADR-003-semantic-tool-hints/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-003-semantic-tool-hints/" class="md-nav__link">
         
   
   
@@ -5097,7 +5099,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/access-workflow/ADR-004-pure-graph-design/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-004-pure-graph-design/" class="md-nav__link">
         
   
   
@@ -5132,7 +5134,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/access-workflow/ADR-005-source-text-tracking/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-005-source-text-tracking/" class="md-nav__link">
         
   
   
@@ -5167,7 +5169,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/access-workflow/ADR-006-staging-migration-workflows/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-006-staging-migration-workflows/" class="md-nav__link">
         
   
   
@@ -5202,7 +5204,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/access-workflow/ADR-038-official-project-apparel/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-038-official-project-apparel/" class="md-nav__link">
         
   
   
@@ -5237,7 +5239,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/access-workflow/ADR-087-documentation-strategy/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-087-documentation-strategy/" class="md-nav__link">
         
   
   
@@ -5272,7 +5274,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/access-workflow/ADR-900-adr-numbering-domain-system/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-900-adr-numbering-domain-system/" class="md-nav__link">
         
   
   
@@ -5312,18 +5314,20 @@
                 
   
   
+    
   
   
+  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9_3" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9_3" checked>
         
           
           <label class="md-nav__link" for="__nav_9_3" id="__nav_9_3_label" tabindex="0">
@@ -5344,7 +5348,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_9_3_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_9_3_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_9_3">
             <span class="md-nav__icon md-icon"></span>
             
@@ -5362,7 +5366,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-039-local-embedding-service/" class="md-nav__link">
+      <a href="../ADR-039-local-embedding-service/" class="md-nav__link">
         
   
   
@@ -5397,7 +5401,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-041-ai-extraction-config/" class="md-nav__link">
+      <a href="../ADR-041-ai-extraction-config/" class="md-nav__link">
         
   
   
@@ -5432,7 +5436,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-042-local-extraction-inference/" class="md-nav__link">
+      <a href="../ADR-042-local-extraction-inference/" class="md-nav__link">
         
   
   
@@ -5467,7 +5471,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-043-single-node-resource-management/" class="md-nav__link">
+      <a href="../ADR-043-single-node-resource-management/" class="md-nav__link">
         
   
   
@@ -5502,7 +5506,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-044-probabilistic-truth-convergence/" class="md-nav__link">
+      <a href="../ADR-044-probabilistic-truth-convergence/" class="md-nav__link">
         
   
   
@@ -5537,7 +5541,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-045-unified-embedding-generation/" class="md-nav__link">
+      <a href="../ADR-045-unified-embedding-generation/" class="md-nav__link">
         
   
   
@@ -5572,7 +5576,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-049-rate-limiting-and-concurrency/" class="md-nav__link">
+      <a href="../ADR-049-rate-limiting-and-concurrency/" class="md-nav__link">
         
   
   
@@ -5607,7 +5611,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-058-polarity-axis-triangulation/" class="md-nav__link">
+      <a href="../ADR-058-polarity-axis-triangulation/" class="md-nav__link">
         
   
   
@@ -5642,7 +5646,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-068-source-text-embeddings/" class="md-nav__link">
+      <a href="../ADR-068-source-text-embeddings/" class="md-nav__link">
         
   
   
@@ -5677,7 +5681,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-070-polarity-axis-analysis/" class="md-nav__link">
+      <a href="../ADR-070-polarity-axis-analysis/" class="md-nav__link">
         
   
   
@@ -5712,7 +5716,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-800-dynamic-model-catalog-and-openrouter-support/" class="md-nav__link">
+      <a href="../ADR-800-dynamic-model-catalog-and-openrouter-support/" class="md-nav__link">
         
   
   
@@ -5747,7 +5751,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-801-uniform-provider-configuration-contract/" class="md-nav__link">
+      <a href="../ADR-801-uniform-provider-configuration-contract/" class="md-nav__link">
         
   
   
@@ -5782,7 +5786,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-802-unify-vision-providers-under-the-uniform-provider-contract/" class="md-nav__link">
+      <a href="../ADR-802-unify-vision-providers-under-the-uniform-provider-contract/" class="md-nav__link">
         
   
   
@@ -5814,10 +5818,44 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/ADR-803-modality-embedding-architecture-universal-text-space-and-independent-per-modality-embedders/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-803: Modality Embedding Architecture — Universal Text Space and Independent Per-Modality Embedders
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--Accepted"></span>
+  
+
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -5840,6 +5878,170 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Decision">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-one-universal-textprose-space" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. One universal text/prose space
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-prose-is-the-bridge-into-the-graph-the-hairpin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Prose is the bridge into the graph (the hairpin)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-a-modalitys-native-embedding-is-an-independent-index" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. A modality's native embedding is an independent index
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-the-real-invariant-is-text-space-consistency" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. The real invariant is text-space consistency
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-schema-correction-incremental-non-committal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Schema correction (incremental, non-committal)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Consequences">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#positive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Positive
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#negative" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Negative
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#neutral" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Neutral
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#alternatives-considered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alternatives Considered
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -5899,7 +6101,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ai-embeddings/media-ADR-058/README_VISUALIZATIONS/" class="md-nav__link">
+      <a href="../media-ADR-058/README_VISUALIZATIONS/" class="md-nav__link">
         
   
   
@@ -5990,7 +6192,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/authentication-security/ADR-017-sensitive-auth-verification/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-017-sensitive-auth-verification/" class="md-nav__link">
         
   
   
@@ -6025,7 +6227,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/authentication-security/ADR-027-user-management-api/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-027-user-management-api/" class="md-nav__link">
         
   
   
@@ -6060,7 +6262,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/authentication-security/ADR-028-dynamic-rbac-system/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-028-dynamic-rbac-system/" class="md-nav__link">
         
   
   
@@ -6095,7 +6297,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/authentication-security/ADR-031-encrypted-api-key-storage/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-031-encrypted-api-key-storage/" class="md-nav__link">
         
   
   
@@ -6130,7 +6332,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/authentication-security/ADR-054-oauth-client-management/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-054-oauth-client-management/" class="md-nav__link">
         
   
   
@@ -6165,7 +6367,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/authentication-security/ADR-060-endpoint-security-architecture/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-060-endpoint-security-architecture/" class="md-nav__link">
         
   
   
@@ -6200,7 +6402,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/authentication-security/ADR-062-mcp-file-ingestion-security/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-062-mcp-file-ingestion-security/" class="md-nav__link">
         
   
   
@@ -6235,7 +6437,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/authentication-security/ADR-074-platform-admin-role/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-074-platform-admin-role/" class="md-nav__link">
         
   
   
@@ -6270,7 +6472,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/authentication-security/ADR-082-user-scoping-artifact-ownership/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-082-user-scoping-artifact-ownership/" class="md-nav__link">
         
   
   
@@ -6305,7 +6507,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/authentication-security/ADR-400-operative-rbac-and-endpoint-security-baseline/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-400-operative-rbac-and-endpoint-security-baseline/" class="md-nav__link">
         
   
   
@@ -6395,7 +6597,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/database-schema/ADR-016-apache-age-migration/" class="md-nav__link">
+      <a href="../../database-schema/ADR-016-apache-age-migration/" class="md-nav__link">
         
   
   
@@ -6430,7 +6632,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/database-schema/ADR-024-multi-schema-postgresql-architecture/" class="md-nav__link">
+      <a href="../../database-schema/ADR-024-multi-schema-postgresql-architecture/" class="md-nav__link">
         
   
   
@@ -6465,7 +6667,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/database-schema/ADR-040-database-schema-migrations/" class="md-nav__link">
+      <a href="../../database-schema/ADR-040-database-schema-migrations/" class="md-nav__link">
         
   
   
@@ -6500,7 +6702,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/database-schema/ADR-061-operator-pattern-lifecycle/" class="md-nav__link">
+      <a href="../../database-schema/ADR-061-operator-pattern-lifecycle/" class="md-nav__link">
         
   
   
@@ -6535,7 +6737,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/database-schema/ADR-200-annealing-ontologies-self-organizing-knowledge-graph-structure/" class="md-nav__link">
+      <a href="../../database-schema/ADR-200-annealing-ontologies-self-organizing-knowledge-graph-structure/" class="md-nav__link">
         
   
   
@@ -6570,7 +6772,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/database-schema/ADR-201-in-memory-graph-acceleration-extension/" class="md-nav__link">
+      <a href="../../database-schema/ADR-201-in-memory-graph-acceleration-extension/" class="md-nav__link">
         
   
   
@@ -6605,7 +6807,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/database-schema/ADR-202-timestamp-timezone-normalization/" class="md-nav__link">
+      <a href="../../database-schema/ADR-202-timestamp-timezone-normalization/" class="md-nav__link">
         
   
   
@@ -6640,7 +6842,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/database-schema/ADR-203-graph-epoch-event-log/" class="md-nav__link">
+      <a href="../../database-schema/ADR-203-graph-epoch-event-log/" class="md-nav__link">
         
   
   
@@ -6675,7 +6877,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/database-schema/ADR-204-node-type-and-abstract-property-representation-for-concept-nodes/" class="md-nav__link">
+      <a href="../../database-schema/ADR-204-node-type-and-abstract-property-representation-for-concept-nodes/" class="md-nav__link">
         
   
   
@@ -6710,7 +6912,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/database-schema/ADR-205-postgresql-18-migration/" class="md-nav__link">
+      <a href="../../database-schema/ADR-205-postgresql-18-migration/" class="md-nav__link">
         
   
   
@@ -6745,7 +6947,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/database-schema/ADR-206-closed-vocabulary-annealing-actions-with-tiered-escalation-and-epistemic-ledger/" class="md-nav__link">
+      <a href="../../database-schema/ADR-206-closed-vocabulary-annealing-actions-with-tiered-escalation-and-epistemic-ledger/" class="md-nav__link">
         
   
   
@@ -6835,7 +7037,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/infrastructure/ADR-012-api-server-architecture/" class="md-nav__link">
+      <a href="../../infrastructure/ADR-012-api-server-architecture/" class="md-nav__link">
         
   
   
@@ -6870,7 +7072,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/infrastructure/ADR-015-backup-restore-streaming/" class="md-nav__link">
+      <a href="../../infrastructure/ADR-015-backup-restore-streaming/" class="md-nav__link">
         
   
   
@@ -6905,7 +7107,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/infrastructure/ADR-018-server-sent-events-streaming/" class="md-nav__link">
+      <a href="../../infrastructure/ADR-018-server-sent-events-streaming/" class="md-nav__link">
         
   
   
@@ -6940,7 +7142,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/infrastructure/ADR-020-admin-module-architecture/" class="md-nav__link">
+      <a href="../../infrastructure/ADR-020-admin-module-architecture/" class="md-nav__link">
         
   
   
@@ -6975,7 +7177,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/infrastructure/ADR-021-live-man-switch-ai-safety/" class="md-nav__link">
+      <a href="../../infrastructure/ADR-021-live-man-switch-ai-safety/" class="md-nav__link">
         
   
   
@@ -7010,7 +7212,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/infrastructure/ADR-050-scheduled-jobs-system/" class="md-nav__link">
+      <a href="../../infrastructure/ADR-050-scheduled-jobs-system/" class="md-nav__link">
         
   
   
@@ -7045,7 +7247,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/infrastructure/ADR-055-cdn-serverless-deployment-model/" class="md-nav__link">
+      <a href="../../infrastructure/ADR-055-cdn-serverless-deployment-model/" class="md-nav__link">
         
   
   
@@ -7080,7 +7282,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/infrastructure/ADR-056-timezone-aware-datetime-utilities/" class="md-nav__link">
+      <a href="../../infrastructure/ADR-056-timezone-aware-datetime-utilities/" class="md-nav__link">
         
   
   
@@ -7115,7 +7317,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/infrastructure/ADR-079-projection-artifact-storage/" class="md-nav__link">
+      <a href="../../infrastructure/ADR-079-projection-artifact-storage/" class="md-nav__link">
         
   
   
@@ -7150,7 +7352,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/infrastructure/ADR-080-garage-service-architecture/" class="md-nav__link">
+      <a href="../../infrastructure/ADR-080-garage-service-architecture/" class="md-nav__link">
         
   
   
@@ -7185,7 +7387,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/infrastructure/ADR-083-artifact-persistence-pattern/" class="md-nav__link">
+      <a href="../../infrastructure/ADR-083-artifact-persistence-pattern/" class="md-nav__link">
         
   
   
@@ -7220,7 +7422,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/infrastructure/ADR-086-deployment-topology/" class="md-nav__link">
+      <a href="../../infrastructure/ADR-086-deployment-topology/" class="md-nav__link">
         
   
   
@@ -7255,7 +7457,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/infrastructure/ADR-088-semantic-election-protocol/" class="md-nav__link">
+      <a href="../../infrastructure/ADR-088-semantic-election-protocol/" class="md-nav__link">
         
   
   
@@ -7290,7 +7492,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/infrastructure/ADR-100-database-driven-job-dispatch/" class="md-nav__link">
+      <a href="../../infrastructure/ADR-100-database-driven-job-dispatch/" class="md-nav__link">
         
   
   
@@ -7325,7 +7527,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/infrastructure/ADR-101-rocm-image-variant-and-install-time-selection/" class="md-nav__link">
+      <a href="../../infrastructure/ADR-101-rocm-image-variant-and-install-time-selection/" class="md-nav__link">
         
   
   
@@ -7415,7 +7617,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ingestion-content/ADR-014-job-approval-workflow/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-014-job-approval-workflow/" class="md-nav__link">
         
   
   
@@ -7450,7 +7652,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ingestion-content/ADR-023-markdown-structured-content-preprocessing/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-023-markdown-structured-content-preprocessing/" class="md-nav__link">
         
   
   
@@ -7485,7 +7687,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ingestion-content/ADR-033-multimodal-ingestion-configurable-prompts/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-033-multimodal-ingestion-configurable-prompts/" class="md-nav__link">
         
   
   
@@ -7520,7 +7722,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ingestion-content/ADR-037-human-guided-graph-editing/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-037-human-guided-graph-editing/" class="md-nav__link">
         
   
   
@@ -7555,7 +7757,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ingestion-content/ADR-051.1-graph-document-deduplication/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-051.1-graph-document-deduplication/" class="md-nav__link">
         
   
   
@@ -7590,7 +7792,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ingestion-content/ADR-051.2-api-changes/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-051.2-api-changes/" class="md-nav__link">
         
   
   
@@ -7625,7 +7827,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ingestion-content/ADR-057.1-multimodal-image-ingestion/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-057.1-multimodal-image-ingestion/" class="md-nav__link">
         
   
   
@@ -7660,7 +7862,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ingestion-content/ADR-057.2-appendix-single-vs-two-stage/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-057.2-appendix-single-vs-two-stage/" class="md-nav__link">
         
   
   
@@ -7695,7 +7897,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ingestion-content/ADR-072-concept-matching-strategies/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-072-concept-matching-strategies/" class="md-nav__link">
         
   
   
@@ -7730,7 +7932,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ingestion-content/ADR-081-source-document-lifecycle/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-081-source-document-lifecycle/" class="md-nav__link">
         
   
   
@@ -7765,7 +7967,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ingestion-content/ADR-089-deterministic-node-edge-creation/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-089-deterministic-node-edge-creation/" class="md-nav__link">
         
   
   
@@ -7855,7 +8057,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/query-search/ADR-030-concept-deduplication-validation/" class="md-nav__link">
+      <a href="../../query-search/ADR-030-concept-deduplication-validation/" class="md-nav__link">
         
   
   
@@ -7890,7 +8092,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/query-search/ADR-063-semantic-diversity-authenticity-signal/" class="md-nav__link">
+      <a href="../../query-search/ADR-063-semantic-diversity-authenticity-signal/" class="md-nav__link">
         
   
   
@@ -7925,7 +8127,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/query-search/ADR-066-published-query-endpoints/" class="md-nav__link">
+      <a href="../../query-search/ADR-066-published-query-endpoints/" class="md-nav__link">
         
   
   
@@ -7960,7 +8162,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/query-search/ADR-071-parallel-graph-queries/" class="md-nav__link">
+      <a href="../../query-search/ADR-071-parallel-graph-queries/" class="md-nav__link">
         
   
   
@@ -7995,7 +8197,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/query-search/ADR-071.1-parallel-implementation-findings/" class="md-nav__link">
+      <a href="../../query-search/ADR-071.1-parallel-implementation-findings/" class="md-nav__link">
         
   
   
@@ -8030,7 +8232,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/query-search/ADR-076-pathfinding-optimization/" class="md-nav__link">
+      <a href="../../query-search/ADR-076-pathfinding-optimization/" class="md-nav__link">
         
   
   
@@ -8065,7 +8267,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/query-search/ADR-076.1-pathfinding-baseline/" class="md-nav__link">
+      <a href="../../query-search/ADR-076.1-pathfinding-baseline/" class="md-nav__link">
         
   
   
@@ -8100,7 +8302,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/query-search/ADR-084-document-search/" class="md-nav__link">
+      <a href="../../query-search/ADR-084-document-search/" class="md-nav__link">
         
   
   
@@ -8135,7 +8337,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/query-search/ADR-500-graph-program-dsl-and-ast-architecture/" class="md-nav__link">
+      <a href="../../query-search/ADR-500-graph-program-dsl-and-ast-architecture/" class="md-nav__link">
         
   
   
@@ -8170,7 +8372,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/query-search/ADR-501-catalog-browse-facade/" class="md-nav__link">
+      <a href="../../query-search/ADR-501-catalog-browse-facade/" class="md-nav__link">
         
   
   
@@ -8260,7 +8462,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-011-cli-admin-separation/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-011-cli-admin-separation/" class="md-nav__link">
         
   
   
@@ -8295,7 +8497,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-013-unified-typescript-client/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-013-unified-typescript-client/" class="md-nav__link">
         
   
   
@@ -8330,7 +8532,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-019-type-based-table-formatting/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-019-type-based-table-formatting/" class="md-nav__link">
         
   
   
@@ -8365,7 +8567,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-029-cli-theory-of-operation/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-029-cli-theory-of-operation/" class="md-nav__link">
         
   
   
@@ -8400,7 +8602,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-034-graph-visualization-query-workbench/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-034-graph-visualization-query-workbench/" class="md-nav__link">
         
   
   
@@ -8435,7 +8637,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-035-explorer-methods-uses-capabilities/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-035-explorer-methods-uses-capabilities/" class="md-nav__link">
         
   
   
@@ -8470,7 +8672,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-036-universal-visual-query-builder/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-036-universal-visual-query-builder/" class="md-nav__link">
         
   
   
@@ -8505,7 +8707,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-064-specialized-truth-convergence-visualizations/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-064-specialized-truth-convergence-visualizations/" class="md-nav__link">
         
   
   
@@ -8540,7 +8742,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-067-web-app-workstation-architecture/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-067-web-app-workstation-architecture/" class="md-nav__link">
         
   
   
@@ -8575,7 +8777,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-069-semantic-fuse-filesystem/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-069-semantic-fuse-filesystem/" class="md-nav__link">
         
   
   
@@ -8610,7 +8812,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-069.1-fuse-implementation-specifics/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-069.1-fuse-implementation-specifics/" class="md-nav__link">
         
   
   
@@ -8645,7 +8847,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-075-postmodern-theme/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-075-postmodern-theme/" class="md-nav__link">
         
   
   
@@ -8680,7 +8882,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-700-ontology-explorer/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-700-ontology-explorer/" class="md-nav__link">
         
   
   
@@ -8715,7 +8917,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-701-vocabulary-administration-interface/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-701-vocabulary-administration-interface/" class="md-nav__link">
         
   
   
@@ -8750,7 +8952,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-702-unified-graph-rendering-engine/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-702-unified-graph-rendering-engine/" class="md-nav__link">
         
   
   
@@ -8785,7 +8987,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/user-interfaces/ADR-703-ontology-lifecycle-administration-interface/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-703-ontology-lifecycle-administration-interface/" class="md-nav__link">
         
   
   
@@ -8875,7 +9077,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/visualization/ADR-078-embedding-landscape-explorer/" class="md-nav__link">
+      <a href="../../visualization/ADR-078-embedding-landscape-explorer/" class="md-nav__link">
         
   
   
@@ -8910,7 +9112,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/visualization/ADR-085-document-explorer/" class="md-nav__link">
+      <a href="../../visualization/ADR-085-document-explorer/" class="md-nav__link">
         
   
   
@@ -9000,7 +9202,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-022-semantic-relationship-taxonomy/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-022-semantic-relationship-taxonomy/" class="md-nav__link">
         
   
   
@@ -9035,7 +9237,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-025-dynamic-relationship-vocabulary/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-025-dynamic-relationship-vocabulary/" class="md-nav__link">
         
   
   
@@ -9070,7 +9272,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-026-autonomous-vocabulary-curation/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-026-autonomous-vocabulary-curation/" class="md-nav__link">
         
   
   
@@ -9105,7 +9307,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-032.1-automatic-edge-vocabulary-expansion/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-032.1-automatic-edge-vocabulary-expansion/" class="md-nav__link">
         
   
   
@@ -9140,7 +9342,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-032.2-implementation-notes/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-032.2-implementation-notes/" class="md-nav__link">
         
   
   
@@ -9175,7 +9377,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-046-grounding-aware-vocabulary-management/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-046-grounding-aware-vocabulary-management/" class="md-nav__link">
         
   
   
@@ -9210,7 +9412,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-047-probabilistic-vocabulary-categorization/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-047-probabilistic-vocabulary-categorization/" class="md-nav__link">
         
   
   
@@ -9245,7 +9447,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-048-vocabulary-metadata-as-graph/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-048-vocabulary-metadata-as-graph/" class="md-nav__link">
         
   
   
@@ -9280,7 +9482,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-052-vocabulary-expansion-consolidation-cycle/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-052-vocabulary-expansion-consolidation-cycle/" class="md-nav__link">
         
   
   
@@ -9315,7 +9517,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-053-eager-vocabulary-categorization/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-053-eager-vocabulary-categorization/" class="md-nav__link">
         
   
   
@@ -9350,7 +9552,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-059-llm-determined-relationship-direction/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-059-llm-determined-relationship-direction/" class="md-nav__link">
         
   
   
@@ -9385,7 +9587,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-065-vocabulary-based-provenance-relationships/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-065-vocabulary-based-provenance-relationships/" class="md-nav__link">
         
   
   
@@ -9420,7 +9622,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/vocabulary-relationships/ADR-077-vocabulary-explorers/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-077-vocabulary-explorers/" class="md-nav__link">
         
   
   
@@ -9467,20 +9669,18 @@
       
   
   
-    
   
   
-  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
         
           
           <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
@@ -9501,7 +9701,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_10">
             <span class="md-nav__icon md-icon"></span>
             
@@ -9519,7 +9719,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../code-intelligence-platforms-comparison/" class="md-nav__link">
+      <a href="../../../research/code-intelligence-platforms-comparison/" class="md-nav__link">
         
   
   
@@ -9547,7 +9747,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../emergent-visual-relationships/" class="md-nav__link">
+      <a href="../../../research/emergent-visual-relationships/" class="md-nav__link">
         
   
   
@@ -9575,7 +9775,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../epistemic-confidence/" class="md-nav__link">
+      <a href="../../../research/epistemic-confidence/" class="md-nav__link">
         
   
   
@@ -9603,7 +9803,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../graph-object-platform-exploration/" class="md-nav__link">
+      <a href="../../../research/graph-object-platform-exploration/" class="md-nav__link">
         
   
   
@@ -9631,7 +9831,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../headless-install-analysis/" class="md-nav__link">
+      <a href="../../../research/headless-install-analysis/" class="md-nav__link">
         
   
   
@@ -9659,7 +9859,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../llm-knowledge-extraction-research-2024-2025/" class="md-nav__link">
+      <a href="../../../research/llm-knowledge-extraction-research-2024-2025/" class="md-nav__link">
         
   
   
@@ -9687,7 +9887,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../polarity-axis-findings/" class="md-nav__link">
+      <a href="../../../research/polarity-axis-findings/" class="md-nav__link">
         
   
   
@@ -9712,37 +9912,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Polarity Axis Analysis Visualization
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../../research/polarity-axis-visualization/" class="md-nav__link">
         
   
   
@@ -9758,242 +9931,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#problem-statement" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Problem Statement
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#research-findings" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Research Findings
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Research Findings">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#established-visualization-patterns" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Established Visualization Patterns
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#available-data-dimensions" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Available Data Dimensions
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#proposed-visualization-system" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Proposed Visualization System
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Proposed Visualization System">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#primary-bubble-chart-scatter-plot" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Primary: Bubble Chart Scatter Plot
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#secondary-distribution-histogram" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Secondary: Distribution Histogram
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#tertiary-statistics-summary-panel" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Tertiary: Statistics Summary Panel
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#implementation-considerations" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Implementation Considerations
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Implementation Considerations">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#reuse-existing-explorer-components" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Reuse Existing Explorer Components
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#technology-options" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Technology Options
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#color-palette" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Color Palette
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#size-scaling" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Size Scaling
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#performance" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Performance
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#user-benefits" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        User Benefits
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#next-steps" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Next Steps
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#open-questions" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Open Questions
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#references" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        References
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -10006,7 +9943,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../t-sne-viz/" class="md-nav__link">
+      <a href="../../../research/t-sne-viz/" class="md-nav__link">
         
   
   
@@ -10081,7 +10018,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../vision-testing/" class="md-nav__link">
+      <a href="../../../research/vision-testing/" class="md-nav__link">
         
   
   
@@ -10109,7 +10046,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../vision-testing/EMBEDDING_COMPARISON_REPORT/" class="md-nav__link">
+      <a href="../../../research/vision-testing/EMBEDDING_COMPARISON_REPORT/" class="md-nav__link">
         
   
   
@@ -10137,7 +10074,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../vision-testing/FINDINGS/" class="md-nav__link">
+      <a href="../../../research/vision-testing/FINDINGS/" class="md-nav__link">
         
   
   
@@ -10165,7 +10102,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../vision-testing/RESEARCH_SUMMARY/" class="md-nav__link">
+      <a href="../../../research/vision-testing/RESEARCH_SUMMARY/" class="md-nav__link">
         
   
   
@@ -10255,7 +10192,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../testing/ADR-200-PHASE-3A-EXERCISE-REPORT/" class="md-nav__link">
+      <a href="../../../testing/ADR-200-PHASE-3A-EXERCISE-REPORT/" class="md-nav__link">
         
   
   
@@ -10283,7 +10220,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../testing/API_AUTH_AUDIT_RESULTS/" class="md-nav__link">
+      <a href="../../../testing/API_AUTH_AUDIT_RESULTS/" class="md-nav__link">
         
   
   
@@ -10311,7 +10248,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../testing/API_AUTH_AUDIT_SUMMARY/" class="md-nav__link">
+      <a href="../../../testing/API_AUTH_AUDIT_SUMMARY/" class="md-nav__link">
         
   
   
@@ -10339,7 +10276,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../testing/API_AUTH_TESTING_RESEARCH/" class="md-nav__link">
+      <a href="../../../testing/API_AUTH_TESTING_RESEARCH/" class="md-nav__link">
         
   
   
@@ -10367,7 +10304,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../testing/INTEGRATION_TEST_NOTES/" class="md-nav__link">
+      <a href="../../../testing/INTEGRATION_TEST_NOTES/" class="md-nav__link">
         
   
   
@@ -10395,7 +10332,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../testing/INTEGRATION_TEST_PLAN/" class="md-nav__link">
+      <a href="../../../testing/INTEGRATION_TEST_PLAN/" class="md-nav__link">
         
   
   
@@ -10423,7 +10360,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../testing/SCHEMA_MIGRATION_TEST_REPORT/" class="md-nav__link">
+      <a href="../../../testing/SCHEMA_MIGRATION_TEST_REPORT/" class="md-nav__link">
         
   
   
@@ -10451,7 +10388,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../testing/TEST_COVERAGE/" class="md-nav__link">
+      <a href="../../../testing/TEST_COVERAGE/" class="md-nav__link">
         
   
   
@@ -10506,10 +10443,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#problem-statement" class="md-nav__link">
+  <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Problem Statement
+        Context
       
     </span>
   </a>
@@ -10517,22 +10454,66 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#research-findings" class="md-nav__link">
+  <a href="#decision" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Research Findings
+        Decision
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Research Findings">
+    <nav class="md-nav" aria-label="Decision">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#established-visualization-patterns" class="md-nav__link">
+  <a href="#1-one-universal-textprose-space" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Established Visualization Patterns
+        1. One universal text/prose space
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-prose-is-the-bridge-into-the-graph-the-hairpin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Prose is the bridge into the graph (the hairpin)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-a-modalitys-native-embedding-is-an-independent-index" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. A modality's native embedding is an independent index
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-the-real-invariant-is-text-space-consistency" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. The real invariant is text-space consistency
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-schema-correction-incremental-non-committal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Schema correction (incremental, non-committal)
       
     </span>
   </a>
@@ -10545,33 +10526,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#available-data-dimensions" class="md-nav__link">
+  <a href="#consequences" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Available Data Dimensions
+        Consequences
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#proposed-visualization-system" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Proposed Visualization System
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Proposed Visualization System">
+    <nav class="md-nav" aria-label="Consequences">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#primary-bubble-chart-scatter-plot" class="md-nav__link">
+  <a href="#positive" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Primary: Bubble Chart Scatter Plot
+        Positive
       
     </span>
   </a>
@@ -10579,10 +10549,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#secondary-distribution-histogram" class="md-nav__link">
+  <a href="#negative" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Secondary: Distribution Histogram
+        Negative
       
     </span>
   </a>
@@ -10590,10 +10560,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#tertiary-statistics-summary-panel" class="md-nav__link">
+  <a href="#neutral" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Tertiary: Statistics Summary Panel
+        Neutral
       
     </span>
   </a>
@@ -10606,115 +10576,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#implementation-considerations" class="md-nav__link">
+  <a href="#alternatives-considered" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Implementation Considerations
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Implementation Considerations">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#reuse-existing-explorer-components" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Reuse Existing Explorer Components
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#technology-options" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Technology Options
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#color-palette" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Color Palette
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#size-scaling" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Size Scaling
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#performance" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Performance
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#user-benefits" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        User Benefits
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#next-steps" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Next Steps
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#open-questions" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Open Questions
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#references" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        References
+        Alternatives Considered
       
     </span>
   </a>
@@ -10741,248 +10606,141 @@
   
 
 
-<h1 id="polarity-axis-analysis-visualization">Polarity Axis Analysis Visualization</h1>
-<p><strong>Status:</strong> Proposed
-<strong>Date:</strong> 2025-11-30
-<strong>Context:</strong> ADR-070 Web UI Enhancement</p>
-<h2 id="problem-statement">Problem Statement</h2>
-<p>The Polarity Axis Analysis produces rich multidimensional data that currently displays only as text statistics and lists. Users need to visually understand:</p>
+<h1 id="adr-803-modality-embedding-architecture-universal-text-space-and-independent-per-modality-embedders">ADR-803: Modality Embedding Architecture — Universal Text Space and Independent Per-Modality Embedders</h1>
+<h2 id="context">Context</h2>
+<p>ADR-802 established vision as a first-class <em>reasoning</em> capability (image→prose)
+resolved independently like embedding. Implementing the embedding side surfaced
+a modality-general question about <strong>embedding spaces</strong> that ADR-057 and its
+schema (migration 055, <code>kg_api.embedding_profile</code>) answered implicitly — and
+incorrectly.</p>
+<p>Migration 055 models an embedding profile as <strong>two co-spatial slots</strong>: a text
+model and an image model sharing one <code>vector_space</code>, with
+<code>chk_image_dimensions_match</code> forcing <code>text_dimensions = image_dimensions</code> and a
+<code>multimodal</code> flag for "one model serves both." The implicit premise is that
+image and text embeddings must be <strong>comparable</strong> — an image vector and a concept
+vector in the same space, matched cross-modally.</p>
+<p>Inspection of the running system contradicts that premise:</p>
 <ul>
-<li>How concepts distribute across the polarity axis</li>
-<li>The correlation between position and grounding strength</li>
-<li>Clustering patterns and outliers</li>
-<li>The overall "shape" of the semantic dimension</li>
+<li>The image embedding (<code>visual_embedding</code>, 768-dim) is <strong>stored on Source nodes
+  and exposed only as a <code>has_visual_embedding</code> presence flag</strong>
+  (<code>routes/sources.py</code>). There is <strong>no <code>vector_search</code> over it</strong>, and <strong>nothing
+  compares an image embedding to a Concept/text embedding.</strong></li>
+<li>The concept graph is built <strong>entirely from prose</strong>: image ingestion is a
+  hairpin — <code>image → describe_image() → prose → text pipeline → concepts</code>
+  (<code>workers/ingestion_worker.py</code>, ADR-057). Every semantic operation
+  (extraction, vector-match/merge, edges) runs on <strong>text</strong> embeddings.</li>
 </ul>
-<h2 id="research-findings">Research Findings</h2>
-<h3 id="established-visualization-patterns">Established Visualization Patterns</h3>
-<ol>
-<li><strong>Semantic Differential Scales</strong> (<a href="https://vizzlo.com/create/semantic-differential-scale">Vizzlo</a>, <a href="https://aytm.com/post/semantic-differential-scale-measuring-perceptions-and-attitudes-of-your-brand">AYTM</a>)</li>
-<li>Classic method for bipolar dimensions (since 1950s)</li>
-<li>Typically shows single dimension as profile chart</li>
-<li>
-<p>Our challenge: multiple concepts to display simultaneously</p>
-</li>
-<li>
-<p><strong>Scatter Plots for Correlation</strong> (<a href="https://www.atlassian.com/data/charts/what-is-a-scatter-plot">Atlassian</a>, <a href="https://flourish.studio/visualisations/scatter-charts/">Flourish</a>)</p>
-</li>
-<li>Standard visualization for correlation analysis</li>
-<li>Shows relationship between two continuous variables</li>
-<li>
-<p>Best practice includes regression line, interactive tooltips</p>
-</li>
-<li>
-<p><strong>Bubble Charts for Multidimensional Data</strong> (<a href="https://chartio.com/learn/charts/bubble-chart-complete-guide/">Chartio</a>, <a href="https://www.storytellingwithdata.com/blog/2021/5/11/what-is-a-bubble-chart">Storytelling with Data</a>)</p>
-</li>
-<li>Encode 3-4 dimensions: x-position, y-position, size, color</li>
-<li>Human cognition limit: ~4 visual dimensions (<a href="https://www.storytellingwithdata.com/blog/2021/5/11/what-is-a-bubble-chart">source</a>)</li>
-<li>
-<p>Optimal match for our data structure</p>
-</li>
-<li>
-<p><strong>Interactive Features</strong> (<a href="https://rpsychologist.com/correlation/">R Psychologist</a>, <a href="https://www.numberanalytics.com/blog/data-visualization-for-correlation">Number Analytics</a>)</p>
-</li>
-<li>Tooltips showing details on hover</li>
-<li>Zoom/pan for exploration</li>
-<li>Filtering and brushing</li>
-<li>Linked views between visualizations</li>
-</ol>
-<h2 id="available-data-dimensions">Available Data Dimensions</h2>
-<p>From each analysis we have:</p>
-<p><strong>Per-Concept:</strong>
-- Position on axis: -1 (negative pole) to +1 (positive pole)
-- Grounding strength: continuous value (can be negative)
-- Direction label: positive, neutral, negative
-- Axis distance: how well concept fits the dimension
-- Concept label and ID</p>
-<p><strong>Aggregate Statistics:</strong>
-- Pearson r (correlation coefficient)
-- p-value (significance)
-- Mean position
-- Distribution by direction
-- Regression line parameters (can derive from r and data)</p>
-<h2 id="proposed-visualization-system">Proposed Visualization System</h2>
-<h3 id="primary-bubble-chart-scatter-plot">Primary: Bubble Chart Scatter Plot</h3>
-<p><strong>Visual Encoding:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Dimension</th>
-<th>Encoding</th>
-<th>Rationale</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Position on axis</td>
-<td>X-axis (-1 to +1)</td>
-<td>Natural mapping to polarity dimension</td>
-</tr>
-<tr>
-<td>Grounding strength</td>
-<td>Y-axis</td>
-<td>Primary variable of interest for correlation</td>
-</tr>
-<tr>
-<td>Direction category</td>
-<td>Color</td>
-<td>Immediate visual grouping (blue/gray/orange)</td>
-</tr>
-<tr>
-<td>Axis distance (fit)</td>
-<td>Bubble size</td>
-<td>Larger = better fit to dimension</td>
-</tr>
-<tr>
-<td>Correlation trend</td>
-<td>Regression line overlay</td>
-<td>Shows correlation visually</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Layout:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>┌─────────────────────────────────────────────────────────┐
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>│  Grounding                                              │
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>│  Strength    o  ● O    Regression Line                 │
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>│      ↑     ●  O  o  ●     /                            │
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>│      │   o  ●    o   ●  /                              │
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>│      │  O   ● o    O  /●                               │
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>│      │ ●  o  O  ●  o/                                  │
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>│      │o  ●  O  ● o/                                    │
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>│      └──────────────────────────→                      │
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>│         -1    Neutral    +1                            │
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>│    Negative Pole    Position    Positive Pole          │
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>│                                                         │
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>│  Legend:                                               │
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>│  ● Positive  o Neutral  ● Negative                     │
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>│  Size = Relevance to axis                              │
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>└─────────────────────────────────────────────────────────┘
-</code></pre></div></p>
-<p><strong>Interactive Features:</strong>
-- <strong>Hover</strong>: Tooltip shows concept label, exact position, grounding, axis distance
-- <strong>Click</strong>: Highlight concept, dim others
-- <strong>Zoom/Pan</strong>: Explore dense regions
-- <strong>Filter</strong>: Toggle direction categories on/off</p>
-<h3 id="secondary-distribution-histogram">Secondary: Distribution Histogram</h3>
-<p>Shows concept distribution across the axis (below or beside scatter plot).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>┌─────────────────────────────────────────────────────────┐
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>│  Count                                                  │
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>│    ↑   ┌──┐                                            │
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>│    │   │  │     ┌──┐                                   │
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>│    │┌──┤  │  ┌──┤  │  ┌──┐                            │
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>│    ││  │  │  │  │  │  │  │                            │
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>│    └──────────────────────────────→                    │
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>│      -1    Neutral    +1                               │
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>│                                                         │
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>│  Stacked by direction:                                 │
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>│  ■ Positive  □ Neutral  ■ Negative                     │
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>└─────────────────────────────────────────────────────────┘
+<p>So the cross-modal co-spatiality the schema enforces is never exercised. It does
+no work except to <strong>forbid otherwise-valid configurations</strong> (e.g. a 768-dim text
+embedder with a 1024-dim image embedder). The coupling was a category error.</p>
+<p>This is not a push to build new modalities. It is about keeping the architecture
+<strong>sane and non-locking</strong> — so that it does not bake in the assumption that all
+content must be reduced to one comparable vector space, and does not preclude
+modality-native embedders (or reasoners) if they ever become useful.</p>
+<p><strong>Why prose is privileged (grounding, not arbitrary).</strong> Modality-native
+symbolic relationships are real: one can mark two lines on wood and <em>see</em>,
+wordlessly, that one is longer. But to make that relation <strong>communicable and
+relational</strong> — to enter a <em>shared</em> knowledge graph — it must be rendered in
+symbolic representation ("line", "mark", "longer"/"shorter", "wood"). A knowledge
+graph arises precisely from the <strong>unification of symbolic representation with the
+sensory/format modalities</strong> (visual, spatial, motion, auditory). Prose is not
+privileged by fiat; it is the symbolic medium through which any modality's
+content becomes relational knowledge. That is why every modality joins the graph
+through prose, while its raw perceptual embedding stays an independent index.</p>
+<h2 id="decision">Decision</h2>
+<p><strong>The knowledge graph has exactly one semantic embedding space — the text/prose
+space. Content joins it through prose; a modality's native embedding, if any, is
+an independent same-modality search index that is never compared to the graph.</strong></p>
+<h3 id="1-one-universal-textprose-space">1. One universal text/prose space</h3>
+<p>All graph semantics live in a single embedding space produced by the <strong>text/prose
+embedder</strong>: concepts, edges, documents/sources, <strong>and the prose description of
+any non-text artifact</strong>. It is the only space the graph reasons or matches in.
+Exactly <strong>one</strong> embedder is semantically global.</p>
+<h3 id="2-prose-is-the-bridge-into-the-graph-the-hairpin">2. Prose is the bridge into the graph (the hairpin)</h3>
+<p>A non-text artifact joins the graph by being <strong>described into prose</strong>, which is
+embedded in the universal text space and extracted like any other text:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>artifact → describe → prose → text space → concepts
 </code></pre></div>
-<h3 id="tertiary-statistics-summary-panel">Tertiary: Statistics Summary Panel</h3>
-<p>Visual hierarchy of key metrics (could be beside or above chart):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>┌──────────────────────────────────────┐
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>│  Correlation: r = 0.82  ●●●●○        │
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>│                p &lt; 0.01  (confident) │
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>│                                      │
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>│  Balance: ──────●───────             │
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>│           -1    0.07   +1            │
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>│           (slightly positive-leaning) │
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>│                                      │
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>│  Concepts: 9 ■ 9 □ 0 ■               │
-<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>│           Pos Neu Neg                │
-<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>└──────────────────────────────────────┘
-</code></pre></div>
-<h2 id="implementation-considerations">Implementation Considerations</h2>
-<h3 id="reuse-existing-explorer-components">Reuse Existing Explorer Components</h3>
-<p><strong>Important:</strong> Leverage existing patterns from <code>/web/src/explorers/common/</code> for consistency:</p>
-<p><strong>Applicable Components:</strong>
-- <strong>NodeInfoBox.tsx</strong> → Show concept details when clicking bubbles
-- <strong>useGraphContextMenu.ts</strong> → Right-click context menu for concepts (e.g., "View in graph", "Copy ID")
-- <strong>Legend.tsx</strong> → Direction color legend (positive/neutral/negative)
-- <strong>StatsPanel.tsx</strong> → Statistics summary panel
-- <strong>PanelStack.tsx</strong> → Panel management for stacking info panels
-- <strong>styles.ts</strong> → Common visual themes and colors
-- <strong>labelStyles.ts</strong> → Consistent text styling</p>
-<p><strong>Benefits:</strong>
-- Familiar UX patterns across all explorers
-- Reduced code duplication
-- Consistent visual language
-- Maintained accessibility patterns</p>
-<h3 id="technology-options">Technology Options</h3>
-<p><strong>Recharts</strong> (Recommended for Phase 1):
-- Good React integration
-- Declarative API
-- Built-in responsive design
-- Supports bubble charts, tooltips, zoom
-- <strong>Trade-off:</strong> Less customization than D3
-- <strong>Compatible with:</strong> Existing explorer component patterns</p>
-<p><strong>Victory</strong>:
-- More customizable
-- Better animation support
-- Steeper learning curve</p>
-<p><strong>D3.js</strong>:
-- Maximum flexibility
-- Full control over interactions
-- Requires more development time
-- Better for novel visualizations</p>
-<p><strong>Recommendation:</strong> Start with Recharts for rapid implementation, integrate with existing explorer components (NodeInfoBox, context menu), migrate to D3 if we need custom interactions later.</p>
-<h3 id="color-palette">Color Palette</h3>
-<p>Using existing Polarity Explorer colors:
-- <strong>Positive pole concepts:</strong> <code>text-blue-500</code> (#3B82F6)
-- <strong>Neutral concepts:</strong> <code>text-muted-foreground</code> (gray)
-- <strong>Negative pole concepts:</strong> <code>text-orange-500</code> (#F97316)</p>
-<p>With opacity for overlapping bubbles: 0.6-0.8 alpha</p>
-<h3 id="size-scaling">Size Scaling</h3>
-<p>Axis distance ranges from 0 (perfect fit) to potentially &gt;2 (unrelated).</p>
-<p>Inverse mapping for bubble size:
-- Distance 0.0-0.5: Large bubbles (12-20px radius)
-- Distance 0.5-1.0: Medium bubbles (8-12px radius)
-- Distance &gt;1.0: Small bubbles (4-8px radius)</p>
-<h3 id="performance">Performance</h3>
-<p>With typical analysis of 10-50 concepts:
-- Scatter plot: No performance concerns
-- Histogram: Fast to compute and render
-- Interactive features: Debounce hover events</p>
-<p>For future scaling to 100+ concepts:
-- Consider canvas rendering instead of SVG
-- Implement virtualization or clustering
-- Add overview+detail pattern</p>
-<h2 id="user-benefits">User Benefits</h2>
-<p>This visualization enables users to immediately answer:</p>
-<ol>
-<li><strong>"Do concepts cluster or spread evenly?"</strong> → Visual density in scatter plot</li>
-<li><strong>"Is the correlation strong?"</strong> → Slope of regression line, visual trend</li>
-<li><strong>"Which side has better evidence?"</strong> → Y-axis distribution, regression direction</li>
-<li><strong>"Are there interesting outliers?"</strong> → Bubbles far from regression line</li>
-<li><strong>"How balanced is the axis?"</strong> → X-axis distribution, mean position marker</li>
-<li><strong>"Which concepts are most relevant?"</strong> → Larger bubbles</li>
-</ol>
-<h2 id="next-steps">Next Steps</h2>
-<ol>
-<li>Create proof-of-concept scatter plot with mock data</li>
-<li>Integrate with actual analysis results</li>
-<li>Add interactive features (tooltips, filtering)</li>
-<li>User testing for clarity and insights</li>
-<li>Refine based on feedback</li>
-<li>Add distribution histogram</li>
-<li>Add statistics summary panel</li>
-</ol>
-<h2 id="open-questions">Open Questions</h2>
-<ol>
-<li>Should we show pole labels on the chart itself or rely on surrounding context?</li>
-<li>Do we need a "reference" or "baseline" visualization for comparison across queries?</li>
-<li>Should axis distance be encoded as size or as a secondary metric (e.g., border thickness)?</li>
-<li>How do we handle extreme outliers (grounding &gt;&gt; 1 or &lt;&lt; -1)?</li>
-<li>Would users benefit from exporting the visualization as PNG/SVG?</li>
-</ol>
-<h2 id="references">References</h2>
+<p>The describe step is a <em>reasoning</em> capability (ADR-802); the embedding step is
+the universal text embedder. The artifact needs no representation comparable to
+concepts, because its <strong>prose</strong> is what reaches the graph.</p>
+<h3 id="3-a-modalitys-native-embedding-is-an-independent-index">3. A modality's native embedding is an independent index</h3>
+<p>Where a native embedding exists (the image vector today), it lives in its <strong>own</strong>
+space, sized by its own model, used <strong>only</strong> for same-modality similarity search.
+It is <strong>not</strong> co-spatial with the text space and is <strong>never</strong> compared to it.
+Modalities are decoupled from text and from each other by construction.</p>
+<p>A single multimodal model that <em>can</em> embed text and image into one space does
+<strong>not</strong> change this: we treat its image output as an independent index and let
+prose do the graph work. Co-spatiality is an optional property of a model, never
+an architectural requirement.</p>
+<h3 id="4-the-real-invariant-is-text-space-consistency">4. The real invariant is text-space consistency</h3>
+<p>The risk worth guarding is <strong>not</strong> "text and image embedders differ" — that is
+the design. It is <strong>changing the active text/prose embedder</strong>, which changes the
+universal space and invalidates <em>every</em> existing text embedding (concepts, edges,
+docs, image-prose), requiring a re-embed. That change must warn and prompt
+re-embedding. Choosing a different (or absent) modality embedder carries no such
+consequence.</p>
+<h3 id="5-schema-correction-incremental-non-committal">5. Schema correction (incremental, non-committal)</h3>
+<p>Migration 055's co-spatiality constraints are relaxed: <code>chk_image_dimensions_match</code>
+is dropped and the image slot may hold its <strong>own</strong> <code>vector_space</code> and dimensions,
+independent of the text slot. This removes the over-constraint without committing
+to any particular future shape — the architecture <em>permits</em> additional
+independent per-modality embedders but this ADR does <strong>not</strong> design or schedule
+them. We are not building the future here; we are not locking it out.</p>
+<h2 id="consequences">Consequences</h2>
+<h3 id="positive">Positive</h3>
 <ul>
-<li><a href="https://vizzlo.com/create/semantic-differential-scale">Semantic Differential Scale Maker</a> - Established bipolar visualization</li>
-<li><a href="https://www.atlassian.com/data/charts/what-is-a-scatter-plot">Mastering Scatter Plots</a> - Best practices</li>
-<li><a href="https://chartio.com/learn/charts/bubble-chart-complete-guide/">Bubble Chart Complete Guide</a> - Multidimensional encoding</li>
-<li><a href="https://www.storytellingwithdata.com/blog/2021/5/11/what-is-a-bubble-chart">What is a Bubble Chart</a> - Cognitive limits</li>
-<li><a href="https://flourish.studio/visualisations/scatter-charts/">Interactive Scatter Charts</a> - Modern examples</li>
-<li><a href="https://rpsychologist.com/correlation/">Understanding Correlations</a> - Interactive demo</li>
-<li><a href="https://www.numberanalytics.com/blog/data-visualization-for-correlation/">Data Visualization for Correlation</a> - Analysis techniques</li>
+<li>The cross-modal embedding-space problem <strong>dissolves</strong>: nothing must be
+  co-spatial because nothing is compared across modalities. Prose is the only
+  bridge, and it is already in the universal space.</li>
+<li>Configurations the old constraint forbade (independent image dims/space) become
+  valid; the operator is no longer asked to match image and text embedders for a
+  comparison that never happens.</li>
+<li>The warning surface points at the <strong>real</strong> risk (text-embedder change ⇒
+  re-embed) instead of a non-issue (text≠image embedders).</li>
+<li>The architecture is not locked into "all content reduces to one vector space,"
+  so future modality-native embedders are neither required nor precluded.</li>
+</ul>
+<h3 id="negative">Negative</h3>
+<ul>
+<li>ADR-057 / migration 055 carried the co-spatiality assumption; relaxing it is a
+  correction future readers must understand (hence this ADR supersedes that
+  aspect). Code/docstrings asserting "image embeddings share the text vector
+  space" (e.g. <code>routes/ingest_image.py</code>) must be corrected so the wrong premise
+  is not re-propagated.</li>
+</ul>
+<h3 id="neutral">Neutral</h3>
+<ul>
+<li>Image-by-vector search is not yet wired (the native index is currently
+  write-only/presence-flagged); this ADR defines the space it will search in when
+  built, without requiring it now.</li>
+<li><strong>Forward note, not a decision:</strong> prose is today the unification substrate for
+  <em>reasoning</em> as well as embedding — all reasoning currently routes through text.
+  Nothing here precludes modality-native reasoners (visual, auditory, motion)
+  later, with prose remaining the common logical-reasoning substrate that ties
+  them together. We are not building that; we are only keeping the door open.</li>
+<li>A multimodal embedder remains usable — it fills the text role and, optionally,
+  an independent modality role; its cross-modal capability is simply not relied
+  upon.</li>
+</ul>
+<h2 id="alternatives-considered">Alternatives Considered</h2>
+<ul>
+<li><strong>Keep co-spatiality (migration 055 as-is).</strong> Rejected: it enforces a property
+  the system never uses, forbids valid configurations, and points operator
+  attention at a non-problem. The code shows no cross-modal comparison exists.</li>
+<li><strong>Require a single multimodal model for both text and image.</strong> Rejected:
+  couples the universal text space to image-model availability for no benefit —
+  prose already bridges the modality, and forcing one model restricts provider
+  choice (counter to ADR-801).</li>
+<li><strong>Re-architect now into a general text-embedder + N-modality registry.</strong>
+  Rejected for this ADR as over-building: the principle does not require a
+  speculative registry, and the goal is a non-locking architecture, not a
+  forward roadmap. The minimal constraint relaxation is sufficient; a richer
+  shape can be designed if and when a real second modality arrives.</li>
+<li><strong>Compare image embeddings to concepts directly (a real cross-modal graph).</strong>
+  Rejected (analysed in the ADR-802 session): a raw image vector is a noisier
+  query than its prose, and the prose is produced anyway — cross-modal adds cost
+  and noise for no gain over the hairpin.</li>
 </ul>
 
 
@@ -10990,6 +10748,9 @@
 
 
 
+
+  
+  
 
 
 
@@ -11033,10 +10794,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": [], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>

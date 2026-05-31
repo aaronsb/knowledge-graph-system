@@ -3956,6 +3956,56 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#vision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        vision
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="vision">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#config_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        config
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#providers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        providers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#set_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        set
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#keys" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3979,7 +4029,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#set_1" class="md-nav__link">
+  <a href="#set_2" class="md-nav__link">
     <span class="md-ellipsis">
       
         set
@@ -6502,6 +6552,41 @@
   
   
   
+    <li class="md-nav__item">
+      <a href="../../../../architecture/ai-embeddings/ADR-803-modality-embedding-architecture-universal-text-space-and-independent-per-modality-embedders/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-803: Modality Embedding Architecture — Universal Text Space and Independent Per-Modality Embedders
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--Accepted"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
     
     
     
@@ -6511,10 +6596,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9_3_14" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9_3_15" >
         
           
-          <label class="md-nav__link" for="__nav_9_3_14" id="__nav_9_3_14_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_9_3_15" id="__nav_9_3_15_label" tabindex="0">
             
   
   
@@ -6532,8 +6617,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_9_3_14_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_9_3_14">
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_9_3_15_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9_3_15">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -11470,6 +11555,56 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#vision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        vision
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="vision">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#config_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        config
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#providers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        providers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#set_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        set
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#keys" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -11493,7 +11628,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#set_1" class="md-nav__link">
+  <a href="#set_2" class="md-nav__link">
     <span class="md-ellipsis">
       
         set
@@ -11565,6 +11700,7 @@
 <li><code>rbac</code> - Manage roles, permissions, and access control (ADR-028)</li>
 <li><code>embedding</code> - Manage embedding profiles (text + image model configuration)</li>
 <li><code>extraction</code> - Manage AI extraction model configuration (ADR-041)</li>
+<li><code>vision</code> - Manage the vision (image-&gt;prose) provider (ADR-802)</li>
 <li><code>keys</code> - Manage API keys for AI providers (ADR-031, ADR-041)</li>
 </ul>
 <hr />
@@ -12652,10 +12788,74 @@
 </tr>
 </tbody>
 </table>
+<h3 id="vision">vision</h3>
+<p>Manage the vision (image-&gt;prose) provider (ADR-802)</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-47-1" name="__codelineno-47-1" href="#__codelineno-47-1"></a>kg<span class="w"> </span>vision<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<p><strong>Subcommands:</strong></p>
+<ul>
+<li><code>config</code> - Show the effective vision (image-&gt;prose) provider/model</li>
+<li><code>providers</code> - List providers and whether they have a vision-capable catalog model</li>
+<li><code>set</code> - Set/activate the vision (image-&gt;prose) provider</li>
+</ul>
+<hr />
+<h4 id="config_1">config</h4>
+<p>Show the effective vision (image-&gt;prose) provider/model</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-48-1" name="__codelineno-48-1" href="#__codelineno-48-1"></a>kg<span class="w"> </span>config<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<h4 id="providers">providers</h4>
+<p>List providers and whether they have a vision-capable catalog model</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-49-1" name="__codelineno-49-1" href="#__codelineno-49-1"></a>kg<span class="w"> </span>providers<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<h4 id="set_1">set</h4>
+<p>Set/activate the vision (image-&gt;prose) provider</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-50-1" name="__codelineno-50-1" href="#__codelineno-50-1"></a>kg<span class="w"> </span><span class="nb">set</span><span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<p><strong>Options:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--provider &lt;provider&gt;</code></td>
+<td>Provider: openai, anthropic, ollama, openrouter, llamacpp</td>
+<td>-</td>
+</tr>
+<tr>
+<td><code>--model &lt;model&gt;</code></td>
+<td>Vision model id (optional; resolved from the catalog when omitted)</td>
+<td>-</td>
+</tr>
+<tr>
+<td><code>--max-tokens &lt;n&gt;</code></td>
+<td>Max output tokens for image description</td>
+<td>-</td>
+</tr>
+<tr>
+<td><code>--temperature &lt;n&gt;</code></td>
+<td>Sampling temperature 0.0-1.0</td>
+<td>-</td>
+</tr>
+<tr>
+<td><code>--no-activate</code></td>
+<td>Persist the provider config without making it the active vision provider</td>
+<td>-</td>
+</tr>
+</tbody>
+</table>
 <h3 id="keys">keys</h3>
 <p>Manage API keys for AI providers (ADR-031, ADR-041)</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-47-1" name="__codelineno-47-1" href="#__codelineno-47-1"></a>kg<span class="w"> </span>keys<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-51-1" name="__codelineno-51-1" href="#__codelineno-51-1"></a>kg<span class="w"> </span>keys<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Subcommands:</strong></p>
 <ul>
@@ -12667,12 +12867,12 @@
 <h4 id="list_6">list</h4>
 <p>List API keys with validation status</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-48-1" name="__codelineno-48-1" href="#__codelineno-48-1"></a>kg<span class="w"> </span>list<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-52-1" name="__codelineno-52-1" href="#__codelineno-52-1"></a>kg<span class="w"> </span>list<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
-<h4 id="set_1">set</h4>
+<h4 id="set_2">set</h4>
 <p>Set API key for a provider (validates before storing)</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-49-1" name="__codelineno-49-1" href="#__codelineno-49-1"></a>kg<span class="w"> </span><span class="nb">set</span><span class="w"> </span>&lt;provider&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-53-1" name="__codelineno-53-1" href="#__codelineno-53-1"></a>kg<span class="w"> </span><span class="nb">set</span><span class="w"> </span>&lt;provider&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -12698,7 +12898,7 @@
 <h4 id="delete_3">delete</h4>
 <p>Delete API key for a provider</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-50-1" name="__codelineno-50-1" href="#__codelineno-50-1"></a>kg<span class="w"> </span>delete<span class="w"> </span>&lt;provider&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-54-1" name="__codelineno-54-1" href="#__codelineno-54-1"></a>kg<span class="w"> </span>delete<span class="w"> </span>&lt;provider&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>

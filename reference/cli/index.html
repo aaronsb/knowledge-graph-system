@@ -5340,6 +5340,56 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#vision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        vision
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="vision">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#config_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        config
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#providers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        providers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#set_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        set
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#keys" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -5363,7 +5413,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#set_3" class="md-nav__link">
+  <a href="#set_4" class="md-nav__link">
     <span class="md-ellipsis">
       
         set
@@ -8543,6 +8593,41 @@
   
   
   
+    <li class="md-nav__item">
+      <a href="../../architecture/ai-embeddings/ADR-803-modality-embedding-architecture-universal-text-space-and-independent-per-modality-embedders/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-803: Modality Embedding Architecture — Universal Text Space and Independent Per-Modality Embedders
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--Accepted"></span>
+  
+
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
     
     
     
@@ -8552,10 +8637,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9_3_14" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9_3_15" >
         
           
-          <label class="md-nav__link" for="__nav_9_3_14" id="__nav_9_3_14_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_9_3_15" id="__nav_9_3_15_label" tabindex="0">
             
   
   
@@ -8573,8 +8658,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_9_3_14_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_9_3_14">
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_9_3_15_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9_3_15">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -14972,6 +15057,56 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#vision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        vision
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="vision">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#config_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        config
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#providers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        providers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#set_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        set
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#keys" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -14995,7 +15130,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#set_3" class="md-nav__link">
+  <a href="#set_4" class="md-nav__link">
     <span class="md-ellipsis">
       
         set
@@ -18705,6 +18840,7 @@ Last updated: 2026-05-31</p>
 <li><code>rbac</code> - Manage roles, permissions, and access control (ADR-028)</li>
 <li><code>embedding</code> - Manage embedding profiles (text + image model configuration)</li>
 <li><code>extraction</code> - Manage AI extraction model configuration (ADR-041)</li>
+<li><code>vision</code> - Manage the vision (image-&gt;prose) provider (ADR-802)</li>
 <li><code>keys</code> - Manage API keys for AI providers (ADR-031, ADR-041)</li>
 </ul>
 <hr />
@@ -19792,10 +19928,74 @@ Last updated: 2026-05-31</p>
 </tr>
 </tbody>
 </table>
+<h3 id="vision">vision</h3>
+<p>Manage the vision (image-&gt;prose) provider (ADR-802)</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-169-1" name="__codelineno-169-1" href="#__codelineno-169-1"></a>kg<span class="w"> </span>vision<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<p><strong>Subcommands:</strong></p>
+<ul>
+<li><code>config</code> - Show the effective vision (image-&gt;prose) provider/model</li>
+<li><code>providers</code> - List providers and whether they have a vision-capable catalog model</li>
+<li><code>set</code> - Set/activate the vision (image-&gt;prose) provider</li>
+</ul>
+<hr />
+<h4 id="config_2">config</h4>
+<p>Show the effective vision (image-&gt;prose) provider/model</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-170-1" name="__codelineno-170-1" href="#__codelineno-170-1"></a>kg<span class="w"> </span>config<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<h4 id="providers">providers</h4>
+<p>List providers and whether they have a vision-capable catalog model</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-171-1" name="__codelineno-171-1" href="#__codelineno-171-1"></a>kg<span class="w"> </span>providers<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<h4 id="set_3">set</h4>
+<p>Set/activate the vision (image-&gt;prose) provider</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-172-1" name="__codelineno-172-1" href="#__codelineno-172-1"></a>kg<span class="w"> </span><span class="nb">set</span><span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<p><strong>Options:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--provider &lt;provider&gt;</code></td>
+<td>Provider: openai, anthropic, ollama, openrouter, llamacpp</td>
+<td>-</td>
+</tr>
+<tr>
+<td><code>--model &lt;model&gt;</code></td>
+<td>Vision model id (optional; resolved from the catalog when omitted)</td>
+<td>-</td>
+</tr>
+<tr>
+<td><code>--max-tokens &lt;n&gt;</code></td>
+<td>Max output tokens for image description</td>
+<td>-</td>
+</tr>
+<tr>
+<td><code>--temperature &lt;n&gt;</code></td>
+<td>Sampling temperature 0.0-1.0</td>
+<td>-</td>
+</tr>
+<tr>
+<td><code>--no-activate</code></td>
+<td>Persist the provider config without making it the active vision provider</td>
+<td>-</td>
+</tr>
+</tbody>
+</table>
 <h3 id="keys">keys</h3>
 <p>Manage API keys for AI providers (ADR-031, ADR-041)</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-169-1" name="__codelineno-169-1" href="#__codelineno-169-1"></a>kg<span class="w"> </span>keys<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-173-1" name="__codelineno-173-1" href="#__codelineno-173-1"></a>kg<span class="w"> </span>keys<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Subcommands:</strong></p>
 <ul>
@@ -19807,12 +20007,12 @@ Last updated: 2026-05-31</p>
 <h4 id="list_16">list</h4>
 <p>List API keys with validation status</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-170-1" name="__codelineno-170-1" href="#__codelineno-170-1"></a>kg<span class="w"> </span>list<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-174-1" name="__codelineno-174-1" href="#__codelineno-174-1"></a>kg<span class="w"> </span>list<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
-<h4 id="set_3">set</h4>
+<h4 id="set_4">set</h4>
 <p>Set API key for a provider (validates before storing)</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-171-1" name="__codelineno-171-1" href="#__codelineno-171-1"></a>kg<span class="w"> </span><span class="nb">set</span><span class="w"> </span>&lt;provider&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-175-1" name="__codelineno-175-1" href="#__codelineno-175-1"></a>kg<span class="w"> </span><span class="nb">set</span><span class="w"> </span>&lt;provider&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -19838,7 +20038,7 @@ Last updated: 2026-05-31</p>
 <h4 id="delete_9">delete</h4>
 <p>Delete API key for a provider</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-172-1" name="__codelineno-172-1" href="#__codelineno-172-1"></a>kg<span class="w"> </span>delete<span class="w"> </span>&lt;provider&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-176-1" name="__codelineno-176-1" href="#__codelineno-176-1"></a>kg<span class="w"> </span>delete<span class="w"> </span>&lt;provider&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -19847,7 +20047,7 @@ Last updated: 2026-05-31</p>
 <h2 id="polarity">polarity</h2>
 <p>Analyze bidirectional semantic dimensions between concept poles</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-173-1" name="__codelineno-173-1" href="#__codelineno-173-1"></a>kg<span class="w"> </span>polarity<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-177-1" name="__codelineno-177-1" href="#__codelineno-177-1"></a>kg<span class="w"> </span>polarity<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Subcommands:</strong></p>
 <ul>
@@ -19857,7 +20057,7 @@ Last updated: 2026-05-31</p>
 <h3 id="analyze_1">analyze</h3>
 <p>Project concepts onto axis formed by two opposing poles (e.g., Modern ↔ Traditional)</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-174-1" name="__codelineno-174-1" href="#__codelineno-174-1"></a>kg<span class="w"> </span>analyze<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-178-1" name="__codelineno-178-1" href="#__codelineno-178-1"></a>kg<span class="w"> </span>analyze<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Options:</strong></p>
 <table>
@@ -19939,7 +20139,7 @@ Last updated: 2026-05-31</p>
 <h2 id="projection-proj">projection (proj)</h2>
 <p>Manage t-SNE/UMAP projections of concept embeddings. Projections reduce high-dimensional embeddings to 3D coordinates for the Embedding Landscape Explorer visualization. Use this to compute, view, and manage projection datasets.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-175-1" name="__codelineno-175-1" href="#__codelineno-175-1"></a>kg<span class="w"> </span>projection<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-179-1" name="__codelineno-179-1" href="#__codelineno-179-1"></a>kg<span class="w"> </span>projection<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Subcommands:</strong></p>
 <ul>
@@ -19954,12 +20154,12 @@ Last updated: 2026-05-31</p>
 <h3 id="list_17">list</h3>
 <p>List projection status for all ontologies. Shows which ontologies have cached projections and their statistics.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-176-1" name="__codelineno-176-1" href="#__codelineno-176-1"></a>kg<span class="w"> </span>list<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-180-1" name="__codelineno-180-1" href="#__codelineno-180-1"></a>kg<span class="w"> </span>list<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <h3 id="info_3">info</h3>
 <p>Get detailed projection info for an ontology</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-177-1" name="__codelineno-177-1" href="#__codelineno-177-1"></a>kg<span class="w"> </span>info<span class="w"> </span>&lt;ontology&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-181-1" name="__codelineno-181-1" href="#__codelineno-181-1"></a>kg<span class="w"> </span>info<span class="w"> </span>&lt;ontology&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -19968,7 +20168,7 @@ Last updated: 2026-05-31</p>
 <h3 id="regenerate_1">regenerate</h3>
 <p>Compute or recompute projection for an ontology</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-178-1" name="__codelineno-178-1" href="#__codelineno-178-1"></a>kg<span class="w"> </span>regenerate<span class="w"> </span>&lt;ontology&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-182-1" name="__codelineno-182-1" href="#__codelineno-182-1"></a>kg<span class="w"> </span>regenerate<span class="w"> </span>&lt;ontology&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -20029,7 +20229,7 @@ Last updated: 2026-05-31</p>
 <h3 id="invalidate">invalidate</h3>
 <p>Delete cached projection for an ontology</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-179-1" name="__codelineno-179-1" href="#__codelineno-179-1"></a>kg<span class="w"> </span>invalidate<span class="w"> </span>&lt;ontology&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-183-1" name="__codelineno-183-1" href="#__codelineno-183-1"></a>kg<span class="w"> </span>invalidate<span class="w"> </span>&lt;ontology&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -20038,7 +20238,7 @@ Last updated: 2026-05-31</p>
 <h3 id="data">data</h3>
 <p>Get full projection data as JSON (for visualization pipelines)</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-180-1" name="__codelineno-180-1" href="#__codelineno-180-1"></a>kg<span class="w"> </span>data<span class="w"> </span>&lt;ontology&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-184-1" name="__codelineno-184-1" href="#__codelineno-184-1"></a>kg<span class="w"> </span>data<span class="w"> </span>&lt;ontology&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -20069,12 +20269,12 @@ Last updated: 2026-05-31</p>
 <h3 id="algorithms">algorithms</h3>
 <p>List available projection algorithms</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-181-1" name="__codelineno-181-1" href="#__codelineno-181-1"></a>kg<span class="w"> </span>algorithms<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-185-1" name="__codelineno-185-1" href="#__codelineno-185-1"></a>kg<span class="w"> </span>algorithms<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <h2 id="artifact-art">artifact (art)</h2>
 <p>Manage artifacts - persistent storage for computed results like polarity analyses, projections, and query results. Artifacts support multi-tier storage: small payloads inline in PostgreSQL, large payloads in Garage S3. Each artifact tracks its graph_epoch for freshness detection.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-182-1" name="__codelineno-182-1" href="#__codelineno-182-1"></a>kg<span class="w"> </span>artifact<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-186-1" name="__codelineno-186-1" href="#__codelineno-186-1"></a>kg<span class="w"> </span>artifact<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Subcommands:</strong></p>
 <ul>
@@ -20088,7 +20288,7 @@ Last updated: 2026-05-31</p>
 <h3 id="list_18">list</h3>
 <p>List your artifacts. Shows metadata without payloads for efficiency. Filter by type, representation, or ontology.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-183-1" name="__codelineno-183-1" href="#__codelineno-183-1"></a>kg<span class="w"> </span>list<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-187-1" name="__codelineno-187-1" href="#__codelineno-187-1"></a>kg<span class="w"> </span>list<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Options:</strong></p>
 <table>
@@ -20135,7 +20335,7 @@ Last updated: 2026-05-31</p>
 <h3 id="show_5">show</h3>
 <p>Show artifact metadata by ID. Does not include the payload - use "payload" command for that.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-184-1" name="__codelineno-184-1" href="#__codelineno-184-1"></a>kg<span class="w"> </span>show<span class="w"> </span>&lt;id&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-188-1" name="__codelineno-188-1" href="#__codelineno-188-1"></a>kg<span class="w"> </span>show<span class="w"> </span>&lt;id&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -20144,7 +20344,7 @@ Last updated: 2026-05-31</p>
 <h3 id="payload">payload</h3>
 <p>Get artifact with full payload. For large artifacts stored in Garage, this fetches from object storage.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-185-1" name="__codelineno-185-1" href="#__codelineno-185-1"></a>kg<span class="w"> </span>payload<span class="w"> </span>&lt;id&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-189-1" name="__codelineno-189-1" href="#__codelineno-189-1"></a>kg<span class="w"> </span>payload<span class="w"> </span>&lt;id&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -20170,7 +20370,7 @@ Last updated: 2026-05-31</p>
 <h3 id="create_9">create</h3>
 <p>Create a test artifact (for API validation). Creates a simple artifact with provided parameters.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-186-1" name="__codelineno-186-1" href="#__codelineno-186-1"></a>kg<span class="w"> </span>create<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-190-1" name="__codelineno-190-1" href="#__codelineno-190-1"></a>kg<span class="w"> </span>create<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Options:</strong></p>
 <table>
@@ -20207,7 +20407,7 @@ Last updated: 2026-05-31</p>
 <h3 id="delete_10">delete</h3>
 <p>Delete an artifact. Removes both database record and any Garage-stored payload.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-187-1" name="__codelineno-187-1" href="#__codelineno-187-1"></a>kg<span class="w"> </span>delete<span class="w"> </span>&lt;id&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-191-1" name="__codelineno-191-1" href="#__codelineno-191-1"></a>kg<span class="w"> </span>delete<span class="w"> </span>&lt;id&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -20233,7 +20433,7 @@ Last updated: 2026-05-31</p>
 <h2 id="group-grp">group (grp)</h2>
 <p>Manage groups for collaborative access control. Groups allow sharing resources with multiple users. System groups (public, admins) are managed by the platform.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-188-1" name="__codelineno-188-1" href="#__codelineno-188-1"></a>kg<span class="w"> </span>group<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-192-1" name="__codelineno-192-1" href="#__codelineno-192-1"></a>kg<span class="w"> </span>group<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Subcommands:</strong></p>
 <ul>
@@ -20247,7 +20447,7 @@ Last updated: 2026-05-31</p>
 <h3 id="list_19">list</h3>
 <p>List all groups</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-189-1" name="__codelineno-189-1" href="#__codelineno-189-1"></a>kg<span class="w"> </span>list<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-193-1" name="__codelineno-193-1" href="#__codelineno-193-1"></a>kg<span class="w"> </span>list<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Options:</strong></p>
 <table>
@@ -20269,7 +20469,7 @@ Last updated: 2026-05-31</p>
 <h3 id="members">members</h3>
 <p>List members of a group</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-190-1" name="__codelineno-190-1" href="#__codelineno-190-1"></a>kg<span class="w"> </span>members<span class="w"> </span>&lt;group-id&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-194-1" name="__codelineno-194-1" href="#__codelineno-194-1"></a>kg<span class="w"> </span>members<span class="w"> </span>&lt;group-id&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -20278,7 +20478,7 @@ Last updated: 2026-05-31</p>
 <h3 id="create_10">create</h3>
 <p>Create a new group (admin only)</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-191-1" name="__codelineno-191-1" href="#__codelineno-191-1"></a>kg<span class="w"> </span>create<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-195-1" name="__codelineno-195-1" href="#__codelineno-195-1"></a>kg<span class="w"> </span>create<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Options:</strong></p>
 <table>
@@ -20310,7 +20510,7 @@ Last updated: 2026-05-31</p>
 <h3 id="add-member">add-member</h3>
 <p>Add a user to a group (admin only)</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-192-1" name="__codelineno-192-1" href="#__codelineno-192-1"></a>kg<span class="w"> </span>add-member<span class="w"> </span>&lt;group-id&gt;<span class="w"> </span>&lt;user-id&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-196-1" name="__codelineno-196-1" href="#__codelineno-196-1"></a>kg<span class="w"> </span>add-member<span class="w"> </span>&lt;group-id&gt;<span class="w"> </span>&lt;user-id&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -20320,7 +20520,7 @@ Last updated: 2026-05-31</p>
 <h3 id="remove-member">remove-member</h3>
 <p>Remove a user from a group (admin only)</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-193-1" name="__codelineno-193-1" href="#__codelineno-193-1"></a>kg<span class="w"> </span>remove-member<span class="w"> </span>&lt;group-id&gt;<span class="w"> </span>&lt;user-id&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-197-1" name="__codelineno-197-1" href="#__codelineno-197-1"></a>kg<span class="w"> </span>remove-member<span class="w"> </span>&lt;group-id&gt;<span class="w"> </span>&lt;user-id&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -20330,7 +20530,7 @@ Last updated: 2026-05-31</p>
 <h2 id="query-def-qd">query-def (qd)</h2>
 <p>Manage saved query definitions - recipes that can be re-executed to generate artifacts. Supports block diagrams, cypher queries, searches, polarity analyses, and connection paths.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-194-1" name="__codelineno-194-1" href="#__codelineno-194-1"></a>kg<span class="w"> </span>query-def<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-198-1" name="__codelineno-198-1" href="#__codelineno-198-1"></a>kg<span class="w"> </span>query-def<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Subcommands:</strong></p>
 <ul>
@@ -20343,7 +20543,7 @@ Last updated: 2026-05-31</p>
 <h3 id="list_20">list</h3>
 <p>List query definitions</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-195-1" name="__codelineno-195-1" href="#__codelineno-195-1"></a>kg<span class="w"> </span>list<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-199-1" name="__codelineno-199-1" href="#__codelineno-199-1"></a>kg<span class="w"> </span>list<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Options:</strong></p>
 <table>
@@ -20370,7 +20570,7 @@ Last updated: 2026-05-31</p>
 <h3 id="show_6">show</h3>
 <p>Show a query definition</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-196-1" name="__codelineno-196-1" href="#__codelineno-196-1"></a>kg<span class="w"> </span>show<span class="w"> </span>&lt;id&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-200-1" name="__codelineno-200-1" href="#__codelineno-200-1"></a>kg<span class="w"> </span>show<span class="w"> </span>&lt;id&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -20379,7 +20579,7 @@ Last updated: 2026-05-31</p>
 <h3 id="create_11">create</h3>
 <p>Create a query definition</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-197-1" name="__codelineno-197-1" href="#__codelineno-197-1"></a>kg<span class="w"> </span>create<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-201-1" name="__codelineno-201-1" href="#__codelineno-201-1"></a>kg<span class="w"> </span>create<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Options:</strong></p>
 <table>
@@ -20411,7 +20611,7 @@ Last updated: 2026-05-31</p>
 <h3 id="delete_11">delete</h3>
 <p>Delete a query definition</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-198-1" name="__codelineno-198-1" href="#__codelineno-198-1"></a>kg<span class="w"> </span>delete<span class="w"> </span>&lt;id&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-202-1" name="__codelineno-202-1" href="#__codelineno-202-1"></a>kg<span class="w"> </span>delete<span class="w"> </span>&lt;id&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -20437,7 +20637,7 @@ Last updated: 2026-05-31</p>
 <h2 id="program-prog">program (prog)</h2>
 <p>Validate, store, and retrieve GraphProgram ASTs (ADR-500). Programs are notarized server-side to ensure safety before execution.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-199-1" name="__codelineno-199-1" href="#__codelineno-199-1"></a>kg<span class="w"> </span>program<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-203-1" name="__codelineno-203-1" href="#__codelineno-203-1"></a>kg<span class="w"> </span>program<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Subcommands:</strong></p>
 <ul>
@@ -20450,7 +20650,7 @@ Last updated: 2026-05-31</p>
 <h3 id="validate">validate</h3>
 <p>Validate a program without storing it (dry run)</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-200-1" name="__codelineno-200-1" href="#__codelineno-200-1"></a>kg<span class="w"> </span>validate<span class="w"> </span>&lt;file&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-204-1" name="__codelineno-204-1" href="#__codelineno-204-1"></a>kg<span class="w"> </span>validate<span class="w"> </span>&lt;file&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -20459,7 +20659,7 @@ Last updated: 2026-05-31</p>
 <h3 id="create_12">create</h3>
 <p>Notarize and store a program</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-201-1" name="__codelineno-201-1" href="#__codelineno-201-1"></a>kg<span class="w"> </span>create<span class="w"> </span>&lt;file&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-205-1" name="__codelineno-205-1" href="#__codelineno-205-1"></a>kg<span class="w"> </span>create<span class="w"> </span>&lt;file&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -20485,7 +20685,7 @@ Last updated: 2026-05-31</p>
 <h3 id="show_7">show</h3>
 <p>Show a notarized program</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-202-1" name="__codelineno-202-1" href="#__codelineno-202-1"></a>kg<span class="w"> </span>show<span class="w"> </span>&lt;id&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-206-1" name="__codelineno-206-1" href="#__codelineno-206-1"></a>kg<span class="w"> </span>show<span class="w"> </span>&lt;id&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -20511,7 +20711,7 @@ Last updated: 2026-05-31</p>
 <h3 id="execute">execute</h3>
 <p>Execute a program server-side</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-203-1" name="__codelineno-203-1" href="#__codelineno-203-1"></a>kg<span class="w"> </span>execute<span class="w"> </span>&lt;source&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-207-1" name="__codelineno-207-1" href="#__codelineno-207-1"></a>kg<span class="w"> </span>execute<span class="w"> </span>&lt;source&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -20542,7 +20742,7 @@ Last updated: 2026-05-31</p>
 <h2 id="storage">storage</h2>
 <p>Read-only diagnostics for S3-compatible object storage. List objects, inspect metadata, verify integrity after cascade deletes, and view retention policies. Useful for integration testing and debugging storage behavior.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-204-1" name="__codelineno-204-1" href="#__codelineno-204-1"></a>kg<span class="w"> </span>storage<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-208-1" name="__codelineno-208-1" href="#__codelineno-208-1"></a>kg<span class="w"> </span>storage<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Subcommands:</strong></p>
 <ul>
@@ -20557,17 +20757,17 @@ Last updated: 2026-05-31</p>
 <h3 id="health_2">health</h3>
 <p>Check storage backend connectivity and bucket accessibility</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-205-1" name="__codelineno-205-1" href="#__codelineno-205-1"></a>kg<span class="w"> </span>health<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-209-1" name="__codelineno-209-1" href="#__codelineno-209-1"></a>kg<span class="w"> </span>health<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <h3 id="stats_1">stats</h3>
 <p>Show storage usage statistics by category (sources, images, projections, artifacts)</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-206-1" name="__codelineno-206-1" href="#__codelineno-206-1"></a>kg<span class="w"> </span>stats<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-210-1" name="__codelineno-210-1" href="#__codelineno-210-1"></a>kg<span class="w"> </span>stats<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <h3 id="list_21">list</h3>
 <p>List objects in storage with optional prefix filter. Examples: kg storage list --prefix sources/ --limit 20</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-207-1" name="__codelineno-207-1" href="#__codelineno-207-1"></a>kg<span class="w"> </span>list<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-211-1" name="__codelineno-211-1" href="#__codelineno-211-1"></a>kg<span class="w"> </span>list<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Options:</strong></p>
 <table>
@@ -20599,7 +20799,7 @@ Last updated: 2026-05-31</p>
 <h3 id="inspect">inspect</h3>
 <p>Inspect metadata for a single object without downloading content. Use the full S3 key from "kg storage list".</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-208-1" name="__codelineno-208-1" href="#__codelineno-208-1"></a>kg<span class="w"> </span>inspect<span class="w"> </span>&lt;key&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-212-1" name="__codelineno-212-1" href="#__codelineno-212-1"></a>kg<span class="w"> </span>inspect<span class="w"> </span>&lt;key&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -20608,7 +20808,7 @@ Last updated: 2026-05-31</p>
 <h3 id="integrity">integrity</h3>
 <p>Cross-reference S3 objects against graph nodes. Finds orphaned objects (in S3 but not graph) and missing objects (in graph but not S3). Essential for verifying cascade deletes.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-209-1" name="__codelineno-209-1" href="#__codelineno-209-1"></a>kg<span class="w"> </span>integrity<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-213-1" name="__codelineno-213-1" href="#__codelineno-213-1"></a>kg<span class="w"> </span>integrity<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Options:</strong></p>
 <table>
@@ -20635,12 +20835,12 @@ Last updated: 2026-05-31</p>
 <h3 id="retention">retention</h3>
 <p>Show current retention policy configuration for each storage category</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-210-1" name="__codelineno-210-1" href="#__codelineno-210-1"></a>kg<span class="w"> </span>retention<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-214-1" name="__codelineno-214-1" href="#__codelineno-214-1"></a>kg<span class="w"> </span>retention<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <h2 id="catalog">catalog</h2>
 <p>Deterministic, filesystem-like browse of what is stored in the knowledge graph. Walk from ontologies down to documents and concepts, filter by name fragment, and inspect single nodes. Distinct from "kg search" (semantic) and "kg storage" (raw S3 admin). Add --json to any subcommand for machine-readable output.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-211-1" name="__codelineno-211-1" href="#__codelineno-211-1"></a>kg<span class="w"> </span>catalog<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-215-1" name="__codelineno-215-1" href="#__codelineno-215-1"></a>kg<span class="w"> </span>catalog<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Subcommands:</strong></p>
 <ul>
@@ -20651,7 +20851,7 @@ Last updated: 2026-05-31</p>
 <h3 id="ls">ls</h3>
 <p>List children of a node, or root ontologies if no id given</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-212-1" name="__codelineno-212-1" href="#__codelineno-212-1"></a>kg<span class="w"> </span>ls<span class="w"> </span><span class="o">[</span>id<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-216-1" name="__codelineno-216-1" href="#__codelineno-216-1"></a>kg<span class="w"> </span>ls<span class="w"> </span><span class="o">[</span>id<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -20702,7 +20902,7 @@ Last updated: 2026-05-31</p>
 <h3 id="stat">stat</h3>
 <p>Show full metadata for a single catalog node</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-213-1" name="__codelineno-213-1" href="#__codelineno-213-1"></a>kg<span class="w"> </span>stat<span class="w"> </span>&lt;id&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-217-1" name="__codelineno-217-1" href="#__codelineno-217-1"></a>kg<span class="w"> </span>stat<span class="w"> </span>&lt;id&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -20733,7 +20933,7 @@ Last updated: 2026-05-31</p>
 <h2 id="login">login</h2>
 <p>Authenticate with username and password - creates personal OAuth client credentials (required for admin commands)</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-214-1" name="__codelineno-214-1" href="#__codelineno-214-1"></a>kg<span class="w"> </span>login<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-218-1" name="__codelineno-218-1" href="#__codelineno-218-1"></a>kg<span class="w"> </span>login<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Options:</strong></p>
 <table>
@@ -20775,7 +20975,7 @@ Last updated: 2026-05-31</p>
 <h2 id="logout">logout</h2>
 <p>End authentication session - revokes OAuth client and clears credentials (use --forget to also clear saved username)</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-215-1" name="__codelineno-215-1" href="#__codelineno-215-1"></a>kg<span class="w"> </span><span class="nb">logout</span><span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-219-1" name="__codelineno-219-1" href="#__codelineno-219-1"></a>kg<span class="w"> </span><span class="nb">logout</span><span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Options:</strong></p>
 <table>
@@ -20797,7 +20997,7 @@ Last updated: 2026-05-31</p>
 <h2 id="oauth_1">oauth</h2>
 <p>Manage OAuth clients (list, create for MCP, revoke)</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-216-1" name="__codelineno-216-1" href="#__codelineno-216-1"></a>kg<span class="w"> </span>oauth<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-220-1" name="__codelineno-220-1" href="#__codelineno-220-1"></a>kg<span class="w"> </span>oauth<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Subcommands:</strong></p>
 <ul>
@@ -20810,12 +21010,12 @@ Last updated: 2026-05-31</p>
 <h3 id="clients-list">clients (list)</h3>
 <p>List your personal OAuth clients</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-217-1" name="__codelineno-217-1" href="#__codelineno-217-1"></a>kg<span class="w"> </span>clients<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-221-1" name="__codelineno-221-1" href="#__codelineno-221-1"></a>kg<span class="w"> </span>clients<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <h3 id="create_13">create</h3>
 <p>Create OAuth client for external tools (MCP, FUSE, scripts)</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-218-1" name="__codelineno-218-1" href="#__codelineno-218-1"></a>kg<span class="w"> </span>create<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-222-1" name="__codelineno-222-1" href="#__codelineno-222-1"></a>kg<span class="w"> </span>create<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Options:</strong></p>
 <table>
@@ -20842,7 +21042,7 @@ Last updated: 2026-05-31</p>
 <h3 id="create-mcp">create-mcp</h3>
 <p>Create OAuth client for MCP server (alias for: create --for mcp)</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-219-1" name="__codelineno-219-1" href="#__codelineno-219-1"></a>kg<span class="w"> </span>create-mcp<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-223-1" name="__codelineno-223-1" href="#__codelineno-223-1"></a>kg<span class="w"> </span>create-mcp<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Options:</strong></p>
 <table>
@@ -20864,7 +21064,7 @@ Last updated: 2026-05-31</p>
 <h3 id="revoke_1">revoke</h3>
 <p>Revoke an OAuth client</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-220-1" name="__codelineno-220-1" href="#__codelineno-220-1"></a>kg<span class="w"> </span>revoke<span class="w"> </span>&lt;client-id&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-224-1" name="__codelineno-224-1" href="#__codelineno-224-1"></a>kg<span class="w"> </span>revoke<span class="w"> </span>&lt;client-id&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
