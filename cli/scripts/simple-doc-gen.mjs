@@ -109,7 +109,13 @@ async function main() {
   // (This previously kept a hardcoded module list that went stale and dropped
   // commands such as `catalog`.) `documentedCommands` is the array of Command
   // objects the CLI registers under `kg`, exported from commands.ts.
-  const { documentedCommands } = await import('../dist/cli/commands.js');
+  let documentedCommands;
+  try {
+    ({ documentedCommands } = await import('../dist/cli/commands.js'));
+  } catch (err) {
+    console.error('✗ Could not load ../dist/cli/commands.js — run `npm run build` first.');
+    throw err;
+  }
   const commands = documentedCommands.map(cmd => extractMetadata(cmd));
 
   console.log(`📋 Extracted ${commands.length} commands from the registry\n`);

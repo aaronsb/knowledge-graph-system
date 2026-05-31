@@ -121,6 +121,9 @@ export const subcommands: Command[] = [
  * auth commands. The auth commands are wired into the program via their own
  * register*() functions (which attach actions/options), but they also expose
  * Command objects so the doc generator can describe them.
+ *
+ * Order mirrors runtime registration (subcommands first, then auth) so the
+ * generated docs match `kg --help`; keep them aligned if registration moves.
  */
 export const documentedCommands: Command[] = [
   ...subcommands,
