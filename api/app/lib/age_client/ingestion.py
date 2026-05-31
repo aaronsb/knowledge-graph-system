@@ -123,6 +123,47 @@ class IngestionMixin:
                 exc_info=True,
             )
 
+    def record_mutation(
+        self,
+        kind: str,
+        actor: Optional[str] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> Optional[int]:
+        """Announce an already-committed atomic graph mutation (ADR-207, #386).
+
+        The universal freshness tick (kg_api.graph_epochs.event_id) only advances
+        when application code records an epoch event — AGE Cypher bypasses
+        PostgreSQL triggers, so there is no automatic backstop. Every path that
+        mutates the graph must call this (or, for long-running jobs, the
+        record_epoch/complete_epoch pair) or its changes are invisible to
+        freshness and every derivation serves stale data for them.
+
+        This does the two things that must co-advance, from one place:
+          1. records a *completed* epoch event of `kind` (advances the tick), and
+          2. invalidates the graph_accel sub-counter (+ its pg_notify),
+        so event_id and graph_accel.generation move together by construction.
+
+        For atomic, synchronous mutations (edit routes, proposal execution). Long
+        jobs that need to tag nodes with the event_id mid-run use record_epoch()
+        at the start and complete_epoch() at the end instead.
+
+        Returns the event_id, or None if the epoch could not be recorded.
+        """
+        event_id = self.record_epoch(kind, actor=actor, metadata=metadata)
+        if event_id is not None:
+            self.complete_epoch(event_id, "completed")
+        # Co-advance the in-memory accelerator's sub-counter. Non-fatal: the
+        # extension may not be loaded on this connection.
+        try:
+            self.graph.invalidate()
+        except Exception:
+            pass
+        # Keep the graph_change_counter snapshot fresh too — FUSE and other
+        # pollers read it (this subsumes the bare refresh_epoch() that mutation
+        # paths used to call).
+        self.refresh_epoch()
+        return event_id
+
     def create_source_node(
         self,
         source_id: str,

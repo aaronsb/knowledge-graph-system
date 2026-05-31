@@ -236,8 +236,9 @@ async def create_ontology(
         except Exception as e:
             logger.warning(f"Failed to generate embedding for new ontology '{request.name}': {e}")
 
-        # Refresh graph epoch so caches (FUSE, etc.) detect the change
-        client.refresh_epoch()
+        # ADR-207/#386: announce the mutation — advances the universal freshness
+        # tick (event_id), invalidates graph_accel, and refreshes the counter.
+        client.record_mutation("edit")
 
         return OntologyNodeResponse(
             ontology_id=node.get('ontology_id', ontology_id),
@@ -1450,8 +1451,9 @@ async def delete_ontology(
         if jobs_deleted > 0:
             logger.info(f"Deleted {jobs_deleted} job records for ontology '{ontology_name}'")
 
-        # Refresh graph epoch so caches (FUSE, etc.) detect the change
-        client.refresh_epoch()
+        # ADR-207/#386: announce the mutation — advances the universal freshness
+        # tick (event_id), invalidates graph_accel, and refreshes the counter.
+        client.record_mutation("edit")
 
         return OntologyDeleteResponse(
             ontology=ontology_name,
@@ -1866,8 +1868,9 @@ async def create_ontology_edge(
             source="manual",
         )
 
-        # Refresh graph epoch so caches (FUSE, etc.) detect the change
-        client.refresh_epoch()
+        # ADR-207/#386: announce the mutation — advances the universal freshness
+        # tick (event_id), invalidates graph_accel, and refreshes the counter.
+        client.record_mutation("edit")
 
         return OntologyEdge(
             from_ontology=ontology_name,
@@ -1925,8 +1928,9 @@ async def delete_ontology_edge(
                 detail=f"No {edge_type} edge found from '{ontology_name}' to '{to_ontology}'",
             )
 
-        # Refresh graph epoch so caches (FUSE, etc.) detect the change
-        client.refresh_epoch()
+        # ADR-207/#386: announce the mutation — advances the universal freshness
+        # tick (event_id), invalidates graph_accel, and refreshes the counter.
+        client.record_mutation("edit")
 
         return {"deleted": deleted, "from_ontology": ontology_name,
                 "to_ontology": to_ontology, "edge_type": edge_type}
@@ -1975,11 +1979,16 @@ async def reassign_sources(
             else:
                 raise HTTPException(status_code=500, detail=error)
 
-        # ADR-201: Invalidate graph_accel cache after SCOPED_BY edge changes
+        # ADR-207/#386: SCOPED_BY edge changes alter the catalog hierarchy —
+        # announce the mutation so the freshness tick advances (record_mutation
+        # also invalidates graph_accel). Non-fatal.
         try:
-            client.graph.invalidate()
+            client.record_mutation(
+                "edit",
+                actor=getattr(current_user, "username", None),
+            )
         except Exception:
-            pass  # Non-fatal — extension may not be installed
+            pass
 
         return ReassignResponse(
             from_ontology=ontology_name,
@@ -2073,11 +2082,16 @@ async def dissolve_ontology(
             else:
                 raise HTTPException(status_code=500, detail=error)
 
-        # ADR-201: Invalidate graph_accel cache after ontology dissolution
+        # ADR-207/#386: dissolution restructures the catalog hierarchy —
+        # announce the mutation so the freshness tick advances (record_mutation
+        # also invalidates graph_accel). Non-fatal.
         try:
-            client.graph.invalidate()
+            client.record_mutation(
+                "edit",
+                actor=getattr(current_user, "username", None),
+            )
         except Exception:
-            pass  # Non-fatal — extension may not be installed
+            pass
 
         return DissolveResponse(
             dissolved_ontology=ontology_name,

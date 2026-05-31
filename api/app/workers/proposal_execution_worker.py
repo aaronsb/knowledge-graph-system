@@ -127,6 +127,20 @@ def run_proposal_execution_worker(
                 f"Proposal {proposal_id} ({proposal['proposal_type']}) "
                 f"executed successfully"
             )
+            # ADR-207/#386: annealing's graph mutations land here. Announce them
+            # so the universal freshness tick (event_id) advances and graph_accel
+            # co-invalidates — otherwise the catalog and grounding caches go
+            # silently stale after annealing. Control-only proposal types change
+            # no graph topology, so they don't tick.
+            if proposal["proposal_type"] not in ("NO_ACTION", "ESCALATE", "ADJUST_CONTROL"):
+                age_client.record_mutation(
+                    "annealing",
+                    actor="annealing",
+                    metadata={
+                        "proposal_id": proposal_id,
+                        "proposal_type": proposal["proposal_type"],
+                    },
+                )
         elif result.get("retry_later"):
             # #402 PR-404 review (finding #2 / advisor): revert the claim
             # so the proposal stays available for the next cycle. Without
