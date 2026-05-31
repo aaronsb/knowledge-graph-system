@@ -5,12 +5,15 @@ derived from — the catalog index, the grounding/polarity caches, and saved
 artifacts. This is the "what and how" explainer; the decision record and its
 rationale live in **ADR-207** (`docs/architecture/database-schema/`).
 
-> **TL;DR.** There is **one universal monotonic tick** that advances on every
-> graph mutation. Anything the platform computes *from* the graph stamps itself
-> with the tick value it was built at, and re-checks that stamp against the
-> current tick before it is trusted. The tick is maintained in application code
-> (Apache AGE bypasses database triggers), so it is **eventually consistent** —
-> it always converges, it is not transactionally instantaneous.
+> **TL;DR.** There is **one universal monotonic tick** for all graph actions —
+> the `graph_epochs.event_id` sequence. Anything the platform computes *from* the
+> graph stamps itself with the tick value it was built at, and re-checks that
+> stamp against the current tick before it is trusted. The tick advances when
+> application code **records an epoch event** for a mutation (Apache AGE bypasses
+> database triggers, so a trigger-driven counter is impossible). It is **eventually
+> consistent**: freshness converges for every mutation *kind that records an
+> event*. Today that is ingestion; extending it to edits and annealing is the work
+> tracked as #386.
 
 ## The problem: derived data drifts
 
@@ -31,14 +34,19 @@ different signals — some of them unsound. ADR-207 unifies that.
 
 ## The universal tick
 
-> **One monotonic counter for every possible graph action. Sub-counters may
-> exist for narrower scopes, but there is exactly one universal tick above them.**
+> **One monotonic counter for every possible graph action — the
+> `kg_api.graph_epochs.event_id` sequence. Sub-counters may exist for narrower
+> scopes, but there is exactly one universal tick above them.**
 
-Every derivation resolves freshness against this one signal — exposed as
-`kg_api.get_committed_epoch()` and, in Python, the single helper
-`api/app/lib/freshness.py:read_committed_epoch()`. A derivation is **fresh** when
-the tick it was built at still equals the current tick (within its declared
-[staleness budget](#staleness-budgets)).
+`event_id` is a `BIGSERIAL`: one row per graph mutation event, monotonically
+increasing. That sequence *is* the universal tick — every action that records an
+event advances it. Every derivation resolves freshness against it through
+`kg_api.get_committed_epoch()` (in Python, the single helper
+`api/app/lib/freshness.py:read_committed_epoch()`), which reads the sequence via a
+[committed-prefix watermark](#reading-the-tick-safely-the-watermark) so an
+in-flight or out-of-order job can't expose a half-applied state. A derivation is
+**fresh** when the tick it was built at still equals the current tick (within its
+declared [staleness budget](#staleness-budgets)).
 
 ### Why it lives in application code, not a trigger
 
@@ -55,34 +63,69 @@ signal: deleting one object and adding another leaves the sum unchanged, so two
 different graph states can share a counter value (a derivation can read
 *false-fresh*).
 
-So the universal tick is advanced where the platform *can* see every mutation:
-the application choke point `AGEClient.refresh_epoch()` →
-`refresh_graph_metrics()`, which every mutation path is required to call,
-"regardless of whether the caller is FUSE, CLI, curl, or the web UI."
+So the tick is advanced where the platform *can* see every mutation: **application
+code records an epoch event when it commits a graph mutation.** `event_id` is the
+one signal that fires for the exact set of mutations the application chooses to
+announce — which is why making that set *complete* is the whole game (see below).
 
-### Eventual consistency — guaranteed convergence, not instant accuracy
+### Eventual consistency — convergence per recorded event-kind
 
-Because the tick is advanced *out of band* from the AGE write (not inside the
-same transaction), there is a brief window where it can lag the true graph state.
-We accept that and guarantee **convergence** instead:
+Because the event is recorded *out of band* from the AGE write (not inside one
+trigger), there is a brief window where the tick can lag the true graph state. We
+accept that and guarantee **convergence** — but be precise about its scope:
 
-- **Periodic backstop.** The background `refresh_graph_metrics()` sync recomputes
-  the snapshot and advances the tick on any detected change. So a count-changing
-  mutation advances the tick within one interval *even if a mutation path forgot
-  to signal it*. No mutation stays invisible forever.
-- **Explicit signals for count-preserving mutations.** Some AGE mutations don't
-  change object counts — annealing re-scopes an edge, a delete-plus-add nets to
-  zero. A checksum can't see these (and neither could a trigger). Those paths
-  **record an epoch event for their mutation kind**, which bumps the tick
-  directly. (This is why recording epoch events for *all* mutation kinds — not
-  just ingestion — is a prerequisite, tracked as #386.)
+> **Freshness converges for every mutation *kind* that records an epoch event.
+> It is blind to kinds that record none.**
 
-The practical contract for anyone writing graph-mutating code:
+Today only the **ingestion** path records events, so the clock is correct for
+ingestion and blind to edits and annealing. There is **no `COUNT`-checksum
+backstop** that rescues this: `refresh_graph_metrics()` recomputes object counts
+for statistics, but it never writes an epoch event, so it cannot advance this
+clock. The only thing that makes the tick universal is **#386 — record an event
+for every mutation kind.**
 
-> **If you mutate the graph, call `refresh_epoch()` (or record an epoch event)
-> when you're done.** Forgetting it doesn't corrupt anything — the periodic
-> backstop will catch any count change — but it delays freshness until the next
-> sync, and count-preserving changes won't be seen at all until you signal them.
+The concrete gap #386 closes: the **annealing path today records nothing** — it
+calls neither `record_epoch()` nor `graph_accel_invalidate()`, so after annealing
+re-scopes the graph, *both* the freshness clock and the in-memory accelerator are
+silently stale. The fix is a single mutation-completion helper that every
+mutating path calls:
+
+```text
+on graph mutation commit:
+    record_epoch(kind, ...)      # advances the universal tick (event_id)
+    graph_accel.invalidate()     # advances the graph_accel sub-counter + pg_notify
+```
+
+Recording both from one place means `event_id` and `graph_accel.generation`
+**co-advance by construction**. The practical contract for anyone writing
+graph-mutating code:
+
+> **If you mutate the graph, record an epoch event (via the mutation-completion
+> helper) when you commit.** A path that forgets doesn't corrupt anything, but its
+> mutations are *invisible to freshness* — derivations will serve stale data for
+> that kind until someone wires it in. There is no background sweep that covers
+> for you.
+
+### Reading the tick safely (the watermark)
+
+`get_committed_epoch()` does not return the raw `MAX(event_id)`. Epoch rows are
+inserted at a job's **start** (so the `event_id` can tag the nodes it creates),
+the job commits at its **end**, and jobs finish **out of order** — a long
+ingestion at id 6 can still be running when a short one at id 7 commits. So the
+clock returns the **contiguous committed prefix**:
+
+```text
+get_committed_epoch() := MIN(event_id WHERE status='in_progress') - 1
+                         if any job is in flight, else MAX(event_id)
+```
+
+An in-flight job at id N holds the clock at N-1, so derivations correctly read
+stale until it lands. Both `completed` and `failed` events count (only
+`in_progress` blocks) because ingestion commits **per-chunk** — a failed job may
+have committed partial changes, and ignoring it would read false-fresh. The
+`status` column makes this work, and a job must resolve its event on **every**
+exit (success/cancel/exception) or it would freeze the clock behind a phantom
+in-flight event.
 
 ### Sub-counters
 
