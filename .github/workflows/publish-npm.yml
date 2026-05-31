@@ -1,11 +1,18 @@
 name: Publish CLI to npm
 
-# Publishes @aaronsb/kg-cli to the npm registry.
+# Publishes @aaronsb/kg-cli to the npm registry via OIDC Trusted Publishing.
 #
-# npm retired the interactive OTP flow for automation, and a normal `npm login`
-# token cannot clear browser 2FA from a non-interactive shell (the EOTP failure
-# documented in publish.sh). So publishing runs here in CI using the NPM_TOKEN
-# repository secret (a 90-day automation token), which bypasses 2FA.
+# No npm token is used. npm retired classic Automation tokens, and a granular
+# token still trips npm's 2FA-on-publish enforcement (EOTP) in a non-interactive
+# shell. Instead we authenticate via GitHub OIDC against the Trusted Publisher
+# configured for @aaronsb/kg-cli on npmjs.com (Package Settings -> Trusted
+# Publisher -> GitHub Actions: aaronsb/knowledge-graph-system, workflow
+# publish-npm.yml). This bypasses 2FA, needs no secret, and never expires.
+#
+# Requirements: `id-token: write` permission, and npm >= 11.5.1 (the version
+# that added OIDC publish auth — newer than what Node 22 bundles, so we upgrade
+# npm explicitly). Do NOT set NODE_AUTH_TOKEN: a token would take precedence
+# over OIDC and reintroduce the EOTP failure.
 #
 # Trigger: on a pushed v* tag, or manually via workflow_dispatch.
 #
@@ -35,6 +42,9 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      # Required so npm can mint an OIDC token and attach build provenance,
+      # which is what lets a granular token publish without an interactive OTP.
+      id-token: write
 
     steps:
       - name: Checkout code
@@ -48,8 +58,12 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           registry-url: https://registry.npmjs.org
+
+      # Node 22 bundles npm 10.x; OIDC Trusted Publishing auth needs >= 11.5.1.
+      - name: Upgrade npm for OIDC publishing
+        run: npm install -g npm@latest
 
       # cli/package-lock.json is gitignored in this repo, so `npm ci` (which
       # requires a committed lockfile) is not usable here — use `npm install`.
@@ -77,9 +91,8 @@ jobs:
       - name: Publish to npm
         if: steps.check.outputs.already_published == 'false'
         working-directory: cli
-        run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        # Auth is via OIDC (Trusted Publisher) — intentionally no NODE_AUTH_TOKEN.
+        run: npm publish --provenance --access public
 
       - name: Summary
         run: |
