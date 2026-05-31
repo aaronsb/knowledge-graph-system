@@ -217,7 +217,7 @@ wheels = [
 
 [[package]]
 name = "kg-fuse"
-version = "0.1.2"
+version = "0.11.0"
 source = { editable = "." }
 dependencies = [
     { name = "httpx" },

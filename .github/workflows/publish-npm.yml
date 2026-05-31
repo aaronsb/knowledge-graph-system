@@ -1,0 +1,81 @@
+name: Publish CLI to npm
+
+# Publishes @aaronsb/kg-cli to the npm registry.
+#
+# npm retired the interactive OTP flow for automation, and a normal `npm login`
+# token cannot clear browser 2FA from a non-interactive shell (the EOTP failure
+# documented in publish.sh). So publishing runs here in CI using the NPM_TOKEN
+# repository secret (a 90-day automation token), which bypasses 2FA.
+#
+# Trigger: when a GitHub Release is published (create-release.yml cuts the tag
+# and release), or manually via workflow_dispatch.
+#
+# Note: the CLI is versioned INDEPENDENTLY of the platform release tag — a
+# v0.X.Y platform release does not imply a CLI bump. This job publishes whatever
+# version is in cli/package.json and skips cleanly if that version already
+# exists on npm, so it is safe to fire on every release.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  publish-npm:
+    name: Build and publish @aaronsb/kg-cli
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          # Full history + tags so cli/scripts/generate-version.js can resolve
+          # the version string via `git describe --tags`.
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org
+
+      # cli/package-lock.json is gitignored in this repo, so `npm ci` (which
+      # requires a committed lockfile) is not usable here — use `npm install`.
+      - name: Install dependencies
+        working-directory: cli
+        run: npm install
+
+      - name: Build CLI
+        working-directory: cli
+        run: npm run build
+
+      - name: Check whether this version is already published
+        id: check
+        working-directory: cli
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          if npm view "@aaronsb/kg-cli@$VERSION" version >/dev/null 2>&1; then
+            echo "already_published=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::@aaronsb/kg-cli@$VERSION is already on npm — skipping publish."
+          else
+            echo "already_published=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish to npm
+        if: steps.check.outputs.already_published == 'false'
+        working-directory: cli
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Summary
+        run: |
+          if [ "${{ steps.check.outputs.already_published }}" = "true" ]; then
+            echo "⏭️  @aaronsb/kg-cli@${{ steps.check.outputs.version }} already published — no action." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "✅ Published @aaronsb/kg-cli@${{ steps.check.outputs.version }} to npm." >> "$GITHUB_STEP_SUMMARY"
+          fi
