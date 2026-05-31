@@ -11,14 +11,17 @@ import { coloredCount, separator } from './colors';
 import { Table } from '../lib/table';
 import { setCommandHelp } from './help-formatter';
 
-/**
- * Standard hint shown when an artifact is stale, pointing at the reconcile path.
- * "Stale" means the graph has advanced past the epoch the artifact was computed
- * at (ADR-207) — the payload is still readable, just no longer current.
- */
+// Shared stale-guidance vocabulary, so `show`, `list`, and `cleanup` all phrase
+// staleness and its remedy identically (ADR-207). "Stale" means the graph has
+// advanced past the epoch the artifact was computed at — the payload is still
+// readable, just no longer current.
+const STALE_MEANING = 'the graph changed since computed';
+/** The reconcile command for one artifact, or `<id>` placeholder for guidance. */
+const regenerateCmd = (id: string | number = '<id>') => `kg artifact regenerate ${id}`;
+
+/** Standard hint shown when a specific artifact is stale, pointing at reconcile. */
 const STALE_HINT = (id: string | number) =>
-  colors.status.dim(`  Stale: the graph changed since this was computed. ` +
-    `Recompute with "kg artifact regenerate ${id}".`);
+  colors.status.dim(`  Stale: ${STALE_MEANING}. Recompute with "${regenerateCmd(id)}".`);
 
 export const artifactCommand = setCommandHelp(
   new Command('artifact'),
@@ -132,8 +135,8 @@ export const artifactCommand = setCommandHelp(
           const staleCount = result.artifacts.filter(a => !a.is_fresh).length;
           if (staleCount > 0) {
             console.log(colors.status.dim(
-              `\n  ○ ${staleCount} stale (graph changed since computed). ` +
-              `Recompute one with "kg artifact regenerate <id>", or clear stale ones with "kg artifact cleanup".`
+              `\n  ○ ${staleCount} stale (${STALE_MEANING}). ` +
+              `Recompute one with "${regenerateCmd()}", or clear stale ones with "kg artifact cleanup".`
             ));
           }
 
@@ -400,7 +403,7 @@ export const artifactCommand = setCommandHelp(
 
           if (!options.force) {
             console.log('\n' + colors.status.warning(`⚠ ${stale.length} stale artifact(s) would be deleted.`));
-            console.log(colors.status.dim('  Re-run with --force to delete them, or recompute one with "kg artifact regenerate <id>".'));
+            console.log(colors.status.dim(`  Re-run with --force to delete them, or recompute one with "${regenerateCmd()}".`));
             console.log(separator());
             return;
           }
