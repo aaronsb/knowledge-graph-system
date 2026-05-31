@@ -2,10 +2,12 @@ name: Publish CLI to npm
 
 # Publishes @aaronsb/kg-cli to the npm registry.
 #
-# npm retired the interactive OTP flow for automation, and a normal `npm login`
-# token cannot clear browser 2FA from a non-interactive shell (the EOTP failure
-# documented in publish.sh). So publishing runs here in CI using the NPM_TOKEN
-# repository secret (a 90-day automation token), which bypasses 2FA.
+# npm retired classic Automation tokens, and a granular token alone still trips
+# npm's 2FA-on-publish enforcement (EOTP) from a non-interactive shell. The
+# working pattern (proven in the jira-cloud repo) is to publish with
+# `id-token: write` + `--provenance`: npm attests the build via GitHub OIDC,
+# which satisfies the publish policy alongside the NPM_TOKEN secret. The token
+# must be a granular access token with read+write on the @aaronsb scope.
 #
 # Trigger: on a pushed v* tag, or manually via workflow_dispatch.
 #
@@ -35,6 +37,9 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      # Required so npm can mint an OIDC token and attach build provenance,
+      # which is what lets a granular token publish without an interactive OTP.
+      id-token: write
 
     steps:
       - name: Checkout code
@@ -48,7 +53,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           registry-url: https://registry.npmjs.org
 
       # cli/package-lock.json is gitignored in this repo, so `npm ci` (which
@@ -77,7 +82,7 @@ jobs:
       - name: Publish to npm
         if: steps.check.outputs.already_published == 'false'
         working-directory: cli
-        run: npm publish --access public
+        run: npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
