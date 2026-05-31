@@ -165,6 +165,23 @@ the migration path retires `get_vision_provider`'s parallel validation and
 config-loading in favour of the ADR-801 surfaces, capability by capability,
 behind the existing factory signature.
 
+> **Amendment (2026-05-31, post-ADR-803):** A scoping investigation found the
+> collapse is *thinner* than "§4 / Alternatives" originally framed it. `AIProvider`
+> **already declares `describe_image()`** (`ai_providers.py:421`) and
+> OpenAI/Anthropic/OpenRouter/Mock already implement it; `routes/ingest.py`
+> already calls `get_provider().describe_image()`. `_load_api_key` is 100%
+> duplicated and the catalog helpers ~80% duplicated between the two modules.
+> So the remaining work is **de-duplication + one call-site migration**
+> (`ingestion_worker.py`), not a rewrite. The genuine risk is *behavioral
+> fidelity*, not size: the ingestion `describe_image` is research-validated
+> (ADR-057 — `LITERAL_DESCRIPTION_PROMPT`, OpenAI `detail="high"`, temp 0.1) and
+> differs from the `ai_providers` one (different prompt, no high-detail, temp
+> 0.3, simpler return shape), and `OllamaProvider.describe_image` is not yet
+> implemented. A collapse must parameterize prompt/detail/temp, unify the
+> return shape, port Ollama vision, and golden-compare ingestion output. The
+> "Rejected: high-risk rewrite" alternative below is **superseded** by this
+> assessment. Tracked in issue #457.
+
 ## Consequences
 
 ### Positive
