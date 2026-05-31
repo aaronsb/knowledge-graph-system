@@ -87,6 +87,42 @@ class IngestionMixin:
             )
             return None
 
+    def complete_epoch(self, event_id: int, status: str = "completed") -> None:
+        """
+        Resolve an epoch event recorded by record_epoch().
+
+        ADR-207/#384: record_epoch() inserts the event as `in_progress`. Call
+        this with `completed` when the mutation transaction commits, or `failed`
+        when it aborts/rolls back. Until resolved, the event holds the committed
+        watermark (kg_api.get_committed_epoch()) just below its event_id, so
+        every materialized derivation correctly reads stale until the job lands.
+
+        Best-effort, like record_epoch(): a failure here is logged at ERROR (a
+        steady-state rate means the watermark can stall on a phantom in-flight
+        event and should be investigated) but never masks the job's own outcome.
+
+        Grep target: `complete_epoch failed`.
+        """
+        if event_id is None:
+            return
+        try:
+            conn = self.pool.getconn()
+            try:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        "SELECT kg_api.complete_graph_epoch(%s::bigint, %s::text)",
+                        (event_id, status),
+                    )
+            finally:
+                conn.commit()
+                self.pool.putconn(conn)
+        except Exception as e:
+            logger.error(
+                "complete_epoch failed (event_id=%s, status=%s): %s",
+                event_id, status, e,
+                exc_info=True,
+            )
+
     def create_source_node(
         self,
         source_id: str,

@@ -404,6 +404,14 @@ def run_ingestion_worker(
         tmp.write(content)
         tmp_path = tmp.name
 
+    # ADR-207/#384: the epoch event recorded mid-run (below) must be resolved on
+    # every exit path — success, cancel, or failure — or it stays in_progress
+    # and holds the committed watermark (kg_api.get_committed_epoch()) behind a
+    # phantom in-flight job, freezing freshness for every derivation.
+    event_id = None
+    age_client = None
+    epoch_resolved = False
+
     try:
         # Load text
         with open(tmp_path, 'r', encoding='utf-8') as f:
@@ -544,6 +552,10 @@ def run_ingestion_worker(
             # ADR-100: Check for cancellation at chunk boundary
             if job_queue.is_job_cancelled(job_id):
                 logger.info(f"Job {job_id} cancelled at chunk {i}/{len(chunks)}")
+                # ADR-207: resolve the epoch (counts toward the watermark either
+                # way — partial per-chunk commits are real graph changes).
+                age_client.complete_epoch(event_id, "failed")
+                epoch_resolved = True
                 return {
                     "status": "cancelled",
                     "chunks_processed": i - 1,
@@ -703,6 +715,12 @@ def run_ingestion_worker(
         except Exception as e:
             logger.warning(f"[{job_id}] Annealing launcher check failed: {e}")
 
+        # ADR-207: graph mutations for this ingestion are committed — resolve
+        # the epoch so the committed watermark advances past it. Done before
+        # close()/cost-calc so the connection pool is still open.
+        age_client.complete_epoch(event_id, "completed")
+        epoch_resolved = True
+
         # ADR-201: Invalidate graph_accel cache after graph mutations
         try:
             age_client.graph.invalidate()
@@ -732,6 +750,14 @@ def run_ingestion_worker(
             "filename": filename,
             "chunks_processed": len(chunks)
         }
+
+    except Exception:
+        # ADR-207: a crashed run must resolve its epoch as failed so it stops
+        # holding the committed watermark behind a phantom in-flight event.
+        # (Failed still counts toward the watermark — partial commits are real.)
+        if age_client is not None and not epoch_resolved:
+            age_client.complete_epoch(event_id, "failed")
+        raise
 
     finally:
         # Clean up temp file
