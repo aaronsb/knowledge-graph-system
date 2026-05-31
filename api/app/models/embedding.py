@@ -100,6 +100,8 @@ class EmbeddingProfileDetail(BaseModel):
     image_dimensions: Optional[int] = None
     image_precision: Optional[str] = None
     image_trust_remote_code: bool = False
+    # ADR-803: the image index's own vector_space, independent of text
+    image_vector_space: Optional[str] = None
 
     # Resources
     device: Optional[str] = None
@@ -158,9 +160,10 @@ class EmbeddingProfileCreateRequest(BaseModel):
     image_model_name: Optional[str] = Field(None, description="Image model")
     image_loader: Optional[str] = Field(None, description="Image loader")
     image_revision: Optional[str] = Field(None, description="Image model revision")
-    image_dimensions: Optional[int] = Field(None, description="Image embedding dimensions")
+    image_dimensions: Optional[int] = Field(None, description="Image embedding dimensions (independent of text dims, ADR-803)")
     image_precision: Optional[str] = Field('float16', description="Image precision")
     image_trust_remote_code: bool = Field(False, description="Trust remote code for image model")
+    image_vector_space: Optional[str] = Field(None, description="Independent vector_space of the image index (ADR-803); never compared to the text space")
 
     # Shorthand (maps to text slot for backward compat)
     provider: Optional[str] = Field(None, description="Shorthand for text_provider")

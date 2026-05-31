@@ -23,6 +23,7 @@ kg admin [options]
 - `rbac` - Manage roles, permissions, and access control (ADR-028)
 - `embedding` - Manage embedding profiles (text + image model configuration)
 - `extraction` - Manage AI extraction model configuration (ADR-041)
+- `vision` - Manage the vision (image->prose) provider (ADR-802)
 - `keys` - Manage API keys for AI providers (ADR-031, ADR-041)
 
 ---
@@ -781,6 +782,60 @@ kg set [options]
 | `--gpu-layers <n>` | GPU layers: -1=auto, 0=CPU only, >0=specific count | - |
 | `--num-threads <n>` | CPU threads for inference (default: 4) | - |
 | `--thinking-mode <mode>` | Thinking mode: off, low, medium, high (Ollama 0.12.x+) | - |
+
+### vision
+
+Manage the vision (image->prose) provider (ADR-802)
+
+**Usage:**
+```bash
+kg vision [options]
+```
+
+**Subcommands:**
+
+- `config` - Show the effective vision (image->prose) provider/model
+- `providers` - List providers and whether they have a vision-capable catalog model
+- `set` - Set/activate the vision (image->prose) provider
+
+---
+
+#### config
+
+Show the effective vision (image->prose) provider/model
+
+**Usage:**
+```bash
+kg config [options]
+```
+
+#### providers
+
+List providers and whether they have a vision-capable catalog model
+
+**Usage:**
+```bash
+kg providers [options]
+```
+
+#### set
+
+Set/activate the vision (image->prose) provider
+
+**Usage:**
+```bash
+kg set [options]
+```
+
+**Options:**
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--provider <provider>` | Provider: openai, anthropic, ollama, openrouter, llamacpp | - |
+| `--model <model>` | Vision model id (optional; resolved from the catalog when omitted) | - |
+| `--max-tokens <n>` | Max output tokens for image description | - |
+| `--temperature <n>` | Sampling temperature 0.0-1.0 | - |
+| `--no-activate` | Persist the provider config without making it the active vision provider | - |
 
 ### keys
 

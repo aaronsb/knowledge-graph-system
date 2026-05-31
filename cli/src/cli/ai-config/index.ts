@@ -18,4 +18,5 @@
 
 export { createEmbeddingCommand } from './embedding';
 export { createExtractionCommand } from './extraction';
+export { createVisionCommand } from './vision';
 export { createKeysCommand } from './keys';

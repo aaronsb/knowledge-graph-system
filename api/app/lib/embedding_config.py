@@ -21,7 +21,8 @@ _PROFILE_COLUMNS = """
     max_seq_length, normalize_embeddings,
     active, delete_protected, change_protected,
     created_at, updated_at, updated_by,
-    text_query_prefix, text_document_prefix
+    text_query_prefix, text_document_prefix,
+    image_vector_space
 """
 
 
@@ -60,6 +61,7 @@ def _row_to_dict(row) -> Dict[str, Any]:
         "updated_by": row[29],
         "text_query_prefix": row[30],
         "text_document_prefix": row[31],
+        "image_vector_space": row[32],  # ADR-803: independent image index space
         # Backward-compat aliases used by model manager and routes
         "provider": row[4],            # text_provider
         "model_name": row[5],          # text_model_name
@@ -162,8 +164,11 @@ def save_embedding_config(config: Dict[str, Any], updated_by: str = "api", force
     image_dimensions = config.get('image_dimensions')
     image_precision = config.get('image_precision', 'float16')
     image_trust_remote_code = config.get('image_trust_remote_code', False)
+    # ADR-803: the image index has its OWN vector_space, independent of the text
+    # space (never compared to it). Optional; NULL for text-only/multimodal.
+    image_vector_space = config.get('image_vector_space')
 
-    # Multimodal: clear image fields
+    # Multimodal: clear image fields (text model serves both roles)
     if multimodal:
         image_provider = None
         image_model_name = None
@@ -172,6 +177,7 @@ def save_embedding_config(config: Dict[str, Any], updated_by: str = "api", force
         image_dimensions = None
         image_precision = None
         image_trust_remote_code = False
+        image_vector_space = None
 
     try:
         client = AGEClient()
@@ -191,6 +197,7 @@ def save_embedding_config(config: Dict[str, Any], updated_by: str = "api", force
                         device, max_memory_mb, num_threads, batch_size,
                         max_seq_length, normalize_embeddings,
                         text_query_prefix, text_document_prefix,
+                        image_vector_space,
                         updated_by, active
                     ) VALUES (
                         %s, %s, %s,
@@ -201,6 +208,7 @@ def save_embedding_config(config: Dict[str, Any], updated_by: str = "api", force
                         %s, %s, %s, %s,
                         %s, %s,
                         %s, %s,
+                        %s,
                         %s, FALSE
                     )
                     RETURNING id
@@ -214,6 +222,7 @@ def save_embedding_config(config: Dict[str, Any], updated_by: str = "api", force
                     config.get('num_threads'), config.get('batch_size', 8),
                     config.get('max_seq_length'), config.get('normalize_embeddings', True),
                     config.get('text_query_prefix'), config.get('text_document_prefix'),
+                    image_vector_space,
                     updated_by
                 ))
 
@@ -512,12 +521,12 @@ def activate_embedding_config(config_id: int, updated_by: str = "api", force_dim
 
                 target_id, target_provider, target_model, target_dims, target_multimodal, target_img_dims = target_row
 
-                # Validate image/text dimension consistency for non-multimodal profiles
-                if not target_multimodal and target_img_dims is not None and target_dims != target_img_dims:
-                    cur.execute("ROLLBACK")
-                    return (False,
-                        f"Profile {config_id} has mismatched text ({target_dims}D) and image ({target_img_dims}D) dimensions. "
-                        "Text and image dimensions must match for non-multimodal profiles.")
+                # ADR-803: the image slot is an INDEPENDENT same-modality index,
+                # never compared to the text/prose space — its dimensions need
+                # NOT match the text model's. The former "text and image
+                # dimensions must match" guard (and chk_image_dimensions_match,
+                # dropped in migration 075) was a co-spatiality assumption the
+                # system never uses. No image/text dimension check on activate.
 
                 # Get currently active profile
                 cur.execute("""
@@ -698,6 +707,9 @@ def export_embedding_profile(profile_id: int) -> Optional[Dict[str, Any]]:
             "dimensions": config["image_dimensions"],
             "precision": config.get("image_precision"),
             "trust_remote_code": config.get("image_trust_remote_code", False),
+            # ADR-803: the image index's own vector_space, independent of the
+            # profile-level (text) vector_space and never compared to it.
+            "vector_space": config.get("image_vector_space"),
         }
 
     return result

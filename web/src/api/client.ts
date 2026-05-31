@@ -1277,9 +1277,47 @@ class APIClient {
       provider: string;
       requires_key: boolean;
       is_local: boolean;
+      supports_vision?: boolean;
     }>;
   }> {
     const response = await this.client.get('/admin/providers');
+    return response.data;
+  }
+
+  /**
+   * Vision (image->prose) provider config — active row + effective resolution
+   * (ADR-802). `config` is null when no explicit vision provider is set; in
+   * that case `effective.source === 'extraction_default'`.
+   */
+  async getVisionConfigDetail(): Promise<{
+    config: { provider: string; model_name: string; max_tokens: number | null; temperature: number | null; active: boolean } | null;
+    effective: { provider: string | null; model: string | null; source: string };
+  }> {
+    const response = await this.client.get('/admin/vision/config');
+    return response.data;
+  }
+
+  /**
+   * Set/activate the vision provider (ADR-802).
+   */
+  async updateVisionConfig(config: {
+    provider: string;
+    model_name?: string;
+    max_tokens?: number;
+    temperature?: number;
+    active?: boolean;
+  }): Promise<{ status: string; provider: string; effective: { provider: string | null; model: string | null; source: string } }> {
+    const response = await this.client.post('/admin/vision/config', config);
+    return response.data;
+  }
+
+  /**
+   * Per-provider vision-capability metadata (catalog-driven, ADR-802).
+   */
+  async getVisionProviders(): Promise<{
+    providers: Array<{ provider: string; supports_vision: boolean; vision_models: string[] }>;
+  }> {
+    const response = await this.client.get('/admin/vision/providers');
     return response.data;
   }
 

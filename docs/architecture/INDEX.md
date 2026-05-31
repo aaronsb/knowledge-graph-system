@@ -163,6 +163,7 @@ _Providers, extraction, convergence, prompts_
 | [ADR-800](./ai-embeddings/ADR-800-dynamic-model-catalog-and-openrouter-support.md) | Dynamic Model Catalog and OpenRouter Support | Accepted |
 | [ADR-801](./ai-embeddings/ADR-801-uniform-provider-configuration-contract.md) | Uniform Provider Configuration Contract | Draft |
 | [ADR-802](./ai-embeddings/ADR-802-unify-vision-providers-under-the-uniform-provider-contract.md) | Unify Vision Providers Under the Uniform Provider Contract | Accepted |
+| [ADR-803](./ai-embeddings/ADR-803-modality-embedding-architecture-universal-text-space-and-independent-per-modality-embedders.md) | Modality Embedding Architecture — Universal Text Space and Independent Per-Modality Embedders | Accepted |
 
 ## Meta/Process
 _Documentation, workflow, access models, ADR system_

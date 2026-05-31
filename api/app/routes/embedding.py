@@ -170,14 +170,12 @@ async def create_embedding_config(
                 detail="multimodal=true: image fields must be absent (text model serves both roles)"
             )
 
-        # Validate dimension match for non-multimodal with image
-        if not request.multimodal and request.image_dimensions:
-            text_dims = request.text_dimensions or request.embedding_dimensions
-            if text_dims and text_dims != request.image_dimensions:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Dimension mismatch: text={text_dims}, image={request.image_dimensions}. Must match for non-multimodal profiles."
-                )
+        # ADR-803: the image slot is an INDEPENDENT same-modality index, never
+        # compared to the text/prose space — so its dimensions need NOT match
+        # the text model's. The old "dimension mismatch" rejection (and the
+        # chk_image_dimensions_match constraint, dropped in migration 075) was a
+        # co-spatiality assumption the system never uses. No dimension-match
+        # check here by design.
 
         # Validate precision
         text_precision = request.text_precision
