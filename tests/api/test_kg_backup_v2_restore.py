@@ -183,6 +183,36 @@ def test_clone_writer_reconstructs_graph(client_with_cleanup):
         f"WHERE r.learned_id = '{NS}s1' RETURN count(r) AS n") == 1
 
 
+def test_epoch_simple_restamp_overrides_carried_stamps(client_with_cleanup):
+    """ADR-102 P5 epoch-simple: ``epoch_restamp`` overrides the carried per-record
+    epoch stamps with LOCAL clocks — every instance gets the one restore event_id,
+    every concept gets the target's current concept epoch. The backup's own
+    stamps (event_id 11, epochs 11/12) must NOT survive."""
+    client = client_with_cleanup
+    backup = _namespaced_backup()  # carries created_at_event_id=11, epochs 11/12
+
+    RESTORE_EVENT = 770077   # the single restore graph_epochs.event_id
+    CONCEPT_EPOCH = 880088   # target's current document_ingestion_counter
+
+    DataImporter.import_backup(
+        client, backup, overwrite_existing=True,
+        epoch_restamp={"event_id": RESTORE_EVENT, "concept_epoch": CONCEPT_EPOCH},
+    )
+
+    # Instance event_id restamped to the restore event (carried 11 is gone).
+    assert _scalar(client,
+        f"MATCH (i:Instance {{instance_id:'{NS}i1'}}) WHERE i.created_at_event_id = {RESTORE_EVENT} RETURN count(i) AS n") == 1
+    assert _scalar(client,
+        f"MATCH (i:Instance {{instance_id:'{NS}i1'}}) WHERE i.created_at_event_id = 11 RETURN count(i) AS n") == 0
+
+    # Both concepts restamped to the local concept epoch (carried 11/12 gone).
+    assert _scalar(client,
+        f"MATCH (c:Concept) WHERE c.concept_id STARTS WITH '{NS}' "
+        f"AND c.created_at_epoch = {CONCEPT_EPOCH} AND c.last_seen_epoch = {CONCEPT_EPOCH} RETURN count(c) AS n") == 2
+    assert _scalar(client,
+        f"MATCH (c:Concept) WHERE c.concept_id STARTS WITH '{NS}' AND c.created_at_epoch = 11 RETURN count(c) AS n") == 0
+
+
 def test_reimport_is_idempotent(client_with_cleanup):
     """Re-importing the same backup must not duplicate edges (MERGE-by-id)."""
     client = client_with_cleanup
