@@ -19,7 +19,7 @@ any ERROR was found (CI convention, matching the sibling lint tools).
 Checks implemented (see ``CHECK_CODES`` for the stable code registry):
   - HEADER presence / well-formedness and format_version family negotiation (§7)
   - kg-backup/2 required header fields (§3.1)
-  - legacy kg-backup/1 flat shape detection (notice, then best-effort) (§7)
+  - single-path: refuse any non-kg-backup/2 object (no legacy upcast) (§7)
   - embedding-profile identity string {provider}:{model}@{dims} (§3.2)
   - dictionary index resolution: profile / rel-type / content_type / kind / actor (§4)
   - cascading embedding-profile resolution record→ontology→backup (§4.1)
@@ -85,9 +85,9 @@ CHECK_CODES = {
     "E_FORMAT_VERSION_SHAPE": "format_version is not '{family}/{major}'.",
     "E_UNKNOWN_FAMILY": "Unknown format family (refuse).",
     "E_HIGHER_MAJOR": "Higher major version than supported (refuse).",
+    "E_LOWER_MAJOR": "Lower major than supported — legacy removed, single-path (refuse).",
     "E_MISSING_HEADER_FIELD": "Required kg-backup/2 header field missing.",
     "E_NO_BULK": "Missing 'bulk' region.",
-    "N_LEGACY_FORMAT": "Legacy kg-backup/1 flat format (best-effort validation).",
     # embedding profiles
     "E_PROFILE_IDENTITY": "embedding profile identity not '{provider}:{model}@{dims}'.",
     "E_DEFAULT_PROFILE_RANGE": "default_embedding_profile index out of range.",
@@ -103,8 +103,9 @@ CHECK_CODES = {
     # referential integrity
     "E_REL_FROM_MISSING": "relationship.from concept_id not in concepts[].",
     "E_REL_TO_MISSING": "relationship.to concept_id not in concepts[].",
-    "E_INSTANCE_CONCEPT_MISSING": "instance.concept_id not in concepts[].",
     "E_INSTANCE_SOURCE_MISSING": "instance.source_id not in sources[].",
+    "E_EVIDENCE_CONCEPT_MISSING": "evidence.concept_id not in concepts[].",
+    "E_EVIDENCE_INSTANCE_MISSING": "evidence.instance_id not in instances[].",
     "E_LEARNED_ID_MISSING": "edge properties.learned_id not an existing source_id.",
     # epochs
     "E_EVENT_ID_UNRESOLVED": "instance.created_at_event_id not in graph_epochs[].",
@@ -199,11 +200,10 @@ def validate_backup(obj: Dict[str, Any]) -> ValidationResult:
     returns a :class:`ValidationResult`. Performs NO I/O — no file, network,
     database, or container access. Safe to call from pytest or an API handler.
 
-    Negotiation (§7) gates the depth of validation:
+    Negotiation (§7) — single-path, no backwards-compat:
       - ``kg-backup/2`` (exact major): full header + bulk validation.
-      - ``kg-backup/1`` (legacy flat): emits ``N_LEGACY_FORMAT`` notice and
-        validates the applicable subset (duplicates, basic referential links).
-      - higher major / unknown family: emits ERROR and stops (refuse, §7).
+      - any other major / unknown family / headerless legacy shape: ERROR, stop
+        (refuse). The legacy flat format was removed; there is no upcast path.
 
     Args:
         obj: the parsed backup object.
@@ -219,20 +219,9 @@ def validate_backup(obj: Dict[str, Any]) -> ValidationResult:
         result.add(ERROR, "E_NOT_OBJECT", "Backup object is not a JSON object.", "$")
         return result
 
-    # ---- Legacy detection (§7 case 2): flat version/type/data, no header ----
-    if "header" not in obj and "version" in obj and "data" in obj:
-        result.format_version = str(obj.get("version"))
-        result.add(
-            NOTICE,
-            "N_LEGACY_FORMAT",
-            f"Legacy kg-backup/1 flat format detected (version={obj.get('version')!r}, "
-            f"type={obj.get('type')!r}); validating applicable subset only.",
-            "$",
-        )
-        _validate_legacy(obj, result)
-        return result
-
     # ---- HEADER presence ----
+    # Single-path (§7): there is exactly one backup model. A headerless object —
+    # including the removed legacy kg-backup/1 flat shape — is refused here.
     header = obj.get("header")
     if not isinstance(header, dict):
         result.add(ERROR, "E_NO_HEADER", "Missing or non-object 'header' region.", "$.header")
@@ -275,10 +264,13 @@ def validate_backup(obj: Dict[str, Any]) -> ValidationResult:
         return result
 
     if major < NATIVE_MAJOR:
-        # Known family, lower major embedded under a header — treat as legacy notice.
-        result.add(NOTICE, "N_LEGACY_FORMAT",
-                   f"Lower-major {fmt!r}; validating applicable subset.",
+        # Single-path (§7): no backwards-compat / upcasting. A lower major is the
+        # removed prototype format — refuse rather than best-effort validate.
+        result.add(ERROR, "E_LOWER_MAJOR",
+                   f"format_version {fmt!r} is a lower major than {KNOWN_FAMILY}/{NATIVE_MAJOR}; "
+                   f"the legacy format was removed (single-path, spec §7) — refuse.",
                    "$.header.format_version")
+        return result
 
     # ---- kg-backup/2 full validation ----
     _validate_header(header, result)
@@ -333,33 +325,24 @@ def _validate_header(header: Dict[str, Any], result: ValidationResult) -> None:
 
 def _resolve_concept_profile(
     concept: Dict[str, Any],
-    ontologies_by_name: Dict[str, Any],
     backup_default: Any,
 ) -> Optional[int]:
     """Resolve a concept's effective embedding-profile index via the cascade (§4.1).
 
-    Order, most-specific-wins: record override -> ontology default ->
-    backup default. Returns the first present integer index, or ``None`` if the
-    cascade yields nothing.
+    Concepts use the 2-tier cascade — record override -> backup default — with
+    NO ontology tier. A concept is cross-ontology by design (it associates with
+    ontologies only via APPEARS->Source{document} and may span several), so it has
+    no single home ontology to inherit from (BACKUP_OBJECT_SPEC §4.1, ADR-102 P2
+    decision). The ontology tier is reserved for ontology-scoped records (sources).
+
+    Returns the first present integer index, or ``None`` if neither tier yields one.
 
     @verified cffa180b
     """
     # 1. record override
     if _is_int_index(concept.get("embedding_profile")):
         return concept["embedding_profile"]
-    # 2. ontology default (concept may name its ontology via 'document'/'ontology')
-    #
-    # OPEN ITEM (BACKUP_OBJECT_SPEC §4.1): concept records carry no ontology field
-    # in the current spec — concepts associate with an ontology only indirectly via
-    # APPEARS->Source{document}. We key on a 'ontology'/'document' field IF present
-    # and otherwise fall through to the backup default. ADR-102 P2 must pin the
-    # concept->ontology association (add a hint field, or drop the ontology tier for
-    # concepts); update this resolution in lockstep when it does.
-    ont_name = concept.get("ontology") or concept.get("document")
-    ont = ontologies_by_name.get(ont_name) if ont_name else None
-    if isinstance(ont, dict) and _is_int_index(ont.get("default_embedding_profile")):
-        return ont["default_embedding_profile"]
-    # 3. backup default
+    # 2. backup default
     if _is_int_index(backup_default):
         return backup_default
     return None
@@ -398,11 +381,6 @@ def _validate_bulk(
     n_actors = len(header.get("actors") or [])
     backup_default = header.get("default_embedding_profile")
 
-    ontologies_by_name = {}
-    for ont in (header.get("ontologies") or []):
-        if isinstance(ont, dict) and "name" in ont:
-            ontologies_by_name[ont["name"]] = ont
-
     faithful = isinstance(graph_epochs, list)
 
     # ---- concepts: ids, dup, profile index, cascade, epoch fields ----
@@ -426,8 +404,8 @@ def _validate_bulk(
                        f"[0,{n_profiles}).",
                        f"$.bulk.concepts[{i}].embedding_profile")
 
-        # cascade resolves to a valid profile
-        resolved = _resolve_concept_profile(c, ontologies_by_name, backup_default)
+        # cascade resolves to a valid profile (concepts: record → backup, no ontology tier)
+        resolved = _resolve_concept_profile(c, backup_default)
         if resolved is None:
             result.add(ERROR, "E_NO_PROFILE_CASCADE",
                        f"concept {cid!r} resolves to no embedding-profile via "
@@ -492,7 +470,8 @@ def _validate_bulk(
                            f"an existing source_id (spec §5.4.1).",
                            f"$.bulk.relationships[{i}].properties.learned_id")
 
-    # ---- instances: ids, dup, concept/source integrity, event_id ----
+    # ---- instances: UNIQUE per instance_id (normalized — no concept_id; the
+    #      Concept->Instance M:N links live in the separate evidence stream) ----
     event_ids = set()
     if faithful:
         for ep in graph_epochs:
@@ -511,11 +490,6 @@ def _validate_bulk(
                            f"$.bulk.instances[{i}].instance_id")
             instance_ids.add(iid)
 
-        cid = inst.get("concept_id")
-        if cid is not None and cid not in concept_ids:
-            result.add(ERROR, "E_INSTANCE_CONCEPT_MISSING",
-                       f"instance.concept_id {cid!r} not present in concepts[].",
-                       f"$.bulk.instances[{i}].concept_id")
         sid = inst.get("source_id")
         if sid is not None and sid not in source_ids:
             result.add(ERROR, "E_INSTANCE_SOURCE_MISSING",
@@ -530,6 +504,21 @@ def _validate_bulk(
                            f"instance.created_at_event_id={ev} does not resolve to a "
                            f"graph_epochs[].event_id (spec §5.3).",
                            f"$.bulk.instances[{i}].created_at_event_id")
+
+    # ---- evidence: Concept->Instance links resolve to existing ids (§5.3.1) ----
+    for i, ev in enumerate(bulk.get("evidence") or []):
+        if not isinstance(ev, dict):
+            continue
+        cid = ev.get("concept_id")
+        if cid is not None and cid not in concept_ids:
+            result.add(ERROR, "E_EVIDENCE_CONCEPT_MISSING",
+                       f"evidence.concept_id {cid!r} not present in concepts[].",
+                       f"$.bulk.evidence[{i}].concept_id")
+        iid = ev.get("instance_id")
+        if iid is not None and iid not in instance_ids:
+            result.add(ERROR, "E_EVIDENCE_INSTANCE_MISSING",
+                       f"evidence.instance_id {iid!r} not present in instances[].",
+                       f"$.bulk.evidence[{i}].instance_id")
 
     # ---- graph_epochs: kind/actor index resolution (§5.6) ----
     if faithful:
@@ -546,80 +535,6 @@ def _validate_bulk(
                 result.add(ERROR, "E_EPOCH_ACTOR_RANGE",
                            f"graph_epoch.actor={actor} out of range [0,{n_actors}).",
                            f"$.bulk.graph_epochs[{i}].actor")
-
-
-def _validate_legacy(obj: Dict[str, Any], result: ValidationResult) -> None:
-    """Best-effort validation of a legacy kg-backup/1 flat object (§7 case 2).
-
-    Legacy has flat ``version``/``type``/``data`` with inline strings and no
-    header/epoch fields. Only duplicate-id and basic referential checks apply.
-
-    @verified cffa180b
-    """
-    data = obj.get("data")
-    if not isinstance(data, dict):
-        return
-    concepts = data.get("concepts") or []
-    sources = data.get("sources") or []
-    instances = data.get("instances") or []
-    relationships = data.get("relationships") or []
-
-    concept_ids = set()
-    for i, c in enumerate(concepts):
-        if not isinstance(c, dict):
-            continue
-        cid = c.get("concept_id")
-        if cid is not None:
-            if cid in concept_ids:
-                result.add(ERROR, "E_DUP_CONCEPT_ID", f"duplicate concept_id {cid!r}.",
-                           f"$.data.concepts[{i}].concept_id")
-            concept_ids.add(cid)
-
-    source_ids = set()
-    for i, s in enumerate(sources):
-        if not isinstance(s, dict):
-            continue
-        sid = s.get("source_id")
-        if sid is not None:
-            if sid in source_ids:
-                result.add(ERROR, "E_DUP_SOURCE_ID", f"duplicate source_id {sid!r}.",
-                           f"$.data.sources[{i}].source_id")
-            source_ids.add(sid)
-
-    instance_ids = set()
-    for i, inst in enumerate(instances):
-        if not isinstance(inst, dict):
-            continue
-        iid = inst.get("instance_id")
-        if iid is not None:
-            if iid in instance_ids:
-                result.add(ERROR, "E_DUP_INSTANCE_ID", f"duplicate instance_id {iid!r}.",
-                           f"$.data.instances[{i}].instance_id")
-            instance_ids.add(iid)
-        cid = inst.get("concept_id")
-        if cid is not None and cid not in concept_ids:
-            result.add(ERROR, "E_INSTANCE_CONCEPT_MISSING",
-                       f"instance.concept_id {cid!r} not present in concepts[].",
-                       f"$.data.instances[{i}].concept_id")
-        sid = inst.get("source_id")
-        if sid is not None and sid not in source_ids:
-            result.add(ERROR, "E_INSTANCE_SOURCE_MISSING",
-                       f"instance.source_id {sid!r} not present in sources[].",
-                       f"$.data.instances[{i}].source_id")
-
-    for i, r in enumerate(relationships):
-        if not isinstance(r, dict):
-            continue
-        frm = r.get("from")
-        if frm is not None and frm not in concept_ids:
-            result.add(ERROR, "E_REL_FROM_MISSING",
-                       f"relationship.from {frm!r} not present in concepts[].",
-                       f"$.data.relationships[{i}].from")
-        to = r.get("to")
-        if to is not None and to not in concept_ids:
-            result.add(ERROR, "E_REL_TO_MISSING",
-                       f"relationship.to {to!r} not present in concepts[].",
-                       f"$.data.relationships[{i}].to")
 
 
 # ---------------------------------------------------------------------------
@@ -719,7 +634,8 @@ def _selftest() -> int:
         "bulk": {
             "concepts": [{"concept_id": "c1", "label": "A"}],
             "sources": [{"source_id": "s1", "content_type": 0}],
-            "instances": [{"instance_id": "i1", "concept_id": "c1", "source_id": "s1"}],
+            "instances": [{"instance_id": "i1", "source_id": "s1"}],
+            "evidence": [{"concept_id": "c1", "instance_id": "i1"}],
             "relationships": [
                 {"from": "c1", "to": "c1", "type": 0,
                  "properties": {"learned_id": "s1"}}
@@ -744,7 +660,11 @@ def _selftest() -> int:
                 {"concept_id": "c1"}, {"concept_id": "c1"},  # dup
             ],
             "sources": [{"source_id": "s1", "content_type": 5}],  # out of range
-            "instances": [{"instance_id": "i1", "concept_id": "cX", "source_id": "sX"}],
+            "instances": [{"instance_id": "i1", "source_id": "sX"}],  # source missing
+            "evidence": [
+                {"concept_id": "cX", "instance_id": "i1"},   # concept missing
+                {"concept_id": "c1", "instance_id": "iX"},   # instance missing
+            ],
             "relationships": [
                 {"from": "cZ", "to": "c1", "type": 7,
                  "properties": {"learned_id": "sZ"}}
@@ -757,18 +677,24 @@ def _selftest() -> int:
     codes = {i.code for i in r2.issues}
     expected = {
         "E_PROFILE_IDENTITY", "E_DEFAULT_PROFILE_RANGE", "E_DUP_CONCEPT_ID",
-        "E_CONTENT_TYPE_RANGE", "E_INSTANCE_CONCEPT_MISSING",
-        "E_INSTANCE_SOURCE_MISSING", "E_REL_FROM_MISSING", "E_REL_TYPE_RANGE",
+        "E_CONTENT_TYPE_RANGE", "E_INSTANCE_SOURCE_MISSING",
+        "E_EVIDENCE_CONCEPT_MISSING", "E_EVIDENCE_INSTANCE_MISSING",
+        "E_REL_FROM_MISSING", "E_REL_TYPE_RANGE",
         "E_LEARNED_ID_MISSING", "E_DERIVED_PRESENT",
     }
     missing = expected - codes
     assert not missing, f"invalid sample missing expected codes: {missing}"
 
-    # legacy detection
+    # single-path: the removed legacy flat shape (no header) is refused
     legacy = {"version": "1.0", "type": "full", "data": {"concepts": [], "sources": [],
               "instances": [], "relationships": []}}
     r3 = validate_backup(legacy)
-    assert any(i.code == "N_LEGACY_FORMAT" for i in r3.issues), "legacy notice expected"
+    assert not r3.ok, "legacy flat shape must be refused"
+    assert any(i.code == "E_NO_HEADER" for i in r3.issues), "legacy flat shape → E_NO_HEADER"
+
+    # single-path: a lower-major under a header is also refused (no upcast)
+    r4 = validate_backup({"header": {"format_version": "kg-backup/1"}, "bulk": {}})
+    assert any(i.code == "E_LOWER_MAJOR" for i in r4.issues), "lower major must be refused"
 
     print("selftest: PASS")
     return 0

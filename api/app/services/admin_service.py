@@ -155,11 +155,16 @@ class AdminService:
         backup_path = Path(backup_file)
         file_size_mb = backup_path.stat().st_size / (1024 * 1024)
 
-        # Load backup to get statistics
+        # Load backup to get statistics (single kg-backup/2 model: counts come from
+        # the bulk record streams, not a top-level statistics field).
         with open(backup_path, 'r') as f:
             backup_data = json.load(f)
 
-        statistics = backup_data.get('statistics', {})
+        from ...lib.serialization import KgBackupV2Reader
+        _counts = KgBackupV2Reader(backup_data).counts()
+        statistics = {
+            k: _counts[k] for k in ("concepts", "sources", "instances", "relationships", "vocabulary")
+        }
 
         # TODO: Add integrity assessment
         integrity = None

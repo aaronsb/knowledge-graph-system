@@ -220,37 +220,45 @@ written **once** in the header, not restated across every concept.
 
 ### 4.1 Cascading-default resolution order
 
-The embedding-profile reference for any record **cascades**. A record states
-only its *override*; absent an override it inherits from its parent scope. The
-resolution order, most-specific-wins:
+The embedding-profile reference for a record **cascades**. A record states only
+its *override*; absent an override it inherits from a parent scope. **The tiers
+available depend on whether the record is ontology-scoped:**
+
+**Ontology-scoped records (`sources`, and any media keyed by them)** — full
+3-tier cascade (most-specific-wins):
 
 ```
-1. record-level override     (concept.embedding_profile)        — if present
-2. ontology-level default    (ontologies[i].default_embedding_profile) — else
+1. record-level override     (source.embedding_profile)          — if present
+2. ontology-level default    (ontologies[i].default_embedding_profile, matched
+                              by the record's `document`)         — else
 3. backup-level default      (header.default_embedding_profile)  — else
 ```
 
+**Concepts** — 2-tier cascade, **no ontology tier**:
+
+```
+1. record-level override     (concept.embedding_profile)         — if present
+2. backup-level default      (header.default_embedding_profile)  — else
+```
+
+> **Why concepts skip the ontology tier (ADR-102 P2 decision).** A concept is
+> **cross-ontology by design**: it associates with ontologies only indirectly via
+> `APPEARS → Source{document}` and the same concept may appear in *several*
+> ontologies (that is exactly what integration/dedup produces). It therefore has no
+> single "home ontology" to inherit a profile from, and forcing one would encode a
+> lossy arbitrary pick into the format. In practice one embedding profile is active
+> per backup, so `header.default_embedding_profile` covers virtually all concepts;
+> a per-concept `embedding_profile` override handles the rare mixed-profile backup.
+
 - A backup with **one uniform** embedding profile declares it once as
   `header.default_embedding_profile` and emits **no** per-record refs.
-- A **mixed** backup declares per-ontology defaults; only records that deviate
-  from their ontology default carry an explicit `embedding_profile`.
+- A **mixed** backup declares per-ontology defaults (for sources) and per-concept
+  overrides only where a concept deviates from the backup default.
 - The same cascade pattern is the model for any future header dictionary whose
   values are scope-defaultable; today only the embedding profile cascades.
 
-> **OPEN ITEM (resolve in ADR-102 P2 — export).** The ontology tier above assumes
-> a concept can be associated with an ontology, but a concept record (§5.1) carries
-> **no** ontology field — concepts associate with an ontology only indirectly, via
-> `APPEARS → Source{document}`. P2 must pin one of: (a) add an explicit ontology
-> hint to the concept record so the ontology tier resolves, or (b) drop the ontology
-> tier for concepts entirely (concept cascade = record-override → backup-default),
-> reserving per-ontology defaults for source/media records. Until pinned, a consumer
-> resolving a concept's profile falls through to the backup-level default. The
-> offline validator (`lint_backup.py`) currently keys the ontology tier on a
-> `concept.ontology`/`concept.document` field if present and otherwise falls through
-> — it must be updated in lockstep when this is resolved.
-
-A consumer resolves a record's effective profile by walking 1 → 2 → 3 and taking
-the first index present. The resolved index then keys
+A consumer resolves a record's effective profile by walking its tiers in order and
+taking the first index present. The resolved index then keys
 `header.embedding_profiles[]` for the keep-vs-recompute decision (ADR-102 §6).
 
 ---
@@ -267,6 +275,7 @@ grounded in the current exporter (`api/lib/serialization.py`,
     "concepts":      [ ... ],
     "sources":       [ ... ],
     "instances":     [ ... ],
+    "evidence":      [ ... ],
     "relationships": [ ... ],
     "vocabulary":    [ ... ],
     "graph_epochs":  [ ... ]
@@ -301,13 +310,30 @@ grounded in the current exporter (`api/lib/serialization.py`,
 
 ### 5.3 instances
 
+Instances are **normalized**: one record per instance node, **unique by
+`instance_id`**, carrying NO `concept_id`. An instance belongs to exactly one
+source (`FROM_SOURCE`) but may be evidenced by *many* concepts (`EVIDENCED_BY` is
+M:N) — those links live in the separate `evidence` stream (§5.3.1), so the quote
+text is stored once rather than repeated per evidenced concept. (The legacy
+`kg-backup/1` exporter denormalized this, emitting one instance row per concept
+with `concept_id` inline and the quote duplicated.)
+
 | Field | Type | Notes |
 |---|---|---|
-| `instance_id` | string | App-assigned. |
+| `instance_id` | string | App-assigned, unique within the backup. Participates in ID remapping. |
 | `quote` | string | Evidence quote. |
-| `concept_id` | string | The evidenced concept (`(c)-[:EVIDENCED_BY]->(i)`). Participates in ID remapping. |
 | `source_id` | string | The originating source (`(i)-[:FROM_SOURCE]->(s)`). Participates in ID remapping. |
 | `created_at_event_id` | integer | FK into `graph_epochs.event_id` (ADR-203). New in `kg-backup/2`. In **faithful** epoch mode it is remapped through the event-ID map; in **simple** mode all instances are restamped with the single restore event (ADR-102 §3). The legacy exporter dropped this entirely. |
+
+### 5.3.1 evidence
+
+The `evidence` stream carries the M:N **Concept→Instance** `EVIDENCED_BY` links,
+one record per link. Restore reconstructs the `EVIDENCED_BY` edges from it.
+
+| Field | Type | Notes |
+|---|---|---|
+| `concept_id` | string | The evidencing concept. Must exist in `concepts[]`. Participates in ID remapping. |
+| `instance_id` | string | The evidenced instance. Must exist in `instances[]`. Participates in ID remapping. |
 
 ### 5.4 relationships
 
@@ -419,17 +445,23 @@ contract for that version. A producer never downgrades silently.
 **Consumer.** On open, reads `header.format_version` *first* and:
 
 1. **Exact major match** (`kg-backup/2`) — accept and apply.
-2. **Known family, lower major** (`kg-backup/1` — the legacy `1.0` JSON shape:
-   flat `version`/`type`/`data`, no header, no epoch fields, inline type/MIME
-   strings) — a consumer MAY accept it through an explicit upcasting reader that
-   synthesizes a minimal HEADER (one default embedding profile, interns the
-   inline strings) and supplies the missing epoch fields as null/simple-mode
-   defaults. Acceptance of older majors is a consumer capability, never assumed.
+2. **Known family, lower major** — **refuse.** This platform is **single-path**:
+   there is exactly one backup model and **no backwards-compatibility / upcasting
+   layer** (ADR-102 P3). The pre-ADR-102 `1.0` JSON shape (flat
+   `version`/`type`/`data`, no header) was a prototype and has been **removed** —
+   no producer emits it and no consumer reads it.
 3. **Known family, higher major** — **refuse.** A `kg-backup/2` consumer MUST NOT
    attempt a `kg-backup/3` object; it may not understand new required HEADER
    dictionaries, and partially applying primary inputs is unsafe (ADR-102 §8:
    restore passes through transiently inconsistent states).
 4. **Unknown family** — refuse.
+
+> **Why no upcast.** The numbering is incidental — what matters is that the
+> running system has a single backup format end-to-end (export, archive, restore,
+> checkpoint). A compatibility shim for the removed prototype would be exactly the
+> "fallback to old methods we don't actively use" the convergence set out to
+> delete. `KgBackupV2Reader` enforces this: it refuses any object whose
+> `format_version` is not `kg-backup/<=2`.
 
 `schema_version` and `source.version` are **informational** and never gate
 acceptance — only `format_version` does. The major component bumps on any change

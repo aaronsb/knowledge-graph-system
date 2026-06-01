@@ -23,8 +23,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from api.lib.console import Console, Colors
 from api.lib.config import Config
 from api.lib.age_ops import AGEConnection, AGEQueries
-from api.lib.serialization import DataImporter, BackupFormat
-from api.lib.integrity import BackupAssessment, DatabaseIntegrity
+from api.lib.serialization import DataImporter, KgBackupV2Reader
+from api.lib.integrity import DatabaseIntegrity
 from api.lib.restitching import ConceptMatcher
 
 
@@ -103,22 +103,17 @@ class RestoreCLI:
             Console.error(f"✗ Invalid backup file: {e}")
             sys.exit(1)
 
-        # Assess backup before restore
+        # Assess external dependencies before restore (single kg-backup/2 model).
+        # Format validity was already gated by validate_backup above.
         Console.info("\nAnalyzing backup...")
-        assessment = BackupAssessment.analyze_backup(backup_data)
-        BackupAssessment.print_assessment(assessment)
-
-        # Check for serious issues
-        if assessment["issues"]:
-            Console.error("\n⚠ This backup has integrity issues!")
-            if not Console.confirm("Continue anyway?"):
-                Console.warning("Restore cancelled")
-                sys.exit(0)
+        external_concepts = KgBackupV2Reader(backup_data).external_concept_ids()
+        if external_concepts:
+            Console.warning(f"  ⚠ {len(external_concepts)} cross-ontology concept references")
 
         # Handle external dependencies - MUST choose stitch or prune
         restitch_action = None
-        if assessment["external_dependencies"]["concepts"]:
-            ext_count = len(assessment["external_dependencies"]["concepts"])
+        if external_concepts:
+            ext_count = len(external_concepts)
 
             # Check if target database is empty (nothing to stitch to)
             client = self.conn.get_client()
@@ -159,9 +154,18 @@ class RestoreCLI:
                     Console.warning("Restore cancelled")
                     sys.exit(0)
 
-        # Check for conflicts
-        if backup_data.get('ontology'):
-            ontology_name = backup_data['ontology']
+        # Check for conflicts (single kg-backup/2 model: scope is named in the header;
+        # one ontology entry == a scoped backup).
+        _ontologies = [
+            o.get("name") for o in backup_data.get("header", {}).get("ontologies", [])
+            if o.get("name")
+        ]
+        # Scope for downstream integrity ops: one ontology entry == a scoped backup;
+        # otherwise graph-wide. (kg-backup/2 has no top-level "ontology" field —
+        # passing None here would silently widen a scoped prune to the whole graph.)
+        scope = _ontologies[0] if len(_ontologies) == 1 else None
+        if len(_ontologies) == 1:
+            ontology_name = _ontologies[0]
             client = self.conn.get_client()
             existing = AGEQueries.get_ontology_info(client, ontology_name)
 
@@ -221,7 +225,7 @@ class RestoreCLI:
                 client = self.conn.get_client()
                 prune_result = DatabaseIntegrity.prune_dangling_relationships(
                     client,
-                    ontology=backup_data.get('ontology'),
+                    ontology=scope,
                     dry_run=False
                 )
 
@@ -240,7 +244,7 @@ class RestoreCLI:
             client = self.conn.get_client()
             integrity = DatabaseIntegrity.check_integrity(
                 client,
-                ontology=backup_data.get('ontology')
+                ontology=scope
             )
 
             if integrity["issues"] or integrity["warnings"]:
@@ -253,7 +257,7 @@ class RestoreCLI:
                         Console.info("Repairing orphaned concepts...")
                         repairs = DatabaseIntegrity.repair_orphaned_concepts(
                             client,
-                            ontology=backup_data.get('ontology')
+                            ontology=scope
                         )
                         Console.success(f"✓ Repaired {repairs} orphaned concepts")
 
@@ -261,7 +265,7 @@ class RestoreCLI:
                         Console.info("Re-validating...")
                         integrity = DatabaseIntegrity.check_integrity(
                             client,
-                            ontology=backup_data.get('ontology')
+                            ontology=scope
                         )
                         if not integrity["issues"]:
                             Console.success("✓ All issues resolved")
@@ -274,7 +278,7 @@ class RestoreCLI:
             if restitch_action == "defer":
                 # URGENT: graph is broken
                 self._show_tips(backup_file=backup_file, urgent=True)
-            elif assessment["external_dependencies"]["concepts"]:
+            elif external_concepts:
                 # Pruned - graph is clean
                 self._show_tips(backup_file=None, urgent=False)
             else:

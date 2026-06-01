@@ -332,14 +332,20 @@ async def restore_backup(
             f"Relationships: {stats.get('relationships', 0)}"
         )
 
-        # Safety check: If ontology backup and target ontology exists, require --merge flag
+        # Safety check: If a single-ontology backup targets an existing ontology,
+        # require the --merge flag. The single kg-backup/2 model names the scope in
+        # the header (one ontology entry == a scoped backup) — ADR-102 P3.
         with open(temp_path, 'r') as f:
             import json
+            from ...lib.serialization import KgBackupV2Reader
             backup_data = json.load(f)
-            backup_type = backup_data.get("type", "")
-            backup_ontology = backup_data.get("ontology")
+            _header_ontologies = [
+                o.get("name") for o in KgBackupV2Reader(backup_data).header.get("ontologies", [])
+                if o.get("name")
+            ]
+            backup_ontology = _header_ontologies[0] if len(_header_ontologies) == 1 else None
 
-            if backup_type == "ontology_backup" and backup_ontology and overwrite:
+            if backup_ontology and overwrite:
                 # Safety check: If ontology exists and user didn't specify --merge, error
                 try:
                     # Use ontology list API to check existence
