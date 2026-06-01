@@ -119,3 +119,26 @@ def test_reconcile_resolves_orphans_but_spares_active_jobs(shim):
         assert _epoch_status(shim, e_running) == "in_progress"
     finally:
         _cleanup(shim, [e_failed, e_running, e_absent], [failed_job, running_job])
+
+
+@pytest.mark.parametrize("status,spared", [
+    ("pending", True),
+    ("awaiting_approval", True),   # review #486 M1: must be spared (pre-execution, live)
+    ("approved", True),
+    ("queued", True),             # review #486 M1: must be spared
+    ("processing", True),
+    ("completed", False),          # terminal → reconciled
+    ("cancelled", False),          # terminal → reconciled
+])
+def test_reconcile_spares_all_non_terminal_statuses(shim, status, spared):
+    """The sweep keys on the closed terminal set, so EVERY non-terminal job status
+    protects its epoch — locks the M1 invariant against future status additions."""
+    job_id = f"{NS}{status}_{uuid.uuid4().hex[:8]}"
+    _seed_job(shim, job_id, status)
+    eid = _seed_epoch(shim, job_id)
+    try:
+        reconcile_orphaned_epochs(shim)
+        expected = "in_progress" if spared else "failed"
+        assert _epoch_status(shim, eid) == expected
+    finally:
+        _cleanup(shim, [eid], [job_id])

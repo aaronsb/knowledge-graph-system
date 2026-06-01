@@ -18,6 +18,14 @@ import os
 
 logger = logging.getLogger(__name__)
 
+# Terminal job statuses — a CLOSED, stable set. The orphaned-epoch sweep keys on
+# this (denylist) rather than the non-terminal set (which keeps growing:
+# pending/awaiting_approval/approved/queued/running/processing/...), so it stays
+# correct-by-construction as the pre-execution status vocabulary evolves. An epoch
+# is reconciled only when its owning job is terminal OR absent; ANY non-terminal
+# status protects it. (review #486 M1)
+TERMINAL_JOB_STATUSES = ("completed", "failed", "cancelled")
+
 
 def reconcile_orphaned_epochs(queue) -> List[int]:
     """Resolve orphaned in_progress graph_epochs to 'failed' (issue #485).
@@ -27,9 +35,11 @@ def reconcile_orphaned_epochs(queue) -> List[int]:
     row in_progress forever, pinning the committed watermark
     (kg_api.get_committed_epoch, migration 076) below it — so EVERY derivation reads
     stale indefinitely. This resolves any in_progress epoch whose owning job
-    (``metadata->>'job_id'``) is no longer active to 'failed'. A failed event still
-    counts toward the watermark, so this unblocks freshness without falsely claiming
-    the partial mutation completed.
+    (``metadata->>'job_id'``) is terminal (TERMINAL_JOB_STATUSES) or absent to
+    'failed'. A failed event still counts toward the watermark, so this unblocks
+    freshness without falsely claiming the partial mutation completed. Keying on the
+    closed terminal set (not the open non-terminal set) means ANY non-terminal
+    status protects a live epoch — correct-by-construction.
 
     Only job_id-bearing rows are swept: every long-lived in_progress epoch carries
     one (ingestion and restore-simple stamp it; P5-faithful stamps the local restore
@@ -44,6 +54,7 @@ def reconcile_orphaned_epochs(queue) -> List[int]:
             cur.execute("SELECT to_regclass('kg_api.graph_epochs') IS NOT NULL")
             if not cur.fetchone()[0]:
                 return []
+            # Resolve when NO non-terminal job owns the epoch (job terminal or absent).
             cur.execute("""
                 UPDATE kg_api.graph_epochs e
                 SET status = 'failed'
@@ -52,10 +63,10 @@ def reconcile_orphaned_epochs(queue) -> List[int]:
                   AND NOT EXISTS (
                       SELECT 1 FROM kg_api.jobs j
                       WHERE j.job_id = e.metadata->>'job_id'
-                        AND j.status IN ('pending', 'approved', 'running', 'processing')
+                        AND j.status NOT IN %s
                   )
                 RETURNING e.event_id
-            """)
+            """, (TERMINAL_JOB_STATUSES,))
             rows = cur.fetchall()
             conn.commit()
             return [r[0] for r in rows]

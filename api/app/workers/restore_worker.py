@@ -641,11 +641,12 @@ def _restore_from_checkpoint(client: AGEClient, checkpoint_path: Path, job_id: s
     # Issue #483: TRUE-REPLACE rollback. A MERGE-only re-import leaves behind any
     # node the failed restore created that the checkpoint does not contain (orphans,
     # stamped with the failed restore epoch). Clear the concept graph first so the
-    # rollback reconstructs EXACTLY the pre-restore state. The checkpoint was a
-    # known-good full export captured at restore start; if the re-import below fails
-    # after the clear, the checkpoint file is preserved on disk (see below) and the
-    # caller flags "manual intervention required" — so a clear+failed-reimport is
-    # recoverable, whereas silent orphans are not. _clear_database preserves
+    # rollback reconstructs EXACTLY the pre-restore state. NOTE: clear and re-import
+    # are NOT one transaction — a process crash between them leaves the graph empty.
+    # That worst case is recoverable: the checkpoint was a known-good full export
+    # captured at restore start, it is preserved on disk (see below), and the caller
+    # flags "manual intervention required" — strictly better than silent permanent
+    # orphans. _clear_database preserves
     # vocabulary + graph_epochs (the checkpoint's instance event-id stamps still
     # resolve against the retained epoch rows).
     logger.info(f"[{job_id}] Clearing concept graph before checkpoint re-import (true replace)")
