@@ -6,7 +6,6 @@ Wraps the Python admin tools and provides async execution.
 """
 
 import asyncio
-import subprocess
 import json
 import os
 import logging
@@ -25,10 +24,7 @@ from ..models.admin import (
     DatabaseStats,
     PythonEnvironment,
     ConfigurationStatus,
-    BackupResponse,
-    BackupIntegrityAssessment,
     ListBackupsResponse,
-    RestoreResponse,
     ResetResponse,
     SchemaValidation,
 )
@@ -106,140 +102,6 @@ class AdminService:
             backups=backups,
             backup_dir=str(self.backup_dir),
             count=len(backups),
-        )
-
-    async def create_backup(
-        self,
-        backup_type: str,
-        ontology_name: Optional[str] = None,
-        output_filename: Optional[str] = None
-    ) -> BackupResponse:
-        """Create a backup (full or ontology-specific).
-
-        DEAD (ADR-102 P6): no caller — the live backup route uses
-        create_backup_stream / stream_backup_archive, not this subprocess. The
-        spawned ``src.admin.backup`` module path is also stale. Scheduled for
-        removal in P6; do not wire to new code.
-        """
-        # Build command
-        cmd = [
-            str(self.project_root / "venv" / "bin" / "python"),
-            "-m",
-            "src.admin.backup",
-        ]
-
-        if backup_type == "full":
-            cmd.append("--auto-full")
-        elif backup_type == "ontology":
-            if not ontology_name:
-                raise ValueError("ontology_name required for ontology backup")
-            cmd.extend(["--ontology", ontology_name])
-        else:
-            raise ValueError(f"Invalid backup_type: {backup_type}")
-
-        if output_filename:
-            cmd.extend(["--output", output_filename])
-
-        # Execute backup
-        proc = await asyncio.create_subprocess_exec(
-            *cmd,
-            cwd=self.project_root,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
-
-        stdout, stderr = await proc.communicate()
-
-        if proc.returncode != 0:
-            raise RuntimeError(f"Backup failed: {stderr.decode()}")
-
-        # Parse output to find backup file
-        output = stdout.decode()
-        backup_file = await self._extract_backup_file_from_output(output, output_filename)
-
-        # Get file info
-        backup_path = Path(backup_file)
-        file_size_mb = backup_path.stat().st_size / (1024 * 1024)
-
-        # Load backup to get statistics (single kg-backup/2 model: counts come from
-        # the bulk record streams, not a top-level statistics field).
-        with open(backup_path, 'r') as f:
-            backup_data = json.load(f)
-
-        from ...lib.serialization import KgBackupV2Reader
-        _counts = KgBackupV2Reader(backup_data).counts()
-        statistics = {
-            k: _counts[k] for k in ("concepts", "sources", "instances", "relationships", "vocabulary")
-        }
-
-        # TODO: Add integrity assessment
-        integrity = None
-
-        return BackupResponse(
-            success=True,
-            backup_file=str(backup_path),
-            file_size_mb=file_size_mb,
-            statistics=statistics,
-            integrity_assessment=integrity,
-            message=f"Backup created successfully: {backup_path.name}",
-        )
-
-    async def restore_backup(
-        self,
-        backup_file: str,
-        overwrite: bool = False,
-        handle_external_deps: str = "prune"
-    ) -> RestoreResponse:
-        """Restore a backup.
-
-        DEAD (ADR-102 P6): no caller — the live restore route enqueues
-        run_restore_worker (which uses the kg-backup/2 mode machinery), not this
-        subprocess. The spawned ``src.admin.restore`` path is stale and the
-        overwrite/handle_external_deps args were removed from the real flow in P4.
-        Scheduled for removal in P6; do not wire to new code.
-        """
-        # Validate backup file exists
-        backup_path = Path(backup_file)
-        if not backup_path.exists():
-            raise FileNotFoundError(f"Backup file not found: {backup_file}")
-
-        # Build command
-        cmd = [
-            str(self.project_root / "venv" / "bin" / "python"),
-            "-m",
-            "src.admin.restore",
-            "--file",
-            str(backup_path),
-        ]
-
-        if overwrite:
-            cmd.append("--overwrite")
-
-        # TODO: Add external deps handling once the restore script supports it
-
-        # Execute restore
-        proc = await asyncio.create_subprocess_exec(
-            *cmd,
-            cwd=self.project_root,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-            stdin=asyncio.subprocess.PIPE,  # For confirmations
-        )
-
-        # Send confirmations (auto-accept for now)
-        stdout, stderr = await proc.communicate(input=b"y\n")
-
-        if proc.returncode != 0:
-            raise RuntimeError(f"Restore failed: {stderr.decode()}")
-
-        # Parse output for results
-        output = stdout.decode()
-
-        return RestoreResponse(
-            success=True,
-            restored_counts={},  # TODO: Parse from output
-            message="Restore completed successfully",
-            external_deps_handled=handle_external_deps,
         )
 
     async def reset_database(
@@ -415,23 +277,3 @@ class AdminService:
 
         return anthropic, openai
 
-    async def _extract_backup_file_from_output(
-        self,
-        output: str,
-        custom_filename: Optional[str]
-    ) -> str:
-        """Extract backup filename from command output"""
-        # If custom filename was provided, use it
-        if custom_filename:
-            return str(self.backup_dir / custom_filename)
-
-        # Otherwise, find latest backup file
-        backup_files = sorted(
-            self.backup_dir.glob("*.json"),
-            key=lambda f: f.stat().st_mtime,
-            reverse=True
-        )
-        if backup_files:
-            return str(backup_files[0])
-
-        raise RuntimeError("Could not determine backup file path")

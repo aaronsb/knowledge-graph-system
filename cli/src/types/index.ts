@@ -730,7 +730,7 @@ export interface RestoreResponse {
   restored_counts: Record<string, number>;
   warnings: string[];
   message: string;
-  external_deps_handled?: string;
+  // external_deps_handled removed in ADR-102 P6 (dead field; restore uses --mode/--epoch)
 }
 
 // ========== RBAC Types (ADR-028) ==========

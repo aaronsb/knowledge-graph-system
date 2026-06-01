@@ -85,16 +85,6 @@ class BackupIntegrityAssessment(BaseModel):
     details: Dict[str, Any] = {}
 
 
-class BackupResponse(BaseModel):
-    """Backup operation response"""
-    success: bool
-    backup_file: str
-    file_size_mb: float
-    statistics: Dict[str, int]
-    integrity_assessment: Optional[BackupIntegrityAssessment] = None
-    message: str
-
-
 class ListBackupsResponse(BaseModel):
     """List available backups"""
     backups: List[Dict[str, Any]]
@@ -102,27 +92,8 @@ class ListBackupsResponse(BaseModel):
     count: int
 
 
-# ========== Restore Models ==========
-
-class RestoreRequest(BaseModel):
-    """Request to restore a backup (requires authentication)"""
-    username: str = Field(..., description="Username for authentication")
-    password: str = Field(..., description="Password for authentication")
-    backup_file: str = Field(..., description="Path to backup file")
-    overwrite: bool = Field(False, description="Overwrite existing data")
-    handle_external_deps: str = Field(
-        "prune",
-        description="How to handle external dependencies: 'prune', 'stitch', or 'defer'"
-    )
-
-
-class RestoreResponse(BaseModel):
-    """Restore operation response"""
-    success: bool
-    restored_counts: Dict[str, int]
-    warnings: List[str] = []
-    message: str
-    external_deps_handled: Optional[str] = None
+# Restore models removed in ADR-102 P6: the /restore route uses Form params
+# (mode, epoch), not request/response models. See routes/admin.py + restore_worker.
 
 
 # ========== Reset Models ==========
