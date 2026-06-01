@@ -984,7 +984,8 @@ class DataImporter:
     def import_backup(client: AGEClient, backup_data: Dict[str, Any],
                       overwrite_existing: bool = False,
                       progress_callback: Optional[callable] = None,
-                      max_workers: int = 2) -> Dict[str, int]:
+                      max_workers: int = 2,
+                      epoch_restamp: Optional[Dict[str, int]] = None) -> Dict[str, int]:
         """Import a kg-backup/2 object — the single backup model's front-door.
 
         Args:
@@ -993,6 +994,16 @@ class DataImporter:
             overwrite_existing: If True, update existing nodes; if False, preserve them
             progress_callback: Optional callback(stage, current, total, percent)
             max_workers: Parallel workers for instances/evidence/relationships
+            epoch_restamp: ADR-102 P5 epoch-simple restamp. When provided,
+                ``{"event_id": int, "concept_epoch": int}`` overrides the carried
+                per-record epoch stamps so every restored node points at LOCAL
+                clocks: instances' ``created_at_event_id`` → the one restore
+                ``event_id`` (a real ``graph_epochs`` row in this target — carried
+                ids would dangle), and concepts' ``created_at_epoch`` /
+                ``last_seen_epoch`` → the target's current ``concept_epoch``
+                (a separate counter; carrying a foreign value future-dates concept
+                vitality). When None the carried stamps are preserved verbatim
+                (faithful — used by checkpoint rollback and P5-faithful replay).
 
         Returns:
             Stats: vocabulary_imported, concepts_created, sources_created,
@@ -1004,20 +1015,27 @@ class DataImporter:
             overwrite_existing=overwrite_existing,
             progress_callback=progress_callback,
             max_workers=max_workers,
+            epoch_restamp=epoch_restamp,
         )
 
     @staticmethod
     def _import_kg_backup_v2(client: AGEClient, reader: "KgBackupV2Reader", *,
                              overwrite_existing: bool = False,
                              progress_callback: Optional[callable] = None,
-                             max_workers: int = 2) -> Dict[str, int]:
+                             max_workers: int = 2,
+                             epoch_restamp: Optional[Dict[str, int]] = None) -> Dict[str, int]:
         """Clone-path writer: import normalized records, preserving ids 1:1.
 
         Order matters: vocabulary (before relationships, ADR-032) → concepts →
         sources → instances (+FROM_SOURCE) → evidence (EVIDENCED_BY + derived
         APPEARS) → relationships. Clone preserves ids, so edge ``learned_id`` needs
         no remap here (that is P4 adjacent mode).
+
+        ``epoch_restamp`` (ADR-102 P5 epoch-simple) overrides the carried epoch
+        stamps with local clocks — see ``import_backup`` for the contract.
         """
+        restamp_event_id = epoch_restamp.get("event_id") if epoch_restamp else None
+        restamp_concept_epoch = epoch_restamp.get("concept_epoch") if epoch_restamp else None
         stats = {
             "vocabulary_imported": 0,
             "concepts_created": 0,
@@ -1034,7 +1052,8 @@ class DataImporter:
 
         concepts = list(reader.concepts())
         Console.info("Importing concepts...")
-        DataImporter._import_concepts(client, concepts, overwrite_existing, progress_callback)
+        DataImporter._import_concepts(client, concepts, overwrite_existing, progress_callback,
+                                      restamp_epoch=restamp_concept_epoch)
         stats["concepts_created"] = len(concepts)
 
         sources = list(reader.sources())
@@ -1044,7 +1063,8 @@ class DataImporter:
 
         instances = list(reader.instances())
         Console.info("Importing instances...")
-        DataImporter._import_instances(client, instances, progress_callback, max_workers)
+        DataImporter._import_instances(client, instances, progress_callback, max_workers,
+                                       restamp_event_id=restamp_event_id)
         stats["instances_created"] = len(instances)
 
         evidence_map = reader.evidence_by_instance()
@@ -1162,8 +1182,16 @@ class DataImporter:
 
     @staticmethod
     def _import_concepts(client: AGEClient, concepts: List[Dict[str, Any]],
-                         overwrite_existing: bool, progress_callback) -> None:
-        """MERGE concepts, carrying the ADR-102 §3 epoch stamps."""
+                         overwrite_existing: bool, progress_callback,
+                         restamp_epoch: Optional[int] = None) -> None:
+        """MERGE concepts, carrying the ADR-102 §3 epoch stamps.
+
+        ``restamp_epoch`` (ADR-102 P5 epoch-simple): when set, override the carried
+        ``created_at_epoch`` / ``last_seen_epoch`` with this target-local concept
+        epoch (a value in the ``document_ingestion_counter`` space). Carried foreign
+        values future-date concept vitality, so a restore into any non-pristine
+        target restamps to "now".
+        """
         total = len(concepts)
         if overwrite_existing:
             query = """
@@ -1195,6 +1223,9 @@ class DataImporter:
                 "created_at_epoch": c.get("created_at_epoch"),
                 "last_seen_epoch": c.get("last_seen_epoch"),
             }
+            if restamp_epoch is not None:
+                params["created_at_epoch"] = restamp_epoch
+                params["last_seen_epoch"] = restamp_epoch
             _execute_with_age_retry(client, query, params)
             _progress(progress_callback, "concepts", i + 1, total)
 
@@ -1232,8 +1263,15 @@ class DataImporter:
 
     @staticmethod
     def _import_instances(client: AGEClient, instances: List[Dict[str, Any]],
-                          progress_callback, max_workers: int) -> None:
-        """MERGE instances and their FROM_SOURCE edges in parallel."""
+                          progress_callback, max_workers: int,
+                          restamp_event_id: Optional[int] = None) -> None:
+        """MERGE instances and their FROM_SOURCE edges in parallel.
+
+        ``restamp_event_id`` (ADR-102 P5 epoch-simple): when set, override every
+        carried ``created_at_event_id`` with this one restore ``graph_epochs``
+        event id. Carried ids reference epoch rows that do not exist in this target
+        (the importer does not replay ``graph_epochs``), so they would dangle.
+        """
         total = len(instances)
         lock = threading.Lock()
         done = {"n": 0}
@@ -1243,7 +1281,10 @@ class DataImporter:
                 "instance_id": inst["instance_id"],
                 "quote": inst.get("quote", ""),
                 "source_id": inst["source_id"],
-                "created_at_event_id": inst.get("created_at_event_id"),
+                "created_at_event_id": (
+                    restamp_event_id if restamp_event_id is not None
+                    else inst.get("created_at_event_id")
+                ),
             }
             _execute_with_age_retry(client, DataImporter._INSTANCE_Q, params)
             with lock:

@@ -2326,8 +2326,7 @@ kg restore [options]
 |--------|-------------|---------|
 | `--file <name>` | Backup filename (from configured directory) | - |
 | `--path <path>` | Custom backup file path (overrides configured directory) | - |
-| `--merge` | Merge into existing ontology if it exists (default: error if ontology exists) | `false` |
-| `--deps <action>` | How to handle external dependencies: prune, stitch, defer | `"prune"` |
+| `--mode <mode>` | Restore merge mode: "idempotent" (default; MERGE-by-id, clone into empty), "adjacent" (independent copy, fresh ids), or "integration" (attach concepts to existing graph by similarity) | `"idempotent"` |
 | `--confirm` | Confirm restore operation (required for non-interactive use) | `false` |
 
 ### scheduler

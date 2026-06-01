@@ -12,7 +12,7 @@ import os
 import json
 import logging
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from datetime import datetime
 
 from ..lib.age_client import AGEClient
@@ -20,6 +20,17 @@ from ..lib.backup_streaming import create_backup_stream
 from ..lib.backup_archive import restore_documents_to_garage, cleanup_extracted_archive
 from ...lib.serialization import DataImporter, KgBackupV2Reader
 from ..lib.restore_modes import RestoreMode, prepare_backup
+from ..lib.lane_control import (
+    RESTORE_FREEZE_LANES,
+    freeze_lanes,
+    thaw_lanes,
+    wait_for_quiesce,
+)
+
+# ADR-102 P5: epoch-simple restore records a single graph_epochs event of this
+# kind (migration 077) so the freshness clock advances and restored nodes carry
+# a real, local event id.
+RESTORE_EPOCH_KIND = "restore"
 
 logger = logging.getLogger(__name__)
 
@@ -64,12 +75,33 @@ def run_restore_worker(
 
     checkpoint_path = None
     client = None
+    lane_prior = None        # ADR-102 A14: prior lane-enabled state, restored on exit
+    restore_event_id = None  # ADR-102 P5: the single restore graph_epochs event
+    quiesced = True          # ADR-102 A14: did frozen lanes drain before the timeout?
 
     try:
         # ADR-100: Check for cancellation before restore
         if job_queue.is_job_cancelled(job_id):
             logger.info(f"Restore job {job_id} cancelled before start")
             return {"status": "cancelled"}
+
+        # ADR-102 A14: freeze mutating lanes (interactive/maintenance) and wait
+        # for their in-flight jobs to drain, so nothing writes the graph while we
+        # checkpoint + import. The system lane (which runs THIS job and the
+        # post-restore rehydration) stays enabled. Fail-open: proceed after the
+        # quiesce timeout with a warning rather than blocking the restore.
+        logger.info(f"[{job_id}] Freezing worker lanes {RESTORE_FREEZE_LANES} for restore")
+        job_queue.update_job(job_id, {
+            "progress": {
+                "stage": "quiescing",
+                "percent": 2,
+                "message": f"Freezing worker lanes {RESTORE_FREEZE_LANES} and draining in-flight jobs"
+            }
+        })
+        lane_prior = freeze_lanes(job_queue, RESTORE_FREEZE_LANES)
+        # Fail-open: a False return means we proceeded over un-drained in-flight
+        # work. Surface it in the job result so an operator can correlate later.
+        quiesced = wait_for_quiesce(job_queue, RESTORE_FREEZE_LANES)
 
         # Stage 1: Create checkpoint backup (ADR-015 Safety Pattern)
         logger.info(f"[{job_id}] Creating checkpoint backup before restore")
@@ -107,12 +139,48 @@ def run_restore_worker(
         logger.info(f"[{job_id}] Restore mode: {mode}")
         prepared_backup, mapping_table = prepare_backup(backup_data, mode, client)
 
+        # ADR-102 P5 (epoch-simple): record ONE restore epoch event up front so its
+        # event_id can stamp every imported node. The carried bulk.graph_epochs are
+        # NOT replayed (that is P5-faithful, clone-only). record_epoch inserts an
+        # in_progress event that holds the committed watermark just below it until
+        # complete_epoch resolves it — exactly the long-job tagging pattern the
+        # ingestion worker uses.
+        #
+        # ADR-102 A13: a failed record_epoch is FATAL here (not log-and-continue).
+        # Without an event id every restored Instance would be untagged AND the
+        # post-restore watermark advance below would be meaningless — restored
+        # data could read FRESH against stale derivations. Fail loudly instead.
+        restore_event_id = client.record_epoch(
+            kind=RESTORE_EPOCH_KIND,
+            actor="restore",
+            metadata={"job_id": job_id, "mode": mode, "restore": True},
+        )
+        if restore_event_id is None:
+            raise RuntimeError(
+                "record_epoch returned None — cannot stamp restored nodes with a "
+                "graph epoch (the freshness clock would be left inconsistent). "
+                "Check kg_api.graph_epochs health (grep 'record_epoch failed')."
+            )
+        logger.info(f"[{job_id}] Restore epoch event_id={restore_event_id}")
+
+        # Concept epochs live in the separate document_ingestion_counter space
+        # (ADR-200), not the graph_epochs.event_id space — so they restamp to the
+        # target's CURRENT concept epoch, not the restore event_id. NOTE: this is a
+        # DELIBERATE collapse — every restored concept gets the same created_at ==
+        # last_seen == now, so relative concept age is intentionally lost until
+        # re-annealing (epoch-simple). P5-faithful must NOT "fix" this by carrying.
+        restore_concept_epoch = client.get_current_epoch()
+
         # Stage 3: Execute restore with progress tracking
         restore_stats = _execute_restore(
             client=client,
             backup_data=prepared_backup,
             job_id=job_id,
-            job_queue=job_queue
+            job_queue=job_queue,
+            epoch_restamp={
+                "event_id": restore_event_id,
+                "concept_epoch": restore_concept_epoch,
+            },
         )
 
         # Stage 4: Restore documents to Garage (for archive backups)
@@ -152,27 +220,60 @@ def run_restore_worker(
             }
         })
 
-        # ADR-207/#386: a restore wholesale replaces the graph — the single
-        # largest possible mutation. Announce it via record_mutation so the
-        # universal freshness tick (get_committed_epoch) advances past every
-        # derivation's stamp; otherwise the catalog index and the grounding /
-        # confidence / artifact caches keep serving pre-restore data as "fresh".
-        # record_mutation records a completed epoch event (advances the tick),
-        # invalidates graph_accel, AND refreshes the graph_change_counter
-        # snapshot — subsuming the bare refresh_graph_metrics() this replaced.
+        # ADR-207/#386 + ADR-102 P5: resolve the restore epoch as COMPLETED. Until
+        # now it held the committed watermark just below its event_id, so every
+        # derivation correctly read stale during the import. Completing it advances
+        # the universal freshness tick (get_committed_epoch) past every restored
+        # node's stamp; otherwise the catalog index and the grounding / confidence
+        # / artifact caches would keep serving pre-restore data as "fresh".
+        #
+        # The record_epoch/complete_epoch pair does NOT co-advance the in-memory
+        # graph_accel sub-counter on its own (the docstring co-advance caveat /
+        # issue #465) — only record_mutation does. So invalidate the accelerator
+        # and refresh the graph_change_counter snapshot explicitly, matching what
+        # record_mutation would have done.
+        client.complete_epoch(restore_event_id, "completed")
         try:
-            metrics_client = AGEClient()
-            try:
-                metrics_client.record_mutation(
-                    "ingestion",
-                    actor="restore",
-                    metadata={"restore": True, "job_id": job_id},
-                )
-                logger.info(f"[{job_id}] Recorded restore as a graph mutation (freshness tick advanced)")
-            finally:
-                metrics_client.close()
+            client.graph.invalidate()
         except Exception as e:
-            logger.warning(f"[{job_id}] Failed to record restore mutation: {e}")
+            # Usually "extension not loaded on this connection" — benign. But this
+            # is the ONLY graph_accel co-advance (issue #465), so log it: a failure
+            # for any OTHER reason silently desyncs the accelerator.
+            logger.debug(f"[{job_id}] graph.invalidate() after restore skipped: {e}")
+        try:
+            client.refresh_epoch()
+        except Exception as e:
+            logger.warning(f"[{job_id}] refresh_epoch after restore failed: {e}")
+        logger.info(f"[{job_id}] Restore epoch {restore_event_id} completed (freshness tick advanced)")
+
+        # ADR-102 P5 rehydration: source text/visual embeddings do NOT travel in
+        # the backup (concept + vocab embeddings do, and scores/catalog/grounding
+        # self-heal off the freshness tick just advanced). Enqueue ONE bulk
+        # only-missing source-embedding job — it runs in the system lane AFTER this
+        # restore releases the slot, and skips any source that already has
+        # embeddings. Best-effort: a failure to enqueue must not fail a completed
+        # restore (the operator can run the regeneration endpoint manually).
+        rehydrate_job_id = None
+        try:
+            rehydrate_job_id = job_queue.enqueue("source_embedding", {
+                "rehydrate_missing": True,
+                "reason": "post_restore_rehydration",
+                "restore_job_id": job_id,
+            })
+            # Auto-approve as a system job (ADR-050) so the system lane claims it
+            # — enqueue() lands jobs as 'pending' (user-upload approval workflow),
+            # but this is internally triggered, not a user upload.
+            job_queue.update_job(rehydrate_job_id, {
+                "is_system_job": True,
+                "job_source": "post_restore_rehydration",
+                "created_by": f"system:restore:{job_id}",
+                "status": "approved",
+                "approved_at": datetime.now().isoformat(),
+                "approved_by": "system:restore",
+            })
+            logger.info(f"[{job_id}] Enqueued source-embedding rehydration job {rehydrate_job_id}")
+        except Exception as e:
+            logger.warning(f"[{job_id}] Failed to enqueue source-embedding rehydration: {e}")
 
         # Success: Delete checkpoint
         if checkpoint_path and checkpoint_path.exists():
@@ -191,6 +292,9 @@ def run_restore_worker(
             "restore_stats": restore_stats,
             "mapping_table": mapping_table if remapped else None,
             "document_stats": doc_stats if is_archive else None,
+            "restore_epoch_event_id": restore_event_id,
+            "rehydration_job_id": rehydrate_job_id,
+            "quiesce_timed_out": not quiesced,
             "checkpoint_created": True,
             "checkpoint_deleted": checkpoint_deleted,
             "temp_file_cleaned": False  # Will be cleaned in finally block
@@ -198,6 +302,18 @@ def run_restore_worker(
 
     except Exception as e:
         logger.error(f"[{job_id}] Restore failed: {str(e)}")
+
+        # ADR-102 P5: resolve the restore epoch as FAILED so it stops holding the
+        # committed watermark below its event_id (a phantom in-flight event would
+        # stall freshness for the whole graph). A FAILED event still counts toward
+        # the committed watermark (migration 076), which keeps the graph reading
+        # STALE — important, because the rollback below is MERGE-only (no clear):
+        # any node the failed restore created that is absent from the checkpoint
+        # SURVIVES the rollback, stamped with this failed restore_event_id. That
+        # residue reads stale (safe), but a true-replace rollback is tracked in
+        # issue #483 (pre-existing MERGE-without-clear weakness).
+        if restore_event_id is not None and client is not None:
+            client.complete_epoch(restore_event_id, "failed")
 
         # Failure: Restore from checkpoint
         if checkpoint_path and checkpoint_path.exists():
@@ -227,6 +343,13 @@ def run_restore_worker(
         )
 
     finally:
+        # ADR-102 A14: ALWAYS thaw the lanes we froze, restoring their prior
+        # enabled state (a lane an operator had already disabled stays disabled).
+        # thaw_lanes is best-effort and never raises, so it cannot mask the
+        # restore's own outcome.
+        if lane_prior:
+            thaw_lanes(job_queue, lane_prior)
+
         # Cleanup: Always delete temp file
         if temp_file.exists():
             logger.info(f"[{job_id}] Cleaning up temp file {temp_file}")
@@ -298,7 +421,8 @@ def _execute_restore(
     client: AGEClient,
     backup_data: Dict[str, Any],
     job_id: str,
-    job_queue
+    job_queue,
+    epoch_restamp: Optional[Dict[str, int]] = None
 ) -> Dict[str, int]:
     """
     Execute restore of an already-mode-prepared kg-backup/2 object, with progress.
@@ -307,6 +431,9 @@ def _execute_restore(
     unchanged; adjacent/integration = ids rewritten). The writer always uses
     overwrite_existing=True: idempotent updates matching nodes in place, while
     adjacent/integration ids are fresh or attach to existing targets.
+
+    ``epoch_restamp`` (ADR-102 P5 epoch-simple) overrides carried epoch stamps
+    with local clocks — see ``DataImporter.import_backup``.
 
     Returns:
         Dict with restore statistics
@@ -363,7 +490,8 @@ def _execute_restore(
         client,
         backup_data,
         overwrite_existing=True,
-        progress_callback=progress_callback
+        progress_callback=progress_callback,
+        epoch_restamp=epoch_restamp
     )
 
     return {
