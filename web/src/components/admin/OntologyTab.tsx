@@ -24,12 +24,16 @@ import {
   CircleSlash,
   ArrowUpFromLine,
   Sliders,
+  Trash2,
+  Database,
+  Skull,
 } from 'lucide-react';
 import { apiClient } from '../../api/client';
 import { useAuthStore } from '../../store/authStore';
 import { Section, InfoCard, formatDateTime } from './components';
 import { AnnealingPressurePanel } from './AnnealingPressurePanel';
 import type { AnnealingProposal, AnnealingStatus } from '../../types/annealing';
+import type { OntologyItem } from '../../types/ingest';
 
 interface OntologyTabProps {
   onError: (error: string) => void;
@@ -144,6 +148,7 @@ const paramsHighlight = (p: AnnealingProposal): string | null => {
 export const OntologyTab: React.FC<OntologyTabProps> = ({ onError, onSuccess }) => {
   const { hasPermission } = useAuthStore();
   const canManage = hasPermission('ontologies', 'write');
+  const canDelete = hasPermission('ontologies', 'delete');
 
   const [status, setStatus] = useState<AnnealingStatus | null>(null);
   const [proposals, setProposals] = useState<AnnealingProposal[]>([]);
@@ -153,23 +158,35 @@ export const OntologyTab: React.FC<OntologyTabProps> = ({ onError, onSuccess }) 
   const [confirmRun, setConfirmRun] = useState(false);
   const [reviewingId, setReviewingId] = useState<number | null>(null);
 
+  // Ontology lifecycle + tombstone controls (operator surface).
+  const [ontologies, setOntologies] = useState<OntologyItem[]>([]);
+  const [tombstones, setTombstones] = useState<Array<{ name: string; removed_by: string | null; removed_at: string | null; reason: string | null }>>([]);
+  const [deletingOntology, setDeletingOntology] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [clearingTombstone, setClearingTombstone] = useState<string | null>(null);
+  const [flushingTombstones, setFlushingTombstones] = useState(false);
+
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [statusRes, proposalsRes] = await Promise.all([
+      const [statusRes, proposalsRes, ontologiesRes, tombstonesRes] = await Promise.all([
         apiClient.getAnnealingStatus(),
         apiClient.listAnnealingProposals(
           statusFilter === 'all' ? { limit: 50 } : { status: statusFilter, limit: 50 },
         ),
+        apiClient.listOntologies().catch(() => ({ count: 0, ontologies: [] })),
+        canDelete ? apiClient.listTombstones().catch(() => ({ count: 0, tombstones: [] })) : Promise.resolve({ count: 0, tombstones: [] }),
       ]);
       setStatus(statusRes);
       setProposals(proposalsRes.proposals);
+      setOntologies(ontologiesRes.ontologies);
+      setTombstones(tombstonesRes.tombstones);
     } catch (err) {
       onError(err instanceof Error ? err.message : 'Failed to load annealing status');
     } finally {
       setLoading(false);
     }
-  }, [statusFilter, onError]);
+  }, [statusFilter, onError, canDelete]);
 
   useEffect(() => {
     loadData();
@@ -202,6 +219,52 @@ export const OntologyTab: React.FC<OntologyTabProps> = ({ onError, onSuccess }) 
       onError(err instanceof Error ? err.message : `Failed to ${decision} proposal`);
     } finally {
       setReviewingId(null);
+    }
+  };
+
+  // Delete an ontology and ALL its data (graph + storage). Clears the tombstone
+  // by default so the name is immediately re-ingestable.
+  const handleDeleteOntology = async (name: string) => {
+    setConfirmDelete(null);
+    setDeletingOntology(name);
+    try {
+      const result = await apiClient.deleteOntology(name);
+      onSuccess?.(
+        `Deleted "${result.ontology}" — ${result.sources_deleted} source(s), ` +
+          `${result.orphaned_concepts_deleted} orphaned concept(s). ` +
+          `${result.tombstone_cleared ? 'Tombstone cleared (re-ingestable).' : 'Tombstone kept.'}`,
+      );
+      await loadData();
+    } catch (err) {
+      onError(err instanceof Error ? err.message : `Failed to delete ontology "${name}"`);
+    } finally {
+      setDeletingOntology(null);
+    }
+  };
+
+  const handleClearTombstone = async (name: string) => {
+    setClearingTombstone(name);
+    try {
+      await apiClient.clearTombstone(name);
+      onSuccess?.(`Cleared tombstone for "${name}" — name is free to re-ingest.`);
+      await loadData();
+    } catch (err) {
+      onError(err instanceof Error ? err.message : `Failed to clear tombstone "${name}"`);
+    } finally {
+      setClearingTombstone(null);
+    }
+  };
+
+  const handleFlushTombstones = async () => {
+    setFlushingTombstones(true);
+    try {
+      const result = await apiClient.flushTombstones();
+      onSuccess?.(`Flushed ${result.flushed} tombstone(s).`);
+      await loadData();
+    } catch (err) {
+      onError(err instanceof Error ? err.message : 'Failed to flush tombstones');
+    } finally {
+      setFlushingTombstones(false);
     }
   };
 
@@ -453,6 +516,111 @@ export const OntologyTab: React.FC<OntologyTabProps> = ({ onError, onSuccess }) 
           </div>
         )}
       </Section>
+
+      {/* Ontology lifecycle — list + delete (operator control) */}
+      <Section title="Ontologies" icon={<Database className="w-5 h-5" />}>
+        {ontologies.length === 0 ? (
+          <p className="text-muted-foreground text-center py-6 text-sm">No ontologies.</p>
+        ) : (
+          <div className="space-y-2">
+            {ontologies.map((o) => (
+              <div
+                key={o.ontology}
+                className="flex items-center justify-between p-3 rounded-lg border border-border bg-muted/30"
+              >
+                <div className="min-w-0">
+                  <div className="text-sm font-medium text-foreground truncate">{o.ontology}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {o.file_count} file(s) · {o.source_count} source(s) · {o.concept_count} concept(s)
+                    {o.lifecycle_state ? ` · ${o.lifecycle_state}` : ''}
+                  </div>
+                </div>
+                {canDelete && (
+                  confirmDelete === o.ontology ? (
+                    <div className="flex items-center gap-1 shrink-0">
+                      <span className="text-xs text-destructive mr-1">Delete all data?</span>
+                      <button
+                        onClick={() => handleDeleteOntology(o.ontology)}
+                        disabled={deletingOntology === o.ontology}
+                        className="px-2 py-1 text-xs font-medium rounded bg-destructive/20 text-destructive hover:bg-destructive/30 disabled:opacity-50"
+                      >
+                        {deletingOntology === o.ontology ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Confirm'}
+                      </button>
+                      <button
+                        onClick={() => setConfirmDelete(null)}
+                        className="px-2 py-1 text-xs text-muted-foreground hover:text-foreground"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setConfirmDelete(o.ontology)}
+                      title="Delete ontology and all its data"
+                      className="flex items-center gap-1 px-2 py-1 text-xs font-medium rounded bg-destructive/10 text-destructive hover:bg-destructive/20 shrink-0"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                      Delete
+                    </button>
+                  )
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </Section>
+
+      {/* Tombstones — operator-delete markers that block re-ingestion */}
+      {canDelete && (
+        <Section
+          title="Tombstones"
+          icon={<Skull className="w-5 h-5" />}
+          action={
+            tombstones.length > 0 ? (
+              <button
+                onClick={handleFlushTombstones}
+                disabled={flushingTombstones}
+                className="flex items-center gap-1 px-2 py-1 text-xs font-medium rounded bg-status-warning/15 text-status-warning hover:bg-status-warning/25 disabled:opacity-50"
+              >
+                {flushingTombstones ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
+                Flush all
+              </button>
+            ) : undefined
+          }
+        >
+          {tombstones.length === 0 ? (
+            <p className="text-muted-foreground text-center py-6 text-sm">
+              None — no names are blocked from re-ingestion.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {tombstones.map((t) => (
+                <div
+                  key={t.name}
+                  className="flex items-center justify-between p-3 rounded-lg border border-border bg-muted/30"
+                >
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium text-foreground truncate">{t.name}</div>
+                    <div className="text-xs text-muted-foreground">
+                      removed by {t.removed_by || 'unknown'}
+                      {t.removed_at ? ` · ${formatDateTime(t.removed_at)}` : ''}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleClearTombstone(t.name)}
+                    disabled={clearingTombstone === t.name}
+                    title="Clear this tombstone (unblock re-ingestion)"
+                    className="flex items-center gap-1 px-2 py-1 text-xs font-medium rounded bg-status-active/15 text-status-active hover:bg-status-active/25 disabled:opacity-50 shrink-0"
+                  >
+                    {clearingTombstone === t.name ? <Loader2 className="w-3 h-3 animate-spin" /> : <Play className="w-3 h-3" />}
+                    Clear
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </Section>
+      )}
     </>
   );
 };

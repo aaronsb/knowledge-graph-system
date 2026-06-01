@@ -3,7 +3,7 @@
 > **Auto-Generated Documentation**
 > 
 > Generated from CLI source code.
-> Last updated: 2026-05-31
+> Last updated: 2026-06-01
 
 ---
 
@@ -1206,6 +1206,7 @@ kg ontology [options]
 - `lifecycle` - Change ontology lifecycle state (ADR-200 Phase 2). States: active (normal), pinned (immune to demotion), frozen (read-only — rejects ingest and rename).
 - `rename` - Rename an ontology while preserving all its data (concepts, sources, relationships). This is a non-destructive operation useful for reorganization, archiving old ontologies, fixing typos, or improving clarity. Atomic transaction ensures all-or-nothing updates. Requires confirmation unless -y flag is used.
 - `delete` - Delete an ontology and ALL its data (concepts, sources, evidence instances, relationships). This is a DESTRUCTIVE operation that CANNOT BE UNDONE. Use this to remove test data, delete old projects, or free up space. Requires --force flag for confirmation. Consider alternatives: rename to add "Archive" suffix, or export data first (future feature).
+- `tombstones` - Manage ontology tombstones (operator-delete markers that block re-ingestion into a deleted name)
 - `scores` - Show cached annealing scores for an ontology (or all ontologies). Shows mass, coherence, exposure, and protection scores. Use "kg ontology score <name>" to recompute.
 - `score` - Recompute annealing scores for one ontology. Runs mass, coherence, exposure, and protection scoring and caches results.
 - `score-all` - Recompute annealing scores for all ontologies. Runs full scoring pipeline and caches results on each Ontology node.
@@ -1326,6 +1327,61 @@ kg delete <name>
 | Option | Description | Default |
 |--------|-------------|---------|
 | `-f, --force` | Skip confirmation and force deletion | - |
+| `--keep-tombstone` | Leave the deletion tombstone in place, deliberately blocking re-ingestion into this name until it is recreated (default: delete clears its own tombstone so the name is immediately re-ingestable) | - |
+
+### tombstones
+
+Manage ontology tombstones (operator-delete markers that block re-ingestion into a deleted name)
+
+**Usage:**
+```bash
+kg tombstones [options]
+```
+
+**Subcommands:**
+
+- `list` - List all ontology tombstones
+- `flush` - Clear ALL ontology tombstones, unblocking re-ingestion into every deleted name
+- `clear` - Clear the tombstone for a single ontology name
+
+---
+
+#### list
+
+List all ontology tombstones
+
+**Usage:**
+```bash
+kg list [options]
+```
+
+#### flush
+
+Clear ALL ontology tombstones, unblocking re-ingestion into every deleted name
+
+**Usage:**
+```bash
+kg flush [options]
+```
+
+**Options:**
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `-f, --force` | Skip confirmation | - |
+
+#### clear
+
+Clear the tombstone for a single ontology name
+
+**Usage:**
+```bash
+kg clear <name>
+```
+
+**Arguments:**
+
+- `<name>` - Ontology name
 
 ### scores
 
@@ -2331,6 +2387,35 @@ Show worker lane configuration and utilization
 ```bash
 kg lanes [options]
 ```
+
+**Subcommands:**
+
+- `set` - Update a worker lane (slots, poll interval, stale timeout, enable/disable)
+
+---
+
+##### set
+
+Update a worker lane (slots, poll interval, stale timeout, enable/disable)
+
+**Usage:**
+```bash
+kg set <lane>
+```
+
+**Arguments:**
+
+- `<lane>` - Lane name (e.g. interactive, maintenance, system)
+
+**Options:**
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--max-slots <n>` | Max concurrent jobs in this lane (0–16) | - |
+| `--poll-interval <ms>` | Poll interval in milliseconds (500–120000) | - |
+| `--stale-timeout <min>` | Stale job timeout in minutes (5–1440) | - |
+| `--enable` | Enable the lane | - |
+| `--disable` | Disable the lane | - |
 
 ### user
 

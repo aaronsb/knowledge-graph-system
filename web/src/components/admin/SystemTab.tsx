@@ -23,12 +23,14 @@ import {
   BarChart3,
   Layers,
   Play,
+  Pause,
   Trash2,
   TestTube,
   Eye,
   EyeOff,
 } from 'lucide-react';
 import { apiClient, API_BASE_URL } from '../../api/client';
+import { useAuthStore } from '../../store/authStore';
 import { Section, StatusBadge } from './components';
 import { VisionProviderCard } from './VisionProviderCard';
 import type { SystemStatus, EmbeddingConfig, ExtractionConfig, ApiKeyInfo, SchedulerStatus, WorkerStatus } from './types';
@@ -49,12 +51,16 @@ const LOCAL_DEFAULT_BASE_URL: Record<string, string> = {
 const DEFAULT_TEMPERATURE = '0.1';
 
 export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
+  const { hasPermission } = useAuthStore();
+  const canManageWorkers = hasPermission('workers', 'manage');
+
   // Data states
   const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
   const [dbStats, setDbStats] = useState<any>(null);
   const [dbCounters, setDbCounters] = useState<any>(null);
   const [schedulerStatus, setSchedulerStatus] = useState<SchedulerStatus | null>(null);
   const [workerStatus, setWorkerStatus] = useState<WorkerStatus | null>(null);
+  const [togglingLane, setTogglingLane] = useState<string | null>(null);
   const [docsIngested, setDocsIngested] = useState<number>(0);
   const [graphEpoch, setGraphEpoch] = useState<number>(0);
   const [embeddingConfigs, setEmbeddingConfigs] = useState<EmbeddingConfig[]>([]);
@@ -177,6 +183,21 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
       onError(err instanceof Error ? err.message : 'Failed to refresh counters');
     } finally {
       setRefreshingCounters(false);
+    }
+  };
+
+  // Freeze/unfreeze a worker lane (ADR-100). Disabling stops the lane claiming
+  // new work; running jobs finish naturally. Takes effect next poll cycle.
+  const handleToggleLane = async (name: string, currentlyEnabled: boolean) => {
+    setTogglingLane(name);
+    try {
+      await apiClient.updateWorkerLane(name, { enabled: !currentlyEnabled });
+      const workers = await apiClient.getWorkerStatus();
+      setWorkerStatus(workers);
+    } catch (err) {
+      onError(err instanceof Error ? err.message : `Failed to ${currentlyEnabled ? 'freeze' : 'unfreeze'} lane`);
+    } finally {
+      setTogglingLane(null);
     }
   };
 
@@ -679,10 +700,44 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
                       : 'bg-muted/50 border-border opacity-60'
                   }`}
                 >
-                  <span className="text-sm font-medium text-foreground">{lane.name}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {lane.enabled ? `${lane.max_slots} slots` : 'disabled'}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-foreground">{lane.name}</span>
+                    <span
+                      className={`px-2 py-0.5 text-xs rounded-full font-medium ${
+                        lane.enabled
+                          ? 'bg-status-active/20 text-status-active'
+                          : 'bg-status-warning/20 text-status-warning'
+                      }`}
+                    >
+                      {lane.enabled ? 'Active' : 'Frozen'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs text-muted-foreground">
+                      {lane.enabled ? `${lane.max_slots} slots` : 'no slots'}
+                    </span>
+                    {canManageWorkers && (
+                      <button
+                        onClick={() => handleToggleLane(lane.name, lane.enabled)}
+                        disabled={togglingLane === lane.name}
+                        title={lane.enabled ? 'Freeze lane (stop claiming new jobs)' : 'Unfreeze lane'}
+                        className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium transition-colors disabled:opacity-50 ${
+                          lane.enabled
+                            ? 'bg-status-warning/15 text-status-warning hover:bg-status-warning/25'
+                            : 'bg-status-active/15 text-status-active hover:bg-status-active/25'
+                        }`}
+                      >
+                        {togglingLane === lane.name ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : lane.enabled ? (
+                          <Pause className="w-3 h-3" />
+                        ) : (
+                          <Play className="w-3 h-3" />
+                        )}
+                        {lane.enabled ? 'Freeze' : 'Unfreeze'}
+                      </button>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>

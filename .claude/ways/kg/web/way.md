@@ -59,3 +59,13 @@ package.json, tsconfig*.json) — those aren't watched by HMR.
 Stores save to API first, fall back to localStorage:
 - Requires OAuth login for database persistence
 - localStorage serves as cache and offline fallback
+
+## Control UI: Show State, Don't Imply It
+
+<!-- epistemic: heuristic -->
+
+An action-labeled button (e.g. "Freeze") is ambiguous about *current* state —
+does "Freeze" mean it's frozen, or that clicking freezes it? For admin/control
+toggles, render an explicit status indicator (an Active/Frozen pill) next to
+the bare action verb, so the user reads the current state directly instead of
+inferring it from the button label.

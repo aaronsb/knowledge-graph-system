@@ -467,6 +467,7 @@ export interface OntologyDeleteResponse {
   deleted: boolean;
   sources_deleted: number;
   orphaned_concepts_deleted: number;
+  tombstone_cleared?: boolean;
   error?: string;
 }
 

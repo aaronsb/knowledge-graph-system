@@ -591,6 +591,54 @@ class APIClient {
     return response.data;
   }
 
+  /**
+   * Delete an ontology and ALL its data (graph + Garage storage).
+   * By default this is a complete delete that clears the deletion tombstone so
+   * the name is immediately re-ingestable; pass keepTombstone to leave the block.
+   */
+  async deleteOntology(
+    name: string,
+    keepTombstone: boolean = false
+  ): Promise<{
+    ontology: string;
+    deleted: boolean;
+    sources_deleted: number;
+    orphaned_concepts_deleted: number;
+    tombstone_cleared: boolean;
+  }> {
+    const response = await this.client.delete(`/ontology/${encodeURIComponent(name)}`, {
+      params: { force: true, keep_tombstone: keepTombstone },
+    });
+    return response.data;
+  }
+
+  /**
+   * List ontology tombstones (operator-delete markers that block re-ingestion).
+   */
+  async listTombstones(): Promise<{
+    tombstones: Array<{ name: string; removed_by: string | null; removed_at: string | null; reason: string | null }>;
+    count: number;
+  }> {
+    const response = await this.client.get('/ontology/tombstones');
+    return response.data;
+  }
+
+  /**
+   * Flush ALL ontology tombstones.
+   */
+  async flushTombstones(): Promise<{ flushed: number; names: string[] }> {
+    const response = await this.client.delete('/ontology/tombstones');
+    return response.data;
+  }
+
+  /**
+   * Clear the tombstone for a single ontology name.
+   */
+  async clearTombstone(name: string): Promise<{ flushed: number; names: string[] }> {
+    const response = await this.client.delete(`/ontology/tombstones/${encodeURIComponent(name)}`);
+    return response.data;
+  }
+
   // ============================================================
   // ONTOLOGY ANNEALING LIFECYCLE METHODS (ADR-200 / ADR-703)
   // ============================================================
@@ -1224,6 +1272,18 @@ class APIClient {
     slots_in_use: number;
   }> {
     const response = await this.client.get('/admin/workers/status');
+    return response.data;
+  }
+
+  /**
+   * Update a worker lane (ADR-100): freeze/unfreeze (enabled) or adjust slots.
+   * Only provided fields change; takes effect on the next poll cycle.
+   */
+  async updateWorkerLane(
+    name: string,
+    body: { max_slots?: number; poll_interval_ms?: number; stale_timeout_minutes?: number; enabled?: boolean }
+  ): Promise<{ lane: { name: string; max_slots: number; enabled: boolean }; changed: Record<string, { old: any; new: any }> }> {
+    const response = await this.client.patch(`/admin/workers/lanes/${encodeURIComponent(name)}`, body);
     return response.data;
   }
 

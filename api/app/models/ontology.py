@@ -182,6 +182,7 @@ class OntologyDeleteResponse(BaseModel):
     deleted: bool
     sources_deleted: int
     orphaned_concepts_deleted: int
+    tombstone_cleared: bool = False  # True if the deletion tombstone was flushed (name re-ingestable)
     error: Optional[str] = None
 
 

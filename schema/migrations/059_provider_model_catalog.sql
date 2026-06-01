@@ -91,14 +91,23 @@ ON CONFLICT (provider, model_id, category) DO NOTHING;
 -- Seed: Anthropic extraction models
 -- ============================================================
 
+-- enabled=FALSE for retired dated snapshots. Anthropic has no catalog API
+-- (ADR-800), so these are seeded by hand — and a dated snapshot eventually
+-- retires and 404s. claude-3-haiku-20240307 (retired 2026-04-19) was the
+-- cheapest *enabled* row, so prefer_cheapest resolution (code-block prose
+-- translation in the markdown preprocessor) silently selected it and every
+-- call 404'd; claude-3-5-sonnet-20241022 likewise 404s. They remain in the
+-- catalog (still visible/selectable in admin) but disabled so resolution
+-- never auto-selects a dead model. Durable fix: reconcile the catalog against
+-- live availability on Refresh (see api/app/routes/models.py refresh_catalog).
 INSERT INTO kg_api.provider_model_catalog
     (provider, model_id, display_name, category, context_length, supports_vision, supports_json_mode, supports_tool_use, price_prompt_per_m, price_completion_per_m, enabled, is_default, sort_order)
 VALUES
     ('anthropic', 'claude-sonnet-4-20250514', 'Claude Sonnet 4', 'extraction', 200000, TRUE, TRUE, TRUE, 3.00, 15.00, TRUE, TRUE, 1),
-    ('anthropic', 'claude-3-5-sonnet-20241022', 'Claude 3.5 Sonnet', 'extraction', 200000, TRUE, TRUE, TRUE, 3.00, 15.00, TRUE, FALSE, 2),
+    ('anthropic', 'claude-3-5-sonnet-20241022', 'Claude 3.5 Sonnet', 'extraction', 200000, TRUE, TRUE, TRUE, 3.00, 15.00, FALSE, FALSE, 2),
     ('anthropic', 'claude-3-opus-20240229', 'Claude 3 Opus', 'extraction', 200000, TRUE, TRUE, TRUE, 15.00, 75.00, FALSE, FALSE, 3),
     ('anthropic', 'claude-3-sonnet-20240229', 'Claude 3 Sonnet', 'extraction', 200000, TRUE, TRUE, TRUE, 3.00, 15.00, FALSE, FALSE, 4),
-    ('anthropic', 'claude-3-haiku-20240307', 'Claude 3 Haiku', 'extraction', 200000, TRUE, TRUE, TRUE, 0.25, 1.25, TRUE, FALSE, 5)
+    ('anthropic', 'claude-3-haiku-20240307', 'Claude 3 Haiku', 'extraction', 200000, TRUE, TRUE, TRUE, 0.25, 1.25, FALSE, FALSE, 5)
 ON CONFLICT (provider, model_id, category) DO NOTHING;
 
 -- ============================================================

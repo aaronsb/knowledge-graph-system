@@ -16,12 +16,18 @@ from psycopg2.extras import RealDictCursor
 
 from ..dependencies.auth import CurrentUser
 from ..services.job_queue import get_job_queue
+from ..services.lane_manager import MAX_LANE_SLOTS
 from ..lib.job_permissions import JobPermissionContext
 
 
 class LaneUpdate(BaseModel):
     """Request body for updating a worker lane."""
-    max_slots: Optional[int] = Field(None, ge=0, le=10, description="Max concurrent jobs")
+    # Cap is MAX_LANE_SLOTS (lane_manager) — the same ceiling the worker pool is
+    # sized against, so a configured value here is always backed by threads.
+    max_slots: Optional[int] = Field(
+        None, ge=0, le=MAX_LANE_SLOTS,
+        description=f"Max concurrent jobs in the lane (0–{MAX_LANE_SLOTS})",
+    )
     poll_interval_ms: Optional[int] = Field(None, ge=500, le=120000, description="Poll interval in ms")
     stale_timeout_minutes: Optional[int] = Field(None, ge=5, le=1440, description="Stale job timeout in minutes")
     enabled: Optional[bool] = Field(None, description="Enable/disable the lane")
