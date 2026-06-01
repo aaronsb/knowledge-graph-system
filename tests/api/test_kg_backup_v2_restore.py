@@ -15,7 +15,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from api.app.lib.age_client import AGEClient
-from api.lib.serialization import DataExporter, DataImporter
+from api.lib.serialization import DataExporter, DataImporter, KgBackupV2Reader
 from api.lib.id_remap import IdRemapper
 from api.app.lib.restore_modes import prepare_backup, RestoreMode
 
@@ -136,6 +136,73 @@ def test_integration_mode_attaches_to_existing_concept(client_with_cleanup):
                         f"OR n.instance_id = $i DETACH DELETE n", params={"i": _id})
                 except Exception:
                     pass
+
+
+def test_faithful_replay_mints_ordered_ids_and_maps_instances(client_with_cleanup):
+    """P5-faithful primitives against the live DB: _replay_graph_epochs mints fresh
+    ordered event_ids carrying occurred_at/kind, and import with event_id_map stamps
+    the restored instance through old→new. Inserts as 'completed' (watermark-safe)
+    and deletes the test epoch rows in a finally."""
+    client = client_with_cleanup
+    backup = DataExporter.build_kg_backup_v2(
+        concepts=[{"concept_id": f"{NS}fc1", "label": "F", "search_terms": [],
+                   "embedding": [0.1, 0.2, 0.3], "created_at_epoch": 5, "last_seen_epoch": 7}],
+        sources=[{"source_id": f"{NS}fs1", "document": "F", "file_path": "/f", "paragraph": 1,
+                  "full_text": "t", "content_type": "text/plain"}],
+        instances=[{"instance_id": f"{NS}fi1", "quote": "q", "source_id": f"{NS}fs1",
+                    "created_at_event_id": 41}],   # carried id → must remap to a new local id
+        evidence=[{"concept_id": f"{NS}fc1", "instance_id": f"{NS}fi1"}],
+        relationships=[], vocabulary=[],
+        embedding_profiles=[{"identity": "x", "vector_space": "x", "image_vector_space": None,
+                             "name": "d", "multimodal": False}],
+        epoch_kinds=[{"kind": "ingestion", "semantic_wallclock": True, "description": ""}],
+        graph_epochs=[
+            {"event_id": 40, "occurred_at": "2026-01-01T00:00:00Z", "kind": "ingestion",
+             "actor": "system", "counter_after": 40, "metadata": {"k": "v"}},
+            {"event_id": 41, "occurred_at": "2026-02-01T00:00:00Z", "kind": "ingestion",
+             "actor": "system", "counter_after": 41, "metadata": {}},
+        ],
+        schema_version=76,
+    )
+    reader = KgBackupV2Reader(backup)
+
+    DataImporter._ensure_epoch_kinds(client, reader)
+    event_id_map = DataImporter._replay_graph_epochs(client, reader, status="completed")
+    new_ids = sorted(event_id_map.values())
+    try:
+        # Two events minted, fresh + ordered (preserve original 40<41 order).
+        assert set(event_id_map.keys()) == {40, 41}
+        assert new_ids[0] < new_ids[1]
+        assert event_id_map[40] < event_id_map[41]
+        # Rows exist carrying the original kind + wallclock.
+        conn = client.pool.getconn()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT kind, occurred_at FROM kg_api.graph_epochs WHERE event_id = %s",
+                    (event_id_map[40],))
+                row = cur.fetchone()
+                assert row[0] == "ingestion"
+                assert row[1].year == 2026 and row[1].month == 1
+        finally:
+            conn.commit(); client.pool.putconn(conn)
+
+        # Import with the map: the instance's carried event_id 41 → the new local id.
+        DataImporter.import_backup(client, backup, overwrite_existing=True, event_id_map=event_id_map)
+        assert _scalar(client,
+            f"MATCH (i:Instance {{instance_id:'{NS}fi1'}}) "
+            f"WHERE i.created_at_event_id = {event_id_map[41]} RETURN count(i) AS n") == 1
+        assert _scalar(client,
+            f"MATCH (i:Instance {{instance_id:'{NS}fi1'}}) "
+            f"WHERE i.created_at_event_id = 41 RETURN count(i) AS n") == 0
+    finally:
+        conn = client.pool.getconn()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("DELETE FROM kg_api.graph_epochs WHERE event_id = ANY(%s)", (new_ids,))
+            conn.commit()
+        finally:
+            client.pool.putconn(conn)
 
 
 def test_merge_relationship_rejects_unsafe_edge_label():
