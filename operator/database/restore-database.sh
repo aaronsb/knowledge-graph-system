@@ -143,12 +143,12 @@ if [ "$AUTO_CONFIRM" = false ]; then
     echo -e "  Size: ${GREEN}$BACKUP_SIZE${NC}"
     echo -e "  Target database: ${BLUE}$DB_NAME${NC}"
     echo ""
-    echo -e "${RED}⚠️  WARNING: This will REPLACE ALL DATA in $DB_NAME${NC}"
+    echo -e "${RED}⚠️  WARNING: This DROPS the entire $DB_NAME database${NC}"
     echo -e "  ${YELLOW}All existing concepts, relationships, sources, and users will be lost${NC}"
     echo ""
-    echo -e "${BLUE}What this does:${NC}"
-    echo "  • Drops all existing tables and data"
-    echo "  • Restores complete database from backup"
+    echo -e "${BLUE}What this does (binary backups):${NC}"
+    echo "  • DROPs and recreates the $DB_NAME database (irreversible data loss)"
+    echo "  • Restores complete database from backup into the empty database"
     echo "  • Includes all graphs, users, and configuration"
     echo ""
     echo -e "${BLUE}Usage:${NC}"
@@ -180,24 +180,61 @@ if file "$BACKUP_FILE" | grep -q "PostgreSQL custom database dump"; then
     # Binary custom format - use pg_restore
     echo -e "${BLUE}→${NC} Restoring from binary backup (pg_restore)..."
 
-    # pg_restore options:
-    # --clean: Drop objects before recreating
-    # --if-exists: Use IF EXISTS when dropping
+    # ------------------------------------------------------------------------
+    # #398 fix: restore into a genuinely EMPTY database.
+    #
+    # Previously this used `pg_restore --clean --if-exists`, which emits
+    # `DROP TABLE IF EXISTS` for Apache AGE label tables. AGE rejects dropping
+    # those tables directly ("ERROR: table \"X\" is for label \"X\""), so any
+    # --clean restore into a database that already holds a graph aborts.
+    #
+    # Instead we DROP and recreate the target database, then pg_restore WITHOUT
+    # --clean. A freshly created database has no AGE label tables to choke on,
+    # and the dump recreates everything (extensions, graph, data) from scratch.
+    #
+    # ⚠️  DATA LOSS: DROP DATABASE destroys ALL existing data in $DB_NAME before
+    #     the restore begins. This is irreversible. The confirmation prompt above
+    #     already warns the operator; honor it.
+    # ------------------------------------------------------------------------
+    echo -e "${RED}⚠️${NC}  Dropping and recreating database ${BLUE}$DB_NAME${NC} (all current data will be destroyed)..."
+
+    # DROP/CREATE must run against a maintenance database, not the target itself.
+    # Terminate any lingering connections first so DROP DATABASE can proceed.
+    if ! docker exec -i $CONTAINER psql -U $DB_USER -d postgres -v ON_ERROR_STOP=1 <<SQL
+SELECT pg_terminate_backend(pid)
+  FROM pg_stat_activity
+ WHERE datname = '$DB_NAME' AND pid <> pg_backend_pid();
+DROP DATABASE IF EXISTS "$DB_NAME";
+CREATE DATABASE "$DB_NAME";
+SQL
+    then
+        echo -e "${RED}✗${NC} Failed to recreate database $DB_NAME"
+        echo -e "  ${YELLOW}The database may be partially dropped. Check: ${BLUE}docker exec $CONTAINER psql -U $DB_USER -l${NC}"
+        echo ""
+        exit 1
+    fi
+
+    # pg_restore options (note: NO --clean / --if-exists — target is empty):
     # --no-owner: Don't restore ownership
     # --no-privileges: Don't restore privileges
     # -1: Run restore in single transaction (all or nothing)
+    #
+    # #397 fix: `set -o pipefail` makes the pipeline below report pg_restore's
+    # exit status rather than grep's, so a failed/rolled-back restore is caught.
+    # AGE emits benign "WARNING" / "already exists" notices we still filter out.
+    set -o pipefail
     if docker exec -i $CONTAINER pg_restore \
         -U $DB_USER \
         -d $DB_NAME \
-        --clean \
-        --if-exists \
         --no-owner \
         --no-privileges \
         -1 \
         < "$BACKUP_FILE" 2>&1 | grep -v "^WARNING:" | grep -v "already exists"; then
 
+        set +o pipefail
         RESTORE_METHOD="pg_restore (binary)"
     else
+        set +o pipefail
         echo -e "${RED}✗${NC} Restore failed"
         echo ""
         echo -e "${YELLOW}Troubleshooting:${NC}"
@@ -227,10 +264,12 @@ else
     fi
 fi
 
-echo -e "${GREEN}✓${NC} Database restored successfully!"
-echo ""
-
-# Show restored database stats
+# Gather restored database stats.
+#
+# #397 fix (part 2): these counts now GATE success instead of being cosmetic.
+# A pg_restore that rolls back inside its single transaction can still exit 0 in
+# some edge cases (and historically the `| grep` masked failures entirely), so we
+# independently verify the graph actually has content before reporting success.
 SCHEMA_VERSION=$(docker exec $CONTAINER psql -U $DB_USER -d $DB_NAME -t -A -c \
     "SELECT MAX(version) FROM public.schema_migrations" 2>/dev/null || echo "unknown")
 
@@ -242,6 +281,27 @@ SOURCE_COUNT=$(docker exec $CONTAINER psql -U $DB_USER -d $DB_NAME -t -A -c \
 
 USER_COUNT=$(docker exec $CONTAINER psql -U $DB_USER -d $DB_NAME -t -A -c \
     "SELECT COUNT(*) FROM kg_auth.users" 2>/dev/null || echo "0")
+
+# Normalize counts (strip whitespace; default to 0 if the query errored).
+CONCEPT_COUNT=$(echo "$CONCEPT_COUNT" | tr -d '[:space:]'); CONCEPT_COUNT=${CONCEPT_COUNT:-0}
+SOURCE_COUNT=$(echo "$SOURCE_COUNT" | tr -d '[:space:]'); SOURCE_COUNT=${SOURCE_COUNT:-0}
+
+# Secondary sanity check on the restored graph. pg_restore's exit status
+# (captured via `set -o pipefail` above) is the AUTHORITATIVE success signal —
+# a genuine failure already took the error path. These counts only catch the
+# rare exit-0-but-rolled-back case, so an empty graph here is a loud WARNING,
+# not a failure: the DROP is already irreversible, and a legitimately empty (or
+# unusually small) backup would otherwise trip a misleading "restore failed".
+if ! [[ "$CONCEPT_COUNT" =~ ^[0-9]+$ ]] || ! [[ "$SOURCE_COUNT" =~ ^[0-9]+$ ]]; then
+    echo -e "${YELLOW}⚠${NC}  Could not read post-restore counts (concepts=$CONCEPT_COUNT, sources=$SOURCE_COUNT); skipping the empty-graph check."
+elif [ "$CONCEPT_COUNT" -eq 0 ] && [ "$SOURCE_COUNT" -eq 0 ]; then
+    echo -e "${YELLOW}⚠${NC}  Restore completed but the graph is empty (0 concepts, 0 sources)."
+    echo -e "  ${YELLOW}If the backup was non-empty this may indicate a silent rollback — check ${BLUE}docker logs $CONTAINER${NC}."
+    echo ""
+fi
+
+echo -e "${GREEN}✓${NC} Database restored successfully!"
+echo ""
 
 echo -e "${BOLD}Restored Database:${NC}"
 echo -e "  Method: ${BLUE}$RESTORE_METHOD${NC}"
