@@ -28,6 +28,10 @@ DEFAULTS = {
     "automation_level": "autonomous",
     "min_ontology_age_epochs": 3,
     "min_ontology_concept_count": 5,
+    # Refractory gate (ADR-200): defer annealing while ingestion is in-flight,
+    # but force a cycle once this many epochs have accumulated so a continuous
+    # ingestion stream can't starve annealing entirely. ~10x epoch_interval.
+    "inflight_defer_max_epochs": 50,
 }
 
 
@@ -46,6 +50,7 @@ def _read_options(conn) -> Dict:
                     "max_proposals",
                     "min_ontology_age_epochs",
                     "min_ontology_concept_count",
+                    "inflight_defer_max_epochs",
                 ):
                     options[key] = int(value)
                 elif key in ("demotion_threshold", "overlap_threshold", "specializes_threshold"):
@@ -55,6 +60,26 @@ def _read_options(conn) -> Dict:
     except Exception as e:
         logger.warning(f"AnnealingLauncher: could not read annealing_options, using defaults: {e}")
     return options
+
+
+def _should_defer_for_inflight(
+    inflight_count: int, epoch_delta: int, max_defer_epochs: int
+) -> bool:
+    """Decide whether to defer an annealing cycle because ingestion is in-flight.
+
+    Refractory gate (ADR-200, Approach A): annealing reorganizes the graph, so
+    running it while documents are still being ingested churns work that the
+    next chunk invalidates — the "panic mode" observed when a large ingest
+    bumps the epoch faster than the epoch_interval cadence. Defer while
+    ingestion is active, but only up to `max_defer_epochs` of accumulated epoch
+    delta, after which we force a cycle so a continuous ingestion stream can't
+    starve annealing entirely.
+
+    Pure function (no I/O) so the policy is unit-testable in isolation.
+    """
+    if inflight_count <= 0:
+        return False
+    return epoch_delta < max_defer_epochs
 
 
 class AnnealingLauncher(JobLauncher):
@@ -102,6 +127,29 @@ class AnnealingLauncher(JobLauncher):
                 current_epoch = client.get_current_epoch()
                 epoch_interval = options["epoch_interval"]
 
+                # Refractory gate (Approach A): defer while ingestion is actively
+                # in-flight so we don't anneal a graph that's still being flooded
+                # with concepts. Bounded by inflight_defer_max_epochs so a
+                # continuous stream can't starve annealing. (Graded pressure-curve
+                # response is the Approach B follow-up — see GitHub issue.)
+                inflight = self._count_inflight_ingestion(conn)
+                if inflight > 0:
+                    max_defer = options["inflight_defer_max_epochs"]
+                    epoch_delta = current_epoch - self._read_last_annealing_epoch(conn)
+                    if _should_defer_for_inflight(inflight, epoch_delta, max_defer):
+                        logger.info(
+                            f"AnnealingLauncher: deferring — {inflight} ingestion "
+                            f"job(s) in-flight (epoch_delta={epoch_delta} < "
+                            f"max_defer={max_defer}); waiting for the influx to settle"
+                        )
+                        conn.rollback()
+                        return False
+                    logger.info(
+                        f"AnnealingLauncher: {inflight} ingestion job(s) in-flight "
+                        f"but epoch_delta={epoch_delta} >= max_defer={max_defer}; "
+                        f"forcing a cycle to avoid starvation"
+                    )
+
                 # Atomic check-and-claim: UPDATE only succeeds if delta is sufficient
                 with conn.cursor() as cur:
                     cur.execute(
@@ -135,6 +183,39 @@ class AnnealingLauncher(JobLauncher):
 
         finally:
             client.close()
+
+    @staticmethod
+    def _count_inflight_ingestion(conn) -> int:
+        """Count ingestion jobs that are queued or actively running (the influx).
+
+        Counts pending/queued/approved/running ingestion + image-ingestion jobs.
+        Excludes terminal states (completed/failed/cancelled) and
+        awaiting_approval (not yet committed to run — could sit indefinitely and
+        would otherwise defer annealing forever). Fails open (returns 0) so an
+        error here never blocks annealing.
+        """
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT count(*) FROM kg_api.jobs "
+                    "WHERE job_type IN ('ingestion', 'ingest_image') "
+                    "AND status IN ('pending', 'queued', 'approved', 'running')"
+                )
+                return int(cur.fetchone()[0])
+        except Exception as e:
+            logger.warning(f"AnnealingLauncher: in-flight ingestion check failed: {e}")
+            return 0
+
+    @staticmethod
+    def _read_last_annealing_epoch(conn) -> int:
+        """Read the last claimed annealing epoch (0 if the metric is absent)."""
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT counter FROM public.graph_metrics "
+                "WHERE metric_name = 'last_annealing_epoch'"
+            )
+            row = cur.fetchone()
+            return int(row[0]) if row else 0
 
     def prepare_job_data(self) -> Dict:
         """
