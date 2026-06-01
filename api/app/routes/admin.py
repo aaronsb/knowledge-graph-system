@@ -219,7 +219,11 @@ async def restore_backup(
     _: None = Depends(require_permission("backups", "restore")),
     file: UploadFile = File(..., description="Backup file (.tar.gz archive or .json)"),
     mode: str = Form("idempotent",
-                     description="Restore merge mode: 'idempotent', 'adjacent', or 'integration'")
+                     description="Restore merge mode: 'idempotent', 'adjacent', or 'integration'"),
+    epoch: str = Form("simple",
+                      description="Epoch reconciliation: 'simple' (one restore event) or "
+                                  "'faithful' (replay carried history; clone-only, requires "
+                                  "idempotent mode + empty target)")
 ):
     """
     Restore a database backup (ADR-015 Phase 2: Multipart Upload)
@@ -264,6 +268,14 @@ async def restore_backup(
     from ..lib.restore_modes import RestoreMode
     try:
         RestoreMode.validate(mode)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+    # Validate the epoch reconciliation mode (eligibility — faithful requires
+    # idempotent + empty target — is enforced in the worker where it has a client).
+    from ..workers.restore_worker import _validate_epoch_mode
+    try:
+        epoch = _validate_epoch_mode(epoch)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
@@ -364,6 +376,7 @@ async def restore_backup(
                 "temp_file": str(temp_path),
                 "temp_file_id": str(temp_file_id),
                 "mode": mode,
+                "epoch": epoch,
                 "backup_stats": stats,
                 "integrity_warnings": len(integrity.warnings),
                 "archive_temp_dir": archive_temp_dir,  # For document restore (None if JSON)

@@ -32,6 +32,66 @@ from ..lib.lane_control import (
 # a real, local event id.
 RESTORE_EPOCH_KIND = "restore"
 
+# ADR-102 P5: epoch reconciliation modes (restore-time selector).
+#   simple   — collapse the backup's history into ONE restore event (default, all modes)
+#   faithful — replay the carried graph_epochs as new local events (clone-only)
+EPOCH_SIMPLE = "simple"
+EPOCH_FAITHFUL = "faithful"
+_EPOCH_MODES = (EPOCH_SIMPLE, EPOCH_FAITHFUL)
+
+
+def _validate_epoch_mode(value) -> str:
+    """Validate the epoch reconciliation mode, defaulting to simple."""
+    v = (value or EPOCH_SIMPLE).lower()
+    if v not in _EPOCH_MODES:
+        raise ValueError(f"Unknown epoch mode {value!r}; expected one of {_EPOCH_MODES}")
+    return v
+
+
+def _max_carried_concept_epoch(backup_data: Dict[str, Any]):
+    """Max of concepts' carried created_at/last_seen epochs, or None if none.
+
+    P5-faithful sets the target's document_ingestion_counter to this so the
+    restored concepts' carried epochs do not read as 'from the future'.
+    """
+    reader = KgBackupV2Reader(backup_data)
+    hi = None
+    for c in reader.concepts():
+        for key in ("created_at_epoch", "last_seen_epoch"):
+            v = c.get(key)
+            if v is not None and (hi is None or v > hi):
+                hi = v
+    return hi
+
+
+def _target_is_empty(client: AGEClient) -> bool:
+    """True if the target holds no graph nodes AND no epoch history.
+
+    Faithful epoch replay (ADR-102) mints fresh local event_ids but only makes
+    sense when reconstructing a graph from scratch — merging a full foreign
+    history into a graph that already has its own would interleave two unrelated
+    timelines. Both the node graph and the graph_epochs log must be empty.
+    """
+    for label in ("Concept", "Source", "Instance"):
+        row = client._execute_cypher(f"MATCH (n:{label}) RETURN count(n) AS n", fetch_one=True)
+        if row and int(str(row.get("n", 0)).strip('"')) > 0:
+            return False
+    conn = client.pool.getconn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT to_regclass('kg_api.graph_epochs') IS NOT NULL")
+            if cur.fetchone()[0]:
+                cur.execute("SELECT count(*) FROM kg_api.graph_epochs")
+                if int(cur.fetchone()[0]) > 0:
+                    return False
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        client.pool.putconn(conn)
+    return True
+
 logger = logging.getLogger(__name__)
 
 
@@ -69,14 +129,16 @@ def run_restore_worker(
     temp_file = Path(job_data["temp_file"])
     temp_file_id = job_data["temp_file_id"]
     mode = RestoreMode.validate(job_data.get("mode", RestoreMode.DEFAULT))
+    epoch_mode = _validate_epoch_mode(job_data.get("epoch", EPOCH_SIMPLE))
     backup_stats = job_data.get("backup_stats", {})
     archive_temp_dir = job_data.get("archive_temp_dir")  # For archive restores
     is_archive = job_data.get("is_archive", False)
 
     checkpoint_path = None
     client = None
-    lane_prior = None        # ADR-102 A14: prior lane-enabled state, restored on exit
-    restore_event_id = None  # ADR-102 P5: the single restore graph_epochs event
+    lane_prior = None         # ADR-102 A14: prior lane-enabled state, restored on exit
+    restore_event_id = None   # ADR-102 P5 epoch-simple: the single restore event
+    replayed_event_ids = None  # ADR-102 P5-faithful: ids minted by the epoch replay
     quiesced = True          # ADR-102 A14: did frozen lanes drain before the timeout?
 
     try:
@@ -114,6 +176,27 @@ def run_restore_worker(
         })
 
         client = AGEClient()
+
+        # ADR-102 P5-faithful eligibility gate (fail fast, before checkpoint/import).
+        # Faithful epoch replay is clone-only: it requires idempotent mode AND an
+        # empty target. Reject otherwise with the actionable alternatives rather
+        # than silently downgrading (faithful is an explicit opt-in).
+        if epoch_mode == EPOCH_FAITHFUL:
+            if mode != RestoreMode.IDEMPOTENT:
+                raise ValueError(
+                    f"epoch=faithful requires --mode idempotent (got {mode!r}). "
+                    f"Faithful replay preserves per-event history against preserved "
+                    f"node ids; adjacent/integration mint new ids. Use --epoch simple, "
+                    f"or --mode idempotent into an empty target."
+                )
+            if not _target_is_empty(client):
+                raise ValueError(
+                    "epoch=faithful requires an EMPTY target (no concepts/sources/"
+                    "instances and no epoch history) — it reconstructs a graph's full "
+                    "history from scratch. For a populated target use --epoch simple, "
+                    "or --mode integration to merge into the existing graph."
+                )
+
         checkpoint_path = _create_checkpoint_backup(client, job_id)
 
         logger.info(f"[{job_id}] Checkpoint created at {checkpoint_path}")
@@ -139,37 +222,58 @@ def run_restore_worker(
         logger.info(f"[{job_id}] Restore mode: {mode}")
         prepared_backup, mapping_table = prepare_backup(backup_data, mode, client)
 
-        # ADR-102 P5 (epoch-simple): record ONE restore epoch event up front so its
-        # event_id can stamp every imported node. The carried bulk.graph_epochs are
-        # NOT replayed (that is P5-faithful, clone-only). record_epoch inserts an
-        # in_progress event that holds the committed watermark just below it until
-        # complete_epoch resolves it — exactly the long-job tagging pattern the
-        # ingestion worker uses.
-        #
-        # ADR-102 A13: a failed record_epoch is FATAL here (not log-and-continue).
-        # Without an event id every restored Instance would be untagged AND the
-        # post-restore watermark advance below would be meaningless — restored
-        # data could read FRESH against stale derivations. Fail loudly instead.
-        restore_event_id = client.record_epoch(
-            kind=RESTORE_EPOCH_KIND,
-            actor="restore",
-            metadata={"job_id": job_id, "mode": mode, "restore": True},
-        )
-        if restore_event_id is None:
-            raise RuntimeError(
-                "record_epoch returned None — cannot stamp restored nodes with a "
-                "graph epoch (the freshness clock would be left inconsistent). "
-                "Check kg_api.graph_epochs health (grep 'record_epoch failed')."
-            )
-        logger.info(f"[{job_id}] Restore epoch event_id={restore_event_id}")
+        # ADR-102 P5: epoch reconciliation. Both modes record graph_epochs as
+        # in_progress so the committed watermark sits below them and the graph reads
+        # STALE during the import; they resolve to 'completed' after the import lands.
+        logger.info(f"[{job_id}] Epoch mode: {epoch_mode}")
+        epoch_restamp = None
+        event_id_map = None
 
-        # Concept epochs live in the separate document_ingestion_counter space
-        # (ADR-200), not the graph_epochs.event_id space — so they restamp to the
-        # target's CURRENT concept epoch, not the restore event_id. NOTE: this is a
-        # DELIBERATE collapse — every restored concept gets the same created_at ==
-        # last_seen == now, so relative concept age is intentionally lost until
-        # re-annealing (epoch-simple). P5-faithful must NOT "fix" this by carrying.
-        restore_concept_epoch = client.get_current_epoch()
+        if epoch_mode == EPOCH_FAITHFUL:
+            # Faithful (clone-only): replay the carried graph_epochs as NEW local
+            # events (fresh ids, carried occurred_at/kind/actor/metadata), then stamp
+            # each Instance via the old→new map. Concepts carry their ORIGINAL epochs;
+            # the counter is advanced after import so vitality stays consistent.
+            #
+            # Raw INSERT (not record_epoch) so we can carry occurred_at + mint N rows
+            # in one pass — watermark-equivalent to the simple path's stored-function
+            # in_progress event. A crash between this commit and the resolve below
+            # leaves N rows in_progress (the simple path leaves 1); the orphaned-epoch
+            # reconciliation sweep that fixes both is tracked in issue #485.
+            reader = KgBackupV2Reader(prepared_backup)
+            DataImporter._ensure_epoch_kinds(client, reader)
+            event_id_map = DataImporter._replay_graph_epochs(client, reader, status="in_progress")
+            replayed_event_ids = list(event_id_map.values())
+            logger.info(f"[{job_id}] Faithful replay minted {len(replayed_event_ids)} epoch events")
+        else:
+            # epoch-simple: record ONE restore event up front so its id stamps every
+            # imported node. The carried bulk.graph_epochs are NOT replayed.
+            #
+            # ADR-102 A13: a failed record_epoch is FATAL (not log-and-continue) —
+            # without an event id, restored data could read FRESH against stale
+            # derivations and every Instance would be untagged.
+            restore_event_id = client.record_epoch(
+                kind=RESTORE_EPOCH_KIND,
+                actor="restore",
+                metadata={"job_id": job_id, "mode": mode, "restore": True},
+            )
+            if restore_event_id is None:
+                raise RuntimeError(
+                    "record_epoch returned None — cannot stamp restored nodes with a "
+                    "graph epoch (the freshness clock would be left inconsistent). "
+                    "Check kg_api.graph_epochs health (grep 'record_epoch failed')."
+                )
+            logger.info(f"[{job_id}] Restore epoch event_id={restore_event_id}")
+
+            # Concept epochs live in the separate document_ingestion_counter space
+            # (ADR-200), not graph_epochs.event_id — so they restamp to the target's
+            # CURRENT concept epoch. DELIBERATE collapse: every restored concept gets
+            # the same created_at == last_seen == now (relative age lost until
+            # re-annealing). P5-faithful preserves the original epochs instead.
+            epoch_restamp = {
+                "event_id": restore_event_id,
+                "concept_epoch": client.get_current_epoch(),
+            }
 
         # Stage 3: Execute restore with progress tracking
         restore_stats = _execute_restore(
@@ -177,10 +281,8 @@ def run_restore_worker(
             backup_data=prepared_backup,
             job_id=job_id,
             job_queue=job_queue,
-            epoch_restamp={
-                "event_id": restore_event_id,
-                "concept_epoch": restore_concept_epoch,
-            },
+            epoch_restamp=epoch_restamp,
+            event_id_map=event_id_map,
         )
 
         # Stage 4: Restore documents to Garage (for archive backups)
@@ -220,19 +322,31 @@ def run_restore_worker(
             }
         })
 
-        # ADR-207/#386 + ADR-102 P5: resolve the restore epoch as COMPLETED. Until
-        # now it held the committed watermark just below its event_id, so every
-        # derivation correctly read stale during the import. Completing it advances
-        # the universal freshness tick (get_committed_epoch) past every restored
-        # node's stamp; otherwise the catalog index and the grounding / confidence
-        # / artifact caches would keep serving pre-restore data as "fresh".
-        #
-        # The record_epoch/complete_epoch pair does NOT co-advance the in-memory
-        # graph_accel sub-counter on its own (the docstring co-advance caveat /
-        # issue #465) — only record_mutation does. So invalidate the accelerator
-        # and refresh the graph_change_counter snapshot explicitly, matching what
-        # record_mutation would have done.
-        client.complete_epoch(restore_event_id, "completed")
+        # ADR-207/#386 + ADR-102 P5: resolve the restore epoch(s) as COMPLETED. Until
+        # now they held the committed watermark just below them, so every derivation
+        # correctly read stale during the import. Completing advances the universal
+        # freshness tick (get_committed_epoch) past every restored node's stamp;
+        # otherwise the catalog index and the grounding / confidence / artifact
+        # caches would keep serving pre-restore data as "fresh".
+        if epoch_mode == EPOCH_FAITHFUL:
+            DataImporter._resolve_replayed_epochs(client, replayed_event_ids, "completed")
+            # Faithful carries concepts' ORIGINAL epochs — advance the concept counter
+            # to the max carried so vitality math + future ingestion stay monotonic.
+            max_concept_epoch = _max_carried_concept_epoch(prepared_backup)
+            if max_concept_epoch is not None:
+                DataImporter._set_ingestion_counter(client, max_concept_epoch)
+            logger.info(
+                f"[{job_id}] Faithful replay resolved {len(replayed_event_ids)} epochs; "
+                f"ingestion counter >= {max_concept_epoch}"
+            )
+        else:
+            client.complete_epoch(restore_event_id, "completed")
+            logger.info(f"[{job_id}] Restore epoch {restore_event_id} completed")
+
+        # The record_epoch/complete_epoch pair (and the faithful INSERT/resolve path)
+        # do NOT co-advance the in-memory graph_accel sub-counter (the docstring
+        # co-advance caveat / issue #465) — only record_mutation does. So invalidate
+        # the accelerator and refresh the graph_change_counter snapshot explicitly.
         try:
             client.graph.invalidate()
         except Exception as e:
@@ -244,7 +358,7 @@ def run_restore_worker(
             client.refresh_epoch()
         except Exception as e:
             logger.warning(f"[{job_id}] refresh_epoch after restore failed: {e}")
-        logger.info(f"[{job_id}] Restore epoch {restore_event_id} completed (freshness tick advanced)")
+        logger.info(f"[{job_id}] Freshness tick advanced ({epoch_mode} epoch reconciliation)")
 
         # ADR-102 P5 rehydration: source text/visual embeddings do NOT travel in
         # the backup (concept + vocab embeddings do, and scores/catalog/grounding
@@ -292,7 +406,9 @@ def run_restore_worker(
             "restore_stats": restore_stats,
             "mapping_table": mapping_table if remapped else None,
             "document_stats": doc_stats if is_archive else None,
+            "epoch_mode": epoch_mode,
             "restore_epoch_event_id": restore_event_id,
+            "faithful_epochs_replayed": len(replayed_event_ids) if replayed_event_ids else 0,
             "rehydration_job_id": rehydrate_job_id,
             "quiesce_timed_out": not quiesced,
             "checkpoint_created": True,
@@ -311,9 +427,17 @@ def run_restore_worker(
         # any node the failed restore created that is absent from the checkpoint
         # SURVIVES the rollback, stamped with this failed restore_event_id. That
         # residue reads stale (safe), but a true-replace rollback is tracked in
-        # issue #483 (pre-existing MERGE-without-clear weakness).
-        if restore_event_id is not None and client is not None:
-            client.complete_epoch(restore_event_id, "failed")
+        # issue #483 (pre-existing MERGE-without-clear weakness). For faithful the
+        # same applies: the resolved-'failed' replayed epoch rows survive referencing
+        # nothing (the empty-target checkpoint rollback is a no-op), reading stale.
+        if client is not None:
+            if restore_event_id is not None:  # epoch-simple
+                client.complete_epoch(restore_event_id, "failed")
+            if replayed_event_ids:            # P5-faithful
+                try:
+                    DataImporter._resolve_replayed_epochs(client, replayed_event_ids, "failed")
+                except Exception as ee:
+                    logger.error(f"[{job_id}] Failed to mark replayed epochs failed: {ee}")
 
         # Failure: Restore from checkpoint
         if checkpoint_path and checkpoint_path.exists():
@@ -422,7 +546,8 @@ def _execute_restore(
     backup_data: Dict[str, Any],
     job_id: str,
     job_queue,
-    epoch_restamp: Optional[Dict[str, int]] = None
+    epoch_restamp: Optional[Dict[str, int]] = None,
+    event_id_map: Optional[Dict[int, int]] = None
 ) -> Dict[str, int]:
     """
     Execute restore of an already-mode-prepared kg-backup/2 object, with progress.
@@ -432,8 +557,8 @@ def _execute_restore(
     overwrite_existing=True: idempotent updates matching nodes in place, while
     adjacent/integration ids are fresh or attach to existing targets.
 
-    ``epoch_restamp`` (ADR-102 P5 epoch-simple) overrides carried epoch stamps
-    with local clocks — see ``DataImporter.import_backup``.
+    ``epoch_restamp`` (epoch-simple) / ``event_id_map`` (faithful) control how
+    instance/concept epoch stamps are reconciled — see ``DataImporter.import_backup``.
 
     Returns:
         Dict with restore statistics
@@ -491,7 +616,8 @@ def _execute_restore(
         backup_data,
         overwrite_existing=True,
         progress_callback=progress_callback,
-        epoch_restamp=epoch_restamp
+        epoch_restamp=epoch_restamp,
+        event_id_map=event_id_map
     )
 
     return {

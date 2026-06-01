@@ -985,7 +985,8 @@ class DataImporter:
                       overwrite_existing: bool = False,
                       progress_callback: Optional[callable] = None,
                       max_workers: int = 2,
-                      epoch_restamp: Optional[Dict[str, int]] = None) -> Dict[str, int]:
+                      epoch_restamp: Optional[Dict[str, int]] = None,
+                      event_id_map: Optional[Dict[int, int]] = None) -> Dict[str, int]:
         """Import a kg-backup/2 object — the single backup model's front-door.
 
         Args:
@@ -1004,6 +1005,13 @@ class DataImporter:
                 (a separate counter; carrying a foreign value future-dates concept
                 vitality). When None the carried stamps are preserved verbatim
                 (faithful — used by checkpoint rollback and P5-faithful replay).
+            event_id_map: ADR-102 P5-faithful replay. When provided, each
+                instance's carried ``created_at_event_id`` is remapped through this
+                ``{old_event_id: new_event_id}`` table (the freshly-minted local
+                epoch ids from the faithful replay). Mutually exclusive with
+                ``epoch_restamp`` (simple collapses to one id; faithful preserves
+                the per-event structure). Concepts are NOT remapped here — faithful
+                carries their original epochs and the worker sets the counter.
 
         Returns:
             Stats: vocabulary_imported, concepts_created, sources_created,
@@ -1016,6 +1024,7 @@ class DataImporter:
             progress_callback=progress_callback,
             max_workers=max_workers,
             epoch_restamp=epoch_restamp,
+            event_id_map=event_id_map,
         )
 
     @staticmethod
@@ -1023,7 +1032,8 @@ class DataImporter:
                              overwrite_existing: bool = False,
                              progress_callback: Optional[callable] = None,
                              max_workers: int = 2,
-                             epoch_restamp: Optional[Dict[str, int]] = None) -> Dict[str, int]:
+                             epoch_restamp: Optional[Dict[str, int]] = None,
+                             event_id_map: Optional[Dict[int, int]] = None) -> Dict[str, int]:
         """Clone-path writer: import normalized records, preserving ids 1:1.
 
         Order matters: vocabulary (before relationships, ADR-032) → concepts →
@@ -1031,8 +1041,8 @@ class DataImporter:
         APPEARS) → relationships. Clone preserves ids, so edge ``learned_id`` needs
         no remap here (that is P4 adjacent mode).
 
-        ``epoch_restamp`` (ADR-102 P5 epoch-simple) overrides the carried epoch
-        stamps with local clocks — see ``import_backup`` for the contract.
+        ``epoch_restamp`` (P5 epoch-simple) / ``event_id_map`` (P5-faithful) control
+        instance epoch stamping — see ``import_backup`` for the contract.
         """
         restamp_event_id = epoch_restamp.get("event_id") if epoch_restamp else None
         restamp_concept_epoch = epoch_restamp.get("concept_epoch") if epoch_restamp else None
@@ -1064,7 +1074,8 @@ class DataImporter:
         instances = list(reader.instances())
         Console.info("Importing instances...")
         DataImporter._import_instances(client, instances, progress_callback, max_workers,
-                                       restamp_event_id=restamp_event_id)
+                                       restamp_event_id=restamp_event_id,
+                                       event_id_map=event_id_map)
         stats["instances_created"] = len(instances)
 
         evidence_map = reader.evidence_by_instance()
@@ -1264,27 +1275,51 @@ class DataImporter:
     @staticmethod
     def _import_instances(client: AGEClient, instances: List[Dict[str, Any]],
                           progress_callback, max_workers: int,
-                          restamp_event_id: Optional[int] = None) -> None:
+                          restamp_event_id: Optional[int] = None,
+                          event_id_map: Optional[Dict[int, int]] = None) -> None:
         """MERGE instances and their FROM_SOURCE edges in parallel.
 
-        ``restamp_event_id`` (ADR-102 P5 epoch-simple): when set, override every
-        carried ``created_at_event_id`` with this one restore ``graph_epochs``
-        event id. Carried ids reference epoch rows that do not exist in this target
-        (the importer does not replay ``graph_epochs``), so they would dangle.
+        Instance ``created_at_event_id`` resolution (mutually exclusive):
+        - ``event_id_map`` (P5-faithful): remap the carried id through the
+          {old: new} faithful-replay table (``.get(old, old)`` — an unmapped or
+          null carried id passes through).
+        - ``restamp_event_id`` (P5 epoch-simple): override every instance with this
+          one restore event id (carried ids would dangle — the simple path does not
+          replay ``graph_epochs``).
+        - neither: carry verbatim (checkpoint rollback).
+
+        Faithful safety: a carried id absent from ``event_id_map`` (an instance
+        referencing an event the backup did not carry) is stamped NULL rather than
+        passed through — a passed-through foreign id would dangle against the target's
+        fresh epoch sequence (reads unpredictably); NULL reads stale, which is safe.
         """
         total = len(instances)
         lock = threading.Lock()
         done = {"n": 0}
+        unmapped = {"n": 0}
+
+        def _event_id(inst):
+            carried = inst.get("created_at_event_id")
+            if event_id_map is not None:
+                if carried is None:
+                    return None
+                mapped = event_id_map.get(carried)
+                if mapped is None:
+                    unmapped["n"] += 1  # tracked under `lock` in work()
+                    return None
+                return mapped
+            if restamp_event_id is not None:
+                return restamp_event_id
+            return carried
 
         def work(inst):
+            with lock:
+                eid = _event_id(inst)
             params = {
                 "instance_id": inst["instance_id"],
                 "quote": inst.get("quote", ""),
                 "source_id": inst["source_id"],
-                "created_at_event_id": (
-                    restamp_event_id if restamp_event_id is not None
-                    else inst.get("created_at_event_id")
-                ),
+                "created_at_event_id": eid,
             }
             _execute_with_age_retry(client, DataImporter._INSTANCE_Q, params)
             with lock:
@@ -1292,6 +1327,11 @@ class DataImporter:
                 _progress(progress_callback, "instances", done["n"], total)
 
         _run_parallel(instances, work, max_workers)
+        if unmapped["n"]:
+            Console.warning(
+                f"  {unmapped['n']} instance(s) referenced an event_id not in the "
+                f"backup's graph_epochs — left unstamped (faithful replay)."
+            )
 
     @staticmethod
     def _import_evidence(client: AGEClient, pairs: List, max_workers: int) -> None:
@@ -1374,3 +1414,147 @@ class DataImporter:
         if result and int(str(result.get("created", 0))) > 0:
             return 1
         return 0
+
+    # ------------------------------------------------------------------
+    # P5-faithful epoch replay (ADR-102) — clone-only. The worker gates this
+    # to an empty target + idempotent mode and orchestrates the order:
+    #   _ensure_epoch_kinds -> _replay_graph_epochs(in_progress) -> import(map)
+    #   -> _resolve_replayed_epochs(completed) -> _set_ingestion_counter.
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _ensure_epoch_kinds(client: AGEClient, reader: "KgBackupV2Reader") -> None:
+        """Upsert the backup's epoch kinds into kg_api.graph_epoch_kinds.
+
+        Faithful replay inserts graph_epochs rows whose ``kind`` is FK-constrained
+        (migration 064) to this lookup, so any carried kind not already present must
+        exist first. ON CONFLICT DO NOTHING preserves the target's own definition
+        for kinds that already exist.
+        """
+        kinds = reader.header.get("epoch_kinds", [])
+        if not kinds:
+            return
+        conn = client.pool.getconn()
+        try:
+            with conn.cursor() as cur:
+                for k in kinds:
+                    name = k.get("kind") if isinstance(k, dict) else k
+                    if not name:
+                        continue
+                    # Log-only kinds (present in the epoch log but not the lookup
+                    # export) arrive as bare {"kind": k} with no flag — default them
+                    # to forensic (semantic_wallclock=False), the conservative choice.
+                    wallclock = bool(k.get("semantic_wallclock", False)) if isinstance(k, dict) else False
+                    desc = (k.get("description") if isinstance(k, dict) else None) or ""
+                    cur.execute(
+                        "INSERT INTO kg_api.graph_epoch_kinds (kind, semantic_wallclock, description) "
+                        "VALUES (%s, %s, %s) ON CONFLICT (kind) DO NOTHING",
+                        (name, wallclock, desc),
+                    )
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            client.pool.putconn(conn)
+
+    @staticmethod
+    def _replay_graph_epochs(client: AGEClient, reader: "KgBackupV2Reader",
+                             status: str = "in_progress") -> Dict[int, int]:
+        """Replay carried graph_epochs as NEW local events (P5-faithful).
+
+        Inserts each carried event in original-id order, letting BIGSERIAL mint a
+        fresh local event_id while carrying occurred_at/kind/actor/counter_after/
+        metadata — so the replayed history's structure (count, order, node→event
+        groupings, wallclock) is faithful even though the ids are new (new ids never
+        collide; no sequence surgery). Returns {old_event_id: new_event_id} for
+        remapping Instance.created_at_event_id.
+
+        Inserted with ``status`` (default 'in_progress') so the committed watermark
+        sits below the lowest new id and the graph reads STALE during the import;
+        the worker resolves them to 'completed' once the import lands.
+        """
+        old_to_new: Dict[int, int] = {}
+        conn = client.pool.getconn()
+        try:
+            with conn.cursor() as cur:
+                for ep in reader.graph_epochs():
+                    old_id = ep.get("event_id")
+                    # counter_after is carried verbatim — it snapshots the SOURCE
+                    # graph's graph_change_counter, a foreign counter space. It is
+                    # display-only (epoch_facade timeline), never drives the watermark
+                    # or vitality, so carrying it is honest for a faithful replay.
+                    cur.execute(
+                        "INSERT INTO kg_api.graph_epochs "
+                        "(occurred_at, kind, actor, counter_after, metadata, status) "
+                        "VALUES (%s::timestamptz, %s, %s, %s, %s::jsonb, %s) RETURNING event_id",
+                        (
+                            ep.get("occurred_at"),
+                            ep.get("kind"),
+                            ep.get("actor"),
+                            ep.get("counter_after"),
+                            json.dumps(ep.get("metadata") or {}),
+                            status,
+                        ),
+                    )
+                    new_id = cur.fetchone()[0]
+                    if old_id is not None:
+                        old_to_new[old_id] = new_id
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            client.pool.putconn(conn)
+        return old_to_new
+
+    @staticmethod
+    def _resolve_replayed_epochs(client: AGEClient, new_event_ids: List[int],
+                                 status: str = "completed") -> None:
+        """Resolve replayed epoch rows to a terminal status (P5-faithful).
+
+        Called after the import lands ('completed') or fails ('failed'). Both count
+        toward the committed watermark (migration 076); completing advances the
+        freshness clock to the max replayed id, failing keeps the graph stale.
+        """
+        if not new_event_ids:
+            return
+        conn = client.pool.getconn()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "UPDATE kg_api.graph_epochs SET status = %s WHERE event_id = ANY(%s)",
+                    (status, list(new_event_ids)),
+                )
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            client.pool.putconn(conn)
+
+    @staticmethod
+    def _set_ingestion_counter(client: AGEClient, value: int) -> None:
+        """Advance document_ingestion_counter to at least ``value`` (P5-faithful).
+
+        Faithful carries concepts' original created_at/last_seen epochs; the counter
+        must be >= the max carried epoch or restored concepts read as 'from the
+        future' against a lower counter (the P5 hazard) and future ingestion would
+        reissue colliding epoch numbers. GREATEST keeps it monotonic.
+        """
+        if value is None:
+            return
+        conn = client.pool.getconn()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "UPDATE graph_metrics SET counter = GREATEST(counter, %s), updated_at = NOW() "
+                    "WHERE metric_name = 'document_ingestion_counter'",
+                    (value,),
+                )
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            client.pool.putconn(conn)

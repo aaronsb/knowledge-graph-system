@@ -721,6 +721,8 @@ export interface RestoreRequest {
   backup_file: string;
   // ADR-102 P4: restore merge mode (replaces overwrite + handle_external_deps).
   mode?: 'idempotent' | 'adjacent' | 'integration';
+  // ADR-102 P5: epoch reconciliation. 'faithful' is clone-only (idempotent + empty target).
+  epoch?: 'simple' | 'faithful';
 }
 
 export interface RestoreResponse {
