@@ -194,6 +194,7 @@ export function createRestoreCommand(): Command {
     .option('--file <name>', 'Backup filename (from configured directory)')
     .option('--path <path>', 'Custom backup file path (overrides configured directory)')
     .option('--mode <mode>', 'Restore merge mode: "idempotent" (default; MERGE-by-id, clone into empty), "adjacent" (independent copy, fresh ids), or "integration" (attach concepts to existing graph by similarity)', 'idempotent')
+    .option('--epoch <epoch>', 'Epoch reconciliation: "simple" (default; one restore event) or "faithful" (replay the backup\'s history; clone-only — requires --mode idempotent into an empty target)', 'simple')
     .option('--confirm', 'Confirm restore operation (required for non-interactive use)', false)
     .action(async (options) => {
       try {
@@ -206,11 +207,23 @@ export function createRestoreCommand(): Command {
         console.log(colors.status.warning('⚠️  Potentially destructive operation'));
         console.log(separator());
 
-        // Validate the restore mode up front (before any file I/O or upload).
+        // Validate the restore mode + epoch mode up front (before any file I/O or upload).
         const validModes = ['idempotent', 'adjacent', 'integration'];
         if (!validModes.includes(options.mode)) {
           console.error(colors.status.error(
             `\n✗ Invalid --mode "${options.mode}". Expected one of: ${validModes.join(', ')}\n`));
+          process.exit(1);
+        }
+        const validEpochs = ['simple', 'faithful'];
+        if (!validEpochs.includes(options.epoch)) {
+          console.error(colors.status.error(
+            `\n✗ Invalid --epoch "${options.epoch}". Expected one of: ${validEpochs.join(', ')}\n`));
+          process.exit(1);
+        }
+        if (options.epoch === 'faithful' && options.mode !== 'idempotent') {
+          console.error(colors.status.error(
+            `\n✗ --epoch faithful requires --mode idempotent (clone-only). ` +
+            `Use --epoch simple for ${options.mode}, or --mode integration to merge.\n`));
           process.exit(1);
         }
 
@@ -305,7 +318,8 @@ export function createRestoreCommand(): Command {
               const uploadedMB = (uploaded / (1024 * 1024)).toFixed(2);
               const totalMB = (total / (1024 * 1024)).toFixed(2);
               spinner.text = `Uploading backup... ${percent}% (${uploadedMB}/${totalMB} MB)`;
-            }
+            },
+            options.epoch
           );
 
           spinner.succeed('Backup uploaded successfully!');

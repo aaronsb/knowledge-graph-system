@@ -2327,6 +2327,7 @@ kg restore [options]
 | `--file <name>` | Backup filename (from configured directory) | - |
 | `--path <path>` | Custom backup file path (overrides configured directory) | - |
 | `--mode <mode>` | Restore merge mode: "idempotent" (default; MERGE-by-id, clone into empty), "adjacent" (independent copy, fresh ids), or "integration" (attach concepts to existing graph by similarity) | `"idempotent"` |
+| `--epoch <epoch>` | Epoch reconciliation: "simple" (default; one restore event) or "faithful" (replay the backup's history; clone-only — requires --mode idempotent into an empty target) | `"simple"` |
 | `--confirm` | Confirm restore operation (required for non-interactive use) | `false` |
 
 ### scheduler

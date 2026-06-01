@@ -1308,16 +1308,19 @@ export class KnowledgeGraphClient {
    * @param backupFilePath Path to backup file (.tar.gz archive or .json)
    * @param mode Restore merge mode: 'idempotent' (default), 'adjacent', or 'integration' (ADR-102 P4)
    * @param onUploadProgress Optional callback for upload progress (bytes uploaded, total bytes, percent)
+   * @param epoch Epoch reconciliation: 'simple' (default) or 'faithful' (clone-only) (ADR-102 P5)
    * @returns Job ID and initial status for polling restore progress
    */
   async restoreBackup(
     backupFilePath: string,
     mode: string = 'idempotent',
-    onUploadProgress?: (uploaded: number, total: number, percent: number) => void
+    onUploadProgress?: (uploaded: number, total: number, percent: number) => void,
+    epoch: string = 'simple'
   ): Promise<{ job_id: string; status: string; message: string; backup_stats: any; integrity_warnings: number }> {
     const form = new FormData();
     form.append('file', fs.createReadStream(backupFilePath));
     form.append('mode', mode);
+    form.append('epoch', epoch);
 
     const response = await this.client.post('/admin/restore', form, {
       headers: form.getHeaders(),
