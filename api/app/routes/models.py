@@ -96,6 +96,39 @@ async def refresh_catalog(
         conn = client.pool.getconn()
         try:
             count = upsert_catalog_entries(conn, entries)
+
+            # --- SKETCH: self-healing catalog reconciliation (not yet implemented) ---
+            # Problem this would solve: upsert is additive. When a provider retires
+            # a dated snapshot, the model vanishes from `entries` but its catalog row
+            # stays enabled=TRUE — so prefer_cheapest/default resolution can still
+            # select a dead model that 404s (this is exactly how claude-3-haiku-
+            # 20240307 broke code-block translation; see migration 059).
+            #
+            # Reconcile idea: `entries` is the set the provider's API says is live.
+            # After upserting, disable any *enabled* catalog row for this provider
+            # whose model_id is NOT in that live set:
+            #
+            #   live = {e["model_id"] for e in entries}
+            #   UPDATE kg_api.provider_model_catalog
+            #      SET enabled = FALSE
+            #    WHERE provider = %s AND enabled = TRUE AND model_id <> ALL(%s)   -- live
+            #   RETURNING model_id;   -- log these as "auto-disabled (retired)"
+            #
+            # Resolve these BEFORE shipping it (why this is a sketch, not code):
+            #   1. Trust completeness of fetch_model_catalog(). If a provider's
+            #      list is paginated/filtered/partial, reconcile would wrongly
+            #      disable valid models. Only reconcile when the fetch is known-
+            #      complete (e.g. a flag from the provider adapter).
+            #   2. Scope by category — don't let an extraction refresh disable
+            #      embedding/vision rows.
+            #   3. Never auto-disable the active extraction model or is_default;
+            #      surface a loud warning instead so the operator re-points config.
+            #   4. Distinguish operator-intent disables from auto-disables (a
+            #      `disabled_reason` column) so a manual enable isn't clobbered.
+            # Pairs with the deferred fail-fast work: a permanent 404 (retired
+            # model) should also surface loudly rather than be silently retried.
+            # --- END SKETCH ---
+
             return {
                 "provider": provider_name,
                 "message": f"Refreshed {count} models",
