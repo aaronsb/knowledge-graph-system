@@ -30,6 +30,7 @@ import {
   EyeOff,
 } from 'lucide-react';
 import { apiClient, API_BASE_URL } from '../../api/client';
+import { useAuthStore } from '../../store/authStore';
 import { Section, StatusBadge } from './components';
 import { VisionProviderCard } from './VisionProviderCard';
 import type { SystemStatus, EmbeddingConfig, ExtractionConfig, ApiKeyInfo, SchedulerStatus, WorkerStatus } from './types';
@@ -50,6 +51,9 @@ const LOCAL_DEFAULT_BASE_URL: Record<string, string> = {
 const DEFAULT_TEMPERATURE = '0.1';
 
 export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
+  const { hasPermission } = useAuthStore();
+  const canManageWorkers = hasPermission('workers', 'manage');
+
   // Data states
   const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
   const [dbStats, setDbStats] = useState<any>(null);
@@ -712,25 +716,27 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
                     <span className="text-xs text-muted-foreground">
                       {lane.enabled ? `${lane.max_slots} slots` : 'no slots'}
                     </span>
-                    <button
-                      onClick={() => handleToggleLane(lane.name, lane.enabled)}
-                      disabled={togglingLane === lane.name}
-                      title={lane.enabled ? 'Freeze lane (stop claiming new jobs)' : 'Unfreeze lane'}
-                      className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium transition-colors disabled:opacity-50 ${
-                        lane.enabled
-                          ? 'bg-status-warning/15 text-status-warning hover:bg-status-warning/25'
-                          : 'bg-status-active/15 text-status-active hover:bg-status-active/25'
-                      }`}
-                    >
-                      {togglingLane === lane.name ? (
-                        <Loader2 className="w-3 h-3 animate-spin" />
-                      ) : lane.enabled ? (
-                        <Pause className="w-3 h-3" />
-                      ) : (
-                        <Play className="w-3 h-3" />
-                      )}
-                      {lane.enabled ? 'Freeze' : 'Unfreeze'}
-                    </button>
+                    {canManageWorkers && (
+                      <button
+                        onClick={() => handleToggleLane(lane.name, lane.enabled)}
+                        disabled={togglingLane === lane.name}
+                        title={lane.enabled ? 'Freeze lane (stop claiming new jobs)' : 'Unfreeze lane'}
+                        className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium transition-colors disabled:opacity-50 ${
+                          lane.enabled
+                            ? 'bg-status-warning/15 text-status-warning hover:bg-status-warning/25'
+                            : 'bg-status-active/15 text-status-active hover:bg-status-active/25'
+                        }`}
+                      >
+                        {togglingLane === lane.name ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : lane.enabled ? (
+                          <Pause className="w-3 h-3" />
+                        ) : (
+                          <Play className="w-3 h-3" />
+                        )}
+                        {lane.enabled ? 'Freeze' : 'Unfreeze'}
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}

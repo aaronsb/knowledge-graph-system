@@ -209,6 +209,9 @@ async def list_ontology_tombstones(
                     "FROM kg_api.ontology_tombstones ORDER BY removed_at DESC"
                 )
                 rows = cur.fetchall()
+            # Close the implicit read transaction before returning the pooled
+            # connection (don't leave it idle-in-transaction holding a snapshot).
+            conn.rollback()
         finally:
             client.pool.putconn(conn)
 

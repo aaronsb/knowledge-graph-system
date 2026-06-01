@@ -3,10 +3,26 @@
  * Worker lane management - monitor slot utilization, queue depth, active jobs
  */
 
-import { Command } from 'commander';
+import { Command, InvalidArgumentError } from 'commander';
 import { createClientFromEnv } from '../../api/client';
 import * as colors from '../colors';
 import { separator, coloredCount } from '../colors';
+
+// Mirror of api/app/services/lane_manager.py MAX_LANE_SLOTS. The server enforces
+// the cap; this is only for help text so the two don't silently drift.
+const MAX_LANE_SLOTS = 16;
+
+// Commander option parser that rejects non-numeric input instead of passing NaN
+// (which would serialize to null and silently no-op server-side).
+function intArg(label: string): (value: string) => number {
+  return (value: string): number => {
+    const n = parseInt(value, 10);
+    if (Number.isNaN(n)) {
+      throw new InvalidArgumentError(`${label} must be a number`);
+    }
+    return n;
+  };
+}
 
 function formatDuration(startedAt: string | null): string {
   if (!startedAt) return 'unknown';
@@ -109,9 +125,9 @@ export function createWorkersCommand(): Command {
       new Command('set')
         .description('Update a worker lane (slots, poll interval, stale timeout, enable/disable)')
         .argument('<lane>', 'Lane name (e.g. interactive, maintenance, system)')
-        .option('--max-slots <n>', 'Max concurrent jobs in this lane (0–16)', (v) => parseInt(v, 10))
-        .option('--poll-interval <ms>', 'Poll interval in milliseconds (500–120000)', (v) => parseInt(v, 10))
-        .option('--stale-timeout <min>', 'Stale job timeout in minutes (5–1440)', (v) => parseInt(v, 10))
+        .option('--max-slots <n>', `Max concurrent jobs in this lane (0–${MAX_LANE_SLOTS})`, intArg('--max-slots'))
+        .option('--poll-interval <ms>', 'Poll interval in milliseconds (500–120000)', intArg('--poll-interval'))
+        .option('--stale-timeout <min>', 'Stale job timeout in minutes (5–1440)', intArg('--stale-timeout'))
         .option('--enable', 'Enable the lane')
         .option('--disable', 'Disable the lane')
         .action(async (lane: string, opts: any) => {
