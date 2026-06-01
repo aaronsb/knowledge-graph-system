@@ -138,9 +138,18 @@ class APIClient {
           }
           emitSessionRefreshed();
           return this.client(config);
-        } catch {
-          clearAuthState();
-          emitSessionExpired();
+        } catch (refreshError) {
+          // Only an actual auth rejection (4xx invalid_grant) is terminal
+          // expiry. A transient failure (network error, 5xx, restarting API)
+          // leaves the session intact so the user can retry — don't force a
+          // spurious logout on a blip.
+          const refreshStatus = axios.isAxiosError(refreshError)
+            ? refreshError.response?.status
+            : undefined;
+          if (refreshStatus !== undefined && refreshStatus >= 400 && refreshStatus < 500) {
+            clearAuthState();
+            emitSessionExpired();
+          }
           return Promise.reject(error);
         }
       }

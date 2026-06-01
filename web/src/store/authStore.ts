@@ -59,6 +59,7 @@ interface AuthStore {
   accessToken: string | null;
   isAuthenticated: boolean;
   sessionStatus: SessionStatus;  // ADR-705: anonymous | authenticated | expired
+  hydrated: boolean;             // ADR-705: initial checkAuth (incl. any refresh) has resolved
   isLoading: boolean;
   error: string | null;
 
@@ -86,6 +87,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   accessToken: null,
   isAuthenticated: false,
   sessionStatus: 'anonymous',
+  hydrated: false,
   isLoading: false,
   error: null,
 
@@ -201,6 +203,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         accessToken: null,
         isAuthenticated: false,
         sessionStatus: hadCredentials ? 'expired' : 'anonymous',
+        hydrated: true,
         error: hadCredentials ? 'No refresh token available' : null,
         permissions: null,  // ADR-074
       });
@@ -215,6 +218,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         accessToken: newAuthState.access_token,
         isAuthenticated: true,
         sessionStatus: 'authenticated',
+        hydrated: true,
         error: null,
       });
 
@@ -228,6 +232,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         accessToken: null,
         isAuthenticated: false,
         sessionStatus: 'expired',
+        hydrated: true,
         error: 'Session expired - please login again',
         permissions: null,  // ADR-074
       });
@@ -248,13 +253,14 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         accessToken: null,
         isAuthenticated: false,
         sessionStatus: 'anonymous',
+        hydrated: true,
       });
       return;
     }
 
     // Check if token is expired
     if (isTokenExpired(authState.expires_at)) {
-      // Try to refresh token automatically (refreshToken sets sessionStatus)
+      // Try to refresh token automatically (refreshToken sets sessionStatus + hydrated)
       if (authState.refresh_token) {
         get().refreshToken();
       } else {
@@ -265,6 +271,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
           accessToken: null,
           isAuthenticated: false,
           sessionStatus: 'expired',
+          hydrated: true,
           error: 'Session expired',
         });
       }
@@ -277,6 +284,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       accessToken: authState.access_token,
       isAuthenticated: true,
       sessionStatus: 'authenticated',
+      hydrated: true,
     });
 
     // Load permissions after restoring auth (ADR-074)
@@ -356,7 +364,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 // and a successful in-flight refresh re-syncs from storage.
 // ============================================================================
 
-onSessionExpired(() => {
+const unsubscribeExpired = onSessionExpired(() => {
   // The interceptor has already cleared stored credentials.
   useAuthStore.setState({
     user: null,
@@ -368,7 +376,7 @@ onSessionExpired(() => {
   });
 });
 
-onSessionRefreshed(() => {
+const unsubscribeRefreshed = onSessionRefreshed(() => {
   // Storage was updated by the refresh; re-sync the in-memory token/user.
   const authState = getAuthState();
   if (authState) {
@@ -379,5 +387,16 @@ onSessionRefreshed(() => {
       sessionStatus: 'authenticated',
       error: null,
     });
+    // Permissions may have changed across the refresh; reload them so the
+    // interceptor-driven refresh path matches refreshToken()/checkAuth().
+    useAuthStore.getState().loadPermissions();
   }
 });
+
+// Avoid stacking duplicate window listeners across Vite HMR reloads (dev only).
+if (import.meta.hot) {
+  import.meta.hot.dispose(() => {
+    unsubscribeExpired();
+    unsubscribeRefreshed();
+  });
+}

@@ -9,6 +9,7 @@ import React, { useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AppLayout } from './components/layout/AppLayout';
+import { Loader2 } from 'lucide-react';
 import { OAuthCallback } from './components/auth/OAuthCallback';
 import { ProtectedView } from './components/auth/ProtectedView';
 import { useVocabularyStore } from './store/vocabularyStore';
@@ -50,7 +51,7 @@ const queryClient = new QueryClient({
 
 const AppContent: React.FC = () => {
   const { setTypes, setLoading, setError } = useVocabularyStore();
-  const { checkAuth, sessionStatus } = useAuthStore();
+  const { checkAuth, sessionStatus, hydrated } = useAuthStore();
   const isAuthenticated = sessionStatus === 'authenticated';  // ADR-705
   const { theme, setTheme } = useThemeStore();
 
@@ -120,6 +121,18 @@ const AppContent: React.FC = () => {
     };
     loadVocabulary();
   }, [isAuthenticated]); // Re-run when authentication changes
+
+  // ADR-705: until the initial checkAuth (including any token refresh) resolves,
+  // sessionStatus is still the default 'anonymous'. Render a neutral loader
+  // rather than flashing signed-out content (LoggedOutView / guest banner) to an
+  // already-authenticated user on a hard load.
+  if (!hydrated) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-background text-muted-foreground">
+        <Loader2 className="w-6 h-6 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <AppLayout>

@@ -41,13 +41,26 @@ ALLOWED_FILES = {
 }
 
 # A line that destructures isAuthenticated from the store, e.g.
-#   const { user, isAuthenticated } = useAuthStore();
-DESTRUCTURE_PATTERN = re.compile(r"useAuthStore\s*\([^)]*\)")
-ISAUTH_NAME = re.compile(r"\bisAuthenticated\b")
+# Store reads are matched against the FULL file text (DOTALL) so multi-line
+# destructures — the common Prettier wrapping — are caught, and only reads that
+# are clearly the auth store are flagged (no false positives on unrelated
+# objects that happen to have an `isAuthenticated` field).
 
-# A line that accesses .isAuthenticated (selectors, getState, etc.), e.g.
-#   useAuthStore((s) => s.isAuthenticated)   state.isAuthenticated
-PROPERTY_ACCESS_PATTERN = re.compile(r"\.isAuthenticated\b")
+# Destructuring isAuthenticated out of the store, one line or many:
+#   const { user, isAuthenticated } = useAuthStore()
+DESTRUCTURE_STORE = re.compile(
+    r"\{[^{}]*\bisAuthenticated\b[^{}]*\}\s*=\s*useAuthStore\b",
+    re.DOTALL,
+)
+# Selector read:  useAuthStore((s) => s.isAuthenticated)
+SELECTOR_ACCESS = re.compile(
+    r"useAuthStore\s*\(\s*\(?[^)]*\)?\s*=>[^)]*\.isAuthenticated\b",
+    re.DOTALL,
+)
+# Imperative read:  useAuthStore.getState().isAuthenticated
+GETSTATE_ACCESS = re.compile(r"useAuthStore\.getState\(\)\.isAuthenticated\b")
+
+STORE_READ_PATTERNS = (DESTRUCTURE_STORE, SELECTOR_ACCESS, GETSTATE_ACCESS)
 
 GATED_USAGE = re.compile(r"<Gated[\s/>]")
 CAPABILITY_USAGE = re.compile(r"\buseCapability\s*\(")
@@ -84,38 +97,43 @@ class GatingLinter:
     def lint_file(self, file_path: Path) -> List[Finding]:
         rel = _rel(file_path, self.root)
         try:
-            lines = file_path.read_text(encoding="utf-8").splitlines()
+            text = file_path.read_text(encoding="utf-8")
         except Exception as e:  # pragma: no cover
             print(f"Warning: Could not read {file_path}: {e}", file=sys.stderr)
             return []
+
+        lines = text.splitlines()
 
         # Don't count adoption inside the primitives' own definitions or in
         # comment lines (doc examples) — the metric should reflect consumers.
         is_definition = rel.endswith("components/auth/Gated.tsx") or rel.endswith(
             "hooks/useCapability.ts"
         )
-
-        findings: List[Finding] = []
-        for i, line in enumerate(lines, start=1):
+        for line in lines:
             stripped = line.lstrip()
-            is_comment = stripped.startswith(("*", "//", "/*"))
-
-            # Adoption metrics (real consumer usages only)
-            if not is_definition and not is_comment:
-                self.gated_count += len(GATED_USAGE.findall(line))
-                self.capability_count += len(CAPABILITY_USAGE.findall(line))
-
-            if is_allowed(rel):
+            if is_definition or stripped.startswith(("*", "//", "/*")):
                 continue
+            self.gated_count += len(GATED_USAGE.findall(line))
+            self.capability_count += len(CAPABILITY_USAGE.findall(line))
 
-            destructured = (
-                DESTRUCTURE_PATTERN.search(line) and ISAUTH_NAME.search(line)
-            )
-            accessed = PROPERTY_ACCESS_PATTERN.search(line)
-            if destructured or accessed:
-                findings.append(Finding(rel, i, line.strip()))
+        if is_allowed(rel):
+            return []
 
-        return findings
+        # Store-read violations are matched against the full text so multi-line
+        # destructures are caught; report the line the match starts on.
+        findings: List[Finding] = []
+        seen_lines = set()
+        for pattern in STORE_READ_PATTERNS:
+            for m in pattern.finditer(text):
+                line_number = text.count("\n", 0, m.start()) + 1
+                if line_number in seen_lines:
+                    continue
+                seen_lines.add(line_number)
+                findings.append(
+                    Finding(rel, line_number, lines[line_number - 1].strip())
+                )
+
+        return sorted(findings, key=lambda f: f.line_number)
 
     def lint_tree(self, directory: Path) -> List[Finding]:
         findings: List[Finding] = []

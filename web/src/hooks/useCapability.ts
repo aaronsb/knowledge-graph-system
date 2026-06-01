@@ -9,7 +9,7 @@
 
 import { useAuthStore } from '../store/authStore';
 
-export type CapabilityReason = 'ok' | 'anonymous' | 'expired' | 'forbidden';
+export type CapabilityReason = 'ok' | 'anonymous' | 'expired' | 'loading' | 'forbidden';
 
 export interface Capability {
   /** Whether the user may perform the action right now. */
@@ -32,7 +32,11 @@ export function useCapability(resource?: string, action?: string): Capability {
   }
 
   if (resource && action) {
-    const allowed = permissions?.can[`${resource}:${action}`] === true;
+    // Permissions load asynchronously after auth. Until they arrive, report
+    // 'loading' rather than a hard 'forbidden' so consumers don't flash a
+    // "you don't have permission" state for a user who may well have it.
+    if (permissions === null) return { can: false, reason: 'loading' };
+    const allowed = permissions.can[`${resource}:${action}`] === true;
     if (!allowed) return { can: false, reason: 'forbidden' };
   }
 
@@ -49,6 +53,8 @@ export function reasonMessage(reason: CapabilityReason, label = 'do this'): stri
       return `Sign in to ${label}`;
     case 'expired':
       return 'Your session expired — sign in to continue';
+    case 'loading':
+      return 'Checking permissions…';
     case 'forbidden':
       return "You don't have permission to do this";
     default:
