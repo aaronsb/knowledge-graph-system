@@ -16,12 +16,9 @@ import {
   Network,
   BookOpen,
   AlertCircle,
-  Loader2,
   CheckCircle,
 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
-import { useCapability } from '../../hooks/useCapability';
-import { SignInPrompt } from '../auth/SignInPrompt';
 import { TabButton } from './components';
 import { AccountTab } from './AccountTab';
 import { UsersTab } from './UsersTab';
@@ -33,7 +30,6 @@ import type { TabType } from './types';
 
 export const AdminDashboard: React.FC = () => {
   const { permissions, hasPermission, isPlatformAdmin } = useAuthStore();
-  const { can: canAccess, reason } = useCapability();  // ADR-705: session-aware gate
 
   // Permission-based access control (ADR-074)
   const canViewUsers = hasPermission('users', 'read');
@@ -57,10 +53,8 @@ export const AdminDashboard: React.FC = () => {
     }
   }, [successMessage]);
 
-  // Not authenticated (or expired) - session-aware in-place prompt (ADR-705)
-  if (!canAccess) {
-    return <SignInPrompt reason={reason} detail="to access admin settings" />;
-  }
+  // Signed-out handling is done at the route via <ProtectedView> (ADR-705);
+  // here we only need per-tab permission gating for authenticated users.
 
   return (
     <div className="h-full flex flex-col bg-background">

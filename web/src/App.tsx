@@ -10,6 +10,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AppLayout } from './components/layout/AppLayout';
 import { OAuthCallback } from './components/auth/OAuthCallback';
+import { ProtectedView } from './components/auth/ProtectedView';
 import { useVocabularyStore } from './store/vocabularyStore';
 import { useAuthStore } from './store/authStore';
 import { useThemeStore } from './store/themeStore';
@@ -123,50 +124,54 @@ const AppContent: React.FC = () => {
   return (
     <AppLayout>
       <Routes>
-        {/* Home - welcome and login page */}
+        {/* Home - welcome and login page (its own signed-out welcome) */}
         <Route path="/" element={<HomeWorkspace />} />
 
+        {/* Content routes are wrapped in <ProtectedView> (ADR-705): when signed
+            out, the workspace doesn't mount/fetch/401 — a consistent
+            LoggedOutView (with the workstation guide) renders instead. */}
+
         {/* Explorers */}
-        <Route path="/explore/graph" element={<ExplorerView explorerType="force-graph" />} />
+        <Route path="/explore/graph" element={<ProtectedView what="the graph"><ExplorerView explorerType="force-graph" /></ProtectedView>} />
         {/* Legacy public routes — preserve bookmarks. The unified plugin
             owns projection via its settings panel, so the URL no longer
             encodes 2D vs 3D. Search params (concept ids, depth, etc.) carry over. */}
         <Route path="/explore/2d" element={<RedirectPreservingSearch to="/explore/graph" />} />
         <Route path="/explore/3d" element={<RedirectPreservingSearch to="/explore/graph" />} />
-        <Route path="/explore/documents" element={<DocumentExplorerWorkspace />} />
-        <Route path="/explore/catalog" element={<CatalogExplorerWorkspace />} />
+        <Route path="/explore/documents" element={<ProtectedView what="documents"><DocumentExplorerWorkspace /></ProtectedView>} />
+        <Route path="/explore/catalog" element={<ProtectedView what="the catalog"><CatalogExplorerWorkspace /></ProtectedView>} />
 
         {/* Block Editor */}
-        <Route path="/blocks" element={<BlockEditorWorkspace />} />
-        <Route path="/blocks/:diagramId" element={<BlockEditorWorkspace />} />
+        <Route path="/blocks" element={<ProtectedView what="the block editor"><BlockEditorWorkspace /></ProtectedView>} />
+        <Route path="/blocks/:diagramId" element={<ProtectedView what="the block editor"><BlockEditorWorkspace /></ProtectedView>} />
 
         {/* Ingest */}
-        <Route path="/ingest" element={<IngestWorkspace />} />
+        <Route path="/ingest" element={<ProtectedView what="ingestion"><IngestWorkspace /></ProtectedView>} />
 
         {/* Jobs */}
-        <Route path="/jobs" element={<JobsWorkspace />} />
+        <Route path="/jobs" element={<ProtectedView what="jobs"><JobsWorkspace /></ProtectedView>} />
 
         {/* Report */}
-        <Route path="/report" element={<ReportWorkspace />} />
+        <Route path="/report" element={<ProtectedView what="reports"><ReportWorkspace /></ProtectedView>} />
 
         {/* Polarity Explorer (ADR-070) */}
-        <Route path="/polarity" element={<PolarityExplorerWorkspace />} />
+        <Route path="/polarity" element={<ProtectedView what="polarity"><PolarityExplorerWorkspace /></ProtectedView>} />
 
         {/* Vocabulary Explorer (ADR-077) */}
-        <Route path="/vocabulary" element={<EdgeExplorerWorkspace />} />
-        <Route path="/vocabulary/chord" element={<VocabularyChordWorkspace />} />
+        <Route path="/vocabulary" element={<ProtectedView what="the vocabulary graph"><EdgeExplorerWorkspace /></ProtectedView>} />
+        <Route path="/vocabulary/chord" element={<ProtectedView what="vocabulary analysis"><VocabularyChordWorkspace /></ProtectedView>} />
 
         {/* Embedding Landscape (ADR-078) */}
-        <Route path="/embeddings" element={<EmbeddingLandscapeWorkspace />} />
+        <Route path="/embeddings" element={<ProtectedView what="the embedding landscape"><EmbeddingLandscapeWorkspace /></ProtectedView>} />
 
         {/* Edit */}
-        <Route path="/edit" element={<GraphEditor />} />
+        <Route path="/edit" element={<ProtectedView what="the graph editor"><GraphEditor /></ProtectedView>} />
 
         {/* Preferences */}
-        <Route path="/preferences" element={<PreferencesWorkspace />} />
+        <Route path="/preferences" element={<ProtectedView what="preferences"><PreferencesWorkspace /></ProtectedView>} />
 
         {/* Admin */}
-        <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/admin" element={<ProtectedView what="administration"><AdminDashboard /></ProtectedView>} />
       </Routes>
     </AppLayout>
   );
