@@ -43,7 +43,20 @@ import type {
   VocabularyJobDispatchResponse,
   AggressivenessProfile,
 } from '../types/vocabulary';
-import { getAuthState } from '../lib/auth/oauth-utils';
+import { getAuthState, clearAuthState, isTokenExpired, type StoredAuthState } from '../lib/auth/oauth-utils';
+import { refreshAccessToken } from '../lib/auth/authorization-code-flow';
+import { emitSessionExpired, emitSessionRefreshed } from '../lib/auth/session-events';
+
+/**
+ * Single-flight refresh guard (ADR-705).
+ * Shared across all requests so concurrent 401s trigger exactly one refresh.
+ */
+let inFlightRefresh: Promise<StoredAuthState> | null = null;
+
+/** Auth endpoints must not be intercepted into refreshing themselves. */
+function isAuthEndpoint(url?: string): boolean {
+  return !!url && url.includes('/auth/oauth/');
+}
 
 // API configuration - runtime config takes precedence over build-time env vars
 // This enables CDN deployment without rebuilding
@@ -72,6 +85,73 @@ class APIClient {
       },
       (error) => {
         return Promise.reject(error);
+      }
+    );
+
+    // Response interceptor: detect mid-session expiry (ADR-705).
+    // The request interceptor only attaches the token; without this, an expired
+    // token surfaces as a raw per-call error while the app still believes it is
+    // authenticated. Here we attempt a single refresh-and-replay, and on failure
+    // signal the session as expired so the UI can react.
+    this.client.interceptors.response.use(
+      (response) => response,
+      async (error) => {
+        const status = error.response?.status;
+        const config = error.config as
+          | (InternalAxiosRequestConfig & { __isRetry?: boolean })
+          | undefined;
+
+        // Only act on 401s we can do something about. Skip already-retried
+        // requests (no loops) and the auth endpoints themselves.
+        if (status !== 401 || !config || config.__isRetry || isAuthEndpoint(config.url)) {
+          return Promise.reject(error);
+        }
+
+        const authState = getAuthState();
+
+        // No stored credentials → this is an anonymous 401 ("please log in"),
+        // not an expiry. Let the caller handle it.
+        if (!authState || !authState.access_token) {
+          return Promise.reject(error);
+        }
+
+        // Have a token but no way to refresh → terminal: session expired.
+        if (!authState.refresh_token) {
+          clearAuthState();
+          emitSessionExpired();
+          return Promise.reject(error);
+        }
+
+        // Single-flight refresh shared across concurrent 401s.
+        try {
+          if (!inFlightRefresh) {
+            inFlightRefresh = refreshAccessToken(authState.refresh_token).finally(() => {
+              inFlightRefresh = null;
+            });
+          }
+          const refreshed = await inFlightRefresh;
+
+          // Replay the original request exactly once with the new token.
+          config.__isRetry = true;
+          if (config.headers) {
+            config.headers.Authorization = `Bearer ${refreshed.access_token}`;
+          }
+          emitSessionRefreshed();
+          return this.client(config);
+        } catch (refreshError) {
+          // Only an actual auth rejection (4xx invalid_grant) is terminal
+          // expiry. A transient failure (network error, 5xx, restarting API)
+          // leaves the session intact so the user can retry — don't force a
+          // spurious logout on a blip.
+          const refreshStatus = axios.isAxiosError(refreshError)
+            ? refreshError.response?.status
+            : undefined;
+          if (refreshStatus !== undefined && refreshStatus >= 400 && refreshStatus < 500) {
+            clearAuthState();
+            emitSessionExpired();
+          }
+          return Promise.reject(error);
+        }
       }
     );
   }
@@ -790,9 +870,17 @@ class APIClient {
       eventSource.close();
     });
 
-    eventSource.onerror = (err) => {
+    eventSource.onerror = () => {
       callbacks.onError?.(new Error('SSE connection error'));
       eventSource.close();
+      // SSE passes the token as a query param and can't use the response
+      // interceptor. If the failure coincides with an expired token, route it
+      // to the same session-expired transition (ADR-705). Guarded on actual
+      // expiry to avoid false positives on transient network errors.
+      const current = getAuthState();
+      if (current && isTokenExpired(current.expires_at)) {
+        emitSessionExpired();
+      }
     };
 
     // Return cleanup function

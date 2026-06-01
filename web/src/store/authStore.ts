@@ -22,6 +22,7 @@ import {
   isTokenExpired,
   type StoredAuthState,
 } from '../lib/auth/oauth-utils';
+import { onSessionExpired, onSessionRefreshed } from '../lib/auth/session-events';
 import { apiClient } from '../api/client';
 
 interface User {
@@ -29,6 +30,18 @@ interface User {
   username: string;
   role: string;
 }
+
+/**
+ * Canonical session status (ADR-705).
+ *
+ * Un-collapses the `isAuthenticated: false` ambiguity so the UI can treat a
+ * never-logged-in user differently from one whose session expired:
+ *  - `anonymous`     — no credentials (never logged in, or logged out)
+ *  - `authenticated` — a valid, non-expired token is present
+ *  - `expired`       — credentials existed but are gone/rejected and could not
+ *                      be refreshed (gets the loud "session expired" treatment)
+ */
+export type SessionStatus = 'anonymous' | 'authenticated' | 'expired';
 
 /**
  * Permissions state (ADR-074)
@@ -45,6 +58,8 @@ interface AuthStore {
   user: User | null;
   accessToken: string | null;
   isAuthenticated: boolean;
+  sessionStatus: SessionStatus;  // ADR-705: anonymous | authenticated | expired
+  hydrated: boolean;             // ADR-705: initial checkAuth (incl. any refresh) has resolved
   isLoading: boolean;
   error: string | null;
 
@@ -71,6 +86,8 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   user: null,
   accessToken: null,
   isAuthenticated: false,
+  sessionStatus: 'anonymous',
+  hydrated: false,
   isLoading: false,
   error: null,
 
@@ -118,6 +135,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         user: null,
         accessToken: null,
         isAuthenticated: false,
+        sessionStatus: 'anonymous',
         isLoading: false,
         error: null,
         permissions: null,  // ADR-074: Clear permissions on logout
@@ -129,6 +147,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         user: null,
         accessToken: null,
         isAuthenticated: false,
+        sessionStatus: 'anonymous',
         isLoading: false,
         error: error instanceof Error ? error.message : 'Logout failed',
         permissions: null,  // ADR-074: Clear permissions on logout
@@ -150,6 +169,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         user: authState.user || null,
         accessToken: authState.access_token,
         isAuthenticated: true,
+        sessionStatus: 'authenticated',
         isLoading: false,
         error: null,
       });
@@ -161,6 +181,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         user: null,
         accessToken: null,
         isAuthenticated: false,
+        sessionStatus: 'anonymous',
         isLoading: false,
         error: error instanceof Error ? error.message : 'Authentication failed',
         permissions: null,  // ADR-074: Clear permissions on auth failure
@@ -175,11 +196,15 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   refreshToken: async () => {
     const authState = getAuthState();
     if (!authState || !authState.refresh_token) {
+      // No credentials at all → anonymous; a present token we cannot refresh → expired.
+      const hadCredentials = !!authState;
       set({
         user: null,
         accessToken: null,
         isAuthenticated: false,
-        error: 'No refresh token available',
+        sessionStatus: hadCredentials ? 'expired' : 'anonymous',
+        hydrated: true,
+        error: hadCredentials ? 'No refresh token available' : null,
         permissions: null,  // ADR-074
       });
       return;
@@ -192,6 +217,8 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         user: newAuthState.user || null,
         accessToken: newAuthState.access_token,
         isAuthenticated: true,
+        sessionStatus: 'authenticated',
+        hydrated: true,
         error: null,
       });
 
@@ -204,6 +231,8 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         user: null,
         accessToken: null,
         isAuthenticated: false,
+        sessionStatus: 'expired',
+        hydrated: true,
         error: 'Session expired - please login again',
         permissions: null,  // ADR-074
       });
@@ -218,26 +247,31 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     const authState = getAuthState();
 
     if (!authState) {
+      // Never logged in (or logged out) → anonymous, not expired.
       set({
         user: null,
         accessToken: null,
         isAuthenticated: false,
+        sessionStatus: 'anonymous',
+        hydrated: true,
       });
       return;
     }
 
     // Check if token is expired
     if (isTokenExpired(authState.expires_at)) {
-      // Try to refresh token automatically
+      // Try to refresh token automatically (refreshToken sets sessionStatus + hydrated)
       if (authState.refresh_token) {
         get().refreshToken();
       } else {
-        // No refresh token - clear state
+        // No refresh token - session expired
         clearAuthState();
         set({
           user: null,
           accessToken: null,
           isAuthenticated: false,
+          sessionStatus: 'expired',
+          hydrated: true,
           error: 'Session expired',
         });
       }
@@ -249,6 +283,8 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       user: authState.user || null,
       accessToken: authState.access_token,
       isAuthenticated: true,
+      sessionStatus: 'authenticated',
+      hydrated: true,
     });
 
     // Load permissions after restoring auth (ADR-074)
@@ -318,3 +354,49 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     return permissions.roleHierarchy.includes('platform_admin');
   },
 }));
+
+// ============================================================================
+// Session event wiring (ADR-705)
+//
+// The API client's 401 interceptor signals session transitions via window
+// events (it cannot import this store). Subscribe once at module load so a
+// mid-session expiry — detected on any request — flips the store to `expired`
+// and a successful in-flight refresh re-syncs from storage.
+// ============================================================================
+
+const unsubscribeExpired = onSessionExpired(() => {
+  // The interceptor has already cleared stored credentials.
+  useAuthStore.setState({
+    user: null,
+    accessToken: null,
+    isAuthenticated: false,
+    sessionStatus: 'expired',
+    error: 'Session expired - please login again',
+    permissions: null,
+  });
+});
+
+const unsubscribeRefreshed = onSessionRefreshed(() => {
+  // Storage was updated by the refresh; re-sync the in-memory token/user.
+  const authState = getAuthState();
+  if (authState) {
+    useAuthStore.setState({
+      user: authState.user || null,
+      accessToken: authState.access_token,
+      isAuthenticated: true,
+      sessionStatus: 'authenticated',
+      error: null,
+    });
+    // Permissions may have changed across the refresh; reload them so the
+    // interceptor-driven refresh path matches refreshToken()/checkAuth().
+    useAuthStore.getState().loadPermissions();
+  }
+});
+
+// Avoid stacking duplicate window listeners across Vite HMR reloads (dev only).
+if (import.meta.hot) {
+  import.meta.hot.dispose(() => {
+    unsubscribeExpired();
+    unsubscribeRefreshed();
+  });
+}

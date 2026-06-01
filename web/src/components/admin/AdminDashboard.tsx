@@ -16,7 +16,6 @@ import {
   Network,
   BookOpen,
   AlertCircle,
-  Loader2,
   CheckCircle,
 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
@@ -30,7 +29,7 @@ import { VocabularyTab } from './VocabularyTab';
 import type { TabType } from './types';
 
 export const AdminDashboard: React.FC = () => {
-  const { isAuthenticated, permissions, hasPermission, isPlatformAdmin } = useAuthStore();
+  const { permissions, hasPermission, isPlatformAdmin } = useAuthStore();
 
   // Permission-based access control (ADR-074)
   const canViewUsers = hasPermission('users', 'read');
@@ -54,22 +53,8 @@ export const AdminDashboard: React.FC = () => {
     }
   }, [successMessage]);
 
-  // Not authenticated
-  if (!isAuthenticated) {
-    return (
-      <div className="h-full flex items-center justify-center bg-background">
-        <div className="text-center">
-          <Shield className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-          <h2 className="text-lg font-semibold text-foreground">
-            Authentication Required
-          </h2>
-          <p className="text-muted-foreground mt-2">
-            Please log in to access admin settings.
-          </p>
-        </div>
-      </div>
-    );
-  }
+  // Signed-out handling is done at the route via <ProtectedView> (ADR-705);
+  // here we only need per-tab permission gating for authenticated users.
 
   return (
     <div className="h-full flex flex-col bg-background">

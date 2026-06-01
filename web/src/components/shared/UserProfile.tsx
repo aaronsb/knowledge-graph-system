@@ -21,7 +21,7 @@ const THEME_CONFIG = {
 } as const;
 
 export const UserProfile: React.FC = () => {
-  const { user, isAuthenticated, isLoading, error, logout, clearError } = useAuthStore();
+  const { user, sessionStatus, isLoading, error, logout, clearError } = useAuthStore();
   const { appliedTheme, cycleTheme } = useThemeStore();
   const themeConfig = THEME_CONFIG[appliedTheme];
   const [isOpen, setIsOpen] = useState(false);
@@ -73,8 +73,10 @@ export const UserProfile: React.FC = () => {
     );
   }
 
-  if (!isAuthenticated) {
+  if (sessionStatus !== 'authenticated') {
     const ThemeIcon = themeConfig.icon;
+    // ADR-705: distinguish expired from never-logged-in in the corner affordance.
+    const expired = sessionStatus === 'expired';
     return (
       <>
         <div className="flex items-center gap-2">
@@ -87,11 +89,18 @@ export const UserProfile: React.FC = () => {
           </button>
           <button
             onClick={handleLogin}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors"
-            title="Login with OAuth 2.0"
+            className={`relative flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors ${
+              expired
+                ? 'bg-status-warning/15 text-status-warning hover:bg-status-warning/25'
+                : 'hover:bg-accent hover:text-accent-foreground'
+            }`}
+            title={expired ? 'Your session expired — sign in again' : 'Login with OAuth 2.0'}
           >
             <LogIn className="w-4 h-4" />
-            <span>Login</span>
+            <span>{expired ? 'Sign In' : 'Login'}</span>
+            {expired && (
+              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-status-warning" />
+            )}
           </button>
         </div>
         <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />

@@ -38,6 +38,7 @@ import {
   X,
 } from 'lucide-react';
 import { UserProfile } from '../shared/UserProfile';
+import { SessionBanner } from '../auth/SessionBanner';
 import { SidebarCategory, SidebarItem } from './SidebarCategory';
 import { GraphAnimation } from '../home/GraphAnimation';
 import { AboutInfoBox } from './AboutInfoBox';
@@ -270,6 +271,9 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col overflow-hidden">
+        {/* Session treatment: expired banner / guest strip (ADR-705) */}
+        <SessionBanner />
+
         {/* Insecure Crypto Warning Banner (DEV only) */}
         {showInsecureWarning && (
           <div className="bg-amber-500/90 text-black px-4 py-2 flex items-center justify-between text-sm">

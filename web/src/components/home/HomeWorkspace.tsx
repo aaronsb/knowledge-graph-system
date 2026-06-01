@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
+import { useCapability } from '../../hooks/useCapability';
 import { LoginModal } from '../auth/LoginModal';
 import { apiClient } from '../../api/client';
 import { GraphAnimation } from './GraphAnimation';
@@ -41,7 +42,8 @@ interface SystemStatus {
  *  with quick actions and NavigationGraph workstation guide (authenticated).
  *  @verified b38d816f */
 export const HomeWorkspace: React.FC = () => {
-  const { isAuthenticated, user } = useAuthStore();
+  const { user } = useAuthStore();
+  const { can: canUse, reason } = useCapability();  // ADR-705: session-aware gate
   const navigate = useNavigate();
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [status, setStatus] = useState<SystemStatus | null>(null);
@@ -49,10 +51,10 @@ export const HomeWorkspace: React.FC = () => {
 
   // Load system status when authenticated
   useEffect(() => {
-    if (isAuthenticated) {
+    if (canUse) {
       loadStatus();
     }
-  }, [isAuthenticated]);
+  }, [canUse]);
 
   const loadStatus = async () => {
     setLoading(true);
@@ -133,8 +135,8 @@ export const HomeWorkspace: React.FC = () => {
     },
   ];
 
-  // Not authenticated - show welcome and login
-  if (!isAuthenticated) {
+  // Not authenticated - show welcome and login (session-aware: anonymous vs expired)
+  if (!canUse) {
     return (
       <div className="h-full flex flex-col bg-background relative overflow-hidden">
         {/* Animated Graph Background - positioned behind everything */}
@@ -162,13 +164,20 @@ export const HomeWorkspace: React.FC = () => {
               Explore semantic relationships beyond sequential reading.
             </p>
 
+            {/* Session-expired notice (ADR-705) */}
+            {reason === 'expired' && (
+              <p className="mb-6 text-sm font-medium text-status-warning">
+                Your session expired — please sign in again.
+              </p>
+            )}
+
             {/* Login Button */}
             <button
               onClick={() => setShowLoginModal(true)}
               className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors shadow-md"
             >
               <LogIn className="w-5 h-5" />
-              Sign In to Continue
+              {reason === 'expired' ? 'Sign In Again' : 'Sign In to Continue'}
             </button>
 
             {/* Features */}
