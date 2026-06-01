@@ -1306,21 +1306,18 @@ export class KnowledgeGraphClient {
    * Uses OAuth authentication (token from login).
    *
    * @param backupFilePath Path to backup file (.tar.gz archive or .json)
-   * @param overwrite Whether to overwrite existing data
-   * @param handleExternalDeps How to handle external dependencies ('prune', 'stitch', 'defer')
+   * @param mode Restore merge mode: 'idempotent' (default), 'adjacent', or 'integration' (ADR-102 P4)
    * @param onUploadProgress Optional callback for upload progress (bytes uploaded, total bytes, percent)
    * @returns Job ID and initial status for polling restore progress
    */
   async restoreBackup(
     backupFilePath: string,
-    overwrite: boolean = false,
-    handleExternalDeps: string = 'prune',
+    mode: string = 'idempotent',
     onUploadProgress?: (uploaded: number, total: number, percent: number) => void
   ): Promise<{ job_id: string; status: string; message: string; backup_stats: any; integrity_warnings: number }> {
     const form = new FormData();
     form.append('file', fs.createReadStream(backupFilePath));
-    form.append('overwrite', String(overwrite));
-    form.append('handle_external_deps', handleExternalDeps);
+    form.append('mode', mode);
 
     const response = await this.client.post('/admin/restore', form, {
       headers: form.getHeaders(),

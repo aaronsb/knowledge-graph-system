@@ -114,7 +114,13 @@ class AdminService:
         ontology_name: Optional[str] = None,
         output_filename: Optional[str] = None
     ) -> BackupResponse:
-        """Create a backup (full or ontology-specific)"""
+        """Create a backup (full or ontology-specific).
+
+        DEAD (ADR-102 P6): no caller — the live backup route uses
+        create_backup_stream / stream_backup_archive, not this subprocess. The
+        spawned ``src.admin.backup`` module path is also stale. Scheduled for
+        removal in P6; do not wire to new code.
+        """
         # Build command
         cmd = [
             str(self.project_root / "venv" / "bin" / "python"),
@@ -184,7 +190,14 @@ class AdminService:
         overwrite: bool = False,
         handle_external_deps: str = "prune"
     ) -> RestoreResponse:
-        """Restore a backup"""
+        """Restore a backup.
+
+        DEAD (ADR-102 P6): no caller — the live restore route enqueues
+        run_restore_worker (which uses the kg-backup/2 mode machinery), not this
+        subprocess. The spawned ``src.admin.restore`` path is stale and the
+        overwrite/handle_external_deps args were removed from the real flow in P4.
+        Scheduled for removal in P6; do not wire to new code.
+        """
         # Validate backup file exists
         backup_path = Path(backup_file)
         if not backup_path.exists():

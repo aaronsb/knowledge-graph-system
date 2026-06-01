@@ -10,13 +10,14 @@ Honors "messy data finds bugs": it does NOT reset the working graph. All nodes u
 a ``p3rt_`` id prefix so they can't collide with real data, and the test removes
 them in a finally block.
 """
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 from api.app.lib.age_client import AGEClient
 from api.lib.serialization import DataExporter, DataImporter
 from api.lib.id_remap import IdRemapper
+from api.app.lib.restore_modes import prepare_backup, RestoreMode
 
 NS = "p3rt_"  # test namespace prefix
 
@@ -77,6 +78,64 @@ def client_with_cleanup():
                 )
             except Exception:
                 pass
+
+
+def test_integration_mode_attaches_to_existing_concept(client_with_cleanup):
+    """integration: a matched incoming concept's instance/edges attach to the
+    EXISTING target concept (not in this backup); the target node is untouched."""
+    client = client_with_cleanup
+
+    # Pre-insert the existing target concept (namespaced; caught by prefix cleanup).
+    target = DataExporter.build_kg_backup_v2(
+        concepts=[{"concept_id": f"{NS}tgt", "label": "Shared", "search_terms": [],
+                   "embedding": [0.1, 0.2, 0.3], "created_at_epoch": 1, "last_seen_epoch": 1}],
+        sources=[], instances=[], evidence=[], relationships=[], vocabulary=[],
+        embedding_profiles=[{"identity": "openai:text-embedding-3-small@1536", "vector_space": "x",
+                             "image_vector_space": None, "name": "d", "multimodal": False}],
+        epoch_kinds=[], graph_epochs=[], schema_version=76,
+    )
+    DataImporter.import_backup(client, target, overwrite_existing=True)
+
+    incoming = _namespaced_backup()  # p3rt_c1 (label "P3 Alpha") will be matched
+
+    class _M:
+        def __init__(self, *a, **k):
+            pass
+        def match_concept_in_database(self, ext, top_k=5):
+            return ({"concept_id": f"{NS}tgt", "label": "Shared", "similarity": 0.95}
+                    if ext.get("label") == "P3 Alpha" else None)
+
+    # Stub the embedding-space gate (ADR-102 §6) so the test is independent of the
+    # dev graph's configured profile; the matcher is already patched.
+    with patch("api.app.lib.restore_modes.ConceptMatcher", _M), \
+         patch("api.app.lib.restore_modes._target_active_identity",
+               return_value="openai:text-embedding-3-small@1536"):
+        prepared, maps = prepare_backup(incoming, RestoreMode.INTEGRATION, client)
+
+    minted = [v for m in maps.values() for v in m.values() if not v.startswith(NS)]
+    try:
+        DataImporter.import_backup(client, prepared, overwrite_existing=True)
+
+        new_i1 = maps["instances"][f"{NS}i1"]
+        new_c2 = maps["concepts"][f"{NS}c2"]
+        # p3rt_c1's instance attached to the EXISTING target via EVIDENCED_BY.
+        assert _scalar(client,
+            f"MATCH (:Concept {{concept_id:'{NS}tgt'}})-[:EVIDENCED_BY]->(:Instance {{instance_id:'{new_i1}'}}) "
+            f"RETURN count(*) AS n") == 1
+        # the IMPLIES edge now runs target -> new c2 (from rewired to the match).
+        assert _scalar(client,
+            f"MATCH (:Concept {{concept_id:'{NS}tgt'}})-[r:IMPLIES]->(:Concept {{concept_id:'{new_c2}'}}) "
+            f"RETURN count(r) AS n") == 1
+    finally:
+        # Minted ids are uuid-based (outside the NS prefix) — delete them explicitly.
+        for _id in minted:
+            for label in ("Concept", "Source", "Instance"):
+                try:
+                    client._execute_cypher(
+                        f"MATCH (n:{label}) WHERE n.concept_id = $i OR n.source_id = $i "
+                        f"OR n.instance_id = $i DETACH DELETE n", params={"i": _id})
+                except Exception:
+                    pass
 
 
 def test_merge_relationship_rejects_unsafe_edge_label():

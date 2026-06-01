@@ -73,33 +73,57 @@ class IdRemapper:
             return self._mint(kind, old_id)
         return old_id  # collision mode, no collision → preserve
 
+    def build_maps(self, bulk: Dict[str, Any]) -> Dict[str, Dict[str, str]]:
+        """Build the old→new id maps for one mode (concepts / sources / instances)."""
+        return {
+            "concepts": {c["concept_id"]: self._decide("concept", c["concept_id"])
+                         for c in bulk.get("concepts", [])},
+            "sources": {s["source_id"]: self._decide("source", s["source_id"])
+                        for s in bulk.get("sources", [])},
+            "instances": {i["instance_id"]: self._decide("instance", i["instance_id"])
+                          for i in bulk.get("instances", [])},
+        }
+
     def remap(self, obj: Dict[str, Any]) -> Tuple[Dict[str, Any], Dict[str, Dict[str, str]]]:
-        """Return ``(new_backup_object, mapping_table)``.
+        """Return ``(new_backup_object, mapping_table)`` for this remapper's mode.
 
         The header is carried unchanged (it holds no app-ids — only ontology names,
         profile identities, and interned dictionaries). All ids live in ``bulk``.
         """
+        maps = self.build_maps(obj["bulk"])
+        new_obj = self.apply_maps(obj, maps["concepts"], maps["sources"], maps["instances"])
+        return new_obj, maps
+
+    @staticmethod
+    def apply_maps(obj: Dict[str, Any],
+                   concept_map: Dict[str, str],
+                   source_map: Dict[str, str],
+                   instance_map: Dict[str, str],
+                   drop_concepts: "frozenset[str]" = frozenset()) -> Dict[str, Any]:
+        """Rewrite every reference class in ``obj`` through the supplied maps.
+
+        Pure: same rewrite for every mode. ``drop_concepts`` names incoming
+        concept_ids whose CONCEPT RECORD must NOT be emitted (integration mode:
+        a matched concept attaches to an existing target, so its node is left
+        untouched) — references to it are still rewritten through ``concept_map``.
+        Unmapped references fall through unchanged (``.get(x, x)``): external
+        endpoints that already live in the target.
+        """
         bulk = obj["bulk"]
-
-        concept_map = {c["concept_id"]: self._decide("concept", c["concept_id"])
-                       for c in bulk.get("concepts", [])}
-        source_map = {s["source_id"]: self._decide("source", s["source_id"])
-                      for s in bulk.get("sources", [])}
-        instance_map = {i["instance_id"]: self._decide("instance", i["instance_id"])
-                        for i in bulk.get("instances", [])}
-
         new_bulk: Dict[str, Any] = {}
 
         new_bulk["concepts"] = [
-            {**c, "concept_id": concept_map[c["concept_id"]]} for c in bulk.get("concepts", [])
+            {**c, "concept_id": concept_map[c["concept_id"]]}
+            for c in bulk.get("concepts", [])
+            if c["concept_id"] not in drop_concepts
         ]
 
         new_sources = []
         for s in bulk.get("sources", []):
             old_sid = s["source_id"]
-            new_sid = source_map[old_sid]
+            new_sid = source_map.get(old_sid, old_sid)
             s2 = {**s, "source_id": new_sid}
-            if s2.get("storage_key"):
+            if s2.get("storage_key") and new_sid != old_sid:
                 s2["storage_key"] = _remap_storage_key(s2["storage_key"], old_sid, new_sid)
             # garage_key is content-addressed (sha256) — immune, left untouched.
             new_sources.append(s2)
@@ -107,7 +131,7 @@ class IdRemapper:
 
         new_bulk["instances"] = [
             {**i,
-             "instance_id": instance_map[i["instance_id"]],
+             "instance_id": instance_map.get(i["instance_id"], i["instance_id"]),
              "source_id": source_map.get(i["source_id"], i["source_id"])}
             for i in bulk.get("instances", [])
         ]
@@ -138,6 +162,4 @@ class IdRemapper:
         if "graph_epochs" in bulk:
             new_bulk["graph_epochs"] = bulk["graph_epochs"]
 
-        new_obj = {"header": obj["header"], "bulk": new_bulk}
-        mapping_table = {"concepts": concept_map, "sources": source_map, "instances": instance_map}
-        return new_obj, mapping_table
+        return {"header": obj["header"], "bulk": new_bulk}

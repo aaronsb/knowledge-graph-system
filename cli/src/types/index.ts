@@ -719,8 +719,8 @@ export interface RestoreRequest {
   username: string;
   password: string;
   backup_file: string;
-  overwrite?: boolean;
-  handle_external_deps?: 'prune' | 'stitch' | 'defer';
+  // ADR-102 P4: restore merge mode (replaces overwrite + handle_external_deps).
+  mode?: 'idempotent' | 'adjacent' | 'integration';
 }
 
 export interface RestoreResponse {
