@@ -38,6 +38,11 @@ class ConceptMatcher:
         """
         Find all external concept references in backup
 
+        DEAD (ADR-102 P6): reads the removed v1 ``data["data"]`` shape. stitch.py now
+        derives external concepts from KgBackupV2Reader (``_find_external_concepts``)
+        and feeds them to ``create_restitch_plan``; this method has no live caller.
+        Do not wire to new code.
+
         Args:
             backup_data: Parsed backup JSON
 

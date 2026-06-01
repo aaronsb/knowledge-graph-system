@@ -144,6 +144,9 @@ Note:
     Console.success("✓ Connected to target database")
     reader = KgBackupV2Reader(backup_data)
     _ontologies = [o.get("name") for o in reader.header.get("ontologies", []) if o.get("name")]
+    # Scope for integrity ops: one ontology entry == scoped; else graph-wide
+    # (passing None to a scoped prune would silently widen it to the whole graph).
+    scope = _ontologies[0] if len(_ontologies) == 1 else None
     Console.key_value("  Backup format", reader.format_version)
     if len(_ontologies) == 1:
         Console.key_value("  Ontology", _ontologies[0])
@@ -227,7 +230,7 @@ Note:
                 Console.warning(f"\n⚠ {len(restitch_plan['unmatched'])} external concepts could not be matched")
                 Console.info("  Pruning relationships to unmatched concepts...")
 
-                ontology = backup_data.get('ontology')
+                ontology = scope
                 client = conn.get_client()
                 prune_result = DatabaseIntegrity.prune_dangling_relationships(
                     client,
@@ -249,7 +252,7 @@ Note:
             Console.section("Pruning Dangling Relationships")
             Console.info("Removing relationships to external concepts...")
 
-            ontology = backup_data.get('ontology')
+            ontology = scope
             client = conn.get_client()
             prune_result = DatabaseIntegrity.prune_dangling_relationships(
                 client,

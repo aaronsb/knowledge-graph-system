@@ -21,7 +21,13 @@ from .console import Console, Colors
 
 
 class BackupAssessment:
-    """Assess backup completeness and dependencies"""
+    """Assess backup completeness and dependencies.
+
+    DEAD (ADR-102 P6): reads the removed v1 ``data["data"]`` shape and has no live
+    caller — backup/restore/stitch now use KgBackupV2Reader.external_concept_ids() /
+    check_backup_data(). Scheduled for deletion in P6 (the runtime DatabaseIntegrity
+    prune/repair below stays until its logic is ported). Do not wire to new code.
+    """
 
     @staticmethod
     def analyze_backup(backup_data: Dict[str, Any]) -> Dict[str, Any]:

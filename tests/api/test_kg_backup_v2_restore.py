@@ -10,6 +10,8 @@ Honors "messy data finds bugs": it does NOT reset the working graph. All nodes u
 a ``p3rt_`` id prefix so they can't collide with real data, and the test removes
 them in a finally block.
 """
+from unittest.mock import MagicMock
+
 import pytest
 
 from api.app.lib.age_client import AGEClient
@@ -75,6 +77,16 @@ def client_with_cleanup():
                 )
             except Exception:
                 pass
+
+
+def test_merge_relationship_rejects_unsafe_edge_label():
+    """A crafted edge label (untrusted backup) is skipped, never interpolated into Cypher."""
+    client = MagicMock()
+    n = DataImporter._merge_relationship(
+        client, {"from": "a", "to": "b", "type": "IMPLIES]->() DETACH DELETE n //", "properties": {}}
+    )
+    assert n == 0
+    client._execute_cypher.assert_not_called()
 
 
 def test_clone_writer_reconstructs_graph(client_with_cleanup):

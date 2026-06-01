@@ -160,6 +160,10 @@ class RestoreCLI:
             o.get("name") for o in backup_data.get("header", {}).get("ontologies", [])
             if o.get("name")
         ]
+        # Scope for downstream integrity ops: one ontology entry == a scoped backup;
+        # otherwise graph-wide. (kg-backup/2 has no top-level "ontology" field —
+        # passing None here would silently widen a scoped prune to the whole graph.)
+        scope = _ontologies[0] if len(_ontologies) == 1 else None
         if len(_ontologies) == 1:
             ontology_name = _ontologies[0]
             client = self.conn.get_client()
@@ -221,7 +225,7 @@ class RestoreCLI:
                 client = self.conn.get_client()
                 prune_result = DatabaseIntegrity.prune_dangling_relationships(
                     client,
-                    ontology=backup_data.get('ontology'),
+                    ontology=scope,
                     dry_run=False
                 )
 
@@ -240,7 +244,7 @@ class RestoreCLI:
             client = self.conn.get_client()
             integrity = DatabaseIntegrity.check_integrity(
                 client,
-                ontology=backup_data.get('ontology')
+                ontology=scope
             )
 
             if integrity["issues"] or integrity["warnings"]:
@@ -253,7 +257,7 @@ class RestoreCLI:
                         Console.info("Repairing orphaned concepts...")
                         repairs = DatabaseIntegrity.repair_orphaned_concepts(
                             client,
-                            ontology=backup_data.get('ontology')
+                            ontology=scope
                         )
                         Console.success(f"✓ Repaired {repairs} orphaned concepts")
 
@@ -261,7 +265,7 @@ class RestoreCLI:
                         Console.info("Re-validating...")
                         integrity = DatabaseIntegrity.check_integrity(
                             client,
-                            ontology=backup_data.get('ontology')
+                            ontology=scope
                         )
                         if not integrity["issues"]:
                             Console.success("✓ All issues resolved")

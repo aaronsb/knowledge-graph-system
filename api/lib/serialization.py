@@ -780,10 +780,12 @@ def _execute_with_age_retry(client, query, params=None, *, fetch_one=False, max_
             return client._execute_cypher(query, params=params, fetch_one=fetch_one)
         except Exception as e:
             es = str(e)
+            # Only genuinely transient AGE conditions are retried: first-use label
+            # table creation racing across threads, and MVCC write conflicts. A
+            # malformed SET is deterministic and must surface, not be masked.
             transient = (
                 "already exists" in es
                 or "Entity failed to be updated" in es
-                or "SET clause expects a map" in es
             )
             if transient and attempt < max_retries:
                 m = re.search(r'relation "(\w+)" already exists', es)
@@ -1296,8 +1298,16 @@ class DataImporter:
 
     @staticmethod
     def _merge_relationship(client: AGEClient, rel: Dict[str, Any]) -> int:
-        """MERGE a single concept relationship (dynamic edge label). Returns 1 if created/matched."""
+        """MERGE a single concept relationship (dynamic edge label). Returns 1 if created/matched.
+
+        The edge label is interpolated into the Cypher text (AGE has no parameterized
+        edge labels), so a backup — an untrusted-input boundary in adjacent mode — must
+        not inject through ``type``. Labels are identifiers; reject anything else.
+        """
         rel_type = rel["type"]  # de-interned label string
+        if not isinstance(rel_type, str) or not DataImporter._PROP_KEY.match(rel_type):
+            Console.warning(f"  Skipping relationship with unsafe edge type: {rel_type!r}")
+            return 0
         query = f"""
             OPTIONAL MATCH (c1:Concept {{concept_id: $from_id}})
             OPTIONAL MATCH (c2:Concept {{concept_id: $to_id}})

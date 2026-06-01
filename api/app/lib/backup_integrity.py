@@ -235,7 +235,9 @@ class BackupIntegrityChecker:
                 if endpoint and endpoint not in local_concept_ids:
                     external_in_rels.add(endpoint)
 
-        total_external = len(external_in_evidence) + len(external_in_rels)
+        # Distinct external concepts (a concept external in BOTH evidence and
+        # relationships must not be counted twice).
+        total_external = len(external_in_evidence | external_in_rels)
         result.external_deps = total_external
 
         if total_external > 0:
