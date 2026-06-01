@@ -144,7 +144,15 @@ class EmbeddingModelManager:
                 )
                 logger.info("  Downloaded and cached")
 
-            self.dimensions = self.model.get_sentence_embedding_dimension()
+            # sentence-transformers renamed get_sentence_embedding_dimension() →
+            # get_embedding_dimension(). Prefer the new name when present, fall
+            # back to the old — forward-compatible (survives the old name's
+            # removal) and backward-compatible (older ST lacks the new name).
+            self.dimensions = (
+                self.model.get_embedding_dimension()
+                if hasattr(self.model, "get_embedding_dimension")
+                else self.model.get_sentence_embedding_dimension()
+            )
             logger.info(f"Embedding model loaded: {self.model_name} ({self.dimensions} dims, {device})")
 
         except Exception as e:
