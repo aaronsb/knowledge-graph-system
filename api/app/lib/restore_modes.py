@@ -56,6 +56,55 @@ def _empty_maps() -> MappingTable:
     return {"concepts": {}, "sources": {}, "instances": {}}
 
 
+def _active_identity(profiles) -> Optional[str]:
+    """The active embedding-profile identity (index 0, active-first) or None."""
+    return profiles[0].get("identity") if profiles else None
+
+
+def _backup_active_identity(obj: Dict[str, Any]) -> Optional[str]:
+    """The backup's active text embedding-profile identity (spec §3.2), or None."""
+    header = obj.get("header", {})
+    profiles = header.get("embedding_profiles") or []
+    idx = header.get("default_embedding_profile")
+    if isinstance(idx, int) and 0 <= idx < len(profiles):
+        return profiles[idx].get("identity")
+    return _active_identity(profiles)
+
+
+def _target_active_identity(client: Any) -> Optional[str]:
+    """The target graph's active embedding-profile identity, or None if unconfigured."""
+    from ...lib.serialization import DataExporter
+    return _active_identity(DataExporter.export_embedding_profiles(client))
+
+
+def _assert_compatible_embedding_space(obj: Dict[str, Any], client: Any) -> None:
+    """Guard integration matching against an embedding-space mismatch (ADR-102 §6).
+
+    Integration matches the backup's CARRIED concept vectors against the target by
+    cosine similarity. If the backup was embedded in a different space than the
+    target's active profile, those vectors are meaningless in the target space and
+    — at equal dimensions — can yield plausible-but-wrong matches that silently
+    mis-attach concepts. §6 requires recomputing embeddings before integration;
+    until that rehydration exists (P5), a known mismatch is REJECTED.
+    """
+    backup_id = _backup_active_identity(obj)
+    target_id = _target_active_identity(client)
+    if backup_id and target_id and backup_id != target_id:
+        raise ValueError(
+            f"integration mode requires matching embedding spaces: backup is "
+            f"{backup_id!r} but the target's active profile is {target_id!r}. The "
+            f"carried vectors are in a different space — recompute embeddings before "
+            f"integration matching (ADR-102 §6; embedding rehydration is P5). Use "
+            f"'adjacent' to import without matching."
+        )
+    if not (backup_id and target_id):
+        logger.warning(
+            "restore(integration): could not confirm embedding-space compatibility "
+            "(backup=%r, target=%r) — proceeding; verify your embedding configuration",
+            backup_id, target_id,
+        )
+
+
 def prepare_backup(obj: Dict[str, Any], mode: str,
                    client: Optional[Any] = None) -> Tuple[Dict[str, Any], MappingTable]:
     """Transform a kg-backup/2 object for ``mode``; return ``(prepared_obj, mapping_table)``.
@@ -91,6 +140,9 @@ def _prepare_integration(obj: Dict[str, Any], client: Any) -> Tuple[Dict[str, An
     node stays untouched); its instances/evidence/edges rewire to the target. Unmatched
     concepts — and all sources/instances — get freshly minted ids.
     """
+    # ADR-102 §6: refuse to match across embedding spaces (silent mis-attach risk).
+    _assert_compatible_embedding_space(obj, client)
+
     bulk = obj["bulk"]
     # Reuse the always-minter for fresh ids (sources, instances, unmatched concepts).
     minted = IdRemapper(mode=IdRemapper.MODE_ALWAYS).build_maps(bulk)

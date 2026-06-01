@@ -105,7 +105,11 @@ def test_integration_mode_attaches_to_existing_concept(client_with_cleanup):
             return ({"concept_id": f"{NS}tgt", "label": "Shared", "similarity": 0.95}
                     if ext.get("label") == "P3 Alpha" else None)
 
-    with patch("api.app.lib.restore_modes.ConceptMatcher", _M):
+    # Stub the embedding-space gate (ADR-102 §6) so the test is independent of the
+    # dev graph's configured profile; the matcher is already patched.
+    with patch("api.app.lib.restore_modes.ConceptMatcher", _M), \
+         patch("api.app.lib.restore_modes._target_active_identity",
+               return_value="openai:text-embedding-3-small@1536"):
         prepared, maps = prepare_backup(incoming, RestoreMode.INTEGRATION, client)
 
     minted = [v for m in maps.values() for v in m.values() if not v.startswith(NS)]

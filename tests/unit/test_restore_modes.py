@@ -46,6 +46,9 @@ def _backup():
     )
 
 
+_BACKUP_IDENTITY = "openai:text-embedding-3-small@1536"
+
+
 class _FakeMatcher:
     """ConceptMatcher stand-in: 'Alpha' matches an existing target; others don't."""
     def __init__(self, client, **kw):
@@ -56,6 +59,13 @@ class _FakeMatcher:
         if external_concept.get("label") == "Alpha":
             return {"concept_id": "TARGET_c1", "label": "Alpha", "similarity": 0.95}
         return None
+
+
+def _integration(obj, target_identity=_BACKUP_IDENTITY, matcher=_FakeMatcher):
+    """Run integration with a patched matcher + a controlled target embedding identity."""
+    with patch("api.app.lib.restore_modes.ConceptMatcher", matcher), \
+         patch("api.app.lib.restore_modes._target_active_identity", return_value=target_identity):
+        return prepare_backup(obj, RestoreMode.INTEGRATION, client=MagicMock())
 
 
 # ---- idempotent ----
@@ -85,8 +95,7 @@ def test_adjacent_mints_all_ids_and_stays_self_contained():
 
 def test_integration_attaches_match_and_mints_rest():
     obj = _backup()
-    with patch("api.app.lib.restore_modes.ConceptMatcher", _FakeMatcher):
-        prepared, maps = prepare_backup(obj, RestoreMode.INTEGRATION, client=MagicMock())
+    prepared, maps = _integration(obj)
 
     # c1 (Alpha) attached to the existing target; c2 minted new.
     assert maps["concepts"]["c1"] == "TARGET_c1"
@@ -108,6 +117,33 @@ def test_integration_attaches_match_and_mints_rest():
     # sources/instances always minted fresh
     assert maps["sources"]["s1"] != "s1"
     assert maps["instances"]["i1"] != "i1"
+
+
+def test_integration_two_matches_share_instance_fan_out():
+    """Two matched concepts evidencing the SAME instance both rewire (drop + fan-out)."""
+    obj = _backup()  # c1(Alpha)+c2(Beta) both evidence i1; rel c1->c2
+
+    class _BothMatch:
+        def __init__(self, *a, **k): pass
+        def match_concept_in_database(self, ext, top_k=5):
+            return {"concept_id": "T_" + ext["label"], "label": ext["label"], "similarity": 0.99}
+
+    prepared, maps = _integration(obj, matcher=_BothMatch)
+    # Both concept records dropped (attach to existing targets).
+    assert prepared["bulk"]["concepts"] == []
+    assert maps["concepts"] == {"c1": "T_Alpha", "c2": "T_Beta"}
+    # The shared instance's two evidence rows rewired to the two targets.
+    ev_concepts = {e["concept_id"] for e in prepared["bulk"]["evidence"]}
+    assert ev_concepts == {"T_Alpha", "T_Beta"}
+    # The edge between them rewired to both targets.
+    rel = prepared["bulk"]["relationships"][0]
+    assert (rel["from"], rel["to"]) == ("T_Alpha", "T_Beta")
+
+
+def test_integration_rejects_embedding_space_mismatch():
+    """ADR-102 §6: matching across embedding spaces is refused (silent mis-attach risk)."""
+    with pytest.raises(ValueError, match="matching embedding spaces"):
+        _integration(_backup(), target_identity="nomic:nomic-embed-text-v1.5@768")
 
 
 def test_integration_requires_client():

@@ -206,6 +206,14 @@ export function createRestoreCommand(): Command {
         console.log(colors.status.warning('⚠️  Potentially destructive operation'));
         console.log(separator());
 
+        // Validate the restore mode up front (before any file I/O or upload).
+        const validModes = ['idempotent', 'adjacent', 'integration'];
+        if (!validModes.includes(options.mode)) {
+          console.error(colors.status.error(
+            `\n✗ Invalid --mode "${options.mode}". Expected one of: ${validModes.join(', ')}\n`));
+          process.exit(1);
+        }
+
         // Determine backup file path
         let backupFilePath: string;
         let backupFilename: string;
@@ -290,12 +298,6 @@ export function createRestoreCommand(): Command {
         let spinner = ora('Uploading backup...').start();
 
         try {
-          const validModes = ['idempotent', 'adjacent', 'integration'];
-          if (!validModes.includes(options.mode)) {
-            spinner.fail(`Invalid --mode "${options.mode}". Expected one of: ${validModes.join(', ')}`);
-            process.exit(1);
-          }
-
           const uploadResult = await client.restoreBackup(
             backupFilePath,
             options.mode,

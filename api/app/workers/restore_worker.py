@@ -104,8 +104,7 @@ def run_restore_worker(
         #   idempotent  → MERGE-by-id in place (into an empty target: a faithful clone)
         #   adjacent    → fresh ids everywhere (independent copy + mapping table)
         #   integration → match concepts to existing target & attach; mint the rest
-        target_state = "empty" if _target_is_empty(client) else "populated"
-        logger.info(f"[{job_id}] Restore mode: {mode} (target {target_state})")
+        logger.info(f"[{job_id}] Restore mode: {mode}")
         prepared_backup, mapping_table = prepare_backup(backup_data, mode, client)
 
         # Stage 3: Execute restore with progress tracking
@@ -293,25 +292,6 @@ def _clear_database(client: AGEClient, job_id: str) -> None:
     client._execute_cypher("MATCH (n:Instance) DETACH DELETE n")
 
     logger.info(f"[{job_id}] Concept graph cleared successfully (vocabulary preserved)")
-
-
-def _target_is_empty(client: AGEClient) -> bool:
-    """Return True if the concept graph holds no Concept/Source/Instance nodes.
-
-    The ADR-102 clone/merge gate: an empty target is restored by CLONE (ids
-    preserved 1:1); a populated target is a MERGE. A label whose backing table does
-    not exist yet (fresh database) counts as empty.
-    """
-    for label in ("Concept", "Source", "Instance"):
-        try:
-            row = client._execute_cypher(
-                f"MATCH (n:{label}) RETURN count(n) AS c", fetch_one=True
-            )
-        except Exception:
-            continue  # label table absent → no such nodes
-        if row and int(str(row.get("c", 0)).strip('"')) > 0:
-            return False
-    return True
 
 
 def _execute_restore(
