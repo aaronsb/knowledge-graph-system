@@ -12035,14 +12035,9 @@
 <td>-</td>
 </tr>
 <tr>
-<td><code>--merge</code></td>
-<td>Merge into existing ontology if it exists (default: error if ontology exists)</td>
-<td><code>false</code></td>
-</tr>
-<tr>
-<td><code>--deps &lt;action&gt;</code></td>
-<td>How to handle external dependencies: prune, stitch, defer</td>
-<td><code>"prune"</code></td>
+<td><code>--mode &lt;mode&gt;</code></td>
+<td>Restore merge mode: "idempotent" (default; MERGE-by-id, clone into empty), "adjacent" (independent copy, fresh ids), or "integration" (attach concepts to existing graph by similarity)</td>
+<td><code>"idempotent"</code></td>
 </tr>
 <tr>
 <td><code>--confirm</code></td>
