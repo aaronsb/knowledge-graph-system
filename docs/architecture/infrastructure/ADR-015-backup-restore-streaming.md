@@ -6,9 +6,20 @@ deciders:
 related:
   - ADR-012
   - ADR-013
+  - ADR-102
 ---
 
 # ADR-015: Backup/Restore Streaming Architecture
+
+> **Status update (ADR-102, 2026):** the client-controlled streaming model decided
+> here is live. **Phase 1 (backup download)** ships as
+> `api/app/lib/backup_streaming.py` + `backup_archive.py`. **Phase 2 (restore upload)**,
+> tracked below as "🚧 IN PROGRESS", was *delivered* by
+> [ADR-102](ADR-102-portable-backup-and-restore-with-clone-merge-semantics.md) — the
+> portable `kg-backup/2` format with clone/merge/restamp restore semantics, epoch
+> reconciliation, and the async `restore_worker`. ADR-102 builds **on** this ADR's
+> streaming foundation rather than replacing it, so ADR-015 remains Accepted; the
+> Phase-2 progress markers below are historical (read them as "done, see ADR-102").
 
 ## Overview
 
