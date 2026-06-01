@@ -111,6 +111,8 @@ CHECK_CODES = {
     "E_EPOCH_ACTOR_RANGE": "graph_epoch.actor index out of range.",
     # cascading default
     "E_NO_PROFILE_CASCADE": "concept resolves to no embedding-profile (cascade failed).",
+    # embedding vector integrity
+    "E_CONCEPT_EMBEDDING_DIM": "concept embedding length != resolved profile @dims.",
     # referential integrity
     "E_REL_FROM_MISSING": "relationship.from concept_id not in concepts[].",
     "E_REL_TO_MISSING": "relationship.to concept_id not in concepts[].",
@@ -202,6 +204,28 @@ class ValidationResult:
 def _is_int_index(value: Any) -> bool:
     """True when value is a usable list index (int, not bool).  @verified cffa180b"""
     return isinstance(value, int) and not isinstance(value, bool)
+
+
+def _profile_dims(profiles: List[Any], idx: Any) -> Optional[int]:
+    """Parse the ``@dims`` suffix of profile ``idx``'s identity (§3.2).
+
+    Returns the integer dimension count from a ``{provider}:{model}@{dims}``
+    identity, or ``None`` when ``idx`` is not a valid in-range profile or the
+    identity has no parseable ``@dims`` (those shapes are flagged separately by
+    ``E_CONCEPT_PROFILE_RANGE`` / ``E_PROFILE_IDENTITY``, so this just declines).
+
+    @verified 32c0baea
+    """
+    if not _is_int_index(idx) or not (0 <= idx < len(profiles)):
+        return None
+    prof = profiles[idx]
+    identity = prof.get("identity") if isinstance(prof, dict) else None
+    if not isinstance(identity, str) or "@" not in identity:
+        return None
+    try:
+        return int(identity.rsplit("@", 1)[1])
+    except (ValueError, IndexError):
+        return None
 
 
 def validate_backup(obj: Dict[str, Any]) -> ValidationResult:
@@ -364,7 +388,10 @@ def _validate_bulk(
 ) -> None:
     """Validate the bulk region: indices, integrity, epochs, dups, exclusions (§4-6).
 
-    @verified cffa180b
+    Includes the concept embedding-dimension check (§3.2): a concept's vector
+    length must equal its resolved profile's ``@dims``.
+
+    @verified 32c0baea
     """
     bulk = obj.get("bulk")
     if not isinstance(bulk, dict):
@@ -385,7 +412,8 @@ def _validate_bulk(
     relationships = bulk.get("relationships") or []
     graph_epochs = bulk.get("graph_epochs")  # None => simple mode
 
-    n_profiles = len(header.get("embedding_profiles") or [])
+    profiles = header.get("embedding_profiles") or []
+    n_profiles = len(profiles)
     n_rel_types = len(header.get("relationship_vocabulary") or [])
     n_content_types = len(header.get("content_types") or [])
     n_kinds = len(header.get("epoch_kinds") or [])
@@ -422,6 +450,19 @@ def _validate_bulk(
                        f"concept {cid!r} resolves to no embedding-profile via "
                        f"record→ontology→backup cascade (spec §4.1).",
                        f"$.bulk.concepts[{i}]")
+
+        # embedding vector dimension must honor the resolved profile's @dims (§3.2).
+        # Only checked when a vector is present AND the profile resolves with parseable
+        # dims — bad index / malformed identity are already flagged above.
+        embedding = c.get("embedding")
+        if isinstance(embedding, list):
+            dims = _profile_dims(profiles, resolved)
+            if dims is not None and len(embedding) != dims:
+                ident = profiles[resolved].get("identity")
+                result.add(ERROR, "E_CONCEPT_EMBEDDING_DIM",
+                           f"concept {cid!r} embedding has {len(embedding)} dims but "
+                           f"resolved profile {resolved} ({ident!r}) declares {dims}.",
+                           f"$.bulk.concepts[{i}].embedding")
 
         # faithful mode: concepts should carry epoch stamps
         if faithful:
@@ -624,7 +665,7 @@ def print_report(result: ValidationResult) -> None:
 def _selftest() -> int:
     """Run a minimal valid/invalid self-test. Returns process exit code.
 
-    @verified cffa180b
+    @verified 32c0baea
     """
     valid = {
         "header": {
@@ -695,6 +736,31 @@ def _selftest() -> int:
     }
     missing = expected - codes
     assert not missing, f"invalid sample missing expected codes: {missing}"
+
+    # embedding dimension consistency (E_CONCEPT_EMBEDDING_DIM): a concept's vector
+    # length must equal its resolved profile's @dims. Uses a tiny @3 profile.
+    def _dim_obj(embedding):
+        return {
+            "header": {
+                "format_version": "kg-backup/2",
+                "source": {}, "exported_at": "x", "schema_version": 76,
+                "embedding_profiles": [{"identity": "test:model@3"}],
+                "default_embedding_profile": 0,
+                "relationship_vocabulary": [], "epoch_kinds": [], "actors": [],
+                "content_types": [], "ontologies": [],
+            },
+            "bulk": {
+                "concepts": [{"concept_id": "c1", "embedding": embedding}],
+                "sources": [], "instances": [], "evidence": [],
+                "relationships": [], "vocabulary": [],
+            },
+        }
+    r_dim_ok = validate_backup(_dim_obj([0.1, 0.2, 0.3]))           # 3 == @3
+    assert not any(i.code == "E_CONCEPT_EMBEDDING_DIM" for i in r_dim_ok.issues), \
+        "matching embedding dims must not flag E_CONCEPT_EMBEDDING_DIM"
+    r_dim_bad = validate_backup(_dim_obj([0.1, 0.2]))               # 2 != @3
+    assert any(i.code == "E_CONCEPT_EMBEDDING_DIM" for i in r_dim_bad.issues), \
+        "embedding length != profile @dims must flag E_CONCEPT_EMBEDDING_DIM"
 
     # single-path: the removed legacy flat shape (no header) is refused
     legacy = {"version": "1.0", "type": "full", "data": {"concepts": [], "sources": [],
