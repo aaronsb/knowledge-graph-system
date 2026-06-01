@@ -12,11 +12,58 @@ Based on ADR-014: Job Approval Workflow
 
 import asyncio
 from datetime import datetime, timedelta, timezone
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 import logging
 import os
 
 logger = logging.getLogger(__name__)
+
+
+def reconcile_orphaned_epochs(queue) -> List[int]:
+    """Resolve orphaned in_progress graph_epochs to 'failed' (issue #485).
+
+    A crash between recording an in_progress epoch (record_epoch, or the P5-faithful
+    replay) and resolving it (complete_epoch / _resolve_replayed_epochs) leaves the
+    row in_progress forever, pinning the committed watermark
+    (kg_api.get_committed_epoch, migration 076) below it — so EVERY derivation reads
+    stale indefinitely. This resolves any in_progress epoch whose owning job
+    (``metadata->>'job_id'``) is no longer active to 'failed'. A failed event still
+    counts toward the watermark, so this unblocks freshness without falsely claiming
+    the partial mutation completed.
+
+    Only job_id-bearing rows are swept: every long-lived in_progress epoch carries
+    one (ingestion and restore-simple stamp it; P5-faithful stamps the local restore
+    job_id), so the transient in_progress window of atomic record_mutation calls
+    (which never sets job_id and self-resolves in the same call) is never touched.
+
+    Returns the list of reconciled event_ids.
+    """
+    conn = queue._get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT to_regclass('kg_api.graph_epochs') IS NOT NULL")
+            if not cur.fetchone()[0]:
+                return []
+            cur.execute("""
+                UPDATE kg_api.graph_epochs e
+                SET status = 'failed'
+                WHERE e.status = 'in_progress'
+                  AND e.metadata->>'job_id' IS NOT NULL
+                  AND NOT EXISTS (
+                      SELECT 1 FROM kg_api.jobs j
+                      WHERE j.job_id = e.metadata->>'job_id'
+                        AND j.status IN ('pending', 'approved', 'running', 'processing')
+                  )
+                RETURNING e.event_id
+            """)
+            rows = cur.fetchall()
+            conn.commit()
+            return [r[0] for r in rows]
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        queue._return_connection(conn)
 
 
 class JobScheduler:
@@ -253,6 +300,19 @@ class JobScheduler:
                 queue._return_connection(conn)
         except Exception as e:
             logger.error(f"Error reaping stale jobs: {e}", exc_info=True)
+
+        # Task 4b (issue #485): reconcile orphaned in_progress graph_epochs. Runs
+        # AFTER the reaper so a just-failed job's epochs resolve the same cycle.
+        try:
+            reconciled = reconcile_orphaned_epochs(queue)
+            if reconciled:
+                logger.warning(
+                    f"Reconciled {len(reconciled)} orphaned in_progress graph_epoch(s) "
+                    f"to 'failed' (owning job terminal/absent) — unblocked the "
+                    f"committed watermark"
+                )
+        except Exception as e:
+            logger.error(f"Error reconciling orphaned epochs: {e}", exc_info=True)
 
         # Task 5: Annealing proposal lifecycle cleanup
         try:
