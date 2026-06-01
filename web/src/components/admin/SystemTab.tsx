@@ -696,10 +696,21 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
                       : 'bg-muted/50 border-border opacity-60'
                   }`}
                 >
-                  <span className="text-sm font-medium text-foreground">{lane.name}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-foreground">{lane.name}</span>
+                    <span
+                      className={`px-2 py-0.5 text-xs rounded-full font-medium ${
+                        lane.enabled
+                          ? 'bg-status-active/20 text-status-active'
+                          : 'bg-status-warning/20 text-status-warning'
+                      }`}
+                    >
+                      {lane.enabled ? 'Active' : 'Frozen'}
+                    </span>
+                  </div>
                   <div className="flex items-center gap-3">
                     <span className="text-xs text-muted-foreground">
-                      {lane.enabled ? `${lane.max_slots} slots` : 'disabled'}
+                      {lane.enabled ? `${lane.max_slots} slots` : 'no slots'}
                     </span>
                     <button
                       onClick={() => handleToggleLane(lane.name, lane.enabled)}
