@@ -25,6 +25,23 @@ logger = logging.getLogger(__name__)
 # Unique worker ID for this process (survives lane restarts, changes on container restart)
 WORKER_ID = f"worker-{uuid.uuid4().hex[:8]}"
 
+# Hard ceiling on a single lane's max_slots (ADR-100).
+#
+# This is the ONE place the per-lane concurrency cap is defined. It governs two
+# things that MUST stay in lockstep:
+#   1. The API validation for PATCH /admin/workers/lanes/{name} (see
+#      admin_workers.LaneUpdate) — a lane cannot be configured above this.
+#   2. The shared worker thread-pool size (see LaneManager.start) — the pool is
+#      sized so every lane can independently reach MAX_LANE_SLOTS without thread
+#      starvation. If the cap were enforced in the API but the pool stayed small,
+#      raising a lane's max_slots would not actually increase concurrency.
+#
+# Raising this value requires an API restart to resize the pool. Note that real
+# downstream throughput is ALSO bounded by each AI provider's
+# max_concurrent_requests (kg_api.ai_extraction_config) — bumping lane slots
+# beyond that just queues work inside the provider client.
+MAX_LANE_SLOTS = 16
+
 
 @dataclass
 class LaneConfig:
@@ -49,18 +66,32 @@ class LaneManager:
         # All mutations to _active_jobs happen on the event loop thread.
         # Worker threads use call_soon_threadsafe to schedule slot release.
         self._active_jobs: dict[str, set[str]] = {}  # lane_name → {job_id, ...}
-        # Shared executor for running sync workers in threads
-        max_workers = int(os.getenv("MAX_CONCURRENT_JOBS", "4"))
-        self._executor = ThreadPoolExecutor(
-            max_workers=max_workers,
-            thread_name_prefix="kg-lane-"
-        )
+        # Shared executor for running sync workers in threads. Sized in start()
+        # once lane count is known so every lane can reach MAX_LANE_SLOTS without
+        # starving its siblings (see MAX_LANE_SLOTS docs).
+        self._executor: Optional[ThreadPoolExecutor] = None
 
     async def start(self) -> None:
         """Start poll loops for all enabled lanes.  @verified (new)"""
         self._running = True
         self._loop = asyncio.get_running_loop()
         lane_names = await self._get_lane_names()
+
+        # Size the shared pool so every lane can independently reach
+        # MAX_LANE_SLOTS. Floor at MAX_CONCURRENT_JOBS for back-compat. Threads
+        # are cheap while idle (they block on provider I/O), so over-provisioning
+        # here is safe; real concurrency is bounded by provider limits downstream.
+        env_floor = int(os.getenv("MAX_CONCURRENT_JOBS", "4"))
+        pool_size = max(env_floor, len(lane_names) * MAX_LANE_SLOTS)
+        self._executor = ThreadPoolExecutor(
+            max_workers=pool_size,
+            thread_name_prefix="kg-lane-",
+        )
+        logger.info(
+            f"Lane worker pool sized to {pool_size} threads "
+            f"({len(lane_names)} lanes × {MAX_LANE_SLOTS} cap, floor {env_floor})"
+        )
+
         for name in lane_names:
             self._active_jobs[name] = set()
             task = asyncio.create_task(self._lane_loop(name))
@@ -79,7 +110,8 @@ class LaneManager:
                 pass
             logger.info(f"Stopped lane loop: {name}")
         self._tasks.clear()
-        self._executor.shutdown(wait=False, cancel_futures=True)
+        if self._executor is not None:
+            self._executor.shutdown(wait=False, cancel_futures=True)
         logger.info("LaneManager stopped")
 
     def get_lane_status(self) -> dict:

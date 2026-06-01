@@ -10,7 +10,8 @@ Provides REST API access to:
 
 from fastapi import APIRouter, Depends, HTTPException, Query as QueryParam
 import logging
-from typing import Any, Dict
+from typing import Any, Dict, List, Optional
+from pydantic import BaseModel
 
 from ..dependencies.auth import CurrentUser, require_role, require_permission
 from ..models.ontology import (
@@ -81,6 +82,10 @@ def _clear_ontology_tombstone(client, ontology_name: str) -> bool:
         conn = client.pool.getconn()
         try:
             with conn.cursor() as cur:
+                # Bounded wait: the tombstone table is read-only to ingestion, so
+                # contention is near-impossible, but cap the lock wait so this can
+                # never hang the caller (e.g. delete) on a pathologically held row.
+                cur.execute("SET LOCAL lock_timeout = '3s'")
                 cur.execute(
                     "DELETE FROM kg_api.ontology_tombstones WHERE name = %s",
                     (ontology_name,),
@@ -147,6 +152,152 @@ def _record_ontology_tombstone(client, ontology_name: str, removed_by: str, reas
             f"Failed to record tombstone for '{ontology_name}': {e}",
             exc_info=True,
         )
+
+
+# ---------------------------------------------------------------------------
+# Tombstone management (operator controls)
+#
+# A tombstone is the operator-delete intent marker (see _record_ontology_tombstone)
+# that blocks re-ingestion into a deleted ontology's name. Before these routes,
+# the only way to inspect or clear tombstones in bulk was raw SQL against
+# kg_api.ontology_tombstones — these give operators a steering wheel.
+#
+# NOTE: declared BEFORE the parameterized /{ontology_name} routes so that
+# "tombstones" is matched as a literal path, not captured as an ontology name.
+# ---------------------------------------------------------------------------
+
+class TombstoneItem(BaseModel):
+    """A recorded operator-delete tombstone."""
+    name: str
+    removed_by: Optional[str] = None
+    removed_at: Optional[str] = None
+    reason: Optional[str] = None
+
+
+class TombstoneListResponse(BaseModel):
+    """Response for listing ontology tombstones."""
+    tombstones: List[TombstoneItem]
+    count: int
+
+
+class TombstoneFlushResponse(BaseModel):
+    """Response for clearing/flushing ontology tombstones."""
+    flushed: int
+    names: List[str]
+
+
+@router.get("/tombstones", response_model=TombstoneListResponse, summary="List ontology tombstones")
+async def list_ontology_tombstones(
+    current_user: CurrentUser,
+    _: None = Depends(require_permission("ontologies", "delete")),
+):
+    """
+    List all ontology tombstones (operator-delete intent markers).
+
+    Each tombstone blocks re-ingestion into its name until cleared — by
+    recreating the ontology, clearing the specific tombstone, or flushing all.
+
+    **Authorization:** Requires `ontologies:delete` permission.
+    """
+    client = get_age_client()
+    try:
+        conn = client.pool.getconn()
+        try:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute(
+                    "SELECT name, removed_by, removed_at, reason "
+                    "FROM kg_api.ontology_tombstones ORDER BY removed_at DESC"
+                )
+                rows = cur.fetchall()
+        finally:
+            client.pool.putconn(conn)
+
+        items = [
+            TombstoneItem(
+                name=r["name"],
+                removed_by=r.get("removed_by"),
+                removed_at=r["removed_at"].isoformat() if r.get("removed_at") else None,
+                reason=r.get("reason"),
+            )
+            for r in rows
+        ]
+        return TombstoneListResponse(tombstones=items, count=len(items))
+    finally:
+        client.close()
+
+
+@router.delete("/tombstones", response_model=TombstoneFlushResponse, summary="Flush all ontology tombstones")
+async def flush_ontology_tombstones(
+    current_user: CurrentUser,
+    _: None = Depends(require_permission("ontologies", "delete")),
+):
+    """
+    Delete ALL ontology tombstones, unblocking re-ingestion into every
+    previously-deleted name. Operator convenience for the clean-slate case.
+
+    **Authorization:** Requires `ontologies:delete` permission.
+    """
+    client = get_age_client()
+    try:
+        conn = client.pool.getconn()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("SET LOCAL lock_timeout = '3s'")
+                cur.execute("DELETE FROM kg_api.ontology_tombstones RETURNING name")
+                names = [row[0] for row in cur.fetchall()]
+            conn.commit()
+        finally:
+            client.pool.putconn(conn)
+
+        logger.info(
+            f"Flushed {len(names)} ontology tombstones "
+            f"(by={getattr(current_user, 'username', None) or 'unknown'})"
+        )
+        return TombstoneFlushResponse(flushed=len(names), names=names)
+    finally:
+        client.close()
+
+
+@router.delete("/tombstones/{name}", response_model=TombstoneFlushResponse, summary="Clear one ontology tombstone")
+async def clear_ontology_tombstone_route(
+    name: str,
+    current_user: CurrentUser,
+    _: None = Depends(require_permission("ontologies", "delete")),
+):
+    """
+    Delete the tombstone for a single ontology name, unblocking re-ingestion
+    into that name.
+
+    **Authorization:** Requires `ontologies:delete` permission.
+
+    Raises:
+        404: If no tombstone exists for the given name.
+    """
+    client = get_age_client()
+    try:
+        conn = client.pool.getconn()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("SET LOCAL lock_timeout = '3s'")
+                cur.execute(
+                    "DELETE FROM kg_api.ontology_tombstones WHERE name = %s RETURNING name",
+                    (name,),
+                )
+                names = [row[0] for row in cur.fetchall()]
+            conn.commit()
+        finally:
+            client.pool.putconn(conn)
+
+        if not names:
+            raise HTTPException(status_code=404, detail=f"No tombstone found for '{name}'")
+
+        logger.info(
+            f"Cleared tombstone '{name}' "
+            f"(by={getattr(current_user, 'username', None) or 'unknown'})"
+        )
+        return TombstoneFlushResponse(flushed=len(names), names=names)
+    finally:
+        client.close()
 
 
 @router.post("/", response_model=OntologyNodeResponse, status_code=201)
@@ -1251,7 +1402,16 @@ async def delete_ontology(
     ontology_name: str,
     current_user: CurrentUser,
     _: None = Depends(require_permission("ontologies", "delete")),
-    force: bool = QueryParam(False, description="Skip confirmation and force deletion")
+    force: bool = QueryParam(False, description="Skip confirmation and force deletion"),
+    keep_tombstone: bool = QueryParam(
+        False,
+        description=(
+            "Keep the deletion tombstone after delete. Default False: delete is a "
+            "complete operation and clears its own tombstone so the name is "
+            "immediately re-ingestable. Set True to leave the tombstone in place "
+            "and deliberately block re-ingestion into this name until recreated."
+        ),
+    ),
 ):
     """
     Delete an ontology and all its data (Admin only - ADR-060).
@@ -1451,6 +1611,17 @@ async def delete_ontology(
         if jobs_deleted > 0:
             logger.info(f"Deleted {jobs_deleted} job records for ontology '{ontology_name}'")
 
+        # Delete is a COMPLETE operation: clear our own tombstone by default so
+        # the name is immediately re-ingestable. The tombstone was written
+        # upstream purely to fail in-flight ingests during this delete; once the
+        # graph is gone there's nothing left to protect. keep_tombstone=True
+        # preserves the block (deliberate "do not recreate this name" intent).
+        # The clear is best-effort and never fails the delete (and uses a
+        # lock_timeout so it cannot hang on a contended row).
+        tombstone_cleared = False
+        if not keep_tombstone:
+            tombstone_cleared = _clear_ontology_tombstone(client, ontology_name)
+
         # ADR-207/#386: announce the mutation — advances the universal freshness
         # tick (event_id), invalidates graph_accel, and refreshes the counter.
         client.record_mutation("edit")
@@ -1459,7 +1630,8 @@ async def delete_ontology(
             ontology=ontology_name,
             deleted=True,
             sources_deleted=sources_deleted,
-            orphaned_concepts_deleted=orphaned_count
+            orphaned_concepts_deleted=orphaned_count,
+            tombstone_cleared=tombstone_cleared,
         )
 
     except HTTPException:

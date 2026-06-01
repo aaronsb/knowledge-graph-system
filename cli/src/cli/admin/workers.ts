@@ -74,8 +74,7 @@ export function createWorkersCommand(): Command {
     });
 
   // workers lanes subcommand
-  workersCommand.addCommand(
-    new Command('lanes')
+  const lanesCommand = new Command('lanes')
       .description('Show worker lane configuration and utilization')
       .action(async () => {
         try {
@@ -103,8 +102,72 @@ export function createWorkersCommand(): Command {
           console.error(colors.status.error(error.response?.data?.detail || error.message));
           process.exit(1);
         }
-      })
-  );
+      });
+
+  // workers lanes set <lane> — update a lane's configuration
+  lanesCommand.addCommand(
+      new Command('set')
+        .description('Update a worker lane (slots, poll interval, stale timeout, enable/disable)')
+        .argument('<lane>', 'Lane name (e.g. interactive, maintenance, system)')
+        .option('--max-slots <n>', 'Max concurrent jobs in this lane (0–16)', (v) => parseInt(v, 10))
+        .option('--poll-interval <ms>', 'Poll interval in milliseconds (500–120000)', (v) => parseInt(v, 10))
+        .option('--stale-timeout <min>', 'Stale job timeout in minutes (5–1440)', (v) => parseInt(v, 10))
+        .option('--enable', 'Enable the lane')
+        .option('--disable', 'Disable the lane')
+        .action(async (lane: string, opts: any) => {
+          try {
+            if (opts.enable && opts.disable) {
+              console.error(colors.status.error('✗ Cannot use both --enable and --disable'));
+              process.exit(1);
+            }
+
+            const body: {
+              max_slots?: number;
+              poll_interval_ms?: number;
+              stale_timeout_minutes?: number;
+              enabled?: boolean;
+            } = {};
+            if (opts.maxSlots !== undefined) body.max_slots = opts.maxSlots;
+            if (opts.pollInterval !== undefined) body.poll_interval_ms = opts.pollInterval;
+            if (opts.staleTimeout !== undefined) body.stale_timeout_minutes = opts.staleTimeout;
+            if (opts.enable) body.enabled = true;
+            if (opts.disable) body.enabled = false;
+
+            if (Object.keys(body).length === 0) {
+              console.error(colors.status.error('✗ Nothing to update'));
+              console.error(colors.status.dim('  Provide at least one of: --max-slots, --poll-interval, --stale-timeout, --enable, --disable'));
+              process.exit(1);
+            }
+
+            const client = createClientFromEnv();
+            const result = await client.updateWorkerLane(lane, body);
+
+            console.log('\n' + separator());
+            console.log(colors.ui.title(`⚙️  Updated lane: ${lane}`));
+            console.log(separator());
+            for (const [field, change] of Object.entries(result.changed)) {
+              console.log(`  ${colors.ui.key(field + ':')} ${colors.status.dim(String(change.old))} → ${colors.ui.value(String(change.new))}`);
+            }
+            console.log(colors.status.dim('\n  Changes take effect on the next poll cycle.'));
+            console.log(separator() + '\n');
+          } catch (error: any) {
+            console.error(colors.status.error('✗ Failed to update worker lane'));
+            const detail = error.response?.data?.detail;
+            if (Array.isArray(detail)) {
+              // FastAPI validation errors: [{loc, msg, ...}]
+              for (const e of detail) {
+                const field = Array.isArray(e.loc) ? e.loc[e.loc.length - 1] : 'request';
+                console.error(colors.status.error(`  ${field}: ${e.msg}`));
+              }
+            } else {
+              console.error(colors.status.error(detail || error.message));
+            }
+            process.exit(1);
+          }
+        })
+    );
+
+  workersCommand.addCommand(lanesCommand);
 
   return workersCommand;
 }

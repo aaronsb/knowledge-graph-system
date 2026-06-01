@@ -141,6 +141,35 @@ Show worker lane configuration and utilization
 kg lanes [options]
 ```
 
+**Subcommands:**
+
+- `set` - Update a worker lane (slots, poll interval, stale timeout, enable/disable)
+
+---
+
+##### set
+
+Update a worker lane (slots, poll interval, stale timeout, enable/disable)
+
+**Usage:**
+```bash
+kg set <lane>
+```
+
+**Arguments:**
+
+- `<lane>` - Lane name (e.g. interactive, maintenance, system)
+
+**Options:**
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--max-slots <n>` | Max concurrent jobs in this lane (0–16) | - |
+| `--poll-interval <ms>` | Poll interval in milliseconds (500–120000) | - |
+| `--stale-timeout <min>` | Stale job timeout in minutes (5–1440) | - |
+| `--enable` | Enable the lane | - |
+| `--disable` | Disable the lane | - |
+
 ### user
 
 User management commands (admin only)

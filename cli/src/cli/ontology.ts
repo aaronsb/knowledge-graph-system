@@ -358,6 +358,7 @@ export const ontologyCommand = setCommandHelp(
       .showHelpAfterError()
       .argument('<name>', 'Ontology name')
       .option('-f, --force', 'Skip confirmation and force deletion')
+      .option('--keep-tombstone', 'Leave the deletion tombstone in place, deliberately blocking re-ingestion into this name until it is recreated (default: delete clears its own tombstone so the name is immediately re-ingestable)')
       .action(async (name, options) => {
         try {
           if (!options.force) {
@@ -370,7 +371,7 @@ export const ontologyCommand = setCommandHelp(
           }
 
           const client = createClientFromEnv();
-          const result = await client.deleteOntology(name, true);
+          const result = await client.deleteOntology(name, true, options.keepTombstone === true);
 
           console.log('\n' + separator());
           console.log(colors.status.success(`✓ Deleted ontology "${result.ontology}"`));
@@ -379,6 +380,13 @@ export const ontologyCommand = setCommandHelp(
           if (result.orphaned_concepts_deleted > 0) {
             console.log(`  ${colors.ui.key('Orphaned concepts cleaned:')} ${coloredCount(result.orphaned_concepts_deleted)}`);
           }
+          // Make the "is it really gone?" state explicit — this is the confusion
+          // this branch fixes: a delete that left a tombstone silently blocking re-ingestion.
+          if (options.keepTombstone) {
+            console.log(`  ${colors.ui.key('Tombstone:')} ${colors.status.warning('kept — re-ingestion into this name is blocked until recreated')}`);
+          } else {
+            console.log(`  ${colors.ui.key('Tombstone:')} ${colors.status.success('cleared — name is free to re-ingest')}`);
+          }
           console.log('\n' + separator());
         } catch (error: any) {
           console.error(colors.status.error('✗ Failed to delete ontology'));
@@ -386,6 +394,115 @@ export const ontologyCommand = setCommandHelp(
           process.exit(1);
         }
       })
+  )
+  // Tombstone management (operator controls) — inspect and clear the
+  // operator-delete markers that block re-ingestion into deleted names.
+  .addCommand(
+    (() => {
+      const tombstones = new Command('tombstones')
+        .description('Manage ontology tombstones (operator-delete markers that block re-ingestion into a deleted name)')
+        .action(async () => {
+          // Default action: list
+          try {
+            const client = createClientFromEnv();
+            const result = await client.listTombstones();
+            console.log('\n' + separator());
+            console.log(colors.ui.title('🪦  Ontology Tombstones'));
+            console.log(separator());
+            if (result.count === 0) {
+              console.log(colors.status.success('\n  None — no names are blocked from re-ingestion.\n'));
+            } else {
+              for (const t of result.tombstones) {
+                console.log(`\n  ${colors.concept.label(t.name)}`);
+                console.log(`    ${colors.ui.key('Removed by:')} ${colors.ui.value(t.removed_by || 'unknown')}`);
+                if (t.removed_at) console.log(`    ${colors.ui.key('Removed at:')} ${colors.ui.value(t.removed_at)}`);
+                if (t.reason) console.log(`    ${colors.ui.key('Reason:')}     ${colors.status.dim(t.reason)}`);
+              }
+              console.log(colors.status.dim(`\n  ${result.count} tombstone(s). Clear with: kg ontology tombstones flush  (or  clear <name>)`));
+            }
+            console.log('\n' + separator() + '\n');
+          } catch (error: any) {
+            console.error(colors.status.error('✗ Failed to list tombstones'));
+            console.error(colors.status.error(error.response?.data?.detail || error.message));
+            process.exit(1);
+          }
+        });
+
+      tombstones.addCommand(
+        new Command('list')
+          .description('List all ontology tombstones')
+          .action(async () => {
+            try {
+              const client = createClientFromEnv();
+              const result = await client.listTombstones();
+              console.log('\n' + separator());
+              console.log(colors.ui.title('🪦  Ontology Tombstones'));
+              console.log(separator());
+              if (result.count === 0) {
+                console.log(colors.status.success('\n  None — no names are blocked from re-ingestion.\n'));
+              } else {
+                for (const t of result.tombstones) {
+                  console.log(`\n  ${colors.concept.label(t.name)}`);
+                  console.log(`    ${colors.ui.key('Removed by:')} ${colors.ui.value(t.removed_by || 'unknown')}`);
+                  if (t.removed_at) console.log(`    ${colors.ui.key('Removed at:')} ${colors.ui.value(t.removed_at)}`);
+                  if (t.reason) console.log(`    ${colors.ui.key('Reason:')}     ${colors.status.dim(t.reason)}`);
+                }
+                console.log(colors.status.dim(`\n  ${result.count} tombstone(s).`));
+              }
+              console.log('\n' + separator() + '\n');
+            } catch (error: any) {
+              console.error(colors.status.error('✗ Failed to list tombstones'));
+              console.error(colors.status.error(error.response?.data?.detail || error.message));
+              process.exit(1);
+            }
+          })
+      );
+
+      tombstones.addCommand(
+        new Command('flush')
+          .description('Clear ALL ontology tombstones, unblocking re-ingestion into every deleted name')
+          .option('-f, --force', 'Skip confirmation')
+          .action(async (options) => {
+            try {
+              if (!options.force) {
+                console.log('\n' + colors.status.warning('This clears every tombstone, allowing re-ingestion into all deleted names.'));
+                console.log('Use ' + colors.ui.key('--force') + ' to confirm.\n');
+                return;
+              }
+              const client = createClientFromEnv();
+              const result = await client.flushTombstones();
+              console.log('\n' + colors.status.success(`✓ Flushed ${result.flushed} tombstone(s)`));
+              if (result.names.length > 0) {
+                console.log(colors.status.dim('  ' + result.names.join(', ')));
+              }
+              console.log('');
+            } catch (error: any) {
+              console.error(colors.status.error('✗ Failed to flush tombstones'));
+              console.error(colors.status.error(error.response?.data?.detail || error.message));
+              process.exit(1);
+            }
+          })
+      );
+
+      tombstones.addCommand(
+        new Command('clear')
+          .description('Clear the tombstone for a single ontology name')
+          .argument('<name>', 'Ontology name')
+          .action(async (name: string) => {
+            try {
+              const client = createClientFromEnv();
+              const result = await client.clearTombstone(name);
+              console.log('\n' + colors.status.success(`✓ Cleared tombstone for "${result.names[0] ?? name}" — name is free to re-ingest\n`));
+            } catch (error: any) {
+              console.error(colors.status.error('✗ Failed to clear tombstone'));
+              console.error(colors.status.error(error.response?.data?.detail || error.message));
+              process.exit(1);
+            }
+          })
+      );
+
+      return tombstones;
+    })()
   )
   // ADR-200 Phase 3a: Scoring & Annealing Control Surface
   .addCommand(

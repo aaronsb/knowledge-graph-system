@@ -993,11 +993,39 @@ export class KnowledgeGraphClient {
    */
   async deleteOntology(
     ontologyName: string,
-    force: boolean = false
+    force: boolean = false,
+    keepTombstone: boolean = false
   ): Promise<OntologyDeleteResponse> {
     const response = await this.client.delete(`/ontology/${encodeURIComponent(ontologyName)}`, {
-      params: { force }
+      params: { force, keep_tombstone: keepTombstone }
     });
+    return response.data;
+  }
+
+  /**
+   * List ontology tombstones (operator-delete markers that block re-ingestion).
+   */
+  async listTombstones(): Promise<{
+    tombstones: Array<{ name: string; removed_by: string | null; removed_at: string | null; reason: string | null }>;
+    count: number;
+  }> {
+    const response = await this.client.get('/ontology/tombstones');
+    return response.data;
+  }
+
+  /**
+   * Flush ALL ontology tombstones, unblocking re-ingestion into every deleted name.
+   */
+  async flushTombstones(): Promise<{ flushed: number; names: string[] }> {
+    const response = await this.client.delete('/ontology/tombstones');
+    return response.data;
+  }
+
+  /**
+   * Clear the tombstone for a single ontology name.
+   */
+  async clearTombstone(name: string): Promise<{ flushed: number; names: string[] }> {
+    const response = await this.client.delete(`/ontology/tombstones/${encodeURIComponent(name)}`);
     return response.data;
   }
 
@@ -1367,6 +1395,37 @@ export class KnowledgeGraphClient {
     }>;
   }> {
     const response = await this.client.get('/admin/workers/lanes');
+    return response.data;
+  }
+
+  /**
+   * Update a worker lane's configuration (ADR-100).
+   * Only the provided fields are changed; changes take effect on the next poll
+   * cycle. max_slots is capped server-side by MAX_LANE_SLOTS.
+   */
+  async updateWorkerLane(
+    name: string,
+    body: {
+      max_slots?: number;
+      poll_interval_ms?: number;
+      stale_timeout_minutes?: number;
+      enabled?: boolean;
+    }
+  ): Promise<{
+    lane: {
+      name: string;
+      job_types: string[];
+      max_slots: number;
+      poll_interval_ms: number;
+      stale_timeout_minutes: number;
+      enabled: boolean;
+    };
+    changed: Record<string, { old: any; new: any }>;
+  }> {
+    const response = await this.client.patch(
+      `/admin/workers/lanes/${encodeURIComponent(name)}`,
+      body
+    );
     return response.data;
   }
 
