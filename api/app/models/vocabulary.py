@@ -210,7 +210,6 @@ class VocabularyConfigResponse(BaseModel):
     synonym_threshold_moderate: float = 0.70
     low_value_threshold: float = 1.0
     consolidation_similarity_threshold: float = 0.90
-    embedding_model: str = "text-embedding-ada-002"
 
 
 class VocabularyConfigDetail(BaseModel):
@@ -225,7 +224,6 @@ class VocabularyConfigDetail(BaseModel):
     synonym_threshold_moderate: float
     low_value_threshold: float
     consolidation_similarity_threshold: float
-    embedding_model: str
     updated_at: Optional[datetime] = None
     updated_by: Optional[str] = None
     # Computed fields

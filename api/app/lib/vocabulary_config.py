@@ -44,8 +44,7 @@ def load_vocabulary_config() -> VocabularyConfigResponse:
             synonym_threshold_strong=float(client.get_vocab_config('synonym_threshold_strong', '0.90')),
             synonym_threshold_moderate=float(client.get_vocab_config('synonym_threshold_moderate', '0.70')),
             low_value_threshold=float(client.get_vocab_config('low_value_threshold', '1.0')),
-            consolidation_similarity_threshold=float(client.get_vocab_config('consolidation_similarity_threshold', '0.90')),
-            embedding_model=client.get_vocab_config('embedding_model', 'text-embedding-ada-002')
+            consolidation_similarity_threshold=float(client.get_vocab_config('consolidation_similarity_threshold', '0.90'))
         )
     finally:
         client.close()
@@ -92,7 +91,6 @@ def load_vocabulary_config_detail() -> VocabularyConfigDetail:
             synonym_threshold_moderate=float(client.get_vocab_config('synonym_threshold_moderate', '0.70')),
             low_value_threshold=float(client.get_vocab_config('low_value_threshold', '1.0')),
             consolidation_similarity_threshold=float(client.get_vocab_config('consolidation_similarity_threshold', '0.90')),
-            embedding_model=client.get_vocab_config('embedding_model', 'text-embedding-ada-002'),
             current_size=current_size,
             zone=ZoneEnum(zone),
             aggressiveness=aggressiveness
