@@ -3999,6 +3999,56 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#tombstones" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        tombstones
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="tombstones">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#list_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        list
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#flush" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        flush
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clear" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        clear
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#scores" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -10759,6 +10809,56 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#tombstones" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        tombstones
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="tombstones">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#list_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        list
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#flush" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        flush
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clear" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        clear
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#scores" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -10922,6 +11022,7 @@
 <li><code>lifecycle</code> - Change ontology lifecycle state (ADR-200 Phase 2). States: active (normal), pinned (immune to demotion), frozen (read-only — rejects ingest and rename).</li>
 <li><code>rename</code> - Rename an ontology while preserving all its data (concepts, sources, relationships). This is a non-destructive operation useful for reorganization, archiving old ontologies, fixing typos, or improving clarity. Atomic transaction ensures all-or-nothing updates. Requires confirmation unless -y flag is used.</li>
 <li><code>delete</code> - Delete an ontology and ALL its data (concepts, sources, evidence instances, relationships). This is a DESTRUCTIVE operation that CANNOT BE UNDONE. Use this to remove test data, delete old projects, or free up space. Requires --force flag for confirmation. Consider alternatives: rename to add "Archive" suffix, or export data first (future feature).</li>
+<li><code>tombstones</code> - Manage ontology tombstones (operator-delete markers that block re-ingestion into a deleted name)</li>
 <li><code>scores</code> - Show cached annealing scores for an ontology (or all ontologies). Shows mass, coherence, exposure, and protection scores. Use "kg ontology score <name>" to recompute.</li>
 <li><code>score</code> - Recompute annealing scores for one ontology. Runs mass, coherence, exposure, and protection scoring and caches results.</li>
 <li><code>score-all</code> - Recompute annealing scores for all ontologies. Runs full scoring pipeline and caches results on each Ontology node.</li>
@@ -11045,12 +11146,65 @@
 <td>Skip confirmation and force deletion</td>
 <td>-</td>
 </tr>
+<tr>
+<td><code>--keep-tombstone</code></td>
+<td>Leave the deletion tombstone in place, deliberately blocking re-ingestion into this name until it is recreated (default: delete clears its own tombstone so the name is immediately re-ingestable)</td>
+<td>-</td>
+</tr>
 </tbody>
 </table>
+<h3 id="tombstones">tombstones</h3>
+<p>Manage ontology tombstones (operator-delete markers that block re-ingestion into a deleted name)</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>kg<span class="w"> </span>tombstones<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<p><strong>Subcommands:</strong></p>
+<ul>
+<li><code>list</code> - List all ontology tombstones</li>
+<li><code>flush</code> - Clear ALL ontology tombstones, unblocking re-ingestion into every deleted name</li>
+<li><code>clear</code> - Clear the tombstone for a single ontology name</li>
+</ul>
+<hr />
+<h4 id="list_1">list</h4>
+<p>List all ontology tombstones</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>kg<span class="w"> </span>list<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<h4 id="flush">flush</h4>
+<p>Clear ALL ontology tombstones, unblocking re-ingestion into every deleted name</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>kg<span class="w"> </span>flush<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<p><strong>Options:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-f, --force</code></td>
+<td>Skip confirmation</td>
+<td>-</td>
+</tr>
+</tbody>
+</table>
+<h4 id="clear">clear</h4>
+<p>Clear the tombstone for a single ontology name</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>kg<span class="w"> </span>clear<span class="w"> </span>&lt;name&gt;
+</code></pre></div></p>
+<p><strong>Arguments:</strong></p>
+<ul>
+<li><code>&lt;name&gt;</code> - Ontology name</li>
+</ul>
 <h3 id="scores">scores</h3>
 <p>Show cached annealing scores for an ontology (or all ontologies). Shows mass, coherence, exposure, and protection scores. Use "kg ontology score <name>" to recompute.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>kg<span class="w"> </span>scores<span class="w"> </span><span class="o">[</span>name<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>kg<span class="w"> </span>scores<span class="w"> </span><span class="o">[</span>name<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -11059,7 +11213,7 @@
 <h3 id="score">score</h3>
 <p>Recompute annealing scores for one ontology. Runs mass, coherence, exposure, and protection scoring and caches results.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>kg<span class="w"> </span>score<span class="w"> </span>&lt;name&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>kg<span class="w"> </span>score<span class="w"> </span>&lt;name&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -11068,12 +11222,12 @@
 <h3 id="score-all">score-all</h3>
 <p>Recompute annealing scores for all ontologies. Runs full scoring pipeline and caches results on each Ontology node.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>kg<span class="w"> </span>score-all<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>kg<span class="w"> </span>score-all<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <h3 id="candidates">candidates</h3>
 <p>Show top concepts by degree centrality in an ontology. High-degree concepts are potential promotion candidates — they may warrant their own ontology.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>kg<span class="w"> </span>candidates<span class="w"> </span>&lt;name&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>kg<span class="w"> </span>candidates<span class="w"> </span>&lt;name&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -11099,7 +11253,7 @@
 <h3 id="affinity">affinity</h3>
 <p>Show cross-ontology concept overlap. Identifies which other ontologies share concepts with this one, ranked by affinity score.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>kg<span class="w"> </span>affinity<span class="w"> </span>&lt;name&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>kg<span class="w"> </span>affinity<span class="w"> </span>&lt;name&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -11125,7 +11279,7 @@
 <h3 id="edges">edges</h3>
 <p>Show ontology-to-ontology edges (OVERLAPS, SPECIALIZES, GENERALIZES). Derived by annealing cycles or created manually.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>kg<span class="w"> </span>edges<span class="w"> </span>&lt;name&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>kg<span class="w"> </span>edges<span class="w"> </span>&lt;name&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -11134,7 +11288,7 @@
 <h3 id="reassign">reassign</h3>
 <p>Move sources from one ontology to another. Updates s.document and SCOPED_BY edges. Refuses if source ontology is frozen.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>kg<span class="w"> </span>reassign<span class="w"> </span>&lt;from&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>kg<span class="w"> </span>reassign<span class="w"> </span>&lt;from&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -11165,7 +11319,7 @@
 <h3 id="dissolve">dissolve</h3>
 <p>Dissolve an ontology non-destructively. Moves all sources to the target ontology, then removes the Ontology node. Unlike delete, this preserves all data. Refuses if ontology is pinned or frozen.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>kg<span class="w"> </span>dissolve<span class="w"> </span>&lt;name&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>kg<span class="w"> </span>dissolve<span class="w"> </span>&lt;name&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -11191,7 +11345,7 @@
 <h3 id="proposals">proposals</h3>
 <p>List annealing proposals generated by the annealing cycle (ADR-206). Each proposal is one of CLEAVE / DISSOLVE / MERGE / RENAME / NO_ACTION / ESCALATE / ADJUST_CONTROL — the six ontology actions plus the Opus-tier control-tuning meta-action.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>kg<span class="w"> </span>proposals<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>kg<span class="w"> </span>proposals<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Options:</strong></p>
 <table>
@@ -11223,7 +11377,7 @@
 <h3 id="proposal">proposal</h3>
 <p>View or review a specific annealing proposal.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>kg<span class="w"> </span>proposal<span class="w"> </span>&lt;id&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>kg<span class="w"> </span>proposal<span class="w"> </span>&lt;id&gt;
 </code></pre></div></p>
 <p><strong>Arguments:</strong></p>
 <ul>
@@ -11259,7 +11413,7 @@
 <h3 id="anneal">anneal</h3>
 <p>Trigger a annealing cycle. Scores all ontologies, recomputes centroids, identifies candidates, and generates proposals for review. Use --dry-run to preview candidates without generating proposals.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>kg<span class="w"> </span>anneal<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>kg<span class="w"> </span>anneal<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div></p>
 <p><strong>Options:</strong></p>
 <table>
