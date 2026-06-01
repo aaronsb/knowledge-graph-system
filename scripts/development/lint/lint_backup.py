@@ -16,6 +16,17 @@ suites and a future live API endpoint import that directly. The CLI is a thin
 wrapper that reads a path, calls the core, prints issues, and exits non-zero if
 any ERROR was found (CI convention, matching the sibling lint tools).
 
+Relationship to the runtime checker (ADR-102 P6 — intentionally NOT merged):
+this is the *independent* verification tool — a deliberately standalone oracle
+with NO api-package dependency, which is what makes it a convenient CI / test /
+build gate and an outside check on the serializer. It validates the RAW interned
+on-disk structure (dictionary index resolution, interning integrity, §6 exclusions,
+format negotiation). Its runtime counterpart, ``api/app/lib/backup_integrity.py``,
+validates the DE-INTERNED logical graph via :class:`KgBackupV2Reader` as the cheap
+gate before stream/archive/restore. The two check different layers for different
+consumers; consolidating them would couple this oracle to the api package and
+strip its interning-layer coverage, so they are kept separate by design.
+
 Checks implemented (see ``CHECK_CODES`` for the stable code registry):
   - HEADER presence / well-formedness and format_version family negotiation (§7)
   - kg-backup/2 required header fields (§3.1)
@@ -34,7 +45,7 @@ Usage:
     python3 scripts/development/lint/lint_backup.py <path-to-archive.tar.gz>
     python3 scripts/development/lint/lint_backup.py --selftest
 
-@verified cffa180b
+@verified b832d59d
 """
 
 import argparse
