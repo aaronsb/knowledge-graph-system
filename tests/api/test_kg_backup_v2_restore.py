@@ -14,6 +14,7 @@ import pytest
 
 from api.app.lib.age_client import AGEClient
 from api.lib.serialization import DataExporter, DataImporter
+from api.lib.id_remap import IdRemapper
 
 NS = "p3rt_"  # test namespace prefix
 
@@ -124,3 +125,33 @@ def test_reimport_is_idempotent(client_with_cleanup):
         f"MATCH (:Concept {{concept_id:'{NS}c1'}})-[r:IMPLIES]->(:Concept {{concept_id:'{NS}c2'}}) RETURN count(r) AS n") == 1
     assert _scalar(client,
         f"MATCH (c:Concept)-[:EVIDENCED_BY]->(i:Instance {{instance_id:'{NS}i1'}}) WHERE c.concept_id STARTS WITH '{NS}' RETURN count(c) AS n") == 2
+
+
+def test_adjacent_remap_round_trips_through_clone_writer(client_with_cleanup):
+    """Adjacent mode: remap all ids, then clone — edges survive under the NEW ids."""
+    client = client_with_cleanup
+    backup = _namespaced_backup()
+
+    # New ids stay under the test namespace so cleanup catches them too.
+    remapper = IdRemapper(mode="always", id_factory=lambda kind, old: f"{NS}rm_{old}")
+    new_obj, table = remapper.remap(backup)
+
+    # Mapping table records the transposition.
+    assert table["concepts"][f"{NS}c1"] == f"{NS}rm_{NS}c1"
+    assert table["sources"][f"{NS}s1"] == f"{NS}rm_{NS}s1"
+
+    DataImporter.import_backup(client, new_obj, overwrite_existing=True)
+
+    rm_c1, rm_c2 = f"{NS}rm_{NS}c1", f"{NS}rm_{NS}c2"
+    rm_s1, rm_i1 = f"{NS}rm_{NS}s1", f"{NS}rm_{NS}i1"
+
+    # The relationship exists under remapped concept ids, with learned_id rewritten
+    # through the SOURCE map (the landmine).
+    assert _scalar(client,
+        f"MATCH (:Concept {{concept_id:'{rm_c1}'}})-[r:IMPLIES]->(:Concept {{concept_id:'{rm_c2}'}}) "
+        f"WHERE r.learned_id = '{rm_s1}' RETURN count(r) AS n") == 1
+
+    # Evidence + FROM_SOURCE reconstructed under the remapped instance/source ids.
+    assert _scalar(client,
+        f"MATCH (c:Concept)-[:EVIDENCED_BY]->(i:Instance {{instance_id:'{rm_i1}'}})-[:FROM_SOURCE]->(:Source {{source_id:'{rm_s1}'}}) "
+        f"RETURN count(c) AS n") == 2
