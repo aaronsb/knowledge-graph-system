@@ -19379,6 +19379,11 @@ Last updated: 2026-06-01</p>
 <td><code>"idempotent"</code></td>
 </tr>
 <tr>
+<td><code>--epoch &lt;epoch&gt;</code></td>
+<td>Epoch reconciliation: "simple" (default; one restore event) or "faithful" (replay the backup's history; clone-only — requires --mode idempotent into an empty target)</td>
+<td><code>"simple"</code></td>
+</tr>
+<tr>
 <td><code>--confirm</code></td>
 <td>Confirm restore operation (required for non-interactive use)</td>
 <td><code>false</code></td>
