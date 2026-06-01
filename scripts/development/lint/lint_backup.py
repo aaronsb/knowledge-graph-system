@@ -103,8 +103,10 @@ CHECK_CODES = {
     # referential integrity
     "E_REL_FROM_MISSING": "relationship.from concept_id not in concepts[].",
     "E_REL_TO_MISSING": "relationship.to concept_id not in concepts[].",
-    "E_INSTANCE_CONCEPT_MISSING": "instance.concept_id not in concepts[].",
+    "E_INSTANCE_CONCEPT_MISSING": "instance.concept_id not in concepts[] (legacy kg-backup/1 only).",
     "E_INSTANCE_SOURCE_MISSING": "instance.source_id not in sources[].",
+    "E_EVIDENCE_CONCEPT_MISSING": "evidence.concept_id not in concepts[].",
+    "E_EVIDENCE_INSTANCE_MISSING": "evidence.instance_id not in instances[].",
     "E_LEARNED_ID_MISSING": "edge properties.learned_id not an existing source_id.",
     # epochs
     "E_EVENT_ID_UNRESOLVED": "instance.created_at_event_id not in graph_epochs[].",
@@ -333,33 +335,24 @@ def _validate_header(header: Dict[str, Any], result: ValidationResult) -> None:
 
 def _resolve_concept_profile(
     concept: Dict[str, Any],
-    ontologies_by_name: Dict[str, Any],
     backup_default: Any,
 ) -> Optional[int]:
     """Resolve a concept's effective embedding-profile index via the cascade (§4.1).
 
-    Order, most-specific-wins: record override -> ontology default ->
-    backup default. Returns the first present integer index, or ``None`` if the
-    cascade yields nothing.
+    Concepts use the 2-tier cascade — record override -> backup default — with
+    NO ontology tier. A concept is cross-ontology by design (it associates with
+    ontologies only via APPEARS->Source{document} and may span several), so it has
+    no single home ontology to inherit from (BACKUP_OBJECT_SPEC §4.1, ADR-102 P2
+    decision). The ontology tier is reserved for ontology-scoped records (sources).
+
+    Returns the first present integer index, or ``None`` if neither tier yields one.
 
     @verified cffa180b
     """
     # 1. record override
     if _is_int_index(concept.get("embedding_profile")):
         return concept["embedding_profile"]
-    # 2. ontology default (concept may name its ontology via 'document'/'ontology')
-    #
-    # OPEN ITEM (BACKUP_OBJECT_SPEC §4.1): concept records carry no ontology field
-    # in the current spec — concepts associate with an ontology only indirectly via
-    # APPEARS->Source{document}. We key on a 'ontology'/'document' field IF present
-    # and otherwise fall through to the backup default. ADR-102 P2 must pin the
-    # concept->ontology association (add a hint field, or drop the ontology tier for
-    # concepts); update this resolution in lockstep when it does.
-    ont_name = concept.get("ontology") or concept.get("document")
-    ont = ontologies_by_name.get(ont_name) if ont_name else None
-    if isinstance(ont, dict) and _is_int_index(ont.get("default_embedding_profile")):
-        return ont["default_embedding_profile"]
-    # 3. backup default
+    # 2. backup default
     if _is_int_index(backup_default):
         return backup_default
     return None
@@ -398,11 +391,6 @@ def _validate_bulk(
     n_actors = len(header.get("actors") or [])
     backup_default = header.get("default_embedding_profile")
 
-    ontologies_by_name = {}
-    for ont in (header.get("ontologies") or []):
-        if isinstance(ont, dict) and "name" in ont:
-            ontologies_by_name[ont["name"]] = ont
-
     faithful = isinstance(graph_epochs, list)
 
     # ---- concepts: ids, dup, profile index, cascade, epoch fields ----
@@ -426,8 +414,8 @@ def _validate_bulk(
                        f"[0,{n_profiles}).",
                        f"$.bulk.concepts[{i}].embedding_profile")
 
-        # cascade resolves to a valid profile
-        resolved = _resolve_concept_profile(c, ontologies_by_name, backup_default)
+        # cascade resolves to a valid profile (concepts: record → backup, no ontology tier)
+        resolved = _resolve_concept_profile(c, backup_default)
         if resolved is None:
             result.add(ERROR, "E_NO_PROFILE_CASCADE",
                        f"concept {cid!r} resolves to no embedding-profile via "
@@ -492,7 +480,8 @@ def _validate_bulk(
                            f"an existing source_id (spec §5.4.1).",
                            f"$.bulk.relationships[{i}].properties.learned_id")
 
-    # ---- instances: ids, dup, concept/source integrity, event_id ----
+    # ---- instances: UNIQUE per instance_id (normalized — no concept_id; the
+    #      Concept->Instance M:N links live in the separate evidence stream) ----
     event_ids = set()
     if faithful:
         for ep in graph_epochs:
@@ -511,11 +500,6 @@ def _validate_bulk(
                            f"$.bulk.instances[{i}].instance_id")
             instance_ids.add(iid)
 
-        cid = inst.get("concept_id")
-        if cid is not None and cid not in concept_ids:
-            result.add(ERROR, "E_INSTANCE_CONCEPT_MISSING",
-                       f"instance.concept_id {cid!r} not present in concepts[].",
-                       f"$.bulk.instances[{i}].concept_id")
         sid = inst.get("source_id")
         if sid is not None and sid not in source_ids:
             result.add(ERROR, "E_INSTANCE_SOURCE_MISSING",
@@ -530,6 +514,21 @@ def _validate_bulk(
                            f"instance.created_at_event_id={ev} does not resolve to a "
                            f"graph_epochs[].event_id (spec §5.3).",
                            f"$.bulk.instances[{i}].created_at_event_id")
+
+    # ---- evidence: Concept->Instance links resolve to existing ids (§5.3.1) ----
+    for i, ev in enumerate(bulk.get("evidence") or []):
+        if not isinstance(ev, dict):
+            continue
+        cid = ev.get("concept_id")
+        if cid is not None and cid not in concept_ids:
+            result.add(ERROR, "E_EVIDENCE_CONCEPT_MISSING",
+                       f"evidence.concept_id {cid!r} not present in concepts[].",
+                       f"$.bulk.evidence[{i}].concept_id")
+        iid = ev.get("instance_id")
+        if iid is not None and iid not in instance_ids:
+            result.add(ERROR, "E_EVIDENCE_INSTANCE_MISSING",
+                       f"evidence.instance_id {iid!r} not present in instances[].",
+                       f"$.bulk.evidence[{i}].instance_id")
 
     # ---- graph_epochs: kind/actor index resolution (§5.6) ----
     if faithful:
@@ -719,7 +718,8 @@ def _selftest() -> int:
         "bulk": {
             "concepts": [{"concept_id": "c1", "label": "A"}],
             "sources": [{"source_id": "s1", "content_type": 0}],
-            "instances": [{"instance_id": "i1", "concept_id": "c1", "source_id": "s1"}],
+            "instances": [{"instance_id": "i1", "source_id": "s1"}],
+            "evidence": [{"concept_id": "c1", "instance_id": "i1"}],
             "relationships": [
                 {"from": "c1", "to": "c1", "type": 0,
                  "properties": {"learned_id": "s1"}}
@@ -744,7 +744,11 @@ def _selftest() -> int:
                 {"concept_id": "c1"}, {"concept_id": "c1"},  # dup
             ],
             "sources": [{"source_id": "s1", "content_type": 5}],  # out of range
-            "instances": [{"instance_id": "i1", "concept_id": "cX", "source_id": "sX"}],
+            "instances": [{"instance_id": "i1", "source_id": "sX"}],  # source missing
+            "evidence": [
+                {"concept_id": "cX", "instance_id": "i1"},   # concept missing
+                {"concept_id": "c1", "instance_id": "iX"},   # instance missing
+            ],
             "relationships": [
                 {"from": "cZ", "to": "c1", "type": 7,
                  "properties": {"learned_id": "sZ"}}
@@ -757,8 +761,9 @@ def _selftest() -> int:
     codes = {i.code for i in r2.issues}
     expected = {
         "E_PROFILE_IDENTITY", "E_DEFAULT_PROFILE_RANGE", "E_DUP_CONCEPT_ID",
-        "E_CONTENT_TYPE_RANGE", "E_INSTANCE_CONCEPT_MISSING",
-        "E_INSTANCE_SOURCE_MISSING", "E_REL_FROM_MISSING", "E_REL_TYPE_RANGE",
+        "E_CONTENT_TYPE_RANGE", "E_INSTANCE_SOURCE_MISSING",
+        "E_EVIDENCE_CONCEPT_MISSING", "E_EVIDENCE_INSTANCE_MISSING",
+        "E_REL_FROM_MISSING", "E_REL_TYPE_RANGE",
         "E_LEARNED_ID_MISSING", "E_DERIVED_PRESENT",
     }
     missing = expected - codes
