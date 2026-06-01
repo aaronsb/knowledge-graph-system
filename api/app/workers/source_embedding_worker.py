@@ -11,6 +11,7 @@ Phase 1: ✅ Skeleton (migration, hash utils, chunker, worker skeleton)
 Phase 2: ✅ Full implementation with embedding generation and storage
 """
 
+import asyncio
 import logging
 import os
 import struct
@@ -89,7 +90,6 @@ def run_source_embedding_worker(
         # only_missing=True skips sources that already have embeddings — safe and
         # idempotent, so it never re-embeds concepts/sources that arrived intact.
         if job_data.get("rehydrate_missing"):
-            import asyncio
             ontology = job_data.get("ontology")  # None → all ontologies
             logger.info(
                 f"[{job_id}] Source-embedding rehydration (only_missing=True, "

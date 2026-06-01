@@ -12,7 +12,7 @@ import os
 import json
 import logging
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from datetime import datetime
 
 from ..lib.age_client import AGEClient
@@ -75,8 +75,9 @@ def run_restore_worker(
 
     checkpoint_path = None
     client = None
-    lane_prior = None       # ADR-102 A14: prior lane-enabled state, restored on exit
+    lane_prior = None        # ADR-102 A14: prior lane-enabled state, restored on exit
     restore_event_id = None  # ADR-102 P5: the single restore graph_epochs event
+    quiesced = True          # ADR-102 A14: did frozen lanes drain before the timeout?
 
     try:
         # ADR-100: Check for cancellation before restore
@@ -98,7 +99,9 @@ def run_restore_worker(
             }
         })
         lane_prior = freeze_lanes(job_queue, RESTORE_FREEZE_LANES)
-        wait_for_quiesce(job_queue, RESTORE_FREEZE_LANES)
+        # Fail-open: a False return means we proceeded over un-drained in-flight
+        # work. Surface it in the job result so an operator can correlate later.
+        quiesced = wait_for_quiesce(job_queue, RESTORE_FREEZE_LANES)
 
         # Stage 1: Create checkpoint backup (ADR-015 Safety Pattern)
         logger.info(f"[{job_id}] Creating checkpoint backup before restore")
@@ -162,7 +165,10 @@ def run_restore_worker(
 
         # Concept epochs live in the separate document_ingestion_counter space
         # (ADR-200), not the graph_epochs.event_id space — so they restamp to the
-        # target's CURRENT concept epoch, not the restore event_id.
+        # target's CURRENT concept epoch, not the restore event_id. NOTE: this is a
+        # DELIBERATE collapse — every restored concept gets the same created_at ==
+        # last_seen == now, so relative concept age is intentionally lost until
+        # re-annealing (epoch-simple). P5-faithful must NOT "fix" this by carrying.
         restore_concept_epoch = client.get_current_epoch()
 
         # Stage 3: Execute restore with progress tracking
@@ -229,8 +235,11 @@ def run_restore_worker(
         client.complete_epoch(restore_event_id, "completed")
         try:
             client.graph.invalidate()
-        except Exception:
-            pass  # extension may not be loaded on this connection
+        except Exception as e:
+            # Usually "extension not loaded on this connection" — benign. But this
+            # is the ONLY graph_accel co-advance (issue #465), so log it: a failure
+            # for any OTHER reason silently desyncs the accelerator.
+            logger.debug(f"[{job_id}] graph.invalidate() after restore skipped: {e}")
         try:
             client.refresh_epoch()
         except Exception as e:
@@ -285,6 +294,7 @@ def run_restore_worker(
             "document_stats": doc_stats if is_archive else None,
             "restore_epoch_event_id": restore_event_id,
             "rehydration_job_id": rehydrate_job_id,
+            "quiesce_timed_out": not quiesced,
             "checkpoint_created": True,
             "checkpoint_deleted": checkpoint_deleted,
             "temp_file_cleaned": False  # Will be cleaned in finally block
@@ -295,9 +305,13 @@ def run_restore_worker(
 
         # ADR-102 P5: resolve the restore epoch as FAILED so it stops holding the
         # committed watermark below its event_id (a phantom in-flight event would
-        # stall freshness for the whole graph). The rollback below re-imports the
-        # checkpoint with its OWN carried stamps (no restamp), so this failed event
-        # tags nothing that survives.
+        # stall freshness for the whole graph). A FAILED event still counts toward
+        # the committed watermark (migration 076), which keeps the graph reading
+        # STALE — important, because the rollback below is MERGE-only (no clear):
+        # any node the failed restore created that is absent from the checkpoint
+        # SURVIVES the rollback, stamped with this failed restore_event_id. That
+        # residue reads stale (safe), but a true-replace rollback is tracked in
+        # issue #483 (pre-existing MERGE-without-clear weakness).
         if restore_event_id is not None and client is not None:
             client.complete_epoch(restore_event_id, "failed")
 
@@ -408,7 +422,7 @@ def _execute_restore(
     backup_data: Dict[str, Any],
     job_id: str,
     job_queue,
-    epoch_restamp: Dict[str, int] = None
+    epoch_restamp: Optional[Dict[str, int]] = None
 ) -> Dict[str, int]:
     """
     Execute restore of an already-mode-prepared kg-backup/2 object, with progress.
