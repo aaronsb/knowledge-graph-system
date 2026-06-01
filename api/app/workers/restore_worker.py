@@ -242,7 +242,8 @@ def run_restore_worker(
             # reconciliation sweep that fixes both is tracked in issue #485.
             reader = KgBackupV2Reader(prepared_backup)
             DataImporter._ensure_epoch_kinds(client, reader)
-            event_id_map = DataImporter._replay_graph_epochs(client, reader, status="in_progress")
+            event_id_map = DataImporter._replay_graph_epochs(
+                client, reader, status="in_progress", owner_job_id=job_id)
             replayed_event_ids = list(event_id_map.values())
             logger.info(f"[{job_id}] Faithful replay minted {len(replayed_event_ids)} epoch events")
         else:
@@ -422,14 +423,11 @@ def run_restore_worker(
         # ADR-102 P5: resolve the restore epoch as FAILED so it stops holding the
         # committed watermark below its event_id (a phantom in-flight event would
         # stall freshness for the whole graph). A FAILED event still counts toward
-        # the committed watermark (migration 076), which keeps the graph reading
-        # STALE — important, because the rollback below is MERGE-only (no clear):
-        # any node the failed restore created that is absent from the checkpoint
-        # SURVIVES the rollback, stamped with this failed restore_event_id. That
-        # residue reads stale (safe), but a true-replace rollback is tracked in
-        # issue #483 (pre-existing MERGE-without-clear weakness). For faithful the
-        # same applies: the resolved-'failed' replayed epoch rows survive referencing
-        # nothing (the empty-target checkpoint rollback is a no-op), reading stale.
+        # the committed watermark (migration 076), keeping the graph reading STALE.
+        # The rollback below is now a TRUE replace (issue #483 fixed —
+        # _restore_from_checkpoint clears before re-importing), so failed-restore
+        # node orphans are removed. The failed epoch ROWS themselves remain in
+        # graph_epochs referencing nothing (reads stale = safe; faithful leaves N).
         if client is not None:
             if restore_event_id is not None:  # epoch-simple
                 client.complete_epoch(restore_event_id, "failed")
@@ -640,8 +638,22 @@ def _restore_from_checkpoint(client: AGEClient, checkpoint_path: Path, job_id: s
     with open(checkpoint_path, 'r', encoding='utf-8') as f:
         checkpoint_data = json.load(f)
 
-    # Restore from checkpoint using DataImporter.import_backup()
-    # No need to clear database - import_backup() uses MERGE which handles overwrites
+    # Issue #483: TRUE-REPLACE rollback. A MERGE-only re-import leaves behind any
+    # node the failed restore created that the checkpoint does not contain (orphans,
+    # stamped with the failed restore epoch). Clear the concept graph first so the
+    # rollback reconstructs EXACTLY the pre-restore state. NOTE: clear and re-import
+    # are NOT one transaction — a process crash between them leaves the graph empty.
+    # That worst case is recoverable: the checkpoint was a known-good full export
+    # captured at restore start, it is preserved on disk (see below), and the caller
+    # flags "manual intervention required" — strictly better than silent permanent
+    # orphans. _clear_database preserves
+    # vocabulary + graph_epochs (the checkpoint's instance event-id stamps still
+    # resolve against the retained epoch rows).
+    logger.info(f"[{job_id}] Clearing concept graph before checkpoint re-import (true replace)")
+    _clear_database(client, job_id)
+
+    # Restore from checkpoint using DataImporter.import_backup() (MERGE-by-id into
+    # the now-cleared graph; carries the checkpoint's own epoch stamps, no restamp).
     logger.info(f"[{job_id}] Restoring checkpoint data")
     DataImporter.import_backup(client, checkpoint_data, overwrite_existing=True)
 

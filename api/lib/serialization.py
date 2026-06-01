@@ -1460,7 +1460,8 @@ class DataImporter:
 
     @staticmethod
     def _replay_graph_epochs(client: AGEClient, reader: "KgBackupV2Reader",
-                             status: str = "in_progress") -> Dict[int, int]:
+                             status: str = "in_progress",
+                             owner_job_id: Optional[str] = None) -> Dict[int, int]:
         """Replay carried graph_epochs as NEW local events (P5-faithful).
 
         Inserts each carried event in original-id order, letting BIGSERIAL mint a
@@ -1473,6 +1474,11 @@ class DataImporter:
         Inserted with ``status`` (default 'in_progress') so the committed watermark
         sits below the lowest new id and the graph reads STALE during the import;
         the worker resolves them to 'completed' once the import lands.
+
+        ``owner_job_id`` (issue #485): stamp the LOCAL restore job into each row's
+        metadata under ``job_id`` so the orphaned-epoch reconciliation sweep can tell
+        a still-running restore's in_progress rows from a crashed one's. The backup's
+        original ``job_id`` (a foreign id) is preserved under ``source_job_id``.
         """
         old_to_new: Dict[int, int] = {}
         conn = client.pool.getconn()
@@ -1480,6 +1486,13 @@ class DataImporter:
             with conn.cursor() as cur:
                 for ep in reader.graph_epochs():
                     old_id = ep.get("event_id")
+                    metadata = dict(ep.get("metadata") or {})
+                    if owner_job_id is not None:
+                        # Reserve metadata.job_id for the LOCAL owning job (the sweep
+                        # invariant); keep the backup's original under source_job_id.
+                        if "job_id" in metadata:
+                            metadata["source_job_id"] = metadata["job_id"]
+                        metadata["job_id"] = owner_job_id
                     # counter_after is carried verbatim — it snapshots the SOURCE
                     # graph's graph_change_counter, a foreign counter space. It is
                     # display-only (epoch_facade timeline), never drives the watermark
@@ -1493,7 +1506,7 @@ class DataImporter:
                             ep.get("kind"),
                             ep.get("actor"),
                             ep.get("counter_after"),
-                            json.dumps(ep.get("metadata") or {}),
+                            json.dumps(metadata),
                             status,
                         ),
                     )

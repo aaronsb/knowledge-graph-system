@@ -145,3 +145,26 @@ def test_faithful_orchestration_replays_and_resolves(tmp_path):
     assert result["epoch_mode"] == "faithful"
     assert result["faithful_epochs_replayed"] == 2
     assert result["restore_epoch_event_id"] is None
+
+
+# ---------------------------------------------------------------------------
+# #483: rollback is a true replace (clear before checkpoint re-import)
+# ---------------------------------------------------------------------------
+def test_rollback_clears_before_reimport(tmp_path):
+    """_restore_from_checkpoint must _clear_database BEFORE re-importing so a failed
+    restore's orphan nodes (absent from the checkpoint) don't survive the rollback."""
+    checkpoint = tmp_path / "ckpt.json"
+    checkpoint.write_text(json.dumps(_minimal_backup()))
+
+    client = MagicMock()
+    calls = []
+    with patch.object(restore_worker, "_clear_database",
+                      side_effect=lambda *a, **k: calls.append("clear")) as clear, \
+         patch.object(DataImporter, "import_backup",
+                      side_effect=lambda *a, **k: calls.append("import")) as imp:
+        restore_worker._restore_from_checkpoint(client, checkpoint, "job_rb", MagicMock())
+
+    clear.assert_called_once()
+    imp.assert_called_once()
+    # Order matters: clear must precede the checkpoint re-import.
+    assert calls == ["clear", "import"]
