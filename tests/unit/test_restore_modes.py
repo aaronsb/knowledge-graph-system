@@ -36,8 +36,8 @@ def _backup():
         evidence=[{"concept_id": "c1", "instance_id": "i1"}, {"concept_id": "c2", "instance_id": "i1"}],
         relationships=[{"from": "c1", "to": "c2", "type": "IMPLIES", "properties": {"learned_id": "s1"}}],
         vocabulary=[{"relationship_type": "IMPLIES", "description": "", "category": "logical",
-                     "embedding_model": "openai:text-embedding-3-small@1536"}],
-        embedding_profiles=[{"identity": "openai:text-embedding-3-small@1536", "vector_space": "x",
+                     "embedding_model": "test:embed@2"}],
+        embedding_profiles=[{"identity": "test:embed@2", "vector_space": "x",
                              "image_vector_space": None, "name": "d", "multimodal": False}],
         epoch_kinds=[{"kind": "ingestion", "semantic_wallclock": True, "description": ""}],
         graph_epochs=[{"event_id": 1, "occurred_at": "2026-06-01T00:00:00Z", "kind": "ingestion",
@@ -46,7 +46,7 @@ def _backup():
     )
 
 
-_BACKUP_IDENTITY = "openai:text-embedding-3-small@1536"
+_BACKUP_IDENTITY = "test:embed@2"
 
 
 class _FakeMatcher:

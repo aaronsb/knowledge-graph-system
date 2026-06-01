@@ -45,10 +45,10 @@ def _fixture_lists():
         ],
         vocabulary=[
             {"relationship_type": "IMPLIES", "description": "x", "category": "logical",
-             "embedding_model": "openai:text-embedding-3-small@1536"},
+             "embedding_model": "test:embed@2"},
         ],
         embedding_profiles=[
-            {"identity": "openai:text-embedding-3-small@1536",
+            {"identity": "test:embed@2",
              "vector_space": "openai-3-small", "image_vector_space": None,
              "name": "default", "multimodal": False},
         ],
