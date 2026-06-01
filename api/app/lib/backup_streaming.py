@@ -98,12 +98,12 @@ async def create_backup_stream(
     if format not in ("json", "gexf"):
         raise ValueError(f"Invalid format: {format}. Must be 'json' or 'gexf'")
 
-    # Generate backup data
+    # Generate backup data (single model: kg-backup/2)
     if backup_type == "full":
-        backup_data = DataExporter.export_full_backup(client)
+        backup_data = DataExporter.export_kg_backup_v2(client)
         ontology_name_for_file = None
     else:
-        backup_data = DataExporter.export_ontology_backup(client, ontology_name)
+        backup_data = DataExporter.export_kg_backup_v2(client, ontology=ontology_name)
         ontology_name_for_file = ontology_name
 
     # Generate filename based on format

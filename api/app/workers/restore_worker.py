@@ -18,7 +18,7 @@ from datetime import datetime
 from ..lib.age_client import AGEClient
 from ..lib.backup_streaming import create_backup_stream
 from ..lib.backup_archive import restore_documents_to_garage, cleanup_extracted_archive
-from ...lib.serialization import DataImporter
+from ...lib.serialization import DataImporter, KgBackupV2Reader
 
 logger = logging.getLogger(__name__)
 
@@ -100,23 +100,20 @@ def run_restore_worker(
         with open(temp_file, 'r', encoding='utf-8') as f:
             backup_data = json.load(f)
 
-        # Stage 2.5: For full backups, clear database first
-        backup_type = backup_data.get("type", "")
-        if backup_type == "full_backup":
-            logger.info(f"[{job_id}] Detected full backup - clearing database before restore")
-            job_queue.update_job(job_id, {
-                "progress": {
-                    "stage": "clearing_database",
-                    "percent": 15,
-                    "message": "Clearing existing database for full backup restore"
-                }
-            })
-            _clear_database(client, job_id)
-            # Force overwrite for full backups (though database is now empty)
+        # Stage 2.5: ADR-102 clone/merge gate — target emptiness, not a backup-type
+        # flag (the single kg-backup/2 model carries no v1 "full_backup" type).
+        #   empty target   → CLONE: ids preserved 1:1, props set fresh.
+        #   populated target → MERGE: MERGE-by-id in place (adjacent/integration in P4).
+        # A destructive "replace everything" is now an explicit reset (then clone),
+        # never an implicit wipe during restore.
+        if _target_is_empty(client):
+            logger.info(f"[{job_id}] Empty target — clone restore (ids preserved 1:1)")
             overwrite = True
+        else:
+            logger.info(f"[{job_id}] Populated target — merge restore (overwrite={overwrite})")
 
         # Stage 3: Execute restore with progress tracking
-        logger.info(f"[{job_id}] Starting restore operation (overwrite={overwrite}, backup_type={backup_type})")
+        logger.info(f"[{job_id}] Starting restore operation (overwrite={overwrite})")
 
         restore_stats = _execute_restore(
             client=client,
@@ -263,9 +260,9 @@ def _create_checkpoint_backup(client: AGEClient, job_id: str) -> Path:
     # Ensure backup directory exists
     checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
 
-    # Export full database backup
+    # Export full database backup (single model: kg-backup/2)
     from ...lib.serialization import DataExporter
-    backup_data = DataExporter.export_full_backup(client)
+    backup_data = DataExporter.export_kg_backup_v2(client)
 
     # Save checkpoint
     with open(checkpoint_path, 'w', encoding='utf-8') as f:
@@ -298,6 +295,25 @@ def _clear_database(client: AGEClient, job_id: str) -> None:
     logger.info(f"[{job_id}] Concept graph cleared successfully (vocabulary preserved)")
 
 
+def _target_is_empty(client: AGEClient) -> bool:
+    """Return True if the concept graph holds no Concept/Source/Instance nodes.
+
+    The ADR-102 clone/merge gate: an empty target is restored by CLONE (ids
+    preserved 1:1); a populated target is a MERGE. A label whose backing table does
+    not exist yet (fresh database) counts as empty.
+    """
+    for label in ("Concept", "Source", "Instance"):
+        try:
+            row = client._execute_cypher(
+                f"MATCH (n:{label}) RETURN count(n) AS c", fetch_one=True
+            )
+        except Exception:
+            continue  # label table absent → no such nodes
+        if row and int(str(row.get("c", 0)).strip('"')) > 0:
+            return False
+    return True
+
+
 def _execute_restore(
     client: AGEClient,
     backup_data: Dict[str, Any],
@@ -312,13 +328,13 @@ def _execute_restore(
     Returns:
         Dict with restore statistics
     """
-    data_section = backup_data.get("data", {})
-    concepts = data_section.get("concepts", [])
-    sources = data_section.get("sources", [])
-    instances = data_section.get("instances", [])
-    relationships = data_section.get("relationships", [])
+    counts = KgBackupV2Reader(backup_data).counts()
+    n_concepts = counts["concepts"]
+    n_sources = counts["sources"]
+    n_instances = counts["instances"]
+    n_relationships = counts["relationships"]
 
-    total_items = len(concepts) + len(sources) + len(instances) + len(relationships)
+    total_items = n_concepts + n_sources + n_instances + n_relationships
 
     if total_items == 0:
         return {"concepts": 0, "sources": 0, "instances": 0, "relationships": 0}
@@ -339,11 +355,11 @@ def _execute_restore(
         if stage == "concepts":
             items_processed_cumulative = current
         elif stage == "sources":
-            items_processed_cumulative = len(concepts) + current
+            items_processed_cumulative = n_concepts + current
         elif stage == "instances":
-            items_processed_cumulative = len(concepts) + len(sources) + current
+            items_processed_cumulative = n_concepts + n_sources + current
         elif stage == "relationships":
-            items_processed_cumulative = len(concepts) + len(sources) + len(instances) + current
+            items_processed_cumulative = n_concepts + n_sources + n_instances + current
 
         # Calculate overall percent (0-100)
         overall_percent = int((items_processed_cumulative / total_items) * 100) if total_items > 0 else 0

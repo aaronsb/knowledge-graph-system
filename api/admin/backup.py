@@ -24,8 +24,16 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from api.lib.console import Console, Colors
 from api.lib.config import Config
 from api.lib.age_ops import AGEConnection, AGEQueries
-from api.lib.serialization import DataExporter
-from api.lib.integrity import BackupAssessment
+from api.lib.serialization import DataExporter, KgBackupV2Reader
+
+
+def _external_concepts(backup_data) -> set:
+    """Cross-ontology concept references in the backup (kg-backup/2 model).
+
+    Replaces the v1-shape BackupAssessment external-dependency scan with the shared
+    reader method.
+    """
+    return KgBackupV2Reader(backup_data).external_concept_ids()
 
 
 class BackupCLI:
@@ -111,7 +119,7 @@ class BackupCLI:
         # Export
         Console.info("\nExporting database...")
         client = self.conn.get_client()
-        backup_data = DataExporter.export_full_backup(client)
+        backup_data = DataExporter.export_kg_backup_v2(client)
 
         # Write to file
         Console.info(f"Writing to {backup_file}...")
@@ -122,13 +130,14 @@ class BackupCLI:
         file_size = backup_file.stat().st_size
         size_mb = file_size / (1024 * 1024)
 
+        counts = KgBackupV2Reader(backup_data).counts()
         Console.section("Backup Complete")
         Console.success(f"✓ Full backup created: {backup_file}")
         Console.info(f"  Size: {size_mb:.2f} MB")
-        Console.info(f"  Concepts: {backup_data['statistics']['concepts']}")
-        Console.info(f"  Sources: {backup_data['statistics']['sources']}")
-        Console.info(f"  Instances: {backup_data['statistics']['instances']}")
-        Console.info(f"  Relationships: {backup_data['statistics']['relationships']}")
+        Console.info(f"  Concepts: {counts['concepts']}")
+        Console.info(f"  Sources: {counts['sources']}")
+        Console.info(f"  Instances: {counts['instances']}")
+        Console.info(f"  Relationships: {counts['relationships']}")
 
         self._show_tips()
 
@@ -167,7 +176,7 @@ class BackupCLI:
             Console.info(f"\n[{i}/{len(ontologies)}] Backing up: {ontology}")
 
             client = self.conn.get_client()
-            backup_data = DataExporter.export_ontology_backup(client, ontology)
+            backup_data = DataExporter.export_kg_backup_v2(client, ontology=ontology)
 
             with open(backup_file, 'w') as f:
                 json.dump(backup_data, f, indent=2)
@@ -212,10 +221,10 @@ class BackupCLI:
 
             # Export
             client = self.conn.get_client()
-            backup_data = DataExporter.export_ontology_backup(client, ontology)
+            backup_data = DataExporter.export_kg_backup_v2(client, ontology=ontology)
 
-            # Assess backup integrity
-            assessment = BackupAssessment.analyze_backup(backup_data)
+            # Assess external dependencies (cross-ontology concept references)
+            external = _external_concepts(backup_data)
 
             # Write
             with open(backup_file, 'w') as f:
@@ -225,12 +234,9 @@ class BackupCLI:
             size_mb = file_size / (1024 * 1024)
             Console.success(f"✓ Backed up ({size_mb:.2f} MB)")
 
-            # Show warnings if external dependencies exist
-            if assessment["warnings"] or assessment["issues"]:
-                Console.warning(f"  ⚠ {len(assessment['warnings'])} warnings, {len(assessment['issues'])} issues")
-                if assessment["external_dependencies"]["concepts"]:
-                    ext_count = len(assessment["external_dependencies"]["concepts"])
-                    Console.warning(f"  ⚠ {ext_count} relationships to external concepts")
+            # Show warning if external dependencies exist
+            if external:
+                Console.warning(f"  ⚠ {len(external)} references to external concepts")
 
             backup_files.append(backup_file)
 
@@ -243,8 +249,7 @@ class BackupCLI:
         for f in backup_files:
             with open(f, 'r') as bf:
                 backup_data = json.load(bf)
-            assessment = BackupAssessment.analyze_backup(backup_data)
-            if assessment["external_dependencies"]["concepts"]:
+            if _external_concepts(backup_data):
                 has_external_deps = True
                 print(f"  • {f.name} {Colors.WARNING}(has external dependencies){Colors.ENDC}")
             else:
@@ -285,7 +290,7 @@ class BackupCLI:
                 backup_file = self.backup_dir / f"ontology_{safe_name}_{timestamp}.json"
 
             Console.info(f"Backing up ontology: {ontology}")
-            backup_data = DataExporter.export_ontology_backup(client, ontology)
+            backup_data = DataExporter.export_kg_backup_v2(client, ontology=ontology)
 
         else:
             # Full backup
@@ -295,7 +300,7 @@ class BackupCLI:
                 backup_file = self.backup_dir / f"full_backup_{timestamp}.json"
 
             Console.info("Backing up full database")
-            backup_data = DataExporter.export_full_backup(client)
+            backup_data = DataExporter.export_kg_backup_v2(client)
 
         # Write
         with open(backup_file, 'w') as f:

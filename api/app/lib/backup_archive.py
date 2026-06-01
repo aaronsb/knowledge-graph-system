@@ -25,7 +25,7 @@ import logging
 from datetime import datetime
 from typing import Dict, Any, Optional, AsyncGenerator, List
 
-from ...lib.serialization import DataExporter, BackupFormat
+from ...lib.serialization import DataExporter, KgBackupV2Reader
 from .age_client import AGEClient
 from .backup_integrity import check_backup_data
 from .garage import get_source_storage, get_image_storage
@@ -89,12 +89,13 @@ def create_backup_archive(
     if backup_type not in ("full", "ontology"):
         raise ValueError(f"Invalid backup_type: {backup_type}")
 
-    # Generate backup data
+    # Generate backup data (single model: kg-backup/2)
     logger.info(f"Generating backup data (type={backup_type}, ontology={ontology_name})")
     if backup_type == "full":
-        backup_data = DataExporter.export_full_backup(client)
+        backup_data = DataExporter.export_kg_backup_v2(client)
     else:
-        backup_data = DataExporter.export_ontology_backup(client, ontology_name)
+        backup_data = DataExporter.export_kg_backup_v2(client, ontology=ontology_name)
+    reader = KgBackupV2Reader(backup_data)
 
     # Validate backup
     integrity = check_backup_data(backup_data)
@@ -106,11 +107,8 @@ def create_backup_archive(
     archive_base = _get_archive_base_name(ontology_name)
     filename = f"{archive_base}.tar.gz"
 
-    # Add document paths to sources
-    backup_data["data"]["sources"] = _add_document_paths_to_sources(
-        backup_data["data"]["sources"],
-        archive_base
-    )
+    # Add archive-relative document paths to the manifest's source records.
+    _add_document_paths_to_sources(backup_data["bulk"]["sources"], archive_base)
 
     # Create tarball in memory
     buffer = io.BytesIO()
@@ -131,7 +129,7 @@ def create_backup_archive(
         docs_failed = 0
         added_keys: set = set()  # Track which keys we've already added
 
-        for source in backup_data["data"]["sources"]:
+        for source in reader.sources():
             # Add source document from Garage (skip if already added)
             garage_key = source.get("garage_key")
             if garage_key and garage_key not in added_keys:
@@ -151,9 +149,10 @@ def create_backup_archive(
                     logger.warning(f"Failed to fetch {garage_key}: {e}")
                     docs_failed += 1
 
-            # Add image from Garage (if content_type is image, skip if already added)
+            # Add image from Garage (storage_key is set only on image sources;
+            # skip if already added)
             storage_key = source.get("storage_key")
-            if storage_key and source.get("content_type") == "image" and storage_key not in added_keys:
+            if storage_key and storage_key not in added_keys:
                 try:
                     content = image_storage.base.get_object(storage_key)
                     if content:
@@ -172,11 +171,11 @@ def create_backup_archive(
     # Reset buffer position for reading
     buffer.seek(0)
 
-    stats = backup_data.get("statistics", {})
+    counts = reader.counts()
     logger.info(
         f"Created backup archive: {filename} - "
-        f"Concepts: {stats.get('concepts', 0)}, "
-        f"Sources: {stats.get('sources', 0)}, "
+        f"Concepts: {counts.get('concepts', 0)}, "
+        f"Sources: {counts.get('sources', 0)}, "
         f"Documents: {docs_added}"
     )
 
@@ -295,7 +294,7 @@ def restore_documents_to_garage(
     stats = {"uploaded": 0, "skipped": 0, "failed": 0}
     processed_keys: set = set()  # Track which keys we've processed
 
-    sources = manifest_data.get("data", {}).get("sources", [])
+    sources = manifest_data.get("bulk", {}).get("sources", [])
 
     for source in sources:
         # Handle source documents

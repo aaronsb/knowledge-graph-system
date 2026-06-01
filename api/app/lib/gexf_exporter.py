@@ -131,6 +131,8 @@ from datetime import datetime
 from typing import Dict, Any, List
 import hashlib
 
+from ...lib.serialization import KgBackupV2Reader
+
 
 def _prettify_xml(elem: ET.Element) -> str:
     """
@@ -224,22 +226,28 @@ def export_to_gexf(backup_data: Dict[str, Any]) -> str:
     Returns:
         GEXF XML string
     """
-    # Extract data from nested structure
-    # Backup format: {"metadata": {...}, "data": {"concepts": [...], ...}}
-    data = backup_data.get("data", {})
-    concepts = data.get("concepts", [])
-    relationships = data.get("relationships", [])
-    instances = data.get("instances", [])
+    # Read the single backup model (kg-backup/2): de-interns relationship types
+    # and exposes the normalized record streams (ADR-102 P3).
+    reader = KgBackupV2Reader(backup_data)
+    concepts = list(reader.concepts())
+    relationships = list(reader.relationships())   # type de-interned to its label
+    instances = list(reader.instances())
 
-    # Metadata is at top level
+    # Metadata: a single-ontology backup names that ontology in the header.
+    ontologies = [o.get("name") for o in reader.header.get("ontologies", []) if o.get("name")]
     metadata = {
-        "export_type": backup_data.get("type", "unknown"),
-        "ontology": backup_data.get("ontology", None)
+        "export_type": "ontology" if len(ontologies) == 1 else "full",
+        "ontology": ontologies[0] if len(ontologies) == 1 else None,
     }
 
-    # Calculate instance counts per concept
+    # Instance count per concept comes from the M:N evidence stream (instances are
+    # normalized and no longer carry concept_id).
     from collections import Counter
-    instance_counts = Counter(inst.get("concept_id", "") for inst in instances)
+    instance_counts = Counter(
+        concept_id
+        for concept_ids in reader.evidence_by_instance().values()
+        for concept_id in concept_ids
+    )
 
     # Create root element
     gexf = ET.Element("gexf", {

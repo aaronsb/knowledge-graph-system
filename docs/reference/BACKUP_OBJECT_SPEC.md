@@ -445,17 +445,23 @@ contract for that version. A producer never downgrades silently.
 **Consumer.** On open, reads `header.format_version` *first* and:
 
 1. **Exact major match** (`kg-backup/2`) — accept and apply.
-2. **Known family, lower major** (`kg-backup/1` — the legacy `1.0` JSON shape:
-   flat `version`/`type`/`data`, no header, no epoch fields, inline type/MIME
-   strings) — a consumer MAY accept it through an explicit upcasting reader that
-   synthesizes a minimal HEADER (one default embedding profile, interns the
-   inline strings) and supplies the missing epoch fields as null/simple-mode
-   defaults. Acceptance of older majors is a consumer capability, never assumed.
+2. **Known family, lower major** — **refuse.** This platform is **single-path**:
+   there is exactly one backup model and **no backwards-compatibility / upcasting
+   layer** (ADR-102 P3). The pre-ADR-102 `1.0` JSON shape (flat
+   `version`/`type`/`data`, no header) was a prototype and has been **removed** —
+   no producer emits it and no consumer reads it.
 3. **Known family, higher major** — **refuse.** A `kg-backup/2` consumer MUST NOT
    attempt a `kg-backup/3` object; it may not understand new required HEADER
    dictionaries, and partially applying primary inputs is unsafe (ADR-102 §8:
    restore passes through transiently inconsistent states).
 4. **Unknown family** — refuse.
+
+> **Why no upcast.** The numbering is incidental — what matters is that the
+> running system has a single backup format end-to-end (export, archive, restore,
+> checkpoint). A compatibility shim for the removed prototype would be exactly the
+> "fallback to old methods we don't actively use" the convergence set out to
+> delete. `KgBackupV2Reader` enforces this: it refuses any object whose
+> `format_version` is not `kg-backup/<=2`.
 
 `schema_version` and `source.version` are **informational** and never gate
 acceptance — only `format_version` does. The major component bumps on any change

@@ -78,7 +78,7 @@ async def test_create_backup_stream_full_backup():
     with patch('api.app.lib.backup_streaming.DataExporter') as mock_exporter, \
          patch('api.app.lib.backup_streaming.check_backup_data') as mock_check:
 
-        mock_exporter.export_full_backup.return_value = mock_backup_data
+        mock_exporter.export_kg_backup_v2.return_value = mock_backup_data
 
         # Mock successful validation
         mock_integrity = Mock()
@@ -122,7 +122,7 @@ async def test_create_backup_stream_ontology_backup():
     with patch('api.app.lib.backup_streaming.DataExporter') as mock_exporter, \
          patch('api.app.lib.backup_streaming.check_backup_data') as mock_check:
 
-        mock_exporter.export_ontology_backup.return_value = mock_backup_data
+        mock_exporter.export_kg_backup_v2.return_value = mock_backup_data
 
         # Mock successful validation
         mock_integrity = Mock()
@@ -226,7 +226,7 @@ async def test_create_backup_stream_validates_backup_data():
     with patch('api.app.lib.backup_streaming.DataExporter') as mock_exporter, \
          patch('api.app.lib.backup_streaming.check_backup_data') as mock_check:
 
-        mock_exporter.export_full_backup.return_value = valid_backup_data
+        mock_exporter.export_kg_backup_v2.return_value = valid_backup_data
 
         # Mock successful validation
         mock_integrity = Mock()
@@ -266,7 +266,7 @@ async def test_create_backup_stream_fails_on_invalid_backup():
     with patch('api.app.lib.backup_streaming.DataExporter') as mock_exporter, \
          patch('api.app.lib.backup_streaming.check_backup_data') as mock_check:
 
-        mock_exporter.export_full_backup.return_value = invalid_backup_data
+        mock_exporter.export_kg_backup_v2.return_value = invalid_backup_data
 
         # Mock failed validation
         mock_integrity = Mock()
@@ -314,7 +314,7 @@ async def test_create_backup_stream_logs_validation_success(caplog):
     with patch('api.app.lib.backup_streaming.DataExporter') as mock_exporter, \
          patch('api.app.lib.backup_streaming.check_backup_data') as mock_check:
 
-        mock_exporter.export_full_backup.return_value = valid_backup_data
+        mock_exporter.export_kg_backup_v2.return_value = valid_backup_data
 
         # Mock successful validation
         mock_integrity = Mock()
@@ -367,7 +367,7 @@ async def test_create_backup_stream_logs_validation_warnings(caplog):
     with patch('api.app.lib.backup_streaming.DataExporter') as mock_exporter, \
          patch('api.app.lib.backup_streaming.check_backup_data') as mock_check:
 
-        mock_exporter.export_full_backup.return_value = valid_backup_data
+        mock_exporter.export_kg_backup_v2.return_value = valid_backup_data
 
         # Mock validation with warnings
         mock_integrity = Mock()
@@ -426,7 +426,7 @@ async def test_create_backup_stream_ontology_validates():
     with patch('api.app.lib.backup_streaming.DataExporter') as mock_exporter, \
          patch('api.app.lib.backup_streaming.check_backup_data') as mock_check:
 
-        mock_exporter.export_ontology_backup.return_value = valid_backup_data
+        mock_exporter.export_kg_backup_v2.return_value = valid_backup_data
 
         # Mock successful validation
         mock_integrity = Mock()

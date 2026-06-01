@@ -30,8 +30,34 @@ from api.lib.console import Console, Colors
 from api.lib.config import Config
 from api.lib.age_ops import AGEConnection
 from api.lib.restitching import ConceptMatcher
-from api.lib.serialization import DataImporter
+from api.lib.serialization import DataImporter, KgBackupV2Reader
 from api.lib.integrity import DatabaseIntegrity
+
+
+def _find_external_concepts(reader: KgBackupV2Reader):
+    """Find concept references with no matching concept record in the backup.
+
+    Reads the single backup model (kg-backup/2) via the reader (relationship types
+    are de-interned). Produces the same structure the legacy
+    ConceptMatcher.create_restitch_plan consumes, so the DB-side re-stitch engine is
+    unchanged. Full migration of the engine to api/app/lib/concept_matcher.py is
+    ADR-102 P4 (integration mode).
+    """
+    internal = {c["concept_id"] for c in reader.concepts()}
+    external = {}
+    for rel in reader.relationships():
+        for endpoint, direction in ((rel.get("from"), "outgoing"), (rel.get("to"), "incoming")):
+            if endpoint and endpoint not in internal:
+                external.setdefault(endpoint, {
+                    "concept_id": endpoint,
+                    "referencing_relationships": [],
+                    "label": None,
+                    "embedding": None,
+                })["referencing_relationships"].append({
+                    "from": rel.get("from"), "to": rel.get("to"),
+                    "type": rel.get("type"), "direction": direction,
+                })
+    return list(external.values())
 
 
 def main():
@@ -116,17 +142,19 @@ Note:
         sys.exit(1)
 
     Console.success("✓ Connected to target database")
-    Console.key_value("  Backup type", backup_data['type'])
-    if backup_data.get('ontology'):
-        Console.key_value("  Ontology", backup_data['ontology'])
+    reader = KgBackupV2Reader(backup_data)
+    _ontologies = [o.get("name") for o in reader.header.get("ontologies", []) if o.get("name")]
+    Console.key_value("  Backup format", reader.format_version)
+    if len(_ontologies) == 1:
+        Console.key_value("  Ontology", _ontologies[0])
     Console.key_value("  Similarity threshold", f"{args.threshold:.0%}")
 
     # Create matcher
     matcher = ConceptMatcher(conn, similarity_threshold=args.threshold)
 
-    # Find external concepts
+    # Find external concepts (read from the single kg-backup/2 model)
     Console.info("\nAnalyzing backup for external concept references...")
-    external_concepts = matcher.find_external_concepts(backup_data)
+    external_concepts = _find_external_concepts(reader)
 
     if not external_concepts:
         Console.success("\n✓ No external concept references found")

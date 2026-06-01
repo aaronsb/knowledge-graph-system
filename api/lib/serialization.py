@@ -6,6 +6,7 @@ preserving embeddings (1536-dim vectors), full text, and relationships.
 """
 
 import json
+import re
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 import sys
@@ -43,12 +44,14 @@ def _parse_nullable_int(raw: Any) -> Optional[int]:
 
 
 class BackupFormat:
-    """Backup data format specification"""
+    """Schema-version probe for backups (ADR-102 P3).
 
-    VERSION = "1.0"
-
-    FULL_BACKUP = "full_backup"
-    ONTOLOGY_BACKUP = "ontology_backup"
+    The legacy v1 metadata (``VERSION``/``FULL_BACKUP``/``ONTOLOGY_BACKUP`` strings
+    and ``create_metadata``) was removed in the single-path ``kg-backup/2``
+    convergence — there is now exactly one backup model. Only the schema-version
+    probe survives; it stamps ``header.schema_version`` in
+    :meth:`DataExporter.export_kg_backup_v2`.
+    """
 
     @staticmethod
     def get_schema_version(client: AGEClient) -> int:
@@ -90,32 +93,6 @@ class BackupFormat:
         finally:
             conn.commit()
             client.pool.putconn(conn)
-
-    @staticmethod
-    def create_metadata(backup_type: str, ontology: Optional[str] = None, client: AGEClient = None) -> Dict[str, Any]:
-        """
-        Create backup metadata with schema versioning
-
-        Args:
-            backup_type: Type of backup (full_backup or ontology_backup)
-            ontology: Optional ontology name
-            client: AGEClient instance (needed for schema version)
-
-        Returns:
-            Metadata dictionary with version, schema_version, type, timestamp, ontology
-        """
-        metadata = {
-            "version": BackupFormat.VERSION,
-            "type": backup_type,
-            "timestamp": datetime.utcnow().isoformat() + "Z",
-            "ontology": ontology
-        }
-
-        # Add schema version if client provided (ADR-015: Schema Versioning)
-        if client:
-            metadata["schema_version"] = BackupFormat.get_schema_version(client)
-
-        return metadata
 
 
 class DataExporter:
@@ -522,105 +499,6 @@ class DataExporter:
             top_list = ", ".join(f"{t}({c})" for t, c in top_types)
             logger.info(f"Top edge types: {top_list}")
 
-    @staticmethod
-    def export_full_backup(client: AGEClient) -> Dict[str, Any]:
-        """
-        Export entire database
-
-        Args:
-            client: AGEClient instance
-
-        Returns:
-            Full backup dictionary
-        """
-        Console.info("Exporting concepts...")
-        concepts = DataExporter.export_concepts(client)
-
-        Console.info("Exporting sources...")
-        sources = DataExporter.export_sources(client)
-
-        Console.info("Exporting instances...")
-        instances = DataExporter.export_instances(client)
-
-        Console.info("Exporting relationships...")
-        relationships = DataExporter.export_relationships(client)
-
-        Console.info("Exporting vocabulary...")
-        vocabulary = DataExporter.export_vocabulary(client)
-
-        # Calculate vocabulary statistics (ADR-032)
-        DataExporter._log_vocabulary_summary(relationships, vocabulary)
-
-        return {
-            **BackupFormat.create_metadata(BackupFormat.FULL_BACKUP, client=client),  # Fixed: pass client for schema_version
-            "statistics": {
-                "concepts": len(concepts),
-                "sources": len(sources),
-                "instances": len(instances),
-                "relationships": len(relationships),
-                "vocabulary": len(vocabulary)
-            },
-            "data": {
-                "concepts": concepts,
-                "sources": sources,
-                "instances": instances,
-                "relationships": relationships,
-                "vocabulary": vocabulary
-            }
-        }
-
-    @staticmethod
-    def export_ontology_backup(client: AGEClient, ontology: str) -> Dict[str, Any]:
-        """
-        Export specific ontology
-
-        Args:
-            client: AGEClient instance
-            ontology: Ontology name
-
-        Returns:
-            Ontology backup dictionary
-        """
-        Console.info(f"Exporting ontology: {ontology}")
-
-        Console.info("  - Concepts...")
-        concepts = DataExporter.export_concepts(client, ontology)
-
-        Console.info("  - Sources...")
-        sources = DataExporter.export_sources(client, ontology)
-
-        Console.info("  - Instances...")
-        instances = DataExporter.export_instances(client, ontology)
-
-        Console.info("  - Relationships...")
-        relationships = DataExporter.export_relationships(client, ontology)
-
-        Console.info("  - Vocabulary...")
-        # NOTE: Vocabulary is global state, export entire vocabulary table
-        # even for ontology backups to preserve extended vocabulary (ADR-032)
-        vocabulary = DataExporter.export_vocabulary(client)
-
-        # Calculate vocabulary statistics (ADR-032)
-        DataExporter._log_vocabulary_summary(relationships, vocabulary)
-
-        return {
-            **BackupFormat.create_metadata(BackupFormat.ONTOLOGY_BACKUP, ontology, client=client),  # Fixed: pass client for schema_version
-            "statistics": {
-                "concepts": len(concepts),
-                "sources": len(sources),
-                "instances": len(instances),
-                "relationships": len(relationships),
-                "vocabulary": len(vocabulary)
-            },
-            "data": {
-                "concepts": concepts,
-                "sources": sources,
-                "instances": instances,
-                "relationships": relationships,
-                "vocabulary": vocabulary
-            }
-        }
-
     # ------------------------------------------------------------------
     # kg-backup/2 export (ADR-102 §5; docs/reference/BACKUP_OBJECT_SPEC.md).
     # The pure build_kg_backup_v2() assembles the self-describing object from
@@ -885,439 +763,563 @@ class DataExporter:
         )
 
 
+def _execute_with_age_retry(client, query, params=None, *, fetch_one=False, max_retries=5):
+    """Execute a Cypher statement with AGE's first-use + MVCC retry backoff.
+
+    Apache AGE lazily creates the backing table the first time a label/edge-type
+    is used; concurrent worker threads racing that creation surface as
+    ``relation "..." already exists``. Concurrent MERGEs on the same node/edge
+    surface as ``Entity failed to be updated`` (MVCC). Both are transient — retry
+    with linear backoff. Lifted from the legacy importer so the single kg-backup/2
+    clone writer shares the same proven path (ADR-102 P3).
+    """
+    import time
+    import re
+    for attempt in range(max_retries + 1):
+        try:
+            return client._execute_cypher(query, params=params, fetch_one=fetch_one)
+        except Exception as e:
+            es = str(e)
+            transient = (
+                "already exists" in es
+                or "Entity failed to be updated" in es
+                or "SET clause expects a map" in es
+            )
+            if transient and attempt < max_retries:
+                m = re.search(r'relation "(\w+)" already exists', es)
+                if m:
+                    Console.info(f"  Initializing AGE label: {m.group(1)}")
+                time.sleep(0.1 * (attempt + 1))
+                continue
+            raise
+
+
+def _progress(progress_callback, stage, current, total, every=10):
+    """Emit console + job progress for an import stage every ``every`` items."""
+    if total and (current % every == 0 or current == total):
+        Console.progress(current, total, stage.capitalize())
+        if progress_callback:
+            progress_callback(stage, current, total, (current / total) * 100)
+
+
+def _run_parallel(items, fn, max_workers):
+    """Submit ``fn(item)`` for every item to a thread pool; raise the first error."""
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = [executor.submit(fn, it) for it in items]
+        for future in as_completed(futures):
+            future.result()
+
+
+class KgBackupV2Reader:
+    """Read a kg-backup/2 object into normalized, de-interned records (ADR-102 P3).
+
+    Pure and DB-free: dereferences the declarative header dictionaries (relationship
+    vocabulary, content types, epoch kinds, actors) and groups the M:N evidence
+    stream, so the clone/merge writers consume plain records and the offline tests
+    exercise it without a database. It is intentionally a data-access view over one
+    object — its several accessors are all "the same backup, seen as records".
+
+    Single-path: there is exactly one backup model. The reader REFUSES anything that
+    is not ``kg-backup/<=2`` (no legacy v1 reading, no upcast — ADR-102 P3); the v1
+    JSON shape was a prototype and has been removed.
+    """
+
+    SUPPORTED_MAJOR = 2
+
+    def __init__(self, obj: Dict[str, Any]):
+        if not isinstance(obj, dict) or "header" not in obj or "bulk" not in obj:
+            raise ValueError(
+                "Not a kg-backup object: missing header/bulk "
+                "(the legacy v1 format is no longer supported — ADR-102 P3)"
+            )
+        self.header = obj["header"]
+        self.bulk = obj["bulk"]
+        self.format_version = self._negotiate(self.header.get("format_version"))
+
+        # De-intern lookup tables (header index -> value).
+        self._rel_types = [
+            v.get("relationship_type") for v in self.header.get("relationship_vocabulary", [])
+        ]
+        self._content_types = list(self.header.get("content_types", []))
+        self._epoch_kinds = [k.get("kind") for k in self.header.get("epoch_kinds", [])]
+        self._actors = list(self.header.get("actors", []))
+
+    @classmethod
+    def _negotiate(cls, fmt):
+        """Accept kg-backup/<=SUPPORTED_MAJOR; refuse unknown family / higher major (spec §7)."""
+        family, _, major = (fmt or "").partition("/")
+        if family != "kg-backup" or not major.isdigit():
+            raise ValueError(f"Unknown backup format_version: {fmt!r}")
+        if int(major) > cls.SUPPORTED_MAJOR:
+            raise ValueError(
+                f"Refusing {fmt}: newer than supported kg-backup/{cls.SUPPORTED_MAJOR} — "
+                "partially applying primary inputs is unsafe (ADR-102 §8)"
+            )
+        return fmt
+
+    def _rel_type(self, idx):
+        """Resolve an edge-type index to its relationship_type string."""
+        return self._rel_types[idx] if isinstance(idx, int) else idx
+
+    def _content_type(self, idx):
+        """Resolve a content-type index to its MIME string (None-safe)."""
+        if idx is None:
+            return None
+        return self._content_types[idx] if isinstance(idx, int) else idx
+
+    def concepts(self):
+        """Yield concept records (concept_id, label, search_terms, embedding, epoch stamps)."""
+        for c in self.bulk.get("concepts", []):
+            yield dict(c)
+
+    def sources(self):
+        """Yield source records with content_type de-interned back to its MIME string."""
+        for s in self.bulk.get("sources", []):
+            rec = dict(s)
+            rec["content_type"] = self._content_type(s.get("content_type"))
+            yield rec
+
+    def instances(self):
+        """Yield normalized instance records (unique; no concept_id — see evidence)."""
+        for i in self.bulk.get("instances", []):
+            yield dict(i)
+
+    def evidence_by_instance(self):
+        """Group the M:N evidence stream as ``{instance_id: [concept_id, ...]}``."""
+        grouped: Dict[str, List[str]] = {}
+        for e in self.bulk.get("evidence", []):
+            grouped.setdefault(e["instance_id"], []).append(e["concept_id"])
+        return grouped
+
+    def relationships(self):
+        """Yield relationship records with ``type`` de-interned to its label string."""
+        for r in self.bulk.get("relationships", []):
+            rec = dict(r)
+            rec["type"] = self._rel_type(r.get("type"))
+            rec["properties"] = r.get("properties") or {}
+            yield rec
+
+    def vocabulary(self):
+        """Return the bulk vocabulary rows (full descriptors, not interned)."""
+        return list(self.bulk.get("vocabulary", []))
+
+    def graph_epochs(self):
+        """Yield epoch-log rows with kind/actor de-interned (faithful replay — P5)."""
+        for ep in self.bulk.get("graph_epochs", []):
+            rec = dict(ep)
+            k = ep.get("kind")
+            rec["kind"] = self._epoch_kinds[k] if isinstance(k, int) else k
+            a = ep.get("actor")
+            rec["actor"] = self._actors[a] if isinstance(a, int) else a
+            yield rec
+
+    def counts(self):
+        """Return record counts per bulk stream (for stats/logging)."""
+        b = self.bulk
+        return {k: len(b.get(k, [])) for k in
+                ("concepts", "sources", "instances", "evidence", "relationships", "vocabulary")}
+
+    def external_concept_ids(self):
+        """Concept ids referenced by edges/evidence but absent from this backup.
+
+        These are cross-ontology dependencies (partial/adjacent backups). On restore
+        they create dangling edges unless the referenced concepts already exist in
+        the target — the signal the stitch/prune tooling acts on.
+        """
+        local = {c.get("concept_id") for c in self.concepts()}
+        external = {
+            endpoint
+            for rel in self.relationships()
+            for endpoint in (rel.get("from"), rel.get("to"))
+            if endpoint and endpoint not in local
+        }
+        external |= {
+            ev.get("concept_id") for ev in self.bulk.get("evidence", [])
+            if ev.get("concept_id") and ev.get("concept_id") not in local
+        }
+        return external
+
+
 class DataImporter:
-    """Import graph data from JSON format"""
+    """Import a kg-backup/2 object into the graph (ADR-102 P3).
+
+    Single-path: consumes the one backup model via :class:`KgBackupV2Reader`. The
+    clone writer (:meth:`_import_kg_backup_v2`) preserves app-assigned ids 1:1, which
+    is correct for an empty target. Adjacent-mode ID remapping and the merge modes
+    (idempotent / adjacent / integration) are added in P4.
+    """
+
+    _INSTANCE_Q = """
+        MATCH (s:Source {source_id: $source_id})
+        MERGE (i:Instance {instance_id: $instance_id})
+        SET i.quote = $quote,
+            i.created_at_event_id = $created_at_event_id
+        MERGE (i)-[:FROM_SOURCE]->(s)
+    """
+
+    # Reconstruct the M:N EVIDENCED_BY edge and the derived APPEARS edge by joining
+    # the concept to the instance's already-created source (ADR-102 §5.3.1).
+    _EVIDENCE_Q = """
+        MATCH (c:Concept {concept_id: $concept_id})
+        MATCH (i:Instance {instance_id: $instance_id})-[:FROM_SOURCE]->(s:Source)
+        MERGE (c)-[:EVIDENCED_BY]->(i)
+        MERGE (c)-[:APPEARS]->(s)
+    """
 
     @staticmethod
     def validate_backup(backup_data: Dict[str, Any]) -> bool:
+        """Validate that ``backup_data`` is a readable kg-backup object.
+
+        Constructs a :class:`KgBackupV2Reader`, which negotiates the format and
+        refuses anything that is not ``kg-backup/<=2``. Raises ``ValueError`` on
+        failure; returns ``True`` when readable. The thorough field-level oracle
+        lives in the offline validator (``scripts/development/lint/lint_backup.py``).
         """
-        Validate backup format
-
-        Args:
-            backup_data: Parsed JSON backup
-
-        Returns:
-            True if valid
-
-        Raises:
-            ValueError if invalid
-        """
-        if "version" not in backup_data:
-            raise ValueError("Missing version field in backup")
-
-        if backup_data["version"] != BackupFormat.VERSION:
-            raise ValueError(f"Unsupported backup version: {backup_data['version']}")
-
-        if "type" not in backup_data:
-            raise ValueError("Missing type field in backup")
-
-        if backup_data["type"] not in (BackupFormat.FULL_BACKUP, BackupFormat.ONTOLOGY_BACKUP):
-            raise ValueError(f"Unknown backup type: {backup_data['type']}")
-
-        if "data" not in backup_data:
-            raise ValueError("Missing data section in backup")
-
-        required_sections = ["concepts", "sources", "instances", "relationships"]
-        for section in required_sections:
-            if section not in backup_data["data"]:
-                raise ValueError(f"Missing {section} in backup data")
-
+        KgBackupV2Reader(backup_data)
         return True
 
     @staticmethod
     def import_backup(client: AGEClient, backup_data: Dict[str, Any],
-                     overwrite_existing: bool = False,
-                     progress_callback: Optional[callable] = None,
-                     max_workers: int = 2) -> Dict[str, int]:
-        """
-        Import backup data into database
+                      overwrite_existing: bool = False,
+                      progress_callback: Optional[callable] = None,
+                      max_workers: int = 2) -> Dict[str, int]:
+        """Import a kg-backup/2 object — the single backup model's front-door.
 
         Args:
             client: AGEClient instance
-            backup_data: Parsed backup JSON
-            overwrite_existing: If True, update existing nodes; if False, skip duplicates
-            progress_callback: Optional callback(stage, current, total, percent) for progress updates
-            max_workers: Maximum parallel workers for instances/relationships (default: 2)
+            backup_data: Parsed kg-backup/2 object (``{header, bulk}``)
+            overwrite_existing: If True, update existing nodes; if False, preserve them
+            progress_callback: Optional callback(stage, current, total, percent)
+            max_workers: Parallel workers for instances/evidence/relationships
 
         Returns:
-            Dictionary with import statistics
+            Stats: vocabulary_imported, concepts_created, sources_created,
+            instances_created, relationships_created.
         """
-        DataImporter.validate_backup(backup_data)
+        reader = KgBackupV2Reader(backup_data)
+        return DataImporter._import_kg_backup_v2(
+            client, reader,
+            overwrite_existing=overwrite_existing,
+            progress_callback=progress_callback,
+            max_workers=max_workers,
+        )
 
-        data = backup_data["data"]
+    @staticmethod
+    def _import_kg_backup_v2(client: AGEClient, reader: "KgBackupV2Reader", *,
+                             overwrite_existing: bool = False,
+                             progress_callback: Optional[callable] = None,
+                             max_workers: int = 2) -> Dict[str, int]:
+        """Clone-path writer: import normalized records, preserving ids 1:1.
+
+        Order matters: vocabulary (before relationships, ADR-032) → concepts →
+        sources → instances (+FROM_SOURCE) → evidence (EVIDENCED_BY + derived
+        APPEARS) → relationships. Clone preserves ids, so edge ``learned_id`` needs
+        no remap here (that is P4 adjacent mode).
+        """
         stats = {
             "vocabulary_imported": 0,
             "concepts_created": 0,
             "sources_created": 0,
             "instances_created": 0,
-            "relationships_created": 0
+            "relationships_created": 0,
         }
 
-        # Import vocabulary first (ADR-032) - needed before relationships
-        if "vocabulary" in data and len(data["vocabulary"]) > 0:
+        vocab = reader.vocabulary()
+        if vocab:
             Console.info("Importing vocabulary...")
-            total_vocab = len(data["vocabulary"])
+            DataImporter._import_vocabulary(client, vocab, progress_callback)
+            stats["vocabulary_imported"] = len(vocab)
 
-            conn = client.pool.getconn()
-            try:
-                import psycopg2.extras
-                with conn.cursor() as cur:
-                    for i, entry in enumerate(data["vocabulary"]):
-                        current = i + 1
-                        Console.progress(current, total_vocab, "Vocabulary")
-
-                        if progress_callback and current % 10 == 0:
-                            percent = (current / total_vocab) * 100
-                            progress_callback("vocabulary", current, total_vocab, percent)
-
-                        # Prepare field values
-                        # synonyms: VARCHAR[] array (not JSONB)
-                        synonyms_array = entry.get('synonyms') if entry.get('synonyms') else None
-
-                        # embedding: JSONB field
-                        embedding_json = json.dumps(entry.get('embedding')) if entry.get('embedding') else None
-
-                        # Insert or update vocabulary entry
-                        cur.execute("""
-                            INSERT INTO kg_api.relationship_vocabulary
-                                (relationship_type, description, category, added_by, added_at,
-                                 usage_count, is_active, is_builtin, synonyms, deprecation_reason,
-                                 embedding_model, embedding_generated_at, embedding)
-                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb)
-                            ON CONFLICT (relationship_type) DO UPDATE SET
-                                description = EXCLUDED.description,
-                                category = EXCLUDED.category,
-                                added_by = EXCLUDED.added_by,
-                                added_at = EXCLUDED.added_at,
-                                usage_count = EXCLUDED.usage_count,
-                                is_active = EXCLUDED.is_active,
-                                is_builtin = EXCLUDED.is_builtin,
-                                synonyms = EXCLUDED.synonyms,
-                                deprecation_reason = EXCLUDED.deprecation_reason,
-                                embedding_model = EXCLUDED.embedding_model,
-                                embedding_generated_at = EXCLUDED.embedding_generated_at,
-                                embedding = EXCLUDED.embedding
-                        """, (
-                            entry.get('relationship_type'),
-                            entry.get('description'),
-                            entry.get('category'),
-                            entry.get('added_by'),
-                            entry.get('added_at'),
-                            entry.get('usage_count', 0),
-                            entry.get('is_active', True),
-                            entry.get('is_builtin', False),
-                            synonyms_array,  # Fixed: VARCHAR[] array, not JSONB
-                            entry.get('deprecation_reason'),
-                            entry.get('embedding_model'),
-                            entry.get('embedding_generated_at'),
-                            embedding_json
-                        ))
-                        stats["vocabulary_imported"] += 1
-
-                conn.commit()
-            finally:
-                client.pool.putconn(conn)
-
-            # Create :VocabType graph nodes (ADR-048)
-            # After SQL import, sync vocabulary to graph nodes
-            Console.info("  Creating vocabulary graph nodes...")
-            for i, entry in enumerate(data["vocabulary"]):
-                current = i + 1
-                relationship_type = entry.get('relationship_type')
-                category = entry.get('category', 'unknown')
-                description = entry.get('description', '')
-                is_builtin = entry.get('is_builtin', False)
-                added_by = entry.get('added_by', 'system')
-                direction_semantics = entry.get('direction_semantics')
-
-                try:
-                    # Use MERGE to be idempotent (safe for re-runs)
-                    # Creates both :VocabType node and :IN_CATEGORY relationship
-                    vocab_query = """
-                        MERGE (v:VocabType {name: $name})
-                        SET v.description = $description,
-                            v.is_builtin = $is_builtin,
-                            v.is_active = $is_active,
-                            v.added_by = $added_by,
-                            v.usage_count = $usage_count,
-                            v.direction_semantics = $direction_semantics
-                        WITH v
-                        MERGE (c:VocabCategory {name: $category})
-                        MERGE (v)-[:IN_CATEGORY]->(c)
-                        RETURN v.name as name
-                    """
-                    params = {
-                        "name": relationship_type,
-                        "category": category,
-                        "description": description,
-                        "is_builtin": 't' if is_builtin else 'f',
-                        "is_active": 't' if entry.get('is_active', True) else 'f',
-                        "added_by": added_by,
-                        "usage_count": entry.get('usage_count', 0),
-                        "direction_semantics": direction_semantics
-                    }
-                    client._execute_cypher(vocab_query, params)
-
-                    if current % 10 == 0:
-                        Console.progress(current, total_vocab, "Graph nodes")
-                except Exception as e:
-                    # Log but don't fail the restore - SQL data is already imported
-                    Console.warning(f"  Failed to create graph node for '{relationship_type}': {e}")
-
-            if progress_callback and total_vocab > 0:
-                progress_callback("vocabulary", total_vocab, total_vocab, 100.0)
-
-        # Import concepts
+        concepts = list(reader.concepts())
         Console.info("Importing concepts...")
-        total_concepts = len(data["concepts"])
-        for i, concept in enumerate(data["concepts"]):
-            current = i + 1
-            Console.progress(current, total_concepts, "Concepts")
+        DataImporter._import_concepts(client, concepts, overwrite_existing, progress_callback)
+        stats["concepts_created"] = len(concepts)
 
-            # Call progress callback every 10 items
-            if progress_callback and current % 10 == 0:
-                percent = (current / total_concepts) * 100
-                progress_callback("concepts", current, total_concepts, percent)
-
-            if overwrite_existing:
-                # Always set properties (create or update)
-                merge_query = """
-                    MERGE (c:Concept {concept_id: $concept_id})
-                    SET c.label = $label,
-                        c.search_terms = $search_terms,
-                        c.embedding = $embedding
-                """
-            else:
-                # Only set if node doesn't exist (skip if exists)
-                merge_query = """
-                    MERGE (c:Concept {concept_id: $concept_id})
-                    ON CREATE SET c.label = $label, c.search_terms = $search_terms, c.embedding = $embedding
-                """
-                # AGE workaround: Use conditional CASE in SET
-                merge_query = """
-                    OPTIONAL MATCH (existing:Concept {concept_id: $concept_id})
-                    WITH existing
-                    MERGE (c:Concept {concept_id: $concept_id})
-                    SET c.label = CASE WHEN existing IS NULL THEN $label ELSE c.label END,
-                        c.search_terms = CASE WHEN existing IS NULL THEN $search_terms ELSE c.search_terms END,
-                        c.embedding = CASE WHEN existing IS NULL THEN $embedding ELSE c.embedding END
-                """
-
-            client._execute_cypher(merge_query, params=concept)
-            stats["concepts_created"] += 1
-
-        # Final callback for concepts stage
-        if progress_callback and total_concepts > 0:
-            progress_callback("concepts", total_concepts, total_concepts, 100.0)
-
-        # Import sources
+        sources = list(reader.sources())
         Console.info("Importing sources...")
-        total_sources = len(data["sources"])
-        for i, source in enumerate(data["sources"]):
-            current = i + 1
-            Console.progress(current, total_sources, "Sources")
+        DataImporter._import_sources(client, sources, progress_callback)
+        stats["sources_created"] = len(sources)
 
-            # Call progress callback every item (sources are fewer)
-            if progress_callback:
-                percent = (current / total_sources) * 100
-                progress_callback("sources", current, total_sources, percent)
+        instances = list(reader.instances())
+        Console.info("Importing instances...")
+        DataImporter._import_instances(client, instances, progress_callback, max_workers)
+        stats["instances_created"] = len(instances)
 
-            # AGE: MERGE + SET (works for both create and update)
-            # Include garage_key, content_type, storage_key if present (ADR-081)
-            merge_query = """
+        evidence_map = reader.evidence_by_instance()
+        pairs = [(cid, iid) for iid, cids in evidence_map.items() for cid in cids]
+        if pairs:
+            Console.info(f"Reconstructing {len(pairs)} evidence links (EVIDENCED_BY + APPEARS)...")
+            DataImporter._import_evidence(client, pairs, max_workers)
+
+        rels = list(reader.relationships())
+        Console.info("Importing relationships...")
+        stats["relationships_created"] = DataImporter._import_relationships(
+            client, rels, progress_callback, max_workers
+        )
+
+        return stats
+
+    @staticmethod
+    def _import_vocabulary(client: AGEClient, vocabulary: List[Dict[str, Any]],
+                           progress_callback: Optional[callable] = None) -> None:
+        """Import relationship vocabulary: SQL rows + :VocabType graph nodes.
+
+        Ported from the original importer (ADR-032 / ADR-048): upserts
+        kg_api.relationship_vocabulary, then MERGEs the :VocabType / :VocabCategory
+        nodes. Shared by the single import path.
+        """
+        total_vocab = len(vocabulary)
+        conn = client.pool.getconn()
+        try:
+            with conn.cursor() as cur:
+                for i, entry in enumerate(vocabulary):
+                    current = i + 1
+                    Console.progress(current, total_vocab, "Vocabulary")
+                    if progress_callback and current % 10 == 0:
+                        progress_callback("vocabulary", current, total_vocab,
+                                          (current / total_vocab) * 100)
+
+                    synonyms_array = entry.get('synonyms') if entry.get('synonyms') else None
+                    embedding_json = json.dumps(entry.get('embedding')) if entry.get('embedding') else None
+
+                    cur.execute("""
+                        INSERT INTO kg_api.relationship_vocabulary
+                            (relationship_type, description, category, added_by, added_at,
+                             usage_count, is_active, is_builtin, synonyms, deprecation_reason,
+                             embedding_model, embedding_generated_at, embedding)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb)
+                        ON CONFLICT (relationship_type) DO UPDATE SET
+                            description = EXCLUDED.description,
+                            category = EXCLUDED.category,
+                            added_by = EXCLUDED.added_by,
+                            added_at = EXCLUDED.added_at,
+                            usage_count = EXCLUDED.usage_count,
+                            is_active = EXCLUDED.is_active,
+                            is_builtin = EXCLUDED.is_builtin,
+                            synonyms = EXCLUDED.synonyms,
+                            deprecation_reason = EXCLUDED.deprecation_reason,
+                            embedding_model = EXCLUDED.embedding_model,
+                            embedding_generated_at = EXCLUDED.embedding_generated_at,
+                            embedding = EXCLUDED.embedding
+                    """, (
+                        entry.get('relationship_type'),
+                        entry.get('description'),
+                        entry.get('category'),
+                        entry.get('added_by'),
+                        entry.get('added_at'),
+                        entry.get('usage_count', 0),
+                        entry.get('is_active', True),
+                        entry.get('is_builtin', False),
+                        synonyms_array,
+                        entry.get('deprecation_reason'),
+                        entry.get('embedding_model'),
+                        entry.get('embedding_generated_at'),
+                        embedding_json
+                    ))
+            conn.commit()
+        finally:
+            client.pool.putconn(conn)
+
+        # Create :VocabType graph nodes (ADR-048) after the SQL import.
+        Console.info("  Creating vocabulary graph nodes...")
+        for i, entry in enumerate(vocabulary):
+            relationship_type = entry.get('relationship_type')
+            try:
+                vocab_query = """
+                    MERGE (v:VocabType {name: $name})
+                    SET v.description = $description,
+                        v.is_builtin = $is_builtin,
+                        v.is_active = $is_active,
+                        v.added_by = $added_by,
+                        v.usage_count = $usage_count,
+                        v.direction_semantics = $direction_semantics
+                    WITH v
+                    MERGE (c:VocabCategory {name: $category})
+                    MERGE (v)-[:IN_CATEGORY]->(c)
+                    RETURN v.name as name
+                """
+                params = {
+                    "name": relationship_type,
+                    "category": entry.get('category', 'unknown'),
+                    "description": entry.get('description', ''),
+                    "is_builtin": 't' if entry.get('is_builtin', False) else 'f',
+                    "is_active": 't' if entry.get('is_active', True) else 'f',
+                    "added_by": entry.get('added_by', 'system'),
+                    "usage_count": entry.get('usage_count', 0),
+                    "direction_semantics": entry.get('direction_semantics'),
+                }
+                client._execute_cypher(vocab_query, params)
+                if (i + 1) % 10 == 0:
+                    Console.progress(i + 1, total_vocab, "Graph nodes")
+            except Exception as e:
+                # SQL data is already imported — log but don't fail the restore.
+                Console.warning(f"  Failed to create graph node for '{relationship_type}': {e}")
+
+        if progress_callback and total_vocab > 0:
+            progress_callback("vocabulary", total_vocab, total_vocab, 100.0)
+
+    @staticmethod
+    def _import_concepts(client: AGEClient, concepts: List[Dict[str, Any]],
+                         overwrite_existing: bool, progress_callback) -> None:
+        """MERGE concepts, carrying the ADR-102 §3 epoch stamps."""
+        total = len(concepts)
+        if overwrite_existing:
+            query = """
+                MERGE (c:Concept {concept_id: $concept_id})
+                SET c.label = $label,
+                    c.search_terms = $search_terms,
+                    c.embedding = $embedding,
+                    c.created_at_epoch = $created_at_epoch,
+                    c.last_seen_epoch = $last_seen_epoch
+            """
+        else:
+            # Preserve an existing concept's properties (AGE has no ON CREATE SET).
+            query = """
+                OPTIONAL MATCH (existing:Concept {concept_id: $concept_id})
+                WITH existing
+                MERGE (c:Concept {concept_id: $concept_id})
+                SET c.label = CASE WHEN existing IS NULL THEN $label ELSE c.label END,
+                    c.search_terms = CASE WHEN existing IS NULL THEN $search_terms ELSE c.search_terms END,
+                    c.embedding = CASE WHEN existing IS NULL THEN $embedding ELSE c.embedding END,
+                    c.created_at_epoch = CASE WHEN existing IS NULL THEN $created_at_epoch ELSE c.created_at_epoch END,
+                    c.last_seen_epoch = CASE WHEN existing IS NULL THEN $last_seen_epoch ELSE c.last_seen_epoch END
+            """
+        for i, c in enumerate(concepts):
+            params = {
+                "concept_id": c["concept_id"],
+                "label": c.get("label"),
+                "search_terms": c.get("search_terms", []),
+                "embedding": c.get("embedding", []),
+                "created_at_epoch": c.get("created_at_epoch"),
+                "last_seen_epoch": c.get("last_seen_epoch"),
+            }
+            _execute_with_age_retry(client, query, params)
+            _progress(progress_callback, "concepts", i + 1, total)
+
+    @staticmethod
+    def _import_sources(client: AGEClient, sources: List[Dict[str, Any]],
+                        progress_callback) -> None:
+        """MERGE sources, including optional Garage/media keys when present (ADR-081)."""
+        total = len(sources)
+        for i, s in enumerate(sources):
+            query = """
                 MERGE (s:Source {source_id: $source_id})
                 SET s.document = $document,
                     s.file_path = $file_path,
                     s.paragraph = $paragraph,
                     s.full_text = $full_text
             """
+            params = {
+                "source_id": s["source_id"],
+                "document": s.get("document"),
+                "file_path": s.get("file_path"),
+                "paragraph": s.get("paragraph"),
+                "full_text": s.get("full_text"),
+            }
+            if s.get("garage_key"):
+                query = query.rstrip() + ",\n                    s.garage_key = $garage_key"
+                params["garage_key"] = s["garage_key"]
+            if s.get("content_type"):
+                query = query.rstrip() + ",\n                    s.content_type = $content_type"
+                params["content_type"] = s["content_type"]
+            if s.get("storage_key"):
+                query = query.rstrip() + ",\n                    s.storage_key = $storage_key"
+                params["storage_key"] = s["storage_key"]
+            _execute_with_age_retry(client, query, params)
+            _progress(progress_callback, "sources", i + 1, total, every=1)
 
-            # Add optional Garage fields to SET clause if present
-            if source.get("garage_key"):
-                merge_query = merge_query.rstrip() + ",\n                    s.garage_key = $garage_key"
-            if source.get("content_type"):
-                merge_query = merge_query.rstrip() + ",\n                    s.content_type = $content_type"
-            if source.get("storage_key"):
-                merge_query = merge_query.rstrip() + ",\n                    s.storage_key = $storage_key"
+    @staticmethod
+    def _import_instances(client: AGEClient, instances: List[Dict[str, Any]],
+                          progress_callback, max_workers: int) -> None:
+        """MERGE instances and their FROM_SOURCE edges in parallel."""
+        total = len(instances)
+        lock = threading.Lock()
+        done = {"n": 0}
 
-            client._execute_cypher(merge_query, params=source)
-            stats["sources_created"] += 1
+        def work(inst):
+            params = {
+                "instance_id": inst["instance_id"],
+                "quote": inst.get("quote", ""),
+                "source_id": inst["source_id"],
+                "created_at_event_id": inst.get("created_at_event_id"),
+            }
+            _execute_with_age_retry(client, DataImporter._INSTANCE_Q, params)
+            with lock:
+                done["n"] += 1
+                _progress(progress_callback, "instances", done["n"], total)
 
-        # Final callback for sources stage
-        if progress_callback and total_sources > 0:
-            progress_callback("sources", total_sources, total_sources, 100.0)
+        _run_parallel(instances, work, max_workers)
 
-        # Import instances (parallel processing for performance)
-        Console.info("Importing instances...")
-        total_instances = len(data["instances"])
+    @staticmethod
+    def _import_evidence(client: AGEClient, pairs: List, max_workers: int) -> None:
+        """Reconstruct EVIDENCED_BY + derived APPEARS edges from the evidence stream."""
+        total = len(pairs)
+        lock = threading.Lock()
+        done = {"n": 0}
 
+        def work(pair):
+            concept_id, instance_id = pair
+            _execute_with_age_retry(
+                client, DataImporter._EVIDENCE_Q,
+                {"concept_id": concept_id, "instance_id": instance_id},
+            )
+            with lock:
+                done["n"] += 1
+                if done["n"] % 50 == 0 or done["n"] == total:
+                    Console.progress(done["n"], total, "Evidence")
 
-        # Thread-safe counter and lock for progress tracking
-        progress_lock = threading.Lock()
-        completed = {"count": 0}
+        _run_parallel(pairs, work, max_workers)
 
-        def process_instance(instance):
-            """Process single instance with optimized single-query approach"""
-            # Optimized: Single query instead of two
-            # MATCH dependencies first, then MERGE+SET, then create relationships
-            # No WITH clause needed - all variables stay in scope
-            query = """
-                MATCH (c:Concept {concept_id: $concept_id})
-                MATCH (s:Source {source_id: $source_id})
-                MERGE (i:Instance {instance_id: $instance_id})
-                SET i.quote = $quote
-                MERGE (c)-[:EVIDENCED_BY]->(i)
-                MERGE (i)-[:FROM_SOURCE]->(s)
-                MERGE (c)-[:APPEARS]->(s)
-            """
+    @staticmethod
+    def _import_relationships(client: AGEClient, rels: List[Dict[str, Any]],
+                              progress_callback, max_workers: int) -> int:
+        """MERGE concept-concept relationships in parallel; return created count."""
+        total = len(rels)
+        lock = threading.Lock()
+        done = {"n": 0, "created": 0}
 
-            import time
-            max_retries = 5
-            for attempt in range(max_retries + 1):
-                try:
-                    client._execute_cypher(query, params=instance)
-                    break
-                except Exception as e:
-                    error_str = str(e)
-                    if "already exists" in error_str and attempt < max_retries:
-                        # AGE creates label tables on first use - parallel threads may race
-                        import re
-                        match = re.search(r'relation "(\w+)" already exists', error_str)
-                        if match:
-                            Console.info(f"  Initializing AGE label: {match.group(1)}")
-                        time.sleep(0.1 * (attempt + 1))
-                        continue
-                    elif "Entity failed to be updated" in error_str and attempt < max_retries:
-                        # AGE MVCC conflict from concurrent MERGE on same node
-                        time.sleep(0.1 * (attempt + 1))
-                        continue
-                    else:
-                        raise
+        def work(rel):
+            created = DataImporter._merge_relationship(client, rel)
+            with lock:
+                done["n"] += 1
+                done["created"] += created
+                _progress(progress_callback, "relationships", done["n"], total)
 
-            # Thread-safe progress tracking
-            with progress_lock:
-                completed["count"] += 1
-                current = completed["count"]
-                if current % 10 == 0 or current == total_instances:
-                    Console.progress(current, total_instances, "Instances")
-                    if progress_callback:
-                        percent = (current / total_instances) * 100
-                        progress_callback("instances", current, total_instances, percent)
+        _run_parallel(rels, work, max_workers)
+        return done["created"]
 
-        # Process instances in parallel (configurable workers)
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            futures = [executor.submit(process_instance, instance)
-                      for instance in data["instances"]]
+    # Edge-property keys are simple identifiers (e.g. learned_id, confidence). AGE
+    # rejects a whole-map parameter (`SET r = $props` → "SET clause expects a map"),
+    # so each property is set individually with a scalar param — mirroring how the
+    # ingestion path writes edge properties.
+    _PROP_KEY = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
-            # Wait for all to complete
-            for future in as_completed(futures):
-                future.result()  # Raise any exceptions
+    @staticmethod
+    def _merge_relationship(client: AGEClient, rel: Dict[str, Any]) -> int:
+        """MERGE a single concept relationship (dynamic edge label). Returns 1 if created/matched."""
+        rel_type = rel["type"]  # de-interned label string
+        query = f"""
+            OPTIONAL MATCH (c1:Concept {{concept_id: $from_id}})
+            OPTIONAL MATCH (c2:Concept {{concept_id: $to_id}})
+            WITH c1, c2
+            WHERE c1 IS NOT NULL AND c2 IS NOT NULL
+            MERGE (c1)-[r:{rel_type}]->(c2)
+        """
+        params = {"from_id": rel["from"], "to_id": rel["to"]}
 
-        stats["instances_created"] = total_instances
+        set_items = []
+        for idx, (key, value) in enumerate((rel.get("properties") or {}).items()):
+            if not DataImporter._PROP_KEY.match(str(key)):
+                Console.warning(f"  Skipping edge property with unsafe key: {key!r}")
+                continue
+            pkey = f"p_{idx}"
+            set_items.append(f"r.{key} = ${pkey}")
+            params[pkey] = value
+        if set_items:
+            query += "                SET " + ", ".join(set_items) + "\n"
+        query += "                RETURN count(r) as created"
 
-        # Final callback for instances stage
-        if progress_callback and total_instances > 0:
-            progress_callback("instances", total_instances, total_instances, 100.0)
-
-        # Import concept-concept relationships (parallel processing for performance)
-        Console.info("Importing relationships...")
-        total_relationships = len(data["relationships"])
-
-        # Thread-safe counter and lock for progress tracking
-        rel_progress_lock = threading.Lock()
-        rel_completed = {"count": 0, "created": 0}
-
-        def process_relationship(rel):
-            """Process single relationship"""
-            # Dynamic relationship type (IMPLIES, SUPPORTS, etc.)
-            # Use OPTIONAL MATCH to handle missing nodes gracefully
-            props = rel.get("properties") or {}
-            if props:
-                query = f"""
-                    OPTIONAL MATCH (c1:Concept {{concept_id: $from_id}})
-                    OPTIONAL MATCH (c2:Concept {{concept_id: $to_id}})
-                    WITH c1, c2
-                    WHERE c1 IS NOT NULL AND c2 IS NOT NULL
-                    MERGE (c1)-[r:{rel['type']}]->(c2)
-                    SET r = $properties
-                    RETURN count(r) as created
-                """
-                params = {
-                    "from_id": rel["from"],
-                    "to_id": rel["to"],
-                    "properties": props
-                }
-            else:
-                # Skip SET for empty properties — AGE rejects SET r = {} with
-                # "SET clause expects a map"
-                query = f"""
-                    OPTIONAL MATCH (c1:Concept {{concept_id: $from_id}})
-                    OPTIONAL MATCH (c2:Concept {{concept_id: $to_id}})
-                    WITH c1, c2
-                    WHERE c1 IS NOT NULL AND c2 IS NOT NULL
-                    MERGE (c1)-[r:{rel['type']}]->(c2)
-                    RETURN count(r) as created
-                """
-                params = {
-                    "from_id": rel["from"],
-                    "to_id": rel["to"],
-                }
-
-            import time
-            max_retries = 5
-            for attempt in range(max_retries + 1):
-                try:
-                    result = client._execute_cypher(query, params=params, fetch_one=True)
-                    break
-                except Exception as e:
-                    error_str = str(e)
-
-                    if "already exists" in error_str and attempt < max_retries:
-                        # AGE creates edge type tables on first use - parallel threads may race
-                        import re
-                        match = re.search(r'relation "(\w+)" already exists', error_str)
-                        if match:
-                            Console.info(f"  Initializing edge type: {match.group(1)}")
-                        time.sleep(0.1 * (attempt + 1))
-                        continue
-                    elif "Entity failed to be updated" in error_str and attempt < max_retries:
-                        # AGE MVCC conflict from concurrent MERGE on same edge
-                        time.sleep(0.1 * (attempt + 1))
-                        continue
-                    elif "SET clause expects a map" in error_str and attempt < max_retries:
-                        time.sleep(0.1 * (attempt + 1))
-                        continue
-                    else:
-                        raise
-
-            created = 0
-            if result and int(str(result.get("created", 0))) > 0:
-                created = 1
-
-            # Thread-safe progress tracking
-            with rel_progress_lock:
-                rel_completed["count"] += 1
-                rel_completed["created"] += created
-                current = rel_completed["count"]
-                if current % 10 == 0 or current == total_relationships:
-                    Console.progress(current, total_relationships, "Relationships")
-                    if progress_callback:
-                        percent = (current / total_relationships) * 100
-                        progress_callback("relationships", current, total_relationships, percent)
-
-        # Process relationships in parallel (configurable workers)
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            futures = [executor.submit(process_relationship, rel)
-                      for rel in data["relationships"]]
-
-            # Wait for all to complete
-            for future in as_completed(futures):
-                future.result()  # Raise any exceptions
-
-        stats["relationships_created"] = rel_completed["created"]
-
-        # Final callback for relationships stage
-        if progress_callback and total_relationships > 0:
-            progress_callback("relationships", total_relationships, total_relationships, 100.0)
-
-        return stats
+        result = _execute_with_age_retry(client, query, params, fetch_one=True)
+        if result and int(str(result.get("created", 0))) > 0:
+            return 1
+        return 0

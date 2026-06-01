@@ -1,546 +1,172 @@
 """
-Tests for Backup Integrity Check Module (ADR-015 Phase 2)
+Tests for the Backup Integrity Check Module (ADR-015 Phase 2; retargeted to
+kg-backup/2 in ADR-102 P3).
 
-Tests cover:
-- Valid backup validation
-- Missing field detection
-- Invalid format detection
-- Reference integrity checking
-- Statistics validation
-- External dependency detection
-- Edge cases and error handling
+The runtime checker now validates the single backup model (declarative header +
+bulk record streams). Tests build objects with the pure
+``DataExporter.build_kg_backup_v2`` and assert structural, reference, and
+external-dependency checks.
 """
-
-import pytest
 import json
 import tempfile
 from pathlib import Path
-from typing import Dict, Any
 
+import pytest
+
+from api.lib.serialization import DataExporter
 from api.app.lib.backup_integrity import (
     BackupIntegrityChecker,
     BackupIntegrity,
     check_backup_integrity,
-    check_backup_data
+    check_backup_data,
 )
 
 
 # ========== Fixtures ==========
 
-@pytest.fixture
-def valid_full_backup() -> Dict[str, Any]:
-    """Valid full database backup"""
-    return {
-        "version": "1.0",
-        "type": "full_backup",
-        "timestamp": "2025-10-09T04:00:00Z",
-        "ontology": None,
-        "statistics": {
-            "concepts": 2,
-            "sources": 1,
-            "instances": 2,
-            "relationships": 1
-        },
-        "data": {
-            "concepts": [
-                {"concept_id": "concept_1", "label": "Test Concept 1", "search_terms": []},
-                {"concept_id": "concept_2", "label": "Test Concept 2", "search_terms": []}
-            ],
-            "sources": [
-                {
-                    "source_id": "source_1",
-                    "document": "Test Document",
-                    "paragraph": 1,
-                    "full_text": "Test content"
-                }
-            ],
-            "instances": [
-                {
-                    "instance_id": "inst_1",
-                    "quote": "Test quote 1",
-                    "concept_id": "concept_1",
-                    "source_id": "source_1"
-                },
-                {
-                    "instance_id": "inst_2",
-                    "quote": "Test quote 2",
-                    "concept_id": "concept_2",
-                    "source_id": "source_1"
-                }
-            ],
-            "relationships": [
-                {
-                    "from": "concept_1",
-                    "to": "concept_2",
-                    "type": "SUPPORTS",
-                    "properties": {}
-                }
-            ]
-        }
-    }
+def _lists(**overrides):
+    base = dict(
+        concepts=[
+            {"concept_id": "c1", "label": "Alpha", "search_terms": ["a"],
+             "embedding": [0.1, 0.2], "created_at_epoch": 1, "last_seen_epoch": 1},
+            {"concept_id": "c2", "label": "Beta", "search_terms": [],
+             "embedding": [0.3, 0.4], "created_at_epoch": 1, "last_seen_epoch": 1},
+        ],
+        sources=[
+            {"source_id": "s1", "document": "Corpus", "file_path": "/a.txt",
+             "paragraph": 1, "full_text": "alpha", "content_type": "text/plain"},
+        ],
+        instances=[
+            {"instance_id": "i1", "quote": "alpha", "source_id": "s1", "created_at_event_id": 1},
+        ],
+        evidence=[{"concept_id": "c1", "instance_id": "i1"}],
+        relationships=[
+            {"from": "c1", "to": "c2", "type": "IMPLIES", "properties": {}},
+        ],
+        vocabulary=[
+            {"relationship_type": "IMPLIES", "description": "x", "category": "logical",
+             "embedding_model": "openai:text-embedding-3-small@1536"},
+        ],
+        embedding_profiles=[
+            {"identity": "openai:text-embedding-3-small@1536", "vector_space": "openai-3-small",
+             "image_vector_space": None, "name": "default", "multimodal": False},
+        ],
+        epoch_kinds=[{"kind": "ingestion", "semantic_wallclock": True, "description": ""}],
+        graph_epochs=[],
+        schema_version=76,
+    )
+    base.update(overrides)
+    return base
 
 
 @pytest.fixture
-def valid_ontology_backup() -> Dict[str, Any]:
-    """Valid ontology backup with external dependencies"""
-    return {
-        "version": "1.0",
-        "type": "ontology_backup",
-        "timestamp": "2025-10-09T04:00:00Z",
-        "ontology": "Test Ontology",
-        "statistics": {
-            "concepts": 1,
-            "sources": 1,
-            "instances": 2,
-            "relationships": 1
-        },
-        "data": {
-            "concepts": [
-                {"concept_id": "local_concept_1", "label": "Local Concept", "search_terms": []}
-            ],
-            "sources": [
-                {
-                    "source_id": "source_1",
-                    "document": "Test Document",
-                    "paragraph": 1,
-                    "full_text": "Test content"
-                }
-            ],
-            "instances": [
-                {
-                    "instance_id": "inst_1",
-                    "quote": "Local quote",
-                    "concept_id": "local_concept_1",
-                    "source_id": "source_1"
-                },
-                {
-                    "instance_id": "inst_2",
-                    "quote": "External quote",
-                    "concept_id": "external_concept_99",  # External reference
-                    "source_id": "source_1"
-                }
-            ],
-            "relationships": [
-                {
-                    "from": "local_concept_1",
-                    "to": "external_concept_77",  # External reference
-                    "type": "RELATES_TO",
-                    "properties": {}
-                }
-            ]
-        }
-    }
+def valid_full_backup():
+    return DataExporter.build_kg_backup_v2(**_lists())
 
 
-# ========== Unit Tests: Valid Backups ==========
+@pytest.fixture
+def valid_scoped_backup():
+    return DataExporter.build_kg_backup_v2(ontology="Corpus", **_lists())
 
-@pytest.mark.unit
+
+# ========== Structural format ==========
+
 def test_valid_full_backup_passes(valid_full_backup):
-    """Test that valid full backup passes all checks"""
-    checker = BackupIntegrityChecker()
-    result = checker.check_data(valid_full_backup)
+    result = BackupIntegrityChecker().check_data(valid_full_backup)
+    assert result.valid, [e.message for e in result.errors]
+    assert result.statistics["concepts"] == 2
 
-    assert result.valid is True
-    assert len(result.errors) == 0
-    assert result.statistics == valid_full_backup["statistics"]
 
+def test_valid_scoped_backup_passes(valid_scoped_backup):
+    result = check_backup_data(valid_scoped_backup)
+    assert result.valid, [e.message for e in result.errors]
 
-@pytest.mark.unit
-def test_valid_ontology_backup_passes(valid_ontology_backup):
-    """Test that valid ontology backup passes (with warnings for external deps)"""
-    checker = BackupIntegrityChecker()
-    result = checker.check_data(valid_ontology_backup)
 
-    assert result.valid is True
-    assert len(result.errors) == 0
-    assert result.has_external_deps is True
-    assert result.external_deps == 2  # 1 in instances, 1 in relationships
+def test_missing_header_bulk_fails():
+    result = check_backup_data({"version": "1.0", "data": {}})  # the dead v1 shape
+    assert not result.valid
+    assert any("header" in e.message.lower() or "bulk" in e.message.lower() for e in result.errors)
 
 
-# ========== Unit Tests: Format Validation ==========
-
-@pytest.mark.unit
-def test_missing_required_field_fails():
-    """Test that missing required fields are detected"""
-    invalid_data = {
-        "version": "1.0",
-        "type": "full_backup"
-        # Missing: timestamp, data, statistics
-    }
-
-    checker = BackupIntegrityChecker()
-    result = checker.check_data(invalid_data)
-
-    assert result.valid is False
-    assert len(result.errors) > 0
-    assert any("Missing required fields" in e.message for e in result.errors)
-
-
-@pytest.mark.unit
-def test_invalid_backup_type_fails():
-    """Test that invalid backup type is detected"""
-    invalid_data = {
-        "version": "1.0",
-        "type": "invalid_type",
-        "timestamp": "2025-10-09T04:00:00Z",
-        "statistics": {},
-        "data": {}
-    }
-
-    checker = BackupIntegrityChecker()
-    result = checker.check_data(invalid_data)
-
-    assert result.valid is False
-    assert any("Invalid backup type" in e.message for e in result.errors)
-
-
-@pytest.mark.unit
-def test_invalid_version_fails():
-    """Test that invalid version format is detected"""
-    invalid_data = {
-        "version": None,  # Invalid
-        "type": "full_backup",
-        "timestamp": "2025-10-09T04:00:00Z",
-        "statistics": {},
-        "data": {}
-    }
-
-    checker = BackupIntegrityChecker()
-    result = checker.check_data(invalid_data)
-
-    assert result.valid is False
-    assert any("version" in e.message.lower() for e in result.errors)
-
-
-@pytest.mark.unit
-def test_missing_data_sections_fails():
-    """Test that missing data sections are detected"""
-    invalid_data = {
-        "version": "1.0",
-        "type": "full_backup",
-        "timestamp": "2025-10-09T04:00:00Z",
-        "statistics": {},
-        "data": {
-            "concepts": [],
-            "sources": []
-            # Missing: instances, relationships
-        }
-    }
-
-    checker = BackupIntegrityChecker()
-    result = checker.check_data(invalid_data)
-
-    assert result.valid is False
-    assert any("Missing data sections" in e.message for e in result.errors)
-
-
-@pytest.mark.unit
-def test_non_list_data_section_fails():
-    """Test that data sections must be lists"""
-    invalid_data = {
-        "version": "1.0",
-        "type": "full_backup",
-        "timestamp": "2025-10-09T04:00:00Z",
-        "statistics": {},
-        "data": {
-            "concepts": "not a list",  # Invalid
-            "sources": [],
-            "instances": [],
-            "relationships": []
-        }
-    }
-
-    checker = BackupIntegrityChecker()
-    result = checker.check_data(invalid_data)
-
-    assert result.valid is False
-    assert any("must be a list" in e.message for e in result.errors)
-
-
-# ========== Unit Tests: Reference Integrity ==========
-
-@pytest.mark.unit
-def test_instance_with_invalid_concept_id_fails(valid_full_backup):
-    """Test that instances referencing non-existent concepts are detected"""
-    invalid_backup = valid_full_backup.copy()
-    invalid_backup["data"]["instances"][0]["concept_id"] = "nonexistent_concept"
-
-    checker = BackupIntegrityChecker()
-    result = checker.check_data(invalid_backup)
-
-    assert result.valid is False
-    assert any("concept_id" in e.message and "doesn't exist" in e.message for e in result.errors)
-
-
-@pytest.mark.unit
-def test_instance_with_invalid_source_id_fails(valid_full_backup):
-    """Test that instances referencing non-existent sources are detected"""
-    invalid_backup = valid_full_backup.copy()
-    invalid_backup["data"]["instances"][0]["source_id"] = "nonexistent_source"
-
-    checker = BackupIntegrityChecker()
-    result = checker.check_data(invalid_backup)
-
-    assert result.valid is False
-    assert any("source_id" in e.message and "doesn't exist" in e.message for e in result.errors)
-
-
-@pytest.mark.unit
-def test_relationship_with_invalid_from_concept_fails(valid_full_backup):
-    """Test that relationships with invalid 'from' concept are detected"""
-    invalid_backup = valid_full_backup.copy()
-    invalid_backup["data"]["relationships"][0]["from"] = "nonexistent_concept"
-
-    checker = BackupIntegrityChecker()
-    result = checker.check_data(invalid_backup)
-
-    assert result.valid is False
-    assert any("'from'" in e.message and "doesn't exist" in e.message for e in result.errors)
-
-
-@pytest.mark.unit
-def test_relationship_with_invalid_to_concept_fails(valid_full_backup):
-    """Test that relationships with invalid 'to' concept are detected"""
-    invalid_backup = valid_full_backup.copy()
-    invalid_backup["data"]["relationships"][0]["to"] = "nonexistent_concept"
-
-    checker = BackupIntegrityChecker()
-    result = checker.check_data(invalid_backup)
-
-    assert result.valid is False
-    assert any("'to'" in e.message and "doesn't exist" in e.message for e in result.errors)
-
-
-@pytest.mark.unit
-def test_unusual_relationship_type_warning(valid_full_backup):
-    """Test that unusual relationship types generate warnings"""
-    backup = valid_full_backup.copy()
-    backup["data"]["relationships"][0]["type"] = "UNUSUAL_TYPE"
-
-    checker = BackupIntegrityChecker()
-    result = checker.check_data(backup)
-
-    assert result.valid is True  # Warning, not error
-    assert any("not in vocabulary" in w.message for w in result.warnings)
-
-
-# ========== Unit Tests: Statistics Validation ==========
-
-@pytest.mark.unit
-def test_statistics_mismatch_warning(valid_full_backup):
-    """Test that statistics mismatches generate warnings"""
-    invalid_backup = valid_full_backup.copy()
-    invalid_backup["statistics"]["concepts"] = 999  # Wrong count
-
-    checker = BackupIntegrityChecker()
-    result = checker.check_data(invalid_backup)
-
-    assert result.valid is True  # Warning, not error
-    assert any("Statistics mismatch" in w.message for w in result.warnings)
-    assert any("concepts" in w.message for w in result.warnings)
-
-
-# ========== Unit Tests: External Dependencies ==========
-
-@pytest.mark.unit
-def test_external_deps_detected_in_ontology_backup(valid_ontology_backup):
-    """Test that external dependencies are detected in ontology backups"""
-    checker = BackupIntegrityChecker()
-    result = checker.check_data(valid_ontology_backup)
-
-    assert result.valid is True
-    assert result.has_external_deps is True
-    assert result.external_deps == 2  # 1 from instance, 1 from relationship
-    assert any("concept_ids from other ontologies" in w.message for w in result.warnings)
-
-
-@pytest.mark.unit
-def test_no_external_deps_in_full_backup(valid_full_backup):
-    """Test that full backups don't report external dependencies"""
-    checker = BackupIntegrityChecker()
-    result = checker.check_data(valid_full_backup)
-
-    assert result.valid is True
-    assert result.has_external_deps is False
-    assert result.external_deps == 0
-
-
-# ========== Integration Tests: File Operations ==========
-
-@pytest.mark.integration
-def test_check_file_with_valid_backup(valid_full_backup):
-    """Test checking backup from file"""
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
-        json.dump(valid_full_backup, f)
-        temp_path = f.name
-
-    try:
-        checker = BackupIntegrityChecker()
-        result = checker.check_file(temp_path)
-
-        assert result.valid is True
-        assert len(result.errors) == 0
-    finally:
-        Path(temp_path).unlink()
-
-
-@pytest.mark.integration
-def test_check_file_with_nonexistent_file():
-    """Test checking non-existent file"""
-    checker = BackupIntegrityChecker()
-    result = checker.check_file("/nonexistent/path/backup.json")
-
-    assert result.valid is False
-    assert any("not found" in e.message for e in result.errors)
-
-
-@pytest.mark.integration
-def test_check_file_with_invalid_json():
-    """Test checking file with invalid JSON"""
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
-        f.write("{ invalid json }")
-        temp_path = f.name
-
-    try:
-        checker = BackupIntegrityChecker()
-        result = checker.check_file(temp_path)
-
-        assert result.valid is False
-        assert any("JSON" in e.message for e in result.errors)
-    finally:
-        Path(temp_path).unlink()
-
-
-# ========== Integration Tests: Convenience Functions ==========
-
-@pytest.mark.integration
-def test_convenience_function_check_backup_integrity(valid_full_backup):
-    """Test check_backup_integrity() convenience function"""
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
-        json.dump(valid_full_backup, f)
-        temp_path = f.name
-
-    try:
-        result = check_backup_integrity(temp_path)
-        assert result.valid is True
-        assert len(result.errors) == 0
-    finally:
-        Path(temp_path).unlink()
-
-
-@pytest.mark.unit
-def test_convenience_function_check_backup_data(valid_full_backup):
-    """Test check_backup_data() convenience function"""
+def test_unknown_format_version_fails(valid_full_backup):
+    valid_full_backup["header"]["format_version"] = "kg-backup/99"
     result = check_backup_data(valid_full_backup)
-
-    assert result.valid is True
-    assert len(result.errors) == 0
-    assert result.statistics == valid_full_backup["statistics"]
+    assert not result.valid
 
 
-# ========== Edge Cases ==========
+def test_missing_bulk_section_fails(valid_full_backup):
+    del valid_full_backup["bulk"]["sources"]
+    result = check_backup_data(valid_full_backup)
+    assert not result.valid
+    assert any("sources" in e.message for e in result.errors)
 
-@pytest.mark.unit
-def test_empty_backup_warning():
-    """Test that empty backup generates warning"""
-    empty_backup = {
-        "version": "1.0",
-        "type": "full_backup",
-        "timestamp": "2025-10-09T04:00:00Z",
-        "statistics": {},
-        "data": {
-            "concepts": [],
-            "sources": [],
-            "instances": [],
-            "relationships": []
-        }
+
+def test_non_list_bulk_section_fails(valid_full_backup):
+    valid_full_backup["bulk"]["concepts"] = {"not": "a list"}
+    result = check_backup_data(valid_full_backup)
+    assert not result.valid
+
+
+# ========== Reference integrity ==========
+
+def test_instance_with_missing_source_fails(valid_full_backup):
+    valid_full_backup["bulk"]["instances"][0]["source_id"] = "nonexistent_source"
+    result = check_backup_data(valid_full_backup)
+    assert not result.valid
+    assert any("source_id" in e.message for e in result.errors)
+
+
+def test_evidence_with_missing_instance_fails(valid_full_backup):
+    valid_full_backup["bulk"]["evidence"].append({"concept_id": "c1", "instance_id": "iX"})
+    result = check_backup_data(valid_full_backup)
+    assert not result.valid
+    assert any("instance_id" in e.message for e in result.errors)
+
+
+def test_relationship_missing_endpoint_fails(valid_full_backup):
+    valid_full_backup["bulk"]["relationships"][0]["from"] = None
+    result = check_backup_data(valid_full_backup)
+    assert not result.valid
+
+
+# ========== External dependencies ==========
+
+def test_external_concept_reference_is_warning_not_error():
+    """An edge to a concept absent from the backup is an external dep (warning)."""
+    lists = _lists(relationships=[
+        {"from": "c1", "to": "external_concept", "type": "IMPLIES", "properties": {}},
+    ])
+    result = check_backup_data(DataExporter.build_kg_backup_v2(**lists))
+    assert result.valid  # external refs do not fail validation
+    assert result.has_external_deps
+    assert result.external_deps == 1
+
+
+# ========== Statistics + file path ==========
+
+def test_statistics_surface_counts(valid_full_backup):
+    result = check_backup_data(valid_full_backup)
+    assert result.statistics == {
+        "concepts": 2, "sources": 1, "instances": 1, "relationships": 1, "vocabulary": 1,
     }
 
-    checker = BackupIntegrityChecker()
-    result = checker.check_data(empty_backup)
 
-    assert result.valid is True  # Empty is valid, just warned
-    assert any("no data" in w.message.lower() for w in result.warnings)
-
-
-@pytest.mark.unit
-def test_missing_instance_concept_id_error():
-    """Test that instances without concept_id are detected"""
-    invalid_backup = {
-        "version": "1.0",
-        "type": "full_backup",
-        "timestamp": "2025-10-09T04:00:00Z",
-        "statistics": {},
-        "data": {
-            "concepts": [{"concept_id": "concept_1", "label": "Test"}],
-            "sources": [{"source_id": "source_1", "document": "Test", "paragraph": 1, "full_text": "Test"}],
-            "instances": [
-                {
-                    "instance_id": "inst_1",
-                    "quote": "Test",
-                    # Missing: concept_id
-                    "source_id": "source_1"
-                }
-            ],
-            "relationships": []
-        }
-    }
-
-    checker = BackupIntegrityChecker()
-    result = checker.check_data(invalid_backup)
-
-    assert result.valid is False
-    assert any("missing concept_id" in e.message for e in result.errors)
+def test_check_file_round_trips(valid_full_backup):
+    with tempfile.TemporaryDirectory() as d:
+        p = Path(d) / "backup.json"
+        p.write_text(json.dumps(valid_full_backup))
+        result = check_backup_integrity(str(p))
+        assert result.valid, [e.message for e in result.errors]
 
 
-@pytest.mark.unit
-def test_all_valid_relationship_types_pass(valid_full_backup):
-    """Test that all valid relationship types are accepted"""
-    valid_types = ["IMPLIES", "SUPPORTS", "CONTRADICTS", "RELATES_TO", "PART_OF"]
-
-    for rel_type in valid_types:
-        backup = valid_full_backup.copy()
-        backup["data"]["relationships"][0]["type"] = rel_type
-
-        checker = BackupIntegrityChecker()
-        result = checker.check_data(backup)
-
-        assert result.valid is True, f"Valid type {rel_type} should pass"
-        assert len([w for w in result.warnings if "unusual type" in w.message]) == 0
+def test_check_file_missing_path_fails():
+    result = check_backup_integrity("/no/such/backup.json")
+    assert not result.valid
 
 
-# ========== Test Coverage Report ==========
-
-def test_integrity_checker_coverage_summary():
-    """
-    Summary of test coverage for BackupIntegrityChecker
-
-    Covered:
-    - ✅ Valid full backup validation
-    - ✅ Valid ontology backup validation
-    - ✅ Missing required fields detection
-    - ✅ Invalid backup type detection
-    - ✅ Invalid version format detection
-    - ✅ Missing data sections detection
-    - ✅ Non-list data section detection
-    - ✅ Instance with invalid concept_id
-    - ✅ Instance with invalid source_id
-    - ✅ Relationship with invalid from concept
-    - ✅ Relationship with invalid to concept
-    - ✅ Unusual relationship type warnings
-    - ✅ Statistics mismatch warnings
-    - ✅ External dependency detection (ontology backups)
-    - ✅ File operations (load from disk)
-    - ✅ Non-existent file handling
-    - ✅ Invalid JSON handling
-    - ✅ Convenience functions
-    - ✅ Empty backup warnings
-    - ✅ Missing instance concept_id
-    - ✅ All valid relationship types accepted
-
-    Test Counts:
-    - Unit tests: 19
-    - Integration tests: 4
-    - Total: 23 tests
-    """
-    pass
+def test_check_file_invalid_json_fails():
+    with tempfile.TemporaryDirectory() as d:
+        p = Path(d) / "bad.json"
+        p.write_text("{not valid json")
+        result = check_backup_integrity(str(p))
+        assert not result.valid
