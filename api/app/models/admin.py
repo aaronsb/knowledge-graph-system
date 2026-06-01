@@ -1,7 +1,7 @@
 """
 Admin API Models
 
-Models for backup, restore, status, and reset operations.
+Models for backup, status, and admin-job operations.
 """
 
 from pydantic import BaseModel, Field
@@ -87,31 +87,9 @@ class ListBackupsResponse(BaseModel):
 # (mode, epoch), not request/response models. See routes/admin.py + restore_worker.
 
 
-# ========== Reset Models ==========
-
-class ResetRequest(BaseModel):
-    """Request to reset database (requires authentication)"""
-    username: str = Field(..., description="Username for authentication")
-    password: str = Field(..., description="Password for authentication")
-    confirm: bool = Field(..., description="Must be true to confirm destructive operation")
-    clear_logs: bool = Field(True, description="Clear log files")
-    clear_checkpoints: bool = Field(True, description="Clear checkpoint files")
-
-
-class SchemaValidation(BaseModel):
-    """Schema validation results"""
-    constraints_count: int
-    vector_index_exists: bool
-    node_count: int
-    schema_test_passed: bool
-
-
-class ResetResponse(BaseModel):
-    """Reset operation response"""
-    success: bool
-    schema_validation: SchemaValidation
-    message: str
-    warnings: List[str] = []
+# Reset models (ResetRequest/ResetResponse/SchemaValidation) removed in ADR-102 P6:
+# the API reset path was retired (too dangerous) and the api/admin/reset.py CLI it
+# delegated to was deleted. Database reset is an operator-level concern now.
 
 
 # ========== Admin Job Models ==========

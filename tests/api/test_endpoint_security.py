@@ -265,13 +265,6 @@ def test_admin_status_succeeds_with_admin_token(api_client, mock_oauth_validatio
 
 @pytest.mark.api
 @pytest.mark.security
-def test_admin_reset_requires_admin_role(api_client, mock_oauth_validation, auth_headers_user):
-    """POST /admin/reset was removed — skip."""
-    pytest.skip("POST /admin/reset endpoint removed")
-
-
-@pytest.mark.api
-@pytest.mark.security
 def test_admin_extraction_config_requires_admin(api_client, mock_oauth_validation, auth_headers_user):
     """Test /admin/extraction/config returns 403 with non-admin token"""
     response = api_client.get("/admin/extraction/config", headers=auth_headers_user)
