@@ -218,8 +218,8 @@ async def restore_backup(
     current_user: CurrentUser,
     _: None = Depends(require_permission("backups", "restore")),
     file: UploadFile = File(..., description="Backup file (.tar.gz archive or .json)"),
-    overwrite: bool = Form(False, description="Overwrite existing data"),
-    handle_external_deps: str = Form("prune", description="How to handle external dependencies: 'prune', 'stitch', or 'defer'")
+    mode: str = Form("idempotent",
+                     description="Restore merge mode: 'idempotent', 'adjacent', or 'integration'")
 ):
     """
     Restore a database backup (ADR-015 Phase 2: Multipart Upload)
@@ -229,16 +229,18 @@ async def restore_backup(
     **Multipart Upload**: Client streams backup file to server.
     Server validates, then queues restore job for background processing.
 
-    Supports two formats:
+    Supports two containers:
     - **.tar.gz** (archive): Contains manifest.json + original documents from Garage
-    - **.json** (legacy): Graph data only, no source documents
+    - **.json**: The kg-backup/2 object (graph data only, no source documents)
 
-    Restore options:
-    - **overwrite**: Whether to overwrite existing data (default: false)
-    - **handle_external_deps**: How to handle external dependencies
-      - `prune`: Remove dangling relationships (default)
-      - `stitch`: Try to reconnect to existing concepts
-      - `defer`: Leave broken (requires manual fix)
+    Restore mode (ADR-102 P4) — how the backup merges into the target:
+    - `idempotent` (default): MERGE-by-id; collisions update in place. Into an
+      empty target this is a faithful clone (ids preserved 1:1).
+    - `adjacent`: mint fresh ids for everything — land the backup as an
+      independent copy alongside existing data (returns an id mapping table).
+    - `integration`: match each incoming concept to the target by similarity and
+      attach to the existing concept where found; mint the rest. Like ingest,
+      without LLM extraction.
 
     The restore process includes:
     1. Save uploaded file to temp location
@@ -255,10 +257,15 @@ async def restore_backup(
     Example (multipart/form-data):
     ```
     file: <backup_file.tar.gz>
-    overwrite: false
-    handle_external_deps: prune
+    mode: integration
     ```
     """
+    # Validate the restore mode up front (single source of truth in restore_modes).
+    from ..lib.restore_modes import RestoreMode
+    try:
+        RestoreMode.validate(mode)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
     # Validate file type
     is_archive = file.filename.endswith('.tar.gz')
@@ -332,44 +339,10 @@ async def restore_backup(
             f"Relationships: {stats.get('relationships', 0)}"
         )
 
-        # Safety check: If a single-ontology backup targets an existing ontology,
-        # require the --merge flag. The single kg-backup/2 model names the scope in
-        # the header (one ontology entry == a scoped backup) — ADR-102 P3.
-        with open(temp_path, 'r') as f:
-            import json
-            from ...lib.serialization import KgBackupV2Reader
-            backup_data = json.load(f)
-            _header_ontologies = [
-                o.get("name") for o in KgBackupV2Reader(backup_data).header.get("ontologies", [])
-                if o.get("name")
-            ]
-            backup_ontology = _header_ontologies[0] if len(_header_ontologies) == 1 else None
-
-            if backup_ontology and overwrite:
-                # Safety check: If ontology exists and user didn't specify --merge, error
-                try:
-                    # Use ontology list API to check existence
-                    from api.app.routes.ontology import list_ontologies
-
-                    ontologies_result = await list_ontologies()
-
-                    existing_ontologies = [ont.ontology for ont in ontologies_result.ontologies]
-                    logger.info(f"Existing ontologies: {existing_ontologies}")
-
-                    if backup_ontology in existing_ontologies:
-                        # Ontology exists - require --merge flag
-                        temp_path.unlink()
-                        raise HTTPException(
-                            status_code=status.HTTP_409_CONFLICT,
-                            detail=f"Ontology '{backup_ontology}' already exists. Use --merge flag to merge into existing ontology, or delete the existing ontology first."
-                        )
-                except HTTPException:
-                    # Re-raise HTTP exceptions (like 409)
-                    raise
-                except Exception as e:
-                    logger.error(f"Error checking ontology existence: {e}", exc_info=True)
-                    # Don't fail restore if ontology check fails - just proceed
-                    logger.warning(f"Proceeding with restore despite ontology check failure")
+        # (ADR-102 P4) No "ontology already exists" 409 guard: restoring into an
+        # existing ontology is now an explicit, intended choice expressed by the
+        # mode — idempotent updates in place, integration attaches by similarity,
+        # adjacent lands an independent copy. The mode IS the merge decision.
 
         # Queue restore job
         job_queue = get_job_queue()
@@ -390,8 +363,7 @@ async def restore_backup(
                 "ontology": "_system",  # System-level operation
                 "temp_file": str(temp_path),
                 "temp_file_id": str(temp_file_id),
-                "overwrite": overwrite,
-                "handle_external_deps": handle_external_deps,
+                "mode": mode,
                 "backup_stats": stats,
                 "integrity_warnings": len(integrity.warnings),
                 "archive_temp_dir": archive_temp_dir,  # For document restore (None if JSON)

@@ -19,6 +19,7 @@ from ..lib.age_client import AGEClient
 from ..lib.backup_streaming import create_backup_stream
 from ..lib.backup_archive import restore_documents_to_garage, cleanup_extracted_archive
 from ...lib.serialization import DataImporter, KgBackupV2Reader
+from ..lib.restore_modes import RestoreMode, prepare_backup
 
 logger = logging.getLogger(__name__)
 
@@ -42,8 +43,7 @@ def run_restore_worker(
         job_data: Job parameters
             - temp_file: str - Path to uploaded backup file
             - temp_file_id: str - UUID of temp file
-            - overwrite: bool - Overwrite existing data
-            - handle_external_deps: str - How to handle external dependencies
+            - mode: str - Restore merge mode (idempotent | adjacent | integration)
             - backup_stats: dict - Statistics from backup file
             - integrity_warnings: int - Number of validation warnings
         job_id: Job ID for progress tracking
@@ -57,8 +57,7 @@ def run_restore_worker(
     """
     temp_file = Path(job_data["temp_file"])
     temp_file_id = job_data["temp_file_id"]
-    overwrite = job_data.get("overwrite", True)  # Default: create new concepts (full restore)
-    handle_external_deps = job_data.get("handle_external_deps", "prune")
+    mode = RestoreMode.validate(job_data.get("mode", RestoreMode.DEFAULT))
     backup_stats = job_data.get("backup_stats", {})
     archive_temp_dir = job_data.get("archive_temp_dir")  # For archive restores
     is_archive = job_data.get("is_archive", False)
@@ -100,26 +99,19 @@ def run_restore_worker(
         with open(temp_file, 'r', encoding='utf-8') as f:
             backup_data = json.load(f)
 
-        # Stage 2.5: ADR-102 clone/merge gate — target emptiness, not a backup-type
-        # flag (the single kg-backup/2 model carries no v1 "full_backup" type).
-        #   empty target   → CLONE: ids preserved 1:1, props set fresh.
-        #   populated target → MERGE: MERGE-by-id in place (adjacent/integration in P4).
-        # A destructive "replace everything" is now an explicit reset (then clone),
-        # never an implicit wipe during restore.
-        if _target_is_empty(client):
-            logger.info(f"[{job_id}] Empty target — clone restore (ids preserved 1:1)")
-            overwrite = True
-        else:
-            logger.info(f"[{job_id}] Populated target — merge restore (overwrite={overwrite})")
+        # Stage 2.5: ADR-102 P4 — transform the backup for the chosen restore MODE
+        # (a restore-time request param; the backup file carries no policy).
+        #   idempotent  → MERGE-by-id in place (into an empty target: a faithful clone)
+        #   adjacent    → fresh ids everywhere (independent copy + mapping table)
+        #   integration → match concepts to existing target & attach; mint the rest
+        target_state = "empty" if _target_is_empty(client) else "populated"
+        logger.info(f"[{job_id}] Restore mode: {mode} (target {target_state})")
+        prepared_backup, mapping_table = prepare_backup(backup_data, mode, client)
 
         # Stage 3: Execute restore with progress tracking
-        logger.info(f"[{job_id}] Starting restore operation (overwrite={overwrite})")
-
         restore_stats = _execute_restore(
             client=client,
-            backup_data=backup_data,
-            overwrite=overwrite,
-            handle_external_deps=handle_external_deps,
+            backup_data=prepared_backup,
             job_id=job_id,
             job_queue=job_queue
         )
@@ -136,10 +128,13 @@ def run_restore_worker(
                 }
             })
 
+            # Use the PREPARED object: adjacent/integration recompute storage_keys,
+            # so media must land under the same keys the restored source nodes now
+            # reference. overwrite=False skips media already present (same content).
             doc_stats = restore_documents_to_garage(
                 temp_dir=archive_temp_dir,
-                manifest_data=backup_data,
-                overwrite=overwrite
+                manifest_data=prepared_backup,
+                overwrite=False
             )
 
             logger.info(
@@ -188,9 +183,14 @@ def run_restore_worker(
         else:
             checkpoint_deleted = False
 
+        # Mapping table is the transposition artifact for adjacent/integration
+        # (old→new ids). Empty for idempotent — omit it then to keep results small.
+        remapped = any(mapping_table.get(k) for k in ("concepts", "sources", "instances"))
         return {
             "status": "completed",
+            "restore_mode": mode,
             "restore_stats": restore_stats,
+            "mapping_table": mapping_table if remapped else None,
             "document_stats": doc_stats if is_archive else None,
             "checkpoint_created": True,
             "checkpoint_deleted": checkpoint_deleted,
@@ -317,13 +317,16 @@ def _target_is_empty(client: AGEClient) -> bool:
 def _execute_restore(
     client: AGEClient,
     backup_data: Dict[str, Any],
-    overwrite: bool,
-    handle_external_deps: str,
     job_id: str,
     job_queue
 ) -> Dict[str, int]:
     """
-    Execute restore operation with progress tracking.
+    Execute restore of an already-mode-prepared kg-backup/2 object, with progress.
+
+    The object has already been transformed for its restore mode (idempotent =
+    unchanged; adjacent/integration = ids rewritten). The writer always uses
+    overwrite_existing=True: idempotent updates matching nodes in place, while
+    adjacent/integration ids are fresh or attach to existing targets.
 
     Returns:
         Dict with restore statistics
@@ -379,7 +382,7 @@ def _execute_restore(
     stats = DataImporter.import_backup(
         client,
         backup_data,
-        overwrite_existing=overwrite,
+        overwrite_existing=True,
         progress_callback=progress_callback
     )
 
