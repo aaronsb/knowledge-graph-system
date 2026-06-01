@@ -904,7 +904,6 @@ VALUES
     ('vocab_emergency', '200', 'Emergency threshold (aggressive pruning)', 'system'),
     ('aggressiveness_profile', 'aggressive', 'Bezier curve profile for pruning aggressiveness', 'system'),
     ('pruning_mode', 'hitl', 'Decision mode: naive, hitl, aitl', 'system'),
-    ('embedding_model', 'text-embedding-ada-002', 'OpenAI model for embeddings', 'system'),
     ('auto_expand_enabled', 'false', 'Enable automatic vocabulary expansion', 'system'),
     ('synonym_threshold_strong', '0.90', 'Strong synonym threshold (auto-merge)', 'system'),
     ('synonym_threshold_moderate', '0.70', 'Moderate synonym threshold (review)', 'system'),

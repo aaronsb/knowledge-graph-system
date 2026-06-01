@@ -46,7 +46,6 @@ export interface VocabularyConfig {
   synonym_threshold_moderate: number;
   low_value_threshold: number;
   consolidation_similarity_threshold: number;
-  embedding_model: string;
   updated_at?: string | null;
   updated_by?: string | null;
   // Computed fields
