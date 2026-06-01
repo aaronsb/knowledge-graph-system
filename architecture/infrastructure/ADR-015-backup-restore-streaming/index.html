@@ -11795,6 +11795,17 @@
 
 
 <h1 id="adr-015-backuprestore-streaming-architecture">ADR-015: Backup/Restore Streaming Architecture</h1>
+<blockquote>
+<p><strong>Status update (ADR-102, 2026):</strong> the client-controlled streaming model decided
+here is live. <strong>Phase 1 (backup download)</strong> ships as
+<code>api/app/lib/backup_streaming.py</code> + <code>backup_archive.py</code>. <strong>Phase 2 (restore upload)</strong>,
+tracked below as "🚧 IN PROGRESS", was <em>delivered</em> by
+<a href="../ADR-102-portable-backup-and-restore-with-clone-merge-semantics/">ADR-102</a> — the
+portable <code>kg-backup/2</code> format with clone/merge/restamp restore semantics, epoch
+reconciliation, and the async <code>restore_worker</code>. ADR-102 builds <strong>on</strong> this ADR's
+streaming foundation rather than replacing it, so ADR-015 remains Accepted; the
+Phase-2 progress markers below are historical (read them as "done, see ADR-102").</p>
+</blockquote>
 <h2 id="overview">Overview</h2>
 <p>Think about how you back up photos from your phone. The photos live on your device, not on some cloud server. You initiate the backup, your phone sends the files where you want them, and you can restore them whenever needed. Now imagine if instead, all your photos were "backed up" to a folder on Apple's servers that you couldn't even access - that would be pretty useless, right?</p>
 <p>That's exactly the problem we had with our initial backup system. When you asked for a backup of your knowledge graph, the system would create it... on the server. You couldn't download it, move it, or keep it somewhere safe. Even worse, if you wanted to restore from a backup, you had to tell the server the filename of a file sitting on the server's disk. This violated a basic principle: the person who owns the data should control where it lives.</p>
