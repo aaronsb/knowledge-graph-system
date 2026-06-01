@@ -761,6 +761,15 @@ def _selftest() -> int:
     r_dim_bad = validate_backup(_dim_obj([0.1, 0.2]))               # 2 != @3
     assert any(i.code == "E_CONCEPT_EMBEDDING_DIM" for i in r_dim_bad.issues), \
         "embedding length != profile @dims must flag E_CONCEPT_EMBEDDING_DIM"
+    # no double-report: an out-of-range profile + a present embedding yields the
+    # range error only — the dim check declines when the profile doesn't resolve.
+    obj_oor = _dim_obj([0.1, 0.2, 0.3])
+    obj_oor["bulk"]["concepts"][0]["embedding_profile"] = 99
+    r_oor = validate_backup(obj_oor)
+    assert any(i.code == "E_CONCEPT_PROFILE_RANGE" for i in r_oor.issues), \
+        "out-of-range record profile must flag E_CONCEPT_PROFILE_RANGE"
+    assert not any(i.code == "E_CONCEPT_EMBEDDING_DIM" for i in r_oor.issues), \
+        "out-of-range profile must NOT also trigger E_CONCEPT_EMBEDDING_DIM"
 
     # single-path: the removed legacy flat shape (no header) is refused
     legacy = {"version": "1.0", "type": "full", "data": {"concepts": [], "sources": [],
