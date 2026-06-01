@@ -237,6 +237,18 @@ resolution order, most-specific-wins:
 - The same cascade pattern is the model for any future header dictionary whose
   values are scope-defaultable; today only the embedding profile cascades.
 
+> **OPEN ITEM (resolve in ADR-102 P2 — export).** The ontology tier above assumes
+> a concept can be associated with an ontology, but a concept record (§5.1) carries
+> **no** ontology field — concepts associate with an ontology only indirectly, via
+> `APPEARS → Source{document}`. P2 must pin one of: (a) add an explicit ontology
+> hint to the concept record so the ontology tier resolves, or (b) drop the ontology
+> tier for concepts entirely (concept cascade = record-override → backup-default),
+> reserving per-ontology defaults for source/media records. Until pinned, a consumer
+> resolving a concept's profile falls through to the backup-level default. The
+> offline validator (`lint_backup.py`) currently keys the ontology tier on a
+> `concept.ontology`/`concept.document` field if present and otherwise falls through
+> — it must be updated in lockstep when this is resolved.
+
 A consumer resolves a record's effective profile by walking 1 → 2 → 3 and taking
 the first index present. The resolved index then keys
 `header.embedding_profiles[]` for the keep-vs-recompute decision (ADR-102 §6).

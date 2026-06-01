@@ -286,19 +286,18 @@ USER_COUNT=$(docker exec $CONTAINER psql -U $DB_USER -d $DB_NAME -t -A -c \
 CONCEPT_COUNT=$(echo "$CONCEPT_COUNT" | tr -d '[:space:]'); CONCEPT_COUNT=${CONCEPT_COUNT:-0}
 SOURCE_COUNT=$(echo "$SOURCE_COUNT" | tr -d '[:space:]'); SOURCE_COUNT=${SOURCE_COUNT:-0}
 
-# Fail loudly if the restore produced an empty/partial graph. A backup made by
-# backup-database.sh always contains concepts and sources, so zero of both means
-# the restore did not actually land (e.g. silent rollback or wrong-format dump).
-if ! [[ "$CONCEPT_COUNT" =~ ^[0-9]+$ ]] || ! [[ "$SOURCE_COUNT" =~ ^[0-9]+$ ]] \
-   || { [ "$CONCEPT_COUNT" -eq 0 ] && [ "$SOURCE_COUNT" -eq 0 ]; }; then
-    echo -e "${RED}✗${NC} Restore completed but the graph is empty (concepts=$CONCEPT_COUNT, sources=$SOURCE_COUNT)"
-    echo -e "  ${YELLOW}This usually means pg_restore rolled back or the backup is invalid.${NC}"
+# Secondary sanity check on the restored graph. pg_restore's exit status
+# (captured via `set -o pipefail` above) is the AUTHORITATIVE success signal —
+# a genuine failure already took the error path. These counts only catch the
+# rare exit-0-but-rolled-back case, so an empty graph here is a loud WARNING,
+# not a failure: the DROP is already irreversible, and a legitimately empty (or
+# unusually small) backup would otherwise trip a misleading "restore failed".
+if ! [[ "$CONCEPT_COUNT" =~ ^[0-9]+$ ]] || ! [[ "$SOURCE_COUNT" =~ ^[0-9]+$ ]]; then
+    echo -e "${YELLOW}⚠${NC}  Could not read post-restore counts (concepts=$CONCEPT_COUNT, sources=$SOURCE_COUNT); skipping the empty-graph check."
+elif [ "$CONCEPT_COUNT" -eq 0 ] && [ "$SOURCE_COUNT" -eq 0 ]; then
+    echo -e "${YELLOW}⚠${NC}  Restore completed but the graph is empty (0 concepts, 0 sources)."
+    echo -e "  ${YELLOW}If the backup was non-empty this may indicate a silent rollback — check ${BLUE}docker logs $CONTAINER${NC}."
     echo ""
-    echo -e "${YELLOW}Troubleshooting:${NC}"
-    echo "  1. Verify backup file is valid: ${BLUE}file $BACKUP_FILE${NC}"
-    echo "  2. View Docker logs: ${BLUE}docker logs $CONTAINER${NC}"
-    echo ""
-    exit 1
 fi
 
 echo -e "${GREEN}✓${NC} Database restored successfully!"

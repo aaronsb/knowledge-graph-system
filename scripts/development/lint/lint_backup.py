@@ -348,6 +348,13 @@ def _resolve_concept_profile(
     if _is_int_index(concept.get("embedding_profile")):
         return concept["embedding_profile"]
     # 2. ontology default (concept may name its ontology via 'document'/'ontology')
+    #
+    # OPEN ITEM (BACKUP_OBJECT_SPEC §4.1): concept records carry no ontology field
+    # in the current spec — concepts associate with an ontology only indirectly via
+    # APPEARS->Source{document}. We key on a 'ontology'/'document' field IF present
+    # and otherwise fall through to the backup default. ADR-102 P2 must pin the
+    # concept->ontology association (add a hint field, or drop the ontology tier for
+    # concepts); update this resolution in lockstep when it does.
     ont_name = concept.get("ontology") or concept.get("document")
     ont = ontologies_by_name.get(ont_name) if ont_name else None
     if isinstance(ont, dict) and _is_int_index(ont.get("default_embedding_profile")):

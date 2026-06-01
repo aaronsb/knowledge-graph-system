@@ -1,16 +1,20 @@
 """
 Concept matching engine for restore integration mode (ADR-102 §2).
 
-Ported from the legacy ``api/lib/restitching.py`` ``ConceptMatcher`` and adapted
-to ``api/app`` conventions. This module is the *matching engine only*: given an
-external concept (carrying an embedding, and optionally a label) it finds the
-best-matching existing concept in the target graph by cosine similarity, using
-the project's canonical two-tier thresholds. It performs no LLM calls, generates
-no embeddings, and is not wired into any worker, route, or service — that wiring
-is Phase 4 of ADR-102.
+Succeeds the legacy ``api/lib/restitching.py`` ``ConceptMatcher`` as the
+``api/app`` integration-mode engine. NOTE: this is not a line-for-line port —
+the legacy matcher used a single 0.85 threshold; this module implements the
+project's **canonical two-tier policy** (``api/app/lib/ingestion.py:432-461``),
+which is what ADR-102 §2 specifies for integration mode. It is the *matching
+engine only*: given an external concept (carrying an embedding, and optionally a
+label) it finds the best-matching existing concept in the target graph by cosine
+similarity. It performs no LLM calls, generates no embeddings, and is not wired
+into any worker, route, or service — that wiring is Phase 4 of ADR-102.
 
 The matching policy mirrors the canonical ingestion path
-(``api/app/lib/ingestion.py``):
+(``api/app/lib/ingestion.py``), with one deliberate refinement: ingestion
+inspects only the top candidate, whereas this engine walks candidates best-first
+so a label-boosted match just below a non-matching top hit is not missed:
 
 - **Strict tier (>= 0.85):** any candidate at or above this cosine similarity is
   an unconditional match.

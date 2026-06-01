@@ -35,8 +35,10 @@ does not deliver this.
 - **Restore worker** — `api/app/workers/restore_worker.py` adds checkpoint + rollback
   safety and calls `record_mutation` to advance the freshness clock after a restore.
 - **Semantic re-stitch** — `api/lib/restitching.py` `ConceptMatcher` already performs
-  an O(n) cosine-similarity scan to attach incoming concepts to existing ones
-  (0.85 strict / 0.75 label-boosted, no LLM). This is the engine for integration mode.
+  an O(n) cosine-similarity scan to attach incoming concepts to existing ones, no LLM.
+  It is the engine for integration mode. (The legacy matcher uses a single 0.85
+  threshold; integration mode adopts the canonical two-tier ingestion policy —
+  0.85 strict / 0.75 label-boosted, `ingestion.py:432-461` — when the engine is ported.)
 - **Physical path** — `operator/database/{backup,restore}-database.sh` wrap
   `pg_dump`/`pg_restore`.
 
