@@ -1287,25 +1287,39 @@ class DataImporter:
           one restore event id (carried ids would dangle — the simple path does not
           replay ``graph_epochs``).
         - neither: carry verbatim (checkpoint rollback).
+
+        Faithful safety: a carried id absent from ``event_id_map`` (an instance
+        referencing an event the backup did not carry) is stamped NULL rather than
+        passed through — a passed-through foreign id would dangle against the target's
+        fresh epoch sequence (reads unpredictably); NULL reads stale, which is safe.
         """
         total = len(instances)
         lock = threading.Lock()
         done = {"n": 0}
+        unmapped = {"n": 0}
 
         def _event_id(inst):
             carried = inst.get("created_at_event_id")
             if event_id_map is not None:
-                return event_id_map.get(carried, carried)
+                if carried is None:
+                    return None
+                mapped = event_id_map.get(carried)
+                if mapped is None:
+                    unmapped["n"] += 1  # tracked under `lock` in work()
+                    return None
+                return mapped
             if restamp_event_id is not None:
                 return restamp_event_id
             return carried
 
         def work(inst):
+            with lock:
+                eid = _event_id(inst)
             params = {
                 "instance_id": inst["instance_id"],
                 "quote": inst.get("quote", ""),
                 "source_id": inst["source_id"],
-                "created_at_event_id": _event_id(inst),
+                "created_at_event_id": eid,
             }
             _execute_with_age_retry(client, DataImporter._INSTANCE_Q, params)
             with lock:
@@ -1313,6 +1327,11 @@ class DataImporter:
                 _progress(progress_callback, "instances", done["n"], total)
 
         _run_parallel(instances, work, max_workers)
+        if unmapped["n"]:
+            Console.warning(
+                f"  {unmapped['n']} instance(s) referenced an event_id not in the "
+                f"backup's graph_epochs — left unstamped (faithful replay)."
+            )
 
     @staticmethod
     def _import_evidence(client: AGEClient, pairs: List, max_workers: int) -> None:
@@ -1422,6 +1441,9 @@ class DataImporter:
                     name = k.get("kind") if isinstance(k, dict) else k
                     if not name:
                         continue
+                    # Log-only kinds (present in the epoch log but not the lookup
+                    # export) arrive as bare {"kind": k} with no flag — default them
+                    # to forensic (semantic_wallclock=False), the conservative choice.
                     wallclock = bool(k.get("semantic_wallclock", False)) if isinstance(k, dict) else False
                     desc = (k.get("description") if isinstance(k, dict) else None) or ""
                     cur.execute(
@@ -1458,6 +1480,10 @@ class DataImporter:
             with conn.cursor() as cur:
                 for ep in reader.graph_epochs():
                     old_id = ep.get("event_id")
+                    # counter_after is carried verbatim — it snapshots the SOURCE
+                    # graph's graph_change_counter, a foreign counter space. It is
+                    # display-only (epoch_facade timeline), never drives the watermark
+                    # or vitality, so carrying it is honest for a faithful replay.
                     cur.execute(
                         "INSERT INTO kg_api.graph_epochs "
                         "(occurred_at, kind, actor, counter_after, metadata, status) "

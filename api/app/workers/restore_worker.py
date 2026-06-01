@@ -84,8 +84,11 @@ def _target_is_empty(client: AGEClient) -> bool:
                 cur.execute("SELECT count(*) FROM kg_api.graph_epochs")
                 if int(cur.fetchone()[0]) > 0:
                     return False
-    finally:
         conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
         client.pool.putconn(conn)
     return True
 
@@ -231,6 +234,12 @@ def run_restore_worker(
             # events (fresh ids, carried occurred_at/kind/actor/metadata), then stamp
             # each Instance via the old→new map. Concepts carry their ORIGINAL epochs;
             # the counter is advanced after import so vitality stays consistent.
+            #
+            # Raw INSERT (not record_epoch) so we can carry occurred_at + mint N rows
+            # in one pass — watermark-equivalent to the simple path's stored-function
+            # in_progress event. A crash between this commit and the resolve below
+            # leaves N rows in_progress (the simple path leaves 1); the orphaned-epoch
+            # reconciliation sweep that fixes both is tracked in issue #485.
             reader = KgBackupV2Reader(prepared_backup)
             DataImporter._ensure_epoch_kinds(client, reader)
             event_id_map = DataImporter._replay_graph_epochs(client, reader, status="in_progress")
@@ -328,7 +337,7 @@ def run_restore_worker(
                 DataImporter._set_ingestion_counter(client, max_concept_epoch)
             logger.info(
                 f"[{job_id}] Faithful replay resolved {len(replayed_event_ids)} epochs; "
-                f"ingestion counter ≥ {max_concept_epoch}"
+                f"ingestion counter >= {max_concept_epoch}"
             )
         else:
             client.complete_epoch(restore_event_id, "completed")
@@ -418,7 +427,9 @@ def run_restore_worker(
         # any node the failed restore created that is absent from the checkpoint
         # SURVIVES the rollback, stamped with this failed restore_event_id. That
         # residue reads stale (safe), but a true-replace rollback is tracked in
-        # issue #483 (pre-existing MERGE-without-clear weakness).
+        # issue #483 (pre-existing MERGE-without-clear weakness). For faithful the
+        # same applies: the resolved-'failed' replayed epoch rows survive referencing
+        # nothing (the empty-target checkpoint rollback is a no-op), reading stale.
         if client is not None:
             if restore_event_id is not None:  # epoch-simple
                 client.complete_epoch(restore_event_id, "failed")

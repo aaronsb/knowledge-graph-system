@@ -205,6 +205,37 @@ def test_faithful_replay_mints_ordered_ids_and_maps_instances(client_with_cleanu
             client.pool.putconn(conn)
 
 
+def test_faithful_unmapped_event_id_is_unstamped_not_dangling(client_with_cleanup):
+    """P5-faithful safety (review M2): an instance referencing an event_id absent
+    from the backup's graph_epochs must be stamped NULL, not passed through to a
+    foreign id that would dangle against the target's fresh epoch sequence."""
+    client = client_with_cleanup
+    backup = DataExporter.build_kg_backup_v2(
+        concepts=[{"concept_id": f"{NS}uc1", "label": "U", "search_terms": [],
+                   "embedding": [0.1, 0.2, 0.3], "created_at_epoch": 1, "last_seen_epoch": 1}],
+        sources=[{"source_id": f"{NS}us1", "document": "U", "file_path": "/u", "paragraph": 1,
+                  "full_text": "t", "content_type": "text/plain"}],
+        # Instance references event 999 — NOT present in graph_epochs below.
+        instances=[{"instance_id": f"{NS}ui1", "quote": "q", "source_id": f"{NS}us1",
+                    "created_at_event_id": 999}],
+        evidence=[{"concept_id": f"{NS}uc1", "instance_id": f"{NS}ui1"}],
+        relationships=[], vocabulary=[],
+        embedding_profiles=[{"identity": "x", "vector_space": "x", "image_vector_space": None,
+                             "name": "d", "multimodal": False}],
+        epoch_kinds=[], graph_epochs=[], schema_version=76,
+    )
+    # event_id_map is empty (no carried epochs) → 999 is unmapped.
+    DataImporter.import_backup(client, backup, overwrite_existing=True, event_id_map={})
+
+    # Stamped NULL (unstamped), NOT the dangling foreign id 999.
+    assert _scalar(client,
+        f"MATCH (i:Instance {{instance_id:'{NS}ui1'}}) "
+        f"WHERE i.created_at_event_id = 999 RETURN count(i) AS n") == 0
+    assert _scalar(client,
+        f"MATCH (i:Instance {{instance_id:'{NS}ui1'}}) "
+        f"WHERE i.created_at_event_id IS NULL RETURN count(i) AS n") == 1
+
+
 def test_merge_relationship_rejects_unsafe_edge_label():
     """A crafted edge label (untrusted backup) is skipped, never interpolated into Cypher."""
     client = MagicMock()
