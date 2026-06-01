@@ -9,9 +9,21 @@ archived, or restored. Validates the single backup model (``kg-backup/2``):
 - External dependencies (concept references not contained in this backup — partial backups)
 - Statistics (record counts surfaced for logging)
 
-This is the *runtime* checker. The exhaustive *offline* oracle is
-``scripts/development/lint/lint_backup.py`` (used in tests/linting). Consolidating
-the two v2 validators is tracked for ADR-102 P6.
+This is the *runtime* checker, deliberately distinct from the offline oracle
+``scripts/development/lint/lint_backup.py``. They validate DIFFERENT layers and are
+intentionally NOT merged (evaluated and decided in ADR-102 P6 — do not "consolidate"
+them):
+  - THIS module checks the DE-INTERNED logical graph via :class:`KgBackupV2Reader`
+    (referential integrity, external deps, statistics) — the cheap runtime gate run
+    before a backup is streamed / archived / restored.
+  - ``lint_backup`` checks the RAW interned on-disk structure (dictionary index
+    ranges, interning integrity, §6 derived-product exclusions, format negotiation)
+    and carries NO api-package dependency by design (ADR-102 Track D), so the
+    pytest oracle can load it standalone by file path.
+
+A shared core would force one layer's representation onto the other and couple the
+standalone oracle to the api package; the narrow overlap (reference / external-dep
+checks) does not justify the cost.
 """
 
 from typing import Dict, List, Optional, Any, Set
