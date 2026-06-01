@@ -28,8 +28,10 @@ from ..models.admin import (
     SystemStatusResponse,
     BackupRequest,
     ListBackupsResponse,
-    # ResetRequest, ResetResponse removed - reset moved to initialize-platform.sh option 0
-    # BackupResponse / RestoreRequest / RestoreResponse removed in ADR-102 P6 (dead)
+    # ResetRequest/ResetResponse/SchemaValidation and BackupResponse/RestoreRequest/
+    # RestoreResponse removed in ADR-102 P6 (dead). The API reset path was retired
+    # (too dangerous — reset was one of the earliest worker functions); database reset
+    # is an operator-level concern now, not an API/worker operation.
 )
 from ..dependencies.auth import CurrentUser, require_permission
 from ..services.admin_service import AdminService

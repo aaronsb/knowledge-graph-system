@@ -129,9 +129,9 @@ def require_role(role: str):
     Decorator for role-based access control (Phase 2).
 
     Usage:
-        @router.post("/admin/reset")
+        @router.post("/admin/backup")
         @require_role("admin")
-        async def reset_database():
+        async def create_backup():
             ...
     """
     def decorator(func):

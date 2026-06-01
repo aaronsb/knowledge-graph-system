@@ -25,8 +25,6 @@ from ..models.admin import (
     PythonEnvironment,
     ConfigurationStatus,
     ListBackupsResponse,
-    ResetResponse,
-    SchemaValidation,
 )
 
 
@@ -102,51 +100,6 @@ class AdminService:
             backups=backups,
             backup_dir=str(self.backup_dir),
             count=len(backups),
-        )
-
-    async def reset_database(
-        self,
-        clear_logs: bool = True,
-        clear_checkpoints: bool = True
-    ) -> ResetResponse:
-        """Reset database (nuclear option) - Delegates to reset module"""
-
-        # Import reset module
-        from ...admin.reset import ResetManager
-        from ..services.job_queue import get_job_queue
-
-        # Execute reset in thread pool (reset module uses subprocess)
-        loop = asyncio.get_event_loop()
-        manager = ResetManager(project_root=self.project_root)
-
-        result = await loop.run_in_executor(
-            None,
-            manager.reset,
-            clear_logs,
-            clear_checkpoints,
-            False  # verbose=False for API calls
-        )
-
-        if not result["success"]:
-            raise RuntimeError(result["error"])
-
-        # Note: Jobs table is already cleared by database reset (docker-compose down -v)
-        # No need to clear again - attempting to do so would fail with stale connection
-        logger.info("✓ Jobs database cleared by database reset")
-
-        # Convert validation results to API response model
-        validation = result["validation"]
-        schema_validation = SchemaValidation(
-            constraints_count=validation["schema_count"],    # PostgreSQL schemas (kg_api, kg_auth, kg_logs)
-            vector_index_exists=validation["graph_exists"],  # AGE graph exists
-            node_count=validation["node_count"],
-            schema_test_passed=validation["schema_test_passed"],
-        )
-
-        return ResetResponse(
-            success=True,
-            schema_validation=schema_validation,
-            message="Database reset successfully",
         )
 
     # ========== Helper Methods ==========

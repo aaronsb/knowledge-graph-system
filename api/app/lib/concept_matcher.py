@@ -1,9 +1,10 @@
 """
 Concept matching engine for restore integration mode (ADR-102 §2).
 
-Succeeds the legacy ``api/lib/restitching.py`` ``ConceptMatcher`` as the
-``api/app`` integration-mode engine. NOTE: this is not a line-for-line port —
-the legacy matcher used a single 0.85 threshold; this module implements the
+Succeeds the legacy ``api/lib/restitching.py`` ``ConceptMatcher`` (removed in
+ADR-102 P6) as the ``api/app`` integration-mode engine. NOTE: this was not a
+line-for-line port — the legacy matcher used a single 0.85 threshold; this
+module implements the
 project's **canonical two-tier policy** (``api/app/lib/ingestion.py:432-461``),
 which is what ADR-102 §2 specifies for integration mode. It is the *matching
 engine only*: given an external concept (carrying an embedding, and optionally a
