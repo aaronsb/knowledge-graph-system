@@ -83,6 +83,28 @@ def run_source_embedding_worker(
             }
         })
 
+        # ADR-102 P5 rehydration: bulk only-missing mode. A restore imports source
+        # nodes WITHOUT their text/visual embeddings (those do not travel in the
+        # backup), so the restore worker enqueues one of these to fill the gaps.
+        # only_missing=True skips sources that already have embeddings — safe and
+        # idempotent, so it never re-embeds concepts/sources that arrived intact.
+        if job_data.get("rehydrate_missing"):
+            import asyncio
+            ontology = job_data.get("ontology")  # None → all ontologies
+            logger.info(
+                f"[{job_id}] Source-embedding rehydration (only_missing=True, "
+                f"ontology={ontology or 'ALL'})"
+            )
+            job_queue.update_job(job_id, {
+                "progress": {"stage": "rehydrating",
+                             "message": "Regenerating missing source embeddings"}
+            })
+            result = asyncio.run(regenerate_source_embeddings(
+                only_missing=True,
+                ontology=ontology,
+            ))
+            return {"status": "completed", "rehydrate_missing": True, **result}
+
         # Extract parameters
         source_id = job_data.get("source_id")
         if not source_id:
