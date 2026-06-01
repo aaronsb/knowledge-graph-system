@@ -35,6 +35,7 @@ _Containers, deployment, backup, storage, networking_
 | [ADR-088](./infrastructure/ADR-088-semantic-election-protocol.md) | Semantic Election Protocol for Distributed Concept Placement | Proposed |
 | [ADR-100](./infrastructure/ADR-100-database-driven-job-dispatch.md) | Database-Driven Job Dispatch | Accepted |
 | [ADR-101](./infrastructure/ADR-101-rocm-image-variant-and-install-time-selection.md) | ROCm Image Variant and Install-Time Selection | Accepted |
+| [ADR-102](./infrastructure/ADR-102-portable-backup-and-restore-with-clone-merge-semantics.md) | Portable Backup and Restore with Clone/Merge Semantics | Accepted |
 
 ## Database/Schema
 _Apache AGE, migrations, schema design, PostgreSQL_
