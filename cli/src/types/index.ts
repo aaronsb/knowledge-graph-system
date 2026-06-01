@@ -685,22 +685,9 @@ export interface BackupRequest {
   format?: 'archive' | 'json' | 'gexf';  // Export format: archive (tar.gz with documents, default), json (graph only), or gexf (Gephi visualization)
 }
 
-export interface BackupIntegrityAssessment {
-  external_dependencies_count: number;
-  warnings_count: number;
-  issues_count: number;
-  has_external_deps: boolean;
-  details: Record<string, any>;
-}
-
-export interface BackupResponse {
-  success: boolean;
-  backup_file: string;
-  file_size_mb: number;
-  statistics: Record<string, number>;
-  integrity_assessment?: BackupIntegrityAssessment;
-  message: string;
-}
+// BackupIntegrityAssessment / BackupResponse removed in ADR-102 P6: the backup route
+// streams the file (createBackup returns {filename,path,size}); the Python-side
+// BackupResponse/BackupIntegrityAssessment models were deleted in P6a.
 
 export interface BackupInfo {
   filename: string;
@@ -715,23 +702,9 @@ export interface ListBackupsResponse {
   count: number;
 }
 
-export interface RestoreRequest {
-  username: string;
-  password: string;
-  backup_file: string;
-  // ADR-102 P4: restore merge mode (replaces overwrite + handle_external_deps).
-  mode?: 'idempotent' | 'adjacent' | 'integration';
-  // ADR-102 P5: epoch reconciliation. 'faithful' is clone-only (idempotent + empty target).
-  epoch?: 'simple' | 'faithful';
-}
-
-export interface RestoreResponse {
-  success: boolean;
-  restored_counts: Record<string, number>;
-  warnings: string[];
-  message: string;
-  // external_deps_handled removed in ADR-102 P6 (dead field; restore uses --mode/--epoch)
-}
+// RestoreRequest / RestoreResponse removed in ADR-102 P6: restoreBackup() uses
+// positional args (backupFilePath, mode, onUploadProgress, epoch) + multipart
+// FormData and returns an inline result type — these interfaces were never used.
 
 // ========== RBAC Types (ADR-028) ==========
 
