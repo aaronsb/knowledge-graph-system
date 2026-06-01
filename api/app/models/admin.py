@@ -76,15 +76,6 @@ class BackupRequest(BaseModel):
     format: str = Field("archive", description="Export format: 'archive' (tar.gz with documents, default), 'json' (graph only), or 'gexf' (Gephi visualization)")
 
 
-class BackupIntegrityAssessment(BaseModel):
-    """Backup integrity assessment results"""
-    external_dependencies_count: int = 0
-    warnings_count: int = 0
-    issues_count: int = 0
-    has_external_deps: bool = False
-    details: Dict[str, Any] = {}
-
-
 class ListBackupsResponse(BaseModel):
     """List available backups"""
     backups: List[Dict[str, Any]]
