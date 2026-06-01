@@ -193,8 +193,7 @@ export function createRestoreCommand(): Command {
     .description('Restore a database backup (uses OAuth authentication)')
     .option('--file <name>', 'Backup filename (from configured directory)')
     .option('--path <path>', 'Custom backup file path (overrides configured directory)')
-    .option('--merge', 'Merge into existing ontology if it exists (default: error if ontology exists)', false)
-    .option('--deps <action>', 'How to handle external dependencies: prune, stitch, defer', 'prune')
+    .option('--mode <mode>', 'Restore merge mode: "idempotent" (default; MERGE-by-id, clone into empty), "adjacent" (independent copy, fresh ids), or "integration" (attach concepts to existing graph by similarity)', 'idempotent')
     .option('--confirm', 'Confirm restore operation (required for non-interactive use)', false)
     .action(async (options) => {
       try {
@@ -291,10 +290,15 @@ export function createRestoreCommand(): Command {
         let spinner = ora('Uploading backup...').start();
 
         try {
+          const validModes = ['idempotent', 'adjacent', 'integration'];
+          if (!validModes.includes(options.mode)) {
+            spinner.fail(`Invalid --mode "${options.mode}". Expected one of: ${validModes.join(', ')}`);
+            process.exit(1);
+          }
+
           const uploadResult = await client.restoreBackup(
             backupFilePath,
-            !options.merge,
-            options.deps,
+            options.mode,
             (uploaded: number, total: number, percent: number) => {
               const uploadedMB = (uploaded / (1024 * 1024)).toFixed(2);
               const totalMB = (total / (1024 * 1024)).toFixed(2);
