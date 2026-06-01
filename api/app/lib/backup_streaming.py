@@ -1,7 +1,7 @@
 """
 Backup Streaming Service
 
-Implements ADR-015 Phase 2: Streaming backup download with chunked transfer encoding.
+Implements ADR-015 Phase 1: Streaming backup download with chunked transfer encoding.
 Converts backup dictionaries into JSON or GEXF streams without loading entire backup into memory.
 
 Supports two formats:
