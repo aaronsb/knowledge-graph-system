@@ -27,11 +27,9 @@ from typing import Optional
 from ..models.admin import (
     SystemStatusResponse,
     BackupRequest,
-    BackupResponse,
     ListBackupsResponse,
-    RestoreRequest,
-    RestoreResponse,
     # ResetRequest, ResetResponse removed - reset moved to initialize-platform.sh option 0
+    # BackupResponse / RestoreRequest / RestoreResponse removed in ADR-102 P6 (dead)
 )
 from ..dependencies.auth import CurrentUser, require_permission
 from ..services.admin_service import AdminService
