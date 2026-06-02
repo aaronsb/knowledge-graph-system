@@ -212,6 +212,15 @@ get_versions() {
     fi
 }
 
+# is_image_published <image_name> <version>
+# True if THIS specific image (e.g. kg-postgres) is already published at version.
+# cmd_images checks each image individually so a lagging image is never masked by
+# a sibling that is already at this version.
+is_image_published() {
+    local image_name="$1" version="$2"
+    docker manifest inspect "$GHCR_REGISTRY/$IMAGE_PREFIX/$image_name:$version" &>/dev/null
+}
+
 # Check if version is already published
 is_version_published() {
     local target="$1"
@@ -219,7 +228,9 @@ is_version_published() {
 
     case "$target" in
         images)
-            # Check GHCR using docker manifest inspect (respects auth)
+            # Per-image checks live in cmd_images via is_image_published(); this
+            # whole-target check is kept only for callers that pass "images" with
+            # a single representative image. Prefer is_image_published().
             docker manifest inspect "$GHCR_REGISTRY/$IMAGE_PREFIX/kg-api:$version" &>/dev/null
             return $?
             ;;
@@ -674,10 +685,8 @@ cmd_images() {
     [ "$DRY_RUN" = "true" ] && echo -e "  Mode:    ${YELLOW}DRY RUN${NC}"
     echo ""
 
-    # Smart check: is this version already published?
-    if [ "$DRY_RUN" = "false" ] && ! check_publish_needed "images" "$VERSION" "$FORCE"; then
-        exit 0
-    fi
+    # Per-image "already published" checks happen inside the loop below, so a
+    # lagging image is published even when its siblings are already at $VERSION.
 
     if [ "$DRY_RUN" = "false" ] && ! check_ghcr_auth; then
         echo -e "${RED}Not authenticated to GHCR${NC}"
@@ -697,9 +706,28 @@ cmd_images() {
 
     cd "$PROJECT_ROOT"
 
+    local built_count=0 skipped_count=0
     for target in "${TARGETS[@]}"; do
         local context dockerfile image_name
         local target_multi_arch="$use_multi_arch"
+
+        # Resolve the image name first so we can do a PER-IMAGE published check.
+        case "$target" in
+            api)      image_name="kg-api" ;;
+            web)      image_name="kg-web" ;;
+            operator) image_name="kg-operator" ;;
+            postgres) image_name="kg-postgres" ;;
+            *) echo -e "${RED}Unknown target: $target${NC}"; continue ;;
+        esac
+
+        # Skip images already published at this version (unless --force). Checked
+        # per-image, so e.g. postgres still gets built when api/web are current.
+        if [ "$DRY_RUN" = "false" ] && [ "$FORCE" = "false" ] && is_image_published "$image_name" "$VERSION"; then
+            echo -e "${YELLOW}⚠ $image_name:$VERSION already published — skipping (--force to rebuild)${NC}"
+            skipped_count=$((skipped_count + 1))
+            continue
+        fi
+        built_count=$((built_count + 1))
 
         case "$target" in
             api)
@@ -803,6 +831,14 @@ cmd_images() {
         fi
         echo ""
     done
+
+    # Summary — make "nothing to do" explicit instead of silently exiting.
+    if [ "$DRY_RUN" = "false" ] && [ "$built_count" -eq 0 ] && [ "$skipped_count" -gt 0 ]; then
+        echo -e "${GREEN}✓ All ${skipped_count} target image(s) already published at v$VERSION${NC}"
+        if [ "${COMMITS_SINCE_TAG:-0}" -gt 0 ]; then
+            echo -e "  ${DIM}${COMMITS_SINCE_TAG} commit(s) since ${LATEST_TAG} — cut a release: ./scripts/publish.sh release patch -m \"...\"${NC}"
+        fi
+    fi
 }
 
 # ============================================================================
