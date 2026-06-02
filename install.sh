@@ -1614,11 +1614,18 @@ download_files() {
     as_root chmod +x operator.sh
     log_success "operator.sh installed - use ./operator.sh to manage the platform"
 
-    # --- Shared AI provider/model configuration ---
-    # Same module operator.sh init uses; configure_platform() sources it post-startup.
+    # --- operator/lib helpers needed on the host ---
+    # Standalone deliberately does NOT ship the full operator/lib (those scripts
+    # assume the repo layout; operator.sh has inline fallbacks for standalone).
+    # We only ship the layout-independent pure helpers the host operator.sh and
+    # configure_platform() actually source:
+    #   configure-ai.sh — AI provider/model + embedding config (post-startup)
+    #   image-tag.sh    — GPU_MODE → kg-api tag (sourced by operator.sh load_config)
     as_root mkdir -p operator/lib
-    log_info "Downloading operator/lib/configure-ai.sh..."
-    curl -fsSL "${KG_REPO_RAW}/operator/lib/configure-ai.sh" | as_root_write_stdin "operator/lib/configure-ai.sh"
+    for libfile in configure-ai.sh image-tag.sh; do
+        log_info "Downloading operator/lib/$libfile..."
+        curl -fsSL "${KG_REPO_RAW}/operator/lib/$libfile" | as_root_write_stdin "operator/lib/$libfile"
+    done
 
     # --- Operator config ---
     as_root_write_stdin ".operator.conf" << EOF
@@ -1628,6 +1635,7 @@ OPERATOR_MODE=standalone
 COMPOSE_PROJECT_NAME=knowledge-graph
 INSTALLER_VERSION=${INSTALLER_VERSION}
 IMAGE_SOURCE=ghcr
+GPU_MODE=${GPU_MODE:-cpu}
 EOF
     log_success ".operator.conf created"
 

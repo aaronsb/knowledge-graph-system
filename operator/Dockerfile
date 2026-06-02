@@ -48,11 +48,17 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 # Copy operator scripts and tools
 COPY operator/ /workspace/operator/
 
-# Copy API library code (operator imports from api.app.lib.*)
-# Only copy what's needed for configuration, not the full API server
+# Copy API library code. The operator imports api.app.lib.*, which in turn
+# import top-level api.app modules (e.g. api.app.constants). In dev/compose the
+# whole repo is mounted at /workspace so these always resolve; the standalone
+# operator image has NO such mount, so every module the import chain touches
+# must be baked here. Dev testing can't catch a missing bake (the mount masks
+# it), so copy all top-level api/app/*.py rather than cherry-picking individual
+# modules — cherry-picking previously omitted api.app.constants and broke
+# `configure.py api-key` on standalone installs.
 COPY api/__init__.py /workspace/api/__init__.py
+COPY api/app/*.py /workspace/api/app/
 COPY api/app/lib/ /workspace/api/app/lib/
-COPY api/app/__init__.py /workspace/api/app/__init__.py
 
 # Copy schema directory (for backup/restore operations)
 COPY schema/ /workspace/schema/

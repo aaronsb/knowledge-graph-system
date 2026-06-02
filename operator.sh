@@ -71,9 +71,17 @@ load_config() {
     # triplication drifted (commit c448f098 fixed one of the gaps after
     # the bug had silently shipped). Now there is one definition.
     if [ -z "$KG_API_IMAGE_TAG" ]; then
-        # shellcheck source=operator/lib/image-tag.sh
-        source "$SCRIPT_DIR/operator/lib/image-tag.sh"
-        KG_API_IMAGE_TAG=$(derive_kg_api_image_tag "$GPU_MODE" "$ROCM_VERSION")
+        if [ -f "$SCRIPT_DIR/operator/lib/image-tag.sh" ]; then
+            # shellcheck source=operator/lib/image-tag.sh
+            source "$SCRIPT_DIR/operator/lib/image-tag.sh"
+            KG_API_IMAGE_TAG=$(derive_kg_api_image_tag "$GPU_MODE" "$ROCM_VERSION")
+        else
+            # Standalone installs that predate shipping image-tag.sh: don't hard
+            # crash. Default to the GHCR convention (kg-api:latest = CUDA/CPU).
+            # AMD-host users: set KG_API_IMAGE_TAG=rocm72-host in .operator.conf.
+            echo -e "${YELLOW}⚠ operator/lib/image-tag.sh missing; defaulting KG_API_IMAGE_TAG=latest${NC}" >&2
+            KG_API_IMAGE_TAG="latest"
+        fi
     fi
     export KG_API_IMAGE_TAG
 }
