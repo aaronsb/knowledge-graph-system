@@ -24,11 +24,14 @@ services:
       # PG18+: bind-mount maps to /var/lib/postgresql (version-specific PGDATA subdir)
       - /srv/docker/data/knowledge-graph/postgres:/var/lib/postgresql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-admin} -d ${POSTGRES_DB:-knowledge_graph}"]
+      # Probe over TCP, not the unix socket: the first-init bootstrap server is
+      # socket-only, so a socket pg_isready reports healthy before init finishes
+      # and the real server restarts. See docker-compose.yml for the full note.
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U ${POSTGRES_USER:-admin} -d ${POSTGRES_DB:-knowledge_graph}"]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 30s
+      start_period: 90s
     networks:
       - kg-internal
     restart: unless-stopped

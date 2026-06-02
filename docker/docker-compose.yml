@@ -63,12 +63,20 @@ services:
       - postgres_import:/import
 
     healthcheck:
-      # Check if PostgreSQL is ready and AGE extension is loaded
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-admin} -d ${POSTGRES_DB:-knowledge_graph} || exit 1"]
+      # Probe over TCP (-h 127.0.0.1), NOT the unix socket. On first init the
+      # postgres entrypoint runs a temporary socket-only server
+      # (listen_addresses='') to execute the init scripts, then shuts it down and
+      # restarts the real server with TCP. A socket pg_isready reports healthy
+      # DURING that bootstrap — so dependents (depends_on: service_healthy) start
+      # and then race the restart. Over TCP the check can only pass once the real
+      # listener is up, i.e. after init completes.
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U ${POSTGRES_USER:-admin} -d ${POSTGRES_DB:-knowledge_graph} || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 30s
+      # Generous: first init (initdb + AGE + baseline + graph_accel) before the
+      # real TCP server comes up can take a while; don't mark unhealthy early.
+      start_period: 90s
 
     networks:
       - kg-network

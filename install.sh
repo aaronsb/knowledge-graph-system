@@ -2225,10 +2225,17 @@ start_containers() {
     log_info "Starting infrastructure (postgres, garage)..."
     $compose_cmd up -d postgres garage
 
-    # Wait for PostgreSQL
+    # Wait for PostgreSQL — over TCP (-h 127.0.0.1), NOT the unix socket.
+    # On first init the postgres entrypoint runs a temporary socket-only server
+    # (listen_addresses='') to execute the init scripts, then restarts the real
+    # server with TCP. A socket pg_isready reports "ready" during that bootstrap
+    # window — before init finishes and before the restart — so consumers race
+    # the restart. Checking 127.0.0.1 only succeeds once the real TCP listener is
+    # up, i.e. after init is complete. First init (initdb + AGE + baseline +
+    # graph_accel) can take a while, so allow generous headroom.
     log_info "Waiting for PostgreSQL..."
-    local retries=30
-    while ! $compose_cmd exec -T postgres pg_isready -U admin &>/dev/null; do
+    local retries=90
+    while ! $compose_cmd exec -T postgres pg_isready -h 127.0.0.1 -U admin &>/dev/null; do
         ((retries--))
         if [[ $retries -le 0 ]]; then
             log_error "PostgreSQL failed to start"
