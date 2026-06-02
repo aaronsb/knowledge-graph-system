@@ -1287,16 +1287,20 @@ validate_config() {
             # No additional validation needed
             ;;
         letsencrypt)
-            if [[ -z "$SSL_EMAIL" ]]; then
-                add_validation_error "Email required for Let's Encrypt (--ssl-email)"
-            elif ! validate_email "$SSL_EMAIL"; then
-                add_validation_error "Invalid email format: $SSL_EMAIL"
-            fi
+            # Reusing an existing certificate runs no ACME registration or
+            # DNS-01 challenge, so the email / DNS-key requirements don't apply.
+            if [[ "$SSL_USE_EXISTING_CERT" != "true" ]]; then
+                if [[ -z "$SSL_EMAIL" ]]; then
+                    add_validation_error "Email required for Let's Encrypt (--ssl-email)"
+                elif ! validate_email "$SSL_EMAIL"; then
+                    add_validation_error "Invalid email format: $SSL_EMAIL"
+                fi
 
-            # If using DNS-01, validate DNS credentials
-            if [[ -n "$SSL_DNS_PROVIDER" ]]; then
-                if [[ -z "$SSL_DNS_KEY" ]]; then
-                    add_validation_error "DNS API key required for DNS-01 challenge (--ssl-dns-key)"
+                # If using DNS-01, validate DNS credentials
+                if [[ -n "$SSL_DNS_PROVIDER" ]]; then
+                    if [[ -z "$SSL_DNS_KEY" ]]; then
+                        add_validation_error "DNS API key required for DNS-01 challenge (--ssl-dns-key)"
+                    fi
                 fi
             fi
             ;;
