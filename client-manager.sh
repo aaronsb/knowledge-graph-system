@@ -344,9 +344,18 @@ load_config() {
 # ============================================================================
 
 pacman_install_node() {
-    # Install Node.js and npm on Arch Linux
+    # Install Node.js and npm on Arch Linux.
+    #
+    # NOTE: we deliberately do NOT run a full `-Syu` here. Arch only supports
+    # full-system upgrades, and `-S`/`-Sy <pkg>` against a stale system can
+    # produce a partial upgrade (e.g. nodejs upgraded while simdjson lags, so
+    # `node` can't find libsimdjson.so.NN). But triggering an unattended,
+    # --noconfirm full-system upgrade from a piped client installer is far more
+    # invasive/surprising than the caller asked for. Instead, ensure_prerequisites
+    # verifies node actually runs after this and, if it's broken, tells the user
+    # to run `sudo pacman -Syu` themselves.
     log_info "Installing Node.js via pacman..."
-    sudo pacman -S --noconfirm nodejs npm
+    sudo pacman -S --needed --noconfirm nodejs npm
 }
 
 pacman_install_pipx() {
@@ -1062,6 +1071,14 @@ verify_api_connection() {
 
     if [[ -z "$response" ]]; then
         log_error "Could not connect to $root_url"
+        # Common, benign cause: the server is deployed on a macvlan network and
+        # you're installing the client on that SAME host. A host cannot reach its
+        # own macvlan-attached container IP without a macvlan shim interface — DNS
+        # resolves but packets don't route. The CLI will still work from other
+        # machines (or once you add a shim). Install continues regardless.
+        log_warning "If the server uses macvlan and this is the same host, that's"
+        log_warning "expected (host<->own-macvlan-container isn't routable). The CLI"
+        log_warning "will still work from other machines on the LAN."
         return 1
     fi
 
@@ -1107,10 +1124,26 @@ ensure_prerequisites() {
         log_info "Node.js is required for the kg CLI"
         install_node
 
-        # Re-detect after install
-        if command -v node &>/dev/null; then
-            DETECTED_NODE_VERSION=$(node --version 2>/dev/null | sed 's/^v//')
+        # Re-detect after install. Verify node actually RUNS — not just that the
+        # binary exists. A broken shared library (classically an Arch partial
+        # upgrade: nodejs upgraded but a dependency like simdjson lagging, so
+        # `libsimdjson.so.NN` is missing) leaves `node` present but non-functional.
+        # Checking only `command -v node` + `node --version 2>/dev/null` let that
+        # slip through as success (empty version), then the CLI install died.
+        DETECTED_NODE_VERSION=$(node --version 2>/dev/null | sed 's/^v//')
+        if [[ -n "$DETECTED_NODE_VERSION" ]]; then
             log_success "Node.js installed: $DETECTED_NODE_VERSION"
+        elif command -v node &>/dev/null; then
+            log_error "Node.js is installed but fails to run:"
+            node --version 2>&1 | sed 's/^/    /' || true
+            if [[ "$DETECTED_PKG_MGR" == "pacman" ]]; then
+                log_error "This looks like an Arch partial upgrade (a dependency such as"
+                log_error "simdjson lags behind nodejs). Arch only supports full-system"
+                log_error "upgrades. Fix it with:"
+                log_error "    sudo pacman -Syu"
+                log_error "then re-run this installer."
+            fi
+            return 1
         else
             log_error "Node.js installation failed"
             return 1
