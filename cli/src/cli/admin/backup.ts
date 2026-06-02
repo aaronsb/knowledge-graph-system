@@ -392,3 +392,125 @@ export function createRestoreCommand(): Command {
       }
     });
 }
+
+export function createVerifyBackupCommand(): Command {
+  return new Command('verify-backup')
+    .description('Validate a backup file without restoring it (runs the server-side oracle)')
+    .argument('[file]', 'Path to a backup .tar.gz or .json (omit to pick from the backup directory)')
+    .option('--file <name>', 'Backup filename from the configured backup directory')
+    .action(async (fileArg: string | undefined, options: any) => {
+      try {
+        const client = createClientFromEnv();
+        const config = getConfig();
+        const backupDir = config.getBackupDir();
+
+        console.log('\n' + separator());
+        console.log(colors.ui.title('🔎 Verify Backup'));
+        console.log(separator());
+
+        // Resolve the backup file: positional arg → --file (from dir) → interactive.
+        let backupFilePath: string;
+        if (fileArg) {
+          backupFilePath = fileArg;
+        } else if (options.file) {
+          backupFilePath = path.join(backupDir, options.file);
+        } else {
+          if (!fs.existsSync(backupDir)) {
+            console.error(colors.status.error('\n✗ No backups available - directory does not exist'));
+            console.log(colors.status.dim(`Directory: ${backupDir}\n`));
+            process.exit(1);
+          }
+          const backups = fs.readdirSync(backupDir)
+            .filter(f => f.endsWith('.tar.gz') || f.endsWith('.json'))
+            .map(filename => {
+              const filepath = path.join(backupDir, filename);
+              return { filename, path: filepath, size_mb: fs.statSync(filepath).size / (1024 * 1024) };
+            })
+            .sort((a, b) => b.size_mb - a.size_mb);
+          if (backups.length === 0) {
+            console.error(colors.status.error('\n✗ No backups available'));
+            console.log(colors.status.dim(`Directory: ${backupDir}\n`));
+            process.exit(1);
+          }
+          console.log('\n' + colors.ui.key('Available Backups:'));
+          backups.slice(0, 10).forEach((b, i) => {
+            console.log(`  ${i + 1}. ${b.filename} (${b.size_mb.toFixed(2)} MB)`);
+          });
+          const choice = await prompt('\nSelect backup [1-10] or enter filename: ');
+          if (/^\d+$/.test(choice)) {
+            const index = parseInt(choice) - 1;
+            if (index < 0 || index >= backups.length) {
+              console.error(colors.status.error('✗ Invalid selection'));
+              process.exit(1);
+            }
+            backupFilePath = backups[index].path;
+          } else {
+            backupFilePath = path.join(backupDir, choice);
+          }
+        }
+
+        if (!fs.existsSync(backupFilePath)) {
+          console.error(colors.status.error(`\n✗ Backup file not found: ${backupFilePath}\n`));
+          process.exit(1);
+        }
+
+        const ora = require('ora');
+        const spinner = ora('Uploading & validating...').start();
+        let report;
+        try {
+          report = await client.verifyBackup(backupFilePath, (uploaded, total, percent) => {
+            const u = (uploaded / (1024 * 1024)).toFixed(2);
+            const t = (total / (1024 * 1024)).toFixed(2);
+            spinner.text = `Uploading & validating... ${percent}% (${u}/${t} MB)`;
+          });
+        } catch (uploadError) {
+          spinner.fail('Verification request failed');
+          throw uploadError;
+        }
+        spinner.stop();
+
+        // Report
+        console.log('');
+        if (report.format_version) {
+          console.log(`  ${colors.ui.key('Format:')} ${report.format_version}`);
+        }
+        const stats = report.statistics || {};
+        if (Object.keys(stats).length > 0) {
+          const parts = ['concepts', 'sources', 'instances', 'relationships', 'vocabulary']
+            .filter(k => stats[k] !== undefined)
+            .map(k => `${stats[k]} ${k}`);
+          console.log(`  ${colors.ui.key('Contents:')} ${parts.join(', ')}`);
+        }
+        if (report.external_deps) {
+          console.log(`  ${colors.ui.key('External deps:')} ${report.external_deps}`);
+        }
+
+        const printIssue = (i: any, colorFn: (s: string) => string) => {
+          const loc = i.location ? ` at ${i.location}` : '';
+          console.log('  ' + colorFn(`[${i.severity}] ${i.code}: ${i.message}${loc}`));
+        };
+        if (report.errors.length || report.warnings.length || report.notices.length) {
+          console.log('');
+        }
+        report.errors.forEach(i => printIssue(i, colors.status.error));
+        report.warnings.forEach(i => printIssue(i, colors.status.warning));
+        report.notices.forEach(i => printIssue(i, colors.status.dim));
+
+        console.log('\n' + separator());
+        if (report.ok) {
+          console.log(colors.status.success(
+            `✓ Valid backup (${report.warnings.length} warning(s), ${report.notices.length} notice(s))`));
+          console.log(separator() + '\n');
+        } else {
+          console.log(colors.status.error(
+            `✗ Invalid backup — ${report.errors.length} error(s), ${report.warnings.length} warning(s)`));
+          console.log(separator() + '\n');
+          process.exit(1);
+        }
+      } catch (error: any) {
+        console.error(colors.status.error('✗ Verification failed'));
+        console.error(colors.status.error(error.response?.data?.detail || error.message));
+        process.exit(1);
+      }
+    });
+}

@@ -17,6 +17,7 @@ kg admin [options]
 - `backup` - Create database backup (ADR-036) - full system or per-ontology, in restorable JSON or Gephi GEXF format
 - `list-backups` - List available backup files from configured directory
 - `restore` - Restore a database backup (uses OAuth authentication)
+- `verify-backup` - Validate a backup file without restoring it (runs the server-side oracle)
 - `scheduler` - Job scheduler management (ADR-014 job queue) - monitor worker status, cleanup stale jobs
 - `workers` - Worker lane management (ADR-100) - monitor slot utilization, queue depth, active jobs
 - `user` - User management commands (admin only)
@@ -82,6 +83,25 @@ kg restore [options]
 | `--mode <mode>` | Restore merge mode: "idempotent" (default; MERGE-by-id, clone into empty), "adjacent" (independent copy, fresh ids), or "integration" (attach concepts to existing graph by similarity) | `"idempotent"` |
 | `--epoch <epoch>` | Epoch reconciliation: "simple" (default; one restore event) or "faithful" (replay the backup's history; clone-only — requires --mode idempotent into an empty target) | `"simple"` |
 | `--confirm` | Confirm restore operation (required for non-interactive use) | `false` |
+
+### verify-backup
+
+Validate a backup file without restoring it (runs the server-side oracle)
+
+**Usage:**
+```bash
+kg verify-backup [file]
+```
+
+**Arguments:**
+
+- `<file>` - Path to a backup .tar.gz or .json (omit to pick from the backup directory)
+
+**Options:**
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--file <name>` | Backup filename from the configured backup directory | - |
 
 ### scheduler
 

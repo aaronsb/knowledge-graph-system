@@ -89,6 +89,11 @@ ENV PATH="/opt/venv/bin:$PATH"
 # Copy application code
 COPY api/ /app/api/
 COPY schema/ /app/schema/
+# Offline backup-object oracle: the single source of truth for kg-backup/2 validation.
+# Shipped so the API can load it by path for POST /admin/backup/verify. Stdlib-only /
+# standalone — no api-package coupling. Copy just the one file (not the dir) to avoid
+# pulling in __pycache__ and unrelated lint scripts.
+COPY scripts/development/lint/lint_backup.py /app/scripts/development/lint/lint_backup.py
 
 # Set Python path for imports (api.app.lib.*)
 ENV PYTHONPATH=/app
