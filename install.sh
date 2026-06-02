@@ -613,9 +613,10 @@ BASIC OPTIONS:
   --help                    Show this help message
 
 AI PROVIDER OPTIONS:
-  --ai-provider PROVIDER    AI extraction provider: openai, anthropic, ollama
+  --ai-provider PROVIDER    AI extraction provider: openai, anthropic, openrouter, ollama
   --ai-model MODEL          Model name (default varies by provider)
-  --ai-key KEY              API key for the AI provider
+  --ai-key KEY              API key for the AI provider (alias: --api-key)
+                            Omit in interactive mode to be prompted after startup
   --skip-ai                 Skip AI provider configuration (configure later)
 
 GPU OPTIONS:
@@ -732,7 +733,7 @@ parse_flags() {
                 has_known_flags=true
                 shift 2
                 ;;
-            --ai-key)
+            --ai-key|--api-key)
                 AI_KEY="$2"
                 has_known_flags=true
                 shift 2
@@ -1214,7 +1215,11 @@ step_confirm() {
         echo "  AI provider:       (configure later)"
     else
         echo "  AI provider:       ${AI_PROVIDER:-none}"
-        [[ -n "$AI_MODEL" ]] && echo "  AI model:          $AI_MODEL"
+        if [[ "$AI_PROVIDER" == "ollama" ]]; then
+            echo "  AI model:          ${AI_MODEL:-llama3.1}"
+        else
+            echo "  API key / model:   prompted after startup"
+        fi
     fi
     echo
 
@@ -1337,16 +1342,19 @@ validate_config() {
     # --- AI provider validation ---
     if [[ "$SKIP_AI" == "false" && -n "$AI_PROVIDER" ]]; then
         case "$AI_PROVIDER" in
-            openai|anthropic)
-                if [[ -z "$AI_KEY" ]]; then
-                    add_validation_error "API key required for $AI_PROVIDER (--ai-key)"
+            openai|anthropic|openrouter)
+                # Cloud providers need a key. In interactive mode it is prompted
+                # and validated after startup, so only require it up front for
+                # headless runs (where there is no chance to prompt later).
+                if [[ "$INTERACTIVE" != "true" && -z "$AI_KEY" ]]; then
+                    add_validation_error "API key required for $AI_PROVIDER in headless mode (pass --ai-key/--api-key, or --skip-ai)"
                 fi
                 ;;
             ollama)
-                # No key required
+                # Local inference — no key required
                 ;;
             *)
-                add_validation_error "Invalid AI provider: $AI_PROVIDER (must be: openai, anthropic, ollama)"
+                add_validation_error "Invalid AI provider: $AI_PROVIDER (must be: openai, anthropic, openrouter, ollama)"
                 ;;
         esac
     fi
