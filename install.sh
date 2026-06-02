@@ -476,116 +476,12 @@ show_cert_info() {
 
 # --- API Key Validation ---
 
-validate_openai_key() {
-    # Validate OpenAI API key by hitting the models endpoint
-    # Returns 0 if valid, 1 if invalid
-    # Usage: if validate_openai_key "$key"; then ...
-    local api_key="$1"
-
-    if [[ -z "$api_key" ]]; then
-        return 1
-    fi
-
-    local response
-    response=$(curl -sf -w "%{http_code}" -o /dev/null \
-        -H "Authorization: Bearer $api_key" \
-        "https://api.openai.com/v1/models" 2>/dev/null)
-
-    [[ "$response" == "200" ]]
-}
-
-list_openai_models() {
-    # List available OpenAI models for chat/completion
-    # Returns newline-separated list of model IDs
-    # Usage: models=$(list_openai_models "$key")
-    local api_key="$1"
-
-    curl -sf -H "Authorization: Bearer $api_key" \
-        "https://api.openai.com/v1/models" 2>/dev/null | \
-        grep -o '"id":"[^"]*"' | \
-        sed 's/"id":"//g; s/"//g' | \
-        grep -E '^gpt-' | \
-        sort -r | \
-        head -10
-}
-
-validate_anthropic_key() {
-    # Validate Anthropic API key
-    # Returns 0 if valid, 1 if invalid
-    local api_key="$1"
-
-    if [[ -z "$api_key" ]]; then
-        return 1
-    fi
-
-    # Anthropic doesn't have a simple models list endpoint
-    # Use a minimal message request that will fail but tell us if key is valid
-    local response
-    response=$(curl -sf -w "%{http_code}" -o /dev/null \
-        -H "x-api-key: $api_key" \
-        -H "anthropic-version: 2023-06-01" \
-        -H "content-type: application/json" \
-        -d '{"model":"claude-3-haiku-20240307","max_tokens":1,"messages":[{"role":"user","content":"hi"}]}' \
-        "https://api.anthropic.com/v1/messages" 2>/dev/null)
-
-    # 200 = valid request, 400 = valid key but bad request, 401 = invalid key
-    [[ "$response" == "200" || "$response" == "400" ]]
-}
-
-prompt_api_key_with_validation() {
-    # Prompt for API key with retry on failure
-    # Usage: key=$(prompt_api_key_with_validation "openai")
-    local provider="$1"
-    local key=""
-    local max_attempts=3
-    local attempt=1
-
-    while [[ $attempt -le $max_attempts ]]; do
-        key=$(prompt_value "${provider^} API key" "")
-
-        if [[ -z "$key" ]]; then
-            log_warning "API key is required"
-            return 1
-        fi
-
-        echo -ne "  Validating API key... " >&2
-
-        local valid=false
-        case "$provider" in
-            openai)
-                if validate_openai_key "$key"; then
-                    valid=true
-                fi
-                ;;
-            anthropic)
-                if validate_anthropic_key "$key"; then
-                    valid=true
-                fi
-                ;;
-            *)
-                # Unknown provider - skip validation
-                valid=true
-                ;;
-        esac
-
-        if [[ "$valid" == "true" ]]; then
-            echo -e "${GREEN}✓ Valid${NC}" >&2
-            echo "$key"
-            return 0
-        else
-            echo -e "${RED}✗ Invalid${NC}" >&2
-            if [[ $attempt -lt $max_attempts ]]; then
-                log_warning "Invalid API key. Please try again ($attempt/$max_attempts)"
-                ((attempt++))
-            else
-                log_error "Failed to validate API key after $max_attempts attempts"
-                return 1
-            fi
-        fi
-    done
-
-    return 1
-}
+# NOTE: AI provider key validation and model selection used to live here as
+# ad-hoc curl calls against each provider's API. That logic drifted (e.g. the
+# Anthropic check hard-coded a since-retired model and reported valid keys as
+# invalid). It now lives in operator/lib/configure-ai.sh — the same shared
+# module operator.sh init uses — which delegates validation and live model
+# enumeration to the operator container's configure.py. See configure_platform().
 
 # --- Config File Management ---
 # Save/load user choices for round-tripping between interactive and headless modes.
@@ -1212,27 +1108,28 @@ step_ssl() {
 }
 
 step_ai() {
-    # Step: Configure AI provider for document extraction
+    # Step: Choose the AI extraction provider.
     #
-    # Flow:
-    #   1. Select provider
-    #   2. Enter API key
-    #   3. Validate API key (with retry)
-    #   4. List available models (for OpenAI)
-    #   5. Select model
+    # Only the provider is chosen here. For cloud providers the API key is
+    # validated + stored and the extraction model is selected AFTER the platform
+    # is up — by configure_platform() via the shared operator/lib/configure-ai.sh
+    # module (server-side validation + live model catalog). This mirrors
+    # `operator.sh init` and avoids the old pre-flight curl validation that broke
+    # whenever a provider's test model was retired.
     echo
     echo -e "${BOLD}=== AI Provider Configuration ===${NC}"
     echo
     echo "An AI provider is needed for document concept extraction."
-    echo "You can skip this and configure later with: ./operator.sh shell"
+    echo "The API key and model are configured after startup, with live validation."
+    echo "You can also skip this and configure later with: ./operator.sh shell"
     echo
 
-    # Step 1: Select provider
     local ai_choice
     ai_choice=$(prompt_select "AI provider for document extraction" \
-        "openai (GPT-4o)" \
+        "openai (GPT-4o, GPT-4o-mini)" \
         "anthropic (Claude)" \
-        "ollama (local)" \
+        "openrouter (200+ models, one key)" \
+        "ollama (local inference)" \
         "skip (configure later)")
 
     # Extract first word
@@ -1244,63 +1141,19 @@ step_ai() {
         return
     fi
 
+    SKIP_AI=false
+
     case "$AI_PROVIDER" in
-        openai)
-            echo
-            # Step 2 & 3: Get and validate API key
-            AI_KEY=$(prompt_api_key_with_validation "openai")
-
-            if [[ -z "$AI_KEY" ]]; then
-                SKIP_AI=true
-                AI_PROVIDER=""
-                return
-            fi
-
-            # Step 4: List available models
-            echo
-            log_info "Fetching available models..."
-            local models
-            models=$(list_openai_models "$AI_KEY")
-
-            if [[ -n "$models" ]]; then
-                echo "Available GPT models:"
-                echo "$models" | head -8 | sed 's/^/  - /'
-                echo
-            fi
-
-            # Step 5: Select model (previous from config, or default)
-            AI_MODEL=$(prompt_with_fallback "Model name" "$AI_MODEL" "gpt-4o")
-            log_success "OpenAI configured with model: $AI_MODEL"
-            ;;
-
-        anthropic)
-            echo
-            # Step 2 & 3: Get and validate API key
-            AI_KEY=$(prompt_api_key_with_validation "anthropic")
-
-            if [[ -z "$AI_KEY" ]]; then
-                SKIP_AI=true
-                AI_PROVIDER=""
-                return
-            fi
-
-            # Anthropic doesn't have a public models list API
-            echo
-            echo "Available Claude models:"
-            echo "  - claude-sonnet-4-20250514 (recommended)"
-            echo "  - claude-3-5-sonnet-20241022"
-            echo "  - claude-3-haiku-20240307 (faster, cheaper)"
-            echo
-
-            AI_MODEL=$(prompt_with_fallback "Model name" "$AI_MODEL" "claude-sonnet-4-20250514")
-            log_success "Anthropic configured with model: $AI_MODEL"
-            ;;
-
         ollama)
+            # Local inference: no API key and no remote catalog, so pick the
+            # model here rather than deferring to the post-startup picker.
             echo
-            AI_MODEL=$(prompt_with_fallback "Model name" "$AI_MODEL" "llama3.1")
-            log_info "Ollama runs locally - no API key needed"
-            log_info "Make sure Ollama is installed and running"
+            AI_MODEL=$(prompt_with_fallback "Ollama model name" "$AI_MODEL" "llama3.1")
+            log_info "Ollama runs locally - make sure it is installed and running"
+            log_success "Ollama selected with model: $AI_MODEL"
+            ;;
+        *)
+            log_success "AI provider selected: $AI_PROVIDER (key + model configured after startup)"
             ;;
     esac
 }
@@ -1748,6 +1601,12 @@ download_files() {
     curl -fsSL "${KG_REPO_RAW}/operator.sh" | as_root_write_stdin "operator.sh"
     as_root chmod +x operator.sh
     log_success "operator.sh installed - use ./operator.sh to manage the platform"
+
+    # --- Shared AI provider/model configuration ---
+    # Same module operator.sh init uses; configure_platform() sources it post-startup.
+    as_root mkdir -p operator/lib
+    log_info "Downloading operator/lib/configure-ai.sh..."
+    curl -fsSL "${KG_REPO_RAW}/operator/lib/configure-ai.sh" | as_root_write_stdin "operator/lib/configure-ai.sh"
 
     # --- Operator config ---
     as_root_write_stdin ".operator.conf" << EOF
@@ -2489,19 +2348,28 @@ configure_platform() {
         log_warning "Could not set admin password"
     fi
 
-    # Configure AI provider (if not skipped)
+    # Configure AI provider (if not skipped) via the shared module — the same
+    # flow operator.sh init uses: server-side key validation + live model catalog.
     if [[ "$SKIP_AI" == "false" && -n "$AI_PROVIDER" ]]; then
         log_info "Configuring AI provider: $AI_PROVIDER"
+        # The shared module runs docker via $CAI_DOCKER; install.sh needs sudo.
+        CAI_DOCKER="sudo docker"
+        # shellcheck source=/dev/null
+        source "$install_dir/operator/lib/configure-ai.sh"
 
-        local model="${AI_MODEL:-gpt-4o}"
-        docker_cmd exec kg-operator python /workspace/operator/configure.py ai-provider "$AI_PROVIDER" --model "$model" || true
-
-        if [[ -n "$AI_KEY" ]]; then
-            if docker_cmd exec kg-operator python /workspace/operator/configure.py api-key "$AI_PROVIDER" --key "$AI_KEY" 2>&1 | grep -qi "stored"; then
-                log_success "AI provider configured: $AI_PROVIDER / $model"
-            else
-                log_warning "Could not store AI API key"
-            fi
+        if [[ "$AI_PROVIDER" == "ollama" ]]; then
+            # Local inference: no API key; model was chosen in the wizard.
+            cai_apply_headless kg-operator ollama "" "${AI_MODEL:-llama3.1}"
+            log_success "Ollama configured with model: ${AI_MODEL:-llama3.1}"
+        elif [[ "$INTERACTIVE" == "true" && -z "$AI_KEY" ]]; then
+            # Interactive: prompt + validate the key, then pick a model live.
+            cai_store_api_key kg-operator "$AI_PROVIDER"
+            cai_select_model kg-operator "$AI_PROVIDER"
+            log_success "AI provider configured: $AI_PROVIDER"
+        else
+            # Headless / preset --ai-key: apply provider + key + model non-interactively.
+            cai_apply_headless kg-operator "$AI_PROVIDER" "$AI_KEY" "$AI_MODEL"
+            log_success "AI provider configured: $AI_PROVIDER${AI_MODEL:+ / $AI_MODEL}"
         fi
     fi
 

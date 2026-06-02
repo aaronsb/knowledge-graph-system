@@ -14,6 +14,9 @@ PROJECT_ROOT="$( cd "$SCRIPT_DIR/../.." && pwd )"
 
 # Source common functions
 source "$SCRIPT_DIR/common.sh"
+# Shared AI provider/model configuration (single source of truth, also used by
+# guided-init.sh and the standalone install.sh).
+source "$SCRIPT_DIR/configure-ai.sh"
 
 # Color codes for output
 RED='\033[0;31m'
@@ -510,23 +513,12 @@ EOF
     if [ "$SKIP_AI_CONFIG" = false ]; then
         if [ -n "$AI_PROVIDER" ]; then
             echo -e "${BLUE}→ Step 6: Configuring AI provider...${NC}"
-
-            local model_arg=""
-            if [ -n "$AI_MODEL" ]; then
-                model_arg="--model $AI_MODEL"
-            fi
-
-            docker exec "$OPERATOR_CONTAINER" python /workspace/operator/configure.py ai-provider "$AI_PROVIDER" $model_arg
-
-            if [ -n "$AI_KEY" ]; then
-                echo -e "${BLUE}  Storing API key...${NC}"
-                docker exec "$OPERATOR_CONTAINER" python /workspace/operator/configure.py api-key "$AI_PROVIDER" --key "$AI_KEY"
-                echo -e "${GREEN}✓ API key stored${NC}"
-            fi
+            cai_apply_headless "$OPERATOR_CONTAINER" "$AI_PROVIDER" "$AI_KEY" "$AI_MODEL"
+            [ -n "$AI_KEY" ] && echo -e "${GREEN}✓ API key stored${NC}"
             echo ""
         else
             echo -e "${BLUE}→ Step 6: Setting default AI provider (OpenAI)...${NC}"
-            docker exec "$OPERATOR_CONTAINER" python /workspace/operator/configure.py ai-provider openai --model gpt-4o
+            cai_apply_headless "$OPERATOR_CONTAINER"
             echo -e "${YELLOW}⚠ AI provider set but no API key provided${NC}"
             echo -e "${YELLOW}  Add key later: docker exec $OPERATOR_CONTAINER python /workspace/operator/configure.py api-key openai --key <KEY>${NC}"
             echo ""
