@@ -447,8 +447,9 @@ async def verify_backup(
     **Authorization:** Requires ``backups:read`` (admin-gated by default; grant
     ``backups:read`` to another role to delegate verification).
     """
-    is_archive = file.filename.endswith('.tar.gz')
-    is_json = file.filename.endswith('.json')
+    filename = file.filename or ""
+    is_archive = filename.endswith('.tar.gz')
+    is_json = filename.endswith('.json')
     if not is_archive and not is_json:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -487,10 +488,11 @@ async def verify_backup(
             report["external_deps"] = getattr(integrity, "external_deps", 0)
         except Exception:
             report["statistics"] = {}
+            report["external_deps"] = 0
 
-        report["filename"] = file.filename
+        report["filename"] = filename
         logger.info(
-            f"Verified backup {file.filename!r}: ok={report['ok']} "
+            f"Verified backup {filename!r}: ok={report['ok']} "
             f"errors={len(report['errors'])} warnings={len(report['warnings'])}"
         )
         return report
@@ -509,6 +511,11 @@ async def verify_backup(
             detail=f"Backup verify failed: {str(e)}"
         )
     finally:
+        # Clean up everything we may have created — including the saved .tar.gz when
+        # extraction throws before its in-try unlink (review: avoid a temp leak on
+        # exactly the malformed-archive case verify exists to catch).
+        if archive_path is not None and archive_path.exists():
+            archive_path.unlink()
         if temp_path.exists():
             temp_path.unlink()
         if archive_temp_dir:
