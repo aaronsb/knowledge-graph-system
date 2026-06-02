@@ -2326,6 +2326,12 @@ configure_platform() {
     local compose_cmd
     compose_cmd=$(build_compose_command)
 
+    # Shared AI/embedding configuration — the same module operator.sh init uses.
+    # It runs docker via $CAI_DOCKER; the standalone installer needs sudo.
+    CAI_DOCKER="sudo docker"
+    # shellcheck source=/dev/null
+    source "$install_dir/operator/lib/configure-ai.sh"
+
     # Configure OAuth redirect URIs
     log_info "Configuring OAuth client redirect URIs..."
     local redirect_url
@@ -2352,10 +2358,6 @@ configure_platform() {
     # flow operator.sh init uses: server-side key validation + live model catalog.
     if [[ "$SKIP_AI" == "false" && -n "$AI_PROVIDER" ]]; then
         log_info "Configuring AI provider: $AI_PROVIDER"
-        # The shared module runs docker via $CAI_DOCKER; install.sh needs sudo.
-        CAI_DOCKER="sudo docker"
-        # shellcheck source=/dev/null
-        source "$install_dir/operator/lib/configure-ai.sh"
 
         if [[ "$AI_PROVIDER" == "ollama" ]]; then
             # Local inference: no API key; model was chosen in the wizard.
@@ -2373,9 +2375,10 @@ configure_platform() {
         fi
     fi
 
-    # Configure embeddings (local by default)
+    # Configure embeddings — select the local profile by provider name (robust to
+    # catalog ordering) on the GPU-aware device, via the shared module.
     log_info "Configuring embeddings..."
-    docker_cmd exec kg-operator python /workspace/operator/configure.py embedding 2 || true
+    cai_configure_embedding kg-operator "$GPU_MODE" || true
     log_success "Local embedding configured (nomic-embed-text-v1.5)"
 
     # Configure Garage storage

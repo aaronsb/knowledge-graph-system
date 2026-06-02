@@ -378,15 +378,7 @@ echo -e "${BOLD}Step 4/9: Configuring local embedding profile${NC}"
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 
-case "$GPU_MODE" in
-    mac)                 EMBEDDING_DEVICE="mps" ;;
-    nvidia)              EMBEDDING_DEVICE="cuda" ;;
-    amd|amd-host)        EMBEDDING_DEVICE="cuda" ;;  # PyTorch ROCm presents as cuda
-    cpu|*)               EMBEDDING_DEVICE="cpu" ;;
-esac
-
-echo "Activating local embeddings (nomic-ai/nomic-embed-text-v1.5) on device: ${EMBEDDING_DEVICE}"
-docker exec kg-operator python /workspace/operator/configure.py embedding --provider local --device "$EMBEDDING_DEVICE"
+cai_configure_embedding kg-operator "$GPU_MODE"
 echo ""
 
 # Step 5: Configure AI provider (interactive selection)

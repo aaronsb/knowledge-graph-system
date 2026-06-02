@@ -524,9 +524,9 @@ EOF
             echo ""
         fi
 
-        # Configure embeddings
+        # Configure embeddings (GPU-aware device selection)
         echo -e "${BLUE}→ Configuring embeddings...${NC}"
-        docker exec "$OPERATOR_CONTAINER" python /workspace/operator/configure.py embedding --provider local
+        cai_configure_embedding "$OPERATOR_CONTAINER" "$GPU_MODE"
         echo -e "${GREEN}✓ Embeddings configured (local nomic-embed)${NC}"
         echo ""
     else

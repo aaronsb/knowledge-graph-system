@@ -38,6 +38,40 @@ _cai_op() {
     $CAI_DOCKER exec "$container" python /workspace/operator/configure.py "$@"
 }
 
+# cai_map_embedding_device <gpu_mode> — echo the PyTorch device (cpu|cuda|mps)
+# for a GPU mode. "auto" (and anything unrecognized) is resolved by host probe,
+# mirroring install.sh's compose-overlay detection. ROCm presents to PyTorch as
+# cuda, so AMD maps to cuda.  @verified cbd07870c
+cai_map_embedding_device() {
+    case "$1" in
+        mac)          echo "mps" ;;
+        nvidia)       echo "cuda" ;;
+        amd|amd-host) echo "cuda" ;;
+        cpu)          echo "cpu" ;;
+        *)
+            if command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi >/dev/null 2>&1; then
+                echo "cuda"
+            elif [ -d /dev/dri ] && command -v rocm-smi >/dev/null 2>&1; then
+                echo "cuda"
+            else
+                echo "cpu"
+            fi
+            ;;
+    esac
+}
+
+# cai_configure_embedding <container> <gpu_mode>
+# Activate the local embedding profile (nomic-embed-text-v1.5) by PROVIDER name
+# on the device implied by gpu_mode. Selecting by --provider (not a positional
+# profile id) is robust to catalog ordering. Shared by all three init paths so
+# device selection is computed identically everywhere.  @verified cbd07870c
+cai_configure_embedding() {
+    local container="$1" gpu_mode="${2:-cpu}" device
+    device=$(cai_map_embedding_device "$gpu_mode")
+    echo -e "${BLUE}→${NC} Activating local embeddings (nomic-embed-text-v1.5) on device: ${device}"
+    _cai_op "$container" embedding --provider local --device "$device"
+}
+
 # cai_select_provider — interactive AI provider menu.
 # Sets the global AI_PROVIDER to one of: openai | anthropic | openrouter.
 # Ollama is intentionally omitted (local inference, configured post-setup).
