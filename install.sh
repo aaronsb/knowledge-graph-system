@@ -1190,13 +1190,15 @@ step_admin() {
     echo -e "${BOLD}=== Admin Configuration ===${NC}"
     echo
     echo "The admin account is used to manage the platform."
-    echo "A secure password will be auto-generated if you skip this."
+    echo "Skip to get a strong random password (shown once at the end of install)."
+    echo "This installer does not offer a weak/dev password — use a custom one if"
+    echo "you need something memorable."
     echo
 
-    if prompt_bool "Set a custom admin password?" "n"; then
+    if prompt_bool "Set a custom admin password? (otherwise a strong random one is generated)" "n"; then
         ADMIN_PASSWORD=$(prompt_password_confirm "Admin password")
     else
-        log_info "Admin password will be auto-generated"
+        log_info "A strong random admin password will be generated (shown at the end)"
     fi
 }
 
