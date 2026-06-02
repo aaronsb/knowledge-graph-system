@@ -12,7 +12,7 @@ import { createEmbeddingCommand, createExtractionCommand, createVisionCommand, c
 
 // Import split command modules
 import { createStatusCommand } from './status';
-import { createBackupCommand, createListBackupsCommand, createRestoreCommand } from './backup';
+import { createBackupCommand, createListBackupsCommand, createRestoreCommand, createVerifyBackupCommand } from './backup';
 import { createSchedulerCommand } from './scheduler';
 import { createWorkersCommand } from './workers';
 
@@ -21,6 +21,7 @@ const statusCommand = createStatusCommand();
 const backupCommand = createBackupCommand();
 const listBackupsCommand = createListBackupsCommand();
 const restoreCommand = createRestoreCommand();
+const verifyBackupCommand = createVerifyBackupCommand();
 const schedulerCommand = createSchedulerCommand();
 const workersCommand = createWorkersCommand();
 
@@ -36,6 +37,7 @@ export const adminCommand = setCommandHelp(
   .addCommand(backupCommand)
   .addCommand(listBackupsCommand)
   .addCommand(restoreCommand)
+  .addCommand(verifyBackupCommand)
   .addCommand(schedulerCommand)
   .addCommand(workersCommand);
 
@@ -65,4 +67,4 @@ adminCommand.addCommand(visionCommand);
 adminCommand.addCommand(keysCommand);
 
 // Configure colored help for all admin commands
-[statusCommand, backupCommand, listBackupsCommand, restoreCommand, schedulerCommand, workersCommand].forEach(configureColoredHelp);
+[statusCommand, backupCommand, listBackupsCommand, restoreCommand, verifyBackupCommand, schedulerCommand, workersCommand].forEach(configureColoredHelp);

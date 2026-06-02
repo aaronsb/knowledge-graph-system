@@ -1335,6 +1335,45 @@ export class KnowledgeGraphClient {
   }
 
   /**
+   * Verify a kg-backup/2 backup file WITHOUT restoring it (ADR-102).
+   *
+   * Uploads the file to POST /admin/backup/verify, which runs the offline oracle
+   * (the single source of truth — scripts/development/lint/lint_backup.py) server-
+   * side and returns its structured report. No validation logic lives in the CLI.
+   */
+  async verifyBackup(
+    backupFilePath: string,
+    onUploadProgress?: (uploaded: number, total: number, percent: number) => void
+  ): Promise<{
+    ok: boolean;
+    format_version: string | null;
+    errors: Array<{ severity: string; code: string; message: string; location: string }>;
+    warnings: Array<{ severity: string; code: string; message: string; location: string }>;
+    notices: Array<{ severity: string; code: string; message: string; location: string }>;
+    issues: Array<{ severity: string; code: string; message: string; location: string }>;
+    statistics?: Record<string, number>;
+    external_deps?: number;
+    filename?: string;
+  }> {
+    const form = new FormData();
+    form.append('file', fs.createReadStream(backupFilePath));
+
+    const response = await this.client.post('/admin/backup/verify', form, {
+      headers: form.getHeaders(),
+      onUploadProgress: (progressEvent) => {
+        if (onUploadProgress && progressEvent.total) {
+          const uploaded = progressEvent.loaded;
+          const total = progressEvent.total;
+          const percent = Math.round((uploaded / total) * 100);
+          onUploadProgress(uploaded, total, percent);
+        }
+      }
+    });
+
+    return response.data;
+  }
+
+  /**
    * Get job scheduler status and statistics (ADR-014)
    */
   async getSchedulerStatus(): Promise<any> {

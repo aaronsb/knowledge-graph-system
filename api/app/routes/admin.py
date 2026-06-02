@@ -13,6 +13,7 @@ Note: Database reset removed from API (too dangerous).
 """
 
 import re
+import json
 import uuid
 import shutil
 import tempfile
@@ -39,7 +40,8 @@ from ..services.job_scheduler import get_job_scheduler
 from ..services.job_queue import get_job_queue
 from ..lib.backup_streaming import create_backup_stream
 from ..lib.backup_archive import stream_backup_archive, extract_backup_archive, cleanup_extracted_archive
-from ..lib.backup_integrity import check_backup_integrity
+from ..lib.backup_integrity import check_backup_integrity, check_backup_data
+from ..lib.backup_oracle import validate_backup_object
 from ..lib.age_client import AGEClient
 from ..lib.encrypted_keys import EncryptedKeyStore
 from pydantic import BaseModel
@@ -421,6 +423,96 @@ async def restore_backup(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Restore upload failed: {str(e)}"
         )
+
+
+@router.post("/backup/verify")
+async def verify_backup(
+    current_user: CurrentUser,
+    _: None = Depends(require_permission("backups", "read")),
+    file: UploadFile = File(..., description="Backup file (.tar.gz archive or .json)")
+):
+    """
+    Validate a kg-backup/2 backup object WITHOUT restoring it (ADR-102).
+
+    Runs the **offline oracle** — the single source of truth for kg-backup/2 spec
+    validation (``scripts/development/lint/lint_backup.py``) — server-side against
+    the uploaded backup, so the CLI/web do not reimplement validation (no
+    cross-language drift). Returns its structured report: ``errors`` / ``warnings``
+    / ``notices``, each with a stable ``code`` and JSON-path ``location``, plus
+    best-effort record-count ``statistics`` (de-interned view).
+
+    Read-only: no graph access, nothing queued, no mutation. Accepts the same two
+    containers as ``/restore`` — ``.tar.gz`` (manifest.json extracted) or ``.json``.
+
+    **Authorization:** Requires ``backups:read`` (admin-gated by default; grant
+    ``backups:read`` to another role to delegate verification).
+    """
+    is_archive = file.filename.endswith('.tar.gz')
+    is_json = file.filename.endswith('.json')
+    if not is_archive and not is_json:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Backup file must be .tar.gz archive or .json format"
+        )
+
+    temp_file_id = uuid.uuid4()
+    archive_temp_dir = None
+    archive_path = (
+        Path(tempfile.gettempdir()) / f"verify_{temp_file_id}.tar.gz" if is_archive else None
+    )
+    temp_path = Path(tempfile.gettempdir()) / f"verify_{temp_file_id}.json"
+
+    try:
+        if is_archive:
+            with open(archive_path, "wb") as temp_file:
+                shutil.copyfileobj(file.file, temp_file)
+            archive_temp_dir, manifest_path = extract_backup_archive(str(archive_path))
+            temp_path = Path(manifest_path)
+            archive_path.unlink()
+        else:
+            with open(temp_path, "wb") as temp_file:
+                shutil.copyfileobj(file.file, temp_file)
+
+        with open(temp_path, "r", encoding="utf-8") as f:
+            obj = json.load(f)
+
+        # Single source of truth: run the offline oracle server-side.
+        report = validate_backup_object(obj)
+
+        # Best-effort record-count statistics (de-interned view). Skipped if the
+        # object is too malformed for the reader — the oracle already reported why.
+        try:
+            integrity = check_backup_data(obj)
+            report["statistics"] = integrity.statistics or {}
+            report["external_deps"] = getattr(integrity, "external_deps", 0)
+        except Exception:
+            report["statistics"] = {}
+
+        report["filename"] = file.filename
+        logger.info(
+            f"Verified backup {file.filename!r}: ok={report['ok']} "
+            f"errors={len(report['errors'])} warnings={len(report['warnings'])}"
+        )
+        return report
+
+    except json.JSONDecodeError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Backup file is not valid JSON: {e}"
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Backup verify failed: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Backup verify failed: {str(e)}"
+        )
+    finally:
+        if temp_path.exists():
+            temp_path.unlink()
+        if archive_temp_dir:
+            cleanup_extracted_archive(archive_temp_dir)
 
 
 # ========== Database Reset REMOVED - Too Dangerous for API ==========
