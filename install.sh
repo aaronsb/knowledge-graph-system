@@ -86,6 +86,9 @@ MACVLAN_SUBNET=""                   # Network subnet (e.g., 192.168.1.0/24)
 MACVLAN_GATEWAY=""                  # Gateway IP (e.g., 192.168.1.1)
 MACVLAN_IP=""                       # Static IP for container (recommended)
 MACVLAN_MAC=""                      # MAC address (optional, for DHCP reservation)
+MACVLAN_SHIM=false                  # Add a host shim so THIS host can reach the macvlan container
+MACVLAN_SHIM_IP=""                  # Free LAN IP for the host shim interface
+MACVLAN_SHIM_NAME="kg-shim0"        # Shim interface name
 
 # --- Admin ---
 ADMIN_PASSWORD=""                   # Admin user password (auto-generated if empty)
@@ -375,6 +378,17 @@ validate_ip() {
     [[ "$ip" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]
 }
 
+next_ip() {
+    # Best-effort suggestion: echo the IPv4 with its last octet +1 (kept in
+    # 1..254). Only a default hint for the shim IP; the user must ensure it's free.
+    local ip="$1" a b c d
+    IFS='.' read -r a b c d <<< "$ip"
+    d=$((d + 1))
+    [[ "$d" -gt 254 ]] && d=$((d - 2))
+    [[ "$d" -lt 1 ]] && d=2
+    echo "$a.$b.$c.$d"
+}
+
 validate_cidr() {
     # Check if string is a valid CIDR notation
     local cidr="$1"
@@ -531,6 +545,8 @@ MACVLAN_PARENT="$MACVLAN_PARENT"
 MACVLAN_SUBNET="$MACVLAN_SUBNET"
 MACVLAN_GATEWAY="$MACVLAN_GATEWAY"
 MACVLAN_IP="$MACVLAN_IP"
+MACVLAN_SHIM="$MACVLAN_SHIM"
+MACVLAN_SHIM_IP="$MACVLAN_SHIM_IP"
 EOF
 
     chmod 600 "$CONFIG_FILE"
@@ -642,6 +658,10 @@ MACVLAN OPTIONS (Dedicated LAN IP):
   --macvlan                 Use existing kg-macvlan network
   --macvlan-ip IP           Static IP on macvlan (recommended)
   --macvlan-mac MAC         MAC address for DHCP reservation
+  --macvlan-shim            Add a host shim so THIS host can reach the platform
+                            (a host can't reach its own macvlan container IP).
+                            Requires --macvlan-ip; persisted via systemd.
+  --macvlan-shim-ip IP      Free, unused LAN IP for the shim interface
 
   --macvlan-create          Create new kg-macvlan network
   --macvlan-parent IFACE    Parent interface (e.g., eth0, eno1)
@@ -830,6 +850,17 @@ parse_flags() {
                 has_known_flags=true
                 shift 2
                 ;;
+            --macvlan-shim)
+                MACVLAN_SHIM=true
+                has_known_flags=true
+                shift
+                ;;
+            --macvlan-shim-ip)
+                MACVLAN_SHIM_IP="$2"
+                MACVLAN_SHIM=true
+                has_known_flags=true
+                shift 2
+                ;;
 
             # --- Admin ---
             --admin-password)
@@ -968,6 +999,23 @@ step_network() {
         if [[ -z "$MACVLAN_IP" ]]; then
             log_warning "Using DHCP - container IP may change on restart"
             MACVLAN_MAC=$(prompt_value "MAC address for DHCP reservation (or leave empty)" "")
+        fi
+
+        # Optional host shim. A host can't reach its OWN macvlan-attached
+        # container IP without one (DNS resolves, packets don't route). Only
+        # offered with a static IP, since the shim routes a specific /32.
+        if [[ -n "$MACVLAN_IP" ]]; then
+            echo
+            echo "By default THIS host can't reach the platform's macvlan IP"
+            echo "($MACVLAN_IP) — only other machines on the LAN can. A host shim"
+            echo "interface fixes that (handy to run the kg CLI/MCP on this host)."
+            echo
+            if prompt_bool "Add a host shim so this host can reach the platform?" "n"; then
+                MACVLAN_SHIM=true
+                local suggested
+                suggested=$(next_ip "$MACVLAN_IP")
+                MACVLAN_SHIM_IP=$(prompt_with_fallback "Free, unused LAN IP for the shim" "$MACVLAN_SHIM_IP" "$suggested")
+            fi
         fi
     fi
 }
@@ -1345,6 +1393,23 @@ validate_config() {
         add_validation_error "Invalid macvlan IP: $MACVLAN_IP"
     fi
 
+    # --- macvlan host shim validation ---
+    if [[ "$MACVLAN_SHIM" == "true" ]]; then
+        if [[ "$MACVLAN_ENABLED" != "true" ]]; then
+            add_validation_error "--macvlan-shim requires macvlan networking (--macvlan)"
+        fi
+        if [[ -z "$MACVLAN_IP" ]]; then
+            add_validation_error "--macvlan-shim requires a static container IP (--macvlan-ip)"
+        fi
+        if [[ -z "$MACVLAN_SHIM_IP" ]]; then
+            add_validation_error "--macvlan-shim requires a free LAN IP (--macvlan-shim-ip)"
+        elif ! validate_ip "$MACVLAN_SHIM_IP"; then
+            add_validation_error "Invalid macvlan shim IP: $MACVLAN_SHIM_IP"
+        elif [[ "$MACVLAN_SHIM_IP" == "$MACVLAN_IP" || "$MACVLAN_SHIM_IP" == "$MACVLAN_GATEWAY" ]]; then
+            add_validation_error "Shim IP ($MACVLAN_SHIM_IP) must differ from the container IP and gateway"
+        fi
+    fi
+
     # --- AI provider validation ---
     if [[ "$SKIP_AI" == "false" && -n "$AI_PROVIDER" ]]; then
         case "$AI_PROVIDER" in
@@ -1548,6 +1613,97 @@ setup_macvlan() {
             exit 1
         fi
         log_success "Macvlan networking configured"
+    fi
+}
+
+setup_macvlan_shim() {
+    # Create a macvlan "shim" on the host so THIS host can reach the platform's
+    # macvlan container IP. Without it, a host cannot talk to its own
+    # macvlan-attached container (DNS resolves, but packets don't route) — only
+    # other machines on the LAN can. The shim is a macvlan sub-interface on the
+    # same parent with its own free IP, plus a /32 route to the container IP.
+    # Persisted via a systemd oneshot unit so it survives reboots.
+    log_step "Setting up macvlan host shim"
+
+    local install_dir="${INSTALL_DIR:-$KG_INSTALL_DIR}"
+
+    # Parent interface: use the configured one, else read it off the docker
+    # network (the existing-network path never prompts for a parent).
+    local parent="$MACVLAN_PARENT"
+    if [[ -z "$parent" ]]; then
+        parent=$(docker_cmd network inspect "$MACVLAN_NETWORK" --format '{{index .Options "parent"}}' 2>/dev/null)
+    fi
+
+    if [[ -z "$parent" ]]; then
+        log_warning "Could not determine the macvlan parent interface; skipping host shim"
+        return 0
+    fi
+    if [[ -z "$MACVLAN_IP" || -z "$MACVLAN_SHIM_IP" ]]; then
+        log_warning "Host shim needs a static container IP and a shim IP; skipping"
+        return 0
+    fi
+
+    log_info "  Shim interface: $MACVLAN_SHIM_NAME"
+    log_info "  Parent:         $parent"
+    log_info "  Shim IP:        $MACVLAN_SHIM_IP"
+    log_info "  Routes to:      $MACVLAN_IP"
+
+    # Idempotent shim-up script (re-runnable; also what the systemd unit calls).
+    # Runtime vars are escaped (\$) so they stay literal in the generated file;
+    # install-time values are expanded now.
+    as_root_write_stdin "$install_dir/macvlan-shim.sh" << EOF
+#!/bin/bash
+# Knowledge Graph macvlan host shim — lets THIS host reach the platform's
+# macvlan container IP. A host can't reach its own macvlan-attached container
+# without a shim interface. Generated by install.sh; safe to re-run.
+set -e
+SHIM="$MACVLAN_SHIM_NAME"
+PARENT="$parent"
+SHIM_IP="$MACVLAN_SHIM_IP"
+ROUTE_IPS="$MACVLAN_IP"
+ip link show "\$SHIM" >/dev/null 2>&1 || ip link add "\$SHIM" link "\$PARENT" type macvlan mode bridge
+ip addr show dev "\$SHIM" 2>/dev/null | grep -qw "\$SHIM_IP" || ip addr add "\$SHIM_IP/32" dev "\$SHIM"
+ip link set "\$SHIM" up
+for cip in \$ROUTE_IPS; do
+    ip route show | grep -qw "\$cip" || ip route add "\$cip/32" dev "\$SHIM"
+done
+EOF
+    as_root chmod +x "$install_dir/macvlan-shim.sh"
+
+    if command -v systemctl &>/dev/null; then
+        as_root_write_stdin "/etc/systemd/system/kg-macvlan-shim.service" << EOF
+[Unit]
+Description=Knowledge Graph macvlan host shim (host <-> macvlan container)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=$install_dir/macvlan-shim.sh
+ExecStop=-/usr/bin/env ip link del $MACVLAN_SHIM_NAME
+
+[Install]
+WantedBy=multi-user.target
+EOF
+        as_root systemctl daemon-reload
+        if as_root systemctl enable --now kg-macvlan-shim.service >/dev/null 2>&1; then
+            log_success "Host shim active and enabled at boot (kg-macvlan-shim.service)"
+        else
+            log_warning "Shim service failed to start — check: sudo systemctl status kg-macvlan-shim"
+            as_root "$install_dir/macvlan-shim.sh" || true
+        fi
+    else
+        log_warning "systemd not found — bringing the shim up now (will NOT persist across reboot)"
+        as_root "$install_dir/macvlan-shim.sh" || true
+    fi
+
+    # Confirm the host can now reach the container.
+    if ping -c1 -W2 "$MACVLAN_IP" &>/dev/null; then
+        log_success "This host can now reach the platform at $MACVLAN_IP"
+    else
+        log_info "Shim configured. If the host still can't reach $MACVLAN_IP, verify"
+        log_info "$MACVLAN_SHIM_IP is unused on the LAN (and the platform is running)."
     fi
 }
 
@@ -2528,6 +2684,9 @@ show_completion() {
         if [[ -n "$MACVLAN_IP" ]]; then
             echo -e "  ${BOLD}IP:${NC}          ${MACVLAN_IP}"
         fi
+        if [[ "$MACVLAN_SHIM" == "true" ]]; then
+            echo -e "  ${BOLD}Host shim:${NC}   ${MACVLAN_SHIM_NAME} @ ${MACVLAN_SHIM_IP} (this host can reach ${MACVLAN_IP})"
+        fi
     fi
 
     echo
@@ -2628,6 +2787,11 @@ main() {
 
     # Start containers
     start_containers
+
+    # Set up the host shim (so this host can reach the macvlan container)
+    if [[ "$MACVLAN_SHIM" == "true" ]]; then
+        setup_macvlan_shim
+    fi
 
     # Configure platform
     configure_platform
