@@ -602,6 +602,52 @@ cmd_release() {
     echo ""
 }
 
+# retag_postgres_to_version
+#
+# Re-tag the already-published kg-postgres image to the current platform VERSION
+# (and refresh :latest) WITHOUT rebuilding. Used on releases where the postgres
+# image does not need a rebuild — i.e. the graph-accel artifacts are absent
+# because the extension did not change. Without this, kg-postgres:latest/:VERSION
+# stay frozen at the last build (e.g. platform 0.15.0 but postgres still tagged
+# 0.13.2), and standalone installs that pull kg-postgres:latest silently lag.
+#
+# Uses `docker buildx imagetools create`, which copies the source manifest
+# (preserving multi-arch) under new tags entirely server-side: no pull, no
+# rebuild, same digest.
+#
+# Caveat: the postgres image also bakes schema/00_baseline.sql. A re-tag keeps
+# whatever baseline the last build captured, so a re-tagged :VERSION may carry an
+# older baseline than its label suggests. This is safe — a fresh DB inits from
+# the baked baseline and the operator's runtime migrations reconcile it to the
+# current schema regardless — but when the baseline itself has changed and you
+# want the image to bake it, build properly (artifacts present) instead of
+# re-tagging.
+retag_postgres_to_version() {
+    local image="$GHCR_REGISTRY/$IMAGE_PREFIX/kg-postgres"
+    echo -e "${BLUE}→ Re-tagging existing $image to $VERSION (no rebuild needed)${NC}"
+
+    if [ "$DRY_RUN" = "true" ]; then
+        echo -e "  ${DIM}Would run: docker buildx imagetools create --tag $image:$VERSION --tag $image:latest $image:latest${NC}"
+        return 0
+    fi
+
+    # Need an existing :latest to copy from (first-ever publish must build).
+    if ! docker buildx imagetools inspect "$image:latest" >/dev/null 2>&1; then
+        echo -e "${YELLOW}⚠ No existing $image:latest to re-tag.${NC}"
+        echo -e "  ${DIM}Build it once: ./graph-accel/build-in-container.sh --all && ./publish.sh images postgres${NC}"
+        return 0
+    fi
+
+    if docker buildx imagetools create \
+        --tag "$image:$VERSION" \
+        --tag "$image:latest" \
+        "$image:latest"; then
+        echo -e "${GREEN}✓ Re-tagged $image → :$VERSION (+ :latest), digest unchanged${NC}"
+    else
+        echo -e "${RED}✗ Failed to re-tag $image (is buildx available and are you logged in to GHCR?)${NC}"
+    fi
+}
+
 cmd_images() {
     get_versions
 
@@ -672,11 +718,15 @@ cmd_images() {
                 image_name="kg-operator"
                 ;;
             postgres)
-                # Requires per-arch pre-built artifacts in graph-accel/dist/pg18/
+                # Requires per-arch pre-built artifacts in graph-accel/dist/pg18/.
+                # When they are absent (graph-accel unchanged, normal release) we
+                # do not rebuild — instead re-tag the existing published image to
+                # the new version so its tags track the platform. See
+                # retag_postgres_to_version() for the rationale.
                 if [ ! -d "./graph-accel/dist/pg18/amd64" ]; then
-                    echo -e "${YELLOW}⚠ graph-accel/dist/pg18/amd64/ missing${NC}"
-                    echo -e "  Build with: ${BLUE}./graph-accel/build-in-container.sh --all${NC}"
-                    echo -e "  Skipping postgres target."
+                    echo -e "${YELLOW}⚠ graph-accel/dist/pg18/amd64/ missing — not rebuilding postgres${NC}"
+                    echo -e "  ${DIM}(rebuild only if graph-accel changed: ./graph-accel/build-in-container.sh --all)${NC}"
+                    retag_postgres_to_version
                     continue
                 fi
                 if [ "$target_multi_arch" = "true" ] && [ ! -d "./graph-accel/dist/pg18/arm64" ]; then
