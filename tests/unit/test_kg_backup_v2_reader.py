@@ -95,7 +95,41 @@ def test_graph_epochs_de_interned():
 def test_counts():
     counts = KgBackupV2Reader(_build()).counts()
     assert counts == {"concepts": 2, "sources": 1, "instances": 1,
-                      "evidence": 2, "relationships": 1, "vocabulary": 1}
+                      "evidence": 2, "relationships": 1, "vocabulary": 1,
+                      "ontologies": 0, "scoped_by": 0, "anchored_by": 0}
+
+
+def test_ontology_streams_round_trip_through_reader():
+    """Ontology nodes + SCOPED_BY/ANCHORED_BY edges survive build → read intact."""
+    obj = _build(
+        ontologies=[
+            {"ontology_id": "ont_1", "name": "Corpus", "description": "d",
+             "embedding": [0.1, 0.2], "search_terms": ["c"],
+             "lifecycle_state": "frozen", "creation_epoch": 5, "created_by": "alice"},
+        ],
+        scoped_by=[{"source_id": "s1", "ontology": "Corpus"}],
+        anchored_by=[{"ontology": "Corpus", "concept_id": "c1"}],
+    )
+    reader = KgBackupV2Reader(obj)
+    onts = list(reader.ontologies())
+    assert len(onts) == 1
+    assert onts[0]["name"] == "Corpus"
+    assert onts[0]["lifecycle_state"] == "frozen"      # the property a lossy fix would drop
+    assert onts[0]["embedding"] == [0.1, 0.2]
+    assert reader.scoped_by() == [{"source_id": "s1", "ontology": "Corpus"}]
+    assert reader.anchored_by() == [{"ontology": "Corpus", "concept_id": "c1"}]
+    assert reader.counts()["ontologies"] == 1
+
+
+def test_ontology_streams_absent_in_pre_stream_backup():
+    """A backup without the ontology streams reads as empty (back-compat)."""
+    obj = _build()
+    obj["bulk"].pop("ontologies", None)
+    obj["bulk"].pop("scoped_by", None)
+    obj["bulk"].pop("anchored_by", None)
+    reader = KgBackupV2Reader(obj)
+    assert list(reader.ontologies()) == []
+    assert reader.scoped_by() == [] and reader.anchored_by() == []
 
 
 def test_external_concept_ids_empty_when_self_contained():

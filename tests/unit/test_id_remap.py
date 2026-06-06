@@ -105,6 +105,27 @@ def test_garage_key_is_immune():
     assert new["bulk"]["sources"][0]["garage_key"] == "sources/Doc/abc123sha"
 
 
+def test_ontology_edges_rewritten_via_id_maps():
+    """SCOPED_BY/ANCHORED_BY edge ids follow their source/concept maps; nodes pass through.
+
+    Without this, adjacent-mode restore would silently orphan ontology membership
+    and provenance — exactly the "missed class" failure the remapper guards against.
+    """
+    obj = _backup(
+        ontologies=[{"ontology_id": "ont_1", "name": "Doc", "description": "",
+                     "embedding": [0.1], "search_terms": [], "lifecycle_state": "active",
+                     "creation_epoch": 1, "created_by": None}],
+        scoped_by=[{"source_id": "s1", "ontology": "Doc"}],
+        anchored_by=[{"ontology": "Doc", "concept_id": "c1"}],
+    )
+    new, _ = IdRemapper(mode="always", id_factory=_fixed_factory).remap(obj)
+    # Edge endpoints follow the minted ids; the ontology NAME is a stable key, unchanged.
+    assert new["bulk"]["scoped_by"] == [{"source_id": "NEW_s1", "ontology": "Doc"}]
+    assert new["bulk"]["anchored_by"] == [{"ontology": "Doc", "concept_id": "NEW_c1"}]
+    # The ontology node itself carries no minted id — passed through verbatim.
+    assert new["bulk"]["ontologies"][0]["ontology_id"] == "ont_1"
+
+
 def test_remapped_object_validates_clean():
     """No reference class left dangling — the integrity guarantee."""
     new, _ = _remap_always()

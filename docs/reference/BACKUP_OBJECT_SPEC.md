@@ -278,10 +278,17 @@ grounded in the current exporter (`api/lib/serialization.py`,
     "evidence":      [ ... ],
     "relationships": [ ... ],
     "vocabulary":    [ ... ],
-    "graph_epochs":  [ ... ]
+    "graph_epochs":  [ ... ],
+    "ontologies":    [ ... ],
+    "scoped_by":     [ ... ],
+    "anchored_by":   [ ... ]
   }
 }
 ```
+
+> **`ontologies` / `scoped_by` / `anchored_by` are additive streams.** A reader
+> tolerates their absence (older backups predate them and simply restore no
+> ontology layer). They are NOT interned (small cardinality) — see §5.7.
 
 ### 5.1 concepts
 
@@ -404,6 +411,54 @@ Present **only** when the backup is produced for faithful epoch replay
 > **Why CLONE-only.** Faithful replay is coherent only when identity is
 > preserved 1:1 (empty target). In MERGE the epoch collapses to one restore
 > event (simple mode), so the source's `graph_epochs` rows are not carried.
+
+### 5.7 ontologies, scoped_by, anchored_by — the ontology layer
+
+`:Ontology` nodes are **first-class primary inputs**, not derived: they carry
+their own `embedding` (in the concept space), `lifecycle_state`, and curator
+metadata that nothing post-restore can reconstruct. A backup that omitted them
+silently dropped `kg ontology list` / the catalog browse tree on restore, and
+turned a `frozen` ontology back into a writable one. These three streams carry
+the nodes and their two edge classes so the layer round-trips faithfully.
+
+They are **not interned** (ontology cardinality is tiny — tens, not tens of
+thousands) and are **additive**: a backup taken before they existed simply lacks
+the keys, and the reader yields empty.
+
+**`ontologies`** — one record per `:Ontology` node:
+
+| Field | Type | Notes |
+|---|---|---|
+| `ontology_id` | string | App-assigned (`ont_<uuid>`). Carried unchanged by ID remapping (its own id space — not a concept/source/instance id). MERGE key on restore. |
+| `name` | string | The ontology name; matches `sources[].document` and is the key the edges below cite. Stable identifier — never minted/remapped. |
+| `description` | string | Curator description (may be empty). |
+| `embedding` | array of floats | Ontology vector, same space as concepts. |
+| `search_terms` | array of strings | Alternative names for similarity matching. |
+| `lifecycle_state` | string | `active` \| `pinned` \| `frozen`. **Load-bearing** — a lost `frozen` silently re-opens an ontology to writes. |
+| `creation_epoch` | integer or null | Global epoch when created. |
+| `created_by` | string or null | Creating user (ADR-200). |
+
+**`scoped_by`** — `(:Source)-[:SCOPED_BY]->(:Ontology)` membership (the source of
+truth; `Source.document` is a denormalized cache):
+
+| Field | Type | Notes |
+|---|---|---|
+| `source_id` | string | Participates in ID remapping (source map). |
+| `ontology` | string | The `ontologies[].name` it belongs to. Not remapped. |
+
+**`anchored_by`** — `(:Ontology)-[:ANCHORED_BY]->(:Concept)` founding-concept
+provenance (ADR-200):
+
+| Field | Type | Notes |
+|---|---|---|
+| `ontology` | string | The `ontologies[].name`. Not remapped. |
+| `concept_id` | string | Participates in ID remapping (concept map). |
+
+The independent validator (`lint_backup.py`) enforces referential integrity for
+all three: duplicate `ontology_id`/`name`, and `scoped_by`/`anchored_by`
+endpoints that resolve to an existing source/concept/ontology
+(`E_SCOPED_*` / `E_ANCHORED_*` / `E_DUP_ONTOLOGY_*`). This is why `kg admin
+verify` round-trip-checks the ontology layer without a restore.
 
 ---
 

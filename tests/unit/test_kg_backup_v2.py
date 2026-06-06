@@ -131,6 +131,84 @@ def test_no_derived_products_in_bulk():
         assert key not in obj["bulk"]
 
 
+def test_ontology_streams_land_in_bulk_and_validate():
+    """First-class :Ontology nodes + edges are emitted to bulk and pass the validator."""
+    lists = _fixture_lists()
+    lists["ontologies"] = [
+        {"ontology_id": "ont_1", "name": "Corpus", "description": "d",
+         "embedding": [0.1, 0.2], "search_terms": [], "lifecycle_state": "active",
+         "creation_epoch": 1, "created_by": None},
+    ]
+    lists["scoped_by"] = [{"source_id": "s1", "ontology": "Corpus"}]
+    lists["anchored_by"] = [{"ontology": "Corpus", "concept_id": "c1"}]
+    obj = DataExporter.build_kg_backup_v2(**lists)
+
+    assert obj["bulk"]["ontologies"][0]["name"] == "Corpus"
+    assert obj["bulk"]["scoped_by"] == [{"source_id": "s1", "ontology": "Corpus"}]
+    assert obj["bulk"]["anchored_by"] == [{"ontology": "Corpus", "concept_id": "c1"}]
+    # The new streams are not interned (small cardinality) and must not break validation.
+    result = lint_backup.validate_backup(obj)
+    assert result.ok, [str(i) for i in result.errors]
+
+
+def test_ontology_streams_default_empty_when_omitted():
+    """Callers that don't pass the streams get empty lists, not missing keys."""
+    obj = DataExporter.build_kg_backup_v2(**_fixture_lists())
+    assert obj["bulk"]["ontologies"] == []
+    assert obj["bulk"]["scoped_by"] == []
+    assert obj["bulk"]["anchored_by"] == []
+
+
+def _ontology(name="Corpus", oid="o1"):
+    return {"ontology_id": oid, "name": name, "description": "", "embedding": [],
+            "search_terms": [], "lifecycle_state": "active", "creation_epoch": 1,
+            "created_by": None}
+
+
+def test_ontology_edge_orphans_are_flagged():
+    """The independent validator catches scoped_by/anchored_by edges with missing endpoints.
+
+    This is what makes `kg admin verify` a real round-trip check: a backup whose
+    ontology membership/provenance edges dangle is rejected WITHOUT a restore.
+    """
+    lists = _fixture_lists()
+    lists["ontologies"] = [_ontology()]
+    lists["scoped_by"] = [
+        {"source_id": "s1", "ontology": "Corpus"},   # ok
+        {"source_id": "sX", "ontology": "Corpus"},   # sX: no such source
+        {"source_id": "s1", "ontology": "Nope"},     # Nope: no such ontology
+    ]
+    lists["anchored_by"] = [
+        {"ontology": "Corpus", "concept_id": "cX"},  # cX: no such concept
+        {"ontology": "Ghost", "concept_id": "c1"},   # Ghost: no such ontology
+    ]
+    codes = {i.code for i in lint_backup.validate_backup(
+        DataExporter.build_kg_backup_v2(**lists)).errors}
+    assert "E_SCOPED_SOURCE_MISSING" in codes
+    assert "E_SCOPED_ONTOLOGY_MISSING" in codes
+    assert "E_ANCHORED_CONCEPT_MISSING" in codes
+    assert "E_ANCHORED_ONTOLOGY_MISSING" in codes
+
+
+def test_duplicate_ontology_is_flagged():
+    lists = _fixture_lists()
+    lists["ontologies"] = [_ontology(), _ontology()]   # same id + name twice
+    codes = {i.code for i in lint_backup.validate_backup(
+        DataExporter.build_kg_backup_v2(**lists)).errors}
+    assert "E_DUP_ONTOLOGY_ID" in codes
+    assert "E_DUP_ONTOLOGY_NAME" in codes
+
+
+def test_well_formed_ontology_streams_validate_clean():
+    """A faithful ontology layer passes the validator with no new errors."""
+    lists = _fixture_lists()
+    lists["ontologies"] = [_ontology()]
+    lists["scoped_by"] = [{"source_id": "s1", "ontology": "Corpus"}]
+    lists["anchored_by"] = [{"ontology": "Corpus", "concept_id": "c1"}]
+    result = lint_backup.validate_backup(DataExporter.build_kg_backup_v2(**lists))
+    assert result.ok, [str(i) for i in result.errors]
+
+
 def test_dynamic_edge_type_missing_from_vocab_still_interns():
     """An edge type absent from the vocabulary table is appended to the header dict."""
     lists = _fixture_lists()
