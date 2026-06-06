@@ -175,6 +175,7 @@ class DataImporter:
             "vocabulary_imported": 0,
             "concepts_created": 0,
             "sources_created": 0,
+            "ontologies_created": 0,
             "instances_created": 0,
             "relationships_created": 0,
         }
@@ -195,6 +196,15 @@ class DataImporter:
         Console.info("Importing sources...")
         DataImporter._import_sources(client, sources, progress_callback)
         stats["sources_created"] = len(sources)
+
+        # Ontologies after concepts + sources: SCOPED_BY needs sources, ANCHORED_BY
+        # needs concepts (both already imported above). Absent in pre-stream backups.
+        ontologies = list(reader.ontologies())
+        if ontologies:
+            Console.info(f"Importing {len(ontologies)} ontologies (+SCOPED_BY/ANCHORED_BY)...")
+            stats["ontologies_created"] = DataImporter._import_ontologies(
+                client, ontologies, reader.scoped_by(), reader.anchored_by(), progress_callback
+            )
 
         instances = list(reader.instances())
         Console.info("Importing instances...")
@@ -396,6 +406,78 @@ class DataImporter:
                 params["storage_key"] = s["storage_key"]
             _execute_with_age_retry(client, query, params)
             _progress(progress_callback, "sources", i + 1, total, every=1)
+
+    @staticmethod
+    def _import_ontologies(client: AGEClient,
+                           ontologies: List[Dict[str, Any]],
+                           scoped_by: List[Dict[str, Any]],
+                           anchored_by: List[Dict[str, Any]],
+                           progress_callback) -> int:
+        """MERGE :Ontology nodes and their SCOPED_BY / ANCHORED_BY edges.
+
+        Clone-faithful and idempotent (MERGE + SET), so re-running a restore
+        re-converges. Nodes are written first so the edge MERGEs can match both
+        endpoints; an edge whose other endpoint (source/concept) is absent simply
+        matches nothing and is skipped — no dangling edge is created.
+
+        Identity is keyed on ``name``, NOT ``ontology_id`` — ``name`` is the
+        natural key the rest of the system uses (``ensure_ontology_exists`` /
+        ``get_ontology_node`` / both edge MATCHes key on it, and the SCOPED_BY /
+        ANCHORED_BY edges below cite ontologies by name). MERGE-on-name keeps a
+        single node per name across merge modes (where ``ontology_id`` is carried
+        verbatim and could otherwise collide-by-id or, when null, collapse every
+        id-less ontology into one node); ``ontology_id`` is restored as a property.
+
+        Returns the number of ontology nodes written.
+        """
+        total = len(ontologies)
+        node_query = """
+            MERGE (o:Ontology {name: $name})
+            SET o.ontology_id = $ontology_id,
+                o.description = $description,
+                o.embedding = $embedding,
+                o.search_terms = $search_terms,
+                o.lifecycle_state = $lifecycle_state,
+                o.creation_epoch = $creation_epoch,
+                o.created_by = $created_by
+        """
+        for i, o in enumerate(ontologies):
+            params = {
+                "ontology_id": o.get("ontology_id"),
+                "name": o.get("name"),
+                "description": o.get("description", ""),
+                "embedding": o.get("embedding", []),
+                "search_terms": o.get("search_terms", []),
+                "lifecycle_state": o.get("lifecycle_state", "active"),
+                "creation_epoch": o.get("creation_epoch"),
+                "created_by": o.get("created_by"),
+            }
+            _execute_with_age_retry(client, node_query, params)
+            _progress(progress_callback, "ontologies", i + 1, total, every=1)
+
+        # SCOPED_BY: (Source)-[:SCOPED_BY]->(Ontology), keyed by ontology name.
+        scoped_query = """
+            MATCH (s:Source {source_id: $source_id}), (o:Ontology {name: $ontology})
+            MERGE (s)-[:SCOPED_BY]->(o)
+        """
+        for edge in scoped_by:
+            _execute_with_age_retry(client, scoped_query, {
+                "source_id": edge.get("source_id"),
+                "ontology": edge.get("ontology"),
+            })
+
+        # ANCHORED_BY: (Ontology)-[:ANCHORED_BY]->(Concept), founding-concept provenance.
+        anchored_query = """
+            MATCH (o:Ontology {name: $ontology}), (c:Concept {concept_id: $concept_id})
+            MERGE (o)-[:ANCHORED_BY]->(c)
+        """
+        for edge in anchored_by:
+            _execute_with_age_retry(client, anchored_query, {
+                "ontology": edge.get("ontology"),
+                "concept_id": edge.get("concept_id"),
+            })
+
+        return total
 
     @staticmethod
     def _import_instances(client: AGEClient, instances: List[Dict[str, Any]],

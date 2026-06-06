@@ -35,6 +35,21 @@ def _parse_nullable_int(raw: Any) -> Optional[int]:
         return None
 
 
+def _parse_nullable_str(raw: Any) -> Optional[str]:
+    """Parse a nullable string from an AGE agtype scalar.
+
+    Distinguishes a genuinely absent/NULL property (``None`` or the literal
+    ``"null"``) from an empty string, which AGE returns as ``'""'``. Used for
+    optional node properties like ``Ontology.created_by``.
+    """
+    if raw is None:
+        return None
+    s = str(raw).strip()
+    if s.lower() == "null":
+        return None
+    return s.strip('"')
+
+
 class DataExporter:
     """Export graph data to JSON format"""
 
@@ -328,6 +343,129 @@ class DataExporter:
         return relationships
 
     @staticmethod
+    def export_ontologies(client: AGEClient, ontology: Optional[str] = None) -> List[Dict[str, Any]]:
+        """Export :Ontology nodes as first-class records (full fidelity).
+
+        Ontologies are first-class graph entities in the concept embedding space,
+        not derivable from sources — the ``s.document`` string is only a
+        denormalized cache of membership. A backup that drops them loses the
+        registry that ``kg ontology list`` / the catalog browse tree depend on,
+        plus the ``lifecycle_state`` (``frozen`` ontologies would silently become
+        writable on restore). Round-trips with :func:`export_scoped_by` /
+        :func:`export_anchored_by` and the importer's ``_import_ontologies``.
+
+        Args:
+            client: AGEClient instance
+            ontology: Optional name filter (None = all ontologies)
+
+        Returns:
+            List of ontology node dictionaries with full embeddings.
+        """
+        if ontology:
+            query = """
+                MATCH (o:Ontology {name: $ontology})
+                RETURN o.ontology_id as ontology_id, o.name as name,
+                       o.description as description, o.embedding as embedding,
+                       o.search_terms as search_terms, o.lifecycle_state as lifecycle_state,
+                       o.creation_epoch as creation_epoch, o.created_by as created_by
+                ORDER BY o.name
+            """
+            result = client._execute_cypher(query, params={"ontology": ontology})
+        else:
+            query = """
+                MATCH (o:Ontology)
+                RETURN o.ontology_id as ontology_id, o.name as name,
+                       o.description as description, o.embedding as embedding,
+                       o.search_terms as search_terms, o.lifecycle_state as lifecycle_state,
+                       o.creation_epoch as creation_epoch, o.created_by as created_by
+                ORDER BY o.name
+            """
+            result = client._execute_cypher(query)
+
+        ontologies = []
+        for record in result:
+            try:
+                search_terms = json.loads(str(record.get("search_terms", "[]")))
+            except json.JSONDecodeError:
+                search_terms = []
+            try:
+                embedding = json.loads(str(record.get("embedding", "[]")))
+            except json.JSONDecodeError:
+                embedding = []
+            ontologies.append({
+                "ontology_id": _parse_nullable_str(record.get("ontology_id")),
+                "name": str(record.get("name", "")).strip('"'),
+                # description normalizes null→"" (production defaults it to "" at
+                # create time; the null/empty distinction carries no meaning here).
+                "description": _parse_nullable_str(record.get("description")) or "",
+                "embedding": embedding,
+                "search_terms": search_terms,
+                "lifecycle_state": _parse_nullable_str(record.get("lifecycle_state")) or "active",
+                "creation_epoch": _parse_nullable_int(record.get("creation_epoch")),
+                "created_by": _parse_nullable_str(record.get("created_by")),
+            })
+
+        return ontologies
+
+    @staticmethod
+    def export_scoped_by(client: AGEClient, ontology: Optional[str] = None) -> List[Dict[str, Any]]:
+        """Export (:Source)-[:SCOPED_BY]->(:Ontology) edges — ontology membership.
+
+        ``:SCOPED_BY`` is the source of truth for which ontology a source belongs
+        to (``s.document`` is the denormalized cache). Exported explicitly so the
+        membership graph round-trips rather than being re-derived heuristically.
+        """
+        if ontology:
+            query = """
+                MATCH (s:Source)-[:SCOPED_BY]->(o:Ontology {name: $ontology})
+                RETURN s.source_id as source_id, o.name as ontology
+                ORDER BY s.source_id
+            """
+            result = client._execute_cypher(query, params={"ontology": ontology})
+        else:
+            query = """
+                MATCH (s:Source)-[:SCOPED_BY]->(o:Ontology)
+                RETURN s.source_id as source_id, o.name as ontology
+                ORDER BY s.source_id, o.name
+            """
+            result = client._execute_cypher(query)
+
+        return [
+            {"source_id": str(r.get("source_id", "")).strip('"'),
+             "ontology": str(r.get("ontology", "")).strip('"')}
+            for r in result
+        ]
+
+    @staticmethod
+    def export_anchored_by(client: AGEClient, ontology: Optional[str] = None) -> List[Dict[str, Any]]:
+        """Export (:Ontology)-[:ANCHORED_BY]->(:Concept) edges — founding concepts.
+
+        Links a promoted ontology to the concept it grew from (ADR-200). The
+        concept exists independently; this edge records provenance and must
+        survive a clone so promotion history is not lost.
+        """
+        if ontology:
+            query = """
+                MATCH (o:Ontology {name: $ontology})-[:ANCHORED_BY]->(c:Concept)
+                RETURN o.name as ontology, c.concept_id as concept_id
+                ORDER BY c.concept_id
+            """
+            result = client._execute_cypher(query, params={"ontology": ontology})
+        else:
+            query = """
+                MATCH (o:Ontology)-[:ANCHORED_BY]->(c:Concept)
+                RETURN o.name as ontology, c.concept_id as concept_id
+                ORDER BY o.name, c.concept_id
+            """
+            result = client._execute_cypher(query)
+
+        return [
+            {"ontology": str(r.get("ontology", "")).strip('"'),
+             "concept_id": str(r.get("concept_id", "")).strip('"')}
+            for r in result
+        ]
+
+    @staticmethod
     def export_vocabulary(client: AGEClient) -> List[Dict[str, Any]]:
         """
         Export relationship vocabulary table (ADR-032)
@@ -544,6 +682,9 @@ class DataExporter:
         epoch_kinds: List[Dict[str, Any]],
         graph_epochs: List[Dict[str, Any]],
         schema_version: int,
+        ontologies: Optional[List[Dict[str, Any]]] = None,
+        scoped_by: Optional[List[Dict[str, Any]]] = None,
+        anchored_by: Optional[List[Dict[str, Any]]] = None,
         source_platform: str = "knowledge-graph-system",
         source_version: str = "unknown",
         exported_at: Optional[str] = None,
@@ -607,16 +748,19 @@ class DataExporter:
                 actor_index[a] = len(actors)
                 actors.append(a)
 
-        # ontologies (with their default profile index = active profile)
+        # header.ontologies: the per-ontology embedding-profile registry (the
+        # name→active-profile map the §4.1 cascade reads). Distinct from the
+        # bulk.ontologies NODE stream (the ``ontologies`` parameter) — a separate
+        # local so it does not shadow that parameter.
         if ontology:
-            ontologies = [{"name": ontology, "default_embedding_profile": 0}]
+            header_ontologies = [{"name": ontology, "default_embedding_profile": 0}]
         else:
             seen: List[str] = []
             for s in sources:
                 doc = s.get("document")
                 if doc and doc not in seen:
                     seen.append(doc)
-            ontologies = [{"name": d, "default_embedding_profile": 0} for d in seen]
+            header_ontologies = [{"name": d, "default_embedding_profile": 0} for d in seen]
 
         header = {
             "format_version": KG_BACKUP_FORMAT_VERSION,
@@ -629,7 +773,7 @@ class DataExporter:
             "epoch_kinds": epoch_kinds,
             "actors": actors,
             "content_types": content_types,
-            "ontologies": ontologies,
+            "ontologies": header_ontologies,
         }
 
         # bulk: intern references by index
@@ -669,6 +813,12 @@ class DataExporter:
                 "relationships": bulk_rels,
                 "vocabulary": vocabulary,
                 "graph_epochs": bulk_epochs,
+                # First-class :Ontology nodes + their membership/provenance edges.
+                # Not interned (small cardinality); empty for backups taken before
+                # this stream existed (the reader tolerates absence).
+                "ontologies": list(ontologies or []),
+                "scoped_by": list(scoped_by or []),
+                "anchored_by": list(anchored_by or []),
             },
         }
 
@@ -691,6 +841,9 @@ class DataExporter:
         embedding_profiles = DataExporter.export_embedding_profiles(client)
         epoch_kinds = DataExporter.export_epoch_kinds(client)
         graph_epochs = DataExporter.export_graph_epochs(client)
+        ontologies = DataExporter.export_ontologies(client, ontology)
+        scoped_by = DataExporter.export_scoped_by(client, ontology)
+        anchored_by = DataExporter.export_anchored_by(client, ontology)
         DataExporter._log_vocabulary_summary(relationships, vocabulary)
 
         return DataExporter.build_kg_backup_v2(
@@ -698,6 +851,7 @@ class DataExporter:
             evidence=evidence, relationships=relationships, vocabulary=vocabulary,
             embedding_profiles=embedding_profiles, epoch_kinds=epoch_kinds,
             graph_epochs=graph_epochs,
+            ontologies=ontologies, scoped_by=scoped_by, anchored_by=anchored_by,
             schema_version=BackupFormat.get_schema_version(client),
             ontology=ontology,
         )

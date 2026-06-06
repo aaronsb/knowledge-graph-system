@@ -7,12 +7,15 @@ rewritten through the maps. A missed class silently orphans edges (ADR-102
 Consequences: "a missed class silently orphans relationships"), so the rewrite is
 exhaustive and is covered class-by-class by the test matrix:
 
-  - ``concept_id``  → concepts, ``evidence.concept_id``, relationship ``from``/``to``
-  - ``source_id``   → sources, ``instances.source_id``, **and the ``learned_id`` EDGE
+  - ``concept_id``  → concepts, ``evidence.concept_id``, relationship ``from``/``to``,
+                      ``anchored_by.concept_id`` (:Ontology→:Concept provenance)
+  - ``source_id``   → sources, ``instances.source_id``, ``scoped_by.source_id``
+                      (:Source→:Ontology membership), **and the ``learned_id`` EDGE
                       property** (a source_id carried on agent-learned edges)
   - ``instance_id`` → instances, ``evidence.instance_id``
   - image ``storage_key`` → **recomputed** from the new source_id (derived, not an id)
   - ``garage_key`` (source document) → content-addressed (sha256): **IMMUNE**, preserved
+  - ``ontologies`` nodes / ontology ``name`` → no minted id; carried unchanged
 
 Pure and DB-free: emits a NEW valid ``kg-backup/2`` object (which flows through the
 normal clone path unchanged) plus the old→new mapping table — a restore artifact
@@ -156,6 +159,23 @@ class IdRemapper:
                 r2["properties"] = p2
             new_rels.append(r2)
         new_bulk["relationships"] = new_rels
+
+        # Ontology nodes carry no concept/source/instance id — only their own
+        # ontology_id and a stable name — so they pass through unchanged (like
+        # vocabulary). Their EDGES, however, reference app-ids and must be remapped
+        # so they land on the freshly-minted nodes rather than silently orphaning.
+        if "ontologies" in bulk:
+            new_bulk["ontologies"] = bulk["ontologies"]
+        if "scoped_by" in bulk:
+            new_bulk["scoped_by"] = [
+                {**e, "source_id": source_map.get(e["source_id"], e["source_id"])}
+                for e in bulk["scoped_by"]
+            ]
+        if "anchored_by" in bulk:
+            new_bulk["anchored_by"] = [
+                {**e, "concept_id": concept_map.get(e["concept_id"], e["concept_id"])}
+                for e in bulk["anchored_by"]
+            ]
 
         # Streams with no app-ids are carried through unchanged.
         new_bulk["vocabulary"] = bulk.get("vocabulary", [])

@@ -169,11 +169,29 @@ class KgBackupV2Reader:
             rec["actor"] = self._actors[a] if isinstance(a, int) else a
             yield rec
 
+    def ontologies(self):
+        """Yield :Ontology node records (name, embedding, lifecycle_state, ...).
+
+        Empty for backups taken before the ontology stream existed — restoring
+        such a backup simply creates no ontology nodes (the prior behavior).
+        """
+        for o in self.bulk.get("ontologies", []):
+            yield dict(o)
+
+    def scoped_by(self):
+        """Return (:Source)-[:SCOPED_BY]->(:Ontology) edges as ``{source_id, ontology}``."""
+        return list(self.bulk.get("scoped_by", []))
+
+    def anchored_by(self):
+        """Return (:Ontology)-[:ANCHORED_BY]->(:Concept) edges as ``{ontology, concept_id}``."""
+        return list(self.bulk.get("anchored_by", []))
+
     def counts(self):
         """Return record counts per bulk stream (for stats/logging)."""
         b = self.bulk
         return {k: len(b.get(k, [])) for k in
-                ("concepts", "sources", "instances", "evidence", "relationships", "vocabulary")}
+                ("concepts", "sources", "instances", "evidence", "relationships",
+                 "vocabulary", "ontologies", "scoped_by", "anchored_by")}
 
     def external_concept_ids(self):
         """Concept ids referenced by edges/evidence but absent from this backup.
