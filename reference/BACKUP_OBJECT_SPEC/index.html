@@ -3279,6 +3279,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#57-ontologies-scoped_by-anchored_by-the-ontology-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.7 ontologies, scoped_by, anchored_by — the ontology layer
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -10941,6 +10952,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#57-ontologies-scoped_by-anchored_by-the-ontology-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.7 ontologies, scoped_by, anchored_by — the ontology layer
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -11316,10 +11338,18 @@ grounded in the current exporter (<code>api/lib/serialization.py</code>,
 <a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="w">    </span><span class="nt">&quot;evidence&quot;</span><span class="p">:</span><span class="w">      </span><span class="p">[</span><span class="w"> </span><span class="err">...</span><span class="w"> </span><span class="p">],</span>
 <a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="w">    </span><span class="nt">&quot;relationships&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="err">...</span><span class="w"> </span><span class="p">],</span>
 <a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="w">    </span><span class="nt">&quot;vocabulary&quot;</span><span class="p">:</span><span class="w">    </span><span class="p">[</span><span class="w"> </span><span class="err">...</span><span class="w"> </span><span class="p">],</span>
-<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="w">    </span><span class="nt">&quot;graph_epochs&quot;</span><span class="p">:</span><span class="w">  </span><span class="p">[</span><span class="w"> </span><span class="err">...</span><span class="w"> </span><span class="p">]</span>
-<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="w">  </span><span class="p">}</span>
-<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="p">}</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="w">    </span><span class="nt">&quot;graph_epochs&quot;</span><span class="p">:</span><span class="w">  </span><span class="p">[</span><span class="w"> </span><span class="err">...</span><span class="w"> </span><span class="p">],</span>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="w">    </span><span class="nt">&quot;ontologies&quot;</span><span class="p">:</span><span class="w">    </span><span class="p">[</span><span class="w"> </span><span class="err">...</span><span class="w"> </span><span class="p">],</span>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="w">    </span><span class="nt">&quot;scoped_by&quot;</span><span class="p">:</span><span class="w">     </span><span class="p">[</span><span class="w"> </span><span class="err">...</span><span class="w"> </span><span class="p">],</span>
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="w">    </span><span class="nt">&quot;anchored_by&quot;</span><span class="p">:</span><span class="w">   </span><span class="p">[</span><span class="w"> </span><span class="err">...</span><span class="w"> </span><span class="p">]</span>
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="w">  </span><span class="p">}</span>
+<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a><span class="p">}</span>
 </code></pre></div>
+<blockquote>
+<p><strong><code>ontologies</code> / <code>scoped_by</code> / <code>anchored_by</code> are additive streams.</strong> A reader
+tolerates their absence (older backups predate them and simply restore no
+ontology layer). They are NOT interned (small cardinality) — see §5.7.</p>
+</blockquote>
 <h3 id="51-concepts">5.1 concepts</h3>
 <table>
 <thead>
@@ -11650,6 +11680,121 @@ vocabulary during rehydration, ADR-102 §6).</p>
 preserved 1:1 (empty target). In MERGE the epoch collapses to one restore
 event (simple mode), so the source's <code>graph_epochs</code> rows are not carried.</p>
 </blockquote>
+<h3 id="57-ontologies-scoped_by-anchored_by-the-ontology-layer">5.7 ontologies, scoped_by, anchored_by — the ontology layer</h3>
+<p><code>:Ontology</code> nodes are <strong>first-class primary inputs</strong>, not derived: they carry
+their own <code>embedding</code> (in the concept space), <code>lifecycle_state</code>, and curator
+metadata that nothing post-restore can reconstruct. A backup that omitted them
+silently dropped <code>kg ontology list</code> / the catalog browse tree on restore, and
+turned a <code>frozen</code> ontology back into a writable one. These three streams carry
+the nodes and their two edge classes so the layer round-trips faithfully.</p>
+<p>They are <strong>not interned</strong> (ontology cardinality is tiny — tens, not tens of
+thousands) and are <strong>additive</strong>: a backup taken before they existed simply lacks
+the keys, and the reader yields empty.</p>
+<p><strong><code>ontologies</code></strong> — one record per <code>:Ontology</code> node:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ontology_id</code></td>
+<td>string</td>
+<td>App-assigned (<code>ont_&lt;uuid&gt;</code>). Carried unchanged by ID remapping (its own id space — not a concept/source/instance id). Restored as a property, NOT the MERGE key.</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td>string</td>
+<td>The ontology name; matches <code>sources[].document</code> and is the key the edges below cite. <strong>The natural key</strong>: restore MERGEs the node on <code>name</code> (consistent with <code>ensure_ontology_exists</code> and the edge MATCHes), so a same-named ontology with a different <code>ontology_id</code> converges to one node across merge modes rather than duplicating. Stable identifier — never minted/remapped.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>string</td>
+<td>Curator description (may be empty).</td>
+</tr>
+<tr>
+<td><code>embedding</code></td>
+<td>array of floats</td>
+<td>Ontology vector, same space as concepts.</td>
+</tr>
+<tr>
+<td><code>search_terms</code></td>
+<td>array of strings</td>
+<td>Alternative names for similarity matching.</td>
+</tr>
+<tr>
+<td><code>lifecycle_state</code></td>
+<td>string</td>
+<td><code>active</code> | <code>pinned</code> | <code>frozen</code>. <strong>Load-bearing</strong> — a lost <code>frozen</code> silently re-opens an ontology to writes.</td>
+</tr>
+<tr>
+<td><code>creation_epoch</code></td>
+<td>integer or null</td>
+<td>Global epoch when created.</td>
+</tr>
+<tr>
+<td><code>created_by</code></td>
+<td>string or null</td>
+<td>Creating user (ADR-200).</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>scoped_by</code></strong> — <code>(:Source)-[:SCOPED_BY]-&gt;(:Ontology)</code> membership (the source of
+truth; <code>Source.document</code> is a denormalized cache):</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>source_id</code></td>
+<td>string</td>
+<td>Participates in ID remapping (source map).</td>
+</tr>
+<tr>
+<td><code>ontology</code></td>
+<td>string</td>
+<td>The <code>ontologies[].name</code> it belongs to. Not remapped.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>anchored_by</code></strong> — <code>(:Ontology)-[:ANCHORED_BY]-&gt;(:Concept)</code> founding-concept
+provenance (ADR-200):</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ontology</code></td>
+<td>string</td>
+<td>The <code>ontologies[].name</code>. Not remapped.</td>
+</tr>
+<tr>
+<td><code>concept_id</code></td>
+<td>string</td>
+<td>Participates in ID remapping (concept map).</td>
+</tr>
+</tbody>
+</table>
+<p>The independent validator (<code>lint_backup.py</code>) enforces integrity for all three:
+duplicate <code>ontology_id</code>/<code>name</code>, duplicate edges, <code>scoped_by</code>/<code>anchored_by</code>
+endpoints that resolve to an existing source/concept/ontology, and the ontology
+embedding dimension against the backup-default profile (<code>E_DUP_ONTOLOGY_*</code> /
+<code>E_DUP_SCOPED_BY</code> / <code>E_DUP_ANCHORED_BY</code> / <code>E_SCOPED_*</code> / <code>E_ANCHORED_*</code> /
+<code>E_ONTOLOGY_EMBEDDING_DIM</code>). This is why <code>kg admin verify</code> round-trip-checks the
+ontology layer without a restore.</p>
 <hr />
 <h2 id="6-exclusions-derived-products-are-not-in-the-backup">6. Exclusions: derived products are NOT in the backup</h2>
 <p>Per <strong>ADR-102 §4</strong> (primary-in / derived-out), the backup carries <strong>primary
