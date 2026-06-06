@@ -429,8 +429,8 @@ the keys, and the reader yields empty.
 
 | Field | Type | Notes |
 |---|---|---|
-| `ontology_id` | string | App-assigned (`ont_<uuid>`). Carried unchanged by ID remapping (its own id space — not a concept/source/instance id). MERGE key on restore. |
-| `name` | string | The ontology name; matches `sources[].document` and is the key the edges below cite. Stable identifier — never minted/remapped. |
+| `ontology_id` | string | App-assigned (`ont_<uuid>`). Carried unchanged by ID remapping (its own id space — not a concept/source/instance id). Restored as a property, NOT the MERGE key. |
+| `name` | string | The ontology name; matches `sources[].document` and is the key the edges below cite. **The natural key**: restore MERGEs the node on `name` (consistent with `ensure_ontology_exists` and the edge MATCHes), so a same-named ontology with a different `ontology_id` converges to one node across merge modes rather than duplicating. Stable identifier — never minted/remapped. |
 | `description` | string | Curator description (may be empty). |
 | `embedding` | array of floats | Ontology vector, same space as concepts. |
 | `search_terms` | array of strings | Alternative names for similarity matching. |
@@ -454,11 +454,13 @@ provenance (ADR-200):
 | `ontology` | string | The `ontologies[].name`. Not remapped. |
 | `concept_id` | string | Participates in ID remapping (concept map). |
 
-The independent validator (`lint_backup.py`) enforces referential integrity for
-all three: duplicate `ontology_id`/`name`, and `scoped_by`/`anchored_by`
-endpoints that resolve to an existing source/concept/ontology
-(`E_SCOPED_*` / `E_ANCHORED_*` / `E_DUP_ONTOLOGY_*`). This is why `kg admin
-verify` round-trip-checks the ontology layer without a restore.
+The independent validator (`lint_backup.py`) enforces integrity for all three:
+duplicate `ontology_id`/`name`, duplicate edges, `scoped_by`/`anchored_by`
+endpoints that resolve to an existing source/concept/ontology, and the ontology
+embedding dimension against the backup-default profile (`E_DUP_ONTOLOGY_*` /
+`E_DUP_SCOPED_BY` / `E_DUP_ANCHORED_BY` / `E_SCOPED_*` / `E_ANCHORED_*` /
+`E_ONTOLOGY_EMBEDDING_DIM`). This is why `kg admin verify` round-trip-checks the
+ontology layer without a restore.
 
 ---
 

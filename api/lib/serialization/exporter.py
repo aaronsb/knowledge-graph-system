@@ -395,6 +395,8 @@ class DataExporter:
             ontologies.append({
                 "ontology_id": _parse_nullable_str(record.get("ontology_id")),
                 "name": str(record.get("name", "")).strip('"'),
+                # description normalizes null→"" (production defaults it to "" at
+                # create time; the null/empty distinction carries no meaning here).
                 "description": _parse_nullable_str(record.get("description")) or "",
                 "embedding": embedding,
                 "search_terms": search_terms,

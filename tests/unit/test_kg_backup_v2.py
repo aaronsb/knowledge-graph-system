@@ -209,6 +209,41 @@ def test_well_formed_ontology_streams_validate_clean():
     assert result.ok, [str(i) for i in result.errors]
 
 
+def test_ontology_embedding_dim_mismatch_flagged():
+    """An ontology vector whose length != the backup-default profile @dims is caught
+    (mirrors the concept dim check — ontologies live in the same space)."""
+    lists = _fixture_lists()                       # default profile is @2 (dims=2)
+    o = _ontology()
+    o["embedding"] = [0.1, 0.2, 0.3]               # 3 dims — wrong
+    lists["ontologies"] = [o]
+    codes = {i.code for i in lint_backup.validate_backup(
+        DataExporter.build_kg_backup_v2(**lists)).errors}
+    assert "E_ONTOLOGY_EMBEDDING_DIM" in codes
+
+
+def test_ontology_empty_embedding_not_dim_checked():
+    """An ontology created without an embedding (``[]``) is not dim-checked."""
+    lists = _fixture_lists()
+    lists["ontologies"] = [_ontology()]            # embedding [] — legitimately absent
+    codes = {i.code for i in lint_backup.validate_backup(
+        DataExporter.build_kg_backup_v2(**lists)).errors}
+    assert "E_ONTOLOGY_EMBEDDING_DIM" not in codes
+
+
+def test_duplicate_ontology_edges_flagged():
+    """Duplicate SCOPED_BY/ANCHORED_BY edges are flagged (integrity parity with nodes)."""
+    lists = _fixture_lists()
+    lists["ontologies"] = [_ontology()]
+    lists["scoped_by"] = [{"source_id": "s1", "ontology": "Corpus"},
+                          {"source_id": "s1", "ontology": "Corpus"}]    # dup
+    lists["anchored_by"] = [{"ontology": "Corpus", "concept_id": "c1"},
+                            {"ontology": "Corpus", "concept_id": "c1"}]  # dup
+    codes = {i.code for i in lint_backup.validate_backup(
+        DataExporter.build_kg_backup_v2(**lists)).errors}
+    assert "E_DUP_SCOPED_BY" in codes
+    assert "E_DUP_ANCHORED_BY" in codes
+
+
 def test_dynamic_edge_type_missing_from_vocab_still_interns():
     """An edge type absent from the vocabulary table is appended to the header dict."""
     lists = _fixture_lists()

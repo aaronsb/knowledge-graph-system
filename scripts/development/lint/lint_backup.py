@@ -129,7 +129,10 @@ CHECK_CODES = {
     "E_DUP_INSTANCE_ID": "duplicate instance_id.",
     "E_DUP_ONTOLOGY_ID": "duplicate ontology_id.",
     "E_DUP_ONTOLOGY_NAME": "duplicate ontology name.",
+    "E_DUP_SCOPED_BY": "duplicate (source_id, ontology) SCOPED_BY edge.",
+    "E_DUP_ANCHORED_BY": "duplicate (ontology, concept_id) ANCHORED_BY edge.",
     # ontology streams (first-class :Ontology nodes + their edges)
+    "E_ONTOLOGY_EMBEDDING_DIM": "ontology embedding length != resolved profile @dims.",
     "E_SCOPED_SOURCE_MISSING": "scoped_by.source_id not in sources[].",
     "E_SCOPED_ONTOLOGY_MISSING": "scoped_by.ontology not in ontologies[].",
     "E_ANCHORED_CONCEPT_MISSING": "anchored_by.concept_id not in concepts[].",
@@ -618,7 +621,22 @@ def _validate_bulk(
                            f"$.bulk.ontologies[{i}].name")
             ontology_names.add(name)
 
-    # ---- scoped_by / anchored_by: edge endpoints must resolve (no silent orphans) ----
+        # Embedding-dimension check (§3.2), mirroring concepts. Ontologies live in
+        # the concept space and have no per-record profile override, so they resolve
+        # to the backup-default profile. Only checked when a NON-EMPTY vector is
+        # present — an ontology created without an embedding carries [] legitimately.
+        embedding = o.get("embedding")
+        if isinstance(embedding, list) and embedding:
+            dims = _profile_dims(profiles, backup_default)
+            if dims is not None and len(embedding) != dims:
+                ident = profiles[backup_default].get("identity")
+                result.add(ERROR, "E_ONTOLOGY_EMBEDDING_DIM",
+                           f"ontology {name!r} embedding has {len(embedding)} dims but "
+                           f"backup-default profile ({ident!r}) declares {dims}.",
+                           f"$.bulk.ontologies[{i}].embedding")
+
+    # ---- scoped_by / anchored_by: endpoints resolve (no silent orphans) + no dup edges ----
+    seen_scoped = set()
     for i, e in enumerate(bulk.get("scoped_by") or []):
         if not isinstance(e, dict):
             continue
@@ -632,7 +650,15 @@ def _validate_bulk(
             result.add(ERROR, "E_SCOPED_ONTOLOGY_MISSING",
                        f"scoped_by.ontology {on!r} not present in ontologies[].",
                        f"$.bulk.scoped_by[{i}].ontology")
+        pair = (sid, on)
+        if sid is not None and on is not None:
+            if pair in seen_scoped:
+                result.add(ERROR, "E_DUP_SCOPED_BY",
+                           f"duplicate SCOPED_BY edge ({sid!r} -> {on!r}).",
+                           f"$.bulk.scoped_by[{i}]")
+            seen_scoped.add(pair)
 
+    seen_anchored = set()
     for i, e in enumerate(bulk.get("anchored_by") or []):
         if not isinstance(e, dict):
             continue
@@ -646,6 +672,13 @@ def _validate_bulk(
             result.add(ERROR, "E_ANCHORED_ONTOLOGY_MISSING",
                        f"anchored_by.ontology {on!r} not present in ontologies[].",
                        f"$.bulk.anchored_by[{i}].ontology")
+        pair = (on, cid)
+        if on is not None and cid is not None:
+            if pair in seen_anchored:
+                result.add(ERROR, "E_DUP_ANCHORED_BY",
+                           f"duplicate ANCHORED_BY edge ({on!r} -> {cid!r}).",
+                           f"$.bulk.anchored_by[{i}]")
+            seen_anchored.add(pair)
 
 
 # ---------------------------------------------------------------------------

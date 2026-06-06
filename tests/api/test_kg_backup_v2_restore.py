@@ -122,6 +122,50 @@ def test_ontology_nodes_and_edges_round_trip(client_with_cleanup):
         f"RETURN count(*) AS n") == 1
 
 
+def test_ontology_merges_on_name_not_id(client_with_cleanup):
+    """Merge safety: an incoming ontology with the same NAME but a different
+    ontology_id converges onto the one node (keyed by name), not a duplicate.
+
+    The rest of the system keys ontologies by name; MERGE-on-name keeps a single
+    node and lets the SCOPED_BY/ANCHORED_BY MATCHes (which bind by name) resolve
+    unambiguously. Regression guard for the adjacent/integration collision case.
+    """
+    client = client_with_cleanup
+    # Pre-existing ontology in the target: same name, DIFFERENT id.
+    client._execute_cypher(
+        "CREATE (o:Ontology {name: $name, ontology_id: $oid, lifecycle_state: 'active'})",
+        params={"name": f"{NS}Onto", "oid": f"{NS}ontA"})
+
+    backup = DataExporter.build_kg_backup_v2(
+        concepts=[{"concept_id": f"{NS}oc1", "label": "Anchor", "search_terms": [],
+                   "embedding": [0.1, 0.2, 0.3], "created_at_epoch": 1, "last_seen_epoch": 1}],
+        sources=[{"source_id": f"{NS}os1", "document": f"{NS}Onto", "file_path": "/o",
+                  "paragraph": 1, "full_text": "t", "content_type": "text/plain"}],
+        instances=[], evidence=[], relationships=[], vocabulary=[],
+        embedding_profiles=[{"identity": "openai:text-embedding-3-small@1536", "vector_space": "x",
+                             "image_vector_space": None, "name": "d", "multimodal": False}],
+        epoch_kinds=[], graph_epochs=[],
+        ontologies=[{"ontology_id": f"{NS}ontB", "name": f"{NS}Onto",  # SAME name, different id
+                     "description": "", "embedding": [0.4, 0.5, 0.6], "search_terms": [],
+                     "lifecycle_state": "frozen", "creation_epoch": 2, "created_by": None}],
+        scoped_by=[{"source_id": f"{NS}os1", "ontology": f"{NS}Onto"}],
+        anchored_by=[{"ontology": f"{NS}Onto", "concept_id": f"{NS}oc1"}],
+        schema_version=76,
+    )
+    DataImporter.import_backup(client, backup, overwrite_existing=True)
+
+    # Exactly ONE node with that name — the id mismatch did NOT spawn a duplicate.
+    assert _scalar(client,
+        f"MATCH (o:Ontology {{name:'{NS}Onto'}}) RETURN count(o) AS n") == 1
+    # Edges attach unambiguously to that single node.
+    assert _scalar(client,
+        f"MATCH (:Source {{source_id:'{NS}os1'}})-[:SCOPED_BY]->(:Ontology {{name:'{NS}Onto'}}) "
+        f"RETURN count(*) AS n") == 1
+    assert _scalar(client,
+        f"MATCH (:Ontology {{name:'{NS}Onto'}})-[:ANCHORED_BY]->(:Concept {{concept_id:'{NS}oc1'}}) "
+        f"RETURN count(*) AS n") == 1
+
+
 def test_integration_mode_attaches_to_existing_concept(client_with_cleanup):
     """integration: a matched incoming concept's instance/edges attach to the
     EXISTING target concept (not in this backup); the target node is untouched."""

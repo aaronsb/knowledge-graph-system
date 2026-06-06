@@ -420,12 +420,20 @@ class DataImporter:
         endpoints; an edge whose other endpoint (source/concept) is absent simply
         matches nothing and is skipped — no dangling edge is created.
 
+        Identity is keyed on ``name``, NOT ``ontology_id`` — ``name`` is the
+        natural key the rest of the system uses (``ensure_ontology_exists`` /
+        ``get_ontology_node`` / both edge MATCHes key on it, and the SCOPED_BY /
+        ANCHORED_BY edges below cite ontologies by name). MERGE-on-name keeps a
+        single node per name across merge modes (where ``ontology_id`` is carried
+        verbatim and could otherwise collide-by-id or, when null, collapse every
+        id-less ontology into one node); ``ontology_id`` is restored as a property.
+
         Returns the number of ontology nodes written.
         """
         total = len(ontologies)
         node_query = """
-            MERGE (o:Ontology {ontology_id: $ontology_id})
-            SET o.name = $name,
+            MERGE (o:Ontology {name: $name})
+            SET o.ontology_id = $ontology_id,
                 o.description = $description,
                 o.embedding = $embedding,
                 o.search_terms = $search_terms,
