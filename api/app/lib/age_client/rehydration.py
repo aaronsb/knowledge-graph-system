@@ -1,29 +1,30 @@
-"""Rehydration mixin: rebuild derived graph-projection layers from Source nodes.
+"""Rehydration mixin: rebuild the derived :Ontology layer from Source nodes.
 
 After a restore, the :Source nodes carry every bit of source-of-truth data
 (``document``, ``garage_key``, ``content_hash``, ``source_id``). But a backup
-created before a projection layer was serialized does not carry that layer, and
-restore otherwise never rebuilds it — so the ontology list and the catalog read
-empty even though the underlying data is intact (issue #505).
+created before the :Ontology layer was serialized (pre-v0.15.1) does not carry
+that layer, and restore otherwise never rebuilds it — so the ontology list and
+the catalog read empty even though the underlying data is intact (issue #505).
 
-This mixin reconstructs both derived layers idempotently from the Sources:
+This mixin reconstructs the **ontology layer** idempotently from the Sources:
+``(:Ontology)`` + ``(:Source)-[:SCOPED_BY]->(:Ontology)``, keyed by distinct
+``s.document`` (mirrors migration 044). For new backups the importer already
+MERGEs these nodes/edges (serialization), so the pass is a harmless idempotent
+no-op; for old backups it is the reconstruction fallback. It also ensures the
+reserved ``primordial`` pool exists, since a clone-style restore can replace a
+freshly-seeded graph (see migration 078 / issue #505).
 
-- **Ontology layer** — ``(:Ontology)`` + ``(:Source)-[:SCOPED_BY]->(:Ontology)``,
-  keyed by distinct ``s.document`` (mirrors migration 044).
-- **Document layer** — ``(:DocumentMeta)`` + ``(:DocumentMeta)-[:HAS_SOURCE]->(:Source)``,
-  one ``DocumentMeta`` per file (grouped by ``s.garage_key``).
-
-Both are pure derivations of intact Source data, so the pass is idempotent
-(MERGE-based) and a no-op on post-serialization backups that already carry the
-layers. It also ensures the reserved ``primordial`` pool exists, since a
-clone-style restore can replace a freshly-seeded graph (see migration 078 /
-issue #505).
+The :DocumentMeta layer is intentionally NOT reconstructed here: its canonical
+identity (``document_id == content_hash == sha256(document bytes)``) is not
+recoverable from Source nodes (the garage_key carries only a 32-char hash
+prefix), so a Source-derived DocumentMeta would have a truncated id that breaks
+drill-down and re-ingest dedup. That layer is handled authoritatively by
+serializing it into ``kg-backup/2`` (Option B, issue #505), with a faithful
+Garage-hashed reconstruction reserved for old backups.
 """
 
 import logging
-import os
-import re
-from typing import Any, Dict, Optional
+from typing import Dict, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -33,22 +34,23 @@ PRIMORDIAL_POOL_NAME = "primordial"
 
 
 class RehydrationMixin:
-    """Reconstruct the :Ontology and :DocumentMeta projection layers from Sources."""
+    """Reconstruct the :Ontology projection layer from Sources (issue #505)."""
 
     def rehydrate_projection_layers(self, created_by: Optional[str] = None) -> Dict[str, int]:
-        """Rebuild the ontology + document projection layers from Source nodes.
+        """Rebuild the ontology projection layer from Source nodes.
 
-        Idempotent: ensures each distinct ontology and file has its node and
-        edges, creating only what is missing. Safe to run on every restore.
+        Idempotent: ensures each distinct ontology has its node and SCOPED_BY
+        edges, creating only what is missing. Safe to run on every restore — a
+        no-op on backups that already carry the serialized ontology layer, the
+        reconstruction fallback on pre-serialization backups.
 
         Args:
             created_by: Actor recorded on any newly created Ontology nodes.
 
         Returns:
-            Counts of work done: ``ontologies``, ``scoped_by_edges``,
-            ``documents``, ``has_source_edges``.
+            Counts of work done: ``ontologies``, ``scoped_by_edges``.
         """
-        stats = {"ontologies": 0, "scoped_by_edges": 0, "documents": 0, "has_source_edges": 0}
+        stats = {"ontologies": 0, "scoped_by_edges": 0}
 
         # The primordial pool is not derivable from Sources — ensure it directly
         # so a clone restore that wiped the seeded graph still has it.
@@ -59,7 +61,6 @@ class RehydrationMixin:
         )
 
         self._rehydrate_ontology_layer(stats, created_by)
-        self._rehydrate_document_layer(stats)
         return stats
 
     def _rehydrate_ontology_layer(self, stats: Dict[str, int], created_by: Optional[str]) -> None:
@@ -83,49 +84,3 @@ class RehydrationMixin:
             )
             if linked:
                 stats["scoped_by_edges"] += int(self._parse_agtype(linked.get("c")) or 0)
-
-    def _rehydrate_document_layer(self, stats: Dict[str, int]) -> None:
-        """Create one :DocumentMeta per file (grouped by garage_key) + :HAS_SOURCE edges."""
-        rows = self._execute_cypher(
-            "MATCH (s:Source) WHERE s.garage_key IS NOT NULL "
-            "RETURN s.garage_key AS gk, s.document AS doc, count(s) AS cnt"
-        ) or []
-        # A file (garage_key) may carry chunks tagged to different ontologies, so
-        # the same gk can appear on multiple rows; process each gk once.
-        seen: set = set()
-        for row in rows:
-            garage_key = self._parse_agtype(row.get("gk"))
-            if not garage_key or garage_key in seen:
-                continue
-            seen.add(garage_key)
-            document = self._parse_agtype(row.get("doc"))
-            chunk_count = int(self._parse_agtype(row.get("cnt")) or 0)
-
-            # Stable document_id + display name from the file hash in the garage_key.
-            file_hash = re.sub(r"^.*/([^/]+)\.md$", r"\1", garage_key)
-            document_id = f"sha256:{file_hash}"
-
-            self._execute_cypher(
-                "MERGE (d:DocumentMeta {document_id: $document_id}) "
-                "SET d.filename = $filename, d.ontology = $ontology, "
-                "    d.content_type = 'document', d.source_count = $source_count "
-                "RETURN d",
-                params={
-                    "document_id": document_id,
-                    "filename": os.path.basename(garage_key),
-                    "ontology": document,
-                    "source_count": chunk_count,
-                },
-                fetch_one=True,
-            )
-            stats["documents"] += 1
-            linked = self._execute_cypher(
-                "MATCH (d:DocumentMeta {document_id: $document_id}) "
-                "MATCH (s:Source {garage_key: $garage_key}) "
-                "MERGE (d)-[:HAS_SOURCE]->(s) "
-                "RETURN count(s) AS c",
-                params={"document_id": document_id, "garage_key": garage_key},
-                fetch_one=True,
-            )
-            if linked:
-                stats["has_source_edges"] += int(self._parse_agtype(linked.get("c")) or 0)

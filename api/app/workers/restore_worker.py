@@ -323,20 +323,21 @@ def run_restore_worker(
             }
         })
 
-        # Issue #505: rebuild the derived graph-projection layers from the
-        # restored Sources. Backups predating ADR-200 (:Ontology) / the
-        # :DocumentMeta layer do not carry those nodes, and the Sources retain
-        # all source-of-truth data — without this the ontology list and catalog
-        # read empty after a restore. Runs BEFORE the epoch completes below, so
-        # the freshness tick that triggers the catalog's first post-restore
-        # rebuild already sees the rebuilt layers. Idempotent + best-effort: a
-        # failure must not fail an otherwise-completed restore.
+        # Issue #505: rebuild the derived :Ontology layer from the restored
+        # Sources. Backups predating the ontology serialization (pre-v0.15.1) do
+        # not carry :Ontology / :SCOPED_BY, and the Sources retain all
+        # source-of-truth data — without this the ontology list and catalog read
+        # empty after a restore. Runs BEFORE the epoch completes below, so the
+        # freshness tick that triggers the catalog's first post-restore rebuild
+        # already sees the rebuilt layer. Idempotent + best-effort: a failure
+        # must not fail an otherwise-completed restore. (The :DocumentMeta layer
+        # is rebuilt from its own serialized section, not reconstructed here —
+        # see issue #505 Option B.)
         try:
             rh = client.rehydrate_projection_layers(created_by="post_restore_rehydration")
             logger.info(
-                f"[{job_id}] Rehydrated graph projections: "
-                f"{rh['ontologies']} ontologies / {rh['scoped_by_edges']} SCOPED_BY, "
-                f"{rh['documents']} documents / {rh['has_source_edges']} HAS_SOURCE"
+                f"[{job_id}] Rehydrated ontology layer: "
+                f"{rh['ontologies']} ontologies / {rh['scoped_by_edges']} SCOPED_BY"
             )
         except Exception as e:
             logger.warning(f"[{job_id}] Graph-projection rehydration failed (non-fatal): {e}")
