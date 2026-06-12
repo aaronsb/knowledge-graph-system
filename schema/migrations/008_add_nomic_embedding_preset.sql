@@ -26,8 +26,9 @@ BEGIN;
 -- Insert Nomic Embedding Preset Configuration
 -- ============================================================================
 
--- Insert nomic-embed-text-v1.5 preset (inactive by default)
--- Users can activate this config to switch to local embeddings
+-- Insert nomic-embed-text-v1.5 preset (ACTIVE by default — nomic-first).
+-- This is the system's out-of-the-box embedding model: local, on-device, no
+-- API key required. Migration 003 seeds the OpenAI alternative as inactive.
 INSERT INTO kg_api.embedding_config (
     provider,
     model_name,
@@ -55,7 +56,7 @@ INSERT INTO kg_api.embedding_config (
     8192,                                    -- Max sequence length: 8K tokens
     TRUE,                                    -- Normalize embeddings: TRUE (standard practice)
     'system',                                -- Created by: system (preset)
-    FALSE,                                   -- Active: FALSE (inactive by default, user activates)
+    TRUE,                                    -- Active: TRUE (nomic-first — active out of the box)
     FALSE,                                   -- Delete protected: FALSE (users can delete if needed)
     FALSE                                    -- Change protected: FALSE (users can modify settings)
 )
@@ -81,9 +82,10 @@ COMMIT;
 -- Post-Migration Instructions
 -- ============================================================================
 --
--- To activate the nomic embedding preset:
+-- Nomic is ACTIVE by default (nomic-first) — no action needed for local
+-- embeddings. To switch to cloud OpenAI embeddings instead:
 --   1. List all configs:     kg admin embedding list
---   2. Find the nomic config ID
+--   2. Find the OpenAI config ID
 --   3. Activate it:          kg admin embedding activate --id <id>
 --   OR use the API:          PUT /admin/embedding/config
 --

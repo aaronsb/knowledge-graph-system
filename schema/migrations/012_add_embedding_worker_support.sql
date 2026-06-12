@@ -177,7 +177,7 @@ COMMENT ON FUNCTION kg_api.mark_embeddings_stale_for_model IS
 -- Function: Validate embedding structure
 CREATE OR REPLACE FUNCTION kg_api.validate_embedding(
     p_embedding JSONB,
-    p_expected_dimensions INTEGER DEFAULT 1536
+    p_expected_dimensions INTEGER DEFAULT 768
 ) RETURNS BOOLEAN AS $$
 DECLARE
     v_array_length INTEGER;

@@ -28,7 +28,7 @@ class MockAIProvider(AIProvider):
 
         # With custom configuration
         provider = MockAIProvider(
-            embedding_dimension=1536,
+            embedding_dimension=768,
             extraction_model="mock-gpt-4",
             concepts_per_chunk=3
         )
@@ -40,7 +40,7 @@ class MockAIProvider(AIProvider):
 
     def __init__(
         self,
-        embedding_dimension: int = 1536,
+        embedding_dimension: int = 768,
         extraction_model: str = "mock-gpt-4o",
         embedding_model: str = "mock-embedding-3-small",
         concepts_per_chunk: int = 3,
@@ -50,7 +50,8 @@ class MockAIProvider(AIProvider):
         Initialize mock provider.
 
         Args:
-            embedding_dimension: Vector dimension (default 1536 for OpenAI compatibility)
+            embedding_dimension: Vector dimension (default 768 to match the
+                nomic-first active profile; pass 1536 to mimic OpenAI)
             extraction_model: Model name to report
             embedding_model: Embedding model name to report
             concepts_per_chunk: Number of concepts to generate per extraction

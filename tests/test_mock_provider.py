@@ -52,7 +52,7 @@ def test_deterministic_embeddings():
 
     # Should be identical
     assert result1["embedding"] == result2["embedding"]
-    assert len(result1["embedding"]) == 1536  # Default dimension
+    assert len(result1["embedding"]) == 768  # Default dimension (nomic-first)
 
     # Different text should produce different embedding
     result3 = provider.generate_embedding("Different text")
