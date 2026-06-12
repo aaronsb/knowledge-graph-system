@@ -255,3 +255,74 @@ def test_dynamic_edge_type_missing_from_vocab_still_interns():
     assert result.ok, [str(i) for i in result.errors]
     types = [v.get("relationship_type") for v in obj["header"]["relationship_vocabulary"]]
     assert "NOVEL_REL" in types
+
+
+# ---------------------------------------------------------------------------
+# Document streams (:DocumentMeta + HAS_SOURCE) — issue #505 Option B
+# ---------------------------------------------------------------------------
+
+_DOC_ID = "sha256:" + "a" * 64
+
+
+def _document(document_id=_DOC_ID, ontology="Corpus"):
+    return {"document_id": document_id, "content_hash": document_id,
+            "ontology": ontology, "filename": "intro.md",
+            "garage_key": "sources/Corpus/" + "a" * 32 + ".md",
+            "content_type": "document", "source_count": 1}
+
+
+def test_document_streams_land_in_bulk_and_validate():
+    """First-class :DocumentMeta nodes + HAS_SOURCE edges are emitted and validate."""
+    lists = _fixture_lists()
+    lists["documents"] = [_document()]
+    lists["has_source"] = [{"document_id": _DOC_ID, "source_id": "s1"}]
+    obj = DataExporter.build_kg_backup_v2(**lists)
+
+    assert obj["bulk"]["documents"][0]["document_id"] == _DOC_ID
+    # Canonical id carried verbatim (with sha256: prefix) — the heart of Option B.
+    assert obj["bulk"]["documents"][0]["content_hash"] == _DOC_ID
+    assert obj["bulk"]["has_source"] == [{"document_id": _DOC_ID, "source_id": "s1"}]
+    result = lint_backup.validate_backup(obj)
+    assert result.ok, [str(i) for i in result.errors]
+
+
+def test_document_streams_default_empty_when_omitted():
+    """Callers that don't pass the streams get empty lists, not missing keys."""
+    obj = DataExporter.build_kg_backup_v2(**_fixture_lists())
+    assert obj["bulk"]["documents"] == []
+    assert obj["bulk"]["has_source"] == []
+
+
+def test_has_source_orphans_are_flagged():
+    """The validator catches HAS_SOURCE edges whose endpoints are missing."""
+    lists = _fixture_lists()
+    lists["documents"] = [_document()]
+    lists["has_source"] = [
+        {"document_id": _DOC_ID, "source_id": "s1"},          # ok
+        {"document_id": _DOC_ID, "source_id": "sX"},          # sX: no such source
+        {"document_id": "sha256:" + "b" * 64, "source_id": "s1"},  # doc: not in documents[]
+    ]
+    codes = {i.code for i in lint_backup.validate_backup(
+        DataExporter.build_kg_backup_v2(**lists)).errors}
+    assert "E_HAS_SOURCE_SOURCE_MISSING" in codes
+    assert "E_HAS_SOURCE_DOC_MISSING" in codes
+
+
+def test_duplicate_document_and_has_source_flagged():
+    lists = _fixture_lists()
+    lists["documents"] = [_document(), _document()]            # same document_id twice
+    lists["has_source"] = [{"document_id": _DOC_ID, "source_id": "s1"},
+                           {"document_id": _DOC_ID, "source_id": "s1"}]  # dup edge
+    codes = {i.code for i in lint_backup.validate_backup(
+        DataExporter.build_kg_backup_v2(**lists)).errors}
+    assert "E_DUP_DOCUMENT_ID" in codes
+    assert "E_DUP_HAS_SOURCE" in codes
+
+
+def test_well_formed_document_streams_validate_clean():
+    """A faithful document layer passes the validator with no new errors."""
+    lists = _fixture_lists()
+    lists["documents"] = [_document()]
+    lists["has_source"] = [{"document_id": _DOC_ID, "source_id": "s1"}]
+    result = lint_backup.validate_backup(DataExporter.build_kg_backup_v2(**lists))
+    assert result.ok, [str(i) for i in result.errors]

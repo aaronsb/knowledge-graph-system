@@ -21,11 +21,13 @@ from .grounding import GroundingMixin
 from .ontology import OntologyMixin
 from .ontology_scoring import OntologyScoringMixin
 from .ontology_edges import OntologyEdgesMixin
+from .rehydration import RehydrationMixin
 from .vocabulary import VocabularyMixin
 
 
 class AGEClient(
     VocabularyMixin,
+    RehydrationMixin,
     OntologyEdgesMixin,
     OntologyScoringMixin,
     OntologyMixin,
@@ -44,6 +46,7 @@ class AGEClient(
     - OntologyMixin: Ontology node CRUD and lifecycle management
     - OntologyScoringMixin: Ontology scoring, analytics, and annealing mutations
     - OntologyEdgesMixin: Inter-ontology edges and proposal execution primitives
+    - RehydrationMixin: Rebuild derived :Ontology/:DocumentMeta layers from Sources (issue #505)
     - VocabularyMixin: Relationship type config, CRUD, sync, merge, embeddings
 
     Facades attached lazily via properties on QueryMixin:

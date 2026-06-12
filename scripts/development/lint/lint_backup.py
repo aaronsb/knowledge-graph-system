@@ -137,6 +137,11 @@ CHECK_CODES = {
     "E_SCOPED_ONTOLOGY_MISSING": "scoped_by.ontology not in ontologies[].",
     "E_ANCHORED_CONCEPT_MISSING": "anchored_by.concept_id not in concepts[].",
     "E_ANCHORED_ONTOLOGY_MISSING": "anchored_by.ontology not in ontologies[].",
+    # document streams (first-class :DocumentMeta nodes + their HAS_SOURCE edges, #505)
+    "E_DUP_DOCUMENT_ID": "duplicate document_id in documents[].",
+    "E_HAS_SOURCE_DOC_MISSING": "has_source.document_id not in documents[].",
+    "E_HAS_SOURCE_SOURCE_MISSING": "has_source.source_id not in sources[].",
+    "E_DUP_HAS_SOURCE": "duplicate (document_id, source_id) HAS_SOURCE edge.",
     # exclusions
     "E_DERIVED_PRESENT": "derived product present in bulk (must be excluded).",
 }
@@ -679,6 +684,41 @@ def _validate_bulk(
                            f"duplicate ANCHORED_BY edge ({on!r} -> {cid!r}).",
                            f"$.bulk.anchored_by[{i}]")
             seen_anchored.add(pair)
+
+    # ---- documents / has_source: unique ids, endpoints resolve, no dup edges (#505) ----
+    document_ids = set()
+    for i, d in enumerate(bulk.get("documents") or []):
+        if not isinstance(d, dict):
+            continue
+        did = d.get("document_id")
+        if did is not None:
+            if did in document_ids:
+                result.add(ERROR, "E_DUP_DOCUMENT_ID",
+                           f"duplicate document_id {did!r} in documents[].",
+                           f"$.bulk.documents[{i}].document_id")
+            document_ids.add(did)
+
+    seen_has_source = set()
+    for i, e in enumerate(bulk.get("has_source") or []):
+        if not isinstance(e, dict):
+            continue
+        did = e.get("document_id")
+        if did is not None and did not in document_ids:
+            result.add(ERROR, "E_HAS_SOURCE_DOC_MISSING",
+                       f"has_source.document_id {did!r} not present in documents[].",
+                       f"$.bulk.has_source[{i}].document_id")
+        sid = e.get("source_id")
+        if sid is not None and sid not in source_ids:
+            result.add(ERROR, "E_HAS_SOURCE_SOURCE_MISSING",
+                       f"has_source.source_id {sid!r} not present in sources[].",
+                       f"$.bulk.has_source[{i}].source_id")
+        pair = (did, sid)
+        if did is not None and sid is not None:
+            if pair in seen_has_source:
+                result.add(ERROR, "E_DUP_HAS_SOURCE",
+                           f"duplicate HAS_SOURCE edge ({did!r} -> {sid!r}).",
+                           f"$.bulk.has_source[{i}]")
+            seen_has_source.add(pair)
 
 
 # ---------------------------------------------------------------------------

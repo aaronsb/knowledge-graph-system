@@ -466,6 +466,112 @@ class DataExporter:
         ]
 
     @staticmethod
+    def export_documents(client: AGEClient, ontology: Optional[str] = None) -> List[Dict[str, Any]]:
+        """Export :DocumentMeta nodes as first-class records (the catalog document tier).
+
+        The document layer is NOT reconstructable from Sources: the canonical
+        identity (``document_id == content_hash == sha256(document bytes)``, the
+        full 71-char ``sha256:``-prefixed digest) survives on Sources only as the
+        32-char ``garage_key`` prefix, so a Source-derived DocumentMeta would have a
+        truncated id that breaks drill-down and re-ingest dedup (issue #505). We
+        therefore serialize the layer and carry every field verbatim — especially
+        ``document_id``/``content_hash`` (with prefix) and ``garage_key`` (no prefix);
+        no recomputation on either side. Round-trips with :func:`export_has_source`
+        and the importer's ``_import_documents``.
+
+        NOTE (multi-ontology, issue #505 follow-up): a scoped export filters on
+        ``d.ontology``, so a document ingested into several ontologies (one
+        DocumentMeta, one ontology value) is only carried by the export of *that*
+        ontology. The dominant full-DB export (``ontology=None``) carries every
+        DocumentMeta and is unaffected.
+
+        Args:
+            client: AGEClient instance
+            ontology: Optional name filter (None = all documents)
+
+        Returns:
+            List of DocumentMeta node dictionaries.
+        """
+        if ontology:
+            query = """
+                MATCH (d:DocumentMeta {ontology: $ontology})
+                RETURN d.document_id as document_id, d.content_hash as content_hash,
+                       d.ontology as ontology, d.filename as filename,
+                       d.garage_key as garage_key, d.content_type as content_type,
+                       d.source_count as source_count, d.ingested_at as ingested_at,
+                       d.ingested_by as ingested_by, d.job_id as job_id,
+                       d.file_path as file_path, d.source_type as source_type,
+                       d.hostname as hostname, d.storage_key as storage_key
+                ORDER BY d.document_id
+            """
+            result = client._execute_cypher(query, params={"ontology": ontology})
+        else:
+            query = """
+                MATCH (d:DocumentMeta)
+                RETURN d.document_id as document_id, d.content_hash as content_hash,
+                       d.ontology as ontology, d.filename as filename,
+                       d.garage_key as garage_key, d.content_type as content_type,
+                       d.source_count as source_count, d.ingested_at as ingested_at,
+                       d.ingested_by as ingested_by, d.job_id as job_id,
+                       d.file_path as file_path, d.source_type as source_type,
+                       d.hostname as hostname, d.storage_key as storage_key
+                ORDER BY d.document_id
+            """
+            result = client._execute_cypher(query)
+
+        documents = []
+        for record in result:
+            documents.append({
+                # Canonical identity — carried verbatim (with the sha256: prefix),
+                # never recomputed. This is what makes restore authoritative.
+                "document_id": _parse_nullable_str(record.get("document_id")),
+                "content_hash": _parse_nullable_str(record.get("content_hash")),
+                "ontology": _parse_nullable_str(record.get("ontology")),
+                "filename": _parse_nullable_str(record.get("filename")),
+                "garage_key": _parse_nullable_str(record.get("garage_key")),
+                "content_type": _parse_nullable_str(record.get("content_type")),
+                "source_count": _parse_nullable_int(record.get("source_count")),
+                "ingested_at": _parse_nullable_str(record.get("ingested_at")),
+                "ingested_by": _parse_nullable_str(record.get("ingested_by")),
+                "job_id": _parse_nullable_str(record.get("job_id")),
+                "file_path": _parse_nullable_str(record.get("file_path")),
+                "source_type": _parse_nullable_str(record.get("source_type")),
+                "hostname": _parse_nullable_str(record.get("hostname")),
+                "storage_key": _parse_nullable_str(record.get("storage_key")),
+            })
+
+        return documents
+
+    @staticmethod
+    def export_has_source(client: AGEClient, ontology: Optional[str] = None) -> List[Dict[str, Any]]:
+        """Export (:DocumentMeta)-[:HAS_SOURCE]->(:Source) edges — the file→chunk grouping.
+
+        One DocumentMeta groups all the Source chunks of a file. Exported explicitly
+        (keyed on the canonical ``document_id``) so the grouping round-trips rather
+        than being re-derived from ``garage_key`` heuristics (issue #505).
+        """
+        if ontology:
+            query = """
+                MATCH (d:DocumentMeta {ontology: $ontology})-[:HAS_SOURCE]->(s:Source)
+                RETURN d.document_id as document_id, s.source_id as source_id
+                ORDER BY d.document_id, s.source_id
+            """
+            result = client._execute_cypher(query, params={"ontology": ontology})
+        else:
+            query = """
+                MATCH (d:DocumentMeta)-[:HAS_SOURCE]->(s:Source)
+                RETURN d.document_id as document_id, s.source_id as source_id
+                ORDER BY d.document_id, s.source_id
+            """
+            result = client._execute_cypher(query)
+
+        return [
+            {"document_id": _parse_nullable_str(r.get("document_id")),
+             "source_id": _parse_nullable_str(r.get("source_id"))}
+            for r in result
+        ]
+
+    @staticmethod
     def export_vocabulary(client: AGEClient) -> List[Dict[str, Any]]:
         """
         Export relationship vocabulary table (ADR-032)
@@ -685,6 +791,8 @@ class DataExporter:
         ontologies: Optional[List[Dict[str, Any]]] = None,
         scoped_by: Optional[List[Dict[str, Any]]] = None,
         anchored_by: Optional[List[Dict[str, Any]]] = None,
+        documents: Optional[List[Dict[str, Any]]] = None,
+        has_source: Optional[List[Dict[str, Any]]] = None,
         source_platform: str = "knowledge-graph-system",
         source_version: str = "unknown",
         exported_at: Optional[str] = None,
@@ -819,6 +927,12 @@ class DataExporter:
                 "ontologies": list(ontologies or []),
                 "scoped_by": list(scoped_by or []),
                 "anchored_by": list(anchored_by or []),
+                # :DocumentMeta nodes + their HAS_SOURCE grouping (the catalog
+                # document tier). Carried verbatim — canonical document_id /
+                # content_hash are unrecoverable from Sources (issue #505). Empty
+                # for pre-stream backups; the reader tolerates absence.
+                "documents": list(documents or []),
+                "has_source": list(has_source or []),
             },
         }
 
@@ -844,6 +958,8 @@ class DataExporter:
         ontologies = DataExporter.export_ontologies(client, ontology)
         scoped_by = DataExporter.export_scoped_by(client, ontology)
         anchored_by = DataExporter.export_anchored_by(client, ontology)
+        documents = DataExporter.export_documents(client, ontology)
+        has_source = DataExporter.export_has_source(client, ontology)
         DataExporter._log_vocabulary_summary(relationships, vocabulary)
 
         return DataExporter.build_kg_backup_v2(
@@ -852,6 +968,7 @@ class DataExporter:
             embedding_profiles=embedding_profiles, epoch_kinds=epoch_kinds,
             graph_epochs=graph_epochs,
             ontologies=ontologies, scoped_by=scoped_by, anchored_by=anchored_by,
+            documents=documents, has_source=has_source,
             schema_version=BackupFormat.get_schema_version(client),
             ontology=ontology,
         )

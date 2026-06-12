@@ -96,7 +96,8 @@ def test_counts():
     counts = KgBackupV2Reader(_build()).counts()
     assert counts == {"concepts": 2, "sources": 1, "instances": 1,
                       "evidence": 2, "relationships": 1, "vocabulary": 1,
-                      "ontologies": 0, "scoped_by": 0, "anchored_by": 0}
+                      "ontologies": 0, "scoped_by": 0, "anchored_by": 0,
+                      "documents": 0, "has_source": 0}
 
 
 def test_ontology_streams_round_trip_through_reader():
@@ -130,6 +131,43 @@ def test_ontology_streams_absent_in_pre_stream_backup():
     reader = KgBackupV2Reader(obj)
     assert list(reader.ontologies()) == []
     assert reader.scoped_by() == [] and reader.anchored_by() == []
+
+
+def test_document_streams_round_trip_through_reader():
+    """:DocumentMeta nodes + HAS_SOURCE edges survive build → read intact (#505).
+
+    The canonical identity (the full ``sha256:``-prefixed digest) must come back
+    byte-for-byte — that is what makes restore authoritative rather than a lossy
+    re-derivation from Sources.
+    """
+    full_id = "sha256:" + "a" * 64
+    obj = _build(
+        documents=[
+            {"document_id": full_id, "content_hash": full_id, "ontology": "Corpus",
+             "filename": "intro.md", "garage_key": "sources/Corpus/" + "a" * 32 + ".md",
+             "content_type": "document", "source_count": 3},
+        ],
+        has_source=[{"document_id": full_id, "source_id": "s1"}],
+    )
+    reader = KgBackupV2Reader(obj)
+    docs = list(reader.documents())
+    assert len(docs) == 1
+    assert docs[0]["document_id"] == full_id          # full 71-char id, not truncated
+    assert docs[0]["content_hash"] == full_id
+    assert docs[0]["garage_key"] == "sources/Corpus/" + "a" * 32 + ".md"
+    assert reader.has_source() == [{"document_id": full_id, "source_id": "s1"}]
+    assert reader.counts()["documents"] == 1
+    assert reader.counts()["has_source"] == 1
+
+
+def test_document_streams_absent_in_pre_stream_backup():
+    """A pre-Option-B backup (no documents stream) reads as empty (back-compat)."""
+    obj = _build()
+    obj["bulk"].pop("documents", None)
+    obj["bulk"].pop("has_source", None)
+    reader = KgBackupV2Reader(obj)
+    assert list(reader.documents()) == []
+    assert reader.has_source() == []
 
 
 def test_external_concept_ids_empty_when_self_contained():

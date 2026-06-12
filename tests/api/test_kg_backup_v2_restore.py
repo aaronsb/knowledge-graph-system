@@ -72,7 +72,8 @@ def client_with_cleanup():
     finally:
         # Remove only the namespaced test nodes (DETACH DELETE drops their edges too).
         for label, idfield in (("Concept", "concept_id"), ("Source", "source_id"),
-                               ("Instance", "instance_id"), ("Ontology", "ontology_id")):
+                               ("Instance", "instance_id"), ("Ontology", "ontology_id"),
+                               ("DocumentMeta", "document_id")):
             try:
                 client._execute_cypher(
                     f"MATCH (n:{label}) WHERE n.{idfield} STARTS WITH '{NS}' DETACH DELETE n"
@@ -440,3 +441,120 @@ def test_adjacent_remap_round_trips_through_clone_writer(client_with_cleanup):
     assert _scalar(client,
         f"MATCH (c:Concept)-[:EVIDENCED_BY]->(i:Instance {{instance_id:'{rm_i1}'}})-[:FROM_SOURCE]->(:Source {{source_id:'{rm_s1}'}}) "
         f"RETURN count(c) AS n") == 2
+
+
+def _document_backup():
+    """A namespaced backup carrying one :DocumentMeta grouping one Source (issue #505)."""
+    doc_id = f"{NS}sha256_doc1"   # NS-prefixed so the cleanup fixture removes it
+    return DataExporter.build_kg_backup_v2(
+        concepts=[],
+        sources=[{"source_id": f"{NS}ds1", "document": f"{NS}DocOnto", "file_path": "/d",
+                  "paragraph": 1, "full_text": "body", "content_type": "text/plain",
+                  "garage_key": f"sources/{NS}DocOnto/{'a' * 32}.md"}],
+        instances=[], evidence=[], relationships=[], vocabulary=[],
+        embedding_profiles=[{"identity": "openai:text-embedding-3-small@1536", "vector_space": "x",
+                             "image_vector_space": None, "name": "d", "multimodal": False}],
+        epoch_kinds=[], graph_epochs=[],
+        documents=[{"document_id": doc_id, "content_hash": doc_id, "ontology": f"{NS}DocOnto",
+                    "filename": "doc1.md", "garage_key": f"sources/{NS}DocOnto/{'a' * 32}.md",
+                    "content_type": "document", "source_count": 1}],
+        has_source=[{"document_id": doc_id, "source_id": f"{NS}ds1"}],
+        schema_version=78,
+    ), doc_id
+
+
+def test_document_layer_round_trips_and_is_idempotent(client_with_cleanup):
+    """The serialized :DocumentMeta layer restores authoritatively and dedups on re-restore.
+
+    Covers issue #505 Option B requirement #1: restoring the SAME backup twice must
+    MERGE on the canonical document_id, never creating a duplicate DocumentMeta. Also
+    asserts the canonical id/content_hash come back byte-identical (carried verbatim,
+    not re-derived from the Source's truncated garage_key prefix).
+    """
+    client = client_with_cleanup
+    backup, doc_id = _document_backup()
+
+    # Restore twice — idempotency is the whole point.
+    DataImporter.import_backup(client, backup, overwrite_existing=True)
+    DataImporter.import_backup(client, backup, overwrite_existing=True)
+
+    # Exactly ONE DocumentMeta despite two restores (requirement #1: no duplicate).
+    assert _scalar(client,
+        f"MATCH (d:DocumentMeta {{document_id:'{doc_id}'}}) RETURN count(d) AS n") == 1
+    # Canonical identity carried verbatim (content_hash == document_id, full string).
+    assert _scalar(client,
+        f"MATCH (d:DocumentMeta {{document_id:'{doc_id}'}}) "
+        f"WHERE d.content_hash = '{doc_id}' RETURN count(d) AS n") == 1
+    # HAS_SOURCE grouping reconstructed, and also idempotent (one edge, not two).
+    assert _scalar(client,
+        f"MATCH (:DocumentMeta {{document_id:'{doc_id}'}})-[:HAS_SOURCE]->(:Source {{source_id:'{NS}ds1'}}) "
+        f"RETURN count(*) AS n") == 1
+
+
+def test_pre_b_backup_imports_no_document_layer(client_with_cleanup):
+    """A backup without the documents stream creates no :DocumentMeta on import.
+
+    (The restore worker's Garage-hashed durability path — covered separately — is
+    what rebuilds the tier for such backups; the importer itself must not invent one.)
+    """
+    client = client_with_cleanup
+    backup, doc_id = _document_backup()
+    backup["bulk"].pop("documents", None)
+    backup["bulk"].pop("has_source", None)
+
+    DataImporter.import_backup(client, backup, overwrite_existing=True)
+    assert _scalar(client,
+        f"MATCH (d:DocumentMeta {{document_id:'{doc_id}'}}) RETURN count(d) AS n") == 0
+
+
+def test_durability_reconstructs_canonical_documentmeta_from_garage_bytes(client_with_cleanup):
+    """Restore-time durability rebuilds :DocumentMeta with the CANONICAL full hash (#505).
+
+    For a pre-B backup there is no documents stream, so the worker hashes the actual
+    document bytes (from Garage) to recover the full digest rather than the truncated
+    32-char garage_key prefix. This injects a fake byte-fetcher and asserts the
+    reconstructed document_id == "sha256:" + sha256(bytes) — the full 71-char form,
+    not the truncated id the naive Source-derived approach produced.
+
+    rehydrate_document_layer scans ALL Sources, so the fetcher returns bytes ONLY for
+    our namespaced garage_key and None for everything else — real sources are skipped
+    (never mutated), keeping this test honest against the "messy data" live graph.
+    """
+    import hashlib
+    client = client_with_cleanup
+
+    content = b"the quick brown fox"
+    full = hashlib.sha256(content).hexdigest()
+    expected_id = f"sha256:{full}"
+    garage_key = f"sources/{NS}DurOnto/{full[:32]}.md"   # prefix matches → no integrity warning
+
+    # Two namespaced Source chunks of the same file (same garage_key), no DocumentMeta yet.
+    for n in (1, 2):
+        client._execute_cypher(
+            "CREATE (s:Source {source_id: $sid, document: $doc, garage_key: $gk, "
+            "full_text: $ft, paragraph: $p})",
+            params={"sid": f"{NS}durs{n}", "doc": f"{NS}DurOnto", "gk": garage_key,
+                    "ft": "chunk", "p": n})
+
+    # Bytes for our file only; None for every real source so they are skipped, not touched.
+    fetch = lambda gk: content if gk == garage_key else None
+    try:
+        client.rehydrate_document_layer(fetch_bytes=fetch)
+
+        # Canonical full-length id reconstructed (NOT the 32-char truncation).
+        assert _scalar(client,
+            f"MATCH (d:DocumentMeta {{document_id:'{expected_id}'}}) "
+            f"WHERE d.content_hash = '{expected_id}' AND d.garage_key = '{garage_key}' "
+            f"RETURN count(d) AS n") == 1
+        # Both chunks grouped under the one DocumentMeta.
+        assert _scalar(client,
+            f"MATCH (:DocumentMeta {{document_id:'{expected_id}'}})-[:HAS_SOURCE]->(s:Source) "
+            f"WHERE s.source_id STARTS WITH '{NS}dur' RETURN count(s) AS n") == 2
+        # Idempotent: a second pass creates no duplicate node or edge.
+        client.rehydrate_document_layer(fetch_bytes=fetch)
+        assert _scalar(client,
+            f"MATCH (d:DocumentMeta {{document_id:'{expected_id}'}}) RETURN count(d) AS n") == 1
+    finally:
+        # Hash-based id isn't NS-prefixed, so remove it explicitly (the fixture can't).
+        client._execute_cypher(
+            f"MATCH (d:DocumentMeta {{document_id:'{expected_id}'}}) DETACH DELETE d")
