@@ -13,25 +13,25 @@
       
       
       
-        <link rel="prev" href="../projection/">
+        <link rel="prev" href="../ADR-102-portable-backup-and-restore-with-clone-merge-semantics/">
       
       
-        <link rel="next" href="../search/">
+        <link rel="next" href="../../ingestion-content/ADR-014-job-approval-workflow/">
       
       
         
       
       
-      <link rel="icon" href="../../../../assets/images/favicon.png">
+      <link rel="icon" href="../../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
-        <title>kg query-def - Knowledge Graph System</title>
+        <title>ADR-103: Distribution strategy: nomic-first thin appliance with app-store tenancy - Knowledge Graph System</title>
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
       
       
 
@@ -50,7 +50,7 @@
       
     
     
-    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -68,7 +68,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#kg-query-def" class="md-skip">
+        <a href="#adr-103-distribution-strategy-nomic-first-thin-appliance-with-app-store-tenancy" class="md-skip">
           Skip to content
         </a>
       
@@ -84,7 +84,7 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../../../.." title="Knowledge Graph System" class="md-header__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+    <a href="../../.." title="Knowledge Graph System" class="md-header__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -104,7 +104,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              kg query-def
+              ADR-103: Distribution strategy: nomic-first thin appliance with app-store tenancy
             
           </span>
         </div>
@@ -194,7 +194,7 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../../../.." title="Knowledge Graph System" class="md-nav__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+    <a href="../../.." title="Knowledge Graph System" class="md-nav__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -224,7 +224,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../.." class="md-nav__link">
+      <a href="../../.." class="md-nav__link">
         
   
   
@@ -298,7 +298,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../concepts/" class="md-nav__link">
+      <a href="../../../concepts/" class="md-nav__link">
         
   
   
@@ -326,7 +326,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../concepts/computed-evidence-over-asserted-truth/" class="md-nav__link">
+      <a href="../../../concepts/computed-evidence-over-asserted-truth/" class="md-nav__link">
         
   
   
@@ -354,7 +354,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../concepts/glossary/" class="md-nav__link">
+      <a href="../../../concepts/glossary/" class="md-nav__link">
         
   
   
@@ -382,7 +382,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../concepts/how-it-works/" class="md-nav__link">
+      <a href="../../../concepts/how-it-works/" class="md-nav__link">
         
   
   
@@ -464,7 +464,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../features/" class="md-nav__link">
+      <a href="../../../features/" class="md-nav__link">
         
   
   
@@ -492,7 +492,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../features/web-workstation/" class="md-nav__link">
+      <a href="../../../features/web-workstation/" class="md-nav__link">
         
   
   
@@ -520,7 +520,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../features/cli/" class="md-nav__link">
+      <a href="../../../features/cli/" class="md-nav__link">
         
   
   
@@ -548,7 +548,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../features/mcp-server/" class="md-nav__link">
+      <a href="../../../features/mcp-server/" class="md-nav__link">
         
   
   
@@ -576,7 +576,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../features/fuse-driver/" class="md-nav__link">
+      <a href="../../../features/fuse-driver/" class="md-nav__link">
         
   
   
@@ -604,7 +604,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../features/rest-api/" class="md-nav__link">
+      <a href="../../../features/rest-api/" class="md-nav__link">
         
   
   
@@ -686,7 +686,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/" class="md-nav__link">
+      <a href="../../../guides/" class="md-nav__link">
         
   
   
@@ -714,7 +714,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/ASYNC-ARCHITECTURE/" class="md-nav__link">
+      <a href="../../../guides/ASYNC-ARCHITECTURE/" class="md-nav__link">
         
   
   
@@ -742,7 +742,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/CLI_DEVELOPMENT/" class="md-nav__link">
+      <a href="../../../guides/CLI_DEVELOPMENT/" class="md-nav__link">
         
   
   
@@ -770,7 +770,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/CONTAINER_IMAGES/" class="md-nav__link">
+      <a href="../../../guides/CONTAINER_IMAGES/" class="md-nav__link">
         
   
   
@@ -798,7 +798,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/CROSS_ONTOLOGY_LINKING/" class="md-nav__link">
+      <a href="../../../guides/CROSS_ONTOLOGY_LINKING/" class="md-nav__link">
         
   
   
@@ -826,7 +826,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/DEPLOYMENT/" class="md-nav__link">
+      <a href="../../../guides/DEPLOYMENT/" class="md-nav__link">
         
   
   
@@ -854,7 +854,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/DOCSTRING_COVERAGE/" class="md-nav__link">
+      <a href="../../../guides/DOCSTRING_COVERAGE/" class="md-nav__link">
         
   
   
@@ -882,7 +882,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/EPISTEMIC-STATUS-FILTERING/" class="md-nav__link">
+      <a href="../../../guides/EPISTEMIC-STATUS-FILTERING/" class="md-nav__link">
         
   
   
@@ -910,7 +910,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/FUSE_FILESYSTEM/" class="md-nav__link">
+      <a href="../../../guides/FUSE_FILESYSTEM/" class="md-nav__link">
         
   
   
@@ -938,7 +938,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/POLARITY_AXIS_ANALYSIS/" class="md-nav__link">
+      <a href="../../../guides/POLARITY_AXIS_ANALYSIS/" class="md-nav__link">
         
   
   
@@ -966,7 +966,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/QUERY_SAFETY_BASELINE/" class="md-nav__link">
+      <a href="../../../guides/QUERY_SAFETY_BASELINE/" class="md-nav__link">
         
   
   
@@ -994,7 +994,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/SAVED_QUERIES/" class="md-nav__link">
+      <a href="../../../guides/SAVED_QUERIES/" class="md-nav__link">
         
   
   
@@ -1022,7 +1022,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/SCHEDULED-JOBS/" class="md-nav__link">
+      <a href="../../../guides/SCHEDULED-JOBS/" class="md-nav__link">
         
   
   
@@ -1050,7 +1050,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/SEMANTIC_PATH_GRADIENTS/" class="md-nav__link">
+      <a href="../../../guides/SEMANTIC_PATH_GRADIENTS/" class="md-nav__link">
         
   
   
@@ -1078,7 +1078,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/VOCABULARY_LIFECYCLE/" class="md-nav__link">
+      <a href="../../../guides/VOCABULARY_LIFECYCLE/" class="md-nav__link">
         
   
   
@@ -1106,7 +1106,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/adr-045-046-migration-plan/" class="md-nav__link">
+      <a href="../../../guides/adr-045-046-migration-plan/" class="md-nav__link">
         
   
   
@@ -1134,7 +1134,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/adr-068-implementation-plan/" class="md-nav__link">
+      <a href="../../../guides/adr-068-implementation-plan/" class="md-nav__link">
         
   
   
@@ -1162,7 +1162,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/adr-074-implementation-checklist/" class="md-nav__link">
+      <a href="../../../guides/adr-074-implementation-checklist/" class="md-nav__link">
         
   
   
@@ -1190,7 +1190,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/exploring/" class="md-nav__link">
+      <a href="../../../guides/exploring/" class="md-nav__link">
         
   
   
@@ -1218,7 +1218,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/querying/" class="md-nav__link">
+      <a href="../../../guides/querying/" class="md-nav__link">
         
   
   
@@ -1246,7 +1246,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../guides/understanding-grounding/" class="md-nav__link">
+      <a href="../../../guides/understanding-grounding/" class="md-nav__link">
         
   
   
@@ -1328,7 +1328,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/" class="md-nav__link">
+      <a href="../../../manual/" class="md-nav__link">
         
   
   
@@ -1403,7 +1403,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/00-introduction/01-WHAT_AND_WHY/" class="md-nav__link">
+      <a href="../../../manual/00-introduction/01-WHAT_AND_WHY/" class="md-nav__link">
         
   
   
@@ -1486,7 +1486,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/01-getting-started/02-CLI_USAGE/" class="md-nav__link">
+      <a href="../../../manual/01-getting-started/02-CLI_USAGE/" class="md-nav__link">
         
   
   
@@ -1514,7 +1514,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/01-getting-started/03-INGESTION/" class="md-nav__link">
+      <a href="../../../manual/01-getting-started/03-INGESTION/" class="md-nav__link">
         
   
   
@@ -1597,7 +1597,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/02-configuration/01-AI_PROVIDERS/" class="md-nav__link">
+      <a href="../../../manual/02-configuration/01-AI_PROVIDERS/" class="md-nav__link">
         
   
   
@@ -1625,7 +1625,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/02-configuration/02-EXTRACTION_CONFIGURATION/" class="md-nav__link">
+      <a href="../../../manual/02-configuration/02-EXTRACTION_CONFIGURATION/" class="md-nav__link">
         
   
   
@@ -1653,7 +1653,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/02-configuration/03-EMBEDDING_CONFIGURATION/" class="md-nav__link">
+      <a href="../../../manual/02-configuration/03-EMBEDDING_CONFIGURATION/" class="md-nav__link">
         
   
   
@@ -1681,7 +1681,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/02-configuration/04-SWITCHING_EXTRACTION_PROVIDERS/" class="md-nav__link">
+      <a href="../../../manual/02-configuration/04-SWITCHING_EXTRACTION_PROVIDERS/" class="md-nav__link">
         
   
   
@@ -1709,7 +1709,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/02-configuration/05-LOCAL_INFERENCE_IMPLEMENTATION/" class="md-nav__link">
+      <a href="../../../manual/02-configuration/05-LOCAL_INFERENCE_IMPLEMENTATION/" class="md-nav__link">
         
   
   
@@ -1737,7 +1737,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/02-configuration/06-EXTRACTION_QUALITY_COMPARISON/" class="md-nav__link">
+      <a href="../../../manual/02-configuration/06-EXTRACTION_QUALITY_COMPARISON/" class="md-nav__link">
         
   
   
@@ -1820,7 +1820,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/03-integration/01-MCP_SETUP/" class="md-nav__link">
+      <a href="../../../manual/03-integration/01-MCP_SETUP/" class="md-nav__link">
         
   
   
@@ -1848,7 +1848,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/03-integration/02-VOCABULARY_CONSOLIDATION/" class="md-nav__link">
+      <a href="../../../manual/03-integration/02-VOCABULARY_CONSOLIDATION/" class="md-nav__link">
         
   
   
@@ -1931,7 +1931,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/04-security-and-access/01-AUTHENTICATION/" class="md-nav__link">
+      <a href="../../../manual/04-security-and-access/01-AUTHENTICATION/" class="md-nav__link">
         
   
   
@@ -1959,7 +1959,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/04-security-and-access/02-RBAC/" class="md-nav__link">
+      <a href="../../../manual/04-security-and-access/02-RBAC/" class="md-nav__link">
         
   
   
@@ -1987,7 +1987,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/04-security-and-access/03-SECURITY/" class="md-nav__link">
+      <a href="../../../manual/04-security-and-access/03-SECURITY/" class="md-nav__link">
         
   
   
@@ -2015,7 +2015,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/04-security-and-access/04-PASSWORD_RECOVERY/" class="md-nav__link">
+      <a href="../../../manual/04-security-and-access/04-PASSWORD_RECOVERY/" class="md-nav__link">
         
   
   
@@ -2098,7 +2098,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/05-maintenance/01-BACKUP_RESTORE/" class="md-nav__link">
+      <a href="../../../manual/05-maintenance/01-BACKUP_RESTORE/" class="md-nav__link">
         
   
   
@@ -2126,7 +2126,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/05-maintenance/02-DATABASE_MIGRATIONS/" class="md-nav__link">
+      <a href="../../../manual/05-maintenance/02-DATABASE_MIGRATIONS/" class="md-nav__link">
         
   
   
@@ -2209,7 +2209,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/06-reference/01-SCHEMA_REFERENCE/" class="md-nav__link">
+      <a href="../../../manual/06-reference/01-SCHEMA_REFERENCE/" class="md-nav__link">
         
   
   
@@ -2237,7 +2237,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/06-reference/02-USE_CASES/" class="md-nav__link">
+      <a href="../../../manual/06-reference/02-USE_CASES/" class="md-nav__link">
         
   
   
@@ -2265,7 +2265,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/06-reference/03-EXAMPLES/" class="md-nav__link">
+      <a href="../../../manual/06-reference/03-EXAMPLES/" class="md-nav__link">
         
   
   
@@ -2293,7 +2293,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/06-reference/04-github_project_history/" class="md-nav__link">
+      <a href="../../../manual/06-reference/04-github_project_history/" class="md-nav__link">
         
   
   
@@ -2321,7 +2321,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/06-reference/05-CONCEPTS_AND_TERMINOLOGY/" class="md-nav__link">
+      <a href="../../../manual/06-reference/05-CONCEPTS_AND_TERMINOLOGY/" class="md-nav__link">
         
   
   
@@ -2349,7 +2349,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/06-reference/06-CONCEPT/" class="md-nav__link">
+      <a href="../../../manual/06-reference/06-CONCEPT/" class="md-nav__link">
         
   
   
@@ -2377,7 +2377,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/06-reference/07-ENRICHMENT_JOURNEY/" class="md-nav__link">
+      <a href="../../../manual/06-reference/07-ENRICHMENT_JOURNEY/" class="md-nav__link">
         
   
   
@@ -2405,7 +2405,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/06-reference/08-DISTRIBUTED_SHARDING_RESEARCH/" class="md-nav__link">
+      <a href="../../../manual/06-reference/08-DISTRIBUTED_SHARDING_RESEARCH/" class="md-nav__link">
         
   
   
@@ -2433,7 +2433,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/06-reference/09-CYPHER_PATTERNS/" class="md-nav__link">
+      <a href="../../../manual/06-reference/09-CYPHER_PATTERNS/" class="md-nav__link">
         
   
   
@@ -2461,7 +2461,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/06-reference/10-OPENCYPHER_QUERIES/" class="md-nav__link">
+      <a href="../../../manual/06-reference/10-OPENCYPHER_QUERIES/" class="md-nav__link">
         
   
   
@@ -2489,7 +2489,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../manual/06-reference/11-LLM_EDGE_DISCOVERY_FLOW/" class="md-nav__link">
+      <a href="../../../manual/06-reference/11-LLM_EDGE_DISCOVERY_FLOW/" class="md-nav__link">
         
   
   
@@ -2579,7 +2579,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../deployment/macvlan-dedicated-ip/" class="md-nav__link">
+      <a href="../../../deployment/macvlan-dedicated-ip/" class="md-nav__link">
         
   
   
@@ -2661,7 +2661,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../operating/" class="md-nav__link">
+      <a href="../../../operating/" class="md-nav__link">
         
   
   
@@ -2689,7 +2689,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../operating/backup-restore/" class="md-nav__link">
+      <a href="../../../operating/backup-restore/" class="md-nav__link">
         
   
   
@@ -2717,7 +2717,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../operating/client-tools/" class="md-nav__link">
+      <a href="../../../operating/client-tools/" class="md-nav__link">
         
   
   
@@ -2745,7 +2745,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../operating/configuration/" class="md-nav__link">
+      <a href="../../../operating/configuration/" class="md-nav__link">
         
   
   
@@ -2773,7 +2773,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../operating/macvlan-headless-install/" class="md-nav__link">
+      <a href="../../../operating/macvlan-headless-install/" class="md-nav__link">
         
   
   
@@ -2801,7 +2801,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../operating/production/" class="md-nav__link">
+      <a href="../../../operating/production/" class="md-nav__link">
         
   
   
@@ -2829,7 +2829,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../operating/quick-start/" class="md-nav__link">
+      <a href="../../../operating/quick-start/" class="md-nav__link">
         
   
   
@@ -2857,7 +2857,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../operating/troubleshooting/" class="md-nav__link">
+      <a href="../../../operating/troubleshooting/" class="md-nav__link">
         
   
   
@@ -2885,7 +2885,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../operating/upgrading/" class="md-nav__link">
+      <a href="../../../operating/upgrading/" class="md-nav__link">
         
   
   
@@ -2917,20 +2917,18 @@
       
   
   
-    
   
   
-  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
         
           
           <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
@@ -2951,7 +2949,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_8">
             <span class="md-nav__icon md-icon"></span>
             
@@ -2969,7 +2967,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../" class="md-nav__link">
+      <a href="../../../reference/" class="md-nav__link">
         
   
   
@@ -2997,7 +2995,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../ARCHITECTURE_OVERVIEW/" class="md-nav__link">
+      <a href="../../../reference/ARCHITECTURE_OVERVIEW/" class="md-nav__link">
         
   
   
@@ -3025,7 +3023,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../BACKUP_OBJECT_SPEC/" class="md-nav__link">
+      <a href="../../../reference/BACKUP_OBJECT_SPEC/" class="md-nav__link">
         
   
   
@@ -3053,7 +3051,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../FRESHNESS-ARCHITECTURE/" class="md-nav__link">
+      <a href="../../../reference/FRESHNESS-ARCHITECTURE/" class="md-nav__link">
         
   
   
@@ -3081,7 +3079,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../OPERATOR_ARCHITECTURE/" class="md-nav__link">
+      <a href="../../../reference/OPERATOR_ARCHITECTURE/" class="md-nav__link">
         
   
   
@@ -3109,7 +3107,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../RECURSIVE_UPSERT_ARCHITECTURE/" class="md-nav__link">
+      <a href="../../../reference/RECURSIVE_UPSERT_ARCHITECTURE/" class="md-nav__link">
         
   
   
@@ -3137,7 +3135,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../STORAGE-ARCHITECTURE/" class="md-nav__link">
+      <a href="../../../reference/STORAGE-ARCHITECTURE/" class="md-nav__link">
         
   
   
@@ -3212,7 +3210,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../api/" class="md-nav__link">
+      <a href="../../../reference/api/" class="md-nav__link">
         
   
   
@@ -3240,7 +3238,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../api/ADMIN-ENDPOINTS/" class="md-nav__link">
+      <a href="../../../reference/api/ADMIN-ENDPOINTS/" class="md-nav__link">
         
   
   
@@ -3273,20 +3271,18 @@
                 
   
   
-    
   
   
-  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8_9" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8_9" >
         
           
           <label class="md-nav__link" for="__nav_8_9" id="__nav_8_9_label" tabindex="0">
@@ -3307,7 +3303,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_8_9_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_8_9_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_8_9">
             <span class="md-nav__icon md-icon"></span>
             
@@ -3325,7 +3321,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../" class="md-nav__link">
+      <a href="../../../reference/cli/" class="md-nav__link">
         
   
   
@@ -3350,20 +3346,18 @@
                 
   
   
-    
   
   
-  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8_9_2" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8_9_2" >
         
           
           <label class="md-nav__link" for="__nav_8_9_2" id="__nav_8_9_2_label" tabindex="0">
@@ -3384,7 +3378,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_8_9_2_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_8_9_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_8_9_2">
             <span class="md-nav__icon md-icon"></span>
             
@@ -3402,7 +3396,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../admin/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/admin/" class="md-nav__link">
         
   
   
@@ -3430,7 +3424,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../artifact/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/artifact/" class="md-nav__link">
         
   
   
@@ -3458,7 +3452,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../batch/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/batch/" class="md-nav__link">
         
   
   
@@ -3486,7 +3480,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../catalog/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/catalog/" class="md-nav__link">
         
   
   
@@ -3514,7 +3508,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../concept/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/concept/" class="md-nav__link">
         
   
   
@@ -3542,7 +3536,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../config/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/config/" class="md-nav__link">
         
   
   
@@ -3570,7 +3564,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../database/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/database/" class="md-nav__link">
         
   
   
@@ -3598,7 +3592,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../document/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/document/" class="md-nav__link">
         
   
   
@@ -3626,7 +3620,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../edge/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/edge/" class="md-nav__link">
         
   
   
@@ -3654,7 +3648,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../group/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/group/" class="md-nav__link">
         
   
   
@@ -3682,7 +3676,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../health/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/health/" class="md-nav__link">
         
   
   
@@ -3710,7 +3704,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ingest/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/ingest/" class="md-nav__link">
         
   
   
@@ -3738,7 +3732,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../job/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/job/" class="md-nav__link">
         
   
   
@@ -3766,7 +3760,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../login/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/login/" class="md-nav__link">
         
   
   
@@ -3794,7 +3788,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../logout/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/logout/" class="md-nav__link">
         
   
   
@@ -3822,7 +3816,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../mcp-config/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/mcp-config/" class="md-nav__link">
         
   
   
@@ -3850,7 +3844,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../oauth/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/oauth/" class="md-nav__link">
         
   
   
@@ -3878,7 +3872,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ontology/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/ontology/" class="md-nav__link">
         
   
   
@@ -3906,7 +3900,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../polarity/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/polarity/" class="md-nav__link">
         
   
   
@@ -3934,7 +3928,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../program/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/program/" class="md-nav__link">
         
   
   
@@ -3962,7 +3956,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../projection/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/projection/" class="md-nav__link">
         
   
   
@@ -3987,37 +3981,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    kg query-def
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../../reference/cli/commands/query-def/" class="md-nav__link">
         
   
   
@@ -4033,87 +4000,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#query-def-qd" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        query-def (qd)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="query-def (qd)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#list" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        list
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#show" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        show
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#create" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        create
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#delete" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        delete
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -4126,7 +4012,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../search/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/search/" class="md-nav__link">
         
   
   
@@ -4154,7 +4040,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../source/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/source/" class="md-nav__link">
         
   
   
@@ -4182,7 +4068,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../storage/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/storage/" class="md-nav__link">
         
   
   
@@ -4210,7 +4096,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../vocabulary/" class="md-nav__link">
+      <a href="../../../reference/cli/commands/vocabulary/" class="md-nav__link">
         
   
   
@@ -4293,7 +4179,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../media/" class="md-nav__link">
+      <a href="../../../reference/cli/media/" class="md-nav__link">
         
   
   
@@ -4384,7 +4270,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../fuse/" class="md-nav__link">
+      <a href="../../../reference/fuse/" class="md-nav__link">
         
   
   
@@ -4467,7 +4353,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../mcp/" class="md-nav__link">
+      <a href="../../../reference/mcp/" class="md-nav__link">
         
   
   
@@ -4542,7 +4428,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../mcp/media/" class="md-nav__link">
+      <a href="../../../reference/mcp/media/" class="md-nav__link">
         
   
   
@@ -4625,7 +4511,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../mcp/tools/analyze_polarity_axis/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/analyze_polarity_axis/" class="md-nav__link">
         
   
   
@@ -4653,7 +4539,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../mcp/tools/artifact/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/artifact/" class="md-nav__link">
         
   
   
@@ -4681,7 +4567,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../mcp/tools/catalog/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/catalog/" class="md-nav__link">
         
   
   
@@ -4709,7 +4595,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../mcp/tools/concept/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/concept/" class="md-nav__link">
         
   
   
@@ -4737,7 +4623,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../mcp/tools/document/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/document/" class="md-nav__link">
         
   
   
@@ -4765,7 +4651,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../mcp/tools/epistemic_status/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/epistemic_status/" class="md-nav__link">
         
   
   
@@ -4793,7 +4679,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../mcp/tools/epoch/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/epoch/" class="md-nav__link">
         
   
   
@@ -4821,7 +4707,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../mcp/tools/graph/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/graph/" class="md-nav__link">
         
   
   
@@ -4849,7 +4735,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../mcp/tools/ingest/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/ingest/" class="md-nav__link">
         
   
   
@@ -4877,7 +4763,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../mcp/tools/job/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/job/" class="md-nav__link">
         
   
   
@@ -4905,7 +4791,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../mcp/tools/ontology/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/ontology/" class="md-nav__link">
         
   
   
@@ -4933,7 +4819,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../mcp/tools/program/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/program/" class="md-nav__link">
         
   
   
@@ -4961,7 +4847,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../mcp/tools/search/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/search/" class="md-nav__link">
         
   
   
@@ -4989,7 +4875,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../mcp/tools/session_context/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/session_context/" class="md-nav__link">
         
   
   
@@ -5017,7 +4903,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../mcp/tools/source/" class="md-nav__link">
+      <a href="../../../reference/mcp/tools/source/" class="md-nav__link">
         
   
   
@@ -5065,18 +4951,20 @@
       
   
   
+    
   
   
+  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" checked>
         
           
           <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
@@ -5097,7 +4985,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_9">
             <span class="md-nav__icon md-icon"></span>
             
@@ -5115,7 +5003,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/INDEX/" class="md-nav__link">
+      <a href="../../INDEX/" class="md-nav__link">
         
   
   
@@ -5190,7 +5078,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/access-workflow/ADR-001-multi-tier-agent-access/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-001-multi-tier-agent-access/" class="md-nav__link">
         
   
   
@@ -5225,7 +5113,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/access-workflow/ADR-002-node-fitness-scoring/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-002-node-fitness-scoring/" class="md-nav__link">
         
   
   
@@ -5260,7 +5148,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/access-workflow/ADR-003-semantic-tool-hints/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-003-semantic-tool-hints/" class="md-nav__link">
         
   
   
@@ -5295,7 +5183,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/access-workflow/ADR-004-pure-graph-design/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-004-pure-graph-design/" class="md-nav__link">
         
   
   
@@ -5330,7 +5218,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/access-workflow/ADR-005-source-text-tracking/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-005-source-text-tracking/" class="md-nav__link">
         
   
   
@@ -5365,7 +5253,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/access-workflow/ADR-006-staging-migration-workflows/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-006-staging-migration-workflows/" class="md-nav__link">
         
   
   
@@ -5400,7 +5288,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/access-workflow/ADR-038-official-project-apparel/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-038-official-project-apparel/" class="md-nav__link">
         
   
   
@@ -5435,7 +5323,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/access-workflow/ADR-087-documentation-strategy/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-087-documentation-strategy/" class="md-nav__link">
         
   
   
@@ -5470,7 +5358,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/access-workflow/ADR-900-adr-numbering-domain-system/" class="md-nav__link">
+      <a href="../../access-workflow/ADR-900-adr-numbering-domain-system/" class="md-nav__link">
         
   
   
@@ -5560,7 +5448,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ai-embeddings/ADR-039-local-embedding-service/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-039-local-embedding-service/" class="md-nav__link">
         
   
   
@@ -5595,7 +5483,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ai-embeddings/ADR-041-ai-extraction-config/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-041-ai-extraction-config/" class="md-nav__link">
         
   
   
@@ -5630,7 +5518,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ai-embeddings/ADR-042-local-extraction-inference/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-042-local-extraction-inference/" class="md-nav__link">
         
   
   
@@ -5665,7 +5553,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ai-embeddings/ADR-043-single-node-resource-management/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-043-single-node-resource-management/" class="md-nav__link">
         
   
   
@@ -5700,7 +5588,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ai-embeddings/ADR-044-probabilistic-truth-convergence/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-044-probabilistic-truth-convergence/" class="md-nav__link">
         
   
   
@@ -5735,7 +5623,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ai-embeddings/ADR-045-unified-embedding-generation/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-045-unified-embedding-generation/" class="md-nav__link">
         
   
   
@@ -5770,7 +5658,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ai-embeddings/ADR-049-rate-limiting-and-concurrency/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-049-rate-limiting-and-concurrency/" class="md-nav__link">
         
   
   
@@ -5805,7 +5693,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ai-embeddings/ADR-058-polarity-axis-triangulation/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-058-polarity-axis-triangulation/" class="md-nav__link">
         
   
   
@@ -5840,7 +5728,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ai-embeddings/ADR-068-source-text-embeddings/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-068-source-text-embeddings/" class="md-nav__link">
         
   
   
@@ -5875,7 +5763,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ai-embeddings/ADR-070-polarity-axis-analysis/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-070-polarity-axis-analysis/" class="md-nav__link">
         
   
   
@@ -5910,7 +5798,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ai-embeddings/ADR-800-dynamic-model-catalog-and-openrouter-support/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-800-dynamic-model-catalog-and-openrouter-support/" class="md-nav__link">
         
   
   
@@ -5945,7 +5833,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ai-embeddings/ADR-801-uniform-provider-configuration-contract/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-801-uniform-provider-configuration-contract/" class="md-nav__link">
         
   
   
@@ -5980,7 +5868,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ai-embeddings/ADR-802-unify-vision-providers-under-the-uniform-provider-contract/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-802-unify-vision-providers-under-the-uniform-provider-contract/" class="md-nav__link">
         
   
   
@@ -6015,7 +5903,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ai-embeddings/ADR-803-modality-embedding-architecture-universal-text-space-and-independent-per-modality-embedders/" class="md-nav__link">
+      <a href="../../ai-embeddings/ADR-803-modality-embedding-architecture-universal-text-space-and-independent-per-modality-embedders/" class="md-nav__link">
         
   
   
@@ -6097,7 +5985,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ai-embeddings/media-ADR-058/README_VISUALIZATIONS/" class="md-nav__link">
+      <a href="../../ai-embeddings/media-ADR-058/README_VISUALIZATIONS/" class="md-nav__link">
         
   
   
@@ -6188,7 +6076,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/authentication-security/ADR-017-sensitive-auth-verification/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-017-sensitive-auth-verification/" class="md-nav__link">
         
   
   
@@ -6223,7 +6111,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/authentication-security/ADR-027-user-management-api/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-027-user-management-api/" class="md-nav__link">
         
   
   
@@ -6258,7 +6146,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/authentication-security/ADR-028-dynamic-rbac-system/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-028-dynamic-rbac-system/" class="md-nav__link">
         
   
   
@@ -6293,7 +6181,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/authentication-security/ADR-031-encrypted-api-key-storage/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-031-encrypted-api-key-storage/" class="md-nav__link">
         
   
   
@@ -6328,7 +6216,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/authentication-security/ADR-054-oauth-client-management/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-054-oauth-client-management/" class="md-nav__link">
         
   
   
@@ -6363,7 +6251,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/authentication-security/ADR-060-endpoint-security-architecture/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-060-endpoint-security-architecture/" class="md-nav__link">
         
   
   
@@ -6398,7 +6286,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/authentication-security/ADR-062-mcp-file-ingestion-security/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-062-mcp-file-ingestion-security/" class="md-nav__link">
         
   
   
@@ -6433,7 +6321,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/authentication-security/ADR-074-platform-admin-role/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-074-platform-admin-role/" class="md-nav__link">
         
   
   
@@ -6468,7 +6356,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/authentication-security/ADR-082-user-scoping-artifact-ownership/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-082-user-scoping-artifact-ownership/" class="md-nav__link">
         
   
   
@@ -6503,7 +6391,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/authentication-security/ADR-400-operative-rbac-and-endpoint-security-baseline/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-400-operative-rbac-and-endpoint-security-baseline/" class="md-nav__link">
         
   
   
@@ -6593,7 +6481,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/database-schema/ADR-016-apache-age-migration/" class="md-nav__link">
+      <a href="../../database-schema/ADR-016-apache-age-migration/" class="md-nav__link">
         
   
   
@@ -6628,7 +6516,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/database-schema/ADR-024-multi-schema-postgresql-architecture/" class="md-nav__link">
+      <a href="../../database-schema/ADR-024-multi-schema-postgresql-architecture/" class="md-nav__link">
         
   
   
@@ -6663,7 +6551,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/database-schema/ADR-040-database-schema-migrations/" class="md-nav__link">
+      <a href="../../database-schema/ADR-040-database-schema-migrations/" class="md-nav__link">
         
   
   
@@ -6698,7 +6586,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/database-schema/ADR-061-operator-pattern-lifecycle/" class="md-nav__link">
+      <a href="../../database-schema/ADR-061-operator-pattern-lifecycle/" class="md-nav__link">
         
   
   
@@ -6733,7 +6621,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/database-schema/ADR-200-annealing-ontologies-self-organizing-knowledge-graph-structure/" class="md-nav__link">
+      <a href="../../database-schema/ADR-200-annealing-ontologies-self-organizing-knowledge-graph-structure/" class="md-nav__link">
         
   
   
@@ -6768,7 +6656,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/database-schema/ADR-201-in-memory-graph-acceleration-extension/" class="md-nav__link">
+      <a href="../../database-schema/ADR-201-in-memory-graph-acceleration-extension/" class="md-nav__link">
         
   
   
@@ -6803,7 +6691,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/database-schema/ADR-202-timestamp-timezone-normalization/" class="md-nav__link">
+      <a href="../../database-schema/ADR-202-timestamp-timezone-normalization/" class="md-nav__link">
         
   
   
@@ -6838,7 +6726,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/database-schema/ADR-203-graph-epoch-event-log/" class="md-nav__link">
+      <a href="../../database-schema/ADR-203-graph-epoch-event-log/" class="md-nav__link">
         
   
   
@@ -6873,7 +6761,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/database-schema/ADR-204-node-type-and-abstract-property-representation-for-concept-nodes/" class="md-nav__link">
+      <a href="../../database-schema/ADR-204-node-type-and-abstract-property-representation-for-concept-nodes/" class="md-nav__link">
         
   
   
@@ -6908,7 +6796,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/database-schema/ADR-205-postgresql-18-migration/" class="md-nav__link">
+      <a href="../../database-schema/ADR-205-postgresql-18-migration/" class="md-nav__link">
         
   
   
@@ -6943,7 +6831,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/database-schema/ADR-206-closed-vocabulary-annealing-actions-with-tiered-escalation-and-epistemic-ledger/" class="md-nav__link">
+      <a href="../../database-schema/ADR-206-closed-vocabulary-annealing-actions-with-tiered-escalation-and-epistemic-ledger/" class="md-nav__link">
         
   
   
@@ -6978,7 +6866,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/database-schema/ADR-207-derived-state-freshness-contract/" class="md-nav__link">
+      <a href="../../database-schema/ADR-207-derived-state-freshness-contract/" class="md-nav__link">
         
   
   
@@ -7018,18 +6906,20 @@
                 
   
   
+    
   
   
+  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9_6" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9_6" checked>
         
           
           <label class="md-nav__link" for="__nav_9_6" id="__nav_9_6_label" tabindex="0">
@@ -7050,7 +6940,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_9_6_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_9_6_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_9_6">
             <span class="md-nav__icon md-icon"></span>
             
@@ -7068,7 +6958,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/infrastructure/ADR-012-api-server-architecture/" class="md-nav__link">
+      <a href="../ADR-012-api-server-architecture/" class="md-nav__link">
         
   
   
@@ -7103,7 +6993,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/infrastructure/ADR-015-backup-restore-streaming/" class="md-nav__link">
+      <a href="../ADR-015-backup-restore-streaming/" class="md-nav__link">
         
   
   
@@ -7138,7 +7028,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/infrastructure/ADR-018-server-sent-events-streaming/" class="md-nav__link">
+      <a href="../ADR-018-server-sent-events-streaming/" class="md-nav__link">
         
   
   
@@ -7173,7 +7063,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/infrastructure/ADR-020-admin-module-architecture/" class="md-nav__link">
+      <a href="../ADR-020-admin-module-architecture/" class="md-nav__link">
         
   
   
@@ -7208,7 +7098,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/infrastructure/ADR-021-live-man-switch-ai-safety/" class="md-nav__link">
+      <a href="../ADR-021-live-man-switch-ai-safety/" class="md-nav__link">
         
   
   
@@ -7243,7 +7133,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/infrastructure/ADR-050-scheduled-jobs-system/" class="md-nav__link">
+      <a href="../ADR-050-scheduled-jobs-system/" class="md-nav__link">
         
   
   
@@ -7278,7 +7168,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/infrastructure/ADR-055-cdn-serverless-deployment-model/" class="md-nav__link">
+      <a href="../ADR-055-cdn-serverless-deployment-model/" class="md-nav__link">
         
   
   
@@ -7313,7 +7203,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/infrastructure/ADR-056-timezone-aware-datetime-utilities/" class="md-nav__link">
+      <a href="../ADR-056-timezone-aware-datetime-utilities/" class="md-nav__link">
         
   
   
@@ -7348,7 +7238,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/infrastructure/ADR-079-projection-artifact-storage/" class="md-nav__link">
+      <a href="../ADR-079-projection-artifact-storage/" class="md-nav__link">
         
   
   
@@ -7383,7 +7273,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/infrastructure/ADR-080-garage-service-architecture/" class="md-nav__link">
+      <a href="../ADR-080-garage-service-architecture/" class="md-nav__link">
         
   
   
@@ -7418,7 +7308,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/infrastructure/ADR-083-artifact-persistence-pattern/" class="md-nav__link">
+      <a href="../ADR-083-artifact-persistence-pattern/" class="md-nav__link">
         
   
   
@@ -7453,7 +7343,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/infrastructure/ADR-086-deployment-topology/" class="md-nav__link">
+      <a href="../ADR-086-deployment-topology/" class="md-nav__link">
         
   
   
@@ -7488,7 +7378,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/infrastructure/ADR-088-semantic-election-protocol/" class="md-nav__link">
+      <a href="../ADR-088-semantic-election-protocol/" class="md-nav__link">
         
   
   
@@ -7523,7 +7413,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/infrastructure/ADR-100-database-driven-job-dispatch/" class="md-nav__link">
+      <a href="../ADR-100-database-driven-job-dispatch/" class="md-nav__link">
         
   
   
@@ -7558,7 +7448,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/infrastructure/ADR-101-rocm-image-variant-and-install-time-selection/" class="md-nav__link">
+      <a href="../ADR-101-rocm-image-variant-and-install-time-selection/" class="md-nav__link">
         
   
   
@@ -7593,7 +7483,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/infrastructure/ADR-102-portable-backup-and-restore-with-clone-merge-semantics/" class="md-nav__link">
+      <a href="../ADR-102-portable-backup-and-restore-with-clone-merge-semantics/" class="md-nav__link">
         
   
   
@@ -7625,10 +7515,44 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../../../architecture/infrastructure/ADR-103-distribution-strategy-nomic-first-thin-appliance-with-app-store-tenancy/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-103: Distribution strategy: nomic-first thin appliance with app-store tenancy
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--Proposed"></span>
+  
+
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -7651,6 +7575,120 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Consequences">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#positive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Positive
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#negative" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Negative
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#neutral" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Neutral
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#open-questions-verification-gates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Open Questions / Verification Gates
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#alternatives-considered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alternatives Considered
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -7718,7 +7756,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ingestion-content/ADR-014-job-approval-workflow/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-014-job-approval-workflow/" class="md-nav__link">
         
   
   
@@ -7753,7 +7791,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ingestion-content/ADR-023-markdown-structured-content-preprocessing/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-023-markdown-structured-content-preprocessing/" class="md-nav__link">
         
   
   
@@ -7788,7 +7826,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ingestion-content/ADR-033-multimodal-ingestion-configurable-prompts/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-033-multimodal-ingestion-configurable-prompts/" class="md-nav__link">
         
   
   
@@ -7823,7 +7861,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ingestion-content/ADR-037-human-guided-graph-editing/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-037-human-guided-graph-editing/" class="md-nav__link">
         
   
   
@@ -7858,7 +7896,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ingestion-content/ADR-051.1-graph-document-deduplication/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-051.1-graph-document-deduplication/" class="md-nav__link">
         
   
   
@@ -7893,7 +7931,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ingestion-content/ADR-051.2-api-changes/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-051.2-api-changes/" class="md-nav__link">
         
   
   
@@ -7928,7 +7966,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ingestion-content/ADR-057.1-multimodal-image-ingestion/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-057.1-multimodal-image-ingestion/" class="md-nav__link">
         
   
   
@@ -7963,7 +8001,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ingestion-content/ADR-057.2-appendix-single-vs-two-stage/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-057.2-appendix-single-vs-two-stage/" class="md-nav__link">
         
   
   
@@ -7998,7 +8036,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ingestion-content/ADR-072-concept-matching-strategies/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-072-concept-matching-strategies/" class="md-nav__link">
         
   
   
@@ -8033,7 +8071,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ingestion-content/ADR-081-source-document-lifecycle/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-081-source-document-lifecycle/" class="md-nav__link">
         
   
   
@@ -8068,7 +8106,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/ingestion-content/ADR-089-deterministic-node-edge-creation/" class="md-nav__link">
+      <a href="../../ingestion-content/ADR-089-deterministic-node-edge-creation/" class="md-nav__link">
         
   
   
@@ -8158,7 +8196,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/query-search/ADR-030-concept-deduplication-validation/" class="md-nav__link">
+      <a href="../../query-search/ADR-030-concept-deduplication-validation/" class="md-nav__link">
         
   
   
@@ -8193,7 +8231,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/query-search/ADR-063-semantic-diversity-authenticity-signal/" class="md-nav__link">
+      <a href="../../query-search/ADR-063-semantic-diversity-authenticity-signal/" class="md-nav__link">
         
   
   
@@ -8228,7 +8266,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/query-search/ADR-066-published-query-endpoints/" class="md-nav__link">
+      <a href="../../query-search/ADR-066-published-query-endpoints/" class="md-nav__link">
         
   
   
@@ -8263,7 +8301,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/query-search/ADR-071-parallel-graph-queries/" class="md-nav__link">
+      <a href="../../query-search/ADR-071-parallel-graph-queries/" class="md-nav__link">
         
   
   
@@ -8298,7 +8336,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/query-search/ADR-071.1-parallel-implementation-findings/" class="md-nav__link">
+      <a href="../../query-search/ADR-071.1-parallel-implementation-findings/" class="md-nav__link">
         
   
   
@@ -8333,7 +8371,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/query-search/ADR-076-pathfinding-optimization/" class="md-nav__link">
+      <a href="../../query-search/ADR-076-pathfinding-optimization/" class="md-nav__link">
         
   
   
@@ -8368,7 +8406,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/query-search/ADR-076.1-pathfinding-baseline/" class="md-nav__link">
+      <a href="../../query-search/ADR-076.1-pathfinding-baseline/" class="md-nav__link">
         
   
   
@@ -8403,7 +8441,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/query-search/ADR-084-document-search/" class="md-nav__link">
+      <a href="../../query-search/ADR-084-document-search/" class="md-nav__link">
         
   
   
@@ -8438,7 +8476,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/query-search/ADR-500-graph-program-dsl-and-ast-architecture/" class="md-nav__link">
+      <a href="../../query-search/ADR-500-graph-program-dsl-and-ast-architecture/" class="md-nav__link">
         
   
   
@@ -8473,7 +8511,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/query-search/ADR-501-catalog-browse-facade/" class="md-nav__link">
+      <a href="../../query-search/ADR-501-catalog-browse-facade/" class="md-nav__link">
         
   
   
@@ -8563,7 +8601,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/user-interfaces/ADR-011-cli-admin-separation/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-011-cli-admin-separation/" class="md-nav__link">
         
   
   
@@ -8598,7 +8636,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/user-interfaces/ADR-013-unified-typescript-client/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-013-unified-typescript-client/" class="md-nav__link">
         
   
   
@@ -8633,7 +8671,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/user-interfaces/ADR-019-type-based-table-formatting/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-019-type-based-table-formatting/" class="md-nav__link">
         
   
   
@@ -8668,7 +8706,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/user-interfaces/ADR-029-cli-theory-of-operation/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-029-cli-theory-of-operation/" class="md-nav__link">
         
   
   
@@ -8703,7 +8741,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/user-interfaces/ADR-034-graph-visualization-query-workbench/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-034-graph-visualization-query-workbench/" class="md-nav__link">
         
   
   
@@ -8738,7 +8776,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/user-interfaces/ADR-035-explorer-methods-uses-capabilities/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-035-explorer-methods-uses-capabilities/" class="md-nav__link">
         
   
   
@@ -8773,7 +8811,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/user-interfaces/ADR-036-universal-visual-query-builder/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-036-universal-visual-query-builder/" class="md-nav__link">
         
   
   
@@ -8808,7 +8846,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/user-interfaces/ADR-064-specialized-truth-convergence-visualizations/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-064-specialized-truth-convergence-visualizations/" class="md-nav__link">
         
   
   
@@ -8843,7 +8881,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/user-interfaces/ADR-067-web-app-workstation-architecture/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-067-web-app-workstation-architecture/" class="md-nav__link">
         
   
   
@@ -8878,7 +8916,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/user-interfaces/ADR-069-semantic-fuse-filesystem/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-069-semantic-fuse-filesystem/" class="md-nav__link">
         
   
   
@@ -8913,7 +8951,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/user-interfaces/ADR-069.1-fuse-implementation-specifics/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-069.1-fuse-implementation-specifics/" class="md-nav__link">
         
   
   
@@ -8948,7 +8986,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/user-interfaces/ADR-075-postmodern-theme/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-075-postmodern-theme/" class="md-nav__link">
         
   
   
@@ -8983,7 +9021,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/user-interfaces/ADR-700-ontology-explorer/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-700-ontology-explorer/" class="md-nav__link">
         
   
   
@@ -9018,7 +9056,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/user-interfaces/ADR-701-vocabulary-administration-interface/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-701-vocabulary-administration-interface/" class="md-nav__link">
         
   
   
@@ -9053,7 +9091,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/user-interfaces/ADR-702-unified-graph-rendering-engine/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-702-unified-graph-rendering-engine/" class="md-nav__link">
         
   
   
@@ -9088,7 +9126,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/user-interfaces/ADR-703-ontology-lifecycle-administration-interface/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-703-ontology-lifecycle-administration-interface/" class="md-nav__link">
         
   
   
@@ -9123,7 +9161,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/user-interfaces/ADR-704-unified-user-scoped-resource-dispensing/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-704-unified-user-scoped-resource-dispensing/" class="md-nav__link">
         
   
   
@@ -9158,7 +9196,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/user-interfaces/ADR-705-session-visibility-and-declarative-capability-gating/" class="md-nav__link">
+      <a href="../../user-interfaces/ADR-705-session-visibility-and-declarative-capability-gating/" class="md-nav__link">
         
   
   
@@ -9248,7 +9286,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/visualization/ADR-078-embedding-landscape-explorer/" class="md-nav__link">
+      <a href="../../visualization/ADR-078-embedding-landscape-explorer/" class="md-nav__link">
         
   
   
@@ -9283,7 +9321,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/visualization/ADR-085-document-explorer/" class="md-nav__link">
+      <a href="../../visualization/ADR-085-document-explorer/" class="md-nav__link">
         
   
   
@@ -9373,7 +9411,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/vocabulary-relationships/ADR-022-semantic-relationship-taxonomy/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-022-semantic-relationship-taxonomy/" class="md-nav__link">
         
   
   
@@ -9408,7 +9446,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/vocabulary-relationships/ADR-025-dynamic-relationship-vocabulary/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-025-dynamic-relationship-vocabulary/" class="md-nav__link">
         
   
   
@@ -9443,7 +9481,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/vocabulary-relationships/ADR-026-autonomous-vocabulary-curation/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-026-autonomous-vocabulary-curation/" class="md-nav__link">
         
   
   
@@ -9478,7 +9516,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/vocabulary-relationships/ADR-032.1-automatic-edge-vocabulary-expansion/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-032.1-automatic-edge-vocabulary-expansion/" class="md-nav__link">
         
   
   
@@ -9513,7 +9551,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/vocabulary-relationships/ADR-032.2-implementation-notes/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-032.2-implementation-notes/" class="md-nav__link">
         
   
   
@@ -9548,7 +9586,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/vocabulary-relationships/ADR-046-grounding-aware-vocabulary-management/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-046-grounding-aware-vocabulary-management/" class="md-nav__link">
         
   
   
@@ -9583,7 +9621,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/vocabulary-relationships/ADR-047-probabilistic-vocabulary-categorization/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-047-probabilistic-vocabulary-categorization/" class="md-nav__link">
         
   
   
@@ -9618,7 +9656,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/vocabulary-relationships/ADR-048-vocabulary-metadata-as-graph/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-048-vocabulary-metadata-as-graph/" class="md-nav__link">
         
   
   
@@ -9653,7 +9691,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/vocabulary-relationships/ADR-052-vocabulary-expansion-consolidation-cycle/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-052-vocabulary-expansion-consolidation-cycle/" class="md-nav__link">
         
   
   
@@ -9688,7 +9726,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/vocabulary-relationships/ADR-053-eager-vocabulary-categorization/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-053-eager-vocabulary-categorization/" class="md-nav__link">
         
   
   
@@ -9723,7 +9761,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/vocabulary-relationships/ADR-059-llm-determined-relationship-direction/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-059-llm-determined-relationship-direction/" class="md-nav__link">
         
   
   
@@ -9758,7 +9796,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/vocabulary-relationships/ADR-065-vocabulary-based-provenance-relationships/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-065-vocabulary-based-provenance-relationships/" class="md-nav__link">
         
   
   
@@ -9793,7 +9831,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/vocabulary-relationships/ADR-077-vocabulary-explorers/" class="md-nav__link">
+      <a href="../../vocabulary-relationships/ADR-077-vocabulary-explorers/" class="md-nav__link">
         
   
   
@@ -9890,7 +9928,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../research/code-intelligence-platforms-comparison/" class="md-nav__link">
+      <a href="../../../research/code-intelligence-platforms-comparison/" class="md-nav__link">
         
   
   
@@ -9918,7 +9956,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../research/emergent-visual-relationships/" class="md-nav__link">
+      <a href="../../../research/emergent-visual-relationships/" class="md-nav__link">
         
   
   
@@ -9946,7 +9984,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../research/epistemic-confidence/" class="md-nav__link">
+      <a href="../../../research/epistemic-confidence/" class="md-nav__link">
         
   
   
@@ -9974,7 +10012,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../research/graph-object-platform-exploration/" class="md-nav__link">
+      <a href="../../../research/graph-object-platform-exploration/" class="md-nav__link">
         
   
   
@@ -10002,7 +10040,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../research/headless-install-analysis/" class="md-nav__link">
+      <a href="../../../research/headless-install-analysis/" class="md-nav__link">
         
   
   
@@ -10030,7 +10068,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../research/llm-knowledge-extraction-research-2024-2025/" class="md-nav__link">
+      <a href="../../../research/llm-knowledge-extraction-research-2024-2025/" class="md-nav__link">
         
   
   
@@ -10058,7 +10096,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../research/polarity-axis-findings/" class="md-nav__link">
+      <a href="../../../research/polarity-axis-findings/" class="md-nav__link">
         
   
   
@@ -10086,7 +10124,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../research/polarity-axis-visualization/" class="md-nav__link">
+      <a href="../../../research/polarity-axis-visualization/" class="md-nav__link">
         
   
   
@@ -10114,7 +10152,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../research/t-sne-viz/" class="md-nav__link">
+      <a href="../../../research/t-sne-viz/" class="md-nav__link">
         
   
   
@@ -10189,7 +10227,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../research/vision-testing/" class="md-nav__link">
+      <a href="../../../research/vision-testing/" class="md-nav__link">
         
   
   
@@ -10217,7 +10255,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../research/vision-testing/EMBEDDING_COMPARISON_REPORT/" class="md-nav__link">
+      <a href="../../../research/vision-testing/EMBEDDING_COMPARISON_REPORT/" class="md-nav__link">
         
   
   
@@ -10245,7 +10283,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../research/vision-testing/FINDINGS/" class="md-nav__link">
+      <a href="../../../research/vision-testing/FINDINGS/" class="md-nav__link">
         
   
   
@@ -10273,7 +10311,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../research/vision-testing/RESEARCH_SUMMARY/" class="md-nav__link">
+      <a href="../../../research/vision-testing/RESEARCH_SUMMARY/" class="md-nav__link">
         
   
   
@@ -10363,7 +10401,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../testing/ADR-200-PHASE-3A-EXERCISE-REPORT/" class="md-nav__link">
+      <a href="../../../testing/ADR-200-PHASE-3A-EXERCISE-REPORT/" class="md-nav__link">
         
   
   
@@ -10391,7 +10429,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../testing/API_AUTH_AUDIT_RESULTS/" class="md-nav__link">
+      <a href="../../../testing/API_AUTH_AUDIT_RESULTS/" class="md-nav__link">
         
   
   
@@ -10419,7 +10457,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../testing/API_AUTH_AUDIT_SUMMARY/" class="md-nav__link">
+      <a href="../../../testing/API_AUTH_AUDIT_SUMMARY/" class="md-nav__link">
         
   
   
@@ -10447,7 +10485,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../testing/API_AUTH_TESTING_RESEARCH/" class="md-nav__link">
+      <a href="../../../testing/API_AUTH_TESTING_RESEARCH/" class="md-nav__link">
         
   
   
@@ -10475,7 +10513,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../testing/INTEGRATION_TEST_NOTES/" class="md-nav__link">
+      <a href="../../../testing/INTEGRATION_TEST_NOTES/" class="md-nav__link">
         
   
   
@@ -10503,7 +10541,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../testing/INTEGRATION_TEST_PLAN/" class="md-nav__link">
+      <a href="../../../testing/INTEGRATION_TEST_PLAN/" class="md-nav__link">
         
   
   
@@ -10531,7 +10569,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../testing/SCHEMA_MIGRATION_TEST_REPORT/" class="md-nav__link">
+      <a href="../../../testing/SCHEMA_MIGRATION_TEST_REPORT/" class="md-nav__link">
         
   
   
@@ -10559,7 +10597,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../testing/TEST_COVERAGE/" class="md-nav__link">
+      <a href="../../../testing/TEST_COVERAGE/" class="md-nav__link">
         
   
   
@@ -10614,22 +10652,44 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#query-def-qd" class="md-nav__link">
+  <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
-        query-def (qd)
+        Context
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="query-def (qd)">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Consequences">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#list" class="md-nav__link">
+  <a href="#positive" class="md-nav__link">
     <span class="md-ellipsis">
       
-        list
+        Positive
       
     </span>
   </a>
@@ -10637,10 +10697,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#show" class="md-nav__link">
+  <a href="#negative" class="md-nav__link">
     <span class="md-ellipsis">
       
-        show
+        Negative
       
     </span>
   </a>
@@ -10648,21 +10708,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#create" class="md-nav__link">
+  <a href="#neutral" class="md-nav__link">
     <span class="md-ellipsis">
       
-        create
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#delete" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        delete
+        Neutral
       
     </span>
   </a>
@@ -10671,6 +10720,28 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#open-questions-verification-gates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Open Questions / Verification Gates
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#alternatives-considered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alternatives Considered
+      
+    </span>
+  </a>
   
 </li>
       
@@ -10694,123 +10765,211 @@
   
 
 
-<h1 id="kg-query-def">kg query-def</h1>
-<blockquote>
-<p>Auto-generated</p>
-</blockquote>
-<h2 id="query-def-qd">query-def (qd)</h2>
-<p>Manage saved query definitions - recipes that can be re-executed to generate artifacts. Supports block diagrams, cypher queries, searches, polarity analyses, and connection paths.</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kg<span class="w"> </span>query-def<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
-</code></pre></div></p>
-<p><strong>Subcommands:</strong></p>
-<ul>
-<li><code>list</code> - List query definitions</li>
-<li><code>show</code> - Show a query definition</li>
-<li><code>create</code> - Create a query definition</li>
-<li><code>delete</code> - Delete a query definition</li>
-</ul>
-<hr />
-<h3 id="list">list</h3>
-<p>List query definitions</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kg<span class="w"> </span>list<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
-</code></pre></div></p>
-<p><strong>Options:</strong></p>
+<h1 id="adr-103-distribution-strategy-nomic-first-thin-appliance-with-app-store-tenancy">ADR-103: Distribution strategy: nomic-first thin appliance with app-store tenancy</h1>
+<h2 id="context">Context</h2>
+<p>The system is fully containerized and managed by <code>operator.sh</code> (an apt-style
+lifecycle tool) with a standalone <code>install.sh</code> for production deployment.
+Despite this, the single biggest constraint on broader adoption is <strong>distribution</strong>:
+standing the platform up requires the operator to understand Docker, Compose,
+<code>operator.sh</code>, provider configuration, and secret generation. That is a steep
+funnel for a system that is otherwise self-contained.</p>
+<p>"Distribution" is not one problem but four, and they have different solutions:</p>
 <table>
 <thead>
 <tr>
-<th>Option</th>
-<th>Description</th>
-<th>Default</th>
+<th>Axis</th>
+<th>What it means</th>
+<th>Solved by an appliance?</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>-t, --type &lt;type&gt;</code></td>
-<td>Filter by type (block_diagram, cypher, search, polarity, connection)</td>
-<td>-</td>
+<td><strong>Install friction</strong></td>
+<td>Docker/Compose/operator literacy required</td>
+<td>Yes — flash, boot, paste a key</td>
 </tr>
 <tr>
-<td><code>-l, --limit &lt;n&gt;</code></td>
-<td>Maximum to return</td>
-<td><code>"20"</code></td>
+<td><strong>Discovery</strong></td>
+<td>People finding the project at all</td>
+<td>No — needs to live where self-hosters browse</td>
+</tr>
+<tr>
+<td><strong>Update lifecycle</strong></td>
+<td>Keeping deployed instances current</td>
+<td>Partly — <code>operator.sh upgrade</code> is already proto-OTA</td>
+</tr>
+<tr>
+<td><strong>Support surface</strong></td>
+<td>Variance across host environments</td>
+<td>Mixed — known-good env helps; tenant management adds surface</td>
 </tr>
 </tbody>
 </table>
-<h3 id="show">show</h3>
-<p>Show a query definition</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kg<span class="w"> </span>show<span class="w"> </span>&lt;id&gt;
-</code></pre></div></p>
-<p><strong>Arguments:</strong></p>
+<p>A naive "ship it all as one VM" framing hides a fork. A <strong>fat appliance</strong> bakes
+images + data into a frozen VM image (truly offline, but fights the existing
+pull-based <code>operator.sh upgrade</code> lifecycle and ships multi-GB images per
+release). A <strong>thin appliance</strong> ships a minimal host with Docker + <code>operator.sh</code>
+preinstalled and pulls images on first boot (keeps the incremental update story,
+needs network on first boot). For a system whose deployment philosophy is
+already "pull images, migrate, restart," the thin model is the natural fit.</p>
+<p>Two technical facts shape the strategy:</p>
+<ol>
+<li>
+<p><strong>The embedding/reasoning split is already a code path, not a thing to
+   build.</strong> <code>LocalEmbeddingProvider</code> does on-device embeddings via
+   sentence-transformers and explicitly cannot extract (ADR-039). Concept
+   <em>extraction/reasoning</em> is a separate provider path that calls a remote LLM.
+   This lets the appliance own the cheap, private, edge-friendly compute
+   (embeddings, vector similarity, graph storage — the user's data) while
+   farming out only document chunks to a cloud LLM for extraction.</p>
+</li>
+<li>
+<p><strong>Multi-arch images are already produced.</strong> <code>publish.sh</code> runs
+   <code>docker buildx --platform linux/amd64,linux/arm64</code>, auto-enabled on
+   <code>release</code>/<code>main</code>. An ARM64 target (Raspberry Pi 4GB+, Home Assistant OS
+   style) is feasible because the CPU/RAM profile fits when reasoning is remote
+   and embeddings use a small local model.</p>
+</li>
+</ol>
+<p>A target deployment is a Raspberry-Pi-class appliance (HAOS-like): a flashable
+image that runs the containers, does embeddings on-device, and only reaches out
+for reasoning. Local inference for <em>reasoning</em> (e.g. vLLM passthrough) is
+explicitly out of scope — if a user wants it, that is their own add-on
+container, not a core responsibility.</p>
+<h2 id="decision">Decision</h2>
+<p>Adopt a <strong>staged, thin-appliance distribution strategy</strong> with a <strong>nomic-first
+local-embedding invariant</strong>, and <strong>defer</strong> building a bespoke supervisor OS.</p>
+<p><strong>Invariant — nomic-first, reasoning-remote.</strong> The out-of-the-box embedding
+model is the local <code>nomic-ai/nomic-embed-text-v1.5</code> profile (768-dim,
+on-device, no API key). Cloud OpenAI embeddings remain a one-command
+alternative but are no longer the default. Reasoning/extraction continues to
+require a remote LLM provider. This makes the appliance self-contained for the
+private/edge half of the workload and means a fresh install needs a cloud key
+<em>only</em> for extraction, never for embeddings. Both default models — text
+(<code>nomic-embed-text-v1.5</code>) <strong>and</strong> vision (<code>nomic-embed-vision-v1.5</code>, loaded via
+the profile's image slot) — are baked into the API image at build time so the
+platform boots without a runtime HuggingFace download, the precondition for an
+offline / air-gapped / Pi appliance.</p>
+<p><strong>Cache-topology constraint (non-obvious).</strong> The HF cache path
+(<code>~/.cache/huggingface</code>) sits under a mounted volume (<code>hf_cache -&gt;
+/home/api/.cache</code>) in every compose variant. Weights baked <em>directly</em> into that
+path are shadowed by the empty volume on first boot, re-triggering the download.
+So the image bakes both models into a path <em>outside</em> the volume (<code>/opt/hf-seed</code>,
+loaded — not merely downloaded — so the <code>trust_remote_code</code> dynamic-module cache
+is populated too), and a first-boot entrypoint (<code>docker-entrypoint.sh</code>) copies
+them into the live cache with <code>cp -n</code> (preserving any model a user later
+switches to or adds). This keeps the deliberate persistent-cache design intact
+while guaranteeing offline first boot.</p>
+<p>The bake and seed live in <strong>shared scripts</strong> (<code>api/bake_embedding_models.py</code> +
+<code>api/docker-entrypoint.sh</code>) invoked by <em>every</em> published image variant — the
+standard CPU/x86/arm64/NVIDIA <code>api/Dockerfile</code> (runs as <code>api</code>, seeds the cache
+volume) and the AMD <code>api/Dockerfile.rocm-host</code> (runs as root, seeds <code>$HOME</code>).
+This was learned the hard way: an inline bake added only to <code>api/Dockerfile</code>
+silently skipped the ROCm image, which kept re-downloading at runtime. One
+source of truth for the model list is the only way the variants stay in lockstep.</p>
+<p><strong>Staged distribution path:</strong></p>
+<ol>
+<li>
+<p><strong>Stage 1 — app-store tenancy.</strong> Publish to existing self-host platforms
+   (Portainer template, CasaOS, Umbrel, TrueNAS SCALE app, Proxmox helper
+   script, Home Assistant add-on). These are <em>already</em> "an appliance OS that
+   manages container tenants." Being a tenant solves discovery <strong>and</strong> install
+   at a fraction of the cost of authoring an OS. Lowest effort, highest leverage.</p>
+</li>
+<li>
+<p><strong>Stage 2 — thin appliance images.</strong> Ship prebuilt OVA/qcow2 + an arm64 Pi
+   image: a minimal host with Docker + <code>operator.sh</code> preinstalled, nomic
+   weights baked, reasoning cloud-only. Still thin — updates flow through the
+   existing <code>operator.sh upgrade</code> pull lifecycle, not whole-image replacement.</p>
+</li>
+<li>
+<p><strong>Stage 3 — supervisor model (deferred).</strong> Becoming our own appliance OS
+   with a first-class add-on model (e.g. user-supplied vLLM-passthrough
+   container) is explicitly out of scope for now. We only <strong>preserve the seam</strong>:
+   keep <code>operator.sh</code> add-on-shaped so the door stays open if demand proves out.</p>
+</li>
+</ol>
+<p>This ADR records the strategy and the nomic-first invariant. The nomic-first
+flip is implemented on branch <code>survey/nomic-first-defaults</code> (seed migrations
+003/008, mig-012 fallback, Dockerfile bake, mock/test dimension alignment,
+operator-help/API-doc defaults).</p>
+<h2 id="consequences">Consequences</h2>
+<h3 id="positive">Positive</h3>
 <ul>
-<li><code>&lt;id&gt;</code> - Definition ID</li>
+<li>Collapses install friction to "flash, boot, paste a reasoning key" on the
+  HAOS adoption curve.</li>
+<li>App-store tenancy (Stage 1) hits discovery + install together without the
+  multi-year cost of building an OS.</li>
+<li>The nomic-first invariant makes the appliance self-contained for embeddings
+  and keeps the private graph local; only document chunks leave the box.</li>
+<li>Keeps the existing pull-based <code>operator.sh upgrade</code> lifecycle intact (thin,
+  not fat) — no multi-GB per-release image churn.</li>
+<li>Reuses code paths that already exist (LocalEmbeddingProvider, multi-arch
+  buildx) rather than introducing new architecture.</li>
 </ul>
-<h3 id="create">create</h3>
-<p>Create a query definition</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kg<span class="w"> </span>create<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
-</code></pre></div></p>
-<p><strong>Options:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>-n, --name &lt;name&gt;</code></td>
-<td>Definition name</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>-t, --type &lt;type&gt;</code></td>
-<td>Type: block_diagram, cypher, search, polarity, connection</td>
-<td>-</td>
-</tr>
-<tr>
-<td><code>-d, --definition &lt;json&gt;</code></td>
-<td>Definition as JSON</td>
-<td>-</td>
-</tr>
-</tbody>
-</table>
-<h3 id="delete">delete</h3>
-<p>Delete a query definition</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kg<span class="w"> </span>delete<span class="w"> </span>&lt;id&gt;
-</code></pre></div></p>
-<p><strong>Arguments:</strong></p>
+<h3 id="negative">Negative</h3>
 <ul>
-<li><code>&lt;id&gt;</code> - Definition ID</li>
+<li>Baking both default models (text ~275MB + vision) adds several hundred MB to
+  the API image, including for cloud-only deployments that will not use local
+  embeddings, and first boot pays a one-time seed-copy into the cache volume.
+  A build ARG to opt out of baking is a possible later refinement.</li>
+<li>Local 768-dim and OpenAI 1536-dim embeddings are incompatible vector spaces;
+  the appliance standardizes on 768 and switching costs a full re-embed.</li>
+<li>A thin appliance still needs network on first boot to pull images (only the
+  embedding model is offline); true air-gap remains a separate, later effort.</li>
+<li>App-store tenancy adds per-platform packaging/maintenance surface (Portainer
+  vs CasaOS vs HA add-on manifests).</li>
 </ul>
-<p><strong>Options:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>-f, --force</code></td>
-<td>Skip confirmation</td>
-<td>-</td>
-</tr>
-</tbody>
-</table>
+<h3 id="neutral">Neutral</h3>
+<ul>
+<li>ARM64 viability depends on two upstream images having arm64 variants —
+  see open gates below.</li>
+<li>Stage 3 deliberately leaves the supervisor/add-on model unbuilt; this is a
+  recorded non-goal, not an oversight.</li>
+<li>No deployed environments exist yet, so the seed-default flip is a direct
+  migration edit rather than a forward reconciliation migration.</li>
+</ul>
+<h2 id="open-questions-verification-gates">Open Questions / Verification Gates</h2>
+<ul>
+<li><strong>AGE arm64</strong>: the Postgres+AGE image is pinned to a SHA digest
+  (<code>apache/age@sha256:e7de17…</code>). Confirm that build publishes an arm64 variant,
+  or repin/rebuild.</li>
+<li><strong>Garage arm64</strong>: <code>dxflrs/garage:v1.0.0</code> — Garage is an edge/self-host
+  product so arm64 almost certainly exists; verify.</li>
+<li><strong>Pi RAM budget</strong>: validate Postgres+AGE + Garage + API + nomic (~400MB
+  loaded) fit comfortably in 4GB under real ingestion.</li>
+<li><strong>Offline boot</strong> ✅ <em>verified 2026-06-11</em> (AMD ROCm image, <code>Dockerfile.rocm-host</code>):
+  a freshly built image seeded <code>/opt/hf-seed</code> into the runtime cache and loaded
+  both text + vision models with logs showing "Loaded from local cache" and zero
+  download lines. The appliance offline precondition holds on real hardware.</li>
+<li><strong>QEMU bake</strong>: confirm the bake step (which <em>loads</em> both models, populating the
+  dynamic-module cache) completes when building the arm64 image under emulation.</li>
+</ul>
+<h2 id="alternatives-considered">Alternatives Considered</h2>
+<ul>
+<li><strong>Fat VM appliance</strong> (bake images + data into a frozen VM). Rejected as the
+  default: fights the pull-based upgrade lifecycle, ships multi-GB images per
+  release, and only earns its weight for a hard air-gapped requirement that no
+  user has yet.</li>
+<li><strong>Build our own supervisor OS now</strong> (HAOS from scratch). Rejected for now:
+  multi-year effort; existing self-host app stores already provide the
+  container-tenant substrate. Deferred to Stage 3, seam preserved.</li>
+<li><strong>Keep OpenAI-embedding default, add appliance packaging only.</strong> Rejected:
+  would force every appliance to carry a cloud embedding key and send all
+  content out for embeddings, defeating the private/edge value proposition.</li>
+<li><strong>Local reasoning in-appliance (bundled vLLM/Ollama).</strong> Rejected as a core
+  responsibility: GPU passthrough into a VM/Pi is host-specific and fragile;
+  left to user-supplied add-on containers.</li>
+</ul>
 
 
 
 
 
 
+
+  
+  
 
 
 
@@ -10854,10 +11013,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../../../..", "features": [], "search": "../../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": [], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>
