@@ -323,6 +323,24 @@ def run_restore_worker(
             }
         })
 
+        # Issue #505: rebuild the derived graph-projection layers from the
+        # restored Sources. Backups predating ADR-200 (:Ontology) / the
+        # :DocumentMeta layer do not carry those nodes, and the Sources retain
+        # all source-of-truth data — without this the ontology list and catalog
+        # read empty after a restore. Runs BEFORE the epoch completes below, so
+        # the freshness tick that triggers the catalog's first post-restore
+        # rebuild already sees the rebuilt layers. Idempotent + best-effort: a
+        # failure must not fail an otherwise-completed restore.
+        try:
+            rh = client.rehydrate_projection_layers(created_by="post_restore_rehydration")
+            logger.info(
+                f"[{job_id}] Rehydrated graph projections: "
+                f"{rh['ontologies']} ontologies / {rh['scoped_by_edges']} SCOPED_BY, "
+                f"{rh['documents']} documents / {rh['has_source_edges']} HAS_SOURCE"
+            )
+        except Exception as e:
+            logger.warning(f"[{job_id}] Graph-projection rehydration failed (non-fatal): {e}")
+
         # ADR-207/#386 + ADR-102 P5: resolve the restore epoch(s) as COMPLETED. Until
         # now they held the committed watermark just below them, so every derivation
         # correctly read stale during the import. Completing advances the universal
