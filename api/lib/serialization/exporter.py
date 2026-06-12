@@ -479,6 +479,12 @@ class DataExporter:
         no recomputation on either side. Round-trips with :func:`export_has_source`
         and the importer's ``_import_documents``.
 
+        NOTE (multi-ontology, issue #505 follow-up): a scoped export filters on
+        ``d.ontology``, so a document ingested into several ontologies (one
+        DocumentMeta, one ontology value) is only carried by the export of *that*
+        ontology. The dominant full-DB export (``ontology=None``) carries every
+        DocumentMeta and is unaffected.
+
         Args:
             client: AGEClient instance
             ontology: Optional name filter (None = all documents)
@@ -560,8 +566,8 @@ class DataExporter:
             result = client._execute_cypher(query)
 
         return [
-            {"document_id": str(r.get("document_id", "")).strip('"'),
-             "source_id": str(r.get("source_id", "")).strip('"')}
+            {"document_id": _parse_nullable_str(r.get("document_id")),
+             "source_id": _parse_nullable_str(r.get("source_id"))}
             for r in result
         ]
 

@@ -114,17 +114,24 @@ class RehydrationMixin:
         Idempotent (MERGE on ``document_id``). Intended to run only when the backup
         lacked the stream; harmless if re-run.
 
+        Known limitation (issue #505 multi-ontology follow-up, tracked separately): a
+        file ingested into multiple ontologies has one ``garage_key`` per ontology but
+        the SAME content hash, so the per-key MERGE collapses to one node (last
+        garage_key wins) — matching native ingest's own last-writer-wins behavior.
+
         Args:
             fetch_bytes: Garage accessor ``garage_key -> bytes | None`` (injected so
                 this mixin needs no storage dependency).
-            created_by: Unused for documents today; accepted for signature symmetry
-                with :meth:`rehydrate_projection_layers`.
+            created_by: Recorded as ``ingested_by`` provenance on rebuilt nodes (these
+                came from a restore, not a native ingest); accepted for signature
+                symmetry with :meth:`rehydrate_projection_layers`.
 
         Returns:
             Counts: ``documents`` (nodes written), ``has_source_edges``, ``skipped``
-            (garage_keys whose bytes could not be fetched).
+            (garage_keys whose bytes could not be fetched), ``mismatches``
+            (garage_key prefix != recomputed hash — corruption-grade, see logs).
         """
-        stats = {"documents": 0, "has_source_edges": 0, "skipped": 0}
+        stats = {"documents": 0, "has_source_edges": 0, "skipped": 0, "mismatches": 0}
         rows = self._execute_cypher(
             "MATCH (s:Source) WHERE s.garage_key IS NOT NULL "
             "RETURN s.garage_key AS gk, head(collect(s.document)) AS doc, count(s) AS cnt"
@@ -150,6 +157,7 @@ class RehydrationMixin:
             # the stored bytes are not what produced the key (corruption / wrong object).
             key_prefix = os.path.splitext(os.path.basename(garage_key))[0]
             if key_prefix and not full_hash.startswith(key_prefix):
+                stats["mismatches"] += 1
                 logger.warning(
                     "garage_key prefix %s does not match recomputed hash %s (%s) — "
                     "rebuilding DocumentMeta from the recomputed (authoritative) hash",
@@ -161,7 +169,8 @@ class RehydrationMixin:
                 "MERGE (d:DocumentMeta {document_id: $document_id}) "
                 "SET d.content_hash = $content_hash, d.ontology = $ontology, "
                 "    d.garage_key = $garage_key, d.filename = $filename, "
-                "    d.content_type = 'document', d.source_count = $source_count "
+                "    d.content_type = 'document', d.source_count = $source_count, "
+                "    d.ingested_by = $ingested_by "
                 "RETURN d",
                 params={
                     "document_id": document_id,
@@ -172,6 +181,8 @@ class RehydrationMixin:
                     # garage_key basename is the best available name for old backups.
                     "filename": os.path.basename(garage_key),
                     "source_count": chunk_count,
+                    # Provenance: these nodes were reconstructed at restore, not ingested.
+                    "ingested_by": created_by or "post_restore_rehydration",
                 },
                 fetch_one=True,
             )

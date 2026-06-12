@@ -348,7 +348,10 @@ def run_restore_worker(
         # When no DocumentMeta survived the import, reconstruct it from the restored
         # Sources by hashing the document bytes now in Garage (uploaded in Stage 4
         # above) to recover the canonical full hash. Guarded on the empty-tier check
-        # so it is a no-op for new backups; idempotent + best-effort.
+        # so it is a no-op for new backups; idempotent + best-effort. (All-or-nothing
+        # by design: a serialized restore that produced *some* DocumentMeta is trusted
+        # whole — a partial import is not self-healed here, to avoid re-hashing all of
+        # Garage on every healthy restore. Issue #505.)
         try:
             have = client._execute_cypher(
                 "MATCH (d:DocumentMeta) RETURN count(d) AS c", fetch_one=True
@@ -361,10 +364,14 @@ def run_restore_worker(
                     fetch_bytes=source_storage.get,
                     created_by="post_restore_rehydration",
                 )
+                mismatch_note = (
+                    f", {dh['mismatches']} HASH MISMATCH — check Garage integrity"
+                    if dh.get("mismatches") else ""
+                )
                 logger.info(
                     f"[{job_id}] Restore-time durability rebuilt document tier: "
                     f"{dh['documents']} documents / {dh['has_source_edges']} HAS_SOURCE "
-                    f"({dh['skipped']} skipped — bytes unavailable)"
+                    f"({dh['skipped']} skipped — bytes unavailable{mismatch_note})"
                 )
             else:
                 logger.info(
