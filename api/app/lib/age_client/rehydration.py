@@ -6,25 +6,31 @@ created before the :Ontology layer was serialized (pre-v0.15.1) does not carry
 that layer, and restore otherwise never rebuilds it — so the ontology list and
 the catalog read empty even though the underlying data is intact (issue #505).
 
-This mixin reconstructs the **ontology layer** idempotently from the Sources:
-``(:Ontology)`` + ``(:Source)-[:SCOPED_BY]->(:Ontology)``, keyed by distinct
-``s.document`` (mirrors migration 044). For new backups the importer already
-MERGEs these nodes/edges (serialization), so the pass is a harmless idempotent
-no-op; for old backups it is the reconstruction fallback. It also ensures the
-reserved ``primordial`` pool exists, since a clone-style restore can replace a
-freshly-seeded graph (see migration 078 / issue #505).
+This mixin provides two restore-time rebuilds:
 
-The :DocumentMeta layer is intentionally NOT reconstructed here: its canonical
-identity (``document_id == content_hash == sha256(document bytes)``) is not
-recoverable from Source nodes (the garage_key carries only a 32-char hash
-prefix), so a Source-derived DocumentMeta would have a truncated id that breaks
-drill-down and re-ingest dedup. That layer is handled authoritatively by
-serializing it into ``kg-backup/2`` (Option B, issue #505), with a faithful
-Garage-hashed reconstruction reserved for old backups.
+- :meth:`rehydrate_projection_layers` — the **ontology layer**:
+  ``(:Ontology)`` + ``(:Source)-[:SCOPED_BY]->(:Ontology)``, keyed by distinct
+  ``s.document`` (mirrors migration 044). For new backups the importer already
+  MERGEs these nodes/edges (serialization), so the pass is a harmless idempotent
+  no-op; for old backups it is the reconstruction. It also ensures the reserved
+  ``primordial`` pool exists, since a clone-style restore can replace a
+  freshly-seeded graph (see migration 078 / issue #505).
+
+- :meth:`rehydrate_document_layer` — **restore-time durability** for the
+  :DocumentMeta tier. New backups serialize :DocumentMeta into ``kg-backup/2``
+  (Option B) and the importer rebuilds it authoritatively. Old backups carry no
+  such stream, so this reconstructs it from the restored Sources — but
+  faithfully: the canonical identity (``document_id == content_hash ==
+  sha256(document bytes)``) is unrecoverable from Source nodes alone (the
+  ``garage_key`` carries only a 32-char hash prefix), so this hashes the actual
+  document bytes (fetched from Garage) to recover the full digest rather than
+  using the truncated prefix. Garage I/O is injected so the mixin stays DB-only.
 """
 
+import hashlib
+import os
 import logging
-from typing import Dict, Optional
+from typing import Callable, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -84,3 +90,101 @@ class RehydrationMixin:
             )
             if linked:
                 stats["scoped_by_edges"] += int(self._parse_agtype(linked.get("c")) or 0)
+
+    def rehydrate_document_layer(
+        self,
+        fetch_bytes: Callable[[str], Optional[bytes]],
+        created_by: Optional[str] = None,
+    ) -> Dict[str, int]:
+        """Restore-time durability: rebuild :DocumentMeta from Sources + Garage bytes.
+
+        For a backup that carried no serialized ``documents`` stream (pre-Option-B),
+        reconstruct the document tier so ``kg catalog ls`` / document drill-down work
+        after restore. One :DocumentMeta per distinct ``garage_key`` (a file), linked
+        to its Source chunks via :HAS_SOURCE.
+
+        The canonical identity is recovered **faithfully**: the full document hash is
+        not on the graph (``garage_key`` holds only its first 32 chars), so this
+        fetches each document's bytes via ``fetch_bytes`` and ``sha256``-es them to
+        get the full digest, then sets ``document_id`` / ``content_hash`` to the
+        canonical ``"sha256:" + <64 hex>`` form — matching what native ingestion
+        writes, so re-ingest dedup and drill-down behave identically. A document whose
+        bytes can't be fetched is skipped (no truncated node is ever created).
+
+        Idempotent (MERGE on ``document_id``). Intended to run only when the backup
+        lacked the stream; harmless if re-run.
+
+        Args:
+            fetch_bytes: Garage accessor ``garage_key -> bytes | None`` (injected so
+                this mixin needs no storage dependency).
+            created_by: Unused for documents today; accepted for signature symmetry
+                with :meth:`rehydrate_projection_layers`.
+
+        Returns:
+            Counts: ``documents`` (nodes written), ``has_source_edges``, ``skipped``
+            (garage_keys whose bytes could not be fetched).
+        """
+        stats = {"documents": 0, "has_source_edges": 0, "skipped": 0}
+        rows = self._execute_cypher(
+            "MATCH (s:Source) WHERE s.garage_key IS NOT NULL "
+            "RETURN s.garage_key AS gk, head(collect(s.document)) AS doc, count(s) AS cnt"
+        ) or []
+        for row in rows:
+            garage_key = self._parse_agtype(row.get("gk"))
+            if not garage_key:
+                continue
+            document = self._parse_agtype(row.get("doc"))
+            chunk_count = int(self._parse_agtype(row.get("cnt")) or 0)
+
+            try:
+                content = fetch_bytes(garage_key)
+            except Exception as e:  # storage hiccup must not abort the whole rebuild
+                logger.warning("Could not fetch %s for document rehydration: %s", garage_key, e)
+                content = None
+            if not content:
+                stats["skipped"] += 1
+                continue
+
+            full_hash = hashlib.sha256(content).hexdigest()
+            # Integrity check: garage_key embeds content_hash[:32]; a mismatch means
+            # the stored bytes are not what produced the key (corruption / wrong object).
+            key_prefix = os.path.splitext(os.path.basename(garage_key))[0]
+            if key_prefix and not full_hash.startswith(key_prefix):
+                logger.warning(
+                    "garage_key prefix %s does not match recomputed hash %s (%s) — "
+                    "rebuilding DocumentMeta from the recomputed (authoritative) hash",
+                    key_prefix, full_hash[:32], garage_key,
+                )
+            document_id = f"sha256:{full_hash}"
+
+            self._execute_cypher(
+                "MERGE (d:DocumentMeta {document_id: $document_id}) "
+                "SET d.content_hash = $content_hash, d.ontology = $ontology, "
+                "    d.garage_key = $garage_key, d.filename = $filename, "
+                "    d.content_type = 'document', d.source_count = $source_count "
+                "RETURN d",
+                params={
+                    "document_id": document_id,
+                    "content_hash": document_id,  # canonical: content_hash == document_id
+                    "ontology": document,
+                    "garage_key": garage_key,
+                    # Original filename lived only on the (absent) DocumentMeta; the
+                    # garage_key basename is the best available name for old backups.
+                    "filename": os.path.basename(garage_key),
+                    "source_count": chunk_count,
+                },
+                fetch_one=True,
+            )
+            stats["documents"] += 1
+            linked = self._execute_cypher(
+                "MATCH (d:DocumentMeta {document_id: $document_id}) "
+                "MATCH (s:Source {garage_key: $garage_key}) "
+                "MERGE (d)-[:HAS_SOURCE]->(s) "
+                "RETURN count(s) AS c",
+                params={"document_id": document_id, "garage_key": garage_key},
+                fetch_one=True,
+            )
+            if linked:
+                stats["has_source_edges"] += int(self._parse_agtype(linked.get("c")) or 0)
+
+        return stats

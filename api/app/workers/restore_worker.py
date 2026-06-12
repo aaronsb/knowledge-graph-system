@@ -342,6 +342,38 @@ def run_restore_worker(
         except Exception as e:
             logger.warning(f"[{job_id}] Graph-projection rehydration failed (non-fatal): {e}")
 
+        # Issue #505: restore-time durability for the :DocumentMeta tier. New backups
+        # carry a serialized `documents` stream that the importer rebuilds
+        # authoritatively; OLD backups don't, leaving the catalog document tier empty.
+        # When no DocumentMeta survived the import, reconstruct it from the restored
+        # Sources by hashing the document bytes now in Garage (uploaded in Stage 4
+        # above) to recover the canonical full hash. Guarded on the empty-tier check
+        # so it is a no-op for new backups; idempotent + best-effort.
+        try:
+            have = client._execute_cypher(
+                "MATCH (d:DocumentMeta) RETURN count(d) AS c", fetch_one=True
+            )
+            doc_count = int(client._parse_agtype(have.get("c")) or 0) if have else 0
+            if doc_count == 0:
+                from ..lib.garage import get_source_storage
+                source_storage = get_source_storage()
+                dh = client.rehydrate_document_layer(
+                    fetch_bytes=source_storage.get,
+                    created_by="post_restore_rehydration",
+                )
+                logger.info(
+                    f"[{job_id}] Restore-time durability rebuilt document tier: "
+                    f"{dh['documents']} documents / {dh['has_source_edges']} HAS_SOURCE "
+                    f"({dh['skipped']} skipped — bytes unavailable)"
+                )
+            else:
+                logger.info(
+                    f"[{job_id}] Document tier present ({doc_count} DocumentMeta) — "
+                    "serialized stream restored authoritatively, durability rebuild skipped"
+                )
+        except Exception as e:
+            logger.warning(f"[{job_id}] Document-tier durability rebuild failed (non-fatal): {e}")
+
         # ADR-207/#386 + ADR-102 P5: resolve the restore epoch(s) as COMPLETED. Until
         # now they held the committed watermark just below them, so every derivation
         # correctly read stale during the import. Completing advances the universal

@@ -186,12 +186,30 @@ class KgBackupV2Reader:
         """Return (:Ontology)-[:ANCHORED_BY]->(:Concept) edges as ``{ontology, concept_id}``."""
         return list(self.bulk.get("anchored_by", []))
 
+    def documents(self):
+        """Yield :DocumentMeta node records (the catalog's document tier — issue #505).
+
+        Carries the canonical document identity (``document_id``/``content_hash`` —
+        the full ``sha256:``-prefixed digest) and Garage location, so restore
+        rebuilds the layer authoritatively rather than re-deriving it from Sources
+        (where the full document hash is unrecoverable). Empty for backups taken
+        before this stream existed — restoring such a backup falls back to the
+        Garage-hashed reconstruction in restore (Option B fallback).
+        """
+        for d in self.bulk.get("documents", []):
+            yield dict(d)
+
+    def has_source(self):
+        """Return (:DocumentMeta)-[:HAS_SOURCE]->(:Source) edges as ``{document_id, source_id}``."""
+        return list(self.bulk.get("has_source", []))
+
     def counts(self):
         """Return record counts per bulk stream (for stats/logging)."""
         b = self.bulk
         return {k: len(b.get(k, [])) for k in
                 ("concepts", "sources", "instances", "evidence", "relationships",
-                 "vocabulary", "ontologies", "scoped_by", "anchored_by")}
+                 "vocabulary", "ontologies", "scoped_by", "anchored_by",
+                 "documents", "has_source")}
 
     def external_concept_ids(self):
         """Concept ids referenced by edges/evidence but absent from this backup.

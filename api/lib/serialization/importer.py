@@ -176,6 +176,7 @@ class DataImporter:
             "concepts_created": 0,
             "sources_created": 0,
             "ontologies_created": 0,
+            "documents_created": 0,
             "instances_created": 0,
             "relationships_created": 0,
         }
@@ -204,6 +205,17 @@ class DataImporter:
             Console.info(f"Importing {len(ontologies)} ontologies (+SCOPED_BY/ANCHORED_BY)...")
             stats["ontologies_created"] = DataImporter._import_ontologies(
                 client, ontologies, reader.scoped_by(), reader.anchored_by(), progress_callback
+            )
+
+        # DocumentMeta after sources: HAS_SOURCE needs the Source nodes (imported
+        # above). Authoritative restore of the catalog document tier (issue #505).
+        # Absent in pre-stream backups → falls back to the restore-worker's
+        # Garage-hashed reconstruction.
+        documents = list(reader.documents())
+        if documents:
+            Console.info(f"Importing {len(documents)} documents (+HAS_SOURCE)...")
+            stats["documents_created"] = DataImporter._import_documents(
+                client, documents, reader.has_source(), progress_callback
             )
 
         instances = list(reader.instances())
@@ -475,6 +487,63 @@ class DataImporter:
             _execute_with_age_retry(client, anchored_query, {
                 "ontology": edge.get("ontology"),
                 "concept_id": edge.get("concept_id"),
+            })
+
+        return total
+
+    # DocumentMeta properties carried in the backup, besides the document_id MERGE
+    # key. Only non-None values are SET so a restore never wipes a field that the
+    # backup happens not to carry (mirrors create_document_meta's build).
+    _DOCUMENT_PROPS = (
+        "content_hash", "ontology", "filename", "garage_key", "content_type",
+        "source_count", "ingested_at", "ingested_by", "job_id", "file_path",
+        "source_type", "hostname", "storage_key",
+    )
+
+    @staticmethod
+    def _import_documents(client: AGEClient,
+                          documents: List[Dict[str, Any]],
+                          has_source: List[Dict[str, Any]],
+                          progress_callback) -> int:
+        """MERGE :DocumentMeta nodes and their HAS_SOURCE edges (issue #505).
+
+        Authoritative restore of the catalog document tier. Idempotent and keyed on
+        the canonical ``document_id`` (the full ``sha256:``-prefixed digest), carried
+        **verbatim** from the backup — never recomputed. MERGE-on-``document_id``
+        means restoring the same backup twice, or restoring a document already
+        present in the target, converges to a single node (robustness requirement #1:
+        no duplicate DocumentMeta). ``content_hash``/``garage_key`` are likewise
+        carried verbatim, so byte-identical content keeps its deterministic Garage
+        key and re-ingest dedup still short-circuits (requirement #2).
+
+        Nodes are written first so the HAS_SOURCE MERGEs can match both endpoints;
+        an edge whose Source endpoint is absent matches nothing and is skipped (no
+        dangling edge). Returns the number of DocumentMeta nodes written.
+        """
+        total = len(documents)
+        for i, d in enumerate(documents):
+            document_id = d.get("document_id")
+            if not document_id:
+                continue
+            # Build SET only from carried, non-None props (don't wipe on restore).
+            set_props = {k: d[k] for k in DataImporter._DOCUMENT_PROPS
+                         if d.get(k) is not None}
+            set_clause = ", ".join(f"d.{k} = ${k}" for k in set_props)
+            node_query = "MERGE (d:DocumentMeta {document_id: $document_id})"
+            if set_clause:
+                node_query += f" SET {set_clause}"
+            _execute_with_age_retry(client, node_query, {"document_id": document_id, **set_props})
+            _progress(progress_callback, "documents", i + 1, total, every=1)
+
+        # HAS_SOURCE: (DocumentMeta)-[:HAS_SOURCE]->(Source), keyed on document_id.
+        has_source_query = """
+            MATCH (d:DocumentMeta {document_id: $document_id}), (s:Source {source_id: $source_id})
+            MERGE (d)-[:HAS_SOURCE]->(s)
+        """
+        for edge in has_source:
+            _execute_with_age_retry(client, has_source_query, {
+                "document_id": edge.get("document_id"),
+                "source_id": edge.get("source_id"),
             })
 
         return total
