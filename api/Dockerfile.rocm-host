@@ -48,6 +48,19 @@ COPY scripts/development/lint/lint_backup.py /app/scripts/development/lint/lint_
 # Set Python path for imports
 ENV PYTHONPATH=/app
 
+# Pre-bake the default nomic-first embedding models (text + vision) into the
+# image at /opt/hf-seed — a path OUTSIDE the runtime cache volume. Same shared
+# bake script + entrypoint as api/Dockerfile, so the CPU/NVIDIA and ROCm images
+# behave identically (offline first boot). See ADR-103 / ADR-039. The bake loads
+# on CPU at build time (no GPU during docker build) — it only warms the cache.
+RUN HF_HOME=/opt/hf-seed python /app/api/bake_embedding_models.py
+
+# First-boot cache seeder (copies /opt/hf-seed into the mounted hf_cache volume).
+# Runs as the runtime user, seeding $HOME/.cache — root here, api in the standard
+# image; the same script works for both. See ADR-103.
+COPY api/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
 # Run as the user inherited from runtime (matches host UID for volume permissions)
 # The docker-compose can specify user: "${UID}:${GID}" if needed
 
@@ -55,5 +68,8 @@ EXPOSE 8000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD curl -f http://localhost:8000/health || exit 1
+
+# Seed the baked model cache on first boot, then start the API.
+ENTRYPOINT ["docker-entrypoint.sh"]
 
 CMD ["uvicorn", "api.app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]

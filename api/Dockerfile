@@ -98,6 +98,24 @@ COPY scripts/development/lint/lint_backup.py /app/scripts/development/lint/lint_
 # Set Python path for imports (api.app.lib.*)
 ENV PYTHONPATH=/app
 
+# Pre-bake the default nomic-first embedding models (text + vision) into the
+# image at /opt/hf-seed — a path OUTSIDE the runtime cache volume. The platform
+# is nomic-first: local on-device embeddings (text nomic-embed-text-v1.5 768d +
+# vision nomic-embed-vision-v1.5), with only reasoning/extraction calling a
+# remote LLM. docker-entrypoint.sh seeds these into the mounted hf_cache volume
+# on first boot, so the system runs fully OFFLINE (no HuggingFace download) —
+# the precondition for an air-gapped / Raspberry-Pi appliance.
+#
+# We bake by LOADING (not just downloading) so the trust_remote_code dynamic
+# module cache (modules/) is populated too — offline loads need it. HF_HOME is
+# scoped to this RUN only; the runtime must NOT inherit it (it would bypass the
+# volume). See ADR-103 (nomic-first appliance) and ADR-039.
+RUN HF_HOME=/opt/hf-seed python /app/api/bake_embedding_models.py
+
+# First-boot cache seeder (copies /opt/hf-seed into the mounted hf_cache volume)
+COPY api/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
 # Create non-root user for running the API
 # Pre-create cache directory with proper ownership for volume mount
 RUN useradd -m -u 1000 api && \
@@ -113,6 +131,10 @@ EXPOSE 8000
 # Health check
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD curl -f http://localhost:8000/health || exit 1
+
+# Seed the baked model cache on first boot, then start the API. The entrypoint
+# execs the CMD, so compose `command:` overrides (e.g. dev --reload) still work.
+ENTRYPOINT ["docker-entrypoint.sh"]
 
 # Start FastAPI server with uvicorn.
 # Single worker: each uvicorn worker is a separate Python process and would
