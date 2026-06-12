@@ -117,6 +117,40 @@ flip is implemented on branch `survey/nomic-first-defaults` (seed migrations
 003/008, mig-012 fallback, Dockerfile bake, mock/test dimension alignment,
 operator-help/API-doc defaults).
 
+## Stage 2 Build Contract — x86 thin appliance
+
+The first Stage-2 artifact is an x86 qcow2/OVA. Its build contract (tooling in
+`appliance/`) records the non-obvious decisions:
+
+- **The appliance is ADR-086's "cube" deployment, baked.** Not a new installer:
+  a minimal Debian host with Docker + the repo at `/opt/kg`, `image-source=ghcr`,
+  reusing the tested `operator.sh init --headless` path verbatim. `install.sh`'s
+  standalone curl-fetch is *staged at bake time* instead of run at install time.
+
+- **Bake / first-boot split, with a no-baked-secrets invariant.** The image
+  carries OS + Docker + repo but **no `.env` and no secrets**. A oneshot
+  systemd unit (`kg-firstboot`, self-disarming via a sentinel) runs
+  `operator.sh init --headless --image-source=ghcr --gpu=cpu --skip-ai-config`
+  on first power-on, so `operator/lib/init-secrets.sh` mints **unique
+  per-instance** `ENCRYPTION_KEY`/`POSTGRES_PASSWORD`/etc. A baked `.env` would
+  ship every appliance with identical secrets — the one thing the split exists
+  to prevent. `WEB_HOSTNAME` is derived from the DHCP lease at first boot.
+
+- **Thin, literally.** Container images are *not* baked; they are pulled on
+  first boot (network required once), so updates stay on the `operator.sh
+  upgrade` pull lifecycle. The only offline asset is the nomic weight set, which
+  rides inside the `kg-api` image. A warm (images-baked) variant is a deferred
+  build flag, not the default.
+
+- **Build tool: virt-customize now, Packer deferred.** libguestfs customizes the
+  Debian genericcloud qcow2 in place (no VM boot), which fits a "stage files +
+  install Docker" job. A Packer/QEMU template is the deferred CI-release path.
+
+- **Reasoning key is never required to reach a running platform.** First boot
+  yields a live box doing local embeddings; the operator pastes a reasoning key
+  in the web UI afterward. This is the "flash, boot, paste a key" curve made
+  concrete.
+
 ## Consequences
 
 ### Positive
