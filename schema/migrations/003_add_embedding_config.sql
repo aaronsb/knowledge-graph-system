@@ -75,18 +75,22 @@ BEGIN
 END $$;
 
 -- ============================================================================
--- Seed Data: Default OpenAI Configuration
+-- Seed Data: OpenAI Configuration (inactive — nomic-first default)
 -- ============================================================================
 
--- Insert default OpenAI configuration (allows system to work out of the box)
+-- Seed the OpenAI config as a ready-to-activate option, but INACTIVE.
+-- The system is nomic-first: the active out-of-the-box embedding model is the
+-- local Nomic preset seeded in migration 008 (768-dim, on-device, no API key).
+-- Reasoning/extraction stays remote; embeddings run locally. See ADR-039.
+-- Operators who prefer cloud embeddings can activate this row.
 INSERT INTO kg_api.embedding_config (
     provider, model_name, embedding_dimensions, precision,
     max_seq_length, normalize_embeddings, updated_by, active
 ) VALUES (
     'openai', 'text-embedding-3-small', 1536, 'float32',
-    8191, TRUE, 'system', TRUE
+    8191, TRUE, 'system', FALSE
 )
-ON CONFLICT (active) WHERE active = TRUE DO NOTHING;
+ON CONFLICT DO NOTHING;
 
 -- ============================================================================
 -- Record Migration

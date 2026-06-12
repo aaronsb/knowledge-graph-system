@@ -160,7 +160,7 @@ class ConceptDetailsResponse(BaseModel):
     label: str = Field(..., description="Human-readable concept label")
     description: Optional[str] = Field(None, description="Factual 1-2 sentence definition of the concept")
     search_terms: List[str] = Field(..., description="Alternative search terms for this concept")
-    embedding: Optional[List[float]] = Field(None, description="Vector embedding for semantic similarity (1536 dimensions)")
+    embedding: Optional[List[float]] = Field(None, description="Vector embedding for semantic similarity (dimension matches the active embedding profile; 768 for the nomic-first default, 1536 for OpenAI)")
     documents: List[str] = Field(..., description="Documents where concept appears")
     instances: List[ConceptInstance] = Field(..., description="Evidence instances (quotes from text)")
     relationships: List[ConceptRelationship] = Field(..., description="Outgoing relationships to other concepts")

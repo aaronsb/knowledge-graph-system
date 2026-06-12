@@ -111,8 +111,8 @@ def mock_ai_provider():
     async def generate_embedding(text):
         # Simple hash-based embedding for deterministic results
         hash_val = hash(text) % 1000
-        # Create 1536-dim embedding (normalized)
-        embedding = np.random.RandomState(hash_val).randn(1536)
+        # Create 768-dim embedding (normalized) — matches nomic-first active profile
+        embedding = np.random.RandomState(hash_val).randn(768)
         embedding = embedding / np.linalg.norm(embedding)
         return {"embedding": embedding.tolist()}
 
