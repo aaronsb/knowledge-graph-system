@@ -22,6 +22,13 @@ live HuggingFace cache, so the platform boots fully offline.
 # Default nomic-first models. Mirror of the seeds in schema/migrations/008
 # (text) and the profile image slot in migration 055 (vision). If those change,
 # change these together.
+#
+# NOTE: we bake the default (unpinned) HuggingFace revision. The runtime loader
+# passes the profile's text_revision/image_revision. Today both are NULL/"main"
+# so they agree and the baked cache is hit offline. If a pinned revision is ever
+# introduced in the embedding profile, pin the SAME revision here too — otherwise
+# the runtime requests a revision the baked cache lacks and tries to download,
+# breaking offline boot.
 TEXT_MODEL = "nomic-ai/nomic-embed-text-v1.5"
 VISION_MODEL = "nomic-ai/nomic-embed-vision-v1.5"
 

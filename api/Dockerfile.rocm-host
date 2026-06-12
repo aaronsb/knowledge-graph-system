@@ -48,6 +48,15 @@ COPY scripts/development/lint/lint_backup.py /app/scripts/development/lint/lint_
 # Set Python path for imports
 ENV PYTHONPATH=/app
 
+# This image has no app user (the ROCm base runs as root). Pin HOME to /home/api
+# so the runtime HF cache resolves to /home/api/.cache — the path the hf_cache
+# volume mounts in every compose variant — so the seeded cache PERSISTS across
+# container recreation, exactly like the standard (api-user) image. Without this
+# root would cache to /root/.cache and the mounted volume would go unused,
+# re-seeding from /opt/hf-seed on every boot. (PR #506 review)
+ENV HOME=/home/api
+RUN mkdir -p /home/api/.cache
+
 # Pre-bake the default nomic-first embedding models (text + vision) into the
 # image at /opt/hf-seed — a path OUTSIDE the runtime cache volume. Same shared
 # bake script + entrypoint as api/Dockerfile, so the CPU/NVIDIA and ROCm images
