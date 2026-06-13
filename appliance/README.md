@@ -41,32 +41,77 @@ boot during the build.
 # also emit an OVA (VMware / VirtualBox)
 ./appliance/build-appliance.sh --ova
 
-# pin a ref / label
-./appliance/build-appliance.sh --ref v0.15.1 --version 0.15.1 --ova
+# pin a ref / label; opt out of the Cockpit host console
+./appliance/build-appliance.sh --ref v0.15.1 --version 0.15.1 --ova --no-cockpit
 ```
 
 Artifacts land in `appliance/out/`. The Debian base is cached in
 `appliance/.cache/` between builds (both are git-ignored).
 
+## Control plane
+
+The appliance has three management layers, in ascending privilege:
+
+| Layer | Surface | Manages |
+|-------|---------|---------|
+| **Host** | Cockpit (`https://<ip>:9090`) · console TUI (tty1) · cloud-init | the VM/OS: network, storage, updates, logs |
+| **Platform** | `kg-operator` container, via `operator.sh` (console menu option 6) | the graph platform: config, admin, lifecycle (Docker socket + config authority) |
+| **Application** | web UI (`http://<ip>/`) · REST API | content: graphs, ontologies, ingestion |
+
+- **Console TUI** runs on the VM console (tty1) in place of a login prompt —
+  status, logs, restart, network, the operator (platform) shell, a host login,
+  reboot/poweroff. No SSH required.
+- **Cockpit** (default on; `--no-cockpit` to omit) is the host web console for
+  network/storage/updates/logs — including growing the root disk.
+
 ## First boot
+
+### Interactive (zero config)
 
 1. Import the qcow2/OVA, give it a **bridged or NAT NIC with internet** (first
    boot pulls images), 2 vCPU / 4 GiB minimum.
-2. Power on. Watch provisioning: `journalctl -u kg-firstboot -f`.
-3. When the login banner shows the Web UI URL, browse to it, set the admin
-   password, and paste a reasoning (OpenAI/Anthropic) API key. Embeddings run
-   locally via the baked nomic model — no key needed for those.
+2. Power on. Watch provisioning on the console (tty1) or
+   `journalctl -u kg-firstboot -f`.
+3. When the banner shows the Web UI URL, browse to it. The generated admin
+   password is in `/root/kg-credentials.txt` (and the console "info" menu).
+   Paste a reasoning (OpenAI/Anthropic) API key under provider config —
+   embeddings run locally via baked nomic, no key needed.
+
+### Declarative (cloud-init user-data)
+
+Supply config at deploy time and the box comes up fully configured. Drop a
+`provision.env` via cloud-init `write_files` (see
+[`files/provision.env.example`](files/provision.env.example)):
+
+```yaml
+#cloud-config
+write_files:
+  - path: /etc/kg/provision.env
+    permissions: '0600'
+    content: |
+      KG_WEB_HOSTNAME=kg.example.com
+      KG_AI_PROVIDER=anthropic
+      KG_AI_MODEL=claude-sonnet-4
+      KG_AI_KEY=sk-ant-...
+```
+
+`provision.env` is the appliance's single declarative control surface — sourced
+by `kg-firstboot.sh`, extensible (unknown keys ignored), and the natural channel
+a future fleet orchestrator would template per node.
 
 ## Layout
 
 ```
 appliance/
-├── build-appliance.sh            # the build (virt-customize)
+├── build-appliance.sh                # the build (virt-customize)
 ├── files/
-│   ├── kg-firstboot.sh           # per-VM first-boot provisioner (secrets + start)
-│   └── kg-firstboot.service      # oneshot systemd unit (self-disarms via sentinel)
+│   ├── kg-firstboot.sh               # per-VM first-boot provisioner (secrets + start)
+│   ├── kg-firstboot.service          # oneshot systemd unit (self-disarms via sentinel)
+│   ├── kg-console.sh                 # console TUI (DCUI) menu
+│   ├── getty-console-override.conf   # getty@tty1 drop-in → runs the console
+│   └── provision.env.example         # cloud-init declarative config template
 └── ovf/
-    └── kg-appliance.ovf.template # OVF descriptor for the OVA wrap
+    └── kg-appliance.ovf.template     # OVF descriptor for the OVA wrap
 ```
 
 ## Deferred
