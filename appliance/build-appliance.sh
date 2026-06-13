@@ -28,6 +28,7 @@
 #     --size SIZE        root disk size (default: 20G)
 #     --output DIR       output directory (default: ./appliance/out)
 #     --ova              also emit an OVA (qcow2 -> vmdk -> OVF wrap)
+#     --no-cockpit       skip the Cockpit host console (:9090)
 #     --help
 #
 # Prerequisites (Debian/Ubuntu host):
@@ -46,18 +47,20 @@ DEBIAN_VER="12"
 DISK_SIZE="20G"
 OUTPUT_DIR="${SCRIPT_DIR}/out"
 MAKE_OVA="false"
+WITH_COCKPIT="true"
 CACHE_DIR="${SCRIPT_DIR}/.cache"
 
 # --- Parse args --------------------------------------------------------------
 while [ $# -gt 0 ]; do
     case "$1" in
-        --ref)      REF="$2"; shift 2 ;;
-        --version)  VERSION="$2"; shift 2 ;;
-        --debian)   DEBIAN_VER="$2"; shift 2 ;;
-        --size)     DISK_SIZE="$2"; shift 2 ;;
-        --output)   OUTPUT_DIR="$2"; shift 2 ;;
-        --ova)      MAKE_OVA="true"; shift ;;
-        --help|-h)  sed -n '2,40p' "${BASH_SOURCE[0]}"; exit 0 ;;
+        --ref)         REF="$2"; shift 2 ;;
+        --version)     VERSION="$2"; shift 2 ;;
+        --debian)      DEBIAN_VER="$2"; shift 2 ;;
+        --size)        DISK_SIZE="$2"; shift 2 ;;
+        --output)      OUTPUT_DIR="$2"; shift 2 ;;
+        --ova)         MAKE_OVA="true"; shift ;;
+        --no-cockpit)  WITH_COCKPIT="false"; shift ;;
+        --help|-h)     sed -n '2,42p' "${BASH_SOURCE[0]}"; exit 0 ;;
         *) echo "Unknown option: $1" >&2; exit 1 ;;
     esac
 done
@@ -107,24 +110,41 @@ qemu-img resize "${OUT_QCOW}" "${DISK_SIZE}"
 # --- 4. Customize in place with virt-customize -------------------------------
 # Docker via the official convenience script (gives docker-ce + the v2 compose
 # plugin operator.sh needs). python3/openssl/curl/git: secret-gen + operator.
-log "customizing image (no VM boot; --network lets apt + get.docker.com fetch)..."
-virt-customize -a "${OUT_QCOW}" \
-    --network \
-    --hostname "kg-appliance" \
-    --run-command 'apt-get update' \
-    --install qemu-guest-agent,ca-certificates,curl,python3,openssl,git,jq \
-    --run-command 'curl -fsSL https://get.docker.com | sh' \
-    --run-command 'systemctl enable docker qemu-guest-agent' \
-    --upload "${REPO_TAR}:/tmp/kg-repo.tar" \
-    --run-command 'tar -xf /tmp/kg-repo.tar -C /opt && rm -f /tmp/kg-repo.tar' \
-    --run-command 'chmod +x /opt/kg/operator.sh /opt/kg/appliance/files/kg-firstboot.sh' \
-    --run-command 'cp /opt/kg/appliance/files/kg-firstboot.service /etc/systemd/system/kg-firstboot.service' \
-    --run-command 'systemctl enable kg-firstboot.service' \
-    --run-command 'truncate -s 0 /etc/machine-id' \
-    --run-command 'rm -f /var/lib/dbus/machine-id && ln -s /etc/machine-id /var/lib/dbus/machine-id' \
-    --run-command 'cloud-init clean --logs 2>/dev/null || true' \
-    --run-command 'apt-get clean && rm -rf /var/lib/apt/lists/*' \
+# Cockpit (optional): host control plane on :9090.
+PKGS="qemu-guest-agent,ca-certificates,curl,python3,openssl,git,jq"
+[ "${WITH_COCKPIT}" = "true" ] && PKGS="${PKGS},cockpit"
+
+VC_ARGS=(
+    -a "${OUT_QCOW}"
+    --network
+    --hostname "kg-appliance"
+    --run-command 'apt-get update'
+    --install "${PKGS}"
+    --run-command 'curl -fsSL https://get.docker.com | sh'
+    --run-command 'systemctl enable docker qemu-guest-agent'
+    # --- stage the repo at /opt/kg (git archive, prefix kg/) ---
+    --upload "${REPO_TAR}:/tmp/kg-repo.tar"
+    --run-command 'tar -xf /tmp/kg-repo.tar -C /opt && rm -f /tmp/kg-repo.tar'
+    --run-command 'chmod +x /opt/kg/operator.sh /opt/kg/appliance/files/kg-firstboot.sh /opt/kg/appliance/files/kg-console.sh'
+    # --- first-boot provisioner ---
+    --run-command 'cp /opt/kg/appliance/files/kg-firstboot.service /etc/systemd/system/kg-firstboot.service'
+    --run-command 'systemctl enable kg-firstboot.service'
+    --mkdir /etc/kg
+    # --- console TUI on tty1 (getty drop-in override) ---
+    --mkdir /etc/systemd/system/getty@tty1.service.d
+    --run-command 'cp /opt/kg/appliance/files/getty-console-override.conf /etc/systemd/system/getty@tty1.service.d/override.conf'
+    # --- per-clone unique identity (regenerated on first boot) ---
+    --run-command 'truncate -s 0 /etc/machine-id'
+    --run-command 'rm -f /var/lib/dbus/machine-id && ln -s /etc/machine-id /var/lib/dbus/machine-id'
+    --run-command 'cloud-init clean --logs 2>/dev/null || true'
+    --run-command 'apt-get clean && rm -rf /var/lib/apt/lists/*'
     --run-command 'printf "\n  Knowledge Graph appliance — first boot in progress.\n  Run: journalctl -u kg-firstboot -f   (provisioning + image pull)\n\n" > /etc/motd'
+)
+[ "${WITH_COCKPIT}" = "true" ] && VC_ARGS+=( --run-command 'systemctl enable cockpit.socket' )
+
+log "customizing image (no VM boot; --network lets apt + get.docker.com fetch)..."
+[ "${WITH_COCKPIT}" = "true" ] && log "  including Cockpit host console (:9090)" || log "  Cockpit disabled (--no-cockpit)"
+virt-customize "${VC_ARGS[@]}"
 
 # --- 5. Sparsify -------------------------------------------------------------
 log "sparsifying..."

@@ -1,0 +1,83 @@
+#!/usr/bin/env bash
+# ============================================================================
+# kg-console.sh — appliance console menu (the "DCUI" surface, pfSense/TrueNAS-style)
+# ============================================================================
+#
+# Runs on tty1 in place of a login prompt (installed via a getty@tty1 drop-in).
+# This is what someone sees on the hypervisor console: where the box is, and a
+# few safe operations — without needing SSH. The shell option drops to an
+# authenticated login; everything else is read-mostly or a clean lifecycle call.
+#
+# Federation seam (not built yet): this menu is the natural place to later show
+# a shard's election/peer status once ADR-088 lands. Kept extensible on purpose.
+# ============================================================================
+set -uo pipefail
+
+KG_DIR="/opt/kg"
+
+primary_ip() {
+    ip route get 1.1.1.1 2>/dev/null \
+        | awk '{for (i=1;i<=NF;i++) if ($i=="src") {print $(i+1); exit}}'
+}
+
+pause() { echo; read -rp "  Press Enter to return to the menu... " _; }
+
+banner() {
+    local ip; ip="$(primary_ip)"; ip="${ip:-(no network)}"
+    clear 2>/dev/null || true
+    cat <<EOF
+  ════════════════════════════════════════════════════════════════
+    Knowledge Graph Appliance
+  ════════════════════════════════════════════════════════════════
+    Web UI:     http://${ip}/
+    Host mgmt:  https://${ip}:9090/   (Cockpit)
+    Hostname:   $(hostname)
+  ────────────────────────────────────────────────────────────────
+    1) Platform status
+    2) Recent API logs
+    3) Restart platform
+    4) Network info
+    5) Appliance / credentials info
+    6) Platform config shell (operator container)
+    7) Login shell (host)
+    8) Reboot
+    9) Power off
+  ════════════════════════════════════════════════════════════════
+EOF
+}
+
+action() {
+    case "$1" in
+        1) echo; (cd "${KG_DIR}" && ./operator.sh status) 2>&1 | sed 's/^/  /'; pause ;;
+        2) echo; (cd "${KG_DIR}" && ./operator.sh logs api --tail 50) 2>&1 | tail -50 | sed 's/^/  /'; pause ;;
+        3) echo "  Restarting platform..."; (cd "${KG_DIR}" && ./operator.sh stop && ./operator.sh start) 2>&1 | sed 's/^/  /'; pause ;;
+        4) echo; ip -brief address 2>&1 | sed 's/^/  /'; echo; ip route 2>&1 | sed 's/^/  /';
+           echo; echo "  Change network settings via Cockpit (https://$(primary_ip):9090/)."; pause ;;
+        5) echo; echo "  Install dir:  ${KG_DIR}"; echo "  Version:      $(cat ${KG_DIR}/VERSION 2>/dev/null || echo unknown)";
+           if [ -f /root/kg-credentials.txt ]; then echo "  Credentials:  /root/kg-credentials.txt (root-only)";
+           else echo "  Credentials:  set on first web sign-in"; fi; pause ;;
+        # The operator container is the platform's privileged control plane
+        # (Docker socket + config authority). This is the "close to the metal"
+        # surface for the graph itself, distinct from a host shell.
+        6) echo "  Entering operator container (Ctrl-D returns to this menu)..."; (cd "${KG_DIR}" && ./operator.sh shell) || true ;;
+        7) echo "  Launching host login (Ctrl-D returns to this menu)..."; /bin/login || true ;;
+        8) read -rp "  Reboot the appliance? [y/N] " a; [ "${a,,}" = "y" ] && systemctl reboot ;;
+        9) read -rp "  Power off the appliance? [y/N] " a; [ "${a,,}" = "y" ] && systemctl poweroff ;;
+        *) ;;
+    esac
+}
+
+# tty1 may come up before first-boot provisioning finishes; show a wait notice.
+if [ ! -f "${KG_DIR}/.appliance-firstboot-done" ]; then
+    clear 2>/dev/null || true
+    echo "  Knowledge Graph appliance — first boot in progress (pulling images)."
+    echo "  This menu becomes available once provisioning completes."
+    echo "  Follow along: journalctl -u kg-firstboot -f"
+    echo
+fi
+
+while true; do
+    banner
+    read -rp "  Select an option [1-9]: " choice
+    action "${choice}"
+done

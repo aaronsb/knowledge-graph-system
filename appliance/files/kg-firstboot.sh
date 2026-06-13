@@ -49,44 +49,95 @@ if ! docker info >/dev/null 2>&1; then
     exit 1
 fi
 
-# --- Derive the public hostname from the DHCP-assigned primary IP ------------
-# WEB_HOSTNAME feeds OAuth redirect + API URLs; without it the web UI points
-# at the wrong origin. We resolve the egress interface's source address.
-IP="$(ip route get 1.1.1.1 2>/dev/null | awk '{for (i=1;i<=NF;i++) if ($i=="src") {print $(i+1); exit}}')"
-IP="${IP:-localhost}"
-log "derived WEB_HOSTNAME=${IP}"
+# --- Optional declarative config (cloud-init drops it at /etc/kg/provision.env)
+# This is the appliance's single declarative control surface. Sourced if present;
+# absent → DHCP-IP + no AI key (finish in the UI). See provision.env.example.
+PROVISION="/etc/kg/provision.env"
+if [ -f "${PROVISION}" ]; then
+    log "found ${PROVISION}; provisioning declaratively."
+    # shellcheck disable=SC1090
+    . "${PROVISION}"
+else
+    log "no ${PROVISION}; provisioning with defaults (DHCP IP, no AI key)."
+fi
+
+# --- Resolve WEB_HOSTNAME: explicit override, else DHCP primary IP ------------
+# WEB_HOSTNAME feeds OAuth redirect + API URLs; without it the web UI points at
+# the wrong origin. We resolve the egress interface's source address.
+IP="${KG_WEB_HOSTNAME:-}"
+if [ -z "${IP}" ]; then
+    IP="$(ip route get 1.1.1.1 2>/dev/null | awk '{for (i=1;i<=NF;i++) if ($i=="src") {print $(i+1); exit}}')"
+    IP="${IP:-localhost}"
+fi
+log "WEB_HOSTNAME=${IP}"
+
+# --- Assemble the operator init invocation -----------------------------------
+# Mirrors ADR-086's cube deployment. --gpu=cpu: the generic VM appliance assumes
+# no GPU passthrough; nomic embeddings run on CPU. Reasoning creds are passed
+# through only if provision.env supplied them — otherwise --skip-ai-config.
+INIT_ARGS=(
+    --headless
+    --container-prefix=kg
+    --image-source=ghcr
+    --gpu=cpu
+    --web-hostname="${IP}"
+    --skip-cli
+    --password-mode="${KG_PASSWORD_MODE:-random}"
+)
+if [ -n "${KG_AI_PROVIDER:-}" ] && [ -n "${KG_AI_KEY:-}" ]; then
+    log "reasoning provider supplied (${KG_AI_PROVIDER}); configuring AI."
+    INIT_ARGS+=( --ai-provider="${KG_AI_PROVIDER}" --ai-key="${KG_AI_KEY}" )
+    [ -n "${KG_AI_MODEL:-}" ] && INIT_ARGS+=( --ai-model="${KG_AI_MODEL}" )
+else
+    log "no reasoning key supplied; deferring AI config to the web UI."
+    INIT_ARGS+=( --skip-ai-config )
+fi
 
 # --- Provision: mint per-instance secrets + start the standalone stack -------
-# Mirrors ADR-086's cube deployment command, minus the AI key (reasoning is
-# configured post-boot in the UI). --gpu=cpu: the generic VM appliance assumes
-# no GPU passthrough; nomic embeddings run on CPU.
+# Tee to a log so we can recover the generated admin password (operator prints
+# it once to stdout; there's no read-it-back path since it's stored encrypted).
 cd "${KG_DIR}"
-log "running operator init (headless, ghcr, cpu, no AI key)..."
-./operator.sh init --headless \
-    --container-prefix=kg \
-    --image-source=ghcr \
-    --gpu=cpu \
-    --web-hostname="${IP}" \
-    --skip-ai-config \
-    --skip-cli
+PROV_LOG="/var/log/kg-firstboot.log"
+log "running operator init..."
+./operator.sh init "${INIT_ARGS[@]}" 2>&1 | tee "${PROV_LOG}"
+
+# --- Recover + persist the generated admin password --------------------------
+# Strip ANSI, grab the value after "Admin password:". Root-only file.
+ADMIN_PW="$(sed -E 's/\x1b\[[0-9;]*m//g' "${PROV_LOG}" \
+    | grep -iE 'Admin password:' | head -1 | sed -E 's/.*Admin password:[[:space:]]*//')"
+if [ -n "${ADMIN_PW}" ]; then
+    umask 077
+    cat > /root/kg-credentials.txt <<EOF
+Knowledge Graph appliance — initial credentials (generated $(date -Iseconds))
+Admin username: admin
+Admin password: ${ADMIN_PW}
+
+Change this in the web UI. Delete this file once you've recorded it.
+EOF
+    log "admin password saved to /root/kg-credentials.txt"
+fi
 
 # --- Mark done and write the login banner ------------------------------------
 touch "${SENTINEL}"
 log "provisioning complete; writing login banner."
 
+CRED_LINE="  Admin pw:  generated — see /root/kg-credentials.txt (or set in the UI)"
+[ -z "${ADMIN_PW}" ] && CRED_LINE="  Admin pw:  set it on first sign-in"
+
 cat > /etc/motd <<EOF
 
   Knowledge Graph appliance — ready.
 
-  Web UI:   http://${IP}/
-  Manage:   cd ${KG_DIR} && ./operator.sh status | logs api -f | stop | start
+  Web UI:    http://${IP}/
+  Host mgmt: https://${IP}:9090/   (Cockpit — network, storage, logs, updates)
+${CRED_LINE}
 
-  NEXT STEPS (one-time, in the web UI):
-    1. Sign in and set the admin password.
-    2. Paste a *reasoning* API key (OpenAI/Anthropic) under provider config.
-       Embeddings already run locally (nomic) — no key needed for those.
+  NEXT STEPS (in the web UI):
+    1. Sign in (admin) and set/confirm the admin password.
+    2. If no reasoning key was provisioned, paste one (OpenAI/Anthropic) under
+       provider config. Embeddings run locally (nomic) — no key needed.
 
-  Updates:  cd ${KG_DIR} && sudo ./operator.sh upgrade
+  Console menu: switch to tty1.   Updates: sudo ${KG_DIR}/operator.sh upgrade
 
 EOF
 
