@@ -48,6 +48,16 @@ boot during the build.
 Artifacts land in `appliance/out/`. The Debian base is cached in
 `appliance/.cache/` between builds (both are git-ignored).
 
+The qcow2/OVA is built **locally** and attached to a GitHub Release by hand —
+same philosophy as the container images (build where it's fast, push, let CI
+integrate). CI does **not** build the image: emulated `virt-customize` under TCG
+is slow and re-proves the least-interesting layer. Instead, `.github/workflows/
+appliance-integration.yml` pulls the published GHCR images and runs this
+appliance's real first-boot path (`operator.sh init --headless
+--image-source=ghcr`) on a native-CPU runner, asserting the stack comes up
+healthy with per-instance secrets. That's the integration surface that actually
+regresses.
+
 ## Control plane
 
 The appliance has three management layers, in ascending privilege:

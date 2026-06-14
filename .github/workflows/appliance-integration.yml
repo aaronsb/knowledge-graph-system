@@ -1,0 +1,119 @@
+name: Appliance Integration (GHCR images)
+
+# Integration CI for the thin-appliance deployment path.
+#
+# We deliberately do NOT build the qcow2/OVA in CI. That build runs virt-customize
+# under TCG emulation (no /dev/kvm on runners) — 30+ minutes to mostly re-prove
+# that apt + get.docker.com can install Docker, the least-interesting layer. Same
+# philosophy as the container images: build the artifact locally where it's fast,
+# and let CI *integrate* (ADR-103 Stage 2).
+#
+# What this actually validates — the things that genuinely break:
+#   * the PUBLISHED GHCR images (kg-api/kg-web/kg-postgres/kg-operator) pull and
+#     run together, on a clean host, with nothing built locally;
+#   * the appliance's real first-boot path — operator.sh init --headless
+#     --image-source=ghcr — provisions per-instance secrets and brings the stack
+#     up healthy;
+#   * the #502 fail-closed secret assertions don't ship a placeholder.
+#
+# Runs on the runner's native CPU, so it finishes in minutes and barely touches
+# the Actions minute budget. The qcow2/OVA is built locally and attached to
+# releases by hand — see appliance/README.md.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    # Only when the deployment/provisioning surface this exercises actually
+    # changes — not on every docs commit. (The container images update
+    # out-of-band via local publish; run this manually after publishing new
+    # images, or rely on the path triggers below for provisioning-code changes.)
+    paths:
+      - 'operator/**'
+      - 'docker/**'
+      - 'schema/**'
+      - 'install.sh'
+      - 'appliance/files/**'
+      - '.github/workflows/appliance-integration.yml'
+
+permissions:
+  contents: read
+  packages: read   # pull GHCR images (public, but be explicit)
+
+jobs:
+  integration:
+    name: Pull GHCR images → first-boot provision → health
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Free up disk
+        # kg-api carries baked nomic weights + torch; reclaim runner space the
+        # default image hogs so the pull + volumes have room.
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android \
+                      /opt/hostedtoolcache/CodeQL /usr/local/share/boost || true
+          df -h /
+
+      - name: Provision via the appliance first-boot path (GHCR images)
+        # Byte-for-byte the invocation kg-firstboot.sh runs on a real appliance's
+        # first power-on, minus the VM-only bits (cloud-init hostname, motd). If
+        # init exits non-zero the #502 assert_secrets_safe / image pull / compose
+        # up all failed loudly here.
+        run: |
+          ./operator.sh init --headless \
+            --container-prefix=kg \
+            --image-source=ghcr \
+            --gpu=cpu \
+            --web-hostname=localhost \
+            --skip-cli \
+            --skip-ai-config \
+            --password-mode=random
+
+      - name: Wait for platform health
+        # api /health gates on postgres+garage healthy and the nomic model load;
+        # web depends_on api service_healthy. Both green = the published images
+        # integrate. Generous deadline: the kg-api image pull is large.
+        run: |
+          deadline=$((SECONDS + 900))
+          ok_api=0; ok_web=0
+          while [ "$SECONDS" -lt "$deadline" ]; do
+            curl -fsS http://localhost:8000/health >/dev/null 2>&1 && ok_api=1
+            curl -fsS http://localhost:3000/        >/dev/null 2>&1 && ok_web=1
+            if [ "$ok_api" -eq 1 ] && [ "$ok_web" -eq 1 ]; then
+              echo "::notice::platform healthy — API + Web both responding"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "timed out (api=$ok_api web=$ok_web)"
+          exit 1
+
+      - name: Assert no placeholder secrets shipped (#502)
+        # Belt-and-suspenders: init already fails closed on placeholder secrets,
+        # but make the regression test explicit and visible.
+        run: |
+          test -f .env || { echo "no .env minted"; exit 1; }
+          grep -q '^POSTGRES_PASSWORD=' .env
+          if grep -qiE '^POSTGRES_PASSWORD=(password|CHANGE_THIS)' .env; then
+            echo "::error::placeholder POSTGRES_PASSWORD shipped — #502 regression"
+            exit 1
+          fi
+          echo "secrets minted (no placeholder)"
+
+      - name: Diagnostics on failure
+        if: failure()
+        run: |
+          echo "===== containers ====="
+          docker ps -a
+          echo "===== logs ====="
+          for c in $(docker ps -aq); do
+            echo "----- $(docker inspect --format '{{.Name}}' "$c") -----"
+            docker logs --tail 120 "$c" 2>&1 || true
+          done
+
+      - name: Tear down
+        if: always()
+        run: ./operator.sh stop || true
