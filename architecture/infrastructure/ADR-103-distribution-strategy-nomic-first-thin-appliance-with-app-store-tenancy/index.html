@@ -16,7 +16,7 @@
         <link rel="prev" href="../ADR-102-portable-backup-and-restore-with-clone-merge-semantics/">
       
       
-        <link rel="next" href="../../ingestion-content/ADR-014-job-approval-workflow/">
+        <link rel="next" href="../ADR-104-unified-provisioning-architecture-install-path-convergence-and-first-run-claim-protocol/">
       
       
         
@@ -7614,6 +7614,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#stage-2-build-contract-x86-thin-appliance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stage 2 Build Contract — x86 thin appliance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#consequences" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -7689,6 +7700,41 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-104-unified-provisioning-architecture-install-path-convergence-and-first-run-claim-protocol/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-104: Unified provisioning architecture: install-path convergence and first-run claim protocol
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--Draft"></span>
+  
+
+  
+
+      </a>
     </li>
   
 
@@ -10674,6 +10720,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#stage-2-build-contract-x86-thin-appliance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stage 2 Build Contract — x86 thin appliance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#consequences" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -10893,6 +10950,45 @@ source of truth for the model list is the only way the variants stay in lockstep
 flip is implemented on branch <code>survey/nomic-first-defaults</code> (seed migrations
 003/008, mig-012 fallback, Dockerfile bake, mock/test dimension alignment,
 operator-help/API-doc defaults).</p>
+<h2 id="stage-2-build-contract-x86-thin-appliance">Stage 2 Build Contract — x86 thin appliance</h2>
+<p>The first Stage-2 artifact is an x86 qcow2/OVA. Its build contract (tooling in
+<code>appliance/</code>) records the non-obvious decisions:</p>
+<ul>
+<li>
+<p><strong>The appliance is ADR-086's "cube" deployment, baked.</strong> Not a new installer:
+  a minimal Debian host with Docker + the repo at <code>/opt/kg</code>, <code>image-source=ghcr</code>,
+  reusing the tested <code>operator.sh init --headless</code> path verbatim. <code>install.sh</code>'s
+  standalone curl-fetch is <em>staged at bake time</em> instead of run at install time.</p>
+</li>
+<li>
+<p><strong>Bake / first-boot split, with a no-baked-secrets invariant.</strong> The image
+  carries OS + Docker + repo but <strong>no <code>.env</code> and no secrets</strong>. A oneshot
+  systemd unit (<code>kg-firstboot</code>, self-disarming via a sentinel) runs
+  <code>operator.sh init --headless --image-source=ghcr --gpu=cpu --skip-ai-config</code>
+  on first power-on, so <code>operator/lib/init-secrets.sh</code> mints <strong>unique
+  per-instance</strong> <code>ENCRYPTION_KEY</code>/<code>POSTGRES_PASSWORD</code>/etc. A baked <code>.env</code> would
+  ship every appliance with identical secrets — the one thing the split exists
+  to prevent. <code>WEB_HOSTNAME</code> is derived from the DHCP lease at first boot.</p>
+</li>
+<li>
+<p><strong>Thin, literally.</strong> Container images are <em>not</em> baked; they are pulled on
+  first boot (network required once), so updates stay on the <code>operator.sh
+  upgrade</code> pull lifecycle. The only offline asset is the nomic weight set, which
+  rides inside the <code>kg-api</code> image. A warm (images-baked) variant is a deferred
+  build flag, not the default.</p>
+</li>
+<li>
+<p><strong>Build tool: virt-customize now, Packer deferred.</strong> libguestfs customizes the
+  Debian genericcloud qcow2 in place (no VM boot), which fits a "stage files +
+  install Docker" job. A Packer/QEMU template is the deferred CI-release path.</p>
+</li>
+<li>
+<p><strong>Reasoning key is never required to reach a running platform.</strong> First boot
+  yields a live box doing local embeddings; the operator pastes a reasoning key
+  in the web UI afterward. This is the "flash, boot, paste a key" curve made
+  concrete.</p>
+</li>
+</ul>
 <h2 id="consequences">Consequences</h2>
 <h3 id="positive">Positive</h3>
 <ul>
