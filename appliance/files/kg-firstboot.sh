@@ -128,7 +128,7 @@ cat > /etc/motd <<EOF
 
   Knowledge Graph appliance — ready.
 
-  Web UI:    http://${IP}/
+  Web UI:    http://${IP}:3000/
   Host mgmt: https://${IP}:9090/   (Cockpit — network, storage, logs, updates)
 ${CRED_LINE}
 
