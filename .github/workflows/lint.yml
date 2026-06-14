@@ -104,3 +104,26 @@ jobs:
             exit 1
           fi
           echo "✅ TypeScript CLI built successfully"
+
+  shell-syntax:
+    name: Shell Syntax Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Syntax-check tracked shell scripts
+        # bash -n parses without executing — catches the breakage class that
+        # would otherwise surface only at the next manual run of operator.sh or
+        # appliance/build-appliance.sh (the latter is no longer built in CI).
+        run: |
+          fail=0
+          while IFS= read -r f; do
+            if ! bash -n "$f"; then
+              echo "❌ syntax error: $f"
+              fail=1
+            fi
+          done < <(git ls-files '*.sh')
+          [ "$fail" -eq 0 ] && echo "✅ all tracked shell scripts parse cleanly"
+          exit "$fail"
