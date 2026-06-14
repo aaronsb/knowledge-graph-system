@@ -1,10 +1,15 @@
 name: Build and Push Containers
 
 on:
+  # NOTE: tag pushes deliberately do NOT trigger this workflow. We build
+  # containers LOCALLY (fast, multi-arch via QEMU) and push to GHCR; CI only
+  # *integrates* already-built containers (see appliance-integration.yml). A
+  # `tags: v*.*.*` trigger here previously auto-built the operator image on
+  # every release tag — building a container in CI (which we never do) and
+  # minting stray version tags. The dispatch escape-hatches below remain for
+  # the rare case CI must build one.
   push:
     branches: [ release ]
-    tags:
-      - 'v*.*.*'
   workflow_dispatch:
     inputs:
       build_api:
