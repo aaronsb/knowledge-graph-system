@@ -27,7 +27,7 @@ banner() {
     clear 2>/dev/null || true
     cat <<EOF
   ════════════════════════════════════════════════════════════════
-    Knowledge Graph Appliance
+    Kappa Graph Appliance
   ════════════════════════════════════════════════════════════════
     Web UI:     http://${ip}:3000/
     Host mgmt:  https://${ip}:9090/   (Cockpit)
@@ -77,7 +77,7 @@ action() {
 # tty1 may come up before first-boot provisioning finishes; show a wait notice.
 if [ ! -f "${KG_DIR}/.appliance-firstboot-done" ]; then
     clear 2>/dev/null || true
-    echo "  Knowledge Graph appliance — first boot in progress (pulling images)."
+    echo "  Kappa Graph appliance — first boot in progress (pulling images)."
     echo "  This menu becomes available once provisioning completes."
     echo "  Follow along: journalctl -u kg-firstboot -f"
     echo

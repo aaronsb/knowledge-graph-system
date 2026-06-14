@@ -115,7 +115,7 @@ ADMIN_PW="$( { sed -E 's/\x1b\[[0-9;]*m//g' "${PROV_LOG}" | grep -iE 'Admin pass
 if [ -n "${ADMIN_PW}" ]; then
     umask 077
     cat > /root/kg-credentials.txt <<EOF
-Knowledge Graph appliance — initial credentials (generated $(date -Iseconds))
+Kappa Graph appliance — initial credentials (generated $(date -Iseconds))
 Admin username: admin
 Admin password: ${ADMIN_PW}
 
@@ -133,7 +133,7 @@ CRED_LINE="  Admin pw:  generated — see /root/kg-credentials.txt (or set in th
 
 cat > /etc/motd <<EOF
 
-  Knowledge Graph appliance — ready.
+  Kappa Graph appliance — ready.
 
   Web UI:    http://${IP}:3000/
   Host mgmt: https://${IP}:9090/   (Cockpit — network, storage, logs, updates)

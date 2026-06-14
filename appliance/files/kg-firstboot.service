@@ -3,7 +3,7 @@
 # Self-disarms via the sentinel file (ConditionPathExists) so it never re-runs
 # once provisioning has succeeded.
 [Unit]
-Description=Knowledge Graph appliance first-boot provisioner
+Description=Kappa Graph appliance first-boot provisioner
 Documentation=https://github.com/aaronsb/knowledge-graph-system
 After=network-online.target docker.service
 Wants=network-online.target docker.service

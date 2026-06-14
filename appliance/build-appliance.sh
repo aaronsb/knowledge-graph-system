@@ -138,7 +138,7 @@ VC_ARGS=(
     --run-command 'rm -f /var/lib/dbus/machine-id && ln -s /etc/machine-id /var/lib/dbus/machine-id'
     --run-command 'cloud-init clean --logs 2>/dev/null || true'
     --run-command 'apt-get clean && rm -rf /var/lib/apt/lists/*'
-    --run-command 'printf "\n  Knowledge Graph appliance — first boot in progress.\n  Run: journalctl -u kg-firstboot -f   (provisioning + image pull)\n\n" > /etc/motd'
+    --run-command 'printf "\n  Kappa Graph appliance — first boot in progress.\n  Run: journalctl -u kg-firstboot -f   (provisioning + image pull)\n\n" > /etc/motd'
 )
 [ "${WITH_COCKPIT}" = "true" ] && VC_ARGS+=( --run-command 'systemctl enable cockpit.socket' )
 

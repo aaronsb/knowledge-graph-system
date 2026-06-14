@@ -29,7 +29,7 @@
     </Network>
   </NetworkSection>
   <VirtualSystem ovf:id="kg-appliance">
-    <Info>Knowledge Graph thin appliance (@@VERSION@@)</Info>
+    <Info>Kappa Graph thin appliance (@@VERSION@@)</Info>
     <Name>kg-appliance-@@VERSION@@</Name>
     <OperatingSystemSection ovf:id="96" ovf:version="12" vmw:osType="debian12_64Guest"
                             xmlns:vmw="http://www.vmware.com/schema/ovf">
