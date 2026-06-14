@@ -123,13 +123,41 @@ is otherwise provider-agnostic (acme.sh does the protocol work). Adding a provid
 = adding a descriptor row, never touching issuance logic. Unknown ids fall through
 to a generic path that passes env through untranslated (today's `*)` branch).
 
-### 3. Real `operator/lib/recert.sh`
+### 3. Certificate lifecycle — `recert.sh` is mode-aware
 
-Implement the dangling renewal target as the **idempotent renewal entry point**:
-re-issue/renew via the same library, refresh `certs/`, reload the web container.
+The lifecycle (issue → store → deploy → detect expiry → renew → reload) has a
+**different owner per mode**. `recert.sh` reads the persisted `SSL_MODE` and does
+the right thing — it is **not** a single Let's-Encrypt renew routine. Today
+`setup_cert_renewal` is wired *solely* from the LE path, which means **a
+self-signed cert silently expires at 365 days with nothing to renew it** — a real
+lifecycle gap this convergence closes.
+
+| Stage | `selfsigned` | `letsencrypt` | `manual` (BYO) | `offload` |
+|-------|--------------|---------------|----------------|-----------|
+| Issue | `openssl` at init | acme.sh DNS-01 / certbot HTTP-01 | operator supplies | **upstream proxy** |
+| Store | `certs/` | `certs/` | `certs/` | n/a |
+| Renew | **regenerate when near expiry** | acme.sh `--renew` (~60d) | operator re-supplies | upstream |
+| Expiry detect | timer checks `enddate` | acme.sh + timer safety net | timer checks, **warn only** | n/a |
+| On failure | local — cannot fail | fall back to `selfsigned` (existing behavior) | keep serving old cert, warn loudly | n/a |
+| Reload | reload web container after any change | same | same | n/a |
+
+The ownership split, stated plainly:
+
+- **`selfsigned` / `letsencrypt`** — the appliance **fully self-manages** the
+  lifecycle (issue + renew + reload). Self-contained.
+- **`manual` (BYO)** — the operator owns issuance and renewal; the appliance only
+  **monitors and warns** near expiry (it has no CA/key authority to mint a
+  replacement) and **never overwrites** a BYO cert.
+- **`offload`** — **upstream owns the entire lifecycle**; `recert.sh` is a
+  **no-op that returns success**. The appliance speaks plain HTTP and never holds
+  a cert. (This is the "it's upstream, we don't manage it" case.)
+
+Expiry detection reuses install.sh's existing `check_existing_acme_cert` /
+`show_cert_info` (openssl `enddate` parsing), generalized across modes.
 *Scheduling* stays path-appropriate and out of the shared lib — `install.sh`'s
-cron stays cron; the appliance uses a systemd timer (it has systemd) — but both
-invoke the one `recert.sh`. This makes `operator.sh recert` real.
+cron stays cron, the appliance uses a systemd timer (it has systemd) — but both
+invoke the one `recert.sh`, and `operator.sh recert` runs it on demand. This makes
+`operator.sh recert` real.
 
 ### 4. Offload as a first-class contract: `EXTERNAL_URL`
 
@@ -163,7 +191,9 @@ GitLab `external_url https://… + listen_https=false` pattern.
 
 - One code path for certs, reachable from every install path; the appliance and
   `operator.sh init` gain HTTPS they never had.
-- `operator.sh recert` stops being a broken command.
+- `operator.sh recert` stops being a broken command, and becomes **mode-aware**:
+  it closes the silent self-signed-expiry gap, renews LE, warns on BYO, and
+  no-ops on offload — so every mode has a defined lifecycle owner.
 - New DNS providers become data, not code.
 - The `http://`-redirect bug — latent for every TLS deployment — is fixed at the
   contract level, not patched per-call.
@@ -207,7 +237,10 @@ Incremental, each step shippable:
    `install.sh` sources it (pure consolidation, no behavior change). Verify
    `install.sh` still produces identical artifacts.
 2. Replace the DNS `case` with the provider registry inside the shared lib.
-3. Implement `operator/lib/recert.sh`; `operator.sh recert` now works.
+3. Implement mode-aware `operator/lib/recert.sh` (self-signed regen near expiry,
+   LE renew, BYO warn-only, offload no-op) + expiry detection; `operator.sh
+   recert` now works. Wire scheduling per path (install.sh cron / appliance
+   systemd timer).
 4. Add `--ssl*` flags to `headless-init.sh` + `guided-init.sh`; operator init can
    now stand up TLS.
 5. Introduce `EXTERNAL_URL`; fix `redirect_uri` scheme in `headless-init.sh` and
