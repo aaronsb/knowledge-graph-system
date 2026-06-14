@@ -38,7 +38,7 @@ _Containers, deployment, backup, storage, networking_
 | [ADR-102](./infrastructure/ADR-102-portable-backup-and-restore-with-clone-merge-semantics.md) | Portable Backup and Restore with Clone/Merge Semantics | Accepted |
 | [ADR-103](./infrastructure/ADR-103-distribution-strategy-nomic-first-thin-appliance-with-app-store-tenancy.md) | Distribution strategy: nomic-first thin appliance with app-store tenancy | Proposed |
 | [ADR-104](./infrastructure/ADR-104-unified-provisioning-architecture-install-path-convergence-and-first-run-claim-protocol.md) | Unified provisioning architecture: install-path convergence and first-run claim protocol | Draft |
-| [ADR-105](./infrastructure/ADR-105-tls-certificate-convergence-unified-cert-factory-and-offload-contract.md) | TLS/certificate convergence — unified cert factory and reverse-proxy offload contract | Draft |
+| [ADR-105](./infrastructure/ADR-105-scenario-driven-tls-via-in-vm-traefik-router.md) | Scenario-driven TLS via an in-VM Traefik router | Draft |
 
 ## Database/Schema
 _Apache AGE, migrations, schema design, PostgreSQL_
