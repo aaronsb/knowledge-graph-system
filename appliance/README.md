@@ -59,8 +59,9 @@ The appliance has three management layers, in ascending privilege:
 | **Application** | web UI (`http://<ip>/`) · REST API | content: graphs, ontologies, ingestion |
 
 - **Console TUI** runs on the VM console (tty1) in place of a login prompt —
-  status, logs, restart, network, the operator (platform) shell, a host login,
-  reboot/poweroff. No SSH required.
+  status, logs, restart, network, **the initial admin credentials**, the
+  operator (platform) shell, a host login, reboot/poweroff. No SSH required —
+  a console-only operator can retrieve the generated admin password here.
 - **Cockpit** (default on; `--no-cockpit` to omit) is the host web console for
   network/storage/updates/logs — including growing the root disk.
 

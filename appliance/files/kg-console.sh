@@ -53,9 +53,16 @@ action() {
         3) echo "  Restarting platform..."; (cd "${KG_DIR}" && ./operator.sh stop && ./operator.sh start) 2>&1 | sed 's/^/  /'; pause ;;
         4) echo; ip -brief address 2>&1 | sed 's/^/  /'; echo; ip route 2>&1 | sed 's/^/  /';
            echo; echo "  Change network settings via Cockpit (https://$(primary_ip):9090/)."; pause ;;
-        5) echo; echo "  Install dir:  ${KG_DIR}"; echo "  Version:      $(cat ${KG_DIR}/VERSION 2>/dev/null || echo unknown)";
-           if [ -f /root/kg-credentials.txt ]; then echo "  Credentials:  /root/kg-credentials.txt (root-only)";
-           else echo "  Credentials:  set on first web sign-in"; fi; pause ;;
+        5) echo; echo "  Install dir:  ${KG_DIR}"; echo "  Version:      $(cat ${KG_DIR}/VERSION 2>/dev/null || echo unknown)"; echo;
+           # The console is root- and hypervisor/physically-gated (highest trust
+           # tier), so showing the generated admin password here is appropriate —
+           # it's the only way a console-only operator (no SSH) can log in.
+           if [ -f /root/kg-credentials.txt ]; then
+               echo "  Initial admin credentials (change in the web UI, then delete the file):";
+               sed 's/^/    /' /root/kg-credentials.txt;
+           else
+               echo "  Admin: set on first web sign-in, or provisioned via cloud-init.";
+           fi; pause ;;
         # The operator container is the platform's privileged control plane
         # (Docker socket + config authority). This is the "close to the metal"
         # surface for the graph itself, distinct from a host shell.
