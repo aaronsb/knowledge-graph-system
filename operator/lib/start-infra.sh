@@ -40,6 +40,33 @@ if [ ! -f "$PROJECT_ROOT/.env" ]; then
     exit 1
 fi
 
+# --- Fail-closed secret assertion (#502 / ADR-401) ---------------------------
+# Refuse to bring up infra with placeholder or default-weak secrets, so a
+# misconfigured .env can never reach a running platform. Placeholders
+# (CHANGE_THIS/changeme/empty) are never valid in any mode; POSTGRES_PASSWORD=
+# "password" is rejected in prod only (dev legitimately uses it).
+assert_secrets_safe() {
+    local env_file="$PROJECT_ROOT/.env" bad=0 v k
+    local dev_mode
+    dev_mode=$(grep -s '^DEV_MODE=' "$PROJECT_ROOT/.operator.conf" | cut -d'=' -f2)
+    for k in ENCRYPTION_KEY OAUTH_SIGNING_KEY POSTGRES_PASSWORD GARAGE_RPC_SECRET INTERNAL_KEY_SERVICE_SECRET; do
+        v=$(grep "^${k}=" "$env_file" | cut -d'=' -f2-)
+        if [ -z "$v" ] || [[ "$v" == *CHANGE_THIS* ]] || [[ "$v" == *changeme* ]]; then
+            echo -e "${RED}✗ ${k} is unset or a placeholder${NC}"; bad=1
+        fi
+    done
+    if [ "${dev_mode:-false}" != "true" ]; then
+        v=$(grep '^POSTGRES_PASSWORD=' "$env_file" | cut -d'=' -f2-)
+        [ "$v" = "password" ] && { echo -e "${RED}✗ POSTGRES_PASSWORD is the weak default 'password' (prod mode)${NC}"; bad=1; }
+    fi
+    if [ "$bad" = 1 ]; then
+        echo -e "${RED}Refusing to start: insecure secrets in .env${NC}"
+        echo "  Regenerate: ./operator/lib/init-secrets.sh   (add --dev for local dev)"
+        exit 1
+    fi
+}
+assert_secrets_safe
+
 cd "$DOCKER_DIR"
 
 # Start postgres and garage (uses config from .operator.conf)
