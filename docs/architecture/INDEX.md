@@ -37,6 +37,7 @@ _Containers, deployment, backup, storage, networking_
 | [ADR-101](./infrastructure/ADR-101-rocm-image-variant-and-install-time-selection.md) | ROCm Image Variant and Install-Time Selection | Accepted |
 | [ADR-102](./infrastructure/ADR-102-portable-backup-and-restore-with-clone-merge-semantics.md) | Portable Backup and Restore with Clone/Merge Semantics | Accepted |
 | [ADR-103](./infrastructure/ADR-103-distribution-strategy-nomic-first-thin-appliance-with-app-store-tenancy.md) | Distribution strategy: nomic-first thin appliance with app-store tenancy | Proposed |
+| [ADR-104](./infrastructure/ADR-104-unified-provisioning-architecture-install-path-convergence-and-first-run-claim-protocol.md) | Unified provisioning architecture: install-path convergence and first-run claim protocol | Draft |
 
 ## Database/Schema
 _Apache AGE, migrations, schema design, PostgreSQL_

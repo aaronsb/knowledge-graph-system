@@ -285,15 +285,15 @@ if [ "$DEV_MODE" = true ]; then
     fi
 else
     # Prod mode: generate strong password
-    # Check if we're upgrading from dev (password is weak, missing, or empty)
-    CURRENT_PASSWORD=$(grep '^POSTGRES_PASSWORD=' "$PROJECT_ROOT/.env" 2>/dev/null | cut -d'=' -f2)
+    # Regenerate any weak/default/empty password — NOT only on explicit --upgrade.
+    # A fresh prod init copies POSTGRES_PASSWORD=password from .env.example (a
+    # placeholder is_secret_valid() doesn't catch), so without this the default
+    # ships unchanged (#502). The UPGRADE_MODE-only gate was the original miss.
+    CURRENT_PASSWORD=$(grep '^POSTGRES_PASSWORD=' "$PROJECT_ROOT/.env" 2>/dev/null | head -1 | cut -d'=' -f2-)
     NEEDS_UPGRADE=false
-    if [ "$UPGRADE_MODE" = true ]; then
-        # Upgrade if password is weak OR doesn't exist OR is empty
-        if [ -z "$CURRENT_PASSWORD" ] || [ "$CURRENT_PASSWORD" = "password" ]; then
-            NEEDS_UPGRADE=true
-            echo -e "${YELLOW}→ Upgrading POSTGRES_PASSWORD from dev to prod...${NC}"
-        fi
+    if [ -z "$CURRENT_PASSWORD" ] || [ "$CURRENT_PASSWORD" = "password" ]; then
+        NEEDS_UPGRADE=true
+        echo -e "${YELLOW}→ Detected weak/default POSTGRES_PASSWORD, generating strong replacement...${NC}"
     fi
 
     if should_reset "POSTGRES_PASSWORD" || ! is_secret_valid "POSTGRES_PASSWORD" || [ "$NEEDS_UPGRADE" = true ]; then

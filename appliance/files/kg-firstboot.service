@@ -1,0 +1,23 @@
+# KG thin-appliance first-boot provisioner (ADR-103 Stage 2).
+# Oneshot: mints per-instance secrets + starts the platform on first power-on.
+# Self-disarms via the sentinel file (ConditionPathExists) so it never re-runs
+# once provisioning has succeeded.
+[Unit]
+Description=Kappa Graph appliance first-boot provisioner
+Documentation=https://github.com/aaronsb/knowledge-graph-system
+After=network-online.target docker.service
+Wants=network-online.target docker.service
+ConditionPathExists=!/opt/kg/.appliance-firstboot-done
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/opt/kg/appliance/files/kg-firstboot.sh
+# First boot pulls the GHCR image set (thin appliance), which can take a while
+# on a slow link — give it room before systemd calls it a failure.
+TimeoutStartSec=1800
+StandardOutput=journal+console
+StandardError=journal+console
+
+[Install]
+WantedBy=multi-user.target

@@ -109,3 +109,7 @@ docs/.venv/
 .cache/
 docs/.obsidian/
 .operator.conf
+
+# KG appliance build artifacts
+appliance/out/
+appliance/.cache/
