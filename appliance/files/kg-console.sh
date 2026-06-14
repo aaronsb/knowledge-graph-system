@@ -85,6 +85,9 @@ fi
 
 while true; do
     banner
-    read -rp "  Select an option [1-9]: " choice
+    # Exit cleanly on stdin EOF (console detach, or a login subshell closing
+    # stdin) so getty respawns us — without the guard the loop busy-spins at
+    # 100% CPU and Restart=always never fires because the process stays alive (H3).
+    read -rp "  Select an option [1-9]: " choice || { sleep 1; exit 0; }
     action "${choice}"
 done

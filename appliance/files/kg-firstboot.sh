@@ -82,7 +82,7 @@ INIT_ARGS=(
     --gpu=cpu
     --web-hostname="${IP}"
     --skip-cli
-    --password-mode="${KG_PASSWORD_MODE:-random}"
+    --password-mode=random
 )
 if [ -n "${KG_AI_PROVIDER:-}" ] && [ -n "${KG_AI_KEY:-}" ]; then
     log "reasoning provider supplied (${KG_AI_PROVIDER}); configuring AI."
@@ -98,13 +98,20 @@ fi
 # it once to stdout; there's no read-it-back path since it's stored encrypted).
 cd "${KG_DIR}"
 PROV_LOG="/var/log/kg-firstboot.log"
+# Pre-create root-only — this log captures operator output that includes the
+# generated admin password, so it must not be world-readable (the umask below
+# only applies after this point) (L5).
+touch "${PROV_LOG}"; chmod 600 "${PROV_LOG}"
 log "running operator init..."
 ./operator.sh init "${INIT_ARGS[@]}" 2>&1 | tee "${PROV_LOG}"
 
 # --- Recover + persist the generated admin password --------------------------
-# Strip ANSI, grab the value after "Admin password:". Root-only file.
-ADMIN_PW="$(sed -E 's/\x1b\[[0-9;]*m//g' "${PROV_LOG}" \
-    | grep -iE 'Admin password:' | head -1 | sed -E 's/.*Admin password:[[:space:]]*//')"
+# Strip ANSI, grab the value after "Admin password:". The grep is guarded with
+# `|| true` so a no-match (e.g. an operator-output wording change) yields an
+# empty string the [ -n ] check handles — rather than aborting first boot under
+# `set -euo pipefail` before the sentinel is written (H1).
+ADMIN_PW="$( { sed -E 's/\x1b\[[0-9;]*m//g' "${PROV_LOG}" | grep -iE 'Admin password:' || true; } \
+    | head -1 | sed -E 's/.*Admin password:[[:space:]]*//')"
 if [ -n "${ADMIN_PW}" ]; then
     umask 077
     cat > /root/kg-credentials.txt <<EOF

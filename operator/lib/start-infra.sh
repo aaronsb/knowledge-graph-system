@@ -48,15 +48,15 @@ fi
 assert_secrets_safe() {
     local env_file="$PROJECT_ROOT/.env" bad=0 v k
     local dev_mode
-    dev_mode=$(grep -s '^DEV_MODE=' "$PROJECT_ROOT/.operator.conf" | cut -d'=' -f2)
+    dev_mode=$(grep -s '^DEV_MODE=' "$PROJECT_ROOT/.operator.conf" | head -1 | cut -d'=' -f2)
     for k in ENCRYPTION_KEY OAUTH_SIGNING_KEY POSTGRES_PASSWORD GARAGE_RPC_SECRET INTERNAL_KEY_SERVICE_SECRET; do
-        v=$(grep "^${k}=" "$env_file" | cut -d'=' -f2-)
+        v=$(grep "^${k}=" "$env_file" | head -1 | cut -d'=' -f2-)
         if [ -z "$v" ] || [[ "$v" == *CHANGE_THIS* ]] || [[ "$v" == *changeme* ]]; then
             echo -e "${RED}✗ ${k} is unset or a placeholder${NC}"; bad=1
         fi
     done
     if [ "${dev_mode:-false}" != "true" ]; then
-        v=$(grep '^POSTGRES_PASSWORD=' "$env_file" | cut -d'=' -f2-)
+        v=$(grep '^POSTGRES_PASSWORD=' "$env_file" | head -1 | cut -d'=' -f2-)
         [ "$v" = "password" ] && { echo -e "${RED}✗ POSTGRES_PASSWORD is the weak default 'password' (prod mode)${NC}"; bad=1; }
     fi
     if [ "$bad" = 1 ]; then

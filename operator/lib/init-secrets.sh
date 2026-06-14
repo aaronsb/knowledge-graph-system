@@ -289,7 +289,7 @@ else
     # A fresh prod init copies POSTGRES_PASSWORD=password from .env.example (a
     # placeholder is_secret_valid() doesn't catch), so without this the default
     # ships unchanged (#502). The UPGRADE_MODE-only gate was the original miss.
-    CURRENT_PASSWORD=$(grep '^POSTGRES_PASSWORD=' "$PROJECT_ROOT/.env" 2>/dev/null | cut -d'=' -f2)
+    CURRENT_PASSWORD=$(grep '^POSTGRES_PASSWORD=' "$PROJECT_ROOT/.env" 2>/dev/null | head -1 | cut -d'=' -f2-)
     NEEDS_UPGRADE=false
     if [ -z "$CURRENT_PASSWORD" ] || [ "$CURRENT_PASSWORD" = "password" ]; then
         NEEDS_UPGRADE=true
