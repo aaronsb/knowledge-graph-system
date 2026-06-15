@@ -3,6 +3,7 @@ status: Accepted
 date: 2025-11-27
 deciders:
   - System Architect
+related: []
 ---
 
 # ADR-068: Source Text Embeddings for Grounding Truth Retrieval

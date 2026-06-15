@@ -4,6 +4,7 @@ date: 2025-10-31
 deciders:
   - aaronsb
   - claude
+related: []
 ---
 
 # ADR-052: Vocabulary Expansion-Consolidation Cycle (The "Dreaming" Pattern)

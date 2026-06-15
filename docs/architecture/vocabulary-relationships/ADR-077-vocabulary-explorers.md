@@ -4,6 +4,7 @@ date: 2025-12-10
 deciders:
   - aaronsb
   - claude
+related: []
 ---
 
 # ADR-077: Vocabulary Explorers

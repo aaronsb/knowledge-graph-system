@@ -3,6 +3,7 @@ status: Accepted
 date: 2025-10-06
 deciders:
   - Development Team
+related: []
 ---
 
 # ADR-013: Unified TypeScript Client (CLI + MCP Server)

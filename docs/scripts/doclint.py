@@ -232,16 +232,32 @@ def collect_nav_pages() -> set:
 
 
 def check_references(nodes: list):
-    """Flag related/supersedes targets that resolve to no known node."""
+    """Flag related/supersedes targets that resolve to no known node.
+
+    Decimal-ADR convention (ADR-900): a decision may be split into parts
+    (ADR-032.1, ADR-032.2). A bare base reference (`ADR-032`) is the family
+    identifier and is satisfied by any of its parts — references cite the
+    decision, not a specific part. An exact part reference (`ADR-032.2`) must
+    match exactly.
+    """
     keys = {n.key for n in nodes}
+    base_parts = set()
+    for k in keys:
+        m = re.match(r"^(ADR-\d+)\.\d+$", k)
+        if m:
+            base_parts.add(m.group(1))
+
     for node in nodes:
         for fname, target in node.refs:
             t = target.strip()
-            if ADR_REF_RE.match(t) or ID_RE.match(t):
-                if t not in keys:
-                    node.issues.append(
-                        ("error", f"dangling {fname} reference: {t} (no such record)"))
-            # Non-ref strings (e.g. prose `amends:`) are ignored by the graph.
+            if not (ADR_REF_RE.match(t) or ID_RE.match(t)):
+                continue   # prose `amends:` and other non-refs are not edges
+            if t in keys:
+                continue
+            if "." not in t and t in base_parts:
+                continue   # base reference satisfied by a part (ADR-032 -> ADR-032.1)
+            node.issues.append(
+                ("error", f"dangling {fname} reference: {t} (no such record)"))
 
 
 def check_supersede_cycles(nodes: list):

@@ -4,6 +4,7 @@ date: 2025-12-04
 deciders:
   - aaronsb
   - claude
+related: []
 ---
 
 # ADR-072: Concept Matching Strategies and Configuration

@@ -4,6 +4,7 @@ date: 2026-01-25
 deciders:
   - aaronsb
   - claude
+related: []
 ---
 
 # ADR-089: Deterministic Node and Edge Creation
