@@ -6,8 +6,18 @@ Kappa Graph extracts structured knowledge from documents, stores it as a typed c
 
 ## The processing pipeline
 
-```
-Documents → Chunking → Extraction → Deduplication → Graph storage
+```mermaid
+flowchart LR
+    A([Documents]) --> B[Chunking]
+    B --> C[Extraction]
+    C --> D[Deduplication]
+    D --> E[(Graph storage)]
+
+    style A fill:#f97316,color:#ffffff
+    style B fill:#0d9488,color:#ffffff
+    style C fill:#0d9488,color:#ffffff
+    style D fill:#0d9488,color:#ffffff
+    style E fill:#16a34a,color:#ffffff
 ```
 
 **Chunking.** Submitted documents are split into overlapping segments of roughly 1,000 words. Overlap preserves ideas that span a boundary; no concept is lost because it crossed a page break.
@@ -18,11 +28,27 @@ Documents → Chunking → Extraction → Deduplication → Graph storage
 
 **Graph storage.** The result lives in Apache AGE 1.7.0, a graph extension for PostgreSQL 18. The data model is:
 
-```
-(:Concept)-[:APPEARS]->(:Source)
-(:Concept)-[:EVIDENCED_BY]->(:Instance)
-(:Instance)-[:FROM_SOURCE]->(:Source)
-(:Concept)-[:IMPLIES|SUPPORTS|CONTRADICTS|CAUSES|PART_OF]->(:Concept)
+```mermaid
+classDiagram
+    class Concept {
+        label : string
+        search_terms : string[]
+        embedding : vector
+        grounding_score : float
+    }
+    class Source {
+        text : string
+        document_path : string
+        position : int
+    }
+    class Instance {
+        quote : string
+    }
+
+    Concept --> Source : APPEARS
+    Concept --> Instance : EVIDENCED_BY
+    Instance --> Source : FROM_SOURCE
+    Concept --> Concept : IMPLIES | SUPPORTS | CONTRADICTS | CAUSES | PART_OF
 ```
 
 `Concept` nodes carry a label, search terms (synonyms), a vector embedding, and a grounding score. `Source` nodes carry the full paragraph text, document path, and position. `Instance` nodes carry the exact quote the LLM cited.

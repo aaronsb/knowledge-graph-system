@@ -18,6 +18,32 @@ Recursive upsert resolves this by using vector similarity as the merge criterion
 
 When the ingestion pipeline extracts a concept from a document chunk, it runs four stages in order (`api/app/lib/ingestion.py`).
 
+```mermaid
+sequenceDiagram
+    participant P as Pipeline
+    participant AGE as AGE Graph
+    participant VI as Vector Index
+    participant EV as Evidence Store
+
+    P->>AGE: Stage 1: lookup concept_id (exact match)
+    alt concept_id exists
+        AGE-->>P: matched existing concept
+    else no exact match
+        P->>VI: Stage 2: embed label+description+terms, cosine scan
+        alt similarity >= 0.85 (strict tier)
+            VI-->>P: matched existing concept
+        else 0.75 <= similarity < 0.85 AND labels overlap (label-boosted tier)
+            VI-->>P: matched existing concept
+        else no match in either tier
+            VI-->>P: no match
+            P->>AGE: Stage 3: create new concept node, store embedding
+            AGE-->>P: new concept created
+        end
+    end
+    P->>EV: Stage 4: store evidence, source ref, provenance
+    EV-->>P: evidence recorded
+```
+
 ### Stage 1: Exact ID match
 
 If the LLM predicted a `concept_id` that already exists in the graph, the pipeline uses it directly. The LLM receives the top 30 existing concepts as context during extraction (configurable via `EXTRACTION_CANDIDATE_K`), so it can predict IDs it recognizes. When this match fires, no embedding computation is needed.

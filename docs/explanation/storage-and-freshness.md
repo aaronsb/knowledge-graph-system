@@ -4,32 +4,44 @@ Kappa Graph stores data across three tiers — Apache AGE, PostgreSQL, and Garag
 
 ## Storage tiers
 
-```
-┌──────────────────────────────────────────────────────────────┐
-│                       Storage Hierarchy                      │
-├──────────────────────────────────────────────────────────────┤
-│                                                              │
-│  Apache AGE (Graph)                                          │
-│    Concepts, relationships, evidence                         │
-│    :Source nodes — chunk text + pointer to full doc          │
-│    :Instance nodes — extracted quotes                        │
-│    Semantic structure and typed edges                        │
-│                                                              │
-│  PostgreSQL (Relational)                                     │
-│    Users, groups, permissions          (kg_auth.*)           │
-│    Job queue, scheduled jobs           (kg_api.*)            │
-│    Artifact metadata + small payloads  (kg_api.artifacts)    │
-│    Query definitions                   (kg_api.*)            │
-│    Configuration, encrypted API keys   (kg_api.*)            │
-│    Audit trail, observability          (kg_logs.*)           │
-│    Catalog index, freshness clock      (kg_api.*)            │
-│                                                              │
-│  Garage S3 (Object Storage)                                  │
-│    Original source documents (pre-chunking)                  │
-│    Original images                                           │
-│    Large computed artifacts (>10 KB)                         │
-│                                                              │
-└──────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    subgraph AGE["Apache AGE — Graph / Semantic Structure"]
+        A1["Concept nodes<br>label · embedding · description"]
+        A2["Source nodes<br>chunk text · garage_key pointer"]
+        A3["Instance nodes<br>extracted quotes"]
+        A4["Typed edges<br>APPEARS · EVIDENCED_BY<br>IMPLIES · SUPPORTS · CONTRADICTS"]
+    end
+    subgraph PG["PostgreSQL — Relational Core"]
+        P1["Users · groups · permissions<br>kg_auth.*"]
+        P2["Job queue · scheduled jobs<br>kg_api.*"]
+        P3["Artifact metadata + small payloads<br>kg_api.artifacts"]
+        P4["Query definitions · configuration<br>encrypted API keys  kg_api.*"]
+        P5["Audit trail · observability<br>kg_logs.*"]
+        P6["Catalog index · freshness clock<br>kg_api.*"]
+    end
+    subgraph S3["Garage S3 — Object Storage"]
+        G1["Original source documents<br>pre-chunking"]
+        G2["Original images"]
+        G3["Large computed artifacts<br>&gt;10 KB"]
+    end
+
+    style AGE fill:#1e3a2f,stroke:#4caf82,color:#e0f5ea
+    style PG  fill:#1e1e3a,stroke:#7c6fc4,color:#e8e6ff
+    style S3  fill:#2b2b2b,stroke:#888888,color:#cccccc
+    style A1  fill:#1b4332,stroke:#4caf82,color:#d8f3dc
+    style A2  fill:#1b4332,stroke:#4caf82,color:#d8f3dc
+    style A3  fill:#1b4332,stroke:#4caf82,color:#d8f3dc
+    style A4  fill:#1b4332,stroke:#4caf82,color:#d8f3dc
+    style P1  fill:#1a1a4e,stroke:#7c6fc4,color:#dcd9ff
+    style P2  fill:#1a1a4e,stroke:#7c6fc4,color:#dcd9ff
+    style P3  fill:#1a1a4e,stroke:#7c6fc4,color:#dcd9ff
+    style P4  fill:#1a1a4e,stroke:#7c6fc4,color:#dcd9ff
+    style P5  fill:#1a1a4e,stroke:#7c6fc4,color:#dcd9ff
+    style P6  fill:#1a1a4e,stroke:#7c6fc4,color:#dcd9ff
+    style G1  fill:#2b2b2b,stroke:#aaaaaa,color:#cccccc
+    style G2  fill:#2b2b2b,stroke:#aaaaaa,color:#cccccc
+    style G3  fill:#2b2b2b,stroke:#aaaaaa,color:#cccccc
 ```
 
 The split reflects two constraints: Apache AGE stores semantic structure via openCypher; PostgreSQL owns structured metadata that needs transactions and relational joins; Garage holds binary blobs that would bloat the database.
@@ -47,69 +59,83 @@ All objects land in a single Garage bucket (`kg-storage` by default, overridden 
 
 ## Data flow: document ingestion
 
-```
-Original doc (PDF, TXT, MD)
-        │
-        ▼
-Store in Garage                     sources/{ontology}/{file}
-        │
-        ▼
-Chunk (~1000 words each)
-        │
-        ├─────────┬─────────┐
-        ▼         ▼         ▼
-    Chunk 1   Chunk 2   Chunk N
-        │         │         │
-        └────┬────┘─────────┘
-             ▼
-    LLM concept extraction (per chunk)
-             │
-             ▼
-    Apache AGE graph
-      :Source nodes — chunk text + garage_key (full-doc pointer)
-      :Concept nodes — label, embedding, description
-      :Instance nodes — extracted quotes
-      Edges — APPEARS, EVIDENCED_BY, IMPLIES, SUPPORTS, CONTRADICTS
+```mermaid
+flowchart TD
+    DOC["Original document<br>PDF · TXT · MD"]
+    GARAGE["Store in Garage<br>sources/{ontology}/{file}"]
+    CHUNK["Chunk into ~1000-word segments"]
+    C1["Chunk 1"]
+    C2["Chunk 2"]
+    CN["Chunk N"]
+    LLM["LLM concept extraction<br>per chunk"]
+    AGE["Apache AGE graph"]
+    SRC["Source nodes<br>chunk text · garage_key pointer"]
+    CON["Concept nodes<br>label · embedding · description"]
+    INST["Instance nodes<br>extracted quotes"]
+    EDGES["Edges<br>APPEARS · EVIDENCED_BY<br>IMPLIES · SUPPORTS · CONTRADICTS"]
+
+    DOC --> GARAGE --> CHUNK
+    CHUNK --> C1 & C2 & CN
+    C1 & C2 & CN --> LLM
+    LLM --> AGE
+    AGE --> SRC & CON & INST & EDGES
+
+    style DOC    fill:#78350f,stroke:#f59e0b,color:#ffffff
+    style GARAGE fill:#1b4332,stroke:#4caf82,color:#d8f3dc
+    style CHUNK  fill:#1e3a5f,stroke:#60a5fa,color:#dbeafe
+    style C1     fill:#1e3a5f,stroke:#60a5fa,color:#dbeafe
+    style C2     fill:#1e3a5f,stroke:#60a5fa,color:#dbeafe
+    style CN     fill:#1e3a5f,stroke:#60a5fa,color:#dbeafe
+    style LLM    fill:#3b0764,stroke:#c084fc,color:#f3e8ff
+    style AGE    fill:#1b4332,stroke:#4caf82,color:#d8f3dc
+    style SRC    fill:#1b4332,stroke:#4caf82,color:#d8f3dc
+    style CON    fill:#1b4332,stroke:#4caf82,color:#d8f3dc
+    style INST   fill:#1b4332,stroke:#4caf82,color:#d8f3dc
+    style EDGES  fill:#1b4332,stroke:#4caf82,color:#d8f3dc
 ```
 
 The chunk text lives in `:Source.full_text` for fast evidence retrieval. The `garage_key` on each `:Source` points back to the full original document stored in Garage.
 
 ## Data flow: image ingestion
 
-```
-Original image
-        │
-        ▼
-Store in Garage                     images/{hash}.{ext}
-        │
-        ▼
-Vision model → prose description
-        │
-        ▼
-(same path as document ingestion from here)
+```mermaid
+flowchart TD
+    IMG["Original image"]
+    GARAGE["Store in Garage<br>images/{hash}.{ext}"]
+    VISION["Vision model<br>prose description"]
+    DOC_PATH["Document ingestion path<br>chunk · extract · graph"]
+
+    IMG --> GARAGE --> VISION --> DOC_PATH
+
+    style IMG      fill:#78350f,stroke:#f59e0b,color:#ffffff
+    style GARAGE   fill:#1b4332,stroke:#4caf82,color:#d8f3dc
+    style VISION   fill:#3b0764,stroke:#c084fc,color:#f3e8ff
+    style DOC_PATH fill:#1e3a5f,stroke:#60a5fa,color:#dbeafe
 ```
 
 ## Data flow: artifact storage
 
 Computed results (polarity analyses, projections, reports) route by size:
 
-```
-Computation (expensive)
-        │
-        ▼
-Size check
-        │
-    ┌───┴───┐
-    ▼       ▼
- <10 KB  >10 KB
- inline   Garage
-    │       │
-    └───┬───┘
-        ▼
-kg_api.artifacts table
-  inline_result (JSONB)  OR  garage_key (pointer)
-  graph_epoch (freshness stamp)
-  owner_id, parameters, metadata
+```mermaid
+flowchart TD
+    COMP["Computation<br>expensive operation"]
+    SIZE{{"Size check"}}
+    SMALL["Inline JSONB<br>payload &lt; 10 KB"]
+    LARGE["Garage pointer<br>payload &gt; 10 KB"]
+    TABLE["kg_api.artifacts<br>inline_result OR garage_key<br>graph_epoch · owner_id · parameters"]
+
+    COMP --> SIZE
+    SIZE -- "small" --> SMALL
+    SIZE -- "large" --> LARGE
+    SMALL --> TABLE
+    LARGE --> TABLE
+
+    style COMP  fill:#78350f,stroke:#f59e0b,color:#ffffff
+    style SIZE  fill:#78350f,stroke:#f59e0b,color:#ffffff
+    style SMALL fill:#1b4332,stroke:#4caf82,color:#d8f3dc
+    style LARGE fill:#1b4332,stroke:#4caf82,color:#d8f3dc
+    style TABLE fill:#1a1a4e,stroke:#7c6fc4,color:#dcd9ff
 ```
 
 ## Retrieval paths

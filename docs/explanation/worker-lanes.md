@@ -36,6 +36,38 @@ start wins it.
 
 ---
 
+## Job lifecycle
+
+```mermaid
+stateDiagram-v2
+    [*] --> awaiting_approval : job submitted
+
+    awaiting_approval --> approved : operator approves
+    awaiting_approval --> cancelled : reject / expire
+
+    approved --> processing : lane claims job
+
+    processing --> completed : success
+    processing --> failed : error
+    processing --> cancelled : cancel request
+
+    completed --> [*]
+    failed --> [*]
+    cancelled --> [*]
+
+    classDef store fill:#2d6a4f,color:#ffffff,stroke:#1b4332
+    classDef process fill:#1d6fa4,color:#ffffff,stroke:#0a3d6b
+    classDef waiting fill:#b5752a,color:#ffffff,stroke:#7d4f1a
+    classDef terminal fill:#4a4a4a,color:#ffffff,stroke:#2a2a2a
+
+    class completed store
+    class processing process
+    class awaiting_approval,approved waiting
+    class failed,cancelled terminal
+```
+
+---
+
 ## How a lane claims a job
 
 Each lane runs an async polling loop in `api/app/services/lane_manager.py`. On every cycle:

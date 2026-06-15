@@ -22,20 +22,33 @@ The system stores concepts and the typed relationships between them — IMPLIES,
 
 ## Architecture
 
-```
-Documents ──→ [FastAPI] ──→ LLM Extraction ──→ [PostgreSQL 18 + AGE 1.7.0]
-                  │                                         │
-                  │                                  [graph_accel]
-                  │                               in-memory traversal
-                  │                                         │
-              [Garage S3]                           [AGE graph store]
-               doc storage                        source of truth (ACID)
-                  │                                         │
-              [React + D3] ←──── REST API ────────→ [FastAPI]
-            web visualization                      query + ingest
-                  │
-           [kg CLI / MCP / FUSE]
-             client interfaces
+```mermaid
+flowchart TD
+    DOCS([("External Documents<br>PDF / MD / Images / Text")])
+    API(["FastAPI<br>Extraction Pipeline and REST API"])
+    LLM(["LLM Extraction<br>Concept and Relationship Mining"])
+    PG[("PostgreSQL 18 + AGE 1.7.0<br>Graph Store — ACID Source of Truth")]
+    GA(["graph_accel<br>Rust Extension — In-Memory BFS and Shortest Path"])
+    S3[("Garage S3<br>Document Asset Storage")]
+    WEB(["React + D3<br>Web Visualization"])
+    CLI(["kg CLI / MCP / FUSE<br>Client Interfaces"])
+
+    DOCS -->|ingest| API
+    API -->|chunk + extract| LLM
+    LLM -->|upsert concepts and edges| PG
+    PG -->|epoch-based read model| GA
+    API -->|store assets| S3
+    WEB -->|REST API| API
+    CLI -->|REST / MCP| API
+
+    style DOCS fill:#c2410c,color:#ffffff,stroke:#9a3412
+    style API  fill:#6d28d9,color:#ffffff,stroke:#4c1d95
+    style LLM  fill:#0d9488,color:#ffffff,stroke:#0f766e
+    style PG   fill:#16a34a,color:#ffffff,stroke:#15803d
+    style GA   fill:#0d9488,color:#ffffff,stroke:#0f766e
+    style S3   fill:#16a34a,color:#ffffff,stroke:#15803d
+    style WEB  fill:#64748b,color:#ffffff,stroke:#475569
+    style CLI  fill:#64748b,color:#ffffff,stroke:#475569
 ```
 
 **PostgreSQL 18 + Apache AGE 1.7.0** — Graph database with native openCypher queries. ACID transactions, schema integrity, vector search via pgvector.
