@@ -3,6 +3,7 @@ status: Accepted
 date: 2025-10-06
 deciders:
   - Development Team
+related: []
 ---
 
 # ADR-012: API Server Architecture for Scalable Neo4j Access

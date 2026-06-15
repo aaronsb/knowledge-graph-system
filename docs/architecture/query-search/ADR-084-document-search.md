@@ -4,6 +4,7 @@ date: 2026-01-03
 deciders:
   - aaronsb
   - claude
+related: []
 ---
 
 # ADR-084: Document-Level Search

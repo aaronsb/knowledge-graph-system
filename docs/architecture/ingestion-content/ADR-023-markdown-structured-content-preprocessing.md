@@ -4,6 +4,7 @@ date: 2025-10-10
 deciders:
   - aaronsb
   - claude
+related: []
 ---
 
 # ADR-023: Markdown Structured Content Preprocessing

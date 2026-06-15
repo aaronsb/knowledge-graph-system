@@ -4,6 +4,7 @@ date: 2026-01-17
 deciders:
   - aaronsb
   - claude
+related: []
 ---
 
 # ADR-086: Deployment Topology (Dev/Stable Split)

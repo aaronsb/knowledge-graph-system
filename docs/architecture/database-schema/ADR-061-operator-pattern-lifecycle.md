@@ -4,6 +4,7 @@ date: 2025-01-07
 deciders:
   - aaronsb
   - claude
+related: []
 ---
 
 # ADR-061: Operator Pattern for Platform Lifecycle Management

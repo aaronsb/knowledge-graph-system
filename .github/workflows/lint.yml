@@ -84,12 +84,12 @@ jobs:
 
       - name: Lint documentation catalog (frontmatter + decision graph)
         # Validates the docs catalog (ADR-087): id/domain/mode frontmatter,
-        # the related/supersedes reference graph, and nav membership. Catalog
-        # pages are enforced (errors fail); ADR frontmatter only warns until the
-        # ADR sweep lands (#520 fast-follow), so --enforce-adrs is intentionally
-        # omitted here.
+        # the related/supersedes reference graph, and nav membership. Both
+        # catalog pages and ADRs are enforced — --enforce-adrs promotes ADR
+        # graph issues (dangling related/supersedes refs, supersede cycles) to
+        # errors now that the ADR frontmatter sweep has landed.
         run: |
-          python3 docs/scripts/doclint.py --check
+          python3 docs/scripts/doclint.py --check --enforce-adrs
 
   # TODO: Add full test infrastructure in future
   # pytest-unit:

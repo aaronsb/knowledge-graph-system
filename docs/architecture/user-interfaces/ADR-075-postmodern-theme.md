@@ -4,6 +4,7 @@ date: 2025-01-09
 deciders:
   - aaronsb
   - claude
+related: []
 ---
 
 # ADR-075: Postmodern Theme System

@@ -4,6 +4,7 @@ date: 2025-11-01
 deciders:
   - aaronsb
   - claude
+related: []
 ---
 
 # ADR-054: OAuth 2.0 Client Management for Multi-Client Authentication

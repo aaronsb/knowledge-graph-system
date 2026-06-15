@@ -4,6 +4,7 @@ date: 2025-10-12
 deciders:
   - aaronsb
   - claude
+related: []
 ---
 
 # ADR-029: CLI Theory of Operation - Hybrid Unix/Domain-Specific Design

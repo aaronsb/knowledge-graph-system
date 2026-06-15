@@ -47,6 +47,13 @@ the "first octet" of the number. The authoritative definition lives in
 A new ADR takes the next free number in its domain band: `adr new <domain>
 "<title>"` assigns it and scaffolds the file under the domain's folder.
 
+A decision that grows into distinct parts uses **decimal sub-numbers**:
+`ADR-032.1` is the decision, `ADR-032.2` a follow-on (implementation notes, an
+appendix, later findings). The bare base number (`ADR-032`) is the *family*
+identifier: a `related: ADR-032` reference cites the decision as a whole and is
+satisfied by any of its parts, while `related: ADR-032.2` targets one part
+exactly. The graph linter (§5) resolves references this way.
+
 ### 2. Legacy range is frozen
 
 ADRs 1–99 predate the domain scheme. They are **frozen at their numbers** —
