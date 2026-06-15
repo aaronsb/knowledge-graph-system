@@ -75,11 +75,13 @@ defaults:
     - claude
   status: Draft
 
-# Legacy ADR range (pre-domain numbering)
-# ADRs in this range are shown separately in the index
+# Retired number range (pre-domain numbering).
+# These ADRs were renumbered into their domain bands on 2026-06-15 (ADR-900
+# amendment). The range is now vacated: no ADR uses 1–99, and doclint's
+# retired-range guard fails the build on any reference into it.
 legacy:
   range: [1, 99]
-  label: "Legacy (Pre-Domain Numbering)"
+  label: "Retired (renumbered into domains 2026-06-15)"
 
 # Viewer command for `adr view`
 # Use {file} as placeholder for the file path

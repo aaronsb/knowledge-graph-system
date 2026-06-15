@@ -1,6 +1,6 @@
 /**
  * Vocabulary Epistemic Status Commands
- * Knowledge validation state based on grounding patterns (ADR-065)
+ * Knowledge validation state based on grounding patterns (ADR-610)
  */
 
 import { Command } from 'commander';
@@ -10,7 +10,7 @@ import { coloredCount, separator } from '../colors';
 
 export function createEpistemicStatusCommand(): Command {
   const epistemicCommand = new Command('epistemic-status')
-    .description('Epistemic status classification for vocabulary types (ADR-065). Shows knowledge validation state based on grounding patterns.');
+    .description('Epistemic status classification for vocabulary types (ADR-610). Shows knowledge validation state based on grounding patterns.');
 
   // kg vocab epistemic-status list
   epistemicCommand.addCommand(
@@ -202,7 +202,7 @@ export function createEpistemicStatusCommand(): Command {
   // kg vocab epistemic-status measure
   epistemicCommand.addCommand(
     new Command('measure')
-      .description('Run epistemic status measurement for all vocabulary types (ADR-065).')
+      .description('Run epistemic status measurement for all vocabulary types (ADR-610).')
       .option('--sample-size <n>', 'Edges to sample per type (default: 100)', (val) => parseInt(val, 10), 100)
       .option('--no-store', 'Run measurement without storing to database')
       .option('--verbose', 'Include detailed statistics in output')

@@ -1,5 +1,5 @@
 """
-API Authentication Audit Regression Test (ADR-060)
+API Authentication Audit Regression Test (ADR-407)
 
 Ensures the authentication audit tool correctly detects security patterns
 and that no endpoints have unclear authentication requirements.

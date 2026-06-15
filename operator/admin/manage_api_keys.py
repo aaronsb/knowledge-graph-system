@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-API Key Management Script (ADR-031)
+API Key Management Script (ADR-405)
 
 Manages encrypted API keys for AI providers (OpenAI, Anthropic).
 Works with both Docker and non-Docker PostgreSQL deployments.

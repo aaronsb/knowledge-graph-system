@@ -2,7 +2,7 @@
 # ============================================================================
 # Garage Initialization Script
 # ============================================================================
-# Creates buckets and keys for image storage (ADR-057)
+# Creates buckets and keys for image storage (ADR-305)
 #
 # Usage:
 #   ./scripts/garage/init-garage.sh
@@ -12,7 +12,7 @@
 #   GARAGE_S3_ENDPOINT     - S3 API endpoint (default: http://localhost:3900)
 #   GARAGE_BUCKET          - Bucket name (default: kg-storage)
 #
-# Note: Application retrieves credentials from encrypted key store (ADR-031)
+# Note: Application retrieves credentials from encrypted key store (ADR-405)
 #       Configure via: ./scripts/setup/initialize-platform.sh (option 7)
 # ============================================================================
 

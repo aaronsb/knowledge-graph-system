@@ -7,9 +7,9 @@ deciders:
 related:
   - ADR-800
   - ADR-801
-  - ADR-039
-  - ADR-045
-  - ADR-041
+  - ADR-804
+  - ADR-809
+  - ADR-805
 ---
 
 # ADR-802: Unify Vision Providers Under the Uniform Provider Contract
@@ -48,7 +48,7 @@ The system already runs **two** decoupled provider capabilities, not one:
   `kg_api.ai_extraction_config` via `load_active_extraction_config()` — a
   per-provider row plus a single `active` flag (ADR-801 §2).
 - **Embedding** resolves *independently* via `get_embedding_provider()`
-  (ADR-039/045). A local multimodal model can serve embeddings regardless of
+  (ADR-804/045). A local multimodal model can serve embeddings regardless of
   which cloud provider does extraction. As the code states: "the embedder
   stays separate (delegated), as with every reasoning provider."
 
@@ -174,7 +174,7 @@ behind the existing factory signature.
 > So the remaining work is **de-duplication + one call-site migration**
 > (`ingestion_worker.py`), not a rewrite. The genuine risk is *behavioral
 > fidelity*, not size: the ingestion `describe_image` is research-validated
-> (ADR-057 — `LITERAL_DESCRIPTION_PROMPT`, OpenAI `detail="high"`, temp 0.1) and
+> (ADR-305 — `LITERAL_DESCRIPTION_PROMPT`, OpenAI `detail="high"`, temp 0.1) and
 > differs from the `ai_providers` one (different prompt, no high-detail, temp
 > 0.3, simpler return shape), and `OllamaProvider.describe_image` is not yet
 > implemented. A collapse must parameterize prompt/detail/temp, unify the

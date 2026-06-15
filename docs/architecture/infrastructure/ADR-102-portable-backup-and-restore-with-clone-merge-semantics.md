@@ -5,9 +5,9 @@ deciders:
   - aaronsb
   - claude
 related:
-  - ADR-015
-  - ADR-079
-  - ADR-083
+  - ADR-107
+  - ADR-114
+  - ADR-116
   - ADR-203
   - ADR-205
   - ADR-207
@@ -156,8 +156,8 @@ recomputed. Everything derived is regenerated after restore and is never seriali
 
 **Out of scope (NOT backed up — regenerated from the restored graph):**
 
-- **Projections** (ADR-079, `projections/...`) — derived embedding-landscape snapshots.
-- **Artifacts / scores** (ADR-083, `artifacts/...`) — polarity analyses, grounding
+- **Projections** (ADR-114, `projections/...`) — derived embedding-landscape snapshots.
+- **Artifacts / scores** (ADR-116, `artifacts/...`) — polarity analyses, grounding
   results, and other computed derivations.
 - Grounding caches and the catalog index.
 
@@ -360,10 +360,10 @@ imports, as the workflow's first phase):
   The first implementation phase produces an import-traced inventory marking each
   module **keep / fold-into-new / delete**, and deletions land alongside the code that
   replaces them.
-- **Reconcile the prior ADR:** ADR-015 (Backup/Restore Streaming Architecture) is at
+- **Reconcile the prior ADR:** ADR-107 (Backup/Restore Streaming Architecture) is at
   least partly superseded by this decision. The audit determines whether its
   streaming-transport mechanism is retained under the new path or fully replaced, and
-  ADR-015's status is updated accordingly (Superseded, or amended) when this lands —
+  ADR-107's status is updated accordingly (Superseded, or amended) when this lands —
   rather than blanket-flipping it now on assumption.
 
 ### 10. Bug fixes folded in

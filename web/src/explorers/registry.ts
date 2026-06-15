@@ -1,7 +1,7 @@
 /**
  * Explorer Registry
  *
- * Centralized registry for all explorer types following ADR-034.
+ * Centralized registry for all explorer types following ADR-710.
  * Each explorer implements the ExplorerPlugin interface.
  */
 

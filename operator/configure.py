@@ -91,7 +91,7 @@ class OperatorConfig:
                     user_id = cur.fetchone()[0]
                     print(f"✅ Created admin user: {username} (id={user_id})")
 
-                    # Add user to admins group (group_id=2, per ADR-082)
+                    # Add user to admins group (group_id=2, per ADR-410)
                     cur.execute(
                         """INSERT INTO kg_auth.user_groups (user_id, group_id, added_by)
                            VALUES (%s, 2, 1)
@@ -112,7 +112,7 @@ class OperatorConfig:
 
     def cmd_platform_config(self, args):
         """
-        Get/set/list platform_config flags (operator control plane, ADR-061).
+        Get/set/list platform_config flags (operator control plane, ADR-211).
 
         Used by the prod init path to disable open self-registration
         (registration_enabled=false, ADR-400/#431) and available to operators
@@ -854,7 +854,7 @@ def main():
     models_parser.add_argument('--category', default='extraction', help='Filter by category (default: extraction)')
     models_parser.add_argument('--limit', type=int, default=0, help='Limit number of results (0=unlimited)')
 
-    # platform-config (operator control plane, ADR-061)
+    # platform-config (operator control plane, ADR-211)
     pc_parser = subparsers.add_parser('platform-config', help='Get/set/list platform configuration flags')
     pc_parser.add_argument('action', nargs='?', default='list', help='set, get, or list')
     pc_parser.add_argument('key', nargs='?', help='Config key (for set/get)')

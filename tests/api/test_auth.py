@@ -1,9 +1,9 @@
 """
-Authentication endpoints tests (ADR-027).
+Authentication endpoints tests (ADR-403).
 
 Tests for user management and authentication endpoints.
 
-NOTE: ADR-054 (Unified OAuth Architecture) removed several endpoints:
+NOTE: ADR-406 (Unified OAuth Architecture) removed several endpoints:
 - POST /auth/login — replaced by OAuth 2.0 flows
 - GET /auth/me — replaced by GET /users/me
 - POST /auth/logout — replaced by OAuth token revocation
@@ -117,7 +117,7 @@ def test_register_user_cannot_self_assign_privileged_role(api_client):
 
 
 # =============================================================================
-# Endpoints removed by ADR-054 (Unified OAuth Architecture):
+# Endpoints removed by ADR-406 (Unified OAuth Architecture):
 # - POST /auth/login → OAuth 2.0 flows (api/app/routes/oauth.py)
 # - GET /auth/me → GET /users/me (OAuth-authenticated)
 # - POST /auth/logout → OAuth token revocation

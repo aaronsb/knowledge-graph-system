@@ -1,5 +1,5 @@
 """
-Batch Service - Bulk graph operations with transactions (ADR-089 Phase 1b).
+Batch Service - Bulk graph operations with transactions (ADR-308 Phase 1b).
 
 Provides batch creation of concepts and edges in a single atomic transaction.
 If any operation fails, the entire batch is rolled back.

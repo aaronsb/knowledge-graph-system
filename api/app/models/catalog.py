@@ -6,7 +6,7 @@ the ontology -> document -> concept hierarchy over the graph's canonical edges
 (:SCOPED_BY, :HAS_SOURCE, :APPEARS).
 
 These models are the surface-agnostic contract shared by CLI, MCP, web (ADR-700),
-and FUSE (ADR-069). They are intentionally NOT the WorkingGraph of ADR-500 —
+and FUSE (ADR-715). They are intentionally NOT the WorkingGraph of ADR-500 —
 browse returns ordered rows, not a graph.
 """
 

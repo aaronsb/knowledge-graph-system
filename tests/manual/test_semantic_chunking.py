@@ -136,10 +136,10 @@ This is normal text after the giant blob.
 def test_real_documentation():
     """Test on real complex documentation"""
     print(f"\n{'='*80}")
-    print("TEST 3: Real Documentation (ADR-016)")
+    print("TEST 3: Real Documentation (ADR-208)")
     print("="*80)
 
-    file_path = 'docs/architecture/ADR-016-apache-age-migration.md'
+    file_path = 'docs/architecture/ADR-208-apache-age-migration.md'
 
     if not Path(file_path).exists():
         print(f"⚠  Skipping: {file_path} not found")

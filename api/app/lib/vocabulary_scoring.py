@@ -1,12 +1,12 @@
 """
 Grounding-Aware Vocabulary Scoring (Graph-Native Implementation).
 
-Implements ADR-046 (Grounding-Aware Vocabulary Management) by extending ADR-032
+Implements ADR-604 (Grounding-Aware Vocabulary Management) by extending ADR-603
 with embedding-based synonym detection and grounding contribution metrics.
 
 Key Features:
 1. **Embedding-based synonym detection** - Uses semantic similarity instead of string matching
-2. **Grounding contribution metrics** - Measures impact on truth convergence (ADR-044)
+2. **Grounding contribution metrics** - Measures impact on truth convergence (ADR-808)
 3. **Dynamic vocabulary curation** - Generates optimized subsets for LLM extraction prompts
 4. **Graph-native architecture** - All operations use graph queries + embeddings
 
@@ -18,13 +18,13 @@ Value Score Components:
 - **grounding_contribution** (NEW): Impact on grounding strength (truth convergence)
 - **supports_concepts** (NEW): Number of concepts this type helps ground
 
-Synonym Detection (ADR-046):
+Synonym Detection (ADR-604):
     Uses embedding cosine similarity instead of Porter stemmer:
     - similarity >= 0.90: Strong synonyms (auto-merge candidates)
     - similarity >= 0.85: Moderate synonyms (review recommended)
     - similarity < 0.85: Distinct types (preserve diversity)
 
-Dynamic Vocabulary Curation (ADR-046):
+Dynamic Vocabulary Curation (ADR-604):
     Prevents LLM cognitive overload by selecting optimal subset:
     - High grounding contribution (truth-critical types)
     - Semantic diversity (avoid redundant synonyms)
@@ -36,10 +36,10 @@ Usage:
 
     scorer = VocabularyScorer(db_client)
 
-    # Basic scoring (ADR-032 metrics)
+    # Basic scoring (ADR-603 metrics)
     scores = await scorer.get_value_scores()
 
-    # With grounding awareness (ADR-046)
+    # With grounding awareness (ADR-604)
     scores = await scorer.get_value_scores(include_grounding=True)
 
     # Find semantic synonyms
@@ -52,16 +52,16 @@ Usage:
     recommendations = await scorer.generate_merge_recommendations(min_similarity=0.85)
 
 Replaces:
-    - ADR-032 synonym_detector.py (string-based detection)
-    - ADR-032 category_classifier.py (table-based classification)
+    - ADR-603 synonym_detector.py (string-based detection)
+    - ADR-603 category_classifier.py (table-based classification)
     - Porter stemmer approach (language-specific, brittle)
 
 References:
-    - ADR-046: Grounding-Aware Vocabulary Management (this implementation)
-    - ADR-044: Probabilistic Truth Convergence (grounding strength calculation)
-    - ADR-045: Unified Embedding Generation (provides embeddings)
-    - ADR-032: Automatic Edge Vocabulary Expansion (extended by this)
-    - ADR-025: Dynamic Relationship Vocabulary
+    - ADR-604: Grounding-Aware Vocabulary Management (this implementation)
+    - ADR-808: Probabilistic Truth Convergence (grounding strength calculation)
+    - ADR-809: Unified Embedding Generation (provides embeddings)
+    - ADR-603: Automatic Edge Vocabulary Expansion (extended by this)
+    - ADR-601: Dynamic Relationship Vocabulary
 """
 
 from typing import Dict, List, Optional, Tuple
@@ -87,10 +87,10 @@ class EdgeTypeScore:
         value_score: Calculated value score (higher = more valuable)
         is_builtin: Protected core type (never auto-prune)
         last_used: Timestamp of most recent traversal
-        avg_grounding_contribution: Average grounding strength contribution (ADR-046)
-        supports_concepts: Number of concepts this edge type helps ground (ADR-046)
-        embedding: Edge type embedding vector for semantic analysis (ADR-046)
-        epistemic_status: Epistemic status classification (ADR-065)
+        avg_grounding_contribution: Average grounding strength contribution (ADR-604)
+        supports_concepts: Number of concepts this edge type helps ground (ADR-604)
+        embedding: Edge type embedding vector for semantic analysis (ADR-604)
+        epistemic_status: Epistemic status classification (ADR-610)
     """
     relationship_type: str
     edge_count: int
@@ -124,7 +124,7 @@ class VocabularyScorer:
     determine structural importance and usage patterns.
     """
 
-    # Bridge detection thresholds (per ADR-032)
+    # Bridge detection thresholds (per ADR-603)
     BRIDGE_SOURCE_THRESHOLD = 10    # Low-activation source
     BRIDGE_DEST_THRESHOLD = 100     # High-activation destination
 
@@ -153,7 +153,7 @@ class VocabularyScorer:
 
         Args:
             include_builtin: Include protected builtin types in results
-            include_grounding: Calculate grounding contributions (ADR-046, slower)
+            include_grounding: Calculate grounding contributions (ADR-604, slower)
 
         Returns:
             Dictionary mapping relationship_type to EdgeTypeScore
@@ -204,7 +204,7 @@ class VocabularyScorer:
                 trend=trend
             )
 
-            # Optionally calculate grounding contribution (ADR-046)
+            # Optionally calculate grounding contribution (ADR-604)
             avg_grounding_contribution = None
             supports_concepts = None
             embedding = None
@@ -216,7 +216,7 @@ class VocabularyScorer:
                 except Exception as e:
                     logger.warning(f"Failed to calculate grounding for {rel_type}: {e}")
 
-            # Get epistemic status from metadata (ADR-065)
+            # Get epistemic status from metadata (ADR-610)
             epistemic_status = vocab_metadata.get(rel_type, {}).get("epistemic_status")
 
             scores[rel_type] = EdgeTypeScore(
@@ -427,7 +427,7 @@ class VocabularyScorer:
             logger.error(f"Error getting vocabulary metadata from SQL: {e}")
             metadata = {}
 
-        # Get epistemic_status from graph (ADR-065)
+        # Get epistemic_status from graph (ADR-610)
         try:
             epistemic_query = """
                 SELECT * FROM cypher('knowledge_graph', $$
@@ -458,7 +458,7 @@ class VocabularyScorer:
         relationship_type: str
     ) -> Tuple[float, int]:
         """
-        Calculate grounding strength contribution for an edge type (ADR-046).
+        Calculate grounding strength contribution for an edge type (ADR-604).
 
         This measures how much an edge type contributes to concept grounding
         across the graph by analyzing its semantic similarity to SUPPORTS/CONTRADICTS.
@@ -617,7 +617,7 @@ class VocabularyScorer:
         limit: int = 10
     ) -> List[Tuple[str, float]]:
         """
-        Find semantic synonyms using embedding similarity (ADR-046).
+        Find semantic synonyms using embedding similarity (ADR-604).
 
         Replaces Porter stemmer approach with embedding-based cosine similarity
         for more accurate synonym detection across all vocabulary types.
@@ -754,7 +754,7 @@ class VocabularyScorer:
         grounding_weight: float = 0.3
     ) -> List[str]:
         """
-        Get optimal vocabulary subset for LLM extraction prompts (ADR-046).
+        Get optimal vocabulary subset for LLM extraction prompts (ADR-604).
 
         Dynamically curates vocabulary based on:
         - Usage metrics (value_score)
@@ -891,9 +891,9 @@ class VocabularyScorer:
         consider_grounding: bool = True
     ) -> List[Dict]:
         """
-        Generate grounding-aware merge recommendations (ADR-046).
+        Generate grounding-aware merge recommendations (ADR-604).
 
-        Replaces ADR-032 synonym_detector + pruning_strategies with graph-native approach.
+        Replaces ADR-603 synonym_detector + pruning_strategies with graph-native approach.
 
         Algorithm:
         1. Get all active edge types with scores + grounding
@@ -1197,7 +1197,7 @@ if __name__ == "__main__":
     import asyncio
     import sys
 
-    print("Vocabulary Scorer - ADR-032 Implementation")
+    print("Vocabulary Scorer - ADR-603 Implementation")
     print("=" * 60)
     print()
     print("This module calculates value scores for edge types based on:")

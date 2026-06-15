@@ -6,13 +6,13 @@ deciders:
   - claude
 related:
   - ADR-103
-  - ADR-086
-  - ADR-061
+  - ADR-117
+  - ADR-211
   - ADR-400
   - ADR-401
-  - ADR-074
-  - ADR-054
-  - ADR-031
+  - ADR-409
+  - ADR-406
+  - ADR-405
 ---
 
 # ADR-104: Unified provisioning architecture: install-path convergence and first-run claim protocol
@@ -55,7 +55,7 @@ job, yet it is implemented more than once:
   (`install.sh:2552`, `headless-init.sh:481`) — plus parallel AI-provider config.
 
 So the paths already converge on the operator container as the configuration
-sink (ADR-061); the duplication is the provisioning *around* it. `install.sh` is
+sink (ADR-211); the duplication is the provisioning *around* it. `install.sh` is
 ~2800 lines partly because it re-implements provisioning the operator already
 owns. Adding a third path naively triples this.
 
@@ -183,25 +183,25 @@ Rotation difficulty differs sharply by layer:
 | Layer | Secrets | Rotatable today? |
 |-------|---------|------------------|
 | Identity | admin password, OAuth clients | yes — claim flow / admin API |
-| Application | provider API keys (OpenAI/Anthropic/…) | **yes** — runtime, encrypted at rest (ADR-031) |
+| Application | provider API keys (OpenAI/Anthropic/…) | **yes** — runtime, encrypted at rest (ADR-405) |
 | Infra / master | `ENCRYPTION_KEY`, `OAUTH_SIGNING_KEY`, `POSTGRES_PASSWORD`, `GARAGE_RPC_SECRET`, `INTERNAL_KEY_SERVICE_SECRET` | **no safe path** |
 
-Application-key rotation is already solved (ADR-031, runtime via API). The gap is
+Application-key rotation is already solved (ADR-405, runtime via API). The gap is
 the **infra/master** layer, where each secret rotates differently and none has a
 safe orchestration today:
 
-- **`ENCRYPTION_KEY`** (Fernet master, ADR-031): regenerating it orphans every
+- **`ENCRYPTION_KEY`** (Fernet master, ADR-405): regenerating it orphans every
   stored API key. Safe rotation needs MultiFernet re-encryption
   (decrypt-old / encrypt-new) — a *data migration*, not a config change.
   ⚠️ `init-secrets.sh --reset-key ENCRYPTION_KEY` regenerates **without**
   re-encrypting, and the script itself warns it "will break existing encrypted
   API keys." That footgun is the sharpest argument that infra-secret rotation
   needs real design, not the existing reset primitive.
-- **`OAUTH_SIGNING_KEY`** (ADR-054): rotation invalidates all live tokens unless
+- **`OAUTH_SIGNING_KEY`** (ADR-406): rotation invalidates all live tokens unless
   a `kid`/keyset overlap is introduced (no such mechanism today).
 - **`POSTGRES_PASSWORD`**: `ALTER USER` + coordinated reconnect of dependents.
 - **`GARAGE_RPC_SECRET`**: coordinated garage restart — and multi-node
-  coordination in a federated future (ADR-088).
+  coordination in a federated future (ADR-118).
 - **`INTERNAL_KEY_SERVICE_SECRET`**: coordinated service-token refresh + restart.
 
 **Decision:** rotation is deferred to a dedicated `auth`-domain ADR. ADR-104
@@ -245,11 +245,11 @@ another operation on the same authority, not a new subsystem.
 
 ### Neutral
 
-- The operator container remains the privileged config sink (ADR-061); the
+- The operator container remains the privileged config sink (ADR-211); the
   claim endpoint executes against it. The three-plane control model (host /
   operator / app from the appliance work) is unchanged.
 - cloud-init `provision.env` becomes the declarative pre-claim channel — already
-  the seam a fleet orchestrator (ADR-103 Stage 3 / ADR-088) would drive.
+  the seam a fleet orchestrator (ADR-103 Stage 3 / ADR-118) would drive.
 - `install.sh` still owns concerns the others don't (SSL/Let's Encrypt, macvlan,
   host shim); convergence targets provisioning, not those.
 

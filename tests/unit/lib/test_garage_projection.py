@@ -1,5 +1,5 @@
 """
-Garage projection storage tests (ADR-079).
+Garage projection storage tests (ADR-114).
 
 Tests for ProjectionStorageService:
 - store

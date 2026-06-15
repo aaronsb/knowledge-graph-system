@@ -1,7 +1,7 @@
 """
 AI Extraction Configuration API Models
 
-Request/response models for AI extraction configuration endpoints (ADR-041).
+Request/response models for AI extraction configuration endpoints (ADR-805).
 """
 
 from pydantic import BaseModel, Field
@@ -23,7 +23,7 @@ class ExtractionConfigResponse(BaseModel):
     max_tokens: Optional[int] = Field(None, description="Maximum token limit")
     config_id: Optional[int] = Field(None, description="Database config ID")
 
-    # Local provider configuration (Ollama, vLLM) - ADR-042
+    # Local provider configuration (Ollama, vLLM) - ADR-806
     base_url: Optional[str] = Field(None, description="Base URL for local providers (e.g., http://localhost:11434)")
     temperature: Optional[float] = Field(None, description="Sampling temperature (0.0-1.0)")
     top_p: Optional[float] = Field(None, description="Nucleus sampling threshold (0.0-1.0)")
@@ -53,7 +53,7 @@ class ExtractionConfigDetail(BaseModel):
     updated_by: Optional[str] = None
     active: bool
 
-    # Local provider configuration (Ollama, vLLM) - ADR-042
+    # Local provider configuration (Ollama, vLLM) - ADR-806
     base_url: Optional[str] = None
     temperature: Optional[float] = None
     top_p: Optional[float] = None
@@ -79,7 +79,7 @@ class UpdateExtractionConfigRequest(BaseModel):
     max_tokens: Optional[int] = Field(None, description="Maximum token limit")
     updated_by: Optional[str] = Field('api', description="User/admin who made the change")
 
-    # Local provider configuration (Ollama, vLLM) - ADR-042
+    # Local provider configuration (Ollama, vLLM) - ADR-806
     base_url: Optional[str] = Field(None, description="Base URL for local providers")
     temperature: Optional[float] = Field(None, description="Sampling temperature (0.0-1.0)")
     top_p: Optional[float] = Field(None, description="Nucleus sampling (0.0-1.0)")

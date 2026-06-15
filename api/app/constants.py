@@ -124,7 +124,7 @@ COGNITIVE_LEAP_LEVELS: Set[str] = {
 }
 
 # ============================================================================
-# AI Providers (ADR-041, ADR-042)
+# AI Providers (ADR-805, ADR-806)
 # ============================================================================
 
 # Valid extraction providers
@@ -132,9 +132,9 @@ EXTRACTION_PROVIDERS: Set[str] = {
     "openai",      # OpenAI API (GPT-4o, etc.)
     "anthropic",   # Anthropic API (Claude Sonnet, etc.)
     "openrouter",  # OpenRouter unified gateway to 200+ models (ADR-800)
-    "ollama",      # Local inference via Ollama (ADR-042)
+    "ollama",      # Local inference via Ollama (ADR-806)
     "llamacpp",    # Local inference via llama.cpp OpenAI-compatible server
-    "vllm",        # Local inference via vLLM (ADR-042 Phase 4)
+    "vllm",        # Local inference via vLLM (ADR-806 Phase 4)
 }
 
 # Providers that require API keys.

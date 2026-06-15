@@ -19,21 +19,21 @@ mode: reference
 - [`config` (cfg)](#config) - Manage kg CLI configuration settings. Controls API connection, authentication tokens, MCP tool preferences, and job auto-approval. Configuration stored in JSON file (typically ~/.kg/config.json).
 - [`mcp-config`](#mcp-config) - Manage path allowlist for secure file/directory ingestion from MCP server.
 
-Security Model (ADR-062):
+Security Model (ADR-408):
 - Fail-secure validation (blocked patterns checked first)
 - Explicit allowlist (no access without configuration)
 - CLI-only management (agent can read, not write)
 - Path resolution prevents traversal attacks
 
 Configuration stored in: ~/.config/kg/mcp-allowed-paths.json
-- [`ingest`](#ingest) - Ingest documents into the knowledge graph. Processes documents and extracts concepts, relationships, and evidence. Supports three modes: single file (one document), directory (batch ingest multiple files), and raw text (ingest text directly without a file). All operations create jobs (ADR-014) that can be monitored via "kg job" commands. Workflow: submit → chunk (semantic boundaries ~1000 words with overlap) → create job → optional approval → process (LLM extract, embed concepts, match existing, insert graph) → complete.
+- [`ingest`](#ingest) - Ingest documents into the knowledge graph. Processes documents and extracts concepts, relationships, and evidence. Supports three modes: single file (one document), directory (batch ingest multiple files), and raw text (ingest text directly without a file). All operations create jobs (ADR-300) that can be monitored via "kg job" commands. Workflow: submit → chunk (semantic boundaries ~1000 words with overlap) → create job → optional approval → process (LLM extract, embed concepts, match existing, insert graph) → complete.
 - [`job` (jobs)](#job) - Manage and monitor ingestion jobs through their lifecycle (pending → approval → processing → completed/failed)
 - [`search`](#search) - Search and explore the knowledge graph using vector similarity, graph traversal, and path finding
-- [`document` (doc)](#document) - Search for documents using semantic similarity and retrieve their content from Garage storage. Documents are aggregated from source chunks, ranked by their best matching chunk similarity (ADR-084).
+- [`document` (doc)](#document) - Search for documents using semantic similarity and retrieve their content from Garage storage. Documents are aggregated from source chunks, ranked by their best matching chunk similarity (ADR-507).
 - [`database` (db)](#database) - Database operations and information for PostgreSQL + Apache AGE: health, statistics, and connection details. Note: `db query` executes arbitrary openCypher (including mutations) and requires database:execute (platform_admin); the stats/info/health reads require database:read (admin).
 - [`ontology` (onto)](#ontology) - Manage ontologies (knowledge domains). Ontologies are named collections that organize concepts into knowledge domains. Each ontology groups related documents and concepts together, making it easier to organize and query knowledge by topic or project.
-- [`source`](#source) - Retrieve and manage source documents stored in Garage. Source documents are the original files ingested into the knowledge graph, preserved for model evolution and re-extraction (ADR-081).
-- [`vocabulary` (vocab)](#vocabulary) - Edge vocabulary management and consolidation. Manages relationship types between concepts including builtin types (30 predefined), custom types (LLM-extracted from documents), categories (semantic groupings), consolidation (AI-assisted merging via AITL - ADR-032), and auto-categorization (probabilistic via embeddings - ADR-047). Features zone-based management (GREEN/WATCH/DANGER/EMERGENCY) and LLM-determined relationship direction (ADR-049).
+- [`source`](#source) - Retrieve and manage source documents stored in Garage. Source documents are the original files ingested into the knowledge graph, preserved for model evolution and re-extraction (ADR-307).
+- [`vocabulary` (vocab)](#vocabulary) - Edge vocabulary management and consolidation. Manages relationship types between concepts including builtin types (30 predefined), custom types (LLM-extracted from documents), categories (semantic groupings), consolidation (AI-assisted merging via AITL - ADR-603), and auto-categorization (probabilistic via embeddings - ADR-605). Features zone-based management (GREEN/WATCH/DANGER/EMERGENCY) and LLM-determined relationship direction (ADR-810).
 - [`concept` (c)](#concept) - Create, list, show, and delete concepts. Concepts are the fundamental nodes in the knowledge graph. When creating concepts, the description is embedded and similarity-matched against existing concepts (same as automatic ingestion). Use matching modes to control duplicate handling.
 - [`edge` (e)](#edge) - Create, list, and delete edges between concepts. Edges represent relationships like IMPLIES, SUPPORTS, CONTRADICTS, etc. Use --from/--to with concept IDs or --from-label/--to-label for semantic lookup by label.
 - [`batch` (b)](#batch) - Batch operations for creating concepts and edges in a single transaction. Import JSON files that define concepts and their relationships. All operations are atomic - if any item fails, the entire batch is rolled back.
@@ -82,7 +82,7 @@ kg config [options]
 - `path` - Show configuration file path
 - `init` - Initialize configuration file with defaults
 - `reset` - Reset configuration to defaults
-- `auto-approve` - Enable or disable automatic approval of ingestion jobs. When enabled, jobs skip the cost estimate review step and start processing immediately (ADR-014).
+- `auto-approve` - Enable or disable automatic approval of ingestion jobs. When enabled, jobs skip the cost estimate review step and start processing immediately (ADR-300).
 - `update-secret` - Authenticate with username/password and update the stored API secret or key. Password is never stored; only the resulting authentication token is persisted.
 - `json` - JSON-based configuration operations (machine-friendly)
 
@@ -198,7 +198,7 @@ kg reset [options]
 
 ### auto-approve
 
-Enable or disable automatic approval of ingestion jobs. When enabled, jobs skip the cost estimate review step and start processing immediately (ADR-014).
+Enable or disable automatic approval of ingestion jobs. When enabled, jobs skip the cost estimate review step and start processing immediately (ADR-300).
 
 **Usage:**
 ```bash
@@ -277,7 +277,7 @@ kg dto [options]
 
 Manage path allowlist for secure file/directory ingestion from MCP server.
 
-Security Model (ADR-062):
+Security Model (ADR-408):
 - Fail-secure validation (blocked patterns checked first)
 - Explicit allowlist (no access without configuration)
 - CLI-only management (agent can read, not write)
@@ -438,7 +438,7 @@ kg oauth [options]
 
 ## ingest
 
-Ingest documents into the knowledge graph. Processes documents and extracts concepts, relationships, and evidence. Supports three modes: single file (one document), directory (batch ingest multiple files), and raw text (ingest text directly without a file). All operations create jobs (ADR-014) that can be monitored via "kg job" commands. Workflow: submit → chunk (semantic boundaries ~1000 words with overlap) → create job → optional approval → process (LLM extract, embed concepts, match existing, insert graph) → complete.
+Ingest documents into the knowledge graph. Processes documents and extracts concepts, relationships, and evidence. Supports three modes: single file (one document), directory (batch ingest multiple files), and raw text (ingest text directly without a file). All operations create jobs (ADR-300) that can be monitored via "kg job" commands. Workflow: submit → chunk (semantic boundaries ~1000 words with overlap) → create job → optional approval → process (LLM extract, embed concepts, match existing, insert graph) → complete.
 
 **Usage:**
 ```bash
@@ -447,16 +447,16 @@ kg ingest [options]
 
 **Subcommands:**
 
-- `file` - Ingest a single document file. Reads file, chunks text into semantic segments (~1000 words with overlap), submits job, returns job ID. Optionally waits for completion with -w. Supports text files (.txt, .md, .rst), PDF documents (.pdf), and other API-supported formats. By default: auto-approves (starts immediately), uses serial processing (chunks see previous concepts for clean deduplication, slower but higher quality), detects duplicates (file hash checked, returns existing job if found). Use --force to bypass duplicate detection, --parallel for faster processing of large documents (may create duplicate concepts), --no-approve to require manual approval (ADR-014), -w to wait for completion (polls until complete, shows progress).
-- `directory` - Ingest all matching files from a directory (batch processing). Scans directory for files matching patterns (default: text *.md *.txt, images *.png *.jpg *.jpeg *.gif *.webp), optionally recurses into subdirectories (-r with depth limit), groups files by ontology (single ontology via -o OR auto-create from subdirectory names via --directories-as-ontologies), and submits batch jobs. Auto-detects file type: images use vision pipeline (ADR-057), text files use standard extraction. Use --dry-run to preview what would be ingested without submitting (checks duplicates, shows skip/submit counts). Directory-as-ontology mode: each subdirectory becomes separate ontology named after directory, useful for organizing knowledge domains by folder structure. Examples: "physics/" → "physics" ontology, "chemistry/organic/" → "organic" ontology.
+- `file` - Ingest a single document file. Reads file, chunks text into semantic segments (~1000 words with overlap), submits job, returns job ID. Optionally waits for completion with -w. Supports text files (.txt, .md, .rst), PDF documents (.pdf), and other API-supported formats. By default: auto-approves (starts immediately), uses serial processing (chunks see previous concepts for clean deduplication, slower but higher quality), detects duplicates (file hash checked, returns existing job if found). Use --force to bypass duplicate detection, --parallel for faster processing of large documents (may create duplicate concepts), --no-approve to require manual approval (ADR-300), -w to wait for completion (polls until complete, shows progress).
+- `directory` - Ingest all matching files from a directory (batch processing). Scans directory for files matching patterns (default: text *.md *.txt, images *.png *.jpg *.jpeg *.gif *.webp), optionally recurses into subdirectories (-r with depth limit), groups files by ontology (single ontology via -o OR auto-create from subdirectory names via --directories-as-ontologies), and submits batch jobs. Auto-detects file type: images use vision pipeline (ADR-305), text files use standard extraction. Use --dry-run to preview what would be ingested without submitting (checks duplicates, shows skip/submit counts). Directory-as-ontology mode: each subdirectory becomes separate ontology named after directory, useful for organizing knowledge domains by folder structure. Examples: "physics/" → "physics" ontology, "chemistry/organic/" → "organic" ontology.
 - `text` - Ingest raw text directly without a file. Submits text content as ingestion job, useful for quick testing/prototyping, ingesting programmatically generated text, API/script integration, and processing text from other commands. Can pipe command output via xargs or use multiline text with heredoc syntax. Text is chunked (default 1000 words per chunk) and processed like file ingestion. Use --filename to customize displayed name in ontology files list (default: text_input). Behavior same as file ingestion: auto-approves by default, detects duplicates, supports --wait for synchronous completion.
-- `image` - Ingest an image file using multimodal vision AI (ADR-057). Converts image to prose description using GPT-4o Vision, generates visual embeddings with Nomic Vision v1.5, then extracts concepts via standard pipeline. Supports PNG, JPEG, GIF, WebP, BMP (max 10MB). Research validated: GPT-4o 100% reliable, Nomic Vision 0.847 clustering quality (27% better than CLIP). See docs/research/vision-testing/
+- `image` - Ingest an image file using multimodal vision AI (ADR-305). Converts image to prose description using GPT-4o Vision, generates visual embeddings with Nomic Vision v1.5, then extracts concepts via standard pipeline. Supports PNG, JPEG, GIF, WebP, BMP (max 10MB). Research validated: GPT-4o 100% reliable, Nomic Vision 0.847 clustering quality (27% better than CLIP). See docs/research/vision-testing/
 
 ---
 
 ### file
 
-Ingest a single document file. Reads file, chunks text into semantic segments (~1000 words with overlap), submits job, returns job ID. Optionally waits for completion with -w. Supports text files (.txt, .md, .rst), PDF documents (.pdf), and other API-supported formats. By default: auto-approves (starts immediately), uses serial processing (chunks see previous concepts for clean deduplication, slower but higher quality), detects duplicates (file hash checked, returns existing job if found). Use --force to bypass duplicate detection, --parallel for faster processing of large documents (may create duplicate concepts), --no-approve to require manual approval (ADR-014), -w to wait for completion (polls until complete, shows progress).
+Ingest a single document file. Reads file, chunks text into semantic segments (~1000 words with overlap), submits job, returns job ID. Optionally waits for completion with -w. Supports text files (.txt, .md, .rst), PDF documents (.pdf), and other API-supported formats. By default: auto-approves (starts immediately), uses serial processing (chunks see previous concepts for clean deduplication, slower but higher quality), detects duplicates (file hash checked, returns existing job if found). Use --force to bypass duplicate detection, --parallel for faster processing of large documents (may create duplicate concepts), --no-approve to require manual approval (ADR-300), -w to wait for completion (polls until complete, shows progress).
 
 **Usage:**
 ```bash
@@ -482,7 +482,7 @@ kg file <path>
 
 ### directory
 
-Ingest all matching files from a directory (batch processing). Scans directory for files matching patterns (default: text *.md *.txt, images *.png *.jpg *.jpeg *.gif *.webp), optionally recurses into subdirectories (-r with depth limit), groups files by ontology (single ontology via -o OR auto-create from subdirectory names via --directories-as-ontologies), and submits batch jobs. Auto-detects file type: images use vision pipeline (ADR-057), text files use standard extraction. Use --dry-run to preview what would be ingested without submitting (checks duplicates, shows skip/submit counts). Directory-as-ontology mode: each subdirectory becomes separate ontology named after directory, useful for organizing knowledge domains by folder structure. Examples: "physics/" → "physics" ontology, "chemistry/organic/" → "organic" ontology.
+Ingest all matching files from a directory (batch processing). Scans directory for files matching patterns (default: text *.md *.txt, images *.png *.jpg *.jpeg *.gif *.webp), optionally recurses into subdirectories (-r with depth limit), groups files by ontology (single ontology via -o OR auto-create from subdirectory names via --directories-as-ontologies), and submits batch jobs. Auto-detects file type: images use vision pipeline (ADR-305), text files use standard extraction. Use --dry-run to preview what would be ingested without submitting (checks duplicates, shows skip/submit counts). Directory-as-ontology mode: each subdirectory becomes separate ontology named after directory, useful for organizing knowledge domains by folder structure. Examples: "physics/" → "physics" ontology, "chemistry/organic/" → "organic" ontology.
 
 **Usage:**
 ```bash
@@ -536,7 +536,7 @@ kg text <text>
 
 ### image
 
-Ingest an image file using multimodal vision AI (ADR-057). Converts image to prose description using GPT-4o Vision, generates visual embeddings with Nomic Vision v1.5, then extracts concepts via standard pipeline. Supports PNG, JPEG, GIF, WebP, BMP (max 10MB). Research validated: GPT-4o 100% reliable, Nomic Vision 0.847 clustering quality (27% better than CLIP). See docs/research/vision-testing/
+Ingest an image file using multimodal vision AI (ADR-305). Converts image to prose description using GPT-4o Vision, generates visual embeddings with Nomic Vision v1.5, then extracts concepts via standard pipeline. Supports PNG, JPEG, GIF, WebP, BMP (max 10MB). Research validated: GPT-4o 100% reliable, Nomic Vision 0.847 clustering quality (27% better than CLIP). See docs/research/vision-testing/
 
 **Usage:**
 ```bash
@@ -573,7 +573,7 @@ kg job [options]
 
 - `status` - Get detailed status information for a job (progress, costs, errors) - use --watch to poll until completion
 - `list` - List recent jobs with optional filtering by status or user - includes subcommands for common filters
-- `approve` - Approve jobs for processing (ADR-014 approval workflow) - single job, batch pending, or filter by status
+- `approve` - Approve jobs for processing (ADR-300 approval workflow) - single job, batch pending, or filter by status
 - `cancel` - Cancel a specific job by ID or batch cancel using filters (all, pending, running, queued, approved)
 - `delete` - Permanently delete a job from database (removes record entirely, not just cancels)
 - `cleanup` - Delete jobs matching filters (with preview) - safer alternative to clear
@@ -716,7 +716,7 @@ kg cancelled [options]
 
 ### approve
 
-Approve jobs for processing (ADR-014 approval workflow) - single job, batch pending, or filter by status
+Approve jobs for processing (ADR-300 approval workflow) - single job, batch pending, or filter by status
 
 **Usage:**
 ```bash
@@ -874,7 +874,7 @@ kg search [query]
 | `-l, --limit <number>` | Maximum number of results to return | `"10"` |
 | `--min-similarity <number>` | Minimum similarity score (0.0-1.0) | `"0.7"` |
 | `--json` | Output raw JSON instead of formatted text | - |
-| `--save-artifact` | Save result as persistent artifact (ADR-083) | - |
+| `--save-artifact` | Save result as persistent artifact (ADR-116) | - |
 
 **Subcommands:**
 
@@ -882,7 +882,7 @@ kg search [query]
 - `show` (`details`) - Get comprehensive details for a concept: all evidence, relationships, sources, and grounding strength
 - `related` - Find concepts related through graph traversal (breadth-first search) - groups results by distance
 - `connect` - Find shortest path between two concepts using IDs or semantic phrase matching
-- `sources` - Search source documents directly using embeddings - returns matched text with related concepts (ADR-068)
+- `sources` - Search source documents directly using embeddings - returns matched text with related concepts (ADR-812)
 
 ---
 
@@ -907,12 +907,12 @@ kg query <query>
 | `--min-similarity <number>` | Minimum similarity score (0.0-1.0, default 0.7=70%, lower to 0.5 for broader matches) | `"0.7"` |
 | `--no-evidence` | Hide evidence quotes (shown by default) | - |
 | `--no-images` | Hide inline image display (shown by default if chafa installed) | - |
-| `--no-grounding` | Disable grounding strength calculation (ADR-044 probabilistic truth convergence) for faster results | - |
-| `--no-diversity` | Disable semantic diversity calculation (ADR-063 authenticity signal) for faster results | - |
+| `--no-grounding` | Disable grounding strength calculation (ADR-808 probabilistic truth convergence) for faster results | - |
+| `--no-diversity` | Disable semantic diversity calculation (ADR-503 authenticity signal) for faster results | - |
 | `--diversity-hops <number>` | Maximum traversal depth for diversity (1-3, default 2) | `"2"` |
 | `--download <directory>` | Download images to specified directory instead of displaying inline | - |
 | `--json` | Output raw JSON instead of formatted text for scripting | - |
-| `--save-artifact` | Save result as persistent artifact (ADR-083) | - |
+| `--save-artifact` | Save result as persistent artifact (ADR-116) | - |
 
 ### show (details)
 
@@ -931,7 +931,7 @@ kg show <concept-id>
 
 | Option | Description | Default |
 |--------|-------------|---------|
-| `--no-grounding` | Disable grounding strength calculation (ADR-044 probabilistic truth convergence) for faster results | - |
+| `--no-grounding` | Disable grounding strength calculation (ADR-808 probabilistic truth convergence) for faster results | - |
 | `--json` | Output raw JSON instead of formatted text for scripting | - |
 
 ### related
@@ -953,9 +953,9 @@ kg related <concept-id>
 |--------|-------------|---------|
 | `-d, --depth <number>` | Maximum traversal depth in hops (1-2 fast, 3-4 moderate, 5 slow) | `"2"` |
 | `-t, --types <types...>` | Filter by relationship types (IMPLIES, ENABLES, SUPPORTS, etc. - see kg vocab list) | - |
-| `--include-epistemic <statuses...>` | Only include relationships with these epistemic statuses (ADR-065): AFFIRMATIVE, CONTESTED, CONTRADICTORY, HISTORICAL | - |
-| `--exclude-epistemic <statuses...>` | Exclude relationships with these epistemic statuses (ADR-065) | - |
-| `--no-grounding` | Disable grounding strength calculation (ADR-044 probabilistic truth convergence) for faster results | - |
+| `--include-epistemic <statuses...>` | Only include relationships with these epistemic statuses (ADR-610): AFFIRMATIVE, CONTESTED, CONTRADICTORY, HISTORICAL | - |
+| `--exclude-epistemic <statuses...>` | Exclude relationships with these epistemic statuses (ADR-610) | - |
+| `--no-grounding` | Disable grounding strength calculation (ADR-808 probabilistic truth convergence) for faster results | - |
 | `--json` | Output raw JSON instead of formatted text for scripting | - |
 
 ### connect
@@ -983,12 +983,12 @@ kg connect <from> <to>
 | `--no-grounding` | Disable grounding strength calculation (faster) | - |
 | `--download <directory>` | Download images to specified directory instead of displaying inline | - |
 | `--json` | Output raw JSON instead of formatted text | - |
-| `--include-epistemic <statuses...>` | Only include relationships with these epistemic statuses (ADR-065): AFFIRMATIVE, CONTESTED, CONTRADICTORY, HISTORICAL | - |
-| `--exclude-epistemic <statuses...>` | Exclude relationships with these epistemic statuses (ADR-065) | - |
+| `--include-epistemic <statuses...>` | Only include relationships with these epistemic statuses (ADR-610): AFFIRMATIVE, CONTESTED, CONTRADICTORY, HISTORICAL | - |
+| `--exclude-epistemic <statuses...>` | Exclude relationships with these epistemic statuses (ADR-610) | - |
 
 ### sources
 
-Search source documents directly using embeddings - returns matched text with related concepts (ADR-068)
+Search source documents directly using embeddings - returns matched text with related concepts (ADR-812)
 
 **Usage:**
 ```bash
@@ -1013,7 +1013,7 @@ kg sources <query>
 
 ## document (doc)
 
-Search for documents using semantic similarity and retrieve their content from Garage storage. Documents are aggregated from source chunks, ranked by their best matching chunk similarity (ADR-084).
+Search for documents using semantic similarity and retrieve their content from Garage storage. Documents are aggregated from source chunks, ranked by their best matching chunk similarity (ADR-507).
 
 **Usage:**
 ```bash
@@ -1125,8 +1125,8 @@ kg database [options]
 - `stats` - Show comprehensive database statistics including node counts (Concepts, Sources, Instances) and relationship type breakdown. Useful for monitoring graph growth and understanding extraction patterns.
 - `info` - Show database connection information including URI, username, connection status, PostgreSQL version, and Apache AGE edition. Use for troubleshooting connection issues and capturing environment details for bug reports.
 - `health` - Check database health and connectivity with detailed checks for: connectivity (PostgreSQL reachable), age_extension (Apache AGE loaded), and graph (schema exists). Use for startup verification and diagnosing which component is failing.
-- `query` - Execute a custom openCypher/GQL query (ADR-048). Use --namespace for safety: "concept" operates on Concept/Source/Instance nodes (default namespace), "vocab" operates on VocabType/VocabCategory nodes, omit for raw queries (mixed types, use with caution). Examples: kg db query "MATCH (c:Concept) WHERE c.label =~ '.*recursive.*' RETURN c.label LIMIT 5" --namespace concept
-- `counters` - Show graph metrics counters organized by type (ADR-079). Counters track: snapshot counts (concepts, edges, sources, vocab_types), activity counters (ingestion, consolidation events), and legacy structure counters. Use --refresh to update from current graph state.
+- `query` - Execute a custom openCypher/GQL query (ADR-606). Use --namespace for safety: "concept" operates on Concept/Source/Instance nodes (default namespace), "vocab" operates on VocabType/VocabCategory nodes, omit for raw queries (mixed types, use with caution). Examples: kg db query "MATCH (c:Concept) WHERE c.label =~ '.*recursive.*' RETURN c.label LIMIT 5" --namespace concept
+- `counters` - Show graph metrics counters organized by type (ADR-114). Counters track: snapshot counts (concepts, edges, sources, vocab_types), activity counters (ingestion, consolidation events), and legacy structure counters. Use --refresh to update from current graph state.
 
 ---
 
@@ -1159,7 +1159,7 @@ kg health [options]
 
 ### query
 
-Execute a custom openCypher/GQL query (ADR-048). Use --namespace for safety: "concept" operates on Concept/Source/Instance nodes (default namespace), "vocab" operates on VocabType/VocabCategory nodes, omit for raw queries (mixed types, use with caution). Examples: kg db query "MATCH (c:Concept) WHERE c.label =~ '.*recursive.*' RETURN c.label LIMIT 5" --namespace concept
+Execute a custom openCypher/GQL query (ADR-606). Use --namespace for safety: "concept" operates on Concept/Source/Instance nodes (default namespace), "vocab" operates on VocabType/VocabCategory nodes, omit for raw queries (mixed types, use with caution). Examples: kg db query "MATCH (c:Concept) WHERE c.label =~ '.*recursive.*' RETURN c.label LIMIT 5" --namespace concept
 
 **Usage:**
 ```bash
@@ -1174,13 +1174,13 @@ kg query <query>
 
 | Option | Description | Default |
 |--------|-------------|---------|
-| `--namespace <type>` | Namespace for safety: "concept", "vocab", or omit for raw (ADR-048) | - |
+| `--namespace <type>` | Namespace for safety: "concept", "vocab", or omit for raw (ADR-606) | - |
 | `--params <json>` | Query parameters as JSON string (e.g., '{"min_score": 0.8}') | - |
 | `--limit <n>` | Convenience: Append LIMIT to query (overrides query LIMIT) | - |
 
 ### counters
 
-Show graph metrics counters organized by type (ADR-079). Counters track: snapshot counts (concepts, edges, sources, vocab_types), activity counters (ingestion, consolidation events), and legacy structure counters. Use --refresh to update from current graph state.
+Show graph metrics counters organized by type (ADR-114). Counters track: snapshot counts (concepts, edges, sources, vocab_types), activity counters (ingestion, consolidation events), and legacy structure counters. Use --refresh to update from current graph state.
 
 **Usage:**
 ```bash
@@ -1573,7 +1573,7 @@ kg anneal [options]
 
 ## source
 
-Retrieve and manage source documents stored in Garage. Source documents are the original files ingested into the knowledge graph, preserved for model evolution and re-extraction (ADR-081).
+Retrieve and manage source documents stored in Garage. Source documents are the original files ingested into the knowledge graph, preserved for model evolution and re-extraction (ADR-307).
 
 **Usage:**
 ```bash
@@ -1642,7 +1642,7 @@ kg info <source-id>
 
 ## vocabulary (vocab)
 
-Edge vocabulary management and consolidation. Manages relationship types between concepts including builtin types (30 predefined), custom types (LLM-extracted from documents), categories (semantic groupings), consolidation (AI-assisted merging via AITL - ADR-032), and auto-categorization (probabilistic via embeddings - ADR-047). Features zone-based management (GREEN/WATCH/DANGER/EMERGENCY) and LLM-determined relationship direction (ADR-049).
+Edge vocabulary management and consolidation. Manages relationship types between concepts including builtin types (30 predefined), custom types (LLM-extracted from documents), categories (semantic groupings), consolidation (AI-assisted merging via AITL - ADR-603), and auto-categorization (probabilistic via embeddings - ADR-605). Features zone-based management (GREEN/WATCH/DANGER/EMERGENCY) and LLM-determined relationship direction (ADR-810).
 
 **Usage:**
 ```bash
@@ -1651,27 +1651,27 @@ kg vocabulary [options]
 
 **Subcommands:**
 
-- `status` - Show current vocabulary status including size, zone (GREEN/WATCH/DANGER/EMERGENCY per ADR-032), aggressiveness, and thresholds.
-- `list` - List all edge types with statistics, categories, and confidence scores (ADR-047).
-- `consolidate` - AI-assisted vocabulary consolidation workflow (AITL - AI-in-the-loop, ADR-032). Analyzes vocabulary via embeddings, identifies similar pairs above threshold, presents merge recommendations.
+- `status` - Show current vocabulary status including size, zone (GREEN/WATCH/DANGER/EMERGENCY per ADR-603), aggressiveness, and thresholds.
+- `list` - List all edge types with statistics, categories, and confidence scores (ADR-605).
+- `consolidate` - AI-assisted vocabulary consolidation workflow (AITL - AI-in-the-loop, ADR-603). Analyzes vocabulary via embeddings, identifies similar pairs above threshold, presents merge recommendations.
 - `merge` - Manually merge one edge type into another. Redirects all edges from deprecated type to target type.
 - `generate-embeddings` - Generate vector embeddings for vocabulary types (required for consolidation and categorization).
-- `category-scores` - Show category similarity scores for a specific relationship type (ADR-047).
-- `refresh-categories` - Refresh category assignments for vocabulary types using latest embeddings (ADR-047, ADR-053).
+- `category-scores` - Show category similarity scores for a specific relationship type (ADR-605).
+- `refresh-categories` - Refresh category assignments for vocabulary types using latest embeddings (ADR-605, ADR-608).
 - `search` - Search for vocabulary terms by natural language query. Useful when creating edges to find the best relationship type.
-- `similar` - Find similar edge types via embedding similarity (ADR-053). Shows types with highest cosine similarity - useful for synonym detection and consolidation.
-- `opposite` - Find opposite (least similar) edge types via embedding similarity (ADR-053). Shows types with lowest cosine similarity.
-- `analyze` - Detailed analysis of vocabulary type for quality assurance (ADR-053). Shows category fit and potential miscategorization.
+- `similar` - Find similar edge types via embedding similarity (ADR-608). Shows types with highest cosine similarity - useful for synonym detection and consolidation.
+- `opposite` - Find opposite (least similar) edge types via embedding similarity (ADR-608). Shows types with lowest cosine similarity.
+- `analyze` - Detailed analysis of vocabulary type for quality assurance (ADR-608). Shows category fit and potential miscategorization.
 - `config` - Show or update vocabulary configuration. No args: display config. With args: update properties (e.g., "kg vocab config vocab_max 275").
 - `profiles` - Manage aggressiveness profiles (Bezier curves for consolidation behavior)
-- `epistemic-status` - Epistemic status classification for vocabulary types (ADR-065). Shows knowledge validation state based on grounding patterns.
-- `sync` - Sync missing edge types from graph to vocabulary (ADR-077). Discovers edge types used in the graph but not registered in vocabulary table/VocabType nodes. Use --dry-run first to preview, then --execute to sync.
+- `epistemic-status` - Epistemic status classification for vocabulary types (ADR-610). Shows knowledge validation state based on grounding patterns.
+- `sync` - Sync missing edge types from graph to vocabulary (ADR-611). Discovers edge types used in the graph but not registered in vocabulary table/VocabType nodes. Use --dry-run first to preview, then --execute to sync.
 
 ---
 
 ### status
 
-Show current vocabulary status including size, zone (GREEN/WATCH/DANGER/EMERGENCY per ADR-032), aggressiveness, and thresholds.
+Show current vocabulary status including size, zone (GREEN/WATCH/DANGER/EMERGENCY per ADR-603), aggressiveness, and thresholds.
 
 **Usage:**
 ```bash
@@ -1680,7 +1680,7 @@ kg status [options]
 
 ### list
 
-List all edge types with statistics, categories, and confidence scores (ADR-047).
+List all edge types with statistics, categories, and confidence scores (ADR-605).
 
 **Usage:**
 ```bash
@@ -1698,7 +1698,7 @@ kg list [options]
 
 ### consolidate
 
-AI-assisted vocabulary consolidation workflow (AITL - AI-in-the-loop, ADR-032). Analyzes vocabulary via embeddings, identifies similar pairs above threshold, presents merge recommendations.
+AI-assisted vocabulary consolidation workflow (AITL - AI-in-the-loop, ADR-603). Analyzes vocabulary via embeddings, identifies similar pairs above threshold, presents merge recommendations.
 
 **Usage:**
 ```bash
@@ -1753,7 +1753,7 @@ kg generate-embeddings [options]
 
 ### category-scores
 
-Show category similarity scores for a specific relationship type (ADR-047).
+Show category similarity scores for a specific relationship type (ADR-605).
 
 **Usage:**
 ```bash
@@ -1766,7 +1766,7 @@ kg category-scores <type>
 
 ### refresh-categories
 
-Refresh category assignments for vocabulary types using latest embeddings (ADR-047, ADR-053).
+Refresh category assignments for vocabulary types using latest embeddings (ADR-605, ADR-608).
 
 **Usage:**
 ```bash
@@ -1801,7 +1801,7 @@ kg search <query>
 
 ### similar
 
-Find similar edge types via embedding similarity (ADR-053). Shows types with highest cosine similarity - useful for synonym detection and consolidation.
+Find similar edge types via embedding similarity (ADR-608). Shows types with highest cosine similarity - useful for synonym detection and consolidation.
 
 **Usage:**
 ```bash
@@ -1820,7 +1820,7 @@ kg similar <type>
 
 ### opposite
 
-Find opposite (least similar) edge types via embedding similarity (ADR-053). Shows types with lowest cosine similarity.
+Find opposite (least similar) edge types via embedding similarity (ADR-608). Shows types with lowest cosine similarity.
 
 **Usage:**
 ```bash
@@ -1839,7 +1839,7 @@ kg opposite <type>
 
 ### analyze
 
-Detailed analysis of vocabulary type for quality assurance (ADR-053). Shows category fit and potential miscategorization.
+Detailed analysis of vocabulary type for quality assurance (ADR-608). Shows category fit and potential miscategorization.
 
 **Usage:**
 ```bash
@@ -1938,7 +1938,7 @@ kg delete <name>
 
 ### epistemic-status
 
-Epistemic status classification for vocabulary types (ADR-065). Shows knowledge validation state based on grounding patterns.
+Epistemic status classification for vocabulary types (ADR-610). Shows knowledge validation state based on grounding patterns.
 
 **Usage:**
 ```bash
@@ -1949,7 +1949,7 @@ kg epistemic-status [options]
 
 - `list` - List all vocabulary types with their epistemic status classifications and statistics.
 - `show` - Show detailed epistemic status for a specific vocabulary type.
-- `measure` - Run epistemic status measurement for all vocabulary types (ADR-065).
+- `measure` - Run epistemic status measurement for all vocabulary types (ADR-610).
 
 ---
 
@@ -1983,7 +1983,7 @@ kg show <type>
 
 #### measure
 
-Run epistemic status measurement for all vocabulary types (ADR-065).
+Run epistemic status measurement for all vocabulary types (ADR-610).
 
 **Usage:**
 ```bash
@@ -2000,7 +2000,7 @@ kg measure [options]
 
 ### sync
 
-Sync missing edge types from graph to vocabulary (ADR-077). Discovers edge types used in the graph but not registered in vocabulary table/VocabType nodes. Use --dry-run first to preview, then --execute to sync.
+Sync missing edge types from graph to vocabulary (ADR-611). Discovers edge types used in the graph but not registered in vocabulary table/VocabType nodes. Use --dry-run first to preview, then --execute to sync.
 
 **Usage:**
 ```bash
@@ -2267,18 +2267,18 @@ kg admin [options]
 **Subcommands:**
 
 - `status` - Show comprehensive system health status (Docker containers, database connections, environment configuration, job scheduler)
-- `backup` - Create database backup (ADR-036) - full system or per-ontology, in restorable JSON or Gephi GEXF format
+- `backup` - Create database backup (ADR-712) - full system or per-ontology, in restorable JSON or Gephi GEXF format
 - `list-backups` - List available backup files from configured directory
 - `restore` - Restore a database backup (uses OAuth authentication)
 - `verify-backup` - Validate a backup file without restoring it (runs the server-side oracle)
-- `scheduler` - Job scheduler management (ADR-014 job queue) - monitor worker status, cleanup stale jobs
+- `scheduler` - Job scheduler management (ADR-300 job queue) - monitor worker status, cleanup stale jobs
 - `workers` - Worker lane management (ADR-100) - monitor slot utilization, queue depth, active jobs
 - `user` - User management commands (admin only)
-- `rbac` - Manage roles, permissions, and access control (ADR-028)
+- `rbac` - Manage roles, permissions, and access control (ADR-404)
 - `embedding` - Manage embedding profiles (text + image model configuration)
-- `extraction` - Manage AI extraction model configuration (ADR-041)
+- `extraction` - Manage AI extraction model configuration (ADR-805)
 - `vision` - Manage the vision (image->prose) provider (ADR-802)
-- `keys` - Manage API keys for AI providers (ADR-031, ADR-041)
+- `keys` - Manage API keys for AI providers (ADR-405, ADR-805)
 
 ---
 
@@ -2293,7 +2293,7 @@ kg status [options]
 
 ### backup
 
-Create database backup (ADR-036) - full system or per-ontology, in restorable JSON or Gephi GEXF format
+Create database backup (ADR-712) - full system or per-ontology, in restorable JSON or Gephi GEXF format
 
 **Usage:**
 ```bash
@@ -2358,7 +2358,7 @@ kg verify-backup [file]
 
 ### scheduler
 
-Job scheduler management (ADR-014 job queue) - monitor worker status, cleanup stale jobs
+Job scheduler management (ADR-300 job queue) - monitor worker status, cleanup stale jobs
 
 **Usage:**
 ```bash
@@ -2555,7 +2555,7 @@ kg delete <user_id>
 
 ### rbac
 
-Manage roles, permissions, and access control (ADR-028)
+Manage roles, permissions, and access control (ADR-404)
 
 **Usage:**
 ```bash
@@ -2845,7 +2845,7 @@ kg embedding [options]
 - `unprotect` - Disable protection flags on an embedding profile
 - `delete` - Delete an embedding profile
 - `status` - Show comprehensive embedding coverage across all graph text entities with hash verification
-- `regenerate` - Regenerate vector embeddings for all graph text entities: concepts, sources, vocabulary (ADR-068 Phase 4) - useful after changing embedding model or repairing missing embeddings
+- `regenerate` - Regenerate vector embeddings for all graph text entities: concepts, sources, vocabulary (ADR-812 Phase 4) - useful after changing embedding model or repairing missing embeddings
 
 ---
 
@@ -3015,7 +3015,7 @@ kg status [options]
 
 #### regenerate
 
-Regenerate vector embeddings for all graph text entities: concepts, sources, vocabulary (ADR-068 Phase 4) - useful after changing embedding model or repairing missing embeddings
+Regenerate vector embeddings for all graph text entities: concepts, sources, vocabulary (ADR-812 Phase 4) - useful after changing embedding model or repairing missing embeddings
 
 **Usage:**
 ```bash
@@ -3035,7 +3035,7 @@ kg regenerate [options]
 
 ### extraction
 
-Manage AI extraction model configuration (ADR-041)
+Manage AI extraction model configuration (ADR-805)
 
 **Usage:**
 ```bash
@@ -3141,7 +3141,7 @@ kg set [options]
 
 ### keys
 
-Manage API keys for AI providers (ADR-031, ADR-041)
+Manage API keys for AI providers (ADR-405, ADR-805)
 
 **Usage:**
 ```bash
@@ -3307,7 +3307,7 @@ kg regenerate <ontology>
 | `--no-center` | Disable embedding centering | - |
 | `--grounding` | Include grounding strength | - |
 | `--diversity` | Include diversity scores (slower) | - |
-| `--save-artifact` | Save result as persistent artifact (ADR-083) | - |
+| `--save-artifact` | Save result as persistent artifact (ADR-116) | - |
 
 ### invalidate
 

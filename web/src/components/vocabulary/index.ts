@@ -1,5 +1,5 @@
 /**
- * Vocabulary Explorer components (ADR-077)
+ * Vocabulary Explorer components (ADR-611)
  */
 
 export { EdgeExplorerWorkspace } from './EdgeExplorerWorkspace';

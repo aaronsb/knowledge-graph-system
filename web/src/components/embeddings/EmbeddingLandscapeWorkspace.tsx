@@ -1,5 +1,5 @@
 /**
- * Embedding Landscape Workspace (ADR-078)
+ * Embedding Landscape Workspace (ADR-717)
  *
  * 3D visualization of concept embeddings projected via t-SNE/UMAP.
  * Supports loading multiple ontologies to see overlapping semantic spaces.

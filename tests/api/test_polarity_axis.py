@@ -3,7 +3,7 @@ Polarity axis analysis tests.
 
 Tests for: kg polarity analyze
 Endpoint: POST /query/polarity-axis
-ADR: ADR-070 Polarity Axis Analysis
+ADR: ADR-813 Polarity Axis Analysis
 """
 
 import pytest

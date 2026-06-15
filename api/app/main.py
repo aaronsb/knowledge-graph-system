@@ -172,7 +172,7 @@ async def log_requests(request: Request, call_next):
 # Helper functions
 def _cleanup_abandoned_temp_files():
     """
-    Cleanup abandoned restore temp files on startup (ADR-015 Phase 2).
+    Cleanup abandoned restore temp files on startup (ADR-107 Phase 2).
 
     Deletes temp files matching /tmp/restore_*.json that are older than 24 hours.
     These files are left behind if the server crashes during restore upload.
@@ -215,10 +215,10 @@ async def startup_event():
     """Initialize services on startup"""
     logger.info("🚀 Starting Knowledge Graph API...")
 
-    # ADR-015: Cleanup abandoned restore temp files on startup
+    # ADR-107: Cleanup abandoned restore temp files on startup
     _cleanup_abandoned_temp_files()
 
-    # Initialize job queue (ADR-024+050: PostgreSQL only, unified kg_api.jobs table)
+    # Initialize job queue (ADR-209+050: PostgreSQL only, unified kg_api.jobs table)
     queue = init_job_queue(queue_type="postgresql")
     logger.info(f"✅ Job queue initialized: postgresql (kg_api.jobs)")
 
@@ -239,7 +239,7 @@ async def startup_event():
     # IMPORTANT: Initialize embedding infrastructure BEFORE starting any jobs
     # (fixes race condition where jobs start before EmbeddingWorker is ready)
 
-    # ADR-039: Initialize embedding model manager (if local embeddings configured)
+    # ADR-804: Initialize embedding model manager (if local embeddings configured)
     # ADR-101: init_embedding_model_manager() already attempts a CPU fallback when
     # the requested accelerator is unavailable. If this still raises, the local
     # provider is unusable and downstream code will fail — log the truth instead
@@ -287,7 +287,7 @@ async def startup_event():
     else:
         logger.info("ℹ️  Non-leader worker — skipping visual embedding generator (ingestion runs on leader)")
 
-    # ADR-041: Validate API keys at startup (non-blocking)
+    # ADR-805: Validate API keys at startup (non-blocking)
     try:
         from .lib.api_key_validator import validate_api_keys_at_startup
         validate_api_keys_at_startup()
@@ -295,7 +295,7 @@ async def startup_event():
         logger.warning(f"⚠️  API key validation failed: {e}")
         logger.info("   System will continue without validated keys")
 
-    # ADR-045: Initialize EmbeddingWorker (required before any jobs can run)
+    # ADR-809: Initialize EmbeddingWorker (required before any jobs can run)
     try:
         logger.info("🔧 Initializing EmbeddingWorker...")
         age_client = AGEClient()
@@ -416,20 +416,20 @@ async def startup_event():
         await lane_manager.start()
         logger.info("✅ Lane manager started (database-driven job dispatch)")
 
-        # ADR-014: Initialize and start job scheduler (lifecycle management)
+        # ADR-300: Initialize and start job scheduler (lifecycle management)
         scheduler = init_job_scheduler()
         scheduler.start()
         logger.info("✅ Job scheduler started (lifecycle management enabled)")
 
-        # ADR-050: Initialize and start scheduled jobs manager (maintenance tasks)
+        # ADR-111: Initialize and start scheduled jobs manager (maintenance tasks)
         global scheduled_jobs_manager
         launcher_registry = {
             'CategoryRefreshLauncher': CategoryRefreshLauncher,
             'VocabConsolidationLauncher': VocabConsolidationLauncher,
             'EpistemicRemeasurementLauncher': EpistemicRemeasurementLauncher,
             'VocabEmbeddingLauncher': VocabEmbeddingLauncher,  # Migration 069: vocab embedding regen
-            'ProjectionLauncher': ProjectionLauncher,  # ADR-078: Embedding projections
-            'ArtifactCleanupLauncher': ArtifactCleanupLauncher,  # ADR-083: Artifact cleanup
+            'ProjectionLauncher': ProjectionLauncher,  # ADR-717: Embedding projections
+            'ArtifactCleanupLauncher': ArtifactCleanupLauncher,  # ADR-116: Artifact cleanup
             'AnnealingLauncher': AnnealingLauncher,  # ADR-200: Ontology annealing cycle
         }
         scheduled_jobs_manager = ScheduledJobsManager(queue, launcher_registry)
@@ -450,7 +450,7 @@ async def shutdown_event():
 
     # Only the dispatch leader runs these services
     if _is_dispatch_leader:
-        # ADR-014: Stop lifecycle scheduler gracefully
+        # ADR-300: Stop lifecycle scheduler gracefully
         try:
             scheduler = get_job_scheduler()
             await scheduler.stop()
@@ -464,7 +464,7 @@ async def shutdown_event():
             await lane_manager.stop()
             logger.info("✅ Lane manager stopped")
 
-        # ADR-050: Stop scheduled jobs manager gracefully
+        # ADR-111: Stop scheduled jobs manager gracefully
         global scheduled_jobs_manager
         if scheduled_jobs_manager:
             await scheduled_jobs_manager.stop()
@@ -498,39 +498,39 @@ async def shutdown_event():
 
 
 # Include routers
-app.include_router(auth.router)  # ADR-027: Authentication endpoints
-app.include_router(auth.admin_router)  # ADR-027: Admin user management
-app.include_router(oauth.router)  # ADR-054: OAuth 2.0 client management and token flows
-app.include_router(rbac.router)  # ADR-028: RBAC management endpoints
+app.include_router(auth.router)  # ADR-403: Authentication endpoints
+app.include_router(auth.admin_router)  # ADR-403: Admin user management
+app.include_router(oauth.router)  # ADR-406: OAuth 2.0 client management and token flows
+app.include_router(rbac.router)  # ADR-404: RBAC management endpoints
 app.include_router(ingest.router)
-app.include_router(ingest_image.router)  # ADR-057: Multimodal image ingestion
-app.include_router(sources.router)  # ADR-057: Source retrieval (images from MinIO)
+app.include_router(ingest_image.router)  # ADR-305: Multimodal image ingestion
+app.include_router(sources.router)  # ADR-305: Source retrieval (images from MinIO)
 app.include_router(jobs.router)
 app.include_router(queries.router)
 app.include_router(database.router)
 app.include_router(ontology.router)
 app.include_router(admin.router)
-app.include_router(vocabulary.router)  # ADR-032: Vocabulary management
+app.include_router(vocabulary.router)  # ADR-603: Vocabulary management
 app.include_router(vocabulary_config.public_router)  # Vocabulary config (public)
 app.include_router(vocabulary_config.admin_router)  # Vocabulary config (admin)
-app.include_router(embedding.public_router)  # ADR-039: Public embedding config
-app.include_router(embedding.admin_router)  # ADR-039: Admin embedding management
-app.include_router(extraction.public_router)  # ADR-041: Public extraction config
-app.include_router(extraction.admin_router)  # ADR-041: Admin extraction management
+app.include_router(embedding.public_router)  # ADR-804: Public embedding config
+app.include_router(embedding.admin_router)  # ADR-804: Admin embedding management
+app.include_router(extraction.public_router)  # ADR-805: Public extraction config
+app.include_router(extraction.admin_router)  # ADR-805: Admin extraction management
 app.include_router(vision.public_router)  # ADR-802: Public vision provider config
 app.include_router(vision.admin_router)  # ADR-802: Admin vision provider management
-app.include_router(projection.router)  # ADR-078: Embedding landscape projections
-app.include_router(artifacts.router)  # ADR-083: Artifact persistence
-app.include_router(grants.router)  # ADR-082: Groups and resource grants
-app.include_router(query_definitions.router)  # ADR-083: Query definitions
+app.include_router(projection.router)  # ADR-717: Embedding landscape projections
+app.include_router(artifacts.router)  # ADR-116: Artifact persistence
+app.include_router(grants.router)  # ADR-410: Groups and resource grants
+app.include_router(query_definitions.router)  # ADR-116: Query definitions
 app.include_router(programs.router)  # ADR-500: Program notarization
-app.include_router(documents.router)  # ADR-084: Document content retrieval
-app.include_router(documents.query_router)  # ADR-084: Document search
-app.include_router(concepts.router)  # ADR-089: Deterministic concept CRUD
+app.include_router(documents.router)  # ADR-507: Document content retrieval
+app.include_router(documents.query_router)  # ADR-507: Document search
+app.include_router(concepts.router)  # ADR-308: Deterministic concept CRUD
 app.include_router(epochs.router)  # ADR-203: Graph epoch event log read surface
 app.include_router(catalog.router)  # ADR-501: Catalog browse facade
-app.include_router(edges.router)  # ADR-089: Deterministic edge CRUD
-app.include_router(graph.router)  # ADR-089: Batch graph operations
+app.include_router(edges.router)  # ADR-308: Deterministic edge CRUD
+app.include_router(graph.router)  # ADR-308: Batch graph operations
 app.include_router(storage_admin.router)  # Storage diagnostics
 app.include_router(admin_workers.router)  # ADR-100: Worker lane management
 app.include_router(models.admin_router)  # ADR-800: Model catalog management
@@ -543,14 +543,14 @@ def root():
     try:
         queue = get_job_queue()
 
-        # Get queue stats (ADR-014: include new states)
+        # Get queue stats (ADR-300: include new states)
         pending = queue.list_jobs(status="pending", limit=1000)
         awaiting_approval = queue.list_jobs(status="awaiting_approval", limit=1000)
         approved = queue.list_jobs(status="approved", limit=1000)
         queued = queue.list_jobs(status="queued", limit=1000)
         processing = queue.list_jobs(status="processing", limit=1000)
 
-        # Queue type is always PostgreSQL now (ADR-050: SQLite removed)
+        # Queue type is always PostgreSQL now (ADR-111: SQLite removed)
         queue_type_name = "postgresql"
 
         # Get epoch from graph_metrics (ADR-200)
@@ -567,7 +567,7 @@ def root():
 
         return {
             "service": "Knowledge Graph API",
-            "version": "0.1.0 (ADR-024: PostgreSQL Job Queue)",
+            "version": "0.1.0 (ADR-209: PostgreSQL Job Queue)",
             "status": "healthy",
             "epoch": epoch,
             "queue": {
@@ -581,7 +581,7 @@ def root():
             "docs": "/docs",
             "endpoints": {
                 "ingest": "POST /ingest (upload file) or POST /ingest/text (raw text)",
-                "ingest_image": "POST /ingest/image (multimodal image ingestion, ADR-057)",
+                "ingest_image": "POST /ingest/image (multimodal image ingestion, ADR-305)",
                 "jobs": "GET /jobs/{job_id} for status, POST /jobs/{job_id}/approve to start processing"
             }
         }

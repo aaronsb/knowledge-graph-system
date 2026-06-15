@@ -1,5 +1,5 @@
 /**
- * Source Search Block - Search source text passages using embeddings (ADR-068 Phase 5)
+ * Source Search Block - Search source text passages using embeddings (ADR-812 Phase 5)
  *
  * This is a Smart Block that uses the API's source search endpoint
  * to find source document passages by semantic similarity.
@@ -55,7 +55,7 @@ export const SourceSearchBlock: React.FC<NodeProps<BlockData>> = ({ data }) => {
 
       {/* Description */}
       <p className="text-xs text-muted-foreground dark:text-gray-400 mb-3">
-        Search source text passages (ADR-068)
+        Search source text passages (ADR-812)
       </p>
 
       {/* Search Input */}

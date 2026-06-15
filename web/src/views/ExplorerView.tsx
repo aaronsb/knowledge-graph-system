@@ -5,7 +5,7 @@
  * - Search bar with query modes
  * - Graph data fetching
  * - Explorer rendering (2D/3D)
- * - Saved queries management (ADR-083)
+ * - Saved queries management (ADR-116)
  */
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -368,7 +368,7 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({ explorerType }) => {
   );
 
   // Settings panel content — each explorer plugin declares its own settings
-  // panel via the ExplorerPlugin contract (ADR-034).
+  // panel via the ExplorerPlugin contract (ADR-710).
   const PluginSettingsPanel = explorerPlugin?.settingsPanel;
   const settingsPanelContent = (
     <div className="p-3 space-y-4">

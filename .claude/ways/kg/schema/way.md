@@ -25,7 +25,7 @@ schema/
 
 **Apache AGE uses openCypher** (not Neo4j Cypher):
 - No `ON CREATE SET` / `ON MATCH SET`
-- See ADR-016 for compatibility notes
+- See ADR-208 for compatibility notes
 
 ## Graph Data Model
 
@@ -36,7 +36,7 @@ schema/
 (:Concept)-[:IMPLIES|SUPPORTS|CONTRADICTS]->(:Concept)
 ```
 
-## Namespaces (ADR-048)
+## Namespaces (ADR-606)
 
 - `kg_core` - Graph data (concepts, sources)
 - `kg_auth` - Authentication (users, roles, grants)

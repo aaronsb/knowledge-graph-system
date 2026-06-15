@@ -3,7 +3,7 @@
  *
  * Manages user configuration stored at ~/.config/kg/config.json
  *
- * ADR-054: OAuth 2.0 Authentication
+ * ADR-406: OAuth 2.0 Authentication
  * - All authentication uses personal OAuth clients (GitHub CLI-style)
  * - Client credentials (client_id + client_secret) are long-lived
  * - Fresh access tokens obtained on-demand via client credentials grant
@@ -15,7 +15,7 @@ import * as path from 'path';
 import * as os from 'os';
 
 export interface AuthTokenConfig {
-  // ADR-054: OAuth 2.0 Client Credentials (Personal OAuth Client)
+  // ADR-406: OAuth 2.0 Client Credentials (Personal OAuth Client)
   oauth_client_id?: string;        // OAuth client ID (kg-cli-username-random)
   oauth_client_secret?: string;    // OAuth client secret (hashed on server)
   oauth_client_name?: string;      // Client name for display
@@ -29,7 +29,7 @@ export interface AuthTokenConfig {
 }
 
 export interface DisplayConfig {
-  // ADR-057: Terminal image display with chafa
+  // ADR-305: Terminal image display with chafa
   enableChafa?: boolean;           // Enable inline terminal image display (default: true if chafa installed)
   chafaWidth?: number;             // Terminal width for image display (default: auto)
   chafaScale?: number;             // Scale factor 0.0-1.0 (e.g., 0.3 for 1/3 width, default: 0.3)
@@ -38,7 +38,7 @@ export interface DisplayConfig {
 }
 
 export interface SearchConfig {
-  // ADR-057: Search command display defaults
+  // ADR-305: Search command display defaults
   showEvidence?: boolean;          // Show evidence quotes by default in search results (default: true)
   showImages?: boolean;            // Display images inline by default in search results (default: true)
 }
@@ -55,11 +55,11 @@ export interface KgConfig {
   secret?: string;  // API key (never store password!)
   api_url?: string;
   backup_dir?: string;
-  auto_approve?: boolean;  // ADR-014: Auto-approve all jobs by default
-  auth?: AuthTokenConfig;   // ADR-054: OAuth 2.0 client credentials
-  aliases?: Record<string, string[]>;  // ADR-029: User-configurable command aliases
-  display?: DisplayConfig;  // ADR-057: Display preferences
-  search?: SearchConfig;    // ADR-057: Search command defaults
+  auto_approve?: boolean;  // ADR-300: Auto-approve all jobs by default
+  auth?: AuthTokenConfig;   // ADR-406: OAuth 2.0 client credentials
+  aliases?: Record<string, string[]>;  // ADR-709: User-configurable command aliases
+  display?: DisplayConfig;  // ADR-305: Display preferences
+  search?: SearchConfig;    // ADR-305: Search command defaults
   session?: SessionConfig;  // Cross-session MCP agent context
 }
 
@@ -114,13 +114,13 @@ export class ConfigManager {
     return {
       api_url: 'http://localhost:8000',
       backup_dir: path.join(os.homedir(), '.local', 'share', 'kg', 'backups'),
-      auto_approve: false,  // ADR-014: Require manual approval by default
-      // ADR-029: Command aliases for shell compatibility
+      auto_approve: false,  // ADR-300: Require manual approval by default
+      // ADR-709: Command aliases for shell compatibility
       // Example: zsh users with 'alias cat=bat' can use this to prevent expansion conflicts
       aliases: {
         cat: ['bat']  // Allow 'kg bat' as alias for 'kg cat' (handles zsh cat→bat expansion)
       },
-      // ADR-057: Display and search defaults
+      // ADR-305: Display and search defaults
       display: {
         enableChafa: true,   // Enable chafa if available
         chafaScale: 0.3,     // Default to 1/3 terminal width
@@ -291,24 +291,24 @@ export class ConfigManager {
   }
 
   /**
-   * Get auto-approve setting (ADR-014)
+   * Get auto-approve setting (ADR-300)
    */
   getAutoApprove(): boolean {
     return this.config.auto_approve ?? false;
   }
 
   /**
-   * Set auto-approve setting (ADR-014)
+   * Set auto-approve setting (ADR-300)
    */
   setAutoApprove(value: boolean): void {
     this.config.auto_approve = value;
     this.save();
   }
 
-  // ========== Authentication Methods (ADR-027, updated by ADR-054) ==========
+  // ========== Authentication Methods (ADR-403, updated by ADR-406) ==========
 
   /**
-   * Store OAuth client credentials (ADR-054 - personal OAuth clients)
+   * Store OAuth client credentials (ADR-406 - personal OAuth clients)
    *
    * Stores long-lived client_id + client_secret for client credentials grant.
    * This is the preferred authentication method for CLI tools.
@@ -345,7 +345,7 @@ export class ConfigManager {
   }
 
   /**
-   * Get OAuth client credentials (ADR-054)
+   * Get OAuth client credentials (ADR-406)
    *
    * @returns OAuth client credentials or null if not stored
    */
@@ -394,7 +394,7 @@ export class ConfigManager {
     return this.getOAuthCredentials() !== null;
   }
 
-  // ========== Alias Methods (ADR-029) ==========
+  // ========== Alias Methods (ADR-709) ==========
 
   /**
    * Get command aliases from config
@@ -460,7 +460,7 @@ export class ConfigManager {
     }
   }
 
-  // ========== Display Methods (ADR-057) ==========
+  // ========== Display Methods (ADR-305) ==========
 
   /**
    * Check if chafa terminal image display is enabled
@@ -573,7 +573,7 @@ export class ConfigManager {
     this.save();
   }
 
-  // ========== Search Methods (ADR-057) ==========
+  // ========== Search Methods (ADR-305) ==========
 
   /**
    * Check if search should show evidence by default

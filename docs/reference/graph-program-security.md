@@ -112,7 +112,7 @@ When the executor runs a program's statements, each statement passes through the
 |-------|-----------|--------|
 | **Authentication** | OAuth 2.0 access token required (`get_current_user` / `CurrentUser` dependency). | `dependencies/auth.py` |
 | **Authorization** | Role-based and permission-based access control (`require_role`, `require_permission`, `require_scope`). | `dependencies/auth.py` |
-| **Namespace safety** | `GraphQueryFacade` enforces explicit labels on Cypher queries, preventing namespace collisions between concept and vocabulary graphs. | `lib/query_facade.py` (ADR-048) |
+| **Namespace safety** | `GraphQueryFacade` enforces explicit labels on Cypher queries, preventing namespace collisions between concept and vocabulary graphs. | `lib/query_facade.py` (ADR-606) |
 | **Audit logging** | `QueryAuditLog` tracks every query with timestamp, namespace, and raw/safe classification. | `lib/query_facade.py` |
 | **Rate limiting** | Per-user rate limits apply to the executor endpoint the same as any other endpoint. | Application middleware |
 

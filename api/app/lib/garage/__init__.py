@@ -1,14 +1,14 @@
 """
-Garage Storage Services - Modular object storage for the knowledge graph (ADR-080).
+Garage Storage Services - Modular object storage for the knowledge graph (ADR-115).
 
 This package provides focused storage services following the Single Responsibility
 Principle. Each service handles one domain:
 
 - GarageBaseClient: Core S3 operations, credentials, bucket management
-- ImageStorageService: Image upload/download for multimodal ingestion (ADR-057)
-- ProjectionStorageService: Embedding landscape projections (ADR-079)
-- SourceDocumentService: Original document preservation (ADR-081)
-- ArtifactStorageService: Computed artifact persistence (ADR-083)
+- ImageStorageService: Image upload/download for multimodal ingestion (ADR-305)
+- ProjectionStorageService: Embedding landscape projections (ADR-114)
+- SourceDocumentService: Original document preservation (ADR-307)
+- ArtifactStorageService: Computed artifact persistence (ADR-116)
 - RetentionPolicyManager: Storage lifecycle and cleanup
 
 Usage:
@@ -188,7 +188,7 @@ class GarageClient:
     def health_check(self) -> bool:
         return self._base.health_check()
 
-    # Image operations (ADR-057)
+    # Image operations (ADR-305)
     def _build_object_key(self, ontology: str, source_id: str, file_extension: str) -> str:
         return self._images._build_object_key(ontology, source_id, file_extension)
 
@@ -214,7 +214,7 @@ class GarageClient:
     def get_image_metadata(self, object_key: str):
         return self._images.get_metadata(object_key)
 
-    # Projection operations (ADR-079)
+    # Projection operations (ADR-114)
     def _build_projection_key(self, ontology: str, embedding_source: str, timestamp=None) -> str:
         return self._projections._build_key(ontology, embedding_source, timestamp)
 

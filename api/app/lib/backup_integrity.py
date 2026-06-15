@@ -1,5 +1,5 @@
 """
-Backup Integrity Check Module (ADR-015 Phase 2; retargeted to kg-backup/2 in ADR-102 P3)
+Backup Integrity Check Module (ADR-107 Phase 2; retargeted to kg-backup/2 in ADR-102 P3)
 
 Runtime defense-in-depth validation of a backup object before it is streamed,
 archived, or restored. Validates the single backup model (``kg-backup/2``):

@@ -2,7 +2,7 @@
 """
 Performance comparison: Sequential vs Parallel polarity candidate discovery.
 
-Tests ADR-071 parallel implementation against sequential baseline.
+Tests ADR-505 parallel implementation against sequential baseline.
 Measures speedup and validates result consistency.
 """
 
@@ -106,7 +106,7 @@ def test_performance_comparison(max_hops: int = 2, max_candidates: int = 20):
 
     # Test Parallel Implementation
     print("-" * 80)
-    print("TEST 2: Parallel Discovery (ADR-071)")
+    print("TEST 2: Parallel Discovery (ADR-505)")
     print("-" * 80)
 
     client2 = AGEClient()

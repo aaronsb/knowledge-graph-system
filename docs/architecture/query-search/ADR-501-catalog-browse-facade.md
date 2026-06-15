@@ -41,12 +41,12 @@ This gap matters more now than it used to, for three reasons:
 
    ```cypher
    (:Ontology)<-[:SCOPED_BY]-(:Source)           // ontology → its source chunks
-   (:DocumentMeta)-[:HAS_SOURCE]->(:Source)       // document → its chunks (ADR-051)
+   (:DocumentMeta)-[:HAS_SOURCE]->(:Source)       // document → its chunks (ADR-304)
    (:Concept)-[:APPEARS]->(:Source)               // concept ↔ where it appears
    ```
 
 3. **Four client surfaces each reinvent listing.** CLI, MCP, web, and the FUSE
-   driver (ADR-069) all need "list the children of X." Today each constructs its
+   driver (ADR-715) all need "list the children of X." Today each constructs its
    own queries: the CLI has `kg ontology list/files`, the web has bespoke
    `getSubgraph` composition, FUSE hand-builds `/query/*` calls in its readdir
    handlers. There is no shared catalog contract, so the four drift.
@@ -70,7 +70,7 @@ two separate is a core decision here, not an accident.
   data — overview treemap, detail view with a searchable document list, bridge
   view. ADR-700's detail view is a **consumer** of this facade, not a competitor.
   This ADR provides the API substrate 700 currently lacks.
-- **ADR-069 (FUSE, shipped)** already draws the deterministic path grammar
+- **ADR-715 (FUSE, shipped)** already draws the deterministic path grammar
   `/ontology/<name>/documents/<file>`. Its stable half (ontology → documents) is
   exactly this catalog; its emergent half (query directories → concepts by
   similarity) stays as-is. The facade lets FUSE's readdir handlers become thin
@@ -155,7 +155,7 @@ The only layer all four clients share is the API. The facade lands as
 `api/app/routes/catalog.py` (thin handler). Each client then gets a thin wrapper —
 this per-endpoint "client tax" (~4 parallel changes: TS client method, CLI command,
 MCP tool action, web client method, FUSE handler) is irreducible given the current
-architecture (ADR-013 unified only CLI+MCP; web and FUSE remain separate), but a
+architecture (ADR-707 unified only CLI+MCP; web and FUSE remain separate), but a
 thin facade minimizes it. A small Postgres-side property/count index (refreshed on
 graph epoch bump, ADR-203) backs fast `child_count` and fragment filtering without
 per-request graph aggregation.
@@ -173,7 +173,7 @@ per-request graph aggregation.
   `kg storage` (raw S3 admin) vs `kg artifact`/catalog (semantic) boundary becomes
   legible because the catalog shows *meaning*, not buckets.
 - **Turns FUSE's stable half into a thin adapter** over a shared contract instead
-  of bespoke readdir queries (ADR-069).
+  of bespoke readdir queries (ADR-715).
 - **Gives ADR-700 its missing substrate** — the Ontology Explorer detail view
   consumes `/catalog/children` rather than inventing its own listing path.
 - **One contract, four surfaces** — reduces the existing drift between CLI/MCP/web/

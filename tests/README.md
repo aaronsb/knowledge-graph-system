@@ -25,8 +25,8 @@ tests/
 ├── conftest.py              # Shared fixtures and configuration
 ├── run.sh                   # Container test runner
 ├── api/                     # API endpoint tests
-│   ├── test_concepts.py     # ADR-089 concept CRUD
-│   ├── test_edges.py        # ADR-089 edge CRUD
+│   ├── test_concepts.py     # ADR-308 concept CRUD
+│   ├── test_edges.py        # ADR-308 edge CRUD
 │   └── ...
 ├── unit/                    # Unit tests (fast, isolated)
 ├── security/                # Auth/security tests

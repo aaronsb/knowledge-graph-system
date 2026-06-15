@@ -45,7 +45,7 @@ If a launcher raises an exception (distinct from returning `False`), the schedul
 | Cron | `0 */6 * * *` |
 | Worker | `vocab_refresh_worker` |
 | Launcher | `CategoryRefreshLauncher` |
-| ADR | ADR-050 |
+| ADR | ADR-111 |
 
 When the LLM discovers relationship types during ingestion, those types are marked `llm_generated`. This job checks for pending `llm_generated` entries and integrates them into the permanent vocabulary.
 
@@ -60,7 +60,7 @@ When the LLM discovers relationship types during ingestion, those types are mark
 | Cron | `0 */12 * * *` |
 | Worker | `vocab_consolidate_worker` |
 | Launcher | `VocabConsolidationLauncher` |
-| ADR | ADR-050 |
+| ADR | ADR-111 |
 
 As a graph evolves, some vocabulary types stop appearing in new extractions and become inactive. When the ratio of inactive-to-active types exceeds a threshold, this job consolidates them to keep the vocabulary manageable.
 
@@ -85,7 +85,7 @@ The aggressiveness profile and target vocabulary size are read from `kg_api.voca
 | Cron | `0 * * * *` |
 | Worker | `epistemic_remeasurement_worker` |
 | Launcher | `EpistemicRemeasurementLauncher` |
-| ADR | ADR-065 |
+| ADR | ADR-610 |
 
 Epistemic status labels (`WELL_GROUNDED`, `MIXED_GROUNDING`, etc.) are computed by sampling relationship edges. This job refreshes those measurements when enough vocabulary changes have accumulated.
 
@@ -147,7 +147,7 @@ The LLM can reject candidates that pass numeric thresholds. See ADR-200 for the 
 | Cron | `0 2 * * *` |
 | Worker | `artifact_cleanup` |
 | Launcher | `ArtifactCleanupLauncher` |
-| ADR | ADR-083 |
+| ADR | ADR-116 |
 
 Removes artifacts whose `expires_at` timestamp has passed.
 
@@ -264,14 +264,14 @@ Check in order:
 4. The scheduler loop is running (API logs should show a scheduler heartbeat every ~60 s)
 
 **Duplicate jobs from one schedule**
-Multiple API workers raced past the advisory lock. Verify the PostgreSQL advisory lock is operating correctly (see ADR-050). Logs should show only one worker acquiring the scheduler lock per minute.
+Multiple API workers raced past the advisory lock. Verify the PostgreSQL advisory lock is operating correctly (see ADR-111). Logs should show only one worker acquiring the scheduler lock per minute.
 
 ---
 
 ## Related
 
-- [ADR-050: Scheduled Jobs System](../architecture/infrastructure/ADR-050-scheduled-jobs-system.md)
-- [ADR-065: Vocabulary-Based Provenance](../architecture/vocabulary-relationships/ADR-065-vocabulary-based-provenance-relationships.md)
+- [ADR-111: Scheduled Jobs System](../architecture/infrastructure/ADR-111-scheduled-jobs-system.md)
+- [ADR-610: Vocabulary-Based Provenance](../architecture/vocabulary-relationships/ADR-610-vocabulary-based-provenance-relationships.md)
 - [ADR-200: Ontology Annealing](../architecture/database-schema/ADR-200-annealing-ontologies-self-organizing-knowledge-graph-structure.md)
 - [Vocabulary Lifecycle](../explanation/vocabulary-lifecycle.md)
 - [Filter by Epistemic Status](../how-to/epistemic-status.md)

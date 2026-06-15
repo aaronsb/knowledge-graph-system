@@ -28,7 +28,7 @@ def get_job_status(
     """
     Get the current status of a job.
 
-    **Job States (ADR-014):**
+    **Job States (ADR-300):**
     - `pending`: Job queued, analysis running (fast)
     - `awaiting_approval`: Analysis complete, needs user approval
     - `approved`: User approved, waiting for processor
@@ -143,7 +143,7 @@ def cancel_or_delete_job(
     - Admins can cancel/delete any user job
     - Platform admins can cancel/delete system jobs
 
-    **ADR-014: Can cancel jobs in these states:**
+    **ADR-300: Can cancel jobs in these states:**
     - `pending`: Job queued, analysis running
     - `awaiting_approval`: Analysis complete, waiting for approval
     - `approved`: Approved but not yet started
@@ -215,7 +215,7 @@ def approve_job(
     current_user: CurrentUser
 ):
     """
-    Approve a job for processing (ADR-014 approval workflow).
+    Approve a job for processing (ADR-300 approval workflow).
 
     **Workflow:**
     1. Job submitted → status: `pending` (analysis runs automatically)
@@ -385,7 +385,7 @@ async def stream_job_progress(
     current_user: CurrentUser
 ):
     """
-    Stream real-time job progress updates via Server-Sent Events (ADR-018).
+    Stream real-time job progress updates via Server-Sent Events (ADR-108).
 
     **Events sent:**
     - `progress`: Job progress updates (stage, percent, items)
@@ -453,7 +453,7 @@ async def stream_job_progress(
         """
         Generator that streams job progress events.
 
-        Implements ADR-018 Phase 1: Core SSE Infrastructure
+        Implements ADR-108 Phase 1: Core SSE Infrastructure
         - Polls job queue every 500ms
         - Sends progress events when state changes
         - Sends terminal events (completed/failed)

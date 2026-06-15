@@ -1,5 +1,5 @@
 """
-System API key storage with encryption at rest (ADR-031).
+System API key storage with encryption at rest (ADR-405).
 
 Manages shard-scoped LLM API keys (OpenAI, Anthropic) with Fernet encryption.
 Keys are encrypted using the master key from Docker/Podman secrets and stored
@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 def mask_api_key(plaintext_key: str) -> str:
     """
-    Mask API key for display, showing only prefix and last 6 characters (ADR-041).
+    Mask API key for display, showing only prefix and last 6 characters (ADR-805).
 
     Examples:
         "sk-proj-abc123def456ghi789" → "sk-proj-...ghi789"
@@ -198,7 +198,7 @@ class EncryptedKeyStore:
 
     def list_providers(self, include_masked_keys: bool = False) -> List[Dict[str, str]]:
         """
-        List configured providers with validation status (ADR-041).
+        List configured providers with validation status (ADR-805).
 
         Args:
             include_masked_keys: If True, decrypt and include masked keys in response
@@ -327,7 +327,7 @@ class EncryptedKeyStore:
         error_message: Optional[str] = None
     ) -> bool:
         """
-        Update validation status for an API key (ADR-041).
+        Update validation status for an API key (ADR-805).
 
         Args:
             provider: Provider name ('openai' or 'anthropic')
@@ -389,7 +389,7 @@ def get_system_api_key(
     service_token: Optional[str] = None
 ) -> Optional[str]:
     """
-    Get decrypted system API key with service token authorization (ADR-031).
+    Get decrypted system API key with service token authorization (ADR-405).
 
     This implements defense-in-depth by requiring authorized workers to present
     a service token before accessing encrypted keys. The token is stored in
@@ -409,7 +409,7 @@ def get_system_api_key(
     Security:
         - Token validation prevents unauthorized code from accessing keys
         - Failed attempts logged as security events
-        - Multiple isolation boundaries required for attack (see ADR-031)
+        - Multiple isolation boundaries required for attack (see ADR-405)
     """
     # Import here to avoid circular dependency
     from .secrets import get_internal_key_service_secret
@@ -426,7 +426,7 @@ def get_system_api_key(
                 "caller_line": caller_frame.lineno
             }
         )
-        raise ValueError("Service token required for key access (ADR-031)")
+        raise ValueError("Service token required for key access (ADR-405)")
 
     expected_token = get_internal_key_service_secret()
     if service_token != expected_token:

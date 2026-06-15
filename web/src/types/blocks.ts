@@ -27,7 +27,7 @@ export type BlockType =
   | 'limit'
   // Smart blocks (use API calls)
   | 'vectorSearch'  // Semantic search with embeddings
-  | 'sourceSearch'  // Source text search (ADR-068)
+  | 'sourceSearch'  // Source text search (ADR-812)
   | 'epistemicFilter' // Filter by epistemic status
   | 'enrich';
 
@@ -63,7 +63,7 @@ export interface NeighborhoodBlockParams {
   depth: number; // 1-5
   direction: 'outgoing' | 'incoming' | 'both';
   relationshipTypes?: string[]; // Empty = all types
-  // ADR-065: Epistemic status filtering
+  // ADR-610: Epistemic status filtering
   includeEpistemicStatus?: string[];
   excludeEpistemicStatus?: string[];
 }

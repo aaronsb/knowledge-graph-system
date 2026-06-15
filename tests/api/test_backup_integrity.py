@@ -1,5 +1,5 @@
 """
-Tests for the Backup Integrity Check Module (ADR-015 Phase 2; retargeted to
+Tests for the Backup Integrity Check Module (ADR-107 Phase 2; retargeted to
 kg-backup/2 in ADR-102 P3).
 
 The runtime checker now validates the single backup model (declarative header +

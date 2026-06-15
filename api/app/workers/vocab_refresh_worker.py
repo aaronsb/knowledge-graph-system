@@ -1,5 +1,5 @@
 """
-Vocabulary Refresh Worker (ADR-050).
+Vocabulary Refresh Worker (ADR-111).
 
 Re-integrates LLM-generated vocabulary categories into the base vocabulary.
 This worker is triggered by the CategoryRefreshLauncher when llm_generated

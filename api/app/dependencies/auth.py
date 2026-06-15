@@ -1,26 +1,26 @@
 """
-Authentication Dependencies (ADR-027, ADR-028, ADR-054, ADR-060)
+Authentication Dependencies (ADR-403, ADR-404, ADR-406, ADR-407)
 
 FastAPI dependency injection for authentication and authorization.
 
 Provides:
-- get_current_user: Validate OAuth 2.0 access token (ADR-054)
+- get_current_user: Validate OAuth 2.0 access token (ADR-406)
 - get_current_active_user: Ensure user is not disabled
 - require_role: Check user has required role (legacy - use require_permission for dynamic RBAC)
 - require_permission: Dynamic permission checking with scoping support
 - get_api_key_user: Authenticate via API key
 
-Type Aliases (ADR-060 - FastAPI Full-Stack Template Pattern):
+Type Aliases (ADR-407 - FastAPI Full-Stack Template Pattern):
 - CurrentUser: Type-annotated dependency for authenticated user
 - TokenDep: Type-annotated dependency for raw token
 - Used for cleaner endpoint signatures per industry standard pattern
 
-ADR-054: OAuth 2.0 Authentication
+ADR-406: OAuth 2.0 Authentication
 - All authentication uses OAuth 2.0 flows (client credentials, device code, personal clients)
 - Single middleware validates OAuth access tokens
 - JWT support removed (OAuth-only since Phase 4 completion)
 
-ADR-060: Endpoint Security Architecture
+ADR-407: Endpoint Security Architecture
 - Per-endpoint dependency injection following FastAPI Full-Stack Template
 - Type-annotated dependencies for cleaner signatures
 - Three security levels: PUBLIC, USER, ADMIN
@@ -225,7 +225,7 @@ def get_user_by_id(user_id: int) -> Optional[UserInDB]:
 
 def validate_oauth_access_token(token: str) -> Optional[UserInDB]:
     """
-    Validate OAuth 2.0 access token and return associated user (ADR-054).
+    Validate OAuth 2.0 access token and return associated user (ADR-406).
 
     Checks the kg_auth.oauth_access_tokens table for a valid, non-expired token.
     Tokens are stored as hashes for security.
@@ -279,12 +279,12 @@ def validate_oauth_access_token(token: str) -> Optional[UserInDB]:
 
 
 # =============================================================================
-# OAuth 2.0 Authentication (ADR-054)
+# OAuth 2.0 Authentication (ADR-406)
 # =============================================================================
 
 async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> UserInDB:
     """
-    Get current user from OAuth 2.0 access token (ADR-054).
+    Get current user from OAuth 2.0 access token (ADR-406).
 
     Validates OAuth access token and retrieves user from database.
     All authentication now uses OAuth 2.0 - JWT support has been removed.
@@ -304,7 +304,7 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> Use
         headers={"WWW-Authenticate": "Bearer"},
     )
 
-    # Validate OAuth access token (ADR-054)
+    # Validate OAuth access token (ADR-406)
     user = validate_oauth_access_token(token)
     if user is not None:
         return user
@@ -459,7 +459,7 @@ def check_permission(
     resource_context: Optional[Dict[str, Any]] = None
 ) -> bool:
     """
-    Check if user has permission for action on resource (ADR-028 dynamic RBAC).
+    Check if user has permission for action on resource (ADR-404 dynamic RBAC).
 
     Uses PermissionChecker for scoped permission checking with support for:
     - Global permissions
@@ -502,7 +502,7 @@ def require_permission(
     resource_context: Optional[Dict[str, Any]] = None
 ):
     """
-    Dependency factory for dynamic permission-based access control (ADR-028).
+    Dependency factory for dynamic permission-based access control (ADR-404).
 
     Supports scoped permissions:
     - Global: Check permission on resource type (e.g., "read concepts")
@@ -565,7 +565,7 @@ def require_permission(
 
 
 # =============================================================================
-# OAuth Scope Checking (ADR-089)
+# OAuth Scope Checking (ADR-308)
 # =============================================================================
 
 # Define graph editing scopes
@@ -608,7 +608,7 @@ def get_token_scopes(token: str) -> list:
 
 def require_scope(*required_scopes: str):
     """
-    Dependency factory for OAuth scope-based access control (ADR-089).
+    Dependency factory for OAuth scope-based access control (ADR-308).
 
     Checks that the access token has at least one of the required scopes.
     Works with the OAuth 2.0 token flow.
@@ -657,7 +657,7 @@ def require_scope(*required_scopes: str):
 
 
 # =============================================================================
-# Type Aliases (ADR-060 - FastAPI Full-Stack Template Pattern)
+# Type Aliases (ADR-407 - FastAPI Full-Stack Template Pattern)
 # =============================================================================
 
 # Type alias for raw OAuth token (FastAPI template pattern)

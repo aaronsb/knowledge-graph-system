@@ -1,7 +1,7 @@
 """
 Markdown Structured Content Preprocessing
 
-Implements ADR-023: Translates code blocks and structured content to prose
+Implements ADR-301: Translates code blocks and structured content to prose
 to prevent parser errors during AGE Cypher ingestion.
 
 Architecture:

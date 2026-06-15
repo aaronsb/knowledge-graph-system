@@ -6,7 +6,7 @@ import type { SourceSearchResponse } from '../../types/index.js';
 import { formatGroundingStrength } from './utils.js';
 
 /**
- * Format source search results as markdown (ADR-068 Phase 5)
+ * Format source search results as markdown (ADR-812 Phase 5)
  *
  * Optimized for MCP/AI consumption - shows matched chunks with offsets
  * and related concepts extracted from those sources.
@@ -69,7 +69,7 @@ export function formatSourceSearchResults(result: SourceSearchResponse): string 
 }
 
 /**
- * Format polarity axis analysis results as markdown (ADR-070)
+ * Format polarity axis analysis results as markdown (ADR-813)
  *
  * Optimized for MCP/AI consumption - shows axis definition, projections,
  * statistics, and grounding correlation patterns.

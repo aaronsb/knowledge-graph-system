@@ -1,5 +1,5 @@
 /**
- * AI Configuration Commands (ADR-039, ADR-041)
+ * AI Configuration Commands (ADR-804, ADR-805)
  *
  * Manages AI provider configuration:
  * - Embedding models (local/API-based)

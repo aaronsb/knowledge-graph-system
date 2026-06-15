@@ -1,5 +1,5 @@
 """
-Source Embedding Worker (ADR-068 Phase 2).
+Source Embedding Worker (ADR-812 Phase 2).
 
 Generates embeddings for source text chunks with offset tracking and hash verification.
 
@@ -450,7 +450,7 @@ async def get_embedding_status(ontology: Optional[str] = None) -> Dict[str, Any]
     - Concepts (AGE graph nodes)
     - Sources (source_embeddings table with hash verification)
     - Vocabulary (relationship types in vocabulary_embeddings table)
-    - Images (future - from ADR-057)
+    - Images (future - from ADR-305)
 
     **Compatibility Detection:**
     Also identifies embeddings that don't match the active embedding configuration:
@@ -708,15 +708,15 @@ async def get_embedding_status(ontology: Optional[str] = None) -> Dict[str, Any]
     }
 
     # ====================================================================
-    # 4. Images (future - ADR-057)
+    # 4. Images (future - ADR-305)
     # ====================================================================
-    # TODO: Add image embedding status when ADR-057 is implemented
+    # TODO: Add image embedding status when ADR-305 is implemented
     status["images"] = {
         "total": 0,
         "with_embeddings": 0,
         "without_embeddings": 0,
         "percentage": 0.0,
-        "note": "Image embeddings not yet implemented (ADR-057)"
+        "note": "Image embeddings not yet implemented (ADR-305)"
     }
 
     # ====================================================================
@@ -760,7 +760,7 @@ async def regenerate_source_embeddings(
     limit: Optional[int] = None
 ) -> Dict[str, Any]:
     """
-    Regenerate embeddings for source nodes in bulk (ADR-068 Phase 4).
+    Regenerate embeddings for source nodes in bulk (ADR-812 Phase 4).
 
     Fetches source nodes from AGE and regenerates their embeddings using
     the current active embedding configuration. Useful for:

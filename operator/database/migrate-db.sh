@@ -5,7 +5,7 @@ set -e
 # Database Migration Runner
 # ============================================================================
 # Applies pending schema migrations to PostgreSQL database
-# ADR-040: Database Schema Migration Management
+# ADR-210: Database Schema Migration Management
 # ============================================================================
 
 # Colors (matching existing script style)

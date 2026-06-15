@@ -1,5 +1,5 @@
 """
-Embedding Projection Service (ADR-078).
+Embedding Projection Service (ADR-717).
 
 Computes t-SNE or UMAP dimensionality reduction projections of concept embeddings
 for visualization in the Embedding Landscape Explorer.

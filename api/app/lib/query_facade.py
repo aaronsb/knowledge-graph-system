@@ -4,7 +4,7 @@ GraphQueryFacade - Namespace-Safe Query Interface
 Provides a thin safety layer enforcing explicit labels in Apache AGE queries
 to prevent namespace collisions between concept graph and vocabulary metadata.
 
-Part of ADR-048: Vocabulary Metadata as First-Class Graph
+Part of ADR-606: Vocabulary Metadata as First-Class Graph
 
 Usage:
     from api.app.lib.query_facade import GraphQueryFacade
@@ -156,8 +156,8 @@ class GraphQueryFacade:
             where: Optional WHERE clause
             params: Query parameters
             limit: Optional result limit
-            include_epistemic_status: Only include relationships with these epistemic statuses (ADR-065 Phase 2)
-            exclude_epistemic_status: Exclude relationships with these epistemic statuses (ADR-065 Phase 2)
+            include_epistemic_status: Only include relationships with these epistemic statuses (ADR-610 Phase 2)
+            exclude_epistemic_status: Exclude relationships with these epistemic statuses (ADR-610 Phase 2)
 
         Returns:
             List of (source, relationship, target) dictionaries
@@ -169,7 +169,7 @@ class GraphQueryFacade:
                 where="r.edge_count > 5"
             )
 
-            # Find only high-confidence relationships (ADR-065)
+            # Find only high-confidence relationships (ADR-610)
             affirmative = facade.match_concept_relationships(
                 include_epistemic_status=["AFFIRMATIVE"]
             )
@@ -184,7 +184,7 @@ class GraphQueryFacade:
                 include_epistemic_status=["CONTESTED", "CONTRADICTORY"]
             )
         """
-        # Phase 2 (ADR-065): Get vocabulary types matching epistemic status filters
+        # Phase 2 (ADR-610): Get vocabulary types matching epistemic status filters
         if include_epistemic_status or exclude_epistemic_status:
             status_filters = []
 
@@ -582,7 +582,7 @@ class GraphQueryFacade:
         source_ids: List[str]
     ) -> Dict[str, List[Dict]]:
         """
-        Batch-fetch concepts for multiple sources (ADR-068 Phase 3).
+        Batch-fetch concepts for multiple sources (ADR-812 Phase 3).
 
         Solves N+1 query problem by fetching all concepts for all sources
         in a single query, then grouping results by source_id.

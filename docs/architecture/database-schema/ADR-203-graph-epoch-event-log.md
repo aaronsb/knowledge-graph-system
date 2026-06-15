@@ -5,7 +5,7 @@ deciders:
   - aaronsb
   - claude
 related:
-  - ADR-079
+  - ADR-114
   - ADR-200
   - ADR-202
 ---
@@ -14,7 +14,7 @@ related:
 
 ## Context
 
-The graph already carries a notion of "epoch" — `graph_metrics.graph_change_counter`, introduced by ADR-079 (migration 033). On every ingestion, concepts are tagged with `created_at_epoch` and `last_seen_epoch` (see `api/app/lib/age_client/ingestion.py:168-169`), and the counter is refreshed via `refresh_graph_metrics()`.
+The graph already carries a notion of "epoch" — `graph_metrics.graph_change_counter`, introduced by ADR-114 (migration 033). On every ingestion, concepts are tagged with `created_at_epoch` and `last_seen_epoch` (see `api/app/lib/age_client/ingestion.py:168-169`), and the counter is refreshed via `refresh_graph_metrics()`.
 
 That counter is **a composite checksum**, not an event sequence:
 
@@ -80,16 +80,16 @@ Per-chunk is too granular and explodes the row count without semantic value. Per
 
 ### 4. Coexistence with `graph_change_counter`
 
-The existing `graph_change_counter` (ADR-079) is **retained, unchanged**. Its purpose is composite cache-invalidation; it remains a count checksum. `graph_epochs.event_id` is the new monotonic event sequence with different semantics. The two coexist:
+The existing `graph_change_counter` (ADR-114) is **retained, unchanged**. Its purpose is composite cache-invalidation; it remains a count checksum. `graph_epochs.event_id` is the new monotonic event sequence with different semantics. The two coexist:
 
-- ADR-079 counter → "has any part of the graph changed since I cached?"
+- ADR-114 counter → "has any part of the graph changed since I cached?"
 - ADR-203 event_id → "what discrete mutation event introduced this data?"
 
 They are not unified, because their semantics are different. The ADR records this explicitly so future readers do not attempt to reconcile them.
 
 ### 5. Concept-level epoch fields
 
-`:Concept.created_at_epoch` and `last_seen_epoch` (count-snapshot values, written by current ingestion code) are **left in place as legacy**. They retain their ADR-079 cache-invalidation semantics. They are *not* renamed or migrated. If a future ADR wants to add `created_at_event_id` / `last_evidenced_event_id` to Concepts directly, that is a separate scope; the present ADR derives concept lifetime from the Instance chain.
+`:Concept.created_at_epoch` and `last_seen_epoch` (count-snapshot values, written by current ingestion code) are **left in place as legacy**. They retain their ADR-114 cache-invalidation semantics. They are *not* renamed or migrated. If a future ADR wants to add `created_at_event_id` / `last_evidenced_event_id` to Concepts directly, that is a separate scope; the present ADR derives concept lifetime from the Instance chain.
 
 ### 6. Scope of this ADR
 

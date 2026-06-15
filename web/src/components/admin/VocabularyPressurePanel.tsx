@@ -257,7 +257,7 @@ export const VocabularyPressurePanel: React.FC<VocabularyPressurePanelProps> = (
           </div>
           <p className="mt-3 text-xs text-muted-foreground">
             The aggressiveness curve maps vocabulary size to consolidation
-            pressure (ADR-032). Tune the curve via the <code className="font-mono">kg vocab</code>{' '}
+            pressure (ADR-603). Tune the curve via the <code className="font-mono">kg vocab</code>{' '}
             CLI; interactive editing is a deferred Profiles tab.
           </p>
         </div>

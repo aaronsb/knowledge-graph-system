@@ -1,5 +1,5 @@
 /**
- * OAuth 2.0 Utility Functions (ADR-054)
+ * OAuth 2.0 Utility Functions (ADR-406)
  *
  * Shared utilities for OAuth token management
  */

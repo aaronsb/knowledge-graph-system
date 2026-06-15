@@ -2,7 +2,7 @@
 Category Classifier for Automatic Edge Vocabulary Expansion.
 
 Classifies edge types into semantic categories using embedding-based similarity.
-Implements high bar for new category creation to prevent proliferation (ADR-032).
+Implements high bar for new category creation to prevent proliferation (ADR-603).
 
 Classification Logic:
     - confidence >= 0.3: Assign to existing category (good fit)
@@ -25,8 +25,8 @@ Usage:
         print(f"Assign to: {result.best_match_category} ({result.confidence:.2f})")
 
 References:
-    - ADR-032: Automatic Edge Vocabulary Expansion
-    - ADR-022: Semantic Relationship Taxonomy (30-type system)
+    - ADR-603: Automatic Edge Vocabulary Expansion
+    - ADR-600: Semantic Relationship Taxonomy (30-type system)
 """
 
 from typing import Dict, List, Optional, Tuple
@@ -71,7 +71,7 @@ class CategoryClassifier:
     to determine best fit.
     """
 
-    # Classification thresholds (per ADR-032)
+    # Classification thresholds (per ADR-603)
     GOOD_FIT_THRESHOLD = 0.3        # >= 0.3: assign to existing
     NEW_CATEGORY_THRESHOLD = 0.3    # < 0.3 for ALL: propose new
 
@@ -80,7 +80,7 @@ class CategoryClassifier:
     CATEGORY_MERGE_THRESHOLD = 12   # Flag merge opportunities
     CATEGORY_MAX = 15               # Hard limit
 
-    # Protected core categories (from ADR-022)
+    # Protected core categories (from ADR-600)
     PROTECTED_CATEGORIES = {
         "logical_truth",
         "causal",
@@ -444,7 +444,7 @@ if __name__ == "__main__":
     import asyncio
     import sys
 
-    print("Category Classifier - ADR-032 Implementation")
+    print("Category Classifier - ADR-603 Implementation")
     print("=" * 60)
     print()
     print("This module classifies edge types into semantic categories using:")

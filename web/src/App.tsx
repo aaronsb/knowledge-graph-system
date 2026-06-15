@@ -2,7 +2,7 @@
  * Main Application Component
  *
  * Integrates React Query, Zustand store, and workstation routing.
- * Follows ADR-034 and ADR-067 architecture.
+ * Follows ADR-710 and ADR-714 architecture.
  */
 
 import React, { useEffect } from 'react';
@@ -167,14 +167,14 @@ const AppContent: React.FC = () => {
         {/* Report */}
         <Route path="/report" element={<ProtectedView what="reports"><ReportWorkspace /></ProtectedView>} />
 
-        {/* Polarity Explorer (ADR-070) */}
+        {/* Polarity Explorer (ADR-813) */}
         <Route path="/polarity" element={<ProtectedView what="polarity"><PolarityExplorerWorkspace /></ProtectedView>} />
 
-        {/* Vocabulary Explorer (ADR-077) */}
+        {/* Vocabulary Explorer (ADR-611) */}
         <Route path="/vocabulary" element={<ProtectedView what="the vocabulary graph"><EdgeExplorerWorkspace /></ProtectedView>} />
         <Route path="/vocabulary/chord" element={<ProtectedView what="vocabulary analysis"><VocabularyChordWorkspace /></ProtectedView>} />
 
-        {/* Embedding Landscape (ADR-078) */}
+        {/* Embedding Landscape (ADR-717) */}
         <Route path="/embeddings" element={<ProtectedView what="the embedding landscape"><EmbeddingLandscapeWorkspace /></ProtectedView>} />
 
         {/* Edit */}

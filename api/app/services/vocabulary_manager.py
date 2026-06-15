@@ -1,5 +1,5 @@
 """
-Vocabulary Manager - Orchestration Layer for ADR-032.
+Vocabulary Manager - Orchestration Layer for ADR-603.
 
 Coordinates automatic edge vocabulary expansion and intelligent pruning:
 - Monitors vocabulary size and calculates aggressiveness
@@ -28,8 +28,8 @@ Usage:
     results = await manager.execute_auto_actions(recommendations['auto_execute'])
 
 References:
-    - ADR-032: Automatic Edge Vocabulary Expansion
-    - ADR-025: Dynamic Relationship Vocabulary
+    - ADR-603: Automatic Edge Vocabulary Expansion
+    - ADR-601: Dynamic Relationship Vocabulary
 """
 
 from typing import Dict, List, Optional, Tuple, Any
@@ -118,7 +118,7 @@ class VocabularyManager:
     Coordinates all Phase 1 worker modules to manage vocabulary lifecycle.
     """
 
-    # Vocabulary thresholds (from ADR-032)
+    # Vocabulary thresholds (from ADR-603)
     VOCAB_MIN = 30          # Protected core (30 builtin types)
     VOCAB_MAX = 90          # Soft limit for new additions (GREEN zone)
     VOCAB_EMERGENCY = 300   # Hard limit - aggressive pruning kicks in
@@ -213,7 +213,7 @@ class VocabularyManager:
             edge_type_scores = {}
 
         # Detect synonym candidates using vocabulary types directly from database
-        # This decouples synonym detection from value scoring (per ADR-032 architecture)
+        # This decouples synonym detection from value scoring (per ADR-603 architecture)
         synonym_candidates = await self._detect_synonym_candidates_from_vocab()
 
         # Identify low-value types (if scorer available)
@@ -519,7 +519,7 @@ class VocabularyManager:
         """
         Detect synonym candidates by getting types directly from vocabulary table.
 
-        This decouples synonym detection from value scoring per ADR-032 architecture.
+        This decouples synonym detection from value scoring per ADR-603 architecture.
         Synonym detection uses embeddings; scoring uses usage metrics.
         They are separate concerns.
 
@@ -596,12 +596,12 @@ class VocabularyManager:
         Strategy:
         1. Filter out low-similarity pairs (< min_similarity)
         2. Filter out likely inverse relationships (_BY suffix patterns)
-        3. ADR-065: Apply epistemic quality gates (block divergent validation states)
+        3. ADR-610: Apply epistemic quality gates (block divergent validation states)
         4. Prefer low-frequency types (easier to merge, less disruption)
         5. Score by: (similarity * 2) - (min_edge_count / 100)
         6. Sort by priority score descending
 
-        Epistemic Quality Gates (ADR-065):
+        Epistemic Quality Gates (ADR-610):
         - Block INSUFFICIENT_DATA: Can't merge without epistemic measurement
         - Block HISTORICAL: Temporal semantics require preservation
         - Block divergent states:
@@ -632,7 +632,7 @@ class VocabularyManager:
                 logger.debug(f"Skipping inverse pair: {candidate.type1} / {candidate.type2}")
                 continue
 
-            # ADR-065: Epistemic quality gates - block divergent epistemic states
+            # ADR-610: Epistemic quality gates - block divergent epistemic states
             # NOTE: Only apply to CUSTOM vocabulary (non-builtin). Built-in types
             # are pre-defined and unused, so INSUFFICIENT_DATA is expected and
             # should not block consolidation of initial vocabulary.
@@ -843,7 +843,7 @@ class VocabularyManager:
                 f"[similarity: {candidate.similarity:.1%}, priority: {priority:.3f}]"
             )
 
-            # Call LLM for decision (ADR-065: Include epistemic status context)
+            # Call LLM for decision (ADR-610: Include epistemic status context)
             decision = await llm_evaluate_merge(
                 type1=candidate.type1,
                 type2=candidate.type2,
@@ -1360,7 +1360,7 @@ if __name__ == "__main__":
     # Quick demonstration
     import asyncio
 
-    print("Vocabulary Manager - ADR-032 Orchestration Layer")
+    print("Vocabulary Manager - ADR-603 Orchestration Layer")
     print("=" * 60)
     print()
     print("This service coordinates:")

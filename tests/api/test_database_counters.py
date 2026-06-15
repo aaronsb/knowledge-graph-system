@@ -1,5 +1,5 @@
 """
-Database counters endpoint tests (ADR-079).
+Database counters endpoint tests (ADR-114).
 
 Tests for: kg database counters
 Endpoints:

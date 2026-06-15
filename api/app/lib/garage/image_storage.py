@@ -1,5 +1,5 @@
 """
-Image Storage Service - Multimodal image storage (ADR-057, ADR-080).
+Image Storage Service - Multimodal image storage (ADR-305, ADR-115).
 
 This service handles image upload, download, and management for the
 multimodal ingestion pipeline. Images are stored with source-ID based
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 class ImageStorageService:
     """
-    Image storage operations for multimodal ingestion (ADR-057).
+    Image storage operations for multimodal ingestion (ADR-305).
 
     Provides upload, download, delete, and listing operations for images
     associated with Source nodes in the knowledge graph.

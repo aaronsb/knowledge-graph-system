@@ -1,4 +1,4 @@
-"""Pydantic models for vocabulary management operations (ADR-032)"""
+"""Pydantic models for vocabulary management operations (ADR-603)"""
 
 from pydantic import BaseModel, Field
 from typing import Dict, List, Optional, Any, Literal
@@ -61,14 +61,14 @@ class EdgeTypeInfo(BaseModel):
     avg_traversal: Optional[float] = None
     last_used: Optional[datetime] = None
     value_score: Optional[float] = None
-    # ADR-047: Probabilistic category assignment
+    # ADR-605: Probabilistic category assignment
     category_source: Optional[str] = None  # 'builtin' or 'computed'
     category_confidence: Optional[float] = None  # 0.0-1.0
     category_scores: Optional[Dict[str, float]] = None  # Full category breakdown
     category_ambiguous: Optional[bool] = None  # True if runner-up > 0.70
-    # ADR-049: LLM-determined direction semantics
+    # ADR-810: LLM-determined direction semantics
     direction_semantics: Optional[str] = None  # 'outward', 'inward', 'bidirectional', or None
-    # ADR-065: Epistemic status (grounding-based)
+    # ADR-610: Epistemic status (grounding-based)
     epistemic_status: Optional[str] = None  # WELL_GROUNDED, MIXED_GROUNDING, etc.
     avg_grounding: Optional[float] = None  # Average grounding strength (-1.0 to 1.0)
 
@@ -164,7 +164,7 @@ class EdgeTypeScoreResponse(BaseModel):
     value_score: float
     is_builtin: bool
     last_used: Optional[datetime] = None
-    epistemic_status: Optional[str] = None  # ADR-065: Epistemic status for quality gates
+    epistemic_status: Optional[str] = None  # ADR-610: Epistemic status for quality gates
 
 
 class SynonymCandidateResponse(BaseModel):
@@ -470,7 +470,7 @@ class VocabularyJobDispatchResponse(BaseModel):
 
 
 # =============================================================================
-# Category Scoring (ADR-047)
+# Category Scoring (ADR-605)
 # =============================================================================
 
 class CategoryScoresResponse(BaseModel):
@@ -502,7 +502,7 @@ class RefreshCategoriesResponse(BaseModel):
     message: str
 
 
-# ========== Similarity Analysis (ADR-053) ==========
+# ========== Similarity Analysis (ADR-608) ==========
 
 class SimilarEdgeType(BaseModel):
     """Edge type with similarity score"""
@@ -514,7 +514,7 @@ class SimilarEdgeType(BaseModel):
 
 
 class VocabularySimilarityResponse(BaseModel):
-    """Response for similarity analysis (ADR-053)"""
+    """Response for similarity analysis (ADR-608)"""
     relationship_type: str
     category: str
     similar_types: List[SimilarEdgeType]
@@ -522,7 +522,7 @@ class VocabularySimilarityResponse(BaseModel):
 
 
 class VocabularyAnalysisDetailResponse(BaseModel):
-    """Detailed analysis of a vocabulary type (ADR-053)"""
+    """Detailed analysis of a vocabulary type (ADR-608)"""
     relationship_type: str
     category: str
     category_fit: float  # Similarity to category seeds
@@ -532,7 +532,7 @@ class VocabularyAnalysisDetailResponse(BaseModel):
     suggestion: Optional[str]
 
 
-# Epistemic Status Models (ADR-065 Phase 2)
+# Epistemic Status Models (ADR-610 Phase 2)
 
 class EpistemicStatusMeasureRequest(BaseModel):
     """Request to measure epistemic status for vocabulary types"""
@@ -582,7 +582,7 @@ class EpistemicStatusListResponse(BaseModel):
 
 
 # =============================================================================
-# Category Flow Models (ADR-077 - Vocabulary Explorers)
+# Category Flow Models (ADR-611 - Vocabulary Explorers)
 # =============================================================================
 
 class CategoryFlowInfo(BaseModel):
@@ -602,7 +602,7 @@ class CategoryFlowsResponse(BaseModel):
 
 
 # =============================================================================
-# Vocabulary Sync Models (ADR-077)
+# Vocabulary Sync Models (ADR-611)
 # =============================================================================
 
 class SyncFailedType(BaseModel):

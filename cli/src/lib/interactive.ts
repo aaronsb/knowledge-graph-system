@@ -1,5 +1,5 @@
 /**
- * Interactive utilities for CLI wizard mode (ADR-089 Phase 2).
+ * Interactive utilities for CLI wizard mode (ADR-308 Phase 2).
  *
  * Provides Tab-to-select input, multi-line editing, and confirmation prompts.
  */

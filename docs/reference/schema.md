@@ -41,7 +41,7 @@ Change counters for triggering periodic epistemic status measurement
 
 ### `schema_migrations`
 
-Tracks applied schema migrations for safe schema evolution - ADR-040
+Tracks applied schema migrations for safe schema evolution - ADR-210
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
@@ -69,7 +69,7 @@ API operational state: jobs, sessions, vocabulary, ontology.
 
 ### `ai_extraction_config`
 
-AI extraction provider configuration for runtime-switchable models - ADR-041
+AI extraction provider configuration for runtime-switchable models - ADR-805
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
@@ -146,7 +146,7 @@ One row per annealing cycle: ecological snapshot + Bezier pressure
 
 ### `artifacts`
 
-Computed artifact metadata with Garage blob pointers (ADR-083)
+Computed artifact metadata with Garage blob pointers (ADR-116)
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
@@ -194,7 +194,7 @@ ADR-501: materialized identity/metadata for catalog nodes (ontology/document/con
 
 ### `concept_access_stats`
 
-Node-level access patterns for caching - ADR-025
+Node-level access patterns for caching - ADR-601
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
@@ -215,7 +215,7 @@ Node-level access patterns for caching - ADR-025
 
 ### `edge_usage_stats`
 
-Performance tracking for graph traversals - ADR-025
+Performance tracking for graph traversals - ADR-601
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
@@ -232,7 +232,7 @@ Performance tracking for graph traversals - ADR-025
 
 ### `embedding_config`
 
-Resource-aware embedding configuration for local and remote models - ADR-039. Includes preset for nomic-embed-text-v1.5.
+Resource-aware embedding configuration for local and remote models - ADR-804. Includes preset for nomic-embed-text-v1.5.
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
@@ -249,7 +249,7 @@ Resource-aware embedding configuration for local and remote models - ADR-039. In
 
 ### `embedding_generation_jobs`
 
-ADR-045: Tracks embedding generation jobs for audit trail and progress monitoring
+ADR-809: Tracks embedding generation jobs for audit trail and progress monitoring
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
@@ -312,7 +312,7 @@ ADR-203: Discriminator for graph_epochs.kind. semantic_wallclock distinguishes e
 
 ### `graph_epochs`
 
-ADR-203: Monotonic event log of graph mutations. Distinct from graph_change_counter (ADR-079) which is a composite cache-invalidation checksum.
+ADR-203: Monotonic event log of graph mutations. Distinct from graph_change_counter (ADR-114) which is a composite cache-invalidation checksum.
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
@@ -325,7 +325,7 @@ ADR-203: Monotonic event log of graph mutations. Distinct from graph_change_coun
 
 ### `ingestion_jobs`
 
-Job queue (replaces SQLite jobs.db) - ADR-014, ADR-024, ADR-100
+Job queue (replaces SQLite jobs.db) - ADR-300, ADR-209, ADR-100
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
@@ -389,7 +389,7 @@ Positive operator-intent signal that an ontology was deliberately
 
 ### `ontology_versions`
 
-Formal ontology versioning with immutable snapshots - ADR-026
+Formal ontology versioning with immutable snapshots - ADR-602
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
@@ -408,7 +408,7 @@ Formal ontology versioning with immutable snapshots - ADR-026
 
 ### `platform_config`
 
-Platform lifecycle configuration for operator control plane (ADR-061)
+Platform lifecycle configuration for operator control plane (ADR-211)
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
@@ -449,7 +449,7 @@ Cached model catalog per AI provider with curation and pricing (ADR-800)
 
 ### `pruning_recommendations`
 
-Pending vocabulary management actions - ADR-032
+Pending vocabulary management actions - ADR-603
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
@@ -472,7 +472,7 @@ Pending vocabulary management actions - ADR-032
 
 ### `query_definitions`
 
-Saved query recipes that can be re-executed (ADR-083)
+Saved query recipes that can be re-executed (ADR-116)
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
@@ -503,7 +503,7 @@ Saved query recipes that can be re-executed (ADR-083)
 
 ### `relationship_vocabulary`
 
-Canonical relationship types with embeddings - ADR-025, ADR-032
+Canonical relationship types with embeddings - ADR-601, ADR-603
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
@@ -520,7 +520,7 @@ Canonical relationship types with embeddings - ADR-025, ADR-032
 
 ### `scheduled_jobs`
 
-Configuration for scheduled background jobs (ADR-050)
+Configuration for scheduled background jobs (ADR-111)
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
@@ -540,7 +540,7 @@ Configuration for scheduled background jobs (ADR-050)
 
 ### `schema_migrations`
 
-Tracks applied database migrations for backup/restore compatibility. Schema version is included in backups to ensure restore compatibility when database schema evolves. See ADR-015 for details.
+Tracks applied database migrations for backup/restore compatibility. Schema version is included in backups to ensure restore compatibility when database schema evolves. See ADR-107 for details.
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
@@ -561,7 +561,7 @@ Tracks applied database migrations for backup/restore compatibility. Schema vers
 
 ### `skipped_relationships`
 
-Capture layer for unmatched relationship types - ADR-025
+Capture layer for unmatched relationship types - ADR-601
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
@@ -582,7 +582,7 @@ Capture layer for unmatched relationship types - ADR-025
 
 ### `source_embeddings`
 
-ADR-068: Embeddings for source text chunks with offset tracking and hash verification
+ADR-812: Embeddings for source text chunks with offset tracking and hash verification
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
@@ -595,7 +595,7 @@ ADR-068: Embeddings for source text chunks with offset tracking and hash verific
 
 ### `synonym_clusters`
 
-ADR-046: Tracks groups of synonymous edge types discovered through embedding-based semantic similarity (threshold > 0.85)
+ADR-604: Tracks groups of synonymous edge types discovered through embedding-based semantic similarity (threshold > 0.85)
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
@@ -607,7 +607,7 @@ ADR-046: Tracks groups of synonymous edge types discovered through embedding-bas
 
 ### `system_api_keys`
 
-Encrypted system API keys for LLM providers (ADR-031, ADR-041)
+Encrypted system API keys for LLM providers (ADR-405, ADR-805)
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
@@ -619,7 +619,7 @@ Encrypted system API keys for LLM providers (ADR-031, ADR-041)
 
 ### `system_initialization_status`
 
-ADR-045: Tracks completion of system initialization tasks like cold start embedding generation
+ADR-809: Tracks completion of system initialization tasks like cold start embedding generation
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
@@ -643,7 +643,7 @@ ADR-045: Tracks completion of system initialization tasks like cold start embedd
 
 ### `vocabulary_config`
 
-System configuration for automatic vocabulary management (ADR-032)
+System configuration for automatic vocabulary management (ADR-603)
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
@@ -655,7 +655,7 @@ System configuration for automatic vocabulary management (ADR-032)
 
 ### `vocabulary_history`
 
-Detailed vocabulary change tracking with context (ADR-032)
+Detailed vocabulary change tracking with context (ADR-603)
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
@@ -674,7 +674,7 @@ Detailed vocabulary change tracking with context (ADR-032)
 
 ### `vocabulary_suggestions`
 
-LLM-assisted vocabulary curation suggestions - ADR-026
+LLM-assisted vocabulary curation suggestions - ADR-602
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
@@ -735,7 +735,7 @@ Authentication and authorization (dynamic RBAC).
 
 ### `groups`
 
-Group definitions for collaborative access control (ADR-082)
+Group definitions for collaborative access control (ADR-410)
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
@@ -828,7 +828,7 @@ OAuth refresh tokens for long-lived sessions
 
 ### `resource_grants`
 
-Instance-level access grants for owned resources (ADR-082)
+Instance-level access grants for owned resources (ADR-410)
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
@@ -847,7 +847,7 @@ Instance-level access grants for owned resources (ADR-082)
 
 ### `resources`
 
-Dynamic resource type registry (ADR-028)
+Dynamic resource type registry (ADR-404)
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
@@ -862,7 +862,7 @@ Dynamic resource type registry (ADR-028)
 
 ### `role_permissions`
 
-Dynamic role permissions with scoping (ADR-028)
+Dynamic role permissions with scoping (ADR-404)
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
@@ -880,7 +880,7 @@ Dynamic role permissions with scoping (ADR-028)
 
 ### `roles`
 
-Dynamic role definitions with inheritance (ADR-028)
+Dynamic role definitions with inheritance (ADR-404)
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
@@ -895,7 +895,7 @@ Dynamic role definitions with inheritance (ADR-028)
 
 ### `user_groups`
 
-Group membership assignments (ADR-082)
+Group membership assignments (ADR-410)
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
@@ -910,7 +910,7 @@ Group membership assignments (ADR-082)
 
 ### `user_roles`
 
-User role assignments with optional scoping (ADR-028)
+User role assignments with optional scoping (ADR-404)
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
@@ -997,44 +997,44 @@ Schema evolves through numbered migrations under `schema/migrations/`. Each is r
 
 | # | Migration | ADRs | Description |
 |---|---|---|---|
-| 1 | baseline | ADR-025, ADR-026, ADR-028, ADR-032, ADR-039, ADR-040 | Baseline schema snapshot (v2.0.0) |
-| 3 | add embedding config | ADR-039 | Add resource-aware embedding configuration table for local/remote models |
-| 4 | add ai extraction config | ADR-041 | Add AI extraction provider configuration table for runtime-switchable models |
-| 5 | add api key validation | ADR-031, ADR-041 | Create system_api_keys table with validation state tracking |
-| 6 | add embedding config protection | ADR-039 | Add delete and change protection flags to embedding configurations |
-| 7 | add local extraction providers | ADR-042 | Extend AI extraction config to support local inference providers (Ollama, vLLM) |
-| 8 | add nomic embedding preset | ADR-039 | Add nomic-embed-text-v1.5 as a pre-configured local embedding option |
-| 9 | add thinking mode | ADR-042 | Add thinking_mode parameter for Ollama reasoning models |
-| 11 | add grounding metrics | ADR-044, ADR-046 | Add grounding-aware metrics to vocabulary table for ADR-044/046 |
-| 12 | add embedding worker support | ADR-045 | Add infrastructure for unified embedding generation (ADR-045) |
-| 13 | Add Schema Version Tracking | ADR-015 | Adds schema_migrations table to track applied migrations |
-| 14 | Vocabulary as Graph Nodes (ADR-048 Phase 3) | ADR-047, ADR-048 |  |
-| 15 | Probabilistic Vocabulary Categorization (ADR-047) | ADR-044, ADR-045, ADR-047 | Adds fields for probabilistic category assignment using embedding similarity. |
-| 16 | LLM-Determined Relationship Direction Semantics (ADR-049) | ADR-047, ADR-048, ADR-049 | Adds direction_semantics field for LLM-determined relationship directionality. |
+| 1 | baseline | ADR-601, ADR-602, ADR-404, ADR-603, ADR-804, ADR-210 | Baseline schema snapshot (v2.0.0) |
+| 3 | add embedding config | ADR-804 | Add resource-aware embedding configuration table for local/remote models |
+| 4 | add ai extraction config | ADR-805 | Add AI extraction provider configuration table for runtime-switchable models |
+| 5 | add api key validation | ADR-405, ADR-805 | Create system_api_keys table with validation state tracking |
+| 6 | add embedding config protection | ADR-804 | Add delete and change protection flags to embedding configurations |
+| 7 | add local extraction providers | ADR-806 | Extend AI extraction config to support local inference providers (Ollama, vLLM) |
+| 8 | add nomic embedding preset | ADR-804 | Add nomic-embed-text-v1.5 as a pre-configured local embedding option |
+| 9 | add thinking mode | ADR-806 | Add thinking_mode parameter for Ollama reasoning models |
+| 11 | add grounding metrics | ADR-808, ADR-604 | Add grounding-aware metrics to vocabulary table for ADR-808/046 |
+| 12 | add embedding worker support | ADR-809 | Add infrastructure for unified embedding generation (ADR-809) |
+| 13 | Add Schema Version Tracking | ADR-107 | Adds schema_migrations table to track applied migrations |
+| 14 | Vocabulary as Graph Nodes (ADR-606 Phase 3) | ADR-605, ADR-606 |  |
+| 15 | Probabilistic Vocabulary Categorization (ADR-605) | ADR-808, ADR-809, ADR-605 | Adds fields for probabilistic category assignment using embedding similarity. |
+| 16 | LLM-Determined Relationship Direction Semantics (ADR-810) | ADR-605, ADR-606, ADR-810 | Adds direction_semantics field for LLM-determined relationship directionality. |
 | 17 | Vocabulary Configuration System |  |  |
 | 18 | add rate limiting config |  | Add rate limiting and concurrency configuration for AI providers |
-| 19 | Scheduled Jobs System | ADR-050 |  |
-| 20 | Track Authenticated Users in Jobs | ADR-027, ADR-028, ADR-082 |  |
-| 21 | Graph-Based Provenance Tracking | ADR-014, ADR-044, ADR-051 |  |
-| 22 | OAuth 2.0 Client Management | ADR-054 | Implements OAuth 2.0 flows (Authorization Code + PKCE, Device Authorization Grant, Client Credentials) |
-| 23 | Image Storage Source Properties (ADR-057) | ADR-057 | Extends Source nodes to support multimodal image ingestion with S3-compatible |
+| 19 | Scheduled Jobs System | ADR-111 |  |
+| 20 | Track Authenticated Users in Jobs | ADR-403, ADR-404, ADR-410 |  |
+| 21 | Graph-Based Provenance Tracking | ADR-300, ADR-808, ADR-304 |  |
+| 22 | OAuth 2.0 Client Management | ADR-406 | Implements OAuth 2.0 flows (Authorization Code + PKCE, Device Authorization Grant, Client Credentials) |
+| 23 | Image Storage Source Properties (ADR-305) | ADR-305 | Extends Source nodes to support multimodal image ingestion with S3-compatible |
 | 24 | Add Description Field to Concept Nodes |  |  |
 | 25 | Graph Metrics Table |  | Track graph change counters to trigger periodic epistemic status measurement |
-| 26 | Add epistemic re-measurement scheduled job | ADR-065 |  |
-| 27 | source text embeddings | ADR-068 | Add source text embeddings with offset tracking and hash verification (ADR-068) |
-| 28 | Platform Admin Resources and Role (ADR-074) | ADR-074 |  |
-| 29 | Fix Role Hierarchy (ADR-074) | ADR-074 |  |
-| 30 | Add 'create' action to users resource type | ADR-074 |  |
+| 26 | Add epistemic re-measurement scheduled job | ADR-610 |  |
+| 27 | source text embeddings | ADR-812 | Add source text embeddings with offset tracking and hash verification (ADR-812) |
+| 28 | Platform Admin Resources and Role (ADR-409) | ADR-409 |  |
+| 29 | Fix Role Hierarchy (ADR-409) | ADR-409 |  |
+| 30 | Add 'create' action to users resource type | ADR-409 |  |
 | 31 | platform config |  | Platform lifecycle configuration for operator-as-control-plane pattern |
-| 32 | Add projection refresh scheduled job | ADR-078 |  |
-| 33 | Graph Metrics Snapshot Refresh | ADR-079 | Provide reliable graph change detection for projection cache invalidation |
-| 34 | User Scoping and Groups (ADR-082) | ADR-082 |  |
-| 35 | Artifact Persistence (ADR-083) | ADR-082, ADR-083 |  |
-| 36 | Job Artifact Linking (ADR-083 Phase 4) | ADR-083 |  |
+| 32 | Add projection refresh scheduled job | ADR-717 |  |
+| 33 | Graph Metrics Snapshot Refresh | ADR-114 | Provide reliable graph change detection for projection cache invalidation |
+| 34 | User Scoping and Groups (ADR-410) | ADR-410 |  |
+| 35 | Artifact Persistence (ADR-116) | ADR-410, ADR-116 |  |
+| 36 | Job Artifact Linking (ADR-116 Phase 4) | ADR-116 |  |
 | 37 | Grant admin role backup create/restore permissions |  |  |
-| 38 | Upgrade admin user to platform_admin | ADR-074 |  |
+| 38 | Upgrade admin user to platform_admin | ADR-409 |  |
 | 39 | Add metadata column to query_definitions |  |  |
-| 40 | Graph CRUD Permissions (ADR-089) | ADR-089 |  |
+| 40 | Graph CRUD Permissions (ADR-308) | ADR-308 |  |
 | 41 | Job RBAC Permissions |  |  |
 | 42 | Storage Admin RBAC Permissions |  |  |
 | 43 | Backfill content_type and storage_key on DocumentMeta Nodes |  |  |
@@ -1049,14 +1049,14 @@ Schema evolves through numbered migrations under `schema/migrations/`. Each is r
 | 52 | Add 'program' to query_definitions definition_type | ADR-500 |  |
 | 53 | Change annealing automation_level default to autonomous |  |  |
 | 54 | Add delete action to sources resource |  |  |
-| 55 | embedding profile | ADR-039 | Unified embedding profile with text + image model slots |
+| 55 | embedding profile | ADR-804 | Unified embedding profile with text + image model slots |
 | 56 | embedding task prefix |  | Add task prefix columns to embedding_profile for purpose-aware embedding |
 | 57 | Worker lanes and database-driven job dispatch (ADR-100) | ADR-100 |  |
 | 59 | Provider model catalog and OpenRouter support (ADR-800) | ADR-800 |  |
 | 60 | Remove hardcoded Ollama catalog seeds (ADR-800) | ADR-800 |  |
 | 61 | Allow llama.cpp as an extraction provider | ADR-800 |  |
 | 62 | ai_extraction_config becomes one row PER PROVIDER (ADR-800 / #8) | ADR-800 |  |
-| 63 | Graph epoch event log (ADR-203) | ADR-079, ADR-203 |  |
+| 63 | Graph epoch event log (ADR-203) | ADR-114, ADR-203 |  |
 | 64 | Replace graph_epochs.kind CHECK constraint with a lookup table. | ADR-203 |  |
 | 65 | Raise annealing cadence floors (#402 Defect C) |  |  |
 | 66 | Ontology tombstones (#402 Defect B2) |  |  |
@@ -1066,10 +1066,10 @@ Schema evolves through numbered migrations under `schema/migrations/`. Each is r
 | 70 | Schedule the VocabEmbeddingLauncher |  |  |
 | 71 | Open-registration feature flag (ADR-400, internet-hardening #431) | ADR-400 |  |
 | 72 | Grant admin oauth_clients:write (ADR-400, internet-hardening #441) | ADR-400 |  |
-| 73 | Catalog Browse Index + RBAC (ADR-501) | ADR-068, ADR-200, ADR-203, ADR-501 |  |
+| 73 | Catalog Browse Index + RBAC (ADR-501) | ADR-812, ADR-200, ADR-203, ADR-501 |  |
 | 74 | ai_vision_config — active vision provider selection (ADR-802 / #378) | ADR-801, ADR-802 |  |
-| 75 | decouple the image embedding slot from the text vector space | ADR-057, ADR-803 |  |
-| 76 | Trustworthy freshness clock (ADR-207, #384) | ADR-079, ADR-203, ADR-207 |  |
+| 75 | decouple the image embedding slot from the text vector space | ADR-305, ADR-803 |  |
+| 76 | Trustworthy freshness clock (ADR-207, #384) | ADR-114, ADR-203, ADR-207 |  |
 | 77 | Add the 'restore' graph-epoch kind (ADR-102 P5) | ADR-102, ADR-207 |  |
 | 78 | seed primordial ontology | ADR-200 | Seed the reserved 'primordial' ontology pool on clean install (#505) |
 

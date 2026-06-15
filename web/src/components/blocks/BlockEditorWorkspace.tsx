@@ -275,7 +275,7 @@ export const BlockEditorWorkspace: React.FC = () => {
               <button
                 className="flex-1 px-2 py-1.5 text-xs rounded bg-muted text-muted-foreground opacity-50 cursor-not-allowed"
                 disabled
-                title="Coming soon (ADR-066)"
+                title="Coming soon (ADR-504)"
               >
                 Published
               </button>

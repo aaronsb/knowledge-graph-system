@@ -1,14 +1,14 @@
 """
-Semantic Diversity Analyzer (ADR-063).
+Semantic Diversity Analyzer (ADR-503).
 
 Measures semantic diversity of related concepts within N-hop graph traversal
 to distinguish authentic information (high diversity from independent domains)
 from fabricated claims (low diversity from circular reasoning).
 
 References:
-    - ADR-063: Semantic Diversity as Authenticity Signal
-    - ADR-044: Dynamic Grounding (probabilistic truth convergence)
-    - ADR-058: Polarity Axis Triangulation
+    - ADR-503: Semantic Diversity as Authenticity Signal
+    - ADR-808: Dynamic Grounding (probabilistic truth convergence)
+    - ADR-811: Polarity Axis Triangulation
 """
 
 from typing import Dict, Any, List, Optional, Tuple
@@ -59,7 +59,7 @@ class DiversityAnalyzer:
         then measures pairwise cosine similarity of their embeddings.
 
         When grounding_strength is provided, also calculates authenticated_diversity
-        which combines diversity with grounding polarity (ADR-044 + ADR-063).
+        which combines diversity with grounding polarity (ADR-808 + ADR-503).
 
         Args:
             concept_id: Target concept ID
@@ -277,7 +277,7 @@ class DiversityAnalyzer:
         """
         Interpret diversity score for human readability.
 
-        Thresholds based on empirical validation (ADR-063):
+        Thresholds based on empirical validation (ADR-503):
         - Apollo 11 (authentic): 0.377 diversity
         - Moon Landing Conspiracy (fabricated): 0.232 diversity
         """

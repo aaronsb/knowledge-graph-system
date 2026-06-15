@@ -5,9 +5,9 @@ deciders:
   - aaronsb
   - claude
 related:
-  - ADR-083
-  - ADR-048
-  - ADR-066
+  - ADR-116
+  - ADR-606
+  - ADR-504
 ---
 
 # ADR-500: Graph Program DSL and AST Architecture
@@ -292,7 +292,7 @@ The API validates program ASTs before execution. Validation checks:
 
 - **Structural**: Required fields present, operator is valid, operation type is known
 - **Boundedness**: Total operation count is statically computable and within limits (default: 100). Conditional branches contribute their longer path to the count.
-- **Cypher safety**: Statements pass through the query facade safety checks (ADR-048) — no writes, no unbounded matches without LIMIT
+- **Cypher safety**: Statements pass through the query facade safety checks (ADR-606) — no writes, no unbounded matches without LIMIT
 - **Parameter resolution**: All `$param` references resolve to declared parameters or provided values
 - **API endpoint allowlist**: `ApiOp` endpoints must be in the permitted set
 - **Nesting depth**: Conditional nesting does not exceed maximum (default: 3)
@@ -340,7 +340,7 @@ Each statement in the program is processed sequentially:
 1. Resolve parameters (`$name` → provided value or default)
 2. Evaluate conditionals against current W state (if applicable)
 3. Execute the selected operation:
-   - `CypherOp`: run against H via the query facade (ADR-048)
+   - `CypherOp`: run against H via the query facade (ADR-606)
    - `ApiOp`: call internal service function directly
 4. Map results to `RawGraphData` format
 5. Apply the operator to W:
@@ -406,7 +406,7 @@ Every existing block type and exploration action maps to the AST:
 
 ### 10. Storage
 
-Programs are stored as `query_definition` records (ADR-083) with `definition_type: 'program'`:
+Programs are stored as `query_definition` records (ADR-116) with `definition_type: 'program'`:
 
 ```json
 {
@@ -428,7 +428,7 @@ This sits alongside existing definition types (`exploration`, `block_diagram`, `
 - **One executor for all clients.** The web app, CLI, MCP server, and AI agents all use the same `POST /programs/execute` endpoint. Set algebra implemented once, tested once.
 - **Headless agent execution.** Agents can author, store, load, and execute programs without a browser. Agents can borrow programs from users or other agents via the query definitions API.
 - **No N+1 round-trips.** Smart blocks (vector search, epistemic filter, etc.) are internal function calls during execution, not HTTP requests from the client. A 10-step program with 4 smart blocks is 1 HTTP request, not 11.
-- **Static cost guarantees.** The validator computes maximum operation count from the AST before execution. Combined with Cypher safety checks (ADR-048), this means programs can't consume unbounded resources.
+- **Static cost guarantees.** The validator computes maximum operation count from the AST before execution. Combined with Cypher safety checks (ADR-606), this means programs can't consume unbounded resources.
 - All three authoring surfaces compile to one format — eliminates three separate client-side execution paths
 - Smart blocks become first-class IR citizens — programs are no longer lossy
 - Block ↔ text ↔ recording round-trip becomes possible via block annotations
@@ -527,5 +527,5 @@ Rejected because: Even bounded iteration makes program cost dependent on graph s
 - `web/src/lib/blockCompiler.ts` — current block → Cypher compiler
 - `web/src/types/blocks.ts` — 18 block type definitions
 - `.claude/todo-unified-query-language.md` — prior ideation notes
-- ADR-048 — Query safety and GraphQueryFacade
-- ADR-083 — Artifact persistence pattern
+- ADR-606 — Query safety and GraphQueryFacade
+- ADR-116 — Artifact persistence pattern

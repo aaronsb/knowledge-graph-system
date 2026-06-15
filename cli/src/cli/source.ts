@@ -1,5 +1,5 @@
 /**
- * Source document retrieval commands (ADR-081)
+ * Source document retrieval commands (ADR-307)
  */
 
 import { Command } from 'commander';
@@ -13,7 +13,7 @@ import { Table } from '../lib/table';
 export const sourceCommand = setCommandHelp(
   new Command('source'),
   'Manage source documents',
-  'Retrieve and manage source documents stored in Garage. Source documents are the original files ingested into the knowledge graph, preserved for model evolution and re-extraction (ADR-081).'
+  'Retrieve and manage source documents stored in Garage. Source documents are the original files ingested into the knowledge graph, preserved for model evolution and re-extraction (ADR-307).'
 )
   .showHelpAfterError();
 
@@ -118,7 +118,7 @@ const getCommand = setCommandHelp(
     } catch (error: any) {
       if (error.response?.status === 404) {
         console.error(colors.status.error(`✗ Source not found or no document: ${sourceId}`));
-        console.error(colors.status.dim('  The source may predate ADR-081 or have no garage_key.'));
+        console.error(colors.status.dim('  The source may predate ADR-307 or have no garage_key.'));
       } else {
         console.error(colors.status.error(`✗ Failed to retrieve document: ${error.message}`));
       }
@@ -151,12 +151,12 @@ const infoCommand = setCommandHelp(
       }
       console.log();
 
-      // ADR-081 fields
-      console.log(colors.ui.header('Storage (ADR-081)'));
+      // ADR-307 fields
+      console.log(colors.ui.header('Storage (ADR-307)'));
       if (metadata.garage_key) {
         console.log(`${colors.ui.key('Garage Key:')} ${colors.status.dim(metadata.garage_key)}`);
       } else {
-        console.log(`${colors.ui.key('Garage Key:')} ${colors.status.warning('none (predates ADR-081)')}`);
+        console.log(`${colors.ui.key('Garage Key:')} ${colors.status.warning('none (predates ADR-307)')}`);
       }
       if (metadata.content_hash) {
         console.log(`${colors.ui.key('Content Hash:')} ${colors.status.dim(metadata.content_hash.substring(0, 16) + '...')}`);

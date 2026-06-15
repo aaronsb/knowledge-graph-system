@@ -1,5 +1,5 @@
 /**
- * Server-Sent Events (SSE) job progress streaming (ADR-018 Phase 1)
+ * Server-Sent Events (SSE) job progress streaming (ADR-108 Phase 1)
  *
  * Provides real-time job progress updates via EventSource API.
  * Gracefully falls back to polling if SSE fails.

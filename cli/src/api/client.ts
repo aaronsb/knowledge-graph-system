@@ -56,7 +56,7 @@ import {
   UserRoleRead,
   PermissionCheckRequest,
   PermissionCheckResponse,
-  // ADR-089: Concept/Edge CRUD types
+  // ADR-308: Concept/Edge CRUD types
   ConceptCreate,
   ConceptUpdate,
   ConceptCRUDResponse,
@@ -91,7 +91,7 @@ export class KnowledgeGraphClient {
       },
     });
 
-    // ADR-054: Add request interceptor for OAuth authentication
+    // ADR-406: Add request interceptor for OAuth authentication
     this.client.interceptors.request.use(async (requestConfig) => {
       // Priority 1: Use MCP JWT token if set (for MCP server - legacy)
       if (this.mcpJwtToken) {
@@ -105,7 +105,7 @@ export class KnowledgeGraphClient {
         const { AuthClient } = require('../lib/auth/auth-client');
         const configManager = getConfig();
 
-        // Check for OAuth client credentials (ADR-054)
+        // Check for OAuth client credentials (ADR-406)
         const oauthCreds = configManager.getOAuthCredentials();
         if (oauthCreds) {
           // Get fresh access token using client credentials grant
@@ -126,7 +126,7 @@ export class KnowledgeGraphClient {
       return requestConfig;
     });
 
-    // ADR-054: Add response interceptor for 401 errors (invalid OAuth token)
+    // ADR-406: Add response interceptor for 401 errors (invalid OAuth token)
     this.client.interceptors.response.use(
       (response) => response,
       (error) => {
@@ -223,7 +223,7 @@ export class KnowledgeGraphClient {
       }
     }
 
-    // ADR-051: Source provenance metadata
+    // ADR-304: Source provenance metadata
     if (request.source_type) {
       form.append('source_type', request.source_type);
     }
@@ -284,7 +284,7 @@ export class KnowledgeGraphClient {
   }
 
   /**
-   * Ingest image (ADR-057)
+   * Ingest image (ADR-305)
    */
   async ingestImage(
     filePath: string,
@@ -434,7 +434,7 @@ export class KnowledgeGraphClient {
   }
 
   /**
-   * Approve a job for processing (ADR-014)
+   * Approve a job for processing (ADR-300)
    */
   async approveJob(jobId: string): Promise<{ job_id: string; status: string; message: string }> {
     const response = await this.client.post(`/jobs/${jobId}/approve`);
@@ -483,7 +483,7 @@ export class KnowledgeGraphClient {
   }
 
   /**
-   * Search source text using semantic similarity (ADR-068 Phase 3)
+   * Search source text using semantic similarity (ADR-812 Phase 3)
    */
   async searchSources(request: SourceSearchRequest): Promise<SourceSearchResponse> {
     const response = await this.client.post('/query/sources/search', request);
@@ -534,7 +534,7 @@ export class KnowledgeGraphClient {
   }
 
   /**
-   * Get image for a source node (ADR-057)
+   * Get image for a source node (ADR-305)
    * @param sourceId - Source ID from concept instance
    * @returns Image as Buffer (binary data)
    */
@@ -546,7 +546,7 @@ export class KnowledgeGraphClient {
   }
 
   /**
-   * Get image for a source node as base64 string (ADR-057)
+   * Get image for a source node as base64 string (ADR-305)
    * Useful for MCP server to return images to Claude
    * @param sourceId - Source ID from concept instance
    * @returns Base64-encoded image string
@@ -587,7 +587,7 @@ export class KnowledgeGraphClient {
   }
 
   /**
-   * Get original document for a source node (ADR-081)
+   * Get original document for a source node (ADR-307)
    * @param sourceId - Source ID from search results or concept details
    * @returns Document content as Buffer (binary data)
    */
@@ -623,7 +623,7 @@ export class KnowledgeGraphClient {
     return response.data;
   }
 
-  // ========== Document Methods (ADR-084) ==========
+  // ========== Document Methods (ADR-507) ==========
 
   /**
    * Search documents using semantic similarity
@@ -724,7 +724,7 @@ export class KnowledgeGraphClient {
     return response.data;
   }
 
-  // ========== Concept CRUD Methods (ADR-089) ==========
+  // ========== Concept CRUD Methods (ADR-308) ==========
 
   /**
    * Create a new concept in the knowledge graph.
@@ -837,7 +837,7 @@ export class KnowledgeGraphClient {
     return response.data;
   }
 
-  // ========== Edge CRUD Methods (ADR-089) ==========
+  // ========== Edge CRUD Methods (ADR-308) ==========
 
   /**
    * Create a new edge between concepts.
@@ -892,7 +892,7 @@ export class KnowledgeGraphClient {
     );
   }
 
-  // ========== Batch Methods (ADR-089 Phase 1b) ==========
+  // ========== Batch Methods (ADR-308 Phase 1b) ==========
 
   /**
    * Batch create concepts and edges in a single transaction.
@@ -929,7 +929,7 @@ export class KnowledgeGraphClient {
   }
 
   /**
-   * Execute a custom cypher query (ADR-048)
+   * Execute a custom cypher query (ADR-606)
    * @param query - openCypher/GQL query string
    * @param params - Optional query parameters
    * @param namespace - Optional namespace: 'concept', 'vocab', or null for raw
@@ -944,7 +944,7 @@ export class KnowledgeGraphClient {
   }
 
   /**
-   * Get all graph metrics counters organized by type (ADR-079)
+   * Get all graph metrics counters organized by type (ADR-114)
    */
   async getDatabaseCounters(): Promise<any> {
     const response = await this.client.get('/database/counters');
@@ -952,7 +952,7 @@ export class KnowledgeGraphClient {
   }
 
   /**
-   * Refresh graph metrics counters from current graph state (ADR-079)
+   * Refresh graph metrics counters from current graph state (ADR-114)
    */
   async refreshDatabaseCounters(): Promise<any> {
     const response = await this.client.post('/database/counters/refresh');
@@ -1228,7 +1228,7 @@ export class KnowledgeGraphClient {
   }
 
   /**
-   * Create a database backup (ADR-015 Phase 2: Streaming Download)
+   * Create a database backup (ADR-107 Phase 2: Streaming Download)
    *
    * Downloads backup as a stream and saves to specified path.
    * Provides progress callback for tracking download.
@@ -1296,7 +1296,7 @@ export class KnowledgeGraphClient {
   }
 
   /**
-   * Restore a database backup (ADR-015 Phase 2: Multipart Upload)
+   * Restore a database backup (ADR-107 Phase 2: Multipart Upload)
    *
    * Uploads backup file as multipart/form-data and queues restore job.
    * Server validates backup, creates checkpoint, then executes restore with progress tracking.
@@ -1374,7 +1374,7 @@ export class KnowledgeGraphClient {
   }
 
   /**
-   * Get job scheduler status and statistics (ADR-014)
+   * Get job scheduler status and statistics (ADR-300)
    */
   async getSchedulerStatus(): Promise<any> {
     const response = await this.client.get('/admin/scheduler/status');
@@ -1382,7 +1382,7 @@ export class KnowledgeGraphClient {
   }
 
   /**
-   * Manually trigger job scheduler cleanup (ADR-014)
+   * Manually trigger job scheduler cleanup (ADR-300)
    */
   async triggerSchedulerCleanup(): Promise<any> {
     const response = await this.client.post('/admin/scheduler/cleanup');
@@ -1490,7 +1490,7 @@ export class KnowledgeGraphClient {
   }
 
   /**
-   * Unified embedding regeneration for all graph text entities (ADR-068 Phase 4).
+   * Unified embedding regeneration for all graph text entities (ADR-812 Phase 4).
    *
    * Regenerate embeddings for concepts, sources, or vocabulary (relationship types).
    * Useful for model migrations, fixing missing/corrupted embeddings, or bulk regeneration.
@@ -1540,7 +1540,7 @@ export class KnowledgeGraphClient {
     return response.data;
   }
 
-  // ========== RBAC Methods (ADR-028) ==========
+  // ========== RBAC Methods (ADR-404) ==========
 
   /**
    * List all registered resource types
@@ -1680,7 +1680,7 @@ export class KnowledgeGraphClient {
     return response.data;
   }
 
-  // ========== Vocabulary Methods (ADR-032) ==========
+  // ========== Vocabulary Methods (ADR-603) ==========
 
   /**
    * Get current vocabulary status
@@ -1829,7 +1829,7 @@ export class KnowledgeGraphClient {
   }
 
   /**
-   * Get category similarity scores for a relationship type (ADR-047)
+   * Get category similarity scores for a relationship type (ADR-605)
    */
   async getCategoryScores(relationshipType: string): Promise<any> {
     const response = await this.client.get(`/vocabulary/category-scores/${encodeURIComponent(relationshipType)}`);
@@ -1837,7 +1837,7 @@ export class KnowledgeGraphClient {
   }
 
   /**
-   * Refresh category assignments for vocabulary types (ADR-047)
+   * Refresh category assignments for vocabulary types (ADR-605)
    */
   async refreshCategories(onlyComputed: boolean = true): Promise<any> {
     const response = await this.client.post('/vocabulary/refresh-categories', {
@@ -1861,7 +1861,7 @@ export class KnowledgeGraphClient {
   }
 
   /**
-   * Run AITL vocabulary consolidation workflow (ADR-032)
+   * Run AITL vocabulary consolidation workflow (ADR-603)
    */
   async consolidateVocabulary(request: {
     target_size?: number;
@@ -1881,7 +1881,7 @@ export class KnowledgeGraphClient {
   }
 
   /**
-   * Measure epistemic status for vocabulary types (ADR-065 Phase 2)
+   * Measure epistemic status for vocabulary types (ADR-610 Phase 2)
    */
   async measureEpistemicStatus(request: {
     sample_size?: number;
@@ -1897,7 +1897,7 @@ export class KnowledgeGraphClient {
   }
 
   /**
-   * List vocabulary types with epistemic status (ADR-065 Phase 2)
+   * List vocabulary types with epistemic status (ADR-610 Phase 2)
    */
   async listEpistemicStatus(statusFilter?: string): Promise<any> {
     const response = await this.client.get('/vocabulary/epistemic-status', {
@@ -1907,7 +1907,7 @@ export class KnowledgeGraphClient {
   }
 
   /**
-   * Get epistemic status for a specific vocabulary type (ADR-065 Phase 2)
+   * Get epistemic status for a specific vocabulary type (ADR-610 Phase 2)
    */
   async getEpistemicStatus(relationshipType: string): Promise<any> {
     const response = await this.client.get(`/vocabulary/epistemic-status/${encodeURIComponent(relationshipType)}`);
@@ -1915,7 +1915,7 @@ export class KnowledgeGraphClient {
   }
 
   /**
-   * Sync missing edge types from graph to vocabulary (ADR-077)
+   * Sync missing edge types from graph to vocabulary (ADR-611)
    */
   async syncVocabulary(dryRun: boolean = true): Promise<any> {
     const response = await this.client.post('/vocabulary/sync', {
@@ -1924,7 +1924,7 @@ export class KnowledgeGraphClient {
     return response.data;
   }
 
-  // ========== AI Configuration Methods (ADR-039, ADR-041) ==========
+  // ========== AI Configuration Methods (ADR-804, ADR-805) ==========
 
   /**
    * Get current embedding configuration (public endpoint)
@@ -2092,7 +2092,7 @@ export class KnowledgeGraphClient {
   }
 
   /**
-   * Get similar edge types via embedding similarity (ADR-053)
+   * Get similar edge types via embedding similarity (ADR-608)
    */
   async getSimilarTypes(
     relationshipType: string,
@@ -2107,7 +2107,7 @@ export class KnowledgeGraphClient {
   }
 
   /**
-   * Get detailed vocabulary analysis (ADR-053)
+   * Get detailed vocabulary analysis (ADR-608)
    */
   async analyzeVocabularyType(relationshipType: string): Promise<any> {
     const response = await this.client.get(
@@ -2117,7 +2117,7 @@ export class KnowledgeGraphClient {
   }
 
   /**
-   * Analyze polarity axis between two concept poles (ADR-070)
+   * Analyze polarity axis between two concept poles (ADR-813)
    */
   async analyzePolarityAxis(request: {
     positive_pole_id: string;
@@ -2136,7 +2136,7 @@ export class KnowledgeGraphClient {
   }
 
   /**
-   * Submit async polarity analysis job with artifact creation (ADR-083)
+   * Submit async polarity analysis job with artifact creation (ADR-116)
    */
   async submitPolarityJob(request: {
     positive_pole_id: string;
@@ -2156,7 +2156,7 @@ export class KnowledgeGraphClient {
   }
 
   // ============================================================================
-  // Projection Methods (ADR-078)
+  // Projection Methods (ADR-717)
   // ============================================================================
 
   /**
@@ -2203,7 +2203,7 @@ export class KnowledgeGraphClient {
   }
 
   // ============================================================================
-  // Artifact Methods (ADR-083)
+  // Artifact Methods (ADR-116)
   // ============================================================================
 
   /**
@@ -2295,7 +2295,7 @@ export class KnowledgeGraphClient {
   }
 
   // ==========================================================================
-  // Groups & Grants Methods (ADR-082)
+  // Groups & Grants Methods (ADR-410)
   // ==========================================================================
 
   /**
@@ -2385,7 +2385,7 @@ export class KnowledgeGraphClient {
   }
 
   // ==========================================================================
-  // Query Definitions Methods (ADR-083)
+  // Query Definitions Methods (ADR-116)
   // ==========================================================================
 
   /**

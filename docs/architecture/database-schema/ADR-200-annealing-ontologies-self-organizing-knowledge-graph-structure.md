@@ -13,7 +13,7 @@ related: [22, 25, 44, 46, 63, 65, 68, 70, 700, 701]
 
 ### The Current Model
 
-Ontologies in this system are a string property (`document`) on Source nodes. When a document is ingested into ontology "ITSM," each Source chunk carries `document = 'ITSM'`. Concepts extracted from those sources are global — they merge across ontologies via embedding similarity (ADR-068). The ontology is a label, not an entity.
+Ontologies in this system are a string property (`document`) on Source nodes. When a document is ingested into ontology "ITSM," each Source chunk carries `document = 'ITSM'`. Concepts extracted from those sources are global — they merge across ontologies via embedding similarity (ADR-812). The ontology is a label, not an entity.
 
 This design is simple and makes cascade deletion straightforward: find all sources where `document = X`, delete them, clean up orphaned concepts. But it creates three escalating problems as the graph grows:
 
@@ -89,14 +89,14 @@ Several existing systems provide infrastructure that directly supports this mode
 
 | System | ADR | What It Provides |
 |--------|-----|------------------|
-| Grounding strength | ADR-044 | Polarity axis projection measuring epistemic alignment of incoming edges. Range: -1.0 to +1.0 |
-| Confidence scoring | ADR-044 | Composite of relationship count, source count, evidence count, type diversity. Michaelis-Menten saturation curve. Measures how much graph structure has accumulated around a concept |
-| Diversity analysis | ADR-063 | Gini-Simpson index of pairwise embedding similarity in N-hop neighborhood. Distinguishes coherent clusters from scattered connections |
-| Polarity projection | ADR-070 | Projects concepts onto semantic axes, measures directional distribution. Can evaluate whether a concept's neighborhood is semantically aligned or scattered |
-| Epistemic status | ADR-065 | Classification of vocabulary types by grounding patterns. Extensible to per-ontology measurement |
-| Degree centrality | ADR-071 | Used in graph_parallelizer for bidirectional path search optimization. Computed on-demand but not surfaced as ranking |
-| Epoch counters | ADR-079 | graph_metrics table tracks ingestion events, vocabulary changes, concept creation. Infrastructure for exposure tracking already exists |
-| Aggressiveness curves | ADR-046 | Bezier curve-based sigmoid functions governing vocabulary management thresholds. Reusable for promotion/demotion pressure curves |
+| Grounding strength | ADR-808 | Polarity axis projection measuring epistemic alignment of incoming edges. Range: -1.0 to +1.0 |
+| Confidence scoring | ADR-808 | Composite of relationship count, source count, evidence count, type diversity. Michaelis-Menten saturation curve. Measures how much graph structure has accumulated around a concept |
+| Diversity analysis | ADR-503 | Gini-Simpson index of pairwise embedding similarity in N-hop neighborhood. Distinguishes coherent clusters from scattered connections |
+| Polarity projection | ADR-813 | Projects concepts onto semantic axes, measures directional distribution. Can evaluate whether a concept's neighborhood is semantically aligned or scattered |
+| Epistemic status | ADR-610 | Classification of vocabulary types by grounding patterns. Extensible to per-ontology measurement |
+| Degree centrality | ADR-505 | Used in graph_parallelizer for bidirectional path search optimization. Computed on-demand but not surfaced as ranking |
+| Epoch counters | ADR-114 | graph_metrics table tracks ingestion events, vocabulary changes, concept creation. Infrastructure for exposure tracking already exists |
+| Aggressiveness curves | ADR-604 | Bezier curve-based sigmoid functions governing vocabulary management thresholds. Reusable for promotion/demotion pressure curves |
 
 ## Decision
 
@@ -132,7 +132,7 @@ Introduce `:Ontology` nodes in the Apache AGE graph with the same core propertie
 
 **Same embedding space** as concepts. Ontology-to-concept similarity is a cosine similarity query. Membership becomes a gradient, not a binary. New content naturally matches to ontologies by embedding proximity — ontologies act as **attractors** in the vector space.
 
-**Same vocabulary** as concept-to-concept edges. Ontology-to-ontology and ontology-to-concept edges use the managed relationship vocabulary (ADR-022, ADR-025). The structural tier (CONTAINS, SPECIALIZES, GENERALIZES, OVERLAPS) is most natural at the ontology level, but no vocabulary restriction is enforced — the same dynamic vocabulary management applies.
+**Same vocabulary** as concept-to-concept edges. Ontology-to-ontology and ontology-to-concept edges use the managed relationship vocabulary (ADR-600, ADR-601). The structural tier (CONTAINS, SPECIALIZES, GENERALIZES, OVERLAPS) is most natural at the ontology level, but no vocabulary restriction is enforced — the same dynamic vocabulary management applies.
 
 ### 2. Source-to-Ontology Edges
 
@@ -152,7 +152,7 @@ This creates natural modularity within "everything else" — the precondition fo
 
 **Undirected growth** — Feed "everything else." Let structure emerge through differentiation. The system proposes promotions based on connectivity and coherence. This is the novel contribution.
 
-**Directed growth** — Feed a specific ontology deliberately. This is how the system works today. A human or AI ingests documents targeting "ITSM" because they know what they're building. Concepts attach to that ontology's sources, and cross-ontology links form naturally as concepts merge with existing graph nodes via embedding similarity (ADR-068). No behavioral change needed — `POST /ingest` with an ontology name already does this.
+**Directed growth** — Feed a specific ontology deliberately. This is how the system works today. A human or AI ingests documents targeting "ITSM" because they know what they're building. Concepts attach to that ontology's sources, and cross-ontology links form naturally as concepts merge with existing graph nodes via embedding similarity (ADR-812). No behavioral change needed — `POST /ingest` with an ontology name already does this.
 
 **Preservation** — Pin or freeze an ontology:
 - **Pinned** (`lifecycle_state = 'pinned'`): Immune to demotion (`exposure_pressure = 0`), still accepts new concepts. Teaching mode — "I will keep feeding this until it stands on its own."
@@ -170,7 +170,7 @@ The degree centrality computation already exists in `graph_parallelizer.py` for 
 
 #### Step 2: Evaluate Coherence via Polarity
 
-For each candidate, analyze the first-order neighborhood using the diversity analyzer (ADR-063) and polarity projection (ADR-070):
+For each candidate, analyze the first-order neighborhood using the diversity analyzer (ADR-503) and polarity projection (ADR-813):
 
 - **Nucleus**: Neighbors are semantically aligned — low diversity score (neighbors are similar to each other), coherent directional cluster on polarity axes. This concept anchors a domain.
 - **Crossroads**: Neighbors are semantically scattered — high diversity score, spread across polarity space. This concept bridges domains. Valuable as a concept, not a promotion candidate.
@@ -234,7 +234,7 @@ protection_score = mass_curve(mass) - exposure_pressure(weighted_exposure)
 ```
 
 Where:
-- `mass_curve(mass)`: sigmoid that asymptotes toward 1.0 (high mass = self-sustaining). Reuses the Bezier curve infrastructure from aggressiveness profiles (ADR-046).
+- `mass_curve(mass)`: sigmoid that asymptotes toward 1.0 (high mass = self-sustaining). Reuses the Bezier curve infrastructure from aggressiveness profiles (ADR-604).
 - `exposure_pressure(exposure)`: grows as opportunity accumulates without mass gain.
 
 | State | Mass | Exposure | Protection | Outcome |
@@ -311,7 +311,7 @@ These edges can be:
 | Concept-to-source ratio | Reasonable extraction density | Over/under-extraction |
 | Cross-ontology affinity | Clear, intentional bridges | Spraying connections everywhere |
 
-The epistemic status measurement (ADR-065) can be extended to run per-ontology, providing aggregate grounding scores, vocabulary distribution analysis, boundary coherence metrics, and merger/split recommendations.
+The epistemic status measurement (ADR-610) can be extended to run per-ontology, providing aggregate grounding scores, vocabulary distribution analysis, boundary coherence metrics, and merger/split recommendations.
 
 ### 12. Graph Lifecycle Interaction
 
@@ -356,7 +356,7 @@ These interventions are expected and deliberate. The graph provides proposals; o
 - Community detection algorithms (Louvain, Girvan-Newman) are referenced as theoretical support but not required for MVP — the promotion function uses simpler signals (degree + diversity) that are already computable
 - The "everything else" primordial pool is a starting posture, not a requirement — users can still create named ontologies upfront and direct content into them. Both modes coexist.
 - This ADR does not address federation ("greedy agent" ontology trading across shards) — that is a future concern that builds on this foundation
-- The Bezier curve infrastructure from vocabulary aggressiveness profiles (ADR-046, ADR-701) can be reused for promotion/demotion pressure curves — same mechanism, different domain
+- The Bezier curve infrastructure from vocabulary aggressiveness profiles (ADR-604, ADR-701) can be reused for promotion/demotion pressure curves — same mechanism, different domain
 
 ## Design Principles
 
@@ -499,11 +499,11 @@ RETURN count(DISTINCT s) AS sources,
        count(r) AS relationships
 ```
 
-Mass is a composite score, not a single count. The existing confidence scoring infrastructure (ADR-044) uses a Michaelis-Menten saturation curve for concept-level confidence — the same curve shape applies here: mass saturates as an ontology grows, so raw counts are transformed to a 0-1 scale.
+Mass is a composite score, not a single count. The existing confidence scoring infrastructure (ADR-808) uses a Michaelis-Menten saturation curve for concept-level confidence — the same curve shape applies here: mass saturates as an ontology grows, so raw counts are transformed to a 0-1 scale.
 
 **Coherence** — internal semantic density vs external scatter:
 
-The diversity analyzer (ADR-063) computes Gini-Simpson index of pairwise embedding similarity in an N-hop neighborhood. For ontology coherence, the "neighborhood" is all concepts scoped to the ontology. High coherence (low diversity) means concepts are semantically clustered. Low coherence (high diversity) means the ontology is a grab-bag.
+The diversity analyzer (ADR-503) computes Gini-Simpson index of pairwise embedding similarity in an N-hop neighborhood. For ontology coherence, the "neighborhood" is all concepts scoped to the ontology. High coherence (low diversity) means concepts are semantically clustered. Low coherence (high diversity) means the ontology is a grab-bag.
 
 ```
 coherence = 1 - diversity_score(concepts_in_ontology)
@@ -543,7 +543,7 @@ After scoring, the annealing worker recomputes each ontology's embedding as a ma
 
 **Bootstrapping:** First call replaces the name-based embedding. Subsequent calls refine. No special first-run path needed.
 
-**Future enhancement:** ADR-070 polarity projection could filter Elders by axis alignment, discarding high-mass "crossroads" concepts that are orthogonal to the domain direction. Not needed for MVP — the naive weighted centroid is sufficient, and crossroads filtering is an optimization to add if drift toward generic concepts is observed in practice.
+**Future enhancement:** ADR-813 polarity projection could filter Elders by axis alignment, discarding high-mass "crossroads" concepts that are orthogonal to the domain direction. Not needed for MVP — the naive weighted centroid is sufficient, and crossroads filtering is an optimization to add if drift toward generic concepts is observed in practice.
 
 #### Promotion Candidate Identification
 
@@ -675,7 +675,7 @@ The system maintains a target cluster granularity — the ratio of ontologies to
 target_ontology_count = f(total_concepts, desired_concepts_per_ontology)
 ```
 
-When the primordial pool grows too large relative to named ontologies, promotion pressure increases. When ontologies get too small, absorption pressure increases. The Bezier curve infrastructure from vocabulary aggressiveness profiles (ADR-046) drives this — same mechanism, different domain.
+When the primordial pool grows too large relative to named ontologies, promotion pressure increases. When ontologies get too small, absorption pressure increases. The Bezier curve infrastructure from vocabulary aggressiveness profiles (ADR-604) drives this — same mechanism, different domain.
 
 #### Graduated Automation
 
@@ -697,7 +697,7 @@ Safety bounds for autonomous mode: only promote concepts above a high-confidence
 
 - **Performance at scale.** Computing degree centrality across all concepts per ontology is O(N). Diversity analysis of candidate neighborhoods adds O(k²) where k is first-order neighbor count. Background job mitigates latency but compute cost grows with graph size. Incremental evaluation (only re-evaluate concepts whose edge count changed since last epoch) is the likely optimization.
 
-- **User attachment.** How do we handle users who resist demotion of "their" ontologies? Pin mechanism provides the escape hatch. Explainability features (score history, comparison to thresholds, what triggered the proposal) support acceptance. ADR-082 grants system provides resource-level ownership.
+- **User attachment.** How do we handle users who resist demotion of "their" ontologies? Pin mechanism provides the escape hatch. Explainability features (score history, comparison to thresholds, what triggered the proposal) support acceptance. ADR-410 grants system provides resource-level ownership.
 
 ## References
 
@@ -721,13 +721,13 @@ Safety bounds for autonomous mode: only promote concepts above a high-confidence
 
 ## Related ADRs
 
-- **ADR-022** — Original 30-type taxonomy (vocabulary that ontology edges draw from)
-- **ADR-025** — Dynamic relationship vocabulary (same vocabulary system applies at ontology scale)
-- **ADR-044** — Probabilistic truth convergence (grounding strength and confidence scoring — reused for ontology mass)
-- **ADR-046** — Grounding-aware vocabulary management (Bezier curve infrastructure reusable for promotion/demotion pressure)
-- **ADR-063** — Semantic diversity (coherence scoring distinguishes nuclei from crossroads)
-- **ADR-065** — Epistemic status (extensible to per-ontology measurement)
-- **ADR-068** — Source text embeddings (cross-ontology concept merging — the mechanism that creates inter-ontology bridges)
-- **ADR-070** — Polarity axis analysis (directional evaluation of candidate neighborhoods)
+- **ADR-600** — Original 30-type taxonomy (vocabulary that ontology edges draw from)
+- **ADR-601** — Dynamic relationship vocabulary (same vocabulary system applies at ontology scale)
+- **ADR-808** — Probabilistic truth convergence (grounding strength and confidence scoring — reused for ontology mass)
+- **ADR-604** — Grounding-aware vocabulary management (Bezier curve infrastructure reusable for promotion/demotion pressure)
+- **ADR-503** — Semantic diversity (coherence scoring distinguishes nuclei from crossroads)
+- **ADR-610** — Epistemic status (extensible to per-ontology measurement)
+- **ADR-812** — Source text embeddings (cross-ontology concept merging — the mechanism that creates inter-ontology bridges)
+- **ADR-813** — Polarity axis analysis (directional evaluation of candidate neighborhoods)
 - **ADR-700** — Ontology Explorer (UI for visualizing and managing ontology structure — first consumer of this data model)
 - **ADR-701** — Vocabulary Administration Interface (Bezier curve editor reusable for promotion/demotion profiles)

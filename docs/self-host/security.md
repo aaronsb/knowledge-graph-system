@@ -14,7 +14,7 @@ Kappa Graph uses OAuth 2.0 client credentials for API authentication, role-based
 
 ### How the OAuth client credentials grant works
 
-Kappa Graph uses OAuth 2.0 client credentials grant (ADR-054). There is no session login endpoint — `POST /auth/login` was removed. All clients obtain a short-lived access token by exchanging long-lived client credentials.
+Kappa Graph uses OAuth 2.0 client credentials grant (ADR-406). There is no session login endpoint — `POST /auth/login` was removed. All clients obtain a short-lived access token by exchanging long-lived client credentials.
 
 | Credential type | Created by | Stored in | Lifetime |
 |---|---|---|---|
@@ -176,7 +176,7 @@ The CLI requires a re-authentication challenge before deletion. You cannot delet
 
 ## Role-based access control
 
-Kappa Graph implements dynamic RBAC (ADR-028). Roles can inherit from parent roles, and permissions can be scoped globally, to a specific resource instance, or filtered.
+Kappa Graph implements dynamic RBAC (ADR-404). Roles can inherit from parent roles, and permissions can be scoped globally, to a specific resource instance, or filtered.
 
 Permission precedence: **DENY → Instance → Filter → Global → Inherited**
 
@@ -275,7 +275,7 @@ POST   /api/rbac/check-permission
 
 ## LLM API key storage
 
-LLM API keys (OpenAI, Anthropic) are encrypted at rest using Fernet (AES-128-CBC + HMAC-SHA256) and stored as binary blobs in PostgreSQL (ADR-031). Plaintext keys are never returned via API.
+LLM API keys (OpenAI, Anthropic) are encrypted at rest using Fernet (AES-128-CBC + HMAC-SHA256) and stored as binary blobs in PostgreSQL (ADR-405). Plaintext keys are never returned via API.
 
 The master encryption key is separate from the database. The fallback chain is:
 
@@ -439,8 +439,8 @@ The system does not protect against code execution within a worker thread, memor
 
 ## ADR references
 
-- ADR-027 — User management API
-- ADR-028 — Dynamic RBAC system
-- ADR-031 — Encrypted API key storage
-- ADR-054 — Unified OAuth authentication (removed `POST /auth/login`)
-- ADR-074 — Platform admin role
+- ADR-403 — User management API
+- ADR-404 — Dynamic RBAC system
+- ADR-405 — Encrypted API key storage
+- ADR-406 — Unified OAuth authentication (removed `POST /auth/login`)
+- ADR-409 — Platform admin role

@@ -7,7 +7,7 @@ Scans Python files for execute_cypher calls and identifies queries that:
 2. Use CREATE without explicit labels
 3. Other unsafe patterns that could cause namespace collisions
 
-Part of ADR-048: Vocabulary Metadata as First-Class Graph
+Part of ADR-606: Vocabulary Metadata as First-Class Graph
 """
 
 import re
@@ -193,7 +193,7 @@ class QueryLinter:
 
         print(f"Summary: {errors} error(s), {warnings} warning(s)")
         print("\nRecommendation: Use GraphQueryFacade for namespace-safe queries.")
-        print("See ADR-048: Vocabulary Metadata as First-Class Graph")
+        print("See ADR-606: Vocabulary Metadata as First-Class Graph")
 
 
 def main():

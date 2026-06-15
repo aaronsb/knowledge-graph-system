@@ -1,5 +1,5 @@
 """
-Vocabulary Consolidation Launcher (ADR-050).
+Vocabulary Consolidation Launcher (ADR-111).
 
 Automatically consolidate vocabulary based on hysteresis curve to prevent
 thrashing and maintain optimal vocabulary spread.

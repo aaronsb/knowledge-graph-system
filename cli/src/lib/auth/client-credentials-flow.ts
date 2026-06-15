@@ -1,5 +1,5 @@
 /**
- * OAuth Client Credentials Grant Flow (ADR-054)
+ * OAuth Client Credentials Grant Flow (ADR-406)
  *
  * Implements RFC 6749 Client Credentials Grant for machine-to-machine authentication (MCP server).
  *

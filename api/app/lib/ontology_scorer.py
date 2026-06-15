@@ -5,15 +5,15 @@ Computes mass, coherence, exposure, and protection scores for ontologies.
 Pure computation — takes AGE client, returns scores.
 
 Scoring algorithms:
-- Mass: Michaelis-Menten saturation of ontology statistics (reuses ADR-044 pattern)
+- Mass: Michaelis-Menten saturation of ontology statistics (reuses ADR-808 pattern)
 - Coherence: mean pairwise cosine similarity of concept embeddings
 - Exposure: epoch delta with adjacency weighting
 - Protection: mass × coherence minus exposure pressure
 
 References:
     - ADR-200: Annealing Ontologies
-    - ADR-044: Dynamic Grounding (Michaelis-Menten saturation)
-    - ADR-063: Semantic Diversity (Gini-Simpson index)
+    - ADR-808: Dynamic Grounding (Michaelis-Menten saturation)
+    - ADR-503: Semantic Diversity (Gini-Simpson index)
 """
 
 import logging
@@ -45,7 +45,7 @@ class OntologyScorer:
         """
         Calculate mass score using Michaelis-Menten saturation.
 
-        Reuses the pattern from ConfidenceAnalyzer._calculate_score() (ADR-044).
+        Reuses the pattern from ConfidenceAnalyzer._calculate_score() (ADR-808).
         Each component normalized to roughly 0-1 range, then saturated.
 
         Composite = concept_count/50 + source_count/20 + internal_rels/50
@@ -84,7 +84,7 @@ class OntologyScorer:
         Low coherence = concepts are diverse (broad/unfocused domain).
 
         Samples up to 100 concept embeddings and computes the average pairwise
-        cosine similarity. Inspired by the diversity patterns in ADR-063.
+        cosine similarity. Inspired by the diversity patterns in ADR-503.
 
         Args:
             ontology_name: Ontology name

@@ -8,9 +8,9 @@ related:
   - ADR-802
   - ADR-800
   - ADR-801
-  - ADR-057
-  - ADR-039
-  - ADR-045
+  - ADR-305
+  - ADR-804
+  - ADR-809
 ---
 
 # ADR-803: Modality Embedding Architecture — Universal Text Space and Independent Per-Modality Embedders
@@ -19,7 +19,7 @@ related:
 
 ADR-802 established vision as a first-class *reasoning* capability (image→prose)
 resolved independently like embedding. Implementing the embedding side surfaced
-a modality-general question about **embedding spaces** that ADR-057 and its
+a modality-general question about **embedding spaces** that ADR-305 and its
 schema (migration 055, `kg_api.embedding_profile`) answered implicitly — and
 incorrectly.
 
@@ -38,7 +38,7 @@ Inspection of the running system contradicts that premise:
   compares an image embedding to a Concept/text embedding.**
 - The concept graph is built **entirely from prose**: image ingestion is a
   hairpin — `image → describe_image() → prose → text pipeline → concepts`
-  (`workers/ingestion_worker.py`, ADR-057). Every semantic operation
+  (`workers/ingestion_worker.py`, ADR-305). Every semantic operation
   (extraction, vector-match/merge, edges) runs on **text** embeddings.
 
 So the cross-modal co-spatiality the schema enforces is never exercised. It does
@@ -134,7 +134,7 @@ them. We are not building the future here; we are not locking it out.
 
 ### Negative
 
-- ADR-057 / migration 055 carried the co-spatiality assumption; relaxing it is a
+- ADR-305 / migration 055 carried the co-spatiality assumption; relaxing it is a
   correction future readers must understand (hence this ADR supersedes that
   aspect). Code/docstrings asserting "image embeddings share the text vector
   space" (e.g. `routes/ingest_image.py`) must be corrected so the wrong premise

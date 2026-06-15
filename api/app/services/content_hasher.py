@@ -4,7 +4,7 @@ Content hashing service for deduplication.
 Prevents re-ingesting the same document multiple times by hashing content
 and checking against previously processed jobs.
 
-ADR-051: Now checks graph (DocumentMeta nodes) as primary source of truth,
+ADR-304: Now checks graph (DocumentMeta nodes) as primary source of truth,
 with jobs table as fallback for in-progress jobs.
 """
 
@@ -23,7 +23,7 @@ class ContentHasher:
         """
         Args:
             job_queue: JobQueue instance for checking existing jobs
-            age_client: AGEClient instance for checking graph (ADR-051)
+            age_client: AGEClient instance for checking graph (ADR-304)
         """
         self.job_queue = job_queue
         self.age_client = age_client
@@ -47,7 +47,7 @@ class ContentHasher:
         ontology: str
     ) -> Optional[Dict]:
         """
-        Check if content already ingested into this ontology (ADR-051).
+        Check if content already ingested into this ontology (ADR-304).
 
         Checks two sources:
         1. Graph (DocumentMeta nodes) - Primary source of truth (persistent)
@@ -66,7 +66,7 @@ class ContentHasher:
                   - From graph: {"source": "graph", "document_id": "...", ...}
                   - From jobs: {"source": "job", "job_id": "...", "status": "...", ...}
         """
-        # ADR-051: Check graph first (persistent state)
+        # ADR-304: Check graph first (persistent state)
         if self.age_client:
             try:
                 doc_meta = self.age_client.get_document_meta(content_hash, ontology)

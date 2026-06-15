@@ -1,11 +1,11 @@
 """
-Source Document Storage Service - Original document preservation (ADR-081, ADR-080).
+Source Document Storage Service - Original document preservation (ADR-307, ADR-115).
 
 This service handles storage of original source documents before ingestion.
 Documents are stored content-addressed using SHA-256 hashes, enabling:
 - Deduplication (same content = same key)
 - Model evolution insurance (re-extract with future LLMs)
-- FUSE filesystem support (ADR-069)
+- FUSE filesystem support (ADR-715)
 
 Key format: sources/{ontology}/{content_hash[:32]}.{ext}
 
@@ -89,12 +89,12 @@ class SourceMetadata:
 
 class SourceDocumentService:
     """
-    Source document storage for ingestion pipeline (ADR-081).
+    Source document storage for ingestion pipeline (ADR-307).
 
     Stores original documents in Garage BEFORE ingestion, enabling:
     - Re-extraction with improved models (model evolution insurance)
     - Strategy experimentation (re-ingest with different matching modes)
-    - FUSE filesystem document retrieval (ADR-069)
+    - FUSE filesystem document retrieval (ADR-715)
 
     Documents are content-addressed using SHA-256 hashes for natural
     deduplication and collision-resistant keys.
@@ -363,7 +363,7 @@ class SourceDocumentService:
         return self.base.head_object(garage_key)
 
 
-# TODO (ADR-081 Future Considerations): Graph → Garage Reconstruction
+# TODO (ADR-307 Future Considerations): Graph → Garage Reconstruction
 #
 # The offset information stored in Source nodes (char_offset_start,
 # char_offset_end, chunk_index) theoretically enables reconstructing
@@ -380,4 +380,4 @@ class SourceDocumentService:
 # 2. Handle chunk overlaps using char_offset_start to deduplicate
 # 3. Concatenate to reconstruct original document
 #
-# See ADR-081 "Future Considerations" section for details.
+# See ADR-307 "Future Considerations" section for details.

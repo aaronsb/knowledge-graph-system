@@ -1,5 +1,5 @@
 """
-Backup streaming tests (ADR-015 Phase 2).
+Backup streaming tests (ADR-107 Phase 2).
 
 Tests for: kg admin backup (streaming)
 Endpoint: POST /admin/backup

@@ -1,7 +1,7 @@
 """
 Backup Streaming Service
 
-Implements ADR-015 Phase 1: Streaming backup download with chunked transfer encoding.
+Implements ADR-107 Phase 1: Streaming backup download with chunked transfer encoding.
 Converts backup dictionaries into JSON or GEXF streams without loading entire backup into memory.
 
 Supports two formats:
@@ -140,17 +140,17 @@ async def create_backup_stream(
         f"Vocabulary: {stats.get('vocabulary', 0)}"
     )
 
-    # Summarize warnings (ADR-032)
+    # Summarize warnings (ADR-603)
     if integrity.warnings:
         from collections import Counter
         warning_categories = Counter(w.category for w in integrity.warnings)
 
-        # Count reference warnings (pre-ADR-032 relationships)
+        # Count reference warnings (pre-ADR-603 relationships)
         ref_warnings = sum(1 for w in integrity.warnings if w.category == 'references' and 'which is not in vocabulary table' in w.message)
 
-        # Log pre-ADR-032 relationships as INFO (not a problem, just historical)
+        # Log pre-ADR-603 relationships as INFO (not a problem, just historical)
         if ref_warnings > 0:
-            logger.info(f"Backup contains {ref_warnings} relationships with types not in vocabulary table (pre-ADR-032 data)")
+            logger.info(f"Backup contains {ref_warnings} relationships with types not in vocabulary table (pre-ADR-603 data)")
 
         # Log other warnings normally
         other_warnings = [w for w in integrity.warnings if w.category != 'references' or 'which is not in vocabulary table' not in w.message]

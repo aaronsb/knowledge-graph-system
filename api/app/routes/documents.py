@@ -1,5 +1,5 @@
 """
-Document search and retrieval API routes (ADR-084).
+Document search and retrieval API routes (ADR-507).
 
 Provides endpoints for:
 - Document-level semantic search (aggregates chunk matches)
@@ -330,7 +330,7 @@ async def search_documents(
     current_user: UserInDB = Depends(get_current_active_user)
 ):
     """
-    Search documents using semantic similarity (ADR-084).
+    Search documents using semantic similarity (ADR-507).
 
     **Authentication:** Requires valid OAuth token
     **Authorization:** Requires `graph:read` permission
@@ -612,7 +612,7 @@ async def get_document_content(
     current_user: UserInDB = Depends(get_current_active_user)
 ):
     """
-    Retrieve full document content from Garage (ADR-084).
+    Retrieve full document content from Garage (ADR-507).
 
     **Authentication:** Requires valid OAuth token
     **Authorization:** Requires `sources:read` permission
@@ -764,7 +764,7 @@ async def list_documents(
     current_user: UserInDB = Depends(get_current_active_user)
 ):
     """
-    List documents with optional ontology filter (ADR-084).
+    List documents with optional ontology filter (ADR-507).
 
     **Authentication:** Requires valid OAuth token
     **Authorization:** Requires `sources:read` permission
@@ -877,7 +877,7 @@ async def get_document_concepts(
     current_user: UserInDB = Depends(get_current_active_user)
 ):
     """
-    Get all concepts extracted from a document (ADR-084).
+    Get all concepts extracted from a document (ADR-507).
 
     **Authentication:** Requires valid OAuth token
     **Authorization:** Requires `graph:read` permission

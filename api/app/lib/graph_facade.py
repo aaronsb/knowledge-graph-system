@@ -878,7 +878,7 @@ class GraphFacade:
         params: Optional[Dict] = None,
         limit: Optional[int] = None
     ) -> List[Dict]:
-        """Match source nodes with explicit :Source label (ADR-048)."""
+        """Match source nodes with explicit :Source label (ADR-606)."""
         query = "MATCH (s:Source)"
         if where:
             query += f" WHERE {where}"

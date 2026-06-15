@@ -2,7 +2,7 @@
 Unit tests for the unified AIProvider.describe_image contract (#457, ADR-802 §4).
 
 The parallel VisionProvider hierarchy was collapsed into AIProvider.describe_image.
-This pins the behavioural-fidelity contract the collapse had to preserve (ADR-057):
+This pins the behavioural-fidelity contract the collapse had to preserve (ADR-305):
 
 - The signature is parameterized: ``model`` / ``detail`` / ``temperature``.
 - ``detail=None`` omits the OpenAI ``detail`` key (provider "auto") — exactly

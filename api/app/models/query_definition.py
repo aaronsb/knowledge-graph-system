@@ -1,5 +1,5 @@
 """
-Query Definition Models (ADR-083)
+Query Definition Models (ADR-116)
 
 Pydantic models for query definitions - saved query recipes that can be re-executed.
 """

@@ -5,10 +5,10 @@ deciders:
   - aaronsb
   - claude
 related:
-  - ADR-015
-  - ADR-016
-  - ADR-040
-  - ADR-061
+  - ADR-107
+  - ADR-208
+  - ADR-210
+  - ADR-211
   - ADR-201
 ---
 
@@ -18,7 +18,7 @@ related:
 
 The platform's database is not PostgreSQL directly — it is the `apache/age`
 Docker image, which bundles a specific PostgreSQL version with the Apache AGE
-graph extension (ADR-016). Until now that image was pinned by digest to
+graph extension (ADR-208). Until now that image was pinned by digest to
 `apache/age:release_PG17_1.6.0` — PostgreSQL 17 + AGE 1.6.0.
 
 PostgreSQL 18 is now the general baseline, and the `apache/age` project ships
@@ -79,7 +79,7 @@ bind-mount production installs as much as named-volume installs.
 A PostgreSQL major-version bump cannot be applied by swapping the container
 image — the new server will not start on an older cluster's data directory.
 The conventional cross-version path is a logical `pg_dump` / `pg_restore`, and
-the platform already ships that tooling (ADR-015). The spike tested it by
+the platform already ships that tooling (ADR-107). The spike tested it by
 dumping the live PG 17 graph (114 Concepts, 191 Instances, ~650 typed edges,
 108 source embeddings) and restoring into PG 18. It does **not** round-trip:
 

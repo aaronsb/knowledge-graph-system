@@ -1,6 +1,6 @@
 /**
  * Vocabulary Embedding Commands
- * Generate embeddings and manage category assignments (ADR-047)
+ * Generate embeddings and manage category assignments (ADR-605)
  */
 
 import { Command } from 'commander';
@@ -72,7 +72,7 @@ export function createGenerateEmbeddingsCommand(): Command {
 
 export function createCategoryScoresCommand(): Command {
   return new Command('category-scores')
-    .description('Show category similarity scores for a specific relationship type (ADR-047).')
+    .description('Show category similarity scores for a specific relationship type (ADR-605).')
     .argument('<type>', 'Relationship type to analyze (e.g., CAUSES, ENABLES)')
     .action(async (relationshipType: string) => {
       try {
@@ -135,7 +135,7 @@ export function createCategoryScoresCommand(): Command {
 
 export function createRefreshCategoriesCommand(): Command {
   return new Command('refresh-categories')
-    .description('Refresh category assignments for vocabulary types using latest embeddings (ADR-047, ADR-053).')
+    .description('Refresh category assignments for vocabulary types using latest embeddings (ADR-605, ADR-608).')
     .option('--computed-only', 'Refresh only types with category_source=computed')
     .action(async (options) => {
       try {

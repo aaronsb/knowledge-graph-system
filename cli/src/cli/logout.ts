@@ -2,7 +2,7 @@
  * kg logout - End authentication session
  *
  * Revokes OAuth client credentials and clears stored tokens from config file.
- * ADR-054: Updated to support OAuth client revocation.
+ * ADR-406: Updated to support OAuth client revocation.
  */
 
 import { Command } from 'commander';

@@ -34,7 +34,7 @@ def get_provider_concurrency_limit(provider_name: str) -> int:
     """
     Get the concurrency limit for a specific provider.
 
-    Configuration precedence (ADR-041):
+    Configuration precedence (ADR-805):
     1. Database (ai_extraction_config.max_concurrent_requests)
     2. Environment variable ({PROVIDER}_MAX_CONCURRENT)
     3. Hardcoded defaults per provider
@@ -65,7 +65,7 @@ def get_provider_concurrency_limit(provider_name: str) -> int:
 
     default_limit = defaults.get(provider, 4)
 
-    # Try to load from database first (ADR-041 pattern)
+    # Try to load from database first (ADR-805 pattern)
     try:
         from .age_client import AGEClient
 
@@ -130,7 +130,7 @@ def get_provider_max_retries(provider_name: str) -> int:
     """
     Get the max retry count for a specific provider.
 
-    Configuration precedence (ADR-041):
+    Configuration precedence (ADR-805):
     1. Database (ai_extraction_config.max_retries)
     2. Environment variable ({PROVIDER}_MAX_RETRIES)
     3. Hardcoded defaults per provider
@@ -161,7 +161,7 @@ def get_provider_max_retries(provider_name: str) -> int:
 
     default_retries = defaults.get(provider, 8)
 
-    # Try to load from database first (ADR-041 pattern)
+    # Try to load from database first (ADR-805 pattern)
     try:
         from .age_client import AGEClient
 
@@ -328,7 +328,7 @@ def _is_rate_limit_error(exception: Exception, catch_exceptions: Optional[tuple]
     """
     Detect if an exception is a retryable error.
 
-    Checks for retryable HTTP errors (ADR-049):
+    Checks for retryable HTTP errors (ADR-810):
     - 429: Rate limit (OpenAI, Anthropic, Ollama)
     - 500: Server error (OpenAI, Anthropic, Ollama)
     - 502: Bad gateway (Ollama cloud models)

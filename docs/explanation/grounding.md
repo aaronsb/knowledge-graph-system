@@ -193,6 +193,6 @@ If you maintain separate ontologies for different domains (medical, legal, news)
 
 ## References
 
-- ADR-044: Probabilistic Truth Convergence (grounding direction)
-- ADR-063: Semantic Diversity as Authenticity Signal
+- ADR-808: Probabilistic Truth Convergence (grounding direction)
+- ADR-503: Semantic Diversity as Authenticity Signal
 - Implementation: `api/app/services/confidence_analyzer.py`

@@ -1,5 +1,5 @@
 """
-Edge CRUD API tests (ADR-089).
+Edge CRUD API tests (ADR-308).
 
 Tests for deterministic edge creation, update, and deletion endpoints.
 """

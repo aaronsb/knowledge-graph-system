@@ -161,7 +161,7 @@ class DataImporter:
                              event_id_map: Optional[Dict[int, int]] = None) -> Dict[str, int]:
         """Clone-path writer: import normalized records, preserving ids 1:1.
 
-        Order matters: vocabulary (before relationships, ADR-032) → concepts →
+        Order matters: vocabulary (before relationships, ADR-603) → concepts →
         sources → instances (+FROM_SOURCE) → evidence (EVIDENCED_BY + derived
         APPEARS) → relationships. Clone preserves ids, so edge ``learned_id`` needs
         no remap here (that is P4 adjacent mode).
@@ -244,7 +244,7 @@ class DataImporter:
                            progress_callback: Optional[callable] = None) -> None:
         """Import relationship vocabulary: SQL rows + :VocabType graph nodes.
 
-        Ported from the original importer (ADR-032 / ADR-048): upserts
+        Ported from the original importer (ADR-603 / ADR-606): upserts
         kg_api.relationship_vocabulary, then MERGEs the :VocabType / :VocabCategory
         nodes. Shared by the single import path.
         """
@@ -300,7 +300,7 @@ class DataImporter:
         finally:
             client.pool.putconn(conn)
 
-        # Create :VocabType graph nodes (ADR-048) after the SQL import.
+        # Create :VocabType graph nodes (ADR-606) after the SQL import.
         Console.info("  Creating vocabulary graph nodes...")
         for i, entry in enumerate(vocabulary):
             relationship_type = entry.get('relationship_type')
@@ -390,7 +390,7 @@ class DataImporter:
     @staticmethod
     def _import_sources(client: AGEClient, sources: List[Dict[str, Any]],
                         progress_callback) -> None:
-        """MERGE sources, including optional Garage/media keys when present (ADR-081)."""
+        """MERGE sources, including optional Garage/media keys when present (ADR-307)."""
         total = len(sources)
         for i, s in enumerate(sources):
             query = """

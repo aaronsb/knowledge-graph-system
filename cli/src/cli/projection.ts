@@ -1,5 +1,5 @@
 /**
- * Projection Commands (ADR-078)
+ * Projection Commands (ADR-717)
  *
  * Manage embedding landscape projections for visualization.
  */
@@ -146,7 +146,7 @@ export const projectionCommand = setCommandHelp(
       .option('--no-center', 'Disable embedding centering')
       .option('--grounding', 'Include grounding strength')
       .option('--diversity', 'Include diversity scores (slower)')
-      .option('--save-artifact', 'Save result as persistent artifact (ADR-083)')
+      .option('--save-artifact', 'Save result as persistent artifact (ADR-116)')
       .action(async (ontology: string, options) => {
         try {
           const client = createClientFromEnv();

@@ -30,8 +30,8 @@ class SearchRequest(BaseModel):
     offset: int = Field(0, description="Number of results to skip for pagination (default: 0)", ge=0)
     ontology: Optional[str] = Field(None, description="Filter results to concepts from this ontology only")
     include_evidence: bool = Field(False, description="Include sample evidence instances (quotes from source text) for each concept")
-    include_grounding: bool = Field(True, description="Include grounding strength (ADR-044: probabilistic truth score) for each concept")
-    include_diversity: bool = Field(False, description="Include semantic diversity score (ADR-063: authenticity signal) for each concept")
+    include_grounding: bool = Field(True, description="Include grounding strength (ADR-808: probabilistic truth score) for each concept")
+    include_diversity: bool = Field(False, description="Include semantic diversity score (ADR-503: authenticity signal) for each concept")
     diversity_max_hops: int = Field(2, description="Maximum traversal depth for diversity calculation (1-3, default: 2)", ge=1, le=3)
 
 
@@ -43,14 +43,14 @@ class ConceptSearchResult(BaseModel):
     score: float = Field(..., description="Similarity score (0.0-1.0)")
     documents: List[str] = Field(..., description="Documents where concept appears")
     evidence_count: int = Field(..., description="Number of evidence instances")
-    grounding_strength: Optional[float] = Field(None, description="Grounding strength (-1.0 to 1.0) if requested (ADR-044)")
+    grounding_strength: Optional[float] = Field(None, description="Grounding strength (-1.0 to 1.0) if requested (ADR-808)")
     # Epistemic confidence (grounding × confidence two-dimensional model)
     confidence_level: Optional[str] = Field(None, description="Epistemic confidence: 'confident', 'tentative', 'insufficient' - determines grounding reliability")
     confidence_score: Optional[float] = Field(None, description="Numeric confidence score (0.0 to 1.0) - nonlinear saturation function reflecting evidence richness")
     grounding_display: Optional[str] = Field(None, description="Combined grounding × confidence label: 'Well-supported', 'Unexplored', 'Contested', etc.")
-    diversity_score: Optional[float] = Field(None, description="Semantic diversity score (0.0 to 1.0) if requested (ADR-063)")
+    diversity_score: Optional[float] = Field(None, description="Semantic diversity score (0.0 to 1.0) if requested (ADR-503)")
     diversity_related_count: Optional[int] = Field(None, description="Number of related concepts analyzed for diversity")
-    authenticated_diversity: Optional[float] = Field(None, description="Sign-weighted diversity: sign(grounding) × diversity. Positive: diverse support, Negative: diverse contradiction (ADR-044 + ADR-063)")
+    authenticated_diversity: Optional[float] = Field(None, description="Sign-weighted diversity: sign(grounding) × diversity. Positive: diverse support, Negative: diverse contradiction (ADR-808 + ADR-503)")
     sample_evidence: Optional[List['ConceptInstance']] = Field(None, description="Sample evidence instances (quotes from source text) when include_evidence=true")
 
 
@@ -77,19 +77,19 @@ class ConceptInstance(BaseModel):
     Each instance is a quoted text snippet from a specific document and paragraph.
     Includes the full chunk text for grounding and context.
 
-    For image sources (ADR-057), includes image metadata and retrieval URI.
+    For image sources (ADR-305), includes image metadata and retrieval URI.
     """
     quote: str = Field(..., description="Quoted text from source (for images, this is the vision AI description)")
     document: str = Field(..., description="Source document name")
     paragraph: int = Field(..., description="Paragraph number in document")
     source_id: str = Field(..., description="Unique source identifier")
     full_text: Optional[str] = Field(None, description="Full chunk text that was processed (for grounding)")
-    # ADR-057: Image metadata
+    # ADR-305: Image metadata
     content_type: Optional[str] = Field(None, description="Content type: 'image' for image sources, 'text' or None for text")
     has_image: Optional[bool] = Field(None, description="True if this source has an associated image")
     image_uri: Optional[str] = Field(None, description="URI to retrieve image: /api/sources/{source_id}/image (requires authentication)")
     storage_key: Optional[str] = Field(None, description="MinIO object key for image storage (internal use)")
-    # ADR-051: Source provenance metadata (from DocumentMeta)
+    # ADR-304: Source provenance metadata (from DocumentMeta)
     filename: Optional[str] = Field(None, description="Original filename or display name")
     source_type: Optional[str] = Field(None, description="Source type: file, stdin, mcp, api")
     source_path: Optional[str] = Field(None, description="Full filesystem path (file ingestion only)")
@@ -105,20 +105,20 @@ class ConceptRelationship(BaseModel):
     to_label: str = Field(..., description="Target concept label")
     rel_type: str = Field(..., description="Relationship type (e.g., IMPLIES, SUPPORTS)")
     confidence: Optional[float] = Field(None, description="Confidence score (0.0-1.0) if available")
-    # ADR-051: Edge provenance metadata
+    # ADR-304: Edge provenance metadata
     created_by: Optional[str] = Field(None, description="User ID who created this relationship")
     source: Optional[str] = Field(None, description="Source of relationship: llm_extraction, human_curated, inference")
     job_id: Optional[str] = Field(None, description="Job ID that created this relationship")
     document_id: Optional[str] = Field(None, description="Document hash (content_hash) that created this relationship")
     created_at: Optional[str] = Field(None, description="Timestamp when relationship was created")
-    # ADR-065: Vocabulary epistemic status metadata
+    # ADR-610: Vocabulary epistemic status metadata
     category: Optional[str] = Field(None, description="Vocabulary category (causality, identity, temporal, etc.)")
     avg_grounding: Optional[float] = Field(None, description="Average grounding strength for this vocabulary type (-1.0 to 1.0)")
     epistemic_status: Optional[str] = Field(None, description="Epistemic status classification (WELL_GROUNDED, MIXED_GROUNDING, WEAK_GROUNDING, POORLY_GROUNDED, CONTRADICTED, HISTORICAL, INSUFFICIENT_DATA)")
 
 
 class ProvenanceDocument(BaseModel):
-    """ADR-051: Document provenance information from DocumentMeta nodes"""
+    """ADR-304: Document provenance information from DocumentMeta nodes"""
     document_id: str = Field(..., description="Document hash (content_hash)")
     filename: str = Field(..., description="Original filename")
     source_type: Optional[str] = Field(None, description="Source type: file, stdin, mcp, api")
@@ -131,7 +131,7 @@ class ProvenanceDocument(BaseModel):
 
 
 class ConceptProvenance(BaseModel):
-    """ADR-051: Provenance tracking for concepts and documents.
+    """ADR-304: Provenance tracking for concepts and documents.
 
     For Concept nodes: Lists source documents via DocumentMeta
     For DocumentMeta nodes: Shows full document metadata
@@ -164,16 +164,16 @@ class ConceptDetailsResponse(BaseModel):
     documents: List[str] = Field(..., description="Documents where concept appears")
     instances: List[ConceptInstance] = Field(..., description="Evidence instances (quotes from text)")
     relationships: List[ConceptRelationship] = Field(..., description="Outgoing relationships to other concepts")
-    grounding_strength: Optional[float] = Field(None, description="Grounding strength (-1.0 to 1.0) based on incoming relationship semantics (ADR-044)")
+    grounding_strength: Optional[float] = Field(None, description="Grounding strength (-1.0 to 1.0) based on incoming relationship semantics (ADR-808)")
     # Epistemic confidence (grounding × confidence two-dimensional model)
     confidence_level: Optional[str] = Field(None, description="Epistemic confidence: 'confident', 'tentative', 'insufficient' - determines grounding reliability")
     confidence_score: Optional[float] = Field(None, description="Numeric confidence score (0.0 to 1.0) - nonlinear saturation function reflecting evidence richness")
     grounding_display: Optional[str] = Field(None, description="Combined grounding × confidence label: 'Well-supported', 'Unexplored', 'Contested', etc.")
-    # ADR-063: Semantic diversity
-    diversity_score: Optional[float] = Field(None, description="Semantic diversity score (0.0 to 1.0) based on related concept embeddings (ADR-063)")
+    # ADR-503: Semantic diversity
+    diversity_score: Optional[float] = Field(None, description="Semantic diversity score (0.0 to 1.0) based on related concept embeddings (ADR-503)")
     diversity_related_count: Optional[int] = Field(None, description="Number of related concepts analyzed for diversity calculation")
-    authenticated_diversity: Optional[float] = Field(None, description="Sign-weighted diversity: sign(grounding) × diversity. Positive: diverse support, Negative: diverse contradiction (ADR-044 + ADR-063)")
-    # ADR-051: Provenance tracking
+    authenticated_diversity: Optional[float] = Field(None, description="Sign-weighted diversity: sign(grounding) × diversity. Positive: diverse support, Negative: diverse contradiction (ADR-808 + ADR-503)")
+    # ADR-304: Provenance tracking
     provenance: Optional[ConceptProvenance] = Field(None, description="Provenance information (source documents or document metadata)")
 
 
@@ -187,11 +187,11 @@ class RelatedConceptsRequest(BaseModel):
     concept_id: str = Field(..., description="Starting concept ID")
     relationship_types: Optional[List[str]] = Field(None, description="Filter by relationship types (e.g., ['IMPLIES', 'SUPPORTS'])")
     max_depth: int = Field(2, description="Maximum traversal depth (1-5 hops)", ge=1, le=5)
-    # ADR-065: Epistemic status filtering
+    # ADR-610: Epistemic status filtering
     include_epistemic_status: Optional[List[str]] = Field(None, description="Filter to only include relationships with these epistemic statuses (e.g., ['AFFIRMATIVE', 'CONTESTED'])")
     exclude_epistemic_status: Optional[List[str]] = Field(None, description="Exclude relationships with these epistemic statuses (e.g., ['HISTORICAL', 'INSUFFICIENT_DATA'])")
-    # ADR-044: grounding strength + confidence hydration (parity with /search/concepts and /query/connect)
-    include_grounding: bool = Field(True, description="Hydrate grounding_strength + confidence fields on each related concept (ADR-044)")
+    # ADR-808: grounding strength + confidence hydration (parity with /search/concepts and /query/connect)
+    include_grounding: bool = Field(True, description="Hydrate grounding_strength + confidence fields on each related concept (ADR-808)")
 
 
 class RelatedConcept(BaseModel):
@@ -200,8 +200,8 @@ class RelatedConcept(BaseModel):
     label: str = Field(..., description="Related concept label")
     distance: int = Field(..., description="Number of hops from starting concept")
     path_types: List[str] = Field(..., description="Relationship types traversed to reach this concept")
-    # ADR-044: grounding fields, populated when RelatedConceptsRequest.include_grounding is true
-    grounding_strength: Optional[float] = Field(None, description="Probabilistic truth convergence score (ADR-044)")
+    # ADR-808: grounding fields, populated when RelatedConceptsRequest.include_grounding is true
+    grounding_strength: Optional[float] = Field(None, description="Probabilistic truth convergence score (ADR-808)")
     confidence_level: Optional[str] = Field(None, description="Categorical confidence label (e.g., 'high', 'medium')")
     confidence_score: Optional[float] = Field(None, description="Numeric confidence score 0-1")
     grounding_display: Optional[str] = Field(None, description="Categorical grounding label from 3x3 grounding x confidence matrix")
@@ -229,8 +229,8 @@ class FindConnectionRequest(BaseModel):
     to_id: str = Field(..., description="Target concept ID (exact match required)")
     max_hops: int = Field(5, description="Maximum path length to search (1-10 hops)", ge=1, le=10)
     include_evidence: bool = Field(False, description="Include sample evidence instances for each concept in paths")
-    include_grounding: bool = Field(True, description="Include grounding strength for each concept in paths (ADR-044)")
-    # ADR-065: Epistemic status filtering
+    include_grounding: bool = Field(True, description="Include grounding strength for each concept in paths (ADR-808)")
+    # ADR-610: Epistemic status filtering
     include_epistemic_status: Optional[List[str]] = Field(None, description="Filter to only include relationships with these epistemic statuses (e.g., ['AFFIRMATIVE', 'CONTESTED'])")
     exclude_epistemic_status: Optional[List[str]] = Field(None, description="Exclude relationships with these epistemic statuses (e.g., ['HISTORICAL', 'INSUFFICIENT_DATA'])")
 
@@ -240,7 +240,7 @@ class PathNode(BaseModel):
     id: str = Field(..., description="Concept ID")
     label: str = Field(..., description="Concept label")
     description: Optional[str] = Field(None, description="Factual 1-2 sentence definition of the concept")
-    grounding_strength: Optional[float] = Field(None, description="Grounding strength (-1.0 to 1.0) if requested (ADR-044)")
+    grounding_strength: Optional[float] = Field(None, description="Grounding strength (-1.0 to 1.0) if requested (ADR-808)")
     # Epistemic confidence (grounding × confidence two-dimensional model)
     confidence_level: Optional[str] = Field(None, description="Epistemic confidence: 'confident', 'tentative', 'insufficient'")
     confidence_score: Optional[float] = Field(None, description="Numeric confidence score (0.0 to 1.0)")
@@ -282,8 +282,8 @@ class FindConnectionBySearchRequest(BaseModel):
     max_hops: int = Field(5, description="Maximum path length to search", ge=1, le=10)
     threshold: float = Field(0.5, description="Minimum similarity threshold (default 50% - lower for broader matches)", ge=0.0, le=1.0)
     include_evidence: bool = Field(False, description="Include sample evidence instances for each concept in paths")
-    include_grounding: bool = Field(True, description="Include grounding strength for each concept in paths (ADR-044)")
-    # ADR-065: Epistemic status filtering
+    include_grounding: bool = Field(True, description="Include grounding strength for each concept in paths (ADR-808)")
+    # ADR-610: Epistemic status filtering
     include_epistemic_status: Optional[List[str]] = Field(None, description="Filter to only include relationships with these epistemic statuses (e.g., ['AFFIRMATIVE', 'CONTESTED'])")
     exclude_epistemic_status: Optional[List[str]] = Field(None, description="Exclude relationships with these epistemic statuses (e.g., ['HISTORICAL', 'INSUFFICIENT_DATA'])")
 
@@ -344,9 +344,9 @@ class CypherQueryResponse(BaseModel):
     query: str = Field(..., description="The executed query")
 
 
-# Source Search Models (ADR-068 Phase 3)
+# Source Search Models (ADR-812 Phase 3)
 class SourceSearchRequest(BaseModel):
-    """Request to search source text using semantic similarity (ADR-068).
+    """Request to search source text using semantic similarity (ADR-812).
 
     Searches source text chunks via embedding similarity, returns matched sources
     with related concepts for evidence/provenance retrieval.
@@ -395,14 +395,14 @@ class SourceSearchResult(BaseModel):
 
 
 class SourceSearchResponse(BaseModel):
-    """Source search results (ADR-068 Phase 3)."""
+    """Source search results (ADR-812 Phase 3)."""
     query: str = Field(..., description="Original search query")
     count: int = Field(..., description="Number of sources returned")
     results: List[SourceSearchResult] = Field(..., description="Ranked source results by similarity")
     threshold_used: float = Field(..., description="Similarity threshold used")
 
 
-# Polarity Axis Models (ADR-070)
+# Polarity Axis Models (ADR-813)
 class PolarityAxisRequest(BaseModel):
     """Request to analyze bidirectional semantic dimension (polarity axis)."""
     positive_pole_id: str = Field(..., description="Concept ID for positive pole (e.g., 'Modern')")
@@ -411,10 +411,10 @@ class PolarityAxisRequest(BaseModel):
     auto_discover: bool = Field(True, description="Auto-discover related concepts if candidate_ids not provided")
     max_candidates: int = Field(20, description="Maximum candidates for auto-discovery", ge=1, le=100)
     max_hops: int = Field(2, description="Maximum graph hops for auto-discovery (1-3)", ge=1, le=3)
-    use_parallel: bool = Field(True, description="Use parallel discovery for 100x+ speedup (ADR-071)")
+    use_parallel: bool = Field(True, description="Use parallel discovery for 100x+ speedup (ADR-505)")
     # ADR-071a: Discovery strategy options (epsilon-greedy)
     discovery_slot_pct: Optional[float] = Field(0.2, description="Discovery slot percentage (0.0=conservative/pure degree, 0.2=balanced/default, 1.0=novelty/pure random)", ge=0.0, le=1.0)
-    # ADR-071: Worker configuration options
+    # ADR-505: Worker configuration options
     max_workers: Optional[int] = Field(8, description="Maximum parallel workers for 2-hop queries", ge=1, le=32)
     chunk_size: Optional[int] = Field(20, description="Concepts per worker chunk", ge=1, le=100)
     timeout_seconds: Optional[float] = Field(120.0, description="Wall-clock timeout in seconds", ge=1.0, le=600.0)

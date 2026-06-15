@@ -318,9 +318,9 @@ listCommand
 // Add list command to jobs
 jobsCommand.addCommand(listCommand);
 
-// Approve job(s) (ADR-014)
+// Approve job(s) (ADR-300)
 const approveCommand = new Command('approve')
-  .description('Approve jobs for processing (ADR-014 approval workflow) - single job, batch pending, or filter by status')
+  .description('Approve jobs for processing (ADR-300 approval workflow) - single job, batch pending, or filter by status')
   .showHelpAfterError();
 
 // Approve single job
@@ -727,7 +727,7 @@ function printJobStatus(job: JobStatus) {
     console.log(chalk.gray(`  Duration: ${duration.toFixed(1)}s`));
   }
 
-  // ADR-014: Show analysis when available
+  // ADR-300: Show analysis when available
   if (job.analysis) {
     console.log(chalk.blue('\nPre-Ingestion Analysis:'));
 

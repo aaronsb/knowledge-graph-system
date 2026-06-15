@@ -1,11 +1,11 @@
 """
-Embedding Projection Worker (ADR-078, ADR-079, ADR-083).
+Embedding Projection Worker (ADR-717, ADR-114, ADR-116).
 
 Computes t-SNE/UMAP projections for ontology embeddings and stores results
 for the Embedding Landscape Explorer. Triggered by ProjectionLauncher when
 concept counts change significantly.
 
-Storage (ADR-079 - Legacy):
+Storage (ADR-114 - Legacy):
     Projections are stored in Garage (S3-compatible object storage) with both
     latest version and timestamped historical snapshots for tracking semantic
     landscape evolution over time.
@@ -13,7 +13,7 @@ Storage (ADR-079 - Legacy):
     Key format: projections/{ontology}/{embedding_source}/latest.json
                 projections/{ontology}/{embedding_source}/{timestamp}.json
 
-Storage (ADR-083 - Artifact):
+Storage (ADR-116 - Artifact):
     When `create_artifact=True` in job_data, also creates a persistent artifact
     linked to the job. Artifacts provide:
     - User ownership and access control
@@ -162,10 +162,10 @@ def run_projection_worker(
             "progress": f"Computed projection for {concept_count} {embedding_source}"
         })
 
-        # Store projection to Garage (ADR-079 - legacy cache)
+        # Store projection to Garage (ADR-114 - legacy cache)
         storage_key = _store_projection(ontology, embedding_source, dataset)
 
-        # ADR-083: Optionally create artifact for persistence
+        # ADR-116: Optionally create artifact for persistence
         artifact_id = None
         create_artifact = job_data.get("create_artifact", False)
 
@@ -202,7 +202,7 @@ def run_projection_worker(
             else:
                 logger.warning(f"Could not create artifact - no user_id for job {job_id}")
 
-        # Prepare result - include warning if storage failed (ADR-079 review feedback)
+        # Prepare result - include warning if storage failed (ADR-114 review feedback)
         result = {
             "success": True,
             "ontology": ontology,
@@ -245,7 +245,7 @@ def run_projection_worker(
 
 def _store_projection(ontology: str, embedding_source: str, dataset: Dict[str, Any]) -> Optional[str]:
     """
-    Store projection dataset to Garage (ADR-079).
+    Store projection dataset to Garage (ADR-114).
 
     Stores both latest version and timestamped historical snapshot.
 

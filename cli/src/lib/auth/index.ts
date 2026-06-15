@@ -1,5 +1,5 @@
 /**
- * OAuth 2.0 Authentication Library (ADR-054)
+ * OAuth 2.0 Authentication Library (ADR-406)
  *
  * Exports all OAuth utilities for CLI and MCP authentication
  */

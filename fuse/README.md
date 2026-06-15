@@ -193,4 +193,4 @@ The FUSE driver is an independent Python client that:
 - Persists user query directories in client-side TOML files
 - Runs as a daemonized process per mount point
 
-See [ADR-069](../docs/architecture/ADR-069-fuse-filesystem-driver.md) for design rationale.
+See [ADR-715](../docs/architecture/ADR-715-fuse-filesystem-driver.md) for design rationale.

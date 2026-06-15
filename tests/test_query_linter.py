@@ -2,7 +2,7 @@
 Unit tests for query safety linter.
 
 Tests the query linter's ability to detect unsafe Cypher patterns
-that could cause namespace collisions (ADR-048).
+that could cause namespace collisions (ADR-606).
 """
 
 import pytest
@@ -246,7 +246,7 @@ def foo():  # Line 3
         assert "Found 1 unsafe query pattern" in captured.out
         assert "test.py" in captured.out
         assert "Line 5" in captured.out
-        assert "ADR-048" in captured.out
+        assert "ADR-606" in captured.out
 
 
 class TestQueryLinterIntegration:

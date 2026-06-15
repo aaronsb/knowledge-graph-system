@@ -130,7 +130,7 @@ const paletteSections: PaletteSection[] = [
         type: 'sourceSearch',
         icon: FileText,
         label: 'Source Search',
-        description: 'Search source text passages (ADR-068)',
+        description: 'Search source text passages (ADR-812)',
         color: 'amber',
       },
       {

@@ -1,5 +1,5 @@
 /**
- * kg oauth - OAuth client management commands (ADR-054)
+ * kg oauth - OAuth client management commands (ADR-406)
  *
  * Manage personal OAuth clients for CLI, MCP, scripts, etc.
  */
@@ -27,7 +27,7 @@ async function requireAuth(): Promise<{ token: string; authClient: AuthClient; u
   const apiUrl = config.getApiUrl();
   const authClient = new AuthClient(apiUrl);
 
-  // Get OAuth client credentials (ADR-054)
+  // Get OAuth client credentials (ADR-406)
   const oauthCreds = config.getOAuthCredentials();
   if (!oauthCreds) {
     console.error('\x1b[31m❌ No OAuth credentials found. Please login: kg login\x1b[0m\n');

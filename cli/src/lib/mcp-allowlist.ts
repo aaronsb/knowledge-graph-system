@@ -1,7 +1,7 @@
 /**
  * MCP File Access Allowlist Manager
  *
- * ADR-062: MCP File Ingestion Security Model
+ * ADR-408: MCP File Ingestion Security Model
  *
  * Manages path allowlist for secure file/directory ingestion from MCP server.
  * Agent-readable but not agent-writable (CLI-only configuration).
@@ -236,7 +236,7 @@ export class McpAllowlistManager {
   }
 
   /**
-   * Validate file path against allowlist (ADR-062 fail-secure validation)
+   * Validate file path against allowlist (ADR-408 fail-secure validation)
    *
    * Security checks (in order):
    * 1. Resolve to absolute path (prevents ../ attacks)

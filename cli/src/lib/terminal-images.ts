@@ -1,5 +1,5 @@
 /**
- * Terminal Image Display Utilities (ADR-057)
+ * Terminal Image Display Utilities (ADR-305)
  *
  * Provides utilities for displaying images in the terminal using chafa,
  * with fallback options and configuration support.

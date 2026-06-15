@@ -317,7 +317,7 @@ export async function trackJobWithPolling(
 }
 
 /**
- * Track job progress with SSE streaming (ADR-018 Phase 1)
+ * Track job progress with SSE streaming (ADR-108 Phase 1)
  */
 export async function trackJobWithSSE(
   client: ReturnType<typeof createClientFromEnv>,

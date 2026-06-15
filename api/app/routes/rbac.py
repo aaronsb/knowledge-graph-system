@@ -1,5 +1,5 @@
 """
-RBAC Management Routes (ADR-028)
+RBAC Management Routes (ADR-404)
 
 API endpoints for dynamic role-based access control management.
 

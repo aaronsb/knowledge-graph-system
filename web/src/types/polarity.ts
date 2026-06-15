@@ -1,5 +1,5 @@
 /**
- * Type definitions for Polarity Axis Analysis (ADR-070)
+ * Type definitions for Polarity Axis Analysis (ADR-813)
  */
 
 export interface PolarityAxisParams {

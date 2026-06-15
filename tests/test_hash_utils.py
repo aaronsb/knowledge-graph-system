@@ -1,5 +1,5 @@
 """
-Unit tests for hash utilities (ADR-068).
+Unit tests for hash utilities (ADR-812).
 
 Tests SHA256 hashing and verification for source text embeddings.
 """

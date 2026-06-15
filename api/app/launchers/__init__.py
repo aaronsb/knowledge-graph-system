@@ -1,5 +1,5 @@
 """
-Job launchers for scheduled tasks (ADR-050).
+Job launchers for scheduled tasks (ADR-111).
 
 Launchers are lightweight "sequencers" that:
 1. Check if conditions are met to run a job

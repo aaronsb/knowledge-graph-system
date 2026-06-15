@@ -3,25 +3,25 @@ openai>=1.10.0
 python-dotenv>=1.0.0
 anthropic>=0.18.0  # Optional: only needed if using AI_PROVIDER=anthropic
 numpy>=1.24.0  # Required for learned knowledge similarity calculations & vector search
-sentence-transformers>=2.3.0  # Local embedding models for ADR-039 (nomic-embed-text, BGE)
+sentence-transformers>=2.3.0  # Local embedding models for ADR-804 (nomic-embed-text, BGE)
 transformers>=4.56.0,<5.0  # Lower bound: AutoModel.from_pretrained `dtype` kwarg (replaces deprecated `torch_dtype`) added in 4.56.0 — older versions silently ignore it via **kwargs and load fp32 on GPU, defeating PR #429's VRAM fix. Upper bound: Nomic Vision requires trust_remote_code, broken on transformers 5.x (#313).
 torch>=2.0.0  # Required for visual embeddings (Nomic Vision)
-torchvision>=0.15.0  # Fast image preprocessing for transformers (ADR-057)
+torchvision>=0.15.0  # Fast image preprocessing for transformers (ADR-305)
 accelerate>=0.20.0  # Required for device_map in transformers model loading
-Pillow>=10.0.0  # Image processing for visual embeddings (ADR-057)
-boto3>=1.28.0  # AWS S3 client for Garage object storage (ADR-057)
+Pillow>=10.0.0  # Image processing for visual embeddings (ADR-305)
+boto3>=1.28.0  # AWS S3 client for Garage object storage (ADR-305)
 botocore>=1.31.0  # Core functionality for boto3
 einops>=0.8.0  # Required by nomic-embed-text model architecture
-mistune>=3.0.0  # Markdown parsing for preprocessing (ADR-023)
+mistune>=3.0.0  # Markdown parsing for preprocessing (ADR-301)
 nltk>=3.8.0  # Natural language processing for relationship mapping (stemming)
 
 # API Server (Phase 1)
 fastapi>=0.109.0
 uvicorn[standard]>=0.27.0  # ASGI server with auto-reload
 python-multipart>=0.0.6  # For file uploads
-croniter>=2.0.0  # Cron expression parsing for scheduled jobs (ADR-050)
+croniter>=2.0.0  # Cron expression parsing for scheduled jobs (ADR-111)
 
-# Authentication (ADR-027)
+# Authentication (ADR-403)
 passlib>=1.7.4  # Password hashing
 bcrypt>=4.0.0,<5.0.0  # bcrypt backend (passlib compatibility)
 python-jose[cryptography]>=3.3.0  # JWT token generation and validation

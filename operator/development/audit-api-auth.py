@@ -88,10 +88,10 @@ def analyze_endpoint(route) -> Dict[str, Any]:
     if hasattr(route, 'endpoint'):
         sig = inspect.signature(route.endpoint)
         for param_name, param in sig.parameters.items():
-            # ADR-060: Check for CurrentUser type annotation (FastAPI template pattern)
+            # ADR-407: Check for CurrentUser type annotation (FastAPI template pattern)
             if param.annotation != inspect.Parameter.empty:
                 annotation_str = str(param.annotation)
-                # Check for CurrentUser type alias (ADR-060)
+                # Check for CurrentUser type alias (ADR-407)
                 # Could be "CurrentUser" or "typing.Annotated[UserInDB, ...]"
                 if 'CurrentUser' in annotation_str:
                     endpoint_info["has_auth"] = True
@@ -116,7 +116,7 @@ def analyze_endpoint(route) -> Dict[str, Any]:
                     if any(auth in func_name for auth in ['current_user', 'api_key', 'require_role', 'require_permission', 'check_role']):
                         endpoint_info["has_auth"] = True
 
-                        # ADR-060: Upgrade to role-based if require_role dependency found
+                        # ADR-407: Upgrade to role-based if require_role dependency found
                         if 'require_role' in func_name or 'check_role' in func_name:
                             endpoint_info["auth_type"] = "role"
                         elif 'require_permission' in func_name:

@@ -1,5 +1,5 @@
 """
-Artifact Storage Service - Multi-tier artifact persistence (ADR-083).
+Artifact Storage Service - Multi-tier artifact persistence (ADR-116).
 
 This service handles storage and retrieval of computed artifacts with
 automatic routing between inline (SQL) and Garage (S3) based on size.
@@ -26,7 +26,7 @@ INLINE_THRESHOLD_BYTES = 10 * 1024
 
 class ArtifactStorageService:
     """
-    Artifact storage service for computed results (ADR-083).
+    Artifact storage service for computed results (ADR-116).
 
     Provides multi-tier storage with automatic routing based on payload size:
     - Small payloads stored inline in PostgreSQL for fast access

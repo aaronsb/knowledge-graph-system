@@ -55,7 +55,7 @@ class DatabaseHealthResponse(BaseModel):
 
 
 # =============================================================================
-# Cypher Query Models (ADR-048)
+# Cypher Query Models (ADR-606)
 # =============================================================================
 
 class CypherQueryRequest(BaseModel):

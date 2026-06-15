@@ -1,5 +1,5 @@
 """
-Pydantic models for batch graph operations (ADR-089 Phase 1b).
+Pydantic models for batch graph operations (ADR-308 Phase 1b).
 
 These models support bulk creation of concepts and edges in a single
 transactional operation.

@@ -6,7 +6,7 @@
  * - Token refresh
  * - User info
  * - Auth status
- * - Permissions (ADR-074)
+ * - Permissions (ADR-409)
  */
 
 import { create } from 'zustand';
@@ -44,7 +44,7 @@ interface User {
 export type SessionStatus = 'anonymous' | 'authenticated' | 'expired';
 
 /**
- * Permissions state (ADR-074)
+ * Permissions state (ADR-409)
  * Loaded after authentication, provides easy permission checking
  */
 interface PermissionsState {
@@ -63,7 +63,7 @@ interface AuthStore {
   isLoading: boolean;
   error: string | null;
 
-  // Permissions (ADR-074)
+  // Permissions (ADR-409)
   permissions: PermissionsState | null;
   permissionsLoading: boolean;
 
@@ -75,7 +75,7 @@ interface AuthStore {
   checkAuth: () => void;
   clearError: () => void;
 
-  // Permission actions (ADR-074)
+  // Permission actions (ADR-409)
   loadPermissions: () => Promise<void>;
   hasPermission: (resource: string, action: string) => boolean;
   isPlatformAdmin: () => boolean;
@@ -91,7 +91,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   isLoading: false,
   error: null,
 
-  // Permissions (ADR-074)
+  // Permissions (ADR-409)
   permissions: null,
   permissionsLoading: false,
 
@@ -138,7 +138,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         sessionStatus: 'anonymous',
         isLoading: false,
         error: null,
-        permissions: null,  // ADR-074: Clear permissions on logout
+        permissions: null,  // ADR-409: Clear permissions on logout
       });
     } catch (error) {
       // Clear local state even if revocation fails
@@ -150,7 +150,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         sessionStatus: 'anonymous',
         isLoading: false,
         error: error instanceof Error ? error.message : 'Logout failed',
-        permissions: null,  // ADR-074: Clear permissions on logout
+        permissions: null,  // ADR-409: Clear permissions on logout
       });
     }
   },
@@ -174,7 +174,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         error: null,
       });
 
-      // Load permissions after successful auth (ADR-074)
+      // Load permissions after successful auth (ADR-409)
       get().loadPermissions();
     } catch (error) {
       set({
@@ -184,7 +184,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         sessionStatus: 'anonymous',
         isLoading: false,
         error: error instanceof Error ? error.message : 'Authentication failed',
-        permissions: null,  // ADR-074: Clear permissions on auth failure
+        permissions: null,  // ADR-409: Clear permissions on auth failure
       });
     }
   },
@@ -205,7 +205,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         sessionStatus: hadCredentials ? 'expired' : 'anonymous',
         hydrated: true,
         error: hadCredentials ? 'No refresh token available' : null,
-        permissions: null,  // ADR-074
+        permissions: null,  // ADR-409
       });
       return;
     }
@@ -222,7 +222,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         error: null,
       });
 
-      // Reload permissions after token refresh (ADR-074)
+      // Reload permissions after token refresh (ADR-409)
       get().loadPermissions();
     } catch (error) {
       // Refresh failed - user needs to re-login
@@ -234,7 +234,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         sessionStatus: 'expired',
         hydrated: true,
         error: 'Session expired - please login again',
-        permissions: null,  // ADR-074
+        permissions: null,  // ADR-409
       });
     }
   },
@@ -287,7 +287,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       hydrated: true,
     });
 
-    // Load permissions after restoring auth (ADR-074)
+    // Load permissions after restoring auth (ADR-409)
     get().loadPermissions();
   },
 
@@ -297,7 +297,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   clearError: () => set({ error: null }),
 
   // ==========================================================================
-  // Permission Methods (ADR-074)
+  // Permission Methods (ADR-409)
   // ==========================================================================
 
   /**

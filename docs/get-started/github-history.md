@@ -160,7 +160,7 @@ Found 12 concepts:
 
 2. Security Enhancement (85.1%)
    Ontology: commits
-   Evidence: "feat(ADR-031): Add service token authorization"
+   Evidence: "feat(ADR-405): Add service token authorization"
    Related: 3 concepts from pull_requests ontology
 ```
 
@@ -176,12 +176,12 @@ kg search related <concept-id> --depth 2
 
 ```
 Distance 1 (direct relationships):
-  • ADR-031 Implementation → [IMPLEMENTS]
+  • ADR-405 Implementation → [IMPLEMENTS]
   • Service Token Authorization → [PART_OF]
   • Fernet Encryption → [USES]
 
 Distance 2 (indirect relationships):
-  • Security Guide Documentation → [DOCUMENTS] → ADR-031 Implementation
+  • Security Guide Documentation → [DOCUMENTS] → ADR-405 Implementation
   • API Server Architecture → [PART_OF] → Service Token Authorization
 ```
 

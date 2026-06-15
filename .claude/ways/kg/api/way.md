@@ -24,7 +24,7 @@ api/app/
 └── workers/             # Background job workers
 ```
 
-## Query Safety (ADR-048)
+## Query Safety (ADR-606)
 
 Always use `client.facade` for graph queries:
 

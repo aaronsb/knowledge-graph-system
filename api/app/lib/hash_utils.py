@@ -1,5 +1,5 @@
 """
-Hash utilities for source text embeddings (ADR-068).
+Hash utilities for source text embeddings (ADR-812).
 
 Provides SHA256 hashing and verification functions for:
 - Source text content (full_text)

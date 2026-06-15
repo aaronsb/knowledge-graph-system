@@ -2,8 +2,8 @@
 Source retrieval API routes.
 
 Provides endpoints for retrieving source content, including:
-- Images from Garage (ADR-057)
-- Original documents from Garage (ADR-081)
+- Images from Garage (ADR-305)
+- Original documents from Garage (ADR-307)
 """
 
 import logging
@@ -131,7 +131,7 @@ async def list_sources(
 
 @router.get(
     "/{source_id}/image",
-    summary="Retrieve image from source (ADR-057)",
+    summary="Retrieve image from source (ADR-305)",
     dependencies=[Depends(require_permission("sources", "read"))],
     responses={
         200: {
@@ -180,7 +180,7 @@ async def get_source_image(
 
     **Access Control:**
     - Requires authentication (any authenticated user can retrieve images)
-    - Future: Add ontology-based access control (ADR-028)
+    - Future: Add ontology-based access control (ADR-404)
     """
     age_client = AGEClient()
 
@@ -273,7 +273,7 @@ async def get_source_image(
 
 @router.get(
     "/{source_id}/document",
-    summary="Retrieve original document from Garage (ADR-081)",
+    summary="Retrieve original document from Garage (ADR-307)",
     dependencies=[Depends(require_permission("sources", "read"))],
     responses={
         200: {
@@ -300,7 +300,7 @@ async def get_source_document(
 
     **Workflow:**
     1. Look up Source node in graph by source_id
-    2. Get garage_key from Source node (ADR-081)
+    2. Get garage_key from Source node (ADR-307)
     3. Download document from Garage storage
     4. Return document with appropriate Content-Type header
 
@@ -365,7 +365,7 @@ async def get_source_document(
     if not garage_key:
         raise HTTPException(
             status_code=404,
-            detail=f"Source {source_id} has no garage_key (document may predate ADR-081)"
+            detail=f"Source {source_id} has no garage_key (document may predate ADR-307)"
         )
 
     # Step 3: Download document from Garage

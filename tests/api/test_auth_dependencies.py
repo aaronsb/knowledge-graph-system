@@ -1,5 +1,5 @@
 """
-Authentication Dependencies Tests (ADR-054, ADR-060)
+Authentication Dependencies Tests (ADR-406, ADR-407)
 
 Unit tests for authentication dependency injection functions.
 

@@ -44,7 +44,7 @@ export const databaseCommand = setCommandHelp(
             });
           }
 
-          // Display graph metrics counters (ADR-065)
+          // Display graph metrics counters (ADR-610)
           if (stats.metrics) {
             console.log('\n' + colors.stats.section('Graph Metrics'));
 
@@ -167,9 +167,9 @@ export const databaseCommand = setCommandHelp(
   )
   .addCommand(
     new Command('query')
-      .description('Execute a custom openCypher/GQL query (ADR-048). Use --namespace for safety: "concept" operates on Concept/Source/Instance nodes (default namespace), "vocab" operates on VocabType/VocabCategory nodes, omit for raw queries (mixed types, use with caution). Examples: kg db query "MATCH (c:Concept) WHERE c.label =~ \'.*recursive.*\' RETURN c.label LIMIT 5" --namespace concept')
+      .description('Execute a custom openCypher/GQL query (ADR-606). Use --namespace for safety: "concept" operates on Concept/Source/Instance nodes (default namespace), "vocab" operates on VocabType/VocabCategory nodes, omit for raw queries (mixed types, use with caution). Examples: kg db query "MATCH (c:Concept) WHERE c.label =~ \'.*recursive.*\' RETURN c.label LIMIT 5" --namespace concept')
       .argument('<query>', 'openCypher/GQL query string')
-      .option('--namespace <type>', 'Namespace for safety: "concept", "vocab", or omit for raw (ADR-048)')
+      .option('--namespace <type>', 'Namespace for safety: "concept", "vocab", or omit for raw (ADR-606)')
       .option('--params <json>', 'Query parameters as JSON string (e.g., \'{"min_score": 0.8}\')')
       .option('--limit <n>', 'Convenience: Append LIMIT to query (overrides query LIMIT)', parseInt)
       .action(async (query: string, options) => {
@@ -205,7 +205,7 @@ export const databaseCommand = setCommandHelp(
           console.log(`\n${colors.ui.key('Query:')} ${colors.status.dim(finalQuery)}`);
 
           if (namespace) {
-            console.log(`${colors.ui.key('Namespace:')} ${colors.status.success(namespace)} ${colors.status.dim('(namespace-safe, ADR-048)')}`);
+            console.log(`${colors.ui.key('Namespace:')} ${colors.status.success(namespace)} ${colors.status.dim('(namespace-safe, ADR-606)')}`);
           } else {
             console.log(`${colors.ui.key('Namespace:')} ${colors.status.warning('raw')} ${colors.status.dim('(no label injection, use with caution)')}`);
           }
@@ -253,7 +253,7 @@ export const databaseCommand = setCommandHelp(
   )
   .addCommand(
     new Command('counters')
-      .description('Show graph metrics counters organized by type (ADR-079). Counters track: snapshot counts (concepts, edges, sources, vocab_types), activity counters (ingestion, consolidation events), and legacy structure counters. Use --refresh to update from current graph state.')
+      .description('Show graph metrics counters organized by type (ADR-114). Counters track: snapshot counts (concepts, edges, sources, vocab_types), activity counters (ingestion, consolidation events), and legacy structure counters. Use --refresh to update from current graph state.')
       .option('--refresh', 'Refresh counters from current graph state before displaying')
       .action(async (options) => {
         try {

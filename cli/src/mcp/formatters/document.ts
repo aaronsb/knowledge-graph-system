@@ -1,11 +1,11 @@
 /**
- * Document formatters (ADR-084)
+ * Document formatters (ADR-507)
  */
 
 import { formatGroundingStrength } from './utils.js';
 
 /**
- * Format document search results (ADR-084)
+ * Format document search results (ADR-507)
  */
 export function formatDocumentSearchResults(result: any): string {
   let output = `# Document Search: "${result.query || 'documents'}"\n\n`;
@@ -42,7 +42,7 @@ export function formatDocumentSearchResults(result: any): string {
 }
 
 /**
- * Format document list (ADR-084)
+ * Format document list (ADR-507)
  */
 export function formatDocumentList(result: any): string {
   let output = `# Documents\n\n`;
@@ -70,7 +70,7 @@ export function formatDocumentList(result: any): string {
 }
 
 /**
- * Format document content (ADR-084)
+ * Format document content (ADR-507)
  */
 export function formatDocumentContent(result: any): string {
   let output = `# Document Content\n\n`;
@@ -100,7 +100,7 @@ export function formatDocumentContent(result: any): string {
 }
 
 /**
- * Format document concepts (ADR-084)
+ * Format document concepts (ADR-507)
  */
 export function formatDocumentConcepts(result: any): string {
   let output = `# Concepts: ${result.filename}\n\n`;
@@ -130,7 +130,7 @@ export function formatDocumentConcepts(result: any): string {
 }
 
 /**
- * Format document concepts with full details (ADR-084)
+ * Format document concepts with full details (ADR-507)
  * Used when include_details=true - fetches all concept info in one call
  */
 export function formatDocumentConceptsDetailed(docResult: any, conceptDetails: any[]): string {

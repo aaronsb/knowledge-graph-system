@@ -1,5 +1,5 @@
 """
-Unit tests for source text chunker (ADR-068).
+Unit tests for source text chunker (ADR-812).
 
 Tests sentence-based chunking with offset tracking for embedding generation.
 """

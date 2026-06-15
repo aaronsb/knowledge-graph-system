@@ -317,7 +317,7 @@ layer. They are not interned (small cardinality); see [Ontology layer](#ontologi
 | `file_path` | string | Original ingest path. |
 | `paragraph` | integer | Ordinal within document. |
 | `full_text` | string | The source prose — a primary input, always carried. |
-| `garage_key` | string (optional) | Present only when set. Sources predating ADR-081 omit it. Informational; restore reconstructs the key from IDs rather than trusting it. |
+| `garage_key` | string (optional) | Present only when set. Sources predating ADR-307 omit it. Informational; restore reconstructs the key from IDs rather than trusting it. |
 | `content_type` | integer (optional) | Index into `header.content_types[]` (interned, replacing the raw MIME string the legacy exporter emitted inline). |
 | `storage_key` | string (optional) | Image/media storage key. Present only when set. Like `garage_key`, reconstructed on restore. |
 
@@ -413,7 +413,7 @@ CLONE-only). Omitted entirely in simple mode. These are the
 | `occurred_at` | ISO-8601Z string | Wall-clock axis; preserved. |
 | `kind` | integer | Index into `header.epoch_kinds[]`. |
 | `actor` | integer or null | Index into `header.actors[]`. |
-| `counter_after` | integer or null | `graph_change_counter` snapshot (ADR-079 cross-ref). Informational. |
+| `counter_after` | integer or null | `graph_change_counter` snapshot (ADR-114 cross-ref). Informational. |
 | `metadata` | object | Free-form event metadata. |
 
 Faithful replay is coherent only when identity is preserved 1:1 (empty target).
@@ -479,8 +479,8 @@ Per ADR-102 §4 (primary-in / derived-out), the backup carries primary inputs
 only. The following are explicitly excluded and are regenerated post-restore
 against the true post-restore graph state — never serialized:
 
-- **Projections** (ADR-079, `projections/…`) — derived embedding-landscape snapshots.
-- **Artifacts / scores** (ADR-083, `artifacts/…`) — polarity analyses, grounding
+- **Projections** (ADR-114, `projections/…`) — derived embedding-landscape snapshots.
+- **Artifacts / scores** (ADR-116, `artifacts/…`) — polarity analyses, grounding
   results, epistemic scores, and other computed derivations.
 - **Grounding caches** and the **catalog index**.
 
@@ -544,8 +544,8 @@ transfer. The concrete endpoint shape is an API-contract concern outside this sp
   header; §6 rehydration; §7 storage keys; §8 partial-apply safety).
 - **ADR-203** — Graph epoch event log (`graph_epochs`, `created_at_event_id`).
 - **ADR-803** — Independent image vector space (migration 075).
-- **ADR-079 / ADR-083** — Projections / artifacts (excluded derived products).
-- **ADR-015** — Prior backup/restore streaming architecture; partly superseded by ADR-102.
+- **ADR-114 / ADR-116** — Projections / artifacts (excluded derived products).
+- **ADR-107** — Prior backup/restore streaming architecture; partly superseded by ADR-102.
 - **Source:** `api/lib/serialization/exporter.py` (`DataExporter`),
   `api/lib/serialization/format.py` (`BackupFormat`, `KgBackupV2Reader`),
   `api/app/lib/embedding_config.py` (`export_embedding_profile`),

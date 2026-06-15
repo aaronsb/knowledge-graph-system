@@ -2,7 +2,7 @@
 Synonym Detector for Automatic Edge Vocabulary Expansion.
 
 Detects potential synonyms among edge types using embedding-based similarity
-to identify merge candidates and reduce vocabulary duplication (ADR-032).
+to identify merge candidates and reduce vocabulary duplication (ADR-603).
 
 Similarity Thresholds:
     - similarity >= 0.90: Strong merge candidate (auto-suggest)
@@ -28,8 +28,8 @@ Usage:
             print(f"Review: {candidate.type1} ≈ {candidate.type2}")
 
 References:
-    - ADR-032: Automatic Edge Vocabulary Expansion
-    - ADR-025: Dynamic Relationship Vocabulary
+    - ADR-603: Automatic Edge Vocabulary Expansion
+    - ADR-601: Dynamic Relationship Vocabulary
 """
 
 from typing import Dict, List, Optional, Tuple, Set
@@ -107,7 +107,7 @@ class SynonymDetector:
     potential synonyms for vocabulary consolidation.
     """
 
-    # Similarity thresholds (per ADR-032)
+    # Similarity thresholds (per ADR-603)
     STRONG_MATCH_THRESHOLD = 0.90      # Auto-suggest merge
     MODERATE_MATCH_THRESHOLD = 0.70    # Review needed
 
@@ -712,7 +712,7 @@ if __name__ == "__main__":
     import asyncio
     import sys
 
-    print("Synonym Detector - ADR-032 Implementation")
+    print("Synonym Detector - ADR-603 Implementation")
     print("=" * 60)
     print()
     print("This module detects synonym edge types using:")

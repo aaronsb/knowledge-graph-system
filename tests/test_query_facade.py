@@ -1,7 +1,7 @@
 """
 Unit tests for GraphQueryFacade.
 
-Tests namespace-safe query interface for Apache AGE (ADR-048).
+Tests namespace-safe query interface for Apache AGE (ADR-606).
 """
 
 import pytest
@@ -587,7 +587,7 @@ class TestGraphQueryFacadeIntegration:
 
 
 class TestEpistemicStatusFiltering:
-    """Test epistemic status filtering (ADR-065 Phase 2)."""
+    """Test epistemic status filtering (ADR-610 Phase 2)."""
 
     @pytest.fixture
     def mock_client(self):

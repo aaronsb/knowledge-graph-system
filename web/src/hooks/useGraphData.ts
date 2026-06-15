@@ -19,7 +19,7 @@ export function useSubgraph(
     relationshipTypes?: string[];
     limit?: number;
     enabled?: boolean;
-    // ADR-065: Epistemic status filtering
+    // ADR-610: Epistemic status filtering
     includeEpistemicStatus?: string[];
     excludeEpistemicStatus?: string[];
   }
@@ -42,7 +42,7 @@ export function useSubgraph(
         depth: options?.depth,
         relationship_types: options?.relationshipTypes,
         limit: options?.limit,
-        // ADR-065: Epistemic status filtering
+        // ADR-610: Epistemic status filtering
         include_epistemic_status: options?.includeEpistemicStatus,
         exclude_epistemic_status: options?.excludeEpistemicStatus,
       });

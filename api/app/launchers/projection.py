@@ -1,12 +1,12 @@
 """
-Embedding Projection Launcher (ADR-078, ADR-079).
+Embedding Projection Launcher (ADR-717, ADR-114).
 
 Automatically re-compute projections when concept counts change significantly.
-Follows the same pattern as EpistemicRemeasurementLauncher from ADR-065.
+Follows the same pattern as EpistemicRemeasurementLauncher from ADR-610.
 
 Storage:
     Projections are stored in Garage (S3-compatible object storage) via
-    the projection worker (ADR-079).
+    the projection worker (ADR-114).
 
 Configuration:
     The per-ontology floor `min_ontology_concept_count` is shared with the
@@ -131,7 +131,7 @@ class ProjectionLauncher(JobLauncher):
                 self._active_min_concepts = min_concepts
 
                 # Get current concept counts per ontology via the canonical
-                # mixin (ADR-048: prefer facade over raw Cypher in launchers).
+                # mixin (ADR-606: prefer facade over raw Cypher in launchers).
                 current_counts = client.list_ontology_concept_counts()
 
                 if not current_counts:
@@ -251,7 +251,7 @@ class ProjectionLauncher(JobLauncher):
 
     def _get_cached_concept_count(self, ontology: str) -> Optional[int]:
         """
-        Get concept count from cached projection in Garage (ADR-079).
+        Get concept count from cached projection in Garage (ADR-114).
 
         Returns:
             Cached concept count or None if no cache

@@ -7,8 +7,8 @@ embedding vector, and active/inactive status.
 
 Key operations:
 - Configuration: vocabulary size, config values, edge type listing
-- Sync: discover edge types in graph not yet in vocabulary (ADR-077)
-- CRUD: add, update, merge relationship types (ADR-047)
+- Sync: discover edge types in graph not yet in vocabulary (ADR-611)
+- CRUD: add, update, merge relationship types (ADR-605)
 - Categories: distribution of types across semantic categories
 - Embeddings: store/retrieve embedding vectors for relationship types
 """
@@ -39,7 +39,7 @@ class VocabularyMixin:
             >>> print(f"Vocabulary size: {size}")
 
         Note:
-            ADR-048 Phase 3.2: Migrated to query graph (:VocabType nodes)
+            ADR-606 Phase 3.2: Migrated to query graph (:VocabType nodes)
         """
         try:
             query = """
@@ -107,7 +107,7 @@ class VocabularyMixin:
             >>> print(f"Active types: {len(types)}")
 
         Note:
-            ADR-048 Phase 3.2: Migrated to query graph (:VocabType nodes)
+            ADR-606 Phase 3.2: Migrated to query graph (:VocabType nodes)
         """
         try:
             if include_inactive:
@@ -132,7 +132,7 @@ class VocabularyMixin:
 
     def sync_missing_edge_types(self, dry_run: bool = True) -> Dict[str, Any]:
         """
-        Sync edge types from graph edges to vocabulary (ADR-077).
+        Sync edge types from graph edges to vocabulary (ADR-611).
 
         Scans all unique relationship types used in the graph and ensures each
         has a corresponding entry in the vocabulary table and VocabType node.
@@ -247,7 +247,7 @@ class VocabularyMixin:
             >>> print(f"Category: {info['category']}, Builtin: {info['is_builtin']}")
 
         Note:
-            ADR-048 Phase 3.2: Migrated to query graph (:VocabType nodes)
+            ADR-606 Phase 3.2: Migrated to query graph (:VocabType nodes)
             Some metadata fields (description, added_by, etc.) not yet in graph
         """
         try:
@@ -279,7 +279,7 @@ class VocabularyMixin:
                 'is_builtin': str(result.get('is_builtin', 'f')) == 't',
                 'usage_count': usage_count,
                 'category': str(result['category']) if result.get('category') else None,
-                'direction_semantics': str(result['direction_semantics']) if result.get('direction_semantics') else None,  # ADR-049
+                'direction_semantics': str(result['direction_semantics']) if result.get('direction_semantics') else None,  # ADR-810
                 # Fields not yet migrated to graph (Phase 3.3)
                 'description': None,
                 'added_by': None,
@@ -290,7 +290,7 @@ class VocabularyMixin:
                 'embedding_generated_at': None,
             }
 
-            # Fetch ADR-047 category scoring fields from SQL (not yet in graph)
+            # Fetch ADR-605 category scoring fields from SQL (not yet in graph)
             try:
                 conn = self.pool.getconn()
                 try:
@@ -316,9 +316,9 @@ class VocabularyMixin:
                 info['category_scores'] = None
                 info['category_ambiguous'] = None
 
-            # ⚠️ CRITICAL: Real-time edge counting required (ADR-044)
+            # ⚠️ CRITICAL: Real-time edge counting required (ADR-808)
             # This MUST count actual edges - do NOT return cached/stale usage_count!
-            # Grounding calculations depend on current edge state. See ADR-044 section on caching.
+            # Grounding calculations depend on current edge state. See ADR-808 section on caching.
             try:
                 count_query = f"""
                 MATCH ()-[r:{relationship_type}]->()
@@ -355,12 +355,12 @@ class VocabularyMixin:
 
         Creates both:
         1. Row in kg_api.relationship_vocabulary table
-        2. :VocabType node in the graph (ADR-048 Phase 3.2)
+        2. :VocabType node in the graph (ADR-606 Phase 3.2)
 
-        ADR-047: If category is "llm_generated" and auto_categorize is True, will compute
+        ADR-605: If category is "llm_generated" and auto_categorize is True, will compute
         proper semantic category after generating embedding using probabilistic categorization.
 
-        ADR-049: LLM determines direction_semantics based on frame of reference when creating
+        ADR-810: LLM determines direction_semantics based on frame of reference when creating
         new relationship types. Direction can be updated on first use if NULL.
 
         Args:
@@ -371,7 +371,7 @@ class VocabularyMixin:
             is_builtin: Whether this is a protected builtin type
             direction_semantics: Direction ("outward", "inward", "bidirectional", or None for LLM to decide)
             ai_provider: Optional AI provider for embedding generation (auto-generation if provided)
-            auto_categorize: If True and category="llm_generated", compute proper category (ADR-047)
+            auto_categorize: If True and category="llm_generated", compute proper category (ADR-605)
 
         Returns:
             True if added successfully, False if already exists
@@ -387,7 +387,7 @@ class VocabularyMixin:
         conn = self.pool.getconn()
         try:
             with conn.cursor() as cur:
-                # Add to vocabulary table (ADR-049: include direction_semantics)
+                # Add to vocabulary table (ADR-810: include direction_semantics)
                 cur.execute("""
                     INSERT INTO kg_api.relationship_vocabulary
                         (relationship_type, description, category, added_by, is_builtin, is_active, direction_semantics)
@@ -433,7 +433,7 @@ class VocabularyMixin:
 
                         logger.debug(f"Generated embedding for vocabulary type '{relationship_type}' ({len(embedding)} dims)")
 
-                        # ADR-047: Auto-categorize LLM-generated types
+                        # ADR-605: Auto-categorize LLM-generated types
                         if auto_categorize and category == "llm_generated":
                             try:
                                 import asyncio
@@ -487,13 +487,13 @@ class VocabularyMixin:
                         # Don't fail the entire operation if embedding generation fails
                         logger.warning(f"Failed to generate embedding for '{relationship_type}': {e}")
 
-                # Create :VocabType node in graph (ADR-048 Phase 3.3 + ADR-049)
+                # Create :VocabType node in graph (ADR-606 Phase 3.3 + ADR-810)
                 # Creates both node and :IN_CATEGORY relationship
                 if was_added:
                     try:
                         # Use MERGE to be idempotent (in case of partial failures)
                         # Phase 3.3: Create :IN_CATEGORY relationship to :VocabCategory node
-                        # ADR-049: Add direction_semantics property
+                        # ADR-810: Add direction_semantics property
                         vocab_query = """
                             MERGE (v:VocabType {name: $name})
                             SET v.description = $description,
@@ -681,7 +681,7 @@ class VocabularyMixin:
             ...     print(f"{category}: {count}")
 
         Note:
-            ADR-048 Phase 3.3: Queries :IN_CATEGORY relationships to :VocabCategory nodes
+            ADR-606 Phase 3.3: Queries :IN_CATEGORY relationships to :VocabCategory nodes
         """
         try:
             # Phase 3.3: Query via :IN_CATEGORY relationships

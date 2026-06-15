@@ -1,5 +1,5 @@
 """
-Epistemic Re-measurement Launcher (ADR-065 Phase 2).
+Epistemic Re-measurement Launcher (ADR-610 Phase 2).
 
 Automatically re-measure epistemic status when vocabulary changes exceed threshold.
 Checks every 1 hour (configured in kg_api.scheduled_jobs) but only runs when

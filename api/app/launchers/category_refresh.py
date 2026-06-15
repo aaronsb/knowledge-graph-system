@@ -1,5 +1,5 @@
 """
-Category Refresh Launcher (ADR-050).
+Category Refresh Launcher (ADR-111).
 
 Automatically refresh vocabulary categories with llm_generated entries.
 Checks every 6 hours (configured in kg_api.scheduled_jobs) but only runs
@@ -42,7 +42,7 @@ class CategoryRefreshLauncher(JobLauncher):
             client = AGEClient()
 
             # Query for categories with llm_generated relationship types using facade
-            # This ensures namespace safety and audit logging (ADR-048)
+            # This ensures namespace safety and audit logging (ADR-606)
             results = client.facade.match_vocab_categories(
                 where="c.name IS NOT NULL"
             )

@@ -46,7 +46,7 @@ Each result reports:
 |---|---|
 | Similarity | Match score 0–1 against your query |
 | Grounding | Evidence signal: positive = supported, negative = contested |
-| Diversity | Breadth of support across related concepts (ADR-063) |
+| Diversity | Breadth of support across related concepts (ADR-503) |
 | Evidence | Quoted source passages that produced the concept |
 
 If results look thin, the CLI suggests a lower threshold:
@@ -96,7 +96,7 @@ kg search related <concept-id> --depth 3
 kg search related <concept-id> --types SUPPORTS
 kg search related <concept-id> --types CONTRADICTS IMPLIES
 
-# Filter by epistemic status (ADR-065)
+# Filter by epistemic status (ADR-610)
 kg search related <concept-id> --include-epistemic AFFIRMATIVE
 kg search related <concept-id> --exclude-epistemic HISTORICAL
 ```

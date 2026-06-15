@@ -15,7 +15,7 @@ under the review threshold without coupling them.
 Key operations:
 - vector_search(): Cosine similarity search across concept embeddings
 - Learned knowledge CRUD: validate, create, list, delete connections
-- facade property: Lazy-loaded GraphQueryFacade for namespace-safe queries (ADR-048)
+- facade property: Lazy-loaded GraphQueryFacade for namespace-safe queries (ADR-606)
 - graph property: Lazy GraphFacade (ADR-201 topology + acceleration)
 - epochs property: Lazy EpochFacade (ADR-203 epoch event log)
 """
@@ -533,13 +533,13 @@ class QueryMixin:
 
 
     # =========================================================================
-    # Query Facade (ADR-048)
+    # Query Facade (ADR-606)
     # =========================================================================
 
     @property
     def facade(self):
         """
-        Get namespace-safe query facade (ADR-048).
+        Get namespace-safe query facade (ADR-606).
 
         Lazy-loads GraphQueryFacade on first access.
 

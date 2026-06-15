@@ -9,7 +9,7 @@
 # authenticated login; everything else is read-mostly or a clean lifecycle call.
 #
 # Federation seam (not built yet): this menu is the natural place to later show
-# a shard's election/peer status once ADR-088 lands. Kept extensible on purpose.
+# a shard's election/peer status once ADR-118 lands. Kept extensible on purpose.
 # ============================================================================
 set -uo pipefail
 

@@ -1,7 +1,7 @@
 """
 Embedding Profile Routes
 
-API endpoints for embedding profile management (ADR-039 + migration 055).
+API endpoints for embedding profile management (ADR-804 + migration 055).
 
 Public endpoints:
 - GET /embedding/config - Get embedding configuration summary
@@ -544,7 +544,7 @@ async def get_embedding_status(
     - Concepts (AGE graph nodes)
     - Sources (source_embeddings table with stale/incompatible detection)
     - Vocabulary (relationship types)
-    - Images (future - ADR-057)
+    - Images (future - ADR-305)
 
     **Authorization:** Requires `embedding_config:read` permission
 
@@ -602,7 +602,7 @@ async def regenerate_embeddings(
     limit: Optional[int] = None
 ):
     """
-    Unified embedding regeneration for all graph text entities (ADR-068 Phase 4).
+    Unified embedding regeneration for all graph text entities (ADR-812 Phase 4).
 
     Regenerate embeddings for concept nodes, source text chunks, or vocabulary
     (relationship types). Useful for model migrations, fixing missing/corrupted

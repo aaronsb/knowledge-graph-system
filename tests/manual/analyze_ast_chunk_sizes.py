@@ -170,7 +170,7 @@ def main():
 
     test_files = [
         'docs/api/OPENCYPHER_QUERIES.md',
-        'docs/architecture/ADR-016-apache-age-migration.md',
+        'docs/architecture/ADR-208-apache-age-migration.md',
         'docs/guides/QUICKSTART.md',
     ]
 

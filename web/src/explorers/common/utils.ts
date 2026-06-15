@@ -161,7 +161,7 @@ export function formatGrounding(grounding: number | undefined | null): { emoji: 
 }
 
 /**
- * Format diversity score for display (ADR-063)
+ * Format diversity score for display (ADR-503)
  */
 export function formatDiversity(diversity: number | undefined | null, relatedCount: number | undefined | null): { emoji: string; label: string; percentage: string; count: string; color: string } | null {
   if (diversity === undefined || diversity === null || relatedCount === undefined || relatedCount === null) return null;
@@ -196,7 +196,7 @@ export function formatDiversity(diversity: number | undefined | null, relatedCou
 }
 
 /**
- * Format authenticated diversity for display (ADR-044 + ADR-063)
+ * Format authenticated diversity for display (ADR-808 + ADR-503)
  *
  * Uses saturation-weighted grounding × diversity calculation.
  * Near-zero values (|authDiv| < 0.05) are "unclear" - grounding too weak to authenticate.

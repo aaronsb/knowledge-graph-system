@@ -1,6 +1,6 @@
 /**
  * Vocabulary Similarity Commands
- * Find similar/opposite types and analyze category fit (ADR-053)
+ * Find similar/opposite types and analyze category fit (ADR-608)
  */
 
 import { Command } from 'commander';
@@ -11,7 +11,7 @@ import { handleCliError } from '../../lib/interactive';
 
 export function createSimilarCommand(): Command {
   return new Command('similar')
-    .description('Find similar edge types via embedding similarity (ADR-053). Shows types with highest cosine similarity - useful for synonym detection and consolidation.')
+    .description('Find similar edge types via embedding similarity (ADR-608). Shows types with highest cosine similarity - useful for synonym detection and consolidation.')
     .argument('<type>', 'Relationship type to analyze (e.g., IMPLIES)')
     .option('--limit <n>', 'Number of results to return (1-100)', '10')
     .action(async (type: string, options: { limit: string }) => {
@@ -55,7 +55,7 @@ export function createSimilarCommand(): Command {
 
         console.log(colors.status.dim('──────────────────────────────────────────────────────────────'));
         console.log();
-        console.log(colors.status.dim('💡 Similarity ≥90%: Strong merge candidates (ADR-052)'));
+        console.log(colors.status.dim('💡 Similarity ≥90%: Strong merge candidates (ADR-607)'));
         console.log(colors.status.dim('   Similarity 75-90%: Review for potential consolidation'));
 
       } catch (error: any) {
@@ -66,7 +66,7 @@ export function createSimilarCommand(): Command {
 
 export function createOppositeCommand(): Command {
   return new Command('opposite')
-    .description('Find opposite (least similar) edge types via embedding similarity (ADR-053). Shows types with lowest cosine similarity.')
+    .description('Find opposite (least similar) edge types via embedding similarity (ADR-608). Shows types with lowest cosine similarity.')
     .argument('<type>', 'Relationship type to analyze (e.g., IMPLIES)')
     .option('--limit <n>', 'Number of results to return (1-100)', '5')
     .action(async (type: string, options: { limit: string }) => {
@@ -180,7 +180,7 @@ export function createSearchCommand(): Command {
 
 export function createAnalyzeCommand(): Command {
   return new Command('analyze')
-    .description('Detailed analysis of vocabulary type for quality assurance (ADR-053). Shows category fit and potential miscategorization.')
+    .description('Detailed analysis of vocabulary type for quality assurance (ADR-608). Shows category fit and potential miscategorization.')
     .argument('<type>', 'Relationship type to analyze (e.g., STORES)')
     .action(async (type: string) => {
       try {

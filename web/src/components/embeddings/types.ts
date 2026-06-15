@@ -1,5 +1,5 @@
 /**
- * Type definitions for Embedding Landscape visualization (ADR-078)
+ * Type definitions for Embedding Landscape visualization (ADR-717)
  */
 
 export type ColorScheme = 'ontology' | 'grounding' | 'position' | 'cluster';

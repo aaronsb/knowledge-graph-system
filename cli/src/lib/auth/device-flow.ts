@@ -1,5 +1,5 @@
 /**
- * OAuth Device Authorization Grant Flow (ADR-054)
+ * OAuth Device Authorization Grant Flow (ADR-406)
  *
  * Implements RFC 8628 Device Authorization Grant for CLI authentication.
  *

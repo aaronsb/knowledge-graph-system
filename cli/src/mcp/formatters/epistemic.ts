@@ -1,5 +1,5 @@
 /**
- * Epistemic status formatters (ADR-065)
+ * Epistemic status formatters (ADR-610)
  */
 
 /**
@@ -19,7 +19,7 @@ function formatEpistemicStatusInterpretation(status: string): string {
 }
 
 /**
- * Format epistemic status list (ADR-065)
+ * Format epistemic status list (ADR-610)
  */
 export function formatEpistemicStatusList(result: any): string {
   let output = '# Epistemic Status Classification\n\n';
@@ -33,7 +33,7 @@ export function formatEpistemicStatusList(result: any): string {
     return output;
   }
 
-  // Add staleness header (ADR-065 Phase 2 counter-based tracking)
+  // Add staleness header (ADR-610 Phase 2 counter-based tracking)
   if (result.last_measurement_at) {
     const measurementDate = new Date(result.last_measurement_at).toLocaleString();
     output += `**Last Measurement:** ${measurementDate}\n`;
@@ -102,7 +102,7 @@ export function formatEpistemicStatusList(result: any): string {
 }
 
 /**
- * Format epistemic status details for a specific type (ADR-065)
+ * Format epistemic status details for a specific type (ADR-610)
  */
 export function formatEpistemicStatusDetails(result: any): string {
   const relType = result.relationship_type || 'Unknown';
@@ -141,7 +141,7 @@ export function formatEpistemicStatusDetails(result: any): string {
     output += `- **Sampled Edges:** ${result.stats.sampled_edges} of ${result.stats.total_edges} total\n`;
   }
 
-  // Add measurement context with staleness (ADR-065 Phase 2)
+  // Add measurement context with staleness (ADR-610 Phase 2)
   output += '\n## Measurement Context\n\n';
   if (result.status_measured_at) {
     output += `- **Measured At:** ${new Date(result.status_measured_at).toLocaleString()}\n`;
@@ -204,7 +204,7 @@ export function formatEpistemicStatusDetails(result: any): string {
 }
 
 /**
- * Format epistemic status measurement results (ADR-065)
+ * Format epistemic status measurement results (ADR-610)
  */
 export function formatEpistemicStatusMeasurement(result: any): string {
   let output = '# Epistemic Status Measurement Results\n\n';

@@ -1,5 +1,5 @@
 """
-Vocabulary management endpoints for ADR-032 automatic edge vocabulary expansion.
+Vocabulary management endpoints for ADR-603 automatic edge vocabulary expansion.
 
 Provides REST API access to:
 - Vocabulary status and statistics
@@ -51,13 +51,13 @@ from ..models.vocabulary import (
     # Embeddings
     GenerateEmbeddingsRequest,
 
-    # Similarity Analysis (ADR-053)
+    # Similarity Analysis (ADR-608)
     SimilarEdgeType,
     VocabularySimilarityResponse,
     VocabularyAnalysisDetailResponse,
     GenerateEmbeddingsResponse,
 
-    # Category Scoring (ADR-047)
+    # Category Scoring (ADR-605)
     CategoryScoresResponse,
     RefreshCategoriesRequest,
     RefreshCategoriesResponse,
@@ -74,18 +74,18 @@ from ..models.vocabulary import (
     VocabularyJobDispatchResponse,
     VOCAB_JOB_KIND_TO_TYPE,
 
-    # Epistemic Status (ADR-065 Phase 2)
+    # Epistemic Status (ADR-610 Phase 2)
     EpistemicStatusMeasureRequest,
     EpistemicStatusMeasureResponse,
     EpistemicStatusListResponse,
     EpistemicStatusInfo,
     EpistemicStatusStats,
 
-    # Category Flows (ADR-077 - Vocabulary Explorers)
+    # Category Flows (ADR-611 - Vocabulary Explorers)
     CategoryFlowInfo,
     CategoryFlowsResponse,
 
-    # Vocabulary Sync (ADR-077)
+    # Vocabulary Sync (ADR-611)
     SyncVocabularyRequest,
     SyncVocabularyResponse,
     SyncFailedType,
@@ -119,7 +119,7 @@ async def get_vocabulary_status(
     current_user: CurrentUser
 ):
     """
-    Get current vocabulary status including size, zone, and aggressiveness (ADR-060).
+    Get current vocabulary status including size, zone, and aggressiveness (ADR-407).
 
     **Authentication:** Requires valid OAuth token
     **Authorization:** Requires `vocabulary:read` permission
@@ -195,7 +195,7 @@ async def list_edge_types(
     include_builtin: bool = Query(True, description="Include builtin types")
 ):
     """
-    List all edge types with statistics (ADR-060).
+    List all edge types with statistics (ADR-407).
 
     **Authentication:** Requires valid OAuth token
     **Authorization:** Requires `vocabulary:read` permission
@@ -215,7 +215,7 @@ async def list_edge_types(
         try:
             all_types = client.get_all_edge_types(include_inactive=include_inactive)
 
-            # Fetch epistemic status for all types in one query (ADR-065)
+            # Fetch epistemic status for all types in one query (ADR-610)
             epistemic_lookup = {}
             try:
                 epistemic_query = """
@@ -274,12 +274,12 @@ async def list_edge_types(
                     avg_traversal=info.get("avg_traversal"),
                     last_used=info.get("last_used"),
                     value_score=info.get("value_score"),
-                    # ADR-047: Category scoring fields
+                    # ADR-605: Category scoring fields
                     category_source=info.get("category_source"),
                     category_confidence=info.get("category_confidence"),
                     category_scores=info.get("category_scores"),
                     category_ambiguous=info.get("category_ambiguous"),
-                    # ADR-065: Epistemic status fields
+                    # ADR-610: Epistemic status fields
                     epistemic_status=epistemic_data.get('status'),
                     avg_grounding=epistemic_data.get('avg_grounding')
                 ))
@@ -745,7 +745,7 @@ async def get_category_scores(
     current_user: CurrentUser
 ):
     """
-    Get category similarity scores for a relationship type (ADR-047, ADR-060).
+    Get category similarity scores for a relationship type (ADR-605, ADR-407).
 
     **Authentication:** Requires valid OAuth token
     **Authorization:** Requires `vocabulary:read` permission
@@ -815,7 +815,7 @@ async def refresh_categories(
     request: RefreshCategoriesRequest = None
 ):
     """
-    Refresh category assignments for vocabulary types (ADR-047).
+    Refresh category assignments for vocabulary types (ADR-605).
 
     **Authorization:** Requires `vocabulary:write` permission
 
@@ -907,7 +907,7 @@ async def refresh_categories(
         raise HTTPException(status_code=500, detail=f"Failed to refresh categories: {str(e)}")
 
 
-# ========== Similarity Analysis Endpoints (ADR-053) ==========
+# ========== Similarity Analysis Endpoints (ADR-608) ==========
 
 @router.get("/similar/{relationship_type}", response_model=VocabularySimilarityResponse, dependencies=[Depends(require_permission("vocabulary", "read"))])
 async def get_similar_types(
@@ -917,7 +917,7 @@ async def get_similar_types(
     reverse: bool = Query(False, description="If True, return least similar (opposites)")
 ):
     """
-    Find similar (or opposite) edge types based on embedding similarity (ADR-053, ADR-060).
+    Find similar (or opposite) edge types based on embedding similarity (ADR-608, ADR-407).
 
     **Authentication:** Requires valid OAuth token
     **Authorization:** Requires `vocabulary:read` permission
@@ -986,18 +986,18 @@ async def get_similar_types(
         """
         all_types = await db_client.execute_query(query, (relationship_type,))
 
-        # ⚠️ CRITICAL: Real-time edge counting required (ADR-044)
+        # ⚠️ CRITICAL: Real-time edge counting required (ADR-808)
         #
         # This MUST query actual edges each time - do NOT cache/precompute counts!
         #
-        # Why: Grounding strength calculations (ADR-044) depend on current edge state.
+        # Why: Grounding strength calculations (ADR-808) depend on current edge state.
         # Stale counts → stale grounding → incorrect truth convergence → system failure.
         #
         # Allowed optimization: Batching (fetch all counts in one query)
         # Forbidden optimization: Caching (store counts as properties/materialized views)
         #
         # Yes, this is O(E) where E = edge count. That's the price of always-current data.
-        # The architecture requires it. Don't try to "fix" this without revisiting ADR-044.
+        # The architecture requires it. Don't try to "fix" this without revisiting ADR-808.
         type_names = [row['relationship_type'] for row in all_types]
 
         if type_names:
@@ -1053,7 +1053,7 @@ async def analyze_vocabulary_type(
     current_user: CurrentUser
 ):
     """
-    Detailed analysis of vocabulary type for quality assurance (ADR-053, ADR-060).
+    Detailed analysis of vocabulary type for quality assurance (ADR-608, ADR-407).
 
     **Authentication:** Requires valid OAuth token
     **Authorization:** Requires `vocabulary:read` permission
@@ -1159,7 +1159,7 @@ async def analyze_vocabulary_type(
 
 
 # =============================================================================
-# Epistemic Status Endpoints (ADR-065 Phase 2)
+# Epistemic Status Endpoints (ADR-610 Phase 2)
 # =============================================================================
 
 @router.post(
@@ -1174,7 +1174,7 @@ async def measure_epistemic_status(
     _: None = Depends(require_permission("vocabulary", "write"))
 ):
     """
-    Measure epistemic status for all vocabulary types (ADR-065 Phase 2).
+    Measure epistemic status for all vocabulary types (ADR-610 Phase 2).
 
     **Authorization:** Requires `vocabulary:write` permission
 
@@ -1260,7 +1260,7 @@ async def list_epistemic_status(
     status_filter: Optional[str] = Query(None, description="Filter by status: AFFIRMATIVE, CONTESTED, CONTRADICTORY, HISTORICAL, INSUFFICIENT_DATA, UNCLASSIFIED")
 ):
     """
-    List all vocabulary types with their epistemic status (ADR-065 Phase 2).
+    List all vocabulary types with their epistemic status (ADR-610 Phase 2).
 
     **Authorization:** Requires `vocabulary:read` permission
 
@@ -1360,7 +1360,7 @@ async def get_epistemic_status(
     current_user: CurrentUser
 ):
     """
-    Get epistemic status for a specific vocabulary type (ADR-065 Phase 2).
+    Get epistemic status for a specific vocabulary type (ADR-610 Phase 2).
 
     **Authorization:** Requires `vocabulary:read` permission
 
@@ -1433,7 +1433,7 @@ async def get_epistemic_status(
 
 
 # =============================================================================
-# Category Flows (ADR-077 - Vocabulary Explorers)
+# Category Flows (ADR-611 - Vocabulary Explorers)
 # =============================================================================
 
 @router.get("/category-flows", response_model=CategoryFlowsResponse, dependencies=[Depends(require_permission("vocabulary", "read"))])
@@ -1540,7 +1540,7 @@ async def get_category_flows():
 
 
 # =============================================================================
-# Vocabulary Sync (ADR-077)
+# Vocabulary Sync (ADR-611)
 # =============================================================================
 
 @router.post(
@@ -1555,7 +1555,7 @@ async def sync_vocabulary(
     request: SyncVocabularyRequest = None
 ):
     """
-    Sync missing edge types from graph edges to vocabulary (ADR-077).
+    Sync missing edge types from graph edges to vocabulary (ADR-611).
 
     **Authorization:** Requires `vocabulary:write` permission
 

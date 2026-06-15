@@ -1,5 +1,5 @@
 """
-OAuth 2.0 Utilities (ADR-054)
+OAuth 2.0 Utilities (ADR-406)
 
 Helper functions for OAuth token generation, validation, and PKCE.
 """

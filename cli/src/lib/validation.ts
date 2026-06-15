@@ -1,5 +1,5 @@
 /**
- * Shared validation module for concept/edge CRUD (ADR-089 Phase 2).
+ * Shared validation module for concept/edge CRUD (ADR-308 Phase 2).
  *
  * These validators are used by both interactive wizard and non-interactive
  * flag-based creation. They ensure graph integrity at all control levels

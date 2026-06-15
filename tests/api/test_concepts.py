@@ -1,5 +1,5 @@
 """
-Concept CRUD API tests (ADR-089).
+Concept CRUD API tests (ADR-308).
 
 Tests for deterministic concept creation, update, and deletion endpoints.
 """

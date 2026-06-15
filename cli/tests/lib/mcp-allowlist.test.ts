@@ -1,7 +1,7 @@
 /**
  * MCP Allowlist Manager Security Tests
  *
- * ADR-062: MCP File Ingestion Security Model
+ * ADR-408: MCP File Ingestion Security Model
  *
  * Tests fail-secure validation, path traversal prevention, and security controls.
  */

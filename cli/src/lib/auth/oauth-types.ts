@@ -1,5 +1,5 @@
 /**
- * OAuth 2.0 Type Definitions (ADR-054)
+ * OAuth 2.0 Type Definitions (ADR-406)
  *
  * Shared types for OAuth client flows:
  * - Device Authorization Grant (CLI)

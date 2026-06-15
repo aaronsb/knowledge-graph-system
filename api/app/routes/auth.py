@@ -1,5 +1,5 @@
 """
-Authentication Routes (ADR-027, updated by ADR-054)
+Authentication Routes (ADR-403, updated by ADR-406)
 
 API endpoints for user authentication and management.
 
@@ -16,7 +16,7 @@ Admin endpoints (requires OAuth token):
 - PUT /users/{user_id} - Update user
 - DELETE /users/{user_id} - Delete user
 
-UNIFIED OAUTH AUTHENTICATION STRATEGY (ADR-054):
+UNIFIED OAUTH AUTHENTICATION STRATEGY (ADR-406):
 All clients use OAuth 2.0 flows - NO JWT sessions, NO multiple auth systems.
 
 - kg CLI: Personal OAuth clients (POST /auth/oauth/clients/personal → client_credentials grant)
@@ -166,7 +166,7 @@ async def register_user(user: RegisterRequest):
 
 
 # =============================================================================
-# REMOVED: POST /auth/login (ADR-054 - Unified OAuth Architecture)
+# REMOVED: POST /auth/login (ADR-406 - Unified OAuth Architecture)
 # =============================================================================
 # ALL authentication (including viz-app) now uses OAuth 2.0 flows.
 # This eliminates multiple auth systems and reduces attack surface.
@@ -191,7 +191,7 @@ async def register_user(user: RegisterRequest):
 # =============================================================================
 
 # =============================================================================
-# REMOVED: GET /auth/me (ADR-054)
+# REMOVED: GET /auth/me (ADR-406)
 # =============================================================================
 # Replaced by GET /users/me which uses OAuth token authentication
 # See admin_router.get("/me") below
@@ -264,7 +264,7 @@ async def update_current_user_profile(
 # =============================================================================
 
 # =============================================================================
-# REMOVED: API Key Endpoints (ADR-054)
+# REMOVED: API Key Endpoints (ADR-406)
 # =============================================================================
 # API keys have been removed and replaced by OAuth 2.0 tokens:
 # - GET /auth/api-keys -> GET /auth/oauth/tokens (admin)
@@ -277,7 +277,7 @@ async def update_current_user_profile(
 # - Refresh tokens (long-lived sessions without re-authentication)
 # - Industry standard security properties
 #
-# See ADR-054: OAuth 2.0 Client Management for Multi-Client Authentication
+# See ADR-406: OAuth 2.0 Client Management for Multi-Client Authentication
 
 
 # =============================================================================
@@ -289,9 +289,9 @@ async def get_current_user_from_oauth(
     current_user: CurrentUser
 ):
     """
-    Get current user profile (ADR-054, ADR-060)
+    Get current user profile (ADR-406, ADR-407)
 
-    Replaces GET /auth/me (ADR-054).
+    Replaces GET /auth/me (ADR-406).
     Returns user details for the authenticated user.
 
     **Authorization:** Authenticated users (any valid token)
@@ -329,7 +329,7 @@ async def get_current_user_permissions(
     current_user: CurrentUser
 ):
     """
-    Get current user's effective permissions (ADR-074)
+    Get current user's effective permissions (ADR-409)
 
     Returns all permissions the user has based on their role and role hierarchy.
     Includes a flat `can` map for easy client-side permission checks.
@@ -420,7 +420,7 @@ async def list_users(
     _: None = Depends(require_permission("users", "read"))
 ):
     """
-    List all users (ADR-027, ADR-060)
+    List all users (ADR-403, ADR-407)
 
     Supports pagination and filtering by role.
 
@@ -467,7 +467,7 @@ async def create_user(
     _: None = Depends(require_permission("users", "create"))
 ):
     """
-    Create a new user (Admin only - ADR-027, ADR-074)
+    Create a new user (Admin only - ADR-403, ADR-409)
 
     Creates a new user with the specified username, password, and role.
     Unlike /auth/register, this endpoint requires admin permissions.
@@ -509,7 +509,7 @@ async def create_user(
             row = cur.fetchone()
             user_id = row[0]
 
-            # Add admin-role users to admins group (ADR-082)
+            # Add admin-role users to admins group (ADR-410)
             if user.role in ('admin', 'platform_admin'):
                 cur.execute("""
                     INSERT INTO kg_auth.user_groups (user_id, group_id, added_by)
@@ -539,7 +539,7 @@ async def reset_user_password(
     _: None = Depends(require_permission("users", "write"))
 ):
     """
-    Reset a user's password (Admin only - ADR-027, ADR-074)
+    Reset a user's password (Admin only - ADR-403, ADR-409)
 
     Sets a new password for the specified user. The password must meet
     security requirements (min 8 chars, uppercase, lowercase, digit, special char).
@@ -598,7 +598,7 @@ async def get_user(
     _: None = Depends(require_permission("users", "read"))
 ):
     """
-    Get user by ID (ADR-027, ADR-060)
+    Get user by ID (ADR-403, ADR-407)
 
     Users can view their own profile, admins can view any user.
 
@@ -647,7 +647,7 @@ async def update_user(
     _: None = Depends(require_permission("users", "write"))
 ):
     """
-    Update user by ID (ADR-027, ADR-060)
+    Update user by ID (ADR-403, ADR-407)
 
     Users can update their own profile, admins can update any user.
     Can update role, disabled status, and password.
@@ -734,7 +734,7 @@ async def delete_user(
     _: None = Depends(require_permission("users", "delete"))
 ):
     """
-    Delete user by ID (Admin only - ADR-027, ADR-060)
+    Delete user by ID (Admin only - ADR-403, ADR-407)
 
     Cannot delete yourself.
     Cascade deletes API keys, sessions, and OAuth tokens.

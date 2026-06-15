@@ -1,6 +1,6 @@
 /**
  * GraphOperationExecutor - Handles graph CRUD operations for MCP tool
- * ADR-089 Phase 3a refactoring: Extracted from mcp-server.ts handler
+ * ADR-308 Phase 3a refactoring: Extracted from mcp-server.ts handler
  */
 
 import type { KnowledgeGraphClient } from '../api/client';

@@ -261,5 +261,5 @@ docker exec knowledge-graph-postgres pg_dump -U admin knowledge_graph > backup.s
 ## Related
 
 - `explanation/vocabulary-lifecycle.md` — how vocabulary expands during ingestion and the design rationale behind AITL consolidation
-- ADR-032: Automatic Edge Vocabulary Expansion
-- ADR-053: Vocabulary quality analysis and embedding similarity
+- ADR-603: Automatic Edge Vocabulary Expansion
+- ADR-608: Vocabulary quality analysis and embedding similarity

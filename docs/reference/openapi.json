@@ -1311,7 +1311,7 @@
                     "ingestion"
                 ],
                 "summary": "Submit document for async ingestion",
-                "description": "Submit a document for async ingestion into the knowledge graph with approval workflow.\n\nImplements ADR-014 job approval workflow with cost estimation before processing.\nDocuments are chunked, analyzed by LLM for concept extraction, and upserted to\nthe graph with semantic relationships.\n\n**Workflow (ADR-014):**\n1. Submit document \u2192 Job created with status `pending`\n2. Analysis runs automatically (fast, estimates costs without LLM calls)\n3. Job status \u2192 `awaiting_approval` with cost/time estimates\n4. Manual approval required via POST /jobs/{job_id}/approve\n5. OR use `auto_approve=true` to skip approval and process immediately\n6. Processing begins \u2192 Watch progress via GET /jobs/{job_id}/stream\n\n**Content Deduplication:**\n- SHA-256 content hash detects duplicate ingestions\n- If same content already exists in same ontology, returns existing job_id\n- Use `force=true` to override and re-process anyway\n- Useful for re-ingestion after system updates or to different ontologies\n\n**Processing Modes:**\n- `serial`: Process chunks one-by-one for clean concept matching (recommended, default)\n- `parallel`: Process chunks concurrently for speed (may create duplicate concepts)\n\n**Chunking Parameters:**\n- `target_words`: Ideal chunk size (default 1000, range 500-2000)\n- `overlap_words`: Word overlap between chunks for context (default 200)\n- Auto-calculated: min_words = target_words * 0.8, max_words = target_words * 1.5\n\n**Returns:**\n- New job: `job_id`, status \"pending (analyzing)\", poll endpoint\n- Duplicate: Existing `job_id` with suggestion to use `force=true` if desired\n\n**Example Response:**\n```json\n{\n  \"job_id\": \"abc123\",\n  \"status\": \"pending (analyzing)\",\n  \"content_hash\": \"sha256:...\",\n  \"message\": \"Job queued. Analysis running. Poll /jobs/abc123 for status.\"\n}\n```",
+                "description": "Submit a document for async ingestion into the knowledge graph with approval workflow.\n\nImplements ADR-300 job approval workflow with cost estimation before processing.\nDocuments are chunked, analyzed by LLM for concept extraction, and upserted to\nthe graph with semantic relationships.\n\n**Workflow (ADR-300):**\n1. Submit document \u2192 Job created with status `pending`\n2. Analysis runs automatically (fast, estimates costs without LLM calls)\n3. Job status \u2192 `awaiting_approval` with cost/time estimates\n4. Manual approval required via POST /jobs/{job_id}/approve\n5. OR use `auto_approve=true` to skip approval and process immediately\n6. Processing begins \u2192 Watch progress via GET /jobs/{job_id}/stream\n\n**Content Deduplication:**\n- SHA-256 content hash detects duplicate ingestions\n- If same content already exists in same ontology, returns existing job_id\n- Use `force=true` to override and re-process anyway\n- Useful for re-ingestion after system updates or to different ontologies\n\n**Processing Modes:**\n- `serial`: Process chunks one-by-one for clean concept matching (recommended, default)\n- `parallel`: Process chunks concurrently for speed (may create duplicate concepts)\n\n**Chunking Parameters:**\n- `target_words`: Ideal chunk size (default 1000, range 500-2000)\n- `overlap_words`: Word overlap between chunks for context (default 200)\n- Auto-calculated: min_words = target_words * 0.8, max_words = target_words * 1.5\n\n**Returns:**\n- New job: `job_id`, status \"pending (analyzing)\", poll endpoint\n- Duplicate: Existing `job_id` with suggestion to use `force=true` if desired\n\n**Example Response:**\n```json\n{\n  \"job_id\": \"abc123\",\n  \"status\": \"pending (analyzing)\",\n  \"content_hash\": \"sha256:...\",\n  \"message\": \"Job queued. Analysis running. Poll /jobs/abc123 for status.\"\n}\n```",
                 "operationId": "ingest_document_ingest_post",
                 "parameters": [
                     {
@@ -1479,7 +1479,7 @@
                     "jobs"
                 ],
                 "summary": "Get job status",
-                "description": "Get the current status of a job.\n\n**Job States (ADR-014):**\n- `pending`: Job queued, analysis running (fast)\n- `awaiting_approval`: Analysis complete, needs user approval\n- `approved`: User approved, waiting for processor\n- `queued`: Legacy state (same as approved)\n- `processing`: Job is currently running\n- `completed`: Job finished successfully (see result field)\n- `failed`: Job failed (see error field)\n- `cancelled`: Job was cancelled or expired\n\n**Polling Recommendations:**\n- Poll every 2-5 seconds while status is \"pending\", \"approved\", \"queued\", or \"processing\"\n- Check `analysis` field when status is \"awaiting_approval\" to see cost estimates\n- Stop polling when status is \"completed\", \"failed\", or \"cancelled\"\n- Use the `progress.percent` field to show progress bar",
+                "description": "Get the current status of a job.\n\n**Job States (ADR-300):**\n- `pending`: Job queued, analysis running (fast)\n- `awaiting_approval`: Analysis complete, needs user approval\n- `approved`: User approved, waiting for processor\n- `queued`: Legacy state (same as approved)\n- `processing`: Job is currently running\n- `completed`: Job finished successfully (see result field)\n- `failed`: Job failed (see error field)\n- `cancelled`: Job was cancelled or expired\n\n**Polling Recommendations:**\n- Poll every 2-5 seconds while status is \"pending\", \"approved\", \"queued\", or \"processing\"\n- Check `analysis` field when status is \"awaiting_approval\" to see cost estimates\n- Stop polling when status is \"completed\", \"failed\", or \"cancelled\"\n- Use the `progress.percent` field to show progress bar",
                 "operationId": "get_job_status_jobs__job_id__get",
                 "parameters": [
                     {
@@ -1552,7 +1552,7 @@
                     "jobs"
                 ],
                 "summary": "Cancel a job",
-                "description": "Cancel a job before it starts processing.\n\n**ADR-014: Can cancel jobs in these states:**\n- `pending`: Job queued, analysis running\n- `awaiting_approval`: Analysis complete, waiting for approval\n- `approved`: Approved but not yet started\n- `queued`: Legacy state\n\n**Cannot cancel:**\n- `processing`: Job already running\n- `completed`, `failed`, `cancelled`: Already finished\n\n**Returns:**\n- 200: Job cancelled successfully\n- 404: Job not found\n- 409: Job cannot be cancelled (already processing or completed)",
+                "description": "Cancel a job before it starts processing.\n\n**ADR-300: Can cancel jobs in these states:**\n- `pending`: Job queued, analysis running\n- `awaiting_approval`: Analysis complete, waiting for approval\n- `approved`: Approved but not yet started\n- `queued`: Legacy state\n\n**Cannot cancel:**\n- `processing`: Job already running\n- `completed`, `failed`, `cancelled`: Already finished\n\n**Returns:**\n- 200: Job cancelled successfully\n- 404: Job not found\n- 409: Job cannot be cancelled (already processing or completed)",
                 "operationId": "cancel_job_jobs__job_id__delete",
                 "parameters": [
                     {
@@ -1659,10 +1659,10 @@
                                     "type": "null"
                                 }
                             ],
-                            "description": "Filter by client ID (ADR-014: view specific user's jobs)",
+                            "description": "Filter by client ID (ADR-300: view specific user's jobs)",
                             "title": "Client Id"
                         },
-                        "description": "Filter by client ID (ADR-014: view specific user's jobs)"
+                        "description": "Filter by client ID (ADR-300: view specific user's jobs)"
                     },
                     {
                         "name": "limit",
@@ -1832,7 +1832,7 @@
                     "jobs"
                 ],
                 "summary": "Approve a job for processing",
-                "description": "Approve a job for processing (ADR-014 approval workflow).\n\n**Workflow:**\n1. Job submitted \u2192 status: `pending` (analysis runs automatically)\n2. Analysis complete \u2192 status: `awaiting_approval` (check `analysis` field for costs)\n3. User approves \u2192 status: `approved` (this endpoint)\n4. Job starts \u2192 status: `processing`\n\n**Requirements:**\n- Job must be in `awaiting_approval` status\n- User must have permission (Phase 2: enforced, Phase 1: placeholder)\n\n**Returns:**\n- 200: Job approved and queued for processing\n- 404: Job not found\n- 409: Job not in awaiting_approval status",
+                "description": "Approve a job for processing (ADR-300 approval workflow).\n\n**Workflow:**\n1. Job submitted \u2192 status: `pending` (analysis runs automatically)\n2. Analysis complete \u2192 status: `awaiting_approval` (check `analysis` field for costs)\n3. User approves \u2192 status: `approved` (this endpoint)\n4. Job starts \u2192 status: `processing`\n\n**Requirements:**\n- Job must be in `awaiting_approval` status\n- User must have permission (Phase 2: enforced, Phase 1: placeholder)\n\n**Returns:**\n- 200: Job approved and queued for processing\n- 404: Job not found\n- 409: Job not in awaiting_approval status",
                 "operationId": "approve_job_jobs__job_id__approve_post",
                 "parameters": [
                     {
@@ -1905,7 +1905,7 @@
                     "jobs"
                 ],
                 "summary": "Stream job progress (Server-Sent Events)",
-                "description": "Stream real-time job progress updates via Server-Sent Events (ADR-018).\n\n**Events sent:**\n- `progress`: Job progress updates (stage, percent, items)\n- `completed`: Job completed successfully\n- `failed`: Job failed with error\n- `error`: Job not found or access denied\n- `keepalive`: Connection keepalive (every 30s)\n\n**SSE Format:**\n```\nevent: progress\ndata: {\"stage\": \"restoring_concepts\", \"percent\": 45, \"items_processed\": 512}\n\nevent: completed\ndata: {\"restore_stats\": {...}}\n```\n\n**Auto-closes stream** when job reaches terminal state (completed/failed/cancelled).\n\n**Polling Fallback**: If SSE fails, client should fall back to `GET /jobs/{job_id}`\n\n**Connection:** Uses HTTP/1.1 chunked transfer encoding. Works through most proxies.",
+                "description": "Stream real-time job progress updates via Server-Sent Events (ADR-108).\n\n**Events sent:**\n- `progress`: Job progress updates (stage, percent, items)\n- `completed`: Job completed successfully\n- `failed`: Job failed with error\n- `error`: Job not found or access denied\n- `keepalive`: Connection keepalive (every 30s)\n\n**SSE Format:**\n```\nevent: progress\ndata: {\"stage\": \"restoring_concepts\", \"percent\": 45, \"items_processed\": 512}\n\nevent: completed\ndata: {\"restore_stats\": {...}}\n```\n\n**Auto-closes stream** when job reaches terminal state (completed/failed/cancelled).\n\n**Polling Fallback**: If SSE fails, client should fall back to `GET /jobs/{job_id}`\n\n**Connection:** Uses HTTP/1.1 chunked transfer encoding. Works through most proxies.",
                 "operationId": "stream_job_progress_jobs__job_id__stream_get",
                 "parameters": [
                     {
@@ -2565,7 +2565,7 @@
                     "admin"
                 ],
                 "summary": "Create Backup",
-                "description": "Create a database backup (ADR-015 Phase 2: Streaming Download)\n\n**Streams backup directly to client** - no server-side storage.\nClient saves to configured backup directory (~/.local/share/kg/backups).\n\nSupports two modes:\n- **full**: Backup entire database (all ontologies)\n- **ontology**: Backup specific ontology (requires ontology_name)\n\nSupports two formats:\n- **json**: Native format (default) - includes all data, restorable\n- **gexf**: Gephi visualization format - graph structure only, NOT restorable\n\nJSON backup includes:\n- All concepts, sources, and instances\n- Full embeddings (1536-dim vectors)\n- All relationships\n- Metadata and statistics\n\nGEXF export includes:\n- Concepts as nodes (with ontology, search terms, instance count)\n- Relationships as edges (with type, category, confidence)\n- Visual properties (colors by ontology, sizes, edge thickness)\n- Compatible with Gephi for immediate visualization\n\nReturns streaming response with Content-Disposition header.\n\nExample (JSON):\n```json\n{\n    \"backup_type\": \"full\",\n    \"format\": \"json\"\n}\n```\n\nExample (GEXF for Gephi):\n```json\n{\n    \"backup_type\": \"ontology\",\n    \"ontology_name\": \"TBM Model\",\n    \"format\": \"gexf\"\n}\n```",
+                "description": "Create a database backup (ADR-107 Phase 2: Streaming Download)\n\n**Streams backup directly to client** - no server-side storage.\nClient saves to configured backup directory (~/.local/share/kg/backups).\n\nSupports two modes:\n- **full**: Backup entire database (all ontologies)\n- **ontology**: Backup specific ontology (requires ontology_name)\n\nSupports two formats:\n- **json**: Native format (default) - includes all data, restorable\n- **gexf**: Gephi visualization format - graph structure only, NOT restorable\n\nJSON backup includes:\n- All concepts, sources, and instances\n- Full embeddings (1536-dim vectors)\n- All relationships\n- Metadata and statistics\n\nGEXF export includes:\n- Concepts as nodes (with ontology, search terms, instance count)\n- Relationships as edges (with type, category, confidence)\n- Visual properties (colors by ontology, sizes, edge thickness)\n- Compatible with Gephi for immediate visualization\n\nReturns streaming response with Content-Disposition header.\n\nExample (JSON):\n```json\n{\n    \"backup_type\": \"full\",\n    \"format\": \"json\"\n}\n```\n\nExample (GEXF for Gephi):\n```json\n{\n    \"backup_type\": \"ontology\",\n    \"ontology_name\": \"TBM Model\",\n    \"format\": \"gexf\"\n}\n```",
                 "operationId": "create_backup_admin_backup_post",
                 "requestBody": {
                     "content": {
@@ -2605,7 +2605,7 @@
                     "admin"
                 ],
                 "summary": "Restore Backup",
-                "description": "Restore a database backup (ADR-015 Phase 2: Multipart Upload)\n\n\u26a0\ufe0f **Potentially destructive operation** - requires username and password.\n\n**Multipart Upload**: Client streams backup file to server.\nServer validates, then queues restore job for background processing.\n\nRestore options:\n- **overwrite**: Whether to overwrite existing data (default: false)\n- **handle_external_deps**: How to handle external dependencies\n  - `prune`: Remove dangling relationships (default)\n  - `stitch`: Try to reconnect to existing concepts\n  - `defer`: Leave broken (requires manual fix)\n\nThe restore process includes:\n1. Save uploaded file to temp location\n2. Run integrity checks (format, references, statistics)\n3. Queue restore worker with job ID\n4. Return job ID for progress tracking\n\n**Authentication required**: Must provide username and password.\n(Currently placeholder - will be validated in production)\n\nReturns job_id for polling restore progress via /jobs/{job_id}\n\nExample (multipart/form-data):\n```\nfile: <backup_file.json>\nusername: admin\npassword: your_password\noverwrite: false\nhandle_external_deps: prune\n```",
+                "description": "Restore a database backup (ADR-107 Phase 2: Multipart Upload)\n\n\u26a0\ufe0f **Potentially destructive operation** - requires username and password.\n\n**Multipart Upload**: Client streams backup file to server.\nServer validates, then queues restore job for background processing.\n\nRestore options:\n- **overwrite**: Whether to overwrite existing data (default: false)\n- **handle_external_deps**: How to handle external dependencies\n  - `prune`: Remove dangling relationships (default)\n  - `stitch`: Try to reconnect to existing concepts\n  - `defer`: Leave broken (requires manual fix)\n\nThe restore process includes:\n1. Save uploaded file to temp location\n2. Run integrity checks (format, references, statistics)\n3. Queue restore worker with job ID\n4. Return job ID for progress tracking\n\n**Authentication required**: Must provide username and password.\n(Currently placeholder - will be validated in production)\n\nReturns job_id for polling restore progress via /jobs/{job_id}\n\nExample (multipart/form-data):\n```\nfile: <backup_file.json>\nusername: admin\npassword: your_password\noverwrite: false\nhandle_external_deps: prune\n```",
                 "operationId": "restore_backup_admin_restore_post",
                 "requestBody": {
                     "content": {
@@ -2687,7 +2687,7 @@
                     "admin"
                 ],
                 "summary": "Get Scheduler Status",
-                "description": "Get job scheduler status and statistics (ADR-014)\n\nReturns current scheduler configuration and statistics:\n- Running status\n- Configuration (cleanup interval, retention periods)\n- Job counts by status\n- Last cleanup time\n- Next scheduled cleanup\n\nExample response:\n```json\n{\n    \"running\": true,\n    \"config\": {\n        \"cleanup_interval\": 3600,\n        \"approval_timeout\": 24,\n        \"completed_retention\": 48,\n        \"failed_retention\": 168\n    },\n    \"stats\": {\n        \"jobs_by_status\": {\n            \"pending\": 2,\n            \"awaiting_approval\": 5,\n            \"approved\": 1,\n            \"completed\": 100\n        },\n        \"last_cleanup\": \"2025-10-07T10:30:00\",\n        \"next_cleanup\": \"2025-10-07T11:30:00\"\n    }\n}\n```",
+                "description": "Get job scheduler status and statistics (ADR-300)\n\nReturns current scheduler configuration and statistics:\n- Running status\n- Configuration (cleanup interval, retention periods)\n- Job counts by status\n- Last cleanup time\n- Next scheduled cleanup\n\nExample response:\n```json\n{\n    \"running\": true,\n    \"config\": {\n        \"cleanup_interval\": 3600,\n        \"approval_timeout\": 24,\n        \"completed_retention\": 48,\n        \"failed_retention\": 168\n    },\n    \"stats\": {\n        \"jobs_by_status\": {\n            \"pending\": 2,\n            \"awaiting_approval\": 5,\n            \"approved\": 1,\n            \"completed\": 100\n        },\n        \"last_cleanup\": \"2025-10-07T10:30:00\",\n        \"next_cleanup\": \"2025-10-07T11:30:00\"\n    }\n}\n```",
                 "operationId": "get_scheduler_status_admin_scheduler_status_get",
                 "responses": {
                     "200": {
@@ -2707,7 +2707,7 @@
                     "admin"
                 ],
                 "summary": "Trigger Scheduler Cleanup",
-                "description": "Manually trigger job scheduler cleanup (ADR-014)\n\nForces an immediate cleanup cycle:\n- Cancels unapproved jobs older than approval_timeout\n- Deletes old completed/cancelled jobs\n- Deletes old failed jobs\n\nUseful for:\n- Testing scheduler behavior\n- Emergency cleanup\n- Manual intervention\n\nReturns cleanup results showing what was processed.\n\nExample response:\n```json\n{\n    \"success\": true,\n    \"message\": \"Cleanup completed\",\n    \"processed\": {\n        \"expired_jobs_cancelled\": 3,\n        \"completed_jobs_deleted\": 15,\n        \"failed_jobs_deleted\": 2\n    }\n}\n```",
+                "description": "Manually trigger job scheduler cleanup (ADR-300)\n\nForces an immediate cleanup cycle:\n- Cancels unapproved jobs older than approval_timeout\n- Deletes old completed/cancelled jobs\n- Deletes old failed jobs\n\nUseful for:\n- Testing scheduler behavior\n- Emergency cleanup\n- Manual intervention\n\nReturns cleanup results showing what was processed.\n\nExample response:\n```json\n{\n    \"success\": true,\n    \"message\": \"Cleanup completed\",\n    \"processed\": {\n        \"expired_jobs_cancelled\": 3,\n        \"completed_jobs_deleted\": 15,\n        \"failed_jobs_deleted\": 2\n    }\n}\n```",
                 "operationId": "trigger_scheduler_cleanup_admin_scheduler_cleanup_post",
                 "responses": {
                     "200": {
@@ -2727,7 +2727,7 @@
                     "admin"
                 ],
                 "summary": "Set Api Key",
-                "description": "Set or rotate system API key for a provider (ADR-031)\n\nStores encrypted API key for this shard's LLM inference.\nValidates the key before storage by making a minimal API call.\n\nSupported providers:\n- `openai`: OpenAI API (GPT-4, GPT-4o, embeddings)\n- `anthropic`: Anthropic API (Claude)\n\nThe key is:\n- Validated against the provider's API\n- Encrypted with Fernet (AES-128-CBC + HMAC-SHA256)\n- Stored in PostgreSQL\n- Decrypted only when needed for inference\n\nRequires admin authentication (placeholder for now).\n\nExample:\n```bash\ncurl -X POST http://localhost:8000/admin/keys/openai \\\n  -F \"api_key=sk-...\"\n```\n\nReturns success message if key validated and stored.",
+                "description": "Set or rotate system API key for a provider (ADR-405)\n\nStores encrypted API key for this shard's LLM inference.\nValidates the key before storage by making a minimal API call.\n\nSupported providers:\n- `openai`: OpenAI API (GPT-4, GPT-4o, embeddings)\n- `anthropic`: Anthropic API (Claude)\n\nThe key is:\n- Validated against the provider's API\n- Encrypted with Fernet (AES-128-CBC + HMAC-SHA256)\n- Stored in PostgreSQL\n- Decrypted only when needed for inference\n\nRequires admin authentication (placeholder for now).\n\nExample:\n```bash\ncurl -X POST http://localhost:8000/admin/keys/openai \\\n  -F \"api_key=sk-...\"\n```\n\nReturns success message if key validated and stored.",
                 "operationId": "set_api_key_admin_keys__provider__post",
                 "parameters": [
                     {
@@ -2776,7 +2776,7 @@
                     "admin"
                 ],
                 "summary": "Delete Api Key",
-                "description": "Delete system API key for a provider (ADR-031)\n\nRemoves the encrypted API key from this shard's storage.\nAfter deletion, inference using this provider will not work\nuntil a new key is configured.\n\nRequires admin authentication (placeholder for now).\n\nExample:\n```bash\ncurl -X DELETE http://localhost:8000/admin/keys/openai\n```\n\nReturns success if key was deleted, 404 if key wasn't configured.",
+                "description": "Delete system API key for a provider (ADR-405)\n\nRemoves the encrypted API key from this shard's storage.\nAfter deletion, inference using this provider will not work\nuntil a new key is configured.\n\nRequires admin authentication (placeholder for now).\n\nExample:\n```bash\ncurl -X DELETE http://localhost:8000/admin/keys/openai\n```\n\nReturns success if key was deleted, 404 if key wasn't configured.",
                 "operationId": "delete_api_key_admin_keys__provider__delete",
                 "parameters": [
                     {
@@ -2817,7 +2817,7 @@
                     "admin"
                 ],
                 "summary": "List Api Keys",
-                "description": "List configured API providers with validation status (ADR-031, ADR-041)\n\nReturns list of providers with status (configured/not configured),\nlast update time, validation status, and masked keys.\n\nThe validation status indicates whether the API key was successfully validated:\n- `valid`: Key validated successfully\n- `invalid`: Key validation failed\n- `untested`: Key not yet validated (newly added)\n- `unknown`: Validation tracking not available (migration pending)\n\nDoes NOT return the actual API keys (security) - only masked versions showing\nprefix + last 6 characters (e.g., \"sk-proj-...abc123\").\n\nExample response:\n```json\n[\n    {\n        \"provider\": \"openai\",\n        \"configured\": true,\n        \"updated_at\": \"2025-10-21T10:30:00Z\",\n        \"validation_status\": \"valid\",\n        \"last_validated_at\": \"2025-10-21T10:30:00Z\",\n        \"validation_error\": null,\n        \"masked_key\": \"sk-proj-...abc123\"\n    },\n    {\n        \"provider\": \"anthropic\",\n        \"configured\": false,\n        \"updated_at\": null,\n        \"validation_status\": null,\n        \"last_validated_at\": null,\n        \"validation_error\": null,\n        \"masked_key\": null\n    }\n]\n```",
+                "description": "List configured API providers with validation status (ADR-405, ADR-805)\n\nReturns list of providers with status (configured/not configured),\nlast update time, validation status, and masked keys.\n\nThe validation status indicates whether the API key was successfully validated:\n- `valid`: Key validated successfully\n- `invalid`: Key validation failed\n- `untested`: Key not yet validated (newly added)\n- `unknown`: Validation tracking not available (migration pending)\n\nDoes NOT return the actual API keys (security) - only masked versions showing\nprefix + last 6 characters (e.g., \"sk-proj-...abc123\").\n\nExample response:\n```json\n[\n    {\n        \"provider\": \"openai\",\n        \"configured\": true,\n        \"updated_at\": \"2025-10-21T10:30:00Z\",\n        \"validation_status\": \"valid\",\n        \"last_validated_at\": \"2025-10-21T10:30:00Z\",\n        \"validation_error\": null,\n        \"masked_key\": \"sk-proj-...abc123\"\n    },\n    {\n        \"provider\": \"anthropic\",\n        \"configured\": false,\n        \"updated_at\": null,\n        \"validation_status\": null,\n        \"last_validated_at\": null,\n        \"validation_error\": null,\n        \"masked_key\": null\n    }\n]\n```",
                 "operationId": "list_api_keys_admin_keys_get",
                 "responses": {
                     "200": {
@@ -3157,7 +3157,7 @@
                     "vocabulary"
                 ],
                 "summary": "Get Category Scores",
-                "description": "Get category similarity scores for a relationship type (ADR-047).\n\nReturns detailed breakdown of semantic similarity to all 8 categories:\n- causation, composition, logical, evidential\n- semantic, temporal, dependency, derivation\n\nUses embedding similarity to 30 builtin seed types to compute scores.\nConfidence = max(similarity to any seed in category).\n\nArgs:\n    relationship_type: Edge type to analyze (e.g., \"ENHANCES\")\n\nReturns:\n    CategoryScoresResponse with:\n    - Primary category assignment\n    - Confidence score (0.0-1.0)\n    - Full score breakdown for all categories\n    - Ambiguity flag if runner-up > 0.70\n\nExample:\n    GET /vocabulary/category-scores/ENHANCES\n    {\n        \"relationship_type\": \"ENHANCES\",\n        \"category\": \"causation\",\n        \"confidence\": 0.85,\n        \"scores\": {\n            \"causation\": 0.85,\n            \"composition\": 0.45,\n            ...\n        },\n        \"ambiguous\": false\n    }",
+                "description": "Get category similarity scores for a relationship type (ADR-605).\n\nReturns detailed breakdown of semantic similarity to all 8 categories:\n- causation, composition, logical, evidential\n- semantic, temporal, dependency, derivation\n\nUses embedding similarity to 30 builtin seed types to compute scores.\nConfidence = max(similarity to any seed in category).\n\nArgs:\n    relationship_type: Edge type to analyze (e.g., \"ENHANCES\")\n\nReturns:\n    CategoryScoresResponse with:\n    - Primary category assignment\n    - Confidence score (0.0-1.0)\n    - Full score breakdown for all categories\n    - Ambiguity flag if runner-up > 0.70\n\nExample:\n    GET /vocabulary/category-scores/ENHANCES\n    {\n        \"relationship_type\": \"ENHANCES\",\n        \"category\": \"causation\",\n        \"confidence\": 0.85,\n        \"scores\": {\n            \"causation\": 0.85,\n            \"composition\": 0.45,\n            ...\n        },\n        \"ambiguous\": false\n    }",
                 "operationId": "get_category_scores_vocabulary_category_scores__relationship_type__get",
                 "parameters": [
                     {
@@ -3200,7 +3200,7 @@
                     "vocabulary"
                 ],
                 "summary": "Refresh Categories",
-                "description": "Refresh category assignments for vocabulary types (ADR-047).\n\nRecomputes probabilistic category assignments based on current embeddings.\nUseful after:\n- Vocabulary merges (topology changed)\n- Embedding model changes (semantic space shifted)\n- Seed type adjustments (category definitions updated)\n\nArgs:\n    request: Configuration for refresh operation\n        - only_computed: If True, only refresh types with category_source='computed'\n                       If False, refresh all types (including builtins)\n\nReturns:\n    RefreshCategoriesResponse with counts and detailed assignments\n\nExample:\n    POST /vocabulary/refresh-categories\n    {\n        \"only_computed\": true\n    }\n\n    Response:\n    {\n        \"success\": true,\n        \"refreshed_count\": 88,\n        \"skipped_count\": 0,\n        \"failed_count\": 0,\n        \"assignments\": [\n            {\n                \"relationship_type\": \"ENHANCES\",\n                \"category\": \"causation\",\n                \"confidence\": 0.85,\n                \"scores\": {...},\n                \"ambiguous\": false\n            },\n            ...\n        ],\n        \"message\": \"Refreshed 88 category assignments\"\n    }",
+                "description": "Refresh category assignments for vocabulary types (ADR-605).\n\nRecomputes probabilistic category assignments based on current embeddings.\nUseful after:\n- Vocabulary merges (topology changed)\n- Embedding model changes (semantic space shifted)\n- Seed type adjustments (category definitions updated)\n\nArgs:\n    request: Configuration for refresh operation\n        - only_computed: If True, only refresh types with category_source='computed'\n                       If False, refresh all types (including builtins)\n\nReturns:\n    RefreshCategoriesResponse with counts and detailed assignments\n\nExample:\n    POST /vocabulary/refresh-categories\n    {\n        \"only_computed\": true\n    }\n\n    Response:\n    {\n        \"success\": true,\n        \"refreshed_count\": 88,\n        \"skipped_count\": 0,\n        \"failed_count\": 0,\n        \"assignments\": [\n            {\n                \"relationship_type\": \"ENHANCES\",\n                \"category\": \"causation\",\n                \"confidence\": 0.85,\n                \"scores\": {...},\n                \"ambiguous\": false\n            },\n            ...\n        ],\n        \"message\": \"Refreshed 88 category assignments\"\n    }",
                 "operationId": "refresh_categories_vocabulary_refresh_categories_post",
                 "requestBody": {
                     "content": {
@@ -4379,7 +4379,7 @@
                             }
                         ],
                         "title": "Grounding Strength",
-                        "description": "Grounding strength (-1.0 to 1.0) based on incoming relationship semantics (ADR-044)"
+                        "description": "Grounding strength (-1.0 to 1.0) based on incoming relationship semantics (ADR-808)"
                     }
                 },
                 "type": "object",
@@ -4518,7 +4518,7 @@
                             }
                         ],
                         "title": "Grounding Strength",
-                        "description": "Grounding strength (-1.0 to 1.0) if requested (ADR-044)"
+                        "description": "Grounding strength (-1.0 to 1.0) if requested (ADR-808)"
                     },
                     "sample_evidence": {
                         "anyOf": [
@@ -5881,7 +5881,7 @@
                     "include_grounding": {
                         "type": "boolean",
                         "title": "Include Grounding",
-                        "description": "Include grounding strength for each concept in paths (ADR-044)",
+                        "description": "Include grounding strength for each concept in paths (ADR-808)",
                         "default": true
                     }
                 },
@@ -6058,7 +6058,7 @@
                     "include_grounding": {
                         "type": "boolean",
                         "title": "Include Grounding",
-                        "description": "Include grounding strength for each concept in paths (ADR-044)",
+                        "description": "Include grounding strength for each concept in paths (ADR-808)",
                         "default": true
                     }
                 },
@@ -7144,7 +7144,7 @@
                             }
                         ],
                         "title": "Grounding Strength",
-                        "description": "Grounding strength (-1.0 to 1.0) if requested (ADR-044)"
+                        "description": "Grounding strength (-1.0 to 1.0) if requested (ADR-808)"
                     },
                     "sample_evidence": {
                         "anyOf": [
@@ -8286,7 +8286,7 @@
                     "include_grounding": {
                         "type": "boolean",
                         "title": "Include Grounding",
-                        "description": "Include grounding strength (ADR-044: probabilistic truth score) for each concept",
+                        "description": "Include grounding strength (ADR-808: probabilistic truth score) for each concept",
                         "default": true
                     }
                 },

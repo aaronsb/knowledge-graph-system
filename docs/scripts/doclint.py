@@ -4,7 +4,7 @@ doclint — graph-aware linter for the documentation catalog.
 
 Extends the ADR linter's approach (`docs/scripts/adr lint`) from ADRs to the
 whole `docs/` tree, treating docs and ADRs as a single *decision graph*: nodes
-are records, edges are `related`/`supersedes` references. See ADR-087
+are records, edges are `related`/`supersedes` references. See ADR-908
 (documentation catalog) and ADR-900 (numbering domain system).
 
 It checks three things:
@@ -42,8 +42,22 @@ except ImportError:
     sys.exit(1)
 
 DOCS = Path(__file__).resolve().parent.parent          # docs/
+REPO = DOCS.parent
 ADR_YAML = DOCS / "architecture" / "adr.yaml"
-MKDOCS_YML = DOCS.parent / "mkdocs.yml"
+MKDOCS_YML = REPO / "mkdocs.yml"
+
+# Retired-range guard (ADR-900): scan these trees for references into the
+# retired pre-domain number range and fail the build.
+RETIRED_SCAN_DIRS = ["docs", "specs", "api", "cli", "fuse", "schema",
+                     "web/src", "operator", "scripts"]
+RETIRED_SCAN_EXTS = {".md", ".py", ".ts", ".tsx", ".js", ".mjs", ".rs",
+                     ".sh", ".yml", ".yaml", ".json"}
+RETIRED_SKIP_PARTS = {"node_modules", "dist", "site", ".git"}
+# Files that define the retired range and may legitimately name it.
+RETIRED_EXEMPT_NAMES = {"adr.yaml"}
+RETIRED_EXEMPT_PREFIXES = ("ADR-900-",)
+RETIRED_ALLOW_MARKER = "doclint-allow-retired"
+ADR_ANYREF_RE = re.compile(r"\bADR-0*(\d+)(\.\d+)?\b")
 
 MODE_LETTER = {
     "tutorial": "T", "how-to": "H", "reference": "R",
@@ -235,9 +249,9 @@ def check_references(nodes: list):
     """Flag related/supersedes targets that resolve to no known node.
 
     Decimal-ADR convention (ADR-900): a decision may be split into parts
-    (ADR-032.1, ADR-032.2). A bare base reference (`ADR-032`) is the family
+    (ADR-603.1, ADR-603.2). A bare base reference (`ADR-603`) is the family
     identifier and is satisfied by any of its parts — references cite the
-    decision, not a specific part. An exact part reference (`ADR-032.2`) must
+    decision, not a specific part. An exact part reference (`ADR-603.2`) must
     match exactly.
     """
     keys = {n.key for n in nodes}
@@ -255,9 +269,43 @@ def check_references(nodes: list):
             if t in keys:
                 continue
             if "." not in t and t in base_parts:
-                continue   # base reference satisfied by a part (ADR-032 -> ADR-032.1)
+                continue   # base reference satisfied by a part (ADR-603 -> ADR-603.1)
             node.issues.append(
                 ("error", f"dangling {fname} reference: {t} (no such record)"))
+
+
+def check_retired_refs(lo: int, hi: int):
+    """Scan docs + source for references into the retired number range (ADR-900).
+
+    Returns a list of (relpath, lineno, ref). The files that define the range
+    (this ADR, adr.yaml) are exempt, as is any line carrying the allow-marker.
+    """
+    hits = []
+    for d in RETIRED_SCAN_DIRS:
+        base = REPO / d
+        if not base.exists():
+            continue
+        for f in base.rglob("*"):
+            if not f.is_file() or f.suffix not in RETIRED_SCAN_EXTS:
+                continue
+            if RETIRED_SKIP_PARTS & set(f.parts):
+                continue
+            if f.name in RETIRED_EXEMPT_NAMES or f.name.startswith(RETIRED_EXEMPT_PREFIXES):
+                continue
+            try:
+                text = f.read_text()
+            except (OSError, UnicodeDecodeError):
+                continue
+            if "ADR-" not in text:
+                continue
+            rel = str(f.relative_to(REPO))
+            for ln, line in enumerate(text.split("\n"), 1):
+                if RETIRED_ALLOW_MARKER in line:
+                    continue
+                for m in ADR_ANYREF_RE.finditer(line):
+                    if lo <= int(m.group(1)) <= hi:
+                        hits.append((rel, ln, m.group(0)))
+    return hits
 
 
 def check_supersede_cycles(nodes: list):
@@ -342,6 +390,9 @@ def main():
 
     digits = load_domain_digits()
     nav_pages = collect_nav_pages()
+    with open(ADR_YAML) as f:
+        retired_lo, retired_hi = (int(x) for x in
+                                  yaml.safe_load(f).get("legacy", {}).get("range", [1, 99]))
 
     doc_nodes = [build_doc_node(p, digits) for p in iter_catalog_pages()]
     adr_nodes = [build_adr_node(p) for p in iter_adrs()]
@@ -369,6 +420,15 @@ def main():
                 errors += 1
             else:
                 warnings += 1
+
+    # Retired-range guard: references into the vacated pre-domain range (ADR-900).
+    retired_hits = check_retired_refs(retired_lo, retired_hi)
+    if retired_hits:
+        print(f"\nRetired-range references (ADR-{retired_lo}..{retired_hi} are "
+              f"renumbered; see ADR-900):")
+        for rel, ln, ref in sorted(retired_hits):
+            print(f"  ERROR  {rel}:{ln}  {ref}")
+        errors += len(retired_hits)
 
     if not args.quiet:
         print_coverage(doc_nodes, digits)

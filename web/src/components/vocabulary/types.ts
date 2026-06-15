@@ -1,5 +1,5 @@
 /**
- * Types for Vocabulary Explorer components (ADR-077)
+ * Types for Vocabulary Explorer components (ADR-611)
  */
 
 export interface EdgeTypeData {

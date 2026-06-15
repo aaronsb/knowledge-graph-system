@@ -1,5 +1,5 @@
 """
-Graph Routes - Batch operations (ADR-089 Phase 1b).
+Graph Routes - Batch operations (ADR-308 Phase 1b).
 
 Provides bulk graph operations with transaction support.
 """

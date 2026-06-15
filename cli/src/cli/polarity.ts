@@ -1,5 +1,5 @@
 /**
- * Polarity Axis Analysis Commands (ADR-070)
+ * Polarity Axis Analysis Commands (ADR-813)
  */
 
 import { Command } from 'commander';
@@ -23,7 +23,7 @@ function formatPosition(position: number): string {
 }
 
 /**
- * Format grounding strength for display (ADR-044)
+ * Format grounding strength for display (ADR-808)
  */
 function formatGrounding(grounding: number): string {
   const formatted = grounding.toFixed(3);
@@ -278,7 +278,7 @@ const analyzeCommand = setCommandHelp(
 
 export const polarityCommand = setCommandHelp(
   new Command('polarity'),
-  'Polarity axis analysis commands (ADR-070)',
+  'Polarity axis analysis commands (ADR-813)',
   'Analyze bidirectional semantic dimensions between concept poles'
 )
   .showHelpAfterError()

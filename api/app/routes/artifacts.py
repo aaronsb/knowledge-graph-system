@@ -1,5 +1,5 @@
 """
-Artifact Routes (ADR-083)
+Artifact Routes (ADR-116)
 
 API endpoints for artifact persistence - storing and retrieving computed results.
 """

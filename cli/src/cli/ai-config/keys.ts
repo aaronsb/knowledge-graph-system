@@ -1,5 +1,5 @@
 /**
- * API Keys Commands (ADR-031, ADR-041)
+ * API Keys Commands (ADR-405, ADR-805)
  * Manages API keys for AI providers
  */
 
@@ -162,7 +162,7 @@ function createKeysDeleteCommand(client: KnowledgeGraphClient): Command {
  */
 export function createKeysCommand(client: KnowledgeGraphClient): Command {
   const keysCommand = new Command('keys')
-    .description('Manage API keys for AI providers (ADR-031, ADR-041)');
+    .description('Manage API keys for AI providers (ADR-405, ADR-805)');
 
   keysCommand.addCommand(createKeysListCommand(client));
   keysCommand.addCommand(createKeysSetCommand(client));

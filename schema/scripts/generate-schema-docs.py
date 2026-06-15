@@ -359,7 +359,7 @@ def render(tables, table_comments, column_comments, migrations):
     today = date.today().isoformat()
     out = []
 
-    # Documentation-catalog frontmatter (ADR-087). Emitted here, not hand-injected,
+    # Documentation-catalog frontmatter (ADR-908). Emitted here, not hand-injected,
     # because this page is overwritten on every docs build. domain=db (schema),
     # mode=reference. Stripped from GitHub Pages (mkdocs ignores unknown keys).
     out.append("---")

@@ -548,7 +548,7 @@ def activate_embedding_config(config_id: int, updated_by: str = "api", force_dim
                             "Changing embedding dimensions breaks vector search for all existing concepts. "
                             "You must re-embed all concepts after switching. "
                             "Use --force to bypass this check (dangerous!). "
-                            "See ADR-039 for migration procedures.")
+                            "See ADR-804 for migration procedures.")
 
                     # Unprotect current profile
                     if change_protected:

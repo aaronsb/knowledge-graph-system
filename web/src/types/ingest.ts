@@ -2,7 +2,7 @@
  * Ingestion Types
  *
  * Types matching the REST API for document ingestion.
- * Supports file upload, text ingestion, and image ingestion (ADR-057).
+ * Supports file upload, text ingestion, and image ingestion (ADR-305).
  */
 
 import type { JobResult, JobAnalysis } from './jobs';
@@ -20,9 +20,9 @@ export interface IngestRequestBase {
   ontology: string;
   filename?: string;
   force?: boolean;           // Bypass duplicate detection
-  auto_approve?: boolean;    // ADR-014: Skip approval step
+  auto_approve?: boolean;    // ADR-300: Skip approval step
   processing_mode?: 'serial' | 'parallel';
-  // ADR-051: Source provenance metadata
+  // ADR-304: Source provenance metadata
   source_type?: 'file' | 'stdin' | 'mcp' | 'api' | 'web';
   source_path?: string;
   source_hostname?: string;
@@ -39,7 +39,7 @@ export interface IngestTextRequest extends IngestRequestBase {
   options?: IngestionOptions;
 }
 
-// Image ingestion request (ADR-057)
+// Image ingestion request (ADR-305)
 export interface IngestImageRequest extends IngestRequestBase {
   vision_provider?: 'openai' | 'anthropic' | 'ollama';
   vision_model?: string;

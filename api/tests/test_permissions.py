@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Permission System Test Script (ADR-074)
+Permission System Test Script (ADR-409)
 
 Tests the RBAC permission system including:
 - Direct role permissions

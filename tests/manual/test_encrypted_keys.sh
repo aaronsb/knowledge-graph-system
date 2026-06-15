@@ -1,12 +1,12 @@
 #!/bin/bash
-# Test script for ADR-031 encrypted API key storage
+# Test script for ADR-405 encrypted API key storage
 
 set -e
 
 API_URL="http://localhost:8000"
 
 echo "=========================================="
-echo "Testing ADR-031: Encrypted API Key Storage"
+echo "Testing ADR-405: Encrypted API Key Storage"
 echo "=========================================="
 echo ""
 

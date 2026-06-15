@@ -1,8 +1,8 @@
 """
-Grounding strength + cache mixin (ADR-044, ADR-201 Phase 5f).
+Grounding strength + cache mixin (ADR-808, ADR-201 Phase 5f).
 
 The grounding cluster is what turns each concept's incoming edges into a
-single probabilistic-truth score (ADR-044): we project edge embeddings
+single probabilistic-truth score (ADR-808): we project edge embeddings
 onto a polarity axis derived from opposing vocabulary pairs
 (SUPPORTS/CONTRADICTS, etc.). Pre-#278 this lived inside query.py
 alongside vector search and learned-knowledge CRUD, growing the file past
@@ -210,7 +210,7 @@ class GroundingMixin:
         exclude_types: Optional[List[str]] = None
     ) -> float:
         """
-        Calculate grounding strength using polarity axis projection (ADR-044).
+        Calculate grounding strength using polarity axis projection (ADR-808).
         @verified 53b820d5
 
         Computes one number per concept that says how much its incoming
@@ -269,8 +269,8 @@ class GroundingMixin:
             #281 chunk-recovery comment for the same trade-off at scale.
 
         References:
-            - ADR-044: Probabilistic Truth Convergence
-            - ADR-045: Unified Embedding Generation
+            - ADR-808: Probabilistic Truth Convergence
+            - ADR-809: Unified Embedding Generation
         """
         global _grounding_cache, _grounding_cache_generation
 

@@ -5,7 +5,7 @@ deciders:
   - aaronsb
   - claude
 related:
-  - ADR-067
+  - ADR-714
   - ADR-400
   - ADR-704
 ---

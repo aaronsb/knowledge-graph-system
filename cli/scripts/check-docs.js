@@ -166,11 +166,11 @@ async function validateDocs() {
   console.log('─'.repeat(80));
   log.info('Additional Documentation Checks\n');
 
-  // Check for ADR-029 references
-  if (docContent.includes('ADR-029')) {
-    log.success('ADR-029 (CLI Theory) referenced');
+  // Check for ADR-709 references
+  if (docContent.includes('ADR-709')) {
+    log.success('ADR-709 (CLI Theory) referenced');
   } else {
-    log.warn('ADR-029 (CLI Theory) not referenced');
+    log.warn('ADR-709 (CLI Theory) not referenced');
   }
 
   // Check for Unix verb router section

@@ -31,7 +31,7 @@ The web workstation offers several specialized explorers, each addressing a diff
 
 Currently, the only UI touchpoint for ontologies is `OntologyFilterBlock` — a query builder filter that lets users include/exclude ontologies from graph queries. Ontology administration lives exclusively in the CLI (`kg ontology list|info|files|rename|delete`) and REST API (`/ontology/` endpoints).
 
-This gap is significant because **cross-ontology concept linking** is a defining capability of the system. Documents are isolated per ontology, but concepts merge automatically across domains via semantic similarity (ADR-068). This creates a rich inter-domain knowledge fabric that no current explorer surfaces.
+This gap is significant because **cross-ontology concept linking** is a defining capability of the system. Documents are isolated per ontology, but concepts merge automatically across domains via semantic similarity (ADR-812). This creates a rich inter-domain knowledge fabric that no current explorer surfaces.
 
 ## Decision
 
@@ -51,7 +51,7 @@ Each ontology node shows:
 - Document count, concept count, relationship count
 - Creation epoch, embedding status
 - Last modified / last ingested timestamp
-- Owner (if resource-scoped via ADR-082 grants)
+- Owner (if resource-scoped via ADR-410 grants)
 
 Clicking an ontology transitions to the Detail View.
 
@@ -78,7 +78,7 @@ This view makes the cross-ontology linking (which happens silently during ingest
 
 ### 2. Interaction Model
 
-The Ontology Explorer is not view-only. It supports management actions gated by the existing RBAC system (ADR-028, ADR-082):
+The Ontology Explorer is not view-only. It supports management actions gated by the existing RBAC system (ADR-404, ADR-410):
 
 | Action | Minimum Role | API Endpoint |
 |--------|-------------|--------------|
@@ -236,8 +236,8 @@ interface OntologyStore {
 
 The explorer respects the three-tier permission model:
 
-1. **RBAC (ADR-028)**: `ontologies:read`, `ontologies:create`, `ontologies:delete` actions on the `ontologies` resource type.
-2. **Grants (ADR-082)**: Resource-level ownership and grants for specific ontologies (e.g., user owns ontology "my-research" and can manage it even without global curator role).
+1. **RBAC (ADR-404)**: `ontologies:read`, `ontologies:create`, `ontologies:delete` actions on the `ontologies` resource type.
+2. **Grants (ADR-410)**: Resource-level ownership and grants for specific ontologies (e.g., user owns ontology "my-research" and can manage it even without global curator role).
 3. **UI gating**: `authStore.hasPermission('ontologies', 'create')` controls whether the "New Ontology" button appears. `authStore.hasPermission('ontologies', 'delete')` controls whether the delete option is available.
 
 For resource-scoped actions (e.g., rename a specific ontology), the UI can optimistically show the action and handle 403 responses gracefully, or pre-check via `GET /ontology/{name}` which could include an `actions` field listing permitted operations for the current user.
@@ -333,10 +333,10 @@ ADR-200 "Annealing Ontologies" provides the data model foundation for this explo
 
 ## Related ADRs
 
-- **ADR-028** — Dynamic RBAC system (permission model for management actions)
-- **ADR-068** — Source text embeddings (enables cross-ontology concept merging)
-- **ADR-082** — User scoping & groups (resource-level ownership of ontologies)
-- **ADR-083** — Artifact persistence (could cache expensive bridge computations)
-- **ADR-084** — Document-level search (complementary document discovery)
-- **ADR-089** — Deterministic graph editing (ontology-scoped concept creation)
+- **ADR-404** — Dynamic RBAC system (permission model for management actions)
+- **ADR-812** — Source text embeddings (enables cross-ontology concept merging)
+- **ADR-410** — User scoping & groups (resource-level ownership of ontologies)
+- **ADR-116** — Artifact persistence (could cache expensive bridge computations)
+- **ADR-507** — Document-level search (complementary document discovery)
+- **ADR-308** — Deterministic graph editing (ontology-scoped concept creation)
 - **ADR-200** — Annealing Ontologies (graph node architecture, directed growth, lifecycle states — data model foundation for this explorer)

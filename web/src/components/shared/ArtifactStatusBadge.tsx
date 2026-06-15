@@ -1,5 +1,5 @@
 /**
- * Artifact Status Badge (ADR-083)
+ * Artifact Status Badge (ADR-116)
  *
  * Shows freshness/staleness status for artifacts.
  * Provides visual feedback when graph has changed since artifact was created.

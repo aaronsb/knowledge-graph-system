@@ -1,6 +1,6 @@
 # Database Migrations
 
-**ADR-040: Database Schema Migration Management**
+**ADR-210: Database Schema Migration Management**
 
 This directory contains numbered migration files that evolve the database schema safely and incrementally.
 
@@ -523,14 +523,14 @@ When the project grows, consider:
 - **Up/Down migration pairs** (like Rails)
 - **Migration tooling** (upgrade to Alembic/Flyway if needed)
 
-See **ADR-040** for future migration system evolution.
+See **ADR-210** for future migration system evolution.
 
 ---
 
 ## Related Documentation
 
-- **ADR-040:** Database Schema Migration Management
-- **ADR-024:** Multi-Schema PostgreSQL Architecture
+- **ADR-210:** Database Schema Migration Management
+- **ADR-209:** Multi-Schema PostgreSQL Architecture
 - **schema/00_baseline.sql:** Current baseline schema
 - **scripts/migrate-db.sh:** Migration runner implementation
 

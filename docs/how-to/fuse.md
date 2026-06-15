@@ -8,7 +8,7 @@ mode: how-to
 
 `kg-fuse` mounts your Kappa Graph as a virtual filesystem. Browse ontologies as directories, create semantic queries with `mkdir`, ingest documents by copying files, and tune search results through virtual files — all from your terminal or file manager.
 
-The Python API reference for kg-fuse is at [reference/fuse.md](../reference/fuse.md). Design rationale is in [ADR-069](../architecture/user-interfaces/ADR-069-semantic-fuse-filesystem.md) and [ADR-069.1](../architecture/user-interfaces/ADR-069.1-fuse-implementation-specifics.md).
+The Python API reference for kg-fuse is at [reference/fuse.md](../reference/fuse.md). Design rationale is in [ADR-715](../architecture/user-interfaces/ADR-715-semantic-fuse-filesystem.md) and [ADR-715.1](../architecture/user-interfaces/ADR-715.1-fuse-implementation-specifics.md).
 
 ---
 

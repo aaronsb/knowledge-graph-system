@@ -4,9 +4,9 @@ Admin Routes
 API endpoints for system administration:
 - System status
 - Database backup
-- Database restore (ADR-015 Phase 2: Multipart Upload)
-- Job scheduler management (ADR-014)
-- API key management (ADR-031)
+- Database restore (ADR-107 Phase 2: Multipart Upload)
+- Job scheduler management (ADR-300)
+- API key management (ADR-405)
 
 Note: Database reset removed from API (too dangerous).
       Use ./scripts/setup/initialize-platform.sh option 0 instead.
@@ -107,7 +107,7 @@ async def create_backup(
     _: None = Depends(require_permission("backups", "create"))
 ):
     """
-    Create a database backup (ADR-015 Phase 2: Streaming Download)
+    Create a database backup (ADR-107 Phase 2: Streaming Download)
 
     **Streams backup directly to client** - no server-side storage.
     Client saves to configured backup directory (~/.local/share/kg/backups).
@@ -228,7 +228,7 @@ async def restore_backup(
                                   "idempotent mode + empty target)")
 ):
     """
-    Restore a database backup (ADR-015 Phase 2: Multipart Upload)
+    Restore a database backup (ADR-107 Phase 2: Multipart Upload)
 
     ⚠️ **Potentially destructive operation** - requires admin role.
 
@@ -536,7 +536,7 @@ async def verify_backup(
 #
 # ========================================================================
 
-# ========== Job Scheduler Endpoints (ADR-014) ==========
+# ========== Job Scheduler Endpoints (ADR-300) ==========
 
 @router.get("/scheduler/status")
 async def get_scheduler_status(
@@ -544,7 +544,7 @@ async def get_scheduler_status(
     _: None = Depends(require_permission("admin", "status"))
 ):
     """
-    Get job scheduler status and statistics (ADR-014)
+    Get job scheduler status and statistics (ADR-300)
 
     Returns current scheduler configuration and statistics:
     - Running status
@@ -606,7 +606,7 @@ async def trigger_scheduler_cleanup(
     _: None = Depends(require_permission("admin", "status"))
 ):
     """
-    Manually trigger job scheduler cleanup (ADR-014)
+    Manually trigger job scheduler cleanup (ADR-300)
 
     Forces an immediate cleanup cycle:
     - Cancels unapproved jobs older than approval_timeout
@@ -665,7 +665,7 @@ async def trigger_scheduler_cleanup(
         )
 
 
-# ========== API Key Management Endpoints (ADR-031) ==========
+# ========== API Key Management Endpoints (ADR-405) ==========
 
 @router.post("/keys/{provider}", status_code=status.HTTP_201_CREATED)
 async def set_api_key(
@@ -675,7 +675,7 @@ async def set_api_key(
     api_key: str = Form(..., description="API key to store")
 ):
     """
-    Set or rotate system API key for a provider (ADR-031)
+    Set or rotate system API key for a provider (ADR-405)
 
     Stores encrypted API key for this shard's LLM inference.
     Validates the key before storage by making a minimal API call.
@@ -728,7 +728,7 @@ async def set_api_key(
             key_store = EncryptedKeyStore(conn)
             key_store.store_key(provider, api_key)
 
-            # Mark key as validated (ADR-041)
+            # Mark key as validated (ADR-805)
             # Key was validated above, so we can mark it as valid
             key_store.update_validation_status(provider, "valid")
 
@@ -771,7 +771,7 @@ async def list_providers(
     - `requires_key`: provider needs an API key (cloud)
     - `is_local`: local inference server, no key (connectivity-tested)
 
-    Providers without a wired connector (e.g. vllm — ADR-042 Phase 4) are
+    Providers without a wired connector (e.g. vllm — ADR-806 Phase 4) are
     omitted so every card maps to something that actually works.
 
     **Authorization:** Requires `api_keys:read` permission
@@ -895,7 +895,7 @@ async def list_api_keys(
     _: None = Depends(require_permission("api_keys", "read"))
 ):
     """
-    List configured API providers with validation status (ADR-031, ADR-041)
+    List configured API providers with validation status (ADR-405, ADR-805)
 
     Returns list of providers with status (configured/not configured),
     last update time, validation status, and masked keys.
@@ -1001,7 +1001,7 @@ async def delete_api_key(
     _: None = Depends(require_permission("api_keys", "delete"))
 ):
     """
-    Delete system API key for a provider (ADR-031)
+    Delete system API key for a provider (ADR-405)
 
     Removes the encrypted API key from this shard's storage.
     After deletion, inference using this provider will not work
@@ -1139,7 +1139,7 @@ async def regenerate_concept_embeddings(
 # MOVED to /admin/embedding/* router (see api/routes/embedding.py)
 # ====================================================================
 # The following endpoints have been refactored and moved to the proper
-# embedding management namespace under /admin/embedding/* (ADR-068 Phase 4):
+# embedding management namespace under /admin/embedding/* (ADR-812 Phase 4):
 #
 # - GET  /admin/embedding-status      → GET  /admin/embedding/status
 # - POST /admin/regenerate-embeddings → POST /admin/embedding/regenerate

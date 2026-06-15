@@ -184,7 +184,7 @@ concept trapped in a text interface. The same applies here.
 
 - **Ecological ratio chart** — total concepts, total ontologies, average per
   ontology, plotted against the target band over recent epochs.
-- **Pressure curve editor** — the Bezier control points (ADR-046 infrastructure,
+- **Pressure curve editor** — the Bezier control points (ADR-604 infrastructure,
   reused) that map ecological ratio to `demotion_threshold` and
   `promotion_min_degree`. Rendered as an editable curve, not four numeric fields.
 - **Effective-threshold preview** — given the current ratio, the thresholds the
@@ -200,7 +200,7 @@ destructive healing.** The original #241 proposal (rewrite illegal structural
 edges to `SIMILAR_TO` at low confidence, delete offending VocabType nodes) is
 **rejected** as inconsistent with the platform's append-only, no-destructive-
 delete posture (ADR-203 epoch event log, ADR-206 "no deletion, only movement")
-and its classify-don't-prune vocabulary stance (ADR-046, ADR-052). A destructive
+and its classify-don't-prune vocabulary stance (ADR-604, ADR-607). A destructive
 janitor would overwrite LLM-emitted signal and fabricate dishonest provenance.
 Crucially, the misuse it targeted is already neutralized by ADR-200 Design
 Principle 6 (edge-agnostic lifecycle): lifecycle queries match on node types,
@@ -283,7 +283,7 @@ interface OntologyLifecycleStore {
 
 ### 6. Permissions
 
-The interface respects the existing three-tier model (ADR-028 RBAC, ADR-082
+The interface respects the existing three-tier model (ADR-404 RBAC, ADR-410
 grants):
 
 | Action | Minimum capability |
@@ -332,7 +332,7 @@ annealing* belong solely to ADR-703.
   choice with visible consequences, instead of a default buried in a migration.
 - CLI and web stay at parity; the automation-policy gap in the CLI is closed.
 - Reuses established patterns wholesale — ADR-701's Admin-entry structure,
-  ADR-046's Bezier curve infrastructure, ADR-028/082 permission gating.
+  ADR-604's Bezier curve infrastructure, ADR-404/082 permission gating.
 
 ### Negative
 
@@ -446,10 +446,10 @@ repair.
 - **ADR-700** — Ontology Explorer (sibling surface; see §7 for the boundary)
 - **ADR-701** — Vocabulary Administration Interface (the pattern this ADR
   follows: a dedicated Admin entry for a self-regulating subsystem)
-- **ADR-046** — Bezier curve aggressiveness profiles (reused for #249 ecological
+- **ADR-604** — Bezier curve aggressiveness profiles (reused for #249 ecological
   pressure)
 - **ADR-203** — Graph Epoch Event Log (annealing cycle history for the Dashboard)
 - **ADR-204** — Node Type representation (structural-name VocabType pollution
   that #241 detects)
-- **ADR-028** — Dynamic RBAC (permission model for lifecycle actions)
-- **ADR-082** — User scoping & grants (resource-level ontology ownership)
+- **ADR-404** — Dynamic RBAC (permission model for lifecycle actions)
+- **ADR-410** — User scoping & grants (resource-level ontology ownership)
