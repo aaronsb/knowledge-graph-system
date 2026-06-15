@@ -108,11 +108,22 @@ qemu-img convert -O qcow2 "${BASE_IMG}" "${OUT_QCOW}"
 qemu-img resize "${OUT_QCOW}" "${DISK_SIZE}"
 
 # --- 4. Customize in place with virt-customize -------------------------------
-# Docker via the official convenience script (gives docker-ce + the v2 compose
-# plugin operator.sh needs). python3/openssl/curl/git: secret-gen + operator.
-# Cockpit (optional): host control plane on :9090.
+# Docker from the official apt repository (docker-ce + the v2 compose plugin
+# operator.sh needs). We use the repo, NOT the get.docker.com convenience script:
+# the script is fragile under virt-customize's offline/no-systemd context (it can
+# leave docker.service unregistered, so the subsequent offline `systemctl enable
+# docker` fails), and Docker themselves do not recommend it for production images.
+# The apt repo installs docker.service deterministically, so the offline enable
+# works. python3/openssl/curl/git: secret-gen + operator. Cockpit (optional): :9090.
+case "${DEBIAN_VER}" in
+    12) DEBIAN_CODENAME="bookworm" ;;
+    11) DEBIAN_CODENAME="bullseye" ;;
+    13) DEBIAN_CODENAME="trixie" ;;
+    *)  die "unknown Debian release ${DEBIAN_VER}; add its codename to build-appliance.sh" ;;
+esac
 PKGS="qemu-guest-agent,ca-certificates,curl,python3,openssl,git,jq"
 [ "${WITH_COCKPIT}" = "true" ] && PKGS="${PKGS},cockpit"
+DOCKER_PKGS="docker-ce,docker-ce-cli,containerd.io,docker-buildx-plugin,docker-compose-plugin"
 
 VC_ARGS=(
     -a "${OUT_QCOW}"
@@ -120,8 +131,29 @@ VC_ARGS=(
     --hostname "kg-appliance"
     --run-command 'apt-get update'
     --install "${PKGS}"
-    --run-command 'curl -fsSL https://get.docker.com | sh'
+    # Docker's official apt repo (keyring + source), then install docker-ce.
+    --run-command 'install -m 0755 -d /etc/apt/keyrings'
+    --run-command 'curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc'
+    --run-command 'chmod a+r /etc/apt/keyrings/docker.asc'
+    --run-command "printf 'deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian ${DEBIAN_CODENAME} stable\n' > /etc/apt/sources.list.d/docker.list"
+    --run-command 'apt-get update'
+    --install "${DOCKER_PKGS}"
     --run-command 'systemctl enable docker qemu-guest-agent'
+    # Keep dockerd serving the legacy API version. Docker Engine >=25 raised its
+    # minimum served API to 1.40, but Traefik v3's Docker provider hard-codes
+    # 1.24 (and ignores DOCKER_API_VERSION), so it gets rejected. DOCKER_MIN_API_VERSION
+    # tells the daemon to keep accepting the old API. (Discovered on the cube deploy.)
+    --mkdir /etc/systemd/system/docker.service.d
+    --run-command 'printf "[Service]\nEnvironment=\"DOCKER_MIN_API_VERSION=1.24\"\n" > /etc/systemd/system/docker.service.d/api-compat.conf'
+    # --- MAC-agnostic networking ---
+    # cloud-init, given no network-config in the seed, generates a netplan that
+    # PINS the NIC to its first-boot MAC. Changing the MAC later (e.g. to claim a
+    # DHCP reservation) then leaves the NIC unconfigured. Disable cloud-init's
+    # network rendering and ship a static DHCP netplan matched by NAME, not MAC,
+    # so the image survives a MAC change. (Discovered on the cube deploy.)
+    --run-command 'printf "network: {config: disabled}\n" > /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg'
+    --run-command 'printf "network:\n  version: 2\n  ethernets:\n    primary:\n      match:\n        name: \"e*\"\n      dhcp4: true\n" > /etc/netplan/50-cloud-init.yaml'
+    --run-command 'chmod 600 /etc/netplan/50-cloud-init.yaml'
     # --- stage the repo at /opt/kg (git archive, prefix kg/) ---
     --upload "${REPO_TAR}:/tmp/kg-repo.tar"
     --run-command 'tar -xf /tmp/kg-repo.tar -C /opt && rm -f /tmp/kg-repo.tar'
@@ -142,7 +174,7 @@ VC_ARGS=(
 )
 [ "${WITH_COCKPIT}" = "true" ] && VC_ARGS+=( --run-command 'systemctl enable cockpit.socket' )
 
-log "customizing image (no VM boot; --network lets apt + get.docker.com fetch)..."
+log "customizing image (no VM boot; --network lets apt fetch base + docker repo)..."
 [ "${WITH_COCKPIT}" = "true" ] && log "  including Cockpit host console (:9090)" || log "  Cockpit disabled (--no-cockpit)"
 virt-customize "${VC_ARGS[@]}"
 

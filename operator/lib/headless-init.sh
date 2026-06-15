@@ -610,6 +610,15 @@ main() {
     # Normalize: strip any trailing slash so "${EXTERNAL_URL}/callback" is clean.
     EXTERNAL_URL="${EXTERNAL_URL%/}"
 
+    # Derive TLS_DOMAIN — the bare hostname (no scheme, no port, no path) that
+    # Let's Encrypt issues the certificate FOR. Traefik only requests an ACME
+    # cert for a domain it finds in a router Host() rule or in tls.domains; the
+    # appliance keeps routers host-agnostic (PathPrefix), so the letsencrypt
+    # overlays pin tls.domains[0].main=${TLS_DOMAIN}. Without it, ACME never fires
+    # and acme.json stays empty (ADR-105 §4). Strip scheme, then port/path.
+    TLS_DOMAIN="${EXTERNAL_URL#*://}"
+    TLS_DOMAIN="${TLS_DOMAIN%%[:/]*}"
+
     # Add WEB_HOSTNAME to .env
     if ! grep -q '^WEB_HOSTNAME=' "$PROJECT_ROOT/.env" 2>/dev/null; then
         echo "" >> "$PROJECT_ROOT/.env"
@@ -625,6 +634,15 @@ main() {
         echo "EXTERNAL_URL=$EXTERNAL_URL" >> "$PROJECT_ROOT/.env"
     else
         sed -i "s|^EXTERNAL_URL=.*|EXTERNAL_URL=$EXTERNAL_URL|" "$PROJECT_ROOT/.env"
+    fi
+
+    # Add TLS_DOMAIN to .env (the letsencrypt overlays pin tls.domains to it so
+    # Traefik knows which hostname to obtain the ACME cert for).
+    if ! grep -q '^TLS_DOMAIN=' "$PROJECT_ROOT/.env" 2>/dev/null; then
+        echo "# Cert hostname — Traefik tls.domains for the letsencrypt ACME resolver" >> "$PROJECT_ROOT/.env"
+        echo "TLS_DOMAIN=$TLS_DOMAIN" >> "$PROJECT_ROOT/.env"
+    else
+        sed -i "s|^TLS_DOMAIN=.*|TLS_DOMAIN=$TLS_DOMAIN|" "$PROJECT_ROOT/.env"
     fi
 
     # Add LE_EMAIL to .env when set (consumed by the letsencrypt overlay's ACME resolver)

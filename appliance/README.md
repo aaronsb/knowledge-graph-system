@@ -111,6 +111,27 @@ write_files:
 by `kg-firstboot.sh`, extensible (unknown keys ignored), and the natural channel
 a future fleet orchestrator would template per node.
 
+## Deploy gotchas (libvirt/KVM) — learned the hard way
+
+- **Attach the NoCloud seed as a VIRTIO disk, not a SATA/IDE cdrom.** The Debian
+  *cloud* kernel ships no AHCI/SATA driver, so a `sr0`/`sda` seed is invisible →
+  `ds-identify` finds no datasource → cloud-init is disabled → `provision.env`
+  never lands and the box comes up with defaults. Attach the `cidata` ISO as
+  `bus=virtio` (it shows up as `/dev/vdb`) and cloud-init finds it.
+  ```
+  virt-install ... \
+    --disk path=kg-appliance.qcow2,bus=virtio \
+    --disk path=kg-seed.iso,format=raw,bus=virtio,readonly=on
+  ```
+- **Changing the NIC MAC is safe.** The image disables cloud-init's network
+  rendering and ships a DHCP netplan matched by interface *name* (`e*`), not MAC,
+  so you can repoint the VM at a pinned DHCP reservation (`virt-xml <dom> --edit
+  --network mac=<reserved>`) and it still gets an address. (cloud-init's default,
+  MAC-pinned, would strand the NIC.)
+- **Modern Docker Engine just works.** Engine ≥25 raised its minimum served API
+  to 1.40, which Traefik v3's hard-coded 1.24 client would be rejected by; the
+  image bakes `DOCKER_MIN_API_VERSION=1.24` as a `docker.service` drop-in.
+
 ## Layout
 
 ```

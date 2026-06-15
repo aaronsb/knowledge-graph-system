@@ -32,6 +32,13 @@ services:
     image: traefik:v3.3.1
     container_name: ${CONTAINER_PREFIX:-knowledge-graph}-traefik
     restart: unless-stopped
+    # NOTE on modern Docker Engine: Traefik v3.3.1's Docker provider HARD-CODES
+    # API version 1.24 and ignores the DOCKER_API_VERSION env (it builds its
+    # client with an explicit WithVersion("1.24")). Engine >=25 raised its
+    # minimum served API to 1.40, so it rejects 1.24 with "client version 1.24
+    # is too old". The fix lives on the DAEMON, not here: set
+    # DOCKER_MIN_API_VERSION=1.24 on dockerd to keep serving the old API. The
+    # appliance bakes that as a docker.service drop-in (appliance/build-appliance.sh).
     command:
       - --providers.docker=true
       - --providers.docker.exposedbydefault=false
