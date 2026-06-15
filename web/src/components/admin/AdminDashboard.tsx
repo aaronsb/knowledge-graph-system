@@ -31,7 +31,7 @@ import type { TabType } from './types';
 export const AdminDashboard: React.FC = () => {
   const { permissions, hasPermission, isPlatformAdmin } = useAuthStore();
 
-  // Permission-based access control (ADR-074)
+  // Permission-based access control (ADR-409)
   const canViewUsers = hasPermission('users', 'read');
   const canViewRoles = hasPermission('rbac', 'read');
   const canViewSystemStatus = hasPermission('admin', 'status');
@@ -66,7 +66,7 @@ export const AdminDashboard: React.FC = () => {
             <h1 className="text-lg font-semibold text-foreground">
               Administration
             </h1>
-            {/* Platform Admin Badge (ADR-074) */}
+            {/* Platform Admin Badge (ADR-409) */}
             {isPlatformAdmin() && (
               <span className="px-2 py-0.5 text-xs rounded-full bg-purple-500/20 text-purple-400 font-medium">
                 Platform Admin
@@ -86,7 +86,7 @@ export const AdminDashboard: React.FC = () => {
               icon={<Key className="w-4 h-4" />}
               label="Account"
             />
-            {/* Users tab - requires users:read permission (ADR-074) */}
+            {/* Users tab - requires users:read permission (ADR-409) */}
             {canViewUsers && (
               <TabButton
                 active={activeTab === 'users'}
@@ -95,7 +95,7 @@ export const AdminDashboard: React.FC = () => {
                 label="Users"
               />
             )}
-            {/* Roles tab - requires rbac:read permission (ADR-074) */}
+            {/* Roles tab - requires rbac:read permission (ADR-409) */}
             {canViewRoles && (
               <TabButton
                 active={activeTab === 'roles'}
@@ -104,7 +104,7 @@ export const AdminDashboard: React.FC = () => {
                 label="Roles"
               />
             )}
-            {/* System tab - requires admin:status permission (ADR-074) */}
+            {/* System tab - requires admin:status permission (ADR-409) */}
             {canViewSystemStatus && (
               <TabButton
                 active={activeTab === 'system'}

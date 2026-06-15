@@ -83,7 +83,7 @@ jobs:
         run: pip install pyyaml
 
       - name: Lint documentation catalog (frontmatter + decision graph)
-        # Validates the docs catalog (ADR-087): id/domain/mode frontmatter,
+        # Validates the docs catalog (ADR-908): id/domain/mode frontmatter,
         # the related/supersedes reference graph, and nav membership. Both
         # catalog pages and ADRs are enforced — --enforce-adrs promotes ADR
         # graph issues (dangling related/supersedes refs, supersede cycles) to

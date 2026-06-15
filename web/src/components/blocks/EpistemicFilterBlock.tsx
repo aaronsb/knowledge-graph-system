@@ -10,7 +10,7 @@ import { Handle, Position, type NodeProps } from 'reactflow';
 import { Snowflake } from 'lucide-react';
 import type { BlockData, EpistemicFilterBlockParams } from '../../types/blocks';
 
-// ADR-065: Available epistemic statuses
+// ADR-610: Available epistemic statuses
 const EPISTEMIC_STATUSES = [
   { value: 'AFFIRMATIVE', label: 'Affirmative', description: 'Well-established knowledge' },
   { value: 'CONTESTED', label: 'Contested', description: 'Debated or mixed validation' },

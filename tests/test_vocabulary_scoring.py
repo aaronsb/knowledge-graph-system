@@ -2,7 +2,7 @@
 Unit tests for vocabulary_scoring.py module.
 
 Tests value score calculation, bridge detection, and trend analysis for
-automatic edge vocabulary expansion (ADR-032).
+automatic edge vocabulary expansion (ADR-603).
 
 Test Coverage:
 - EdgeTypeScore dataclass

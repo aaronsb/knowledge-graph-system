@@ -1,5 +1,5 @@
 /**
- * Document search and retrieval commands (ADR-084)
+ * Document search and retrieval commands (ADR-507)
  */
 
 import { Command } from 'commander';
@@ -65,7 +65,7 @@ function formatGrounding(
 export const documentCommand = setCommandHelp(
   new Command('document'),
   'Search and retrieve documents',
-  'Search for documents using semantic similarity and retrieve their content from Garage storage. Documents are aggregated from source chunks, ranked by their best matching chunk similarity (ADR-084).'
+  'Search for documents using semantic similarity and retrieve their content from Garage storage. Documents are aggregated from source chunks, ranked by their best matching chunk similarity (ADR-507).'
 )
   .showHelpAfterError();
 

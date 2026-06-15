@@ -1,5 +1,5 @@
 """
-Async restore worker (ADR-015 Phase 2)
+Async restore worker (ADR-107 Phase 2)
 
 Executes database restore operations as background jobs with:
 - Checkpoint backup safety pattern
@@ -103,7 +103,7 @@ def run_restore_worker(
     """
     Execute database restore as a background job.
 
-    Implements ADR-015 Checkpoint Backup Safety Pattern:
+    Implements ADR-107 Checkpoint Backup Safety Pattern:
     1. Create checkpoint backup (current database state)
     2. Execute restore operation
     3. Run integrity check
@@ -165,7 +165,7 @@ def run_restore_worker(
         # work. Surface it in the job result so an operator can correlate later.
         quiesced = wait_for_quiesce(job_queue, RESTORE_FREEZE_LANES)
 
-        # Stage 1: Create checkpoint backup (ADR-015 Safety Pattern)
+        # Stage 1: Create checkpoint backup (ADR-107 Safety Pattern)
         logger.info(f"[{job_id}] Creating checkpoint backup before restore")
         job_queue.update_job(job_id, {
             "progress": {
@@ -433,7 +433,7 @@ def run_restore_worker(
                 "reason": "post_restore_rehydration",
                 "restore_job_id": job_id,
             })
-            # Auto-approve as a system job (ADR-050) so the system lane claims it
+            # Auto-approve as a system job (ADR-111) so the system lane claims it
             # — enqueue() lands jobs as 'pending' (user-upload approval workflow),
             # but this is internally triggered, not a user upload.
             job_queue.update_job(rehydrate_job_id, {
@@ -582,7 +582,7 @@ def _clear_database(client: AGEClient, job_id: str) -> None:
     Used when restoring a full backup to ensure clean slate.
     Deletes concept graph nodes (Concept, Source, Instance) and their relationships.
 
-    Note (ADR-048): Preserves vocabulary metadata (VocabType, VocabCategory) nodes.
+    Note (ADR-606): Preserves vocabulary metadata (VocabType, VocabCategory) nodes.
     These live in a separate namespace and should not be cleared during restore.
     """
     logger.info(f"[{job_id}] Clearing concept graph data")
@@ -635,7 +635,7 @@ def _execute_restore(
 
     def progress_callback(stage: str, current: int, total: int, percent: float):
         """
-        Progress callback for DataImporter (ADR-018 Phase 2)
+        Progress callback for DataImporter (ADR-108 Phase 2)
 
         Called every N items during import to update job progress.
         Calculates overall progress across all stages.

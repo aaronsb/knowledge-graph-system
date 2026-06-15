@@ -1,5 +1,5 @@
 """
-Authentication Utility Functions Tests (ADR-054, ADR-027)
+Authentication Utility Functions Tests (ADR-406, ADR-403)
 
 Unit tests for authentication utilities in api/app/lib/auth.py.
 

@@ -1,5 +1,5 @@
 """
-Pydantic models for deterministic concept CRUD (ADR-089).
+Pydantic models for deterministic concept CRUD (ADR-308).
 
 These models support direct concept creation/editing without LLM ingestion,
 enabling manual curation, agent-driven knowledge building, and foreign graph import.

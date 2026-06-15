@@ -1,5 +1,5 @@
 """
-Audit logging service for graph mutations (ADR-089 Phase 1b).
+Audit logging service for graph mutations (ADR-308 Phase 1b).
 
 Provides simple audit logging to kg_logs.audit_trail table for
 tracking who did what, when, and with what outcome.

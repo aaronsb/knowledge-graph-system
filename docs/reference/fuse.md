@@ -536,7 +536,7 @@ instances with image evidence. Deduplicates by source_id.
 
 #### `async ingest_image(ontology: str, filename: str, content: bytes)`
 
-Submit image to dedicated image ingestion API (ADR-057) and track the job.
+Submit image to dedicated image ingestion API (ADR-305) and track the job.
 
 ---
 

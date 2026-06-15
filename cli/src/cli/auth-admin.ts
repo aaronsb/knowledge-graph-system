@@ -15,7 +15,7 @@ import { Table } from '../lib/table.js';
 /**
  * Ensure user is logged in (has OAuth credentials or valid token)
  *
- * ADR-054: Updated to support OAuth client credentials
+ * ADR-406: Updated to support OAuth client credentials
  * - Checks for OAuth credentials first (preferred)
  * - Falls back to legacy JWT tokens
  * - Gets fresh OAuth access token if using client credentials
@@ -38,7 +38,7 @@ async function requireAuth(): Promise<{ token: string; authClient: AuthClient; u
   const apiUrl = config.getApiUrl();
   const authClient = new AuthClient(apiUrl);
 
-  // Get OAuth client credentials (ADR-054)
+  // Get OAuth client credentials (ADR-406)
   const oauthCreds = config.getOAuthCredentials();
   if (!oauthCreds) {
     console.error('\x1b[31m❌ No OAuth credentials found. Please login: kg login\x1b[0m\n');
@@ -299,7 +299,7 @@ async function updateUserCommand(
     // Handle role change (requires challenge if promoting to admin)
     if (options.role) {
       if (options.role === 'admin' && user.role !== 'admin') {
-        // TODO(ADR-054): Re-implement AuthChallenge with OAuth support for sensitive operations
+        // TODO(ADR-406): Re-implement AuthChallenge with OAuth support for sensitive operations
         console.log('');
         console.log(`\x1b[33m⚠️  Warning: Promoting user "${user.username}" to admin role\x1b[0m`);
         console.log('');
@@ -356,7 +356,7 @@ async function deleteUserCommand(userId: string, options: { yes?: boolean }) {
     console.log('   This action cannot be undone!');
     console.log('');
 
-    // TODO(ADR-054): Re-implement AuthChallenge with OAuth support
+    // TODO(ADR-406): Re-implement AuthChallenge with OAuth support
     // For now, require manual confirmation
     if (!options.yes) {
       const confirmation = await prompts({

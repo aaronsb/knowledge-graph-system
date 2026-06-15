@@ -20,7 +20,7 @@ investigated when working in these areas. Source: `docs/PRODUCT_REVIEW_2026-02-0
 
 ## Architecture & Tech Debt
 
-- 45 Proposed ADRs that are actually implemented — should be promoted to Accepted (start with ADR-016, 024, 028, 040, 060)
+- 45 Proposed ADRs that are actually implemented — should be promoted to Accepted (start with ADR-208, 024, 028, 040, 060)
 - Schema README claims version 001, actual is 052
 - Forward-only migrations — no rollback path, should document explicitly
 - Migration numbering gaps (002, 010 missing)
@@ -31,7 +31,7 @@ investigated when working in these areas. Source: `docs/PRODUCT_REVIEW_2026-02-0
 ## Security Hardening
 
 - Dev compose exposes Postgres 5432 and Garage 3900/3903 to host — verify production compose doesn't
-- Docker socket mounted into operator container (accepted tradeoff per ADR-061, but worth documenting for security reviewers)
+- Docker socket mounted into operator container (accepted tradeoff per ADR-211, but worth documenting for security reviewers)
 - CORS TODO at `api/app/main.py:62` — tracked in roadmap Phase 0
 
 ## CI/CD

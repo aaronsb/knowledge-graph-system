@@ -1,5 +1,5 @@
 """
-Base class for scheduled job launchers (ADR-050).
+Base class for scheduled job launchers (ADR-111).
 
 Launchers are lightweight "sequencers" that check conditions and prepare jobs
 for the existing job queue. They don't execute work themselves - they just
@@ -123,7 +123,7 @@ class JobLauncher(ABC):
             job_data=job_data
         )
 
-        # Mark as system job and auto-approve (ADR-050: job ownership)
+        # Mark as system job and auto-approve (ADR-111: job ownership)
         # System/scheduled jobs bypass the approval workflow since they're
         # triggered by internal conditions, not user uploads
         if job_id:

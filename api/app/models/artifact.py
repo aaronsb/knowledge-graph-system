@@ -1,5 +1,5 @@
 """
-Artifact Models (ADR-083)
+Artifact Models (ADR-116)
 
 Pydantic models for artifact persistence API endpoints.
 """

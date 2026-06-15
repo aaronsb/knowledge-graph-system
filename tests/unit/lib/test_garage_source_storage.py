@@ -1,5 +1,5 @@
 """
-Source document storage unit tests (ADR-081).
+Source document storage unit tests (ADR-307).
 
 These tests cover pure logic that doesn't require S3/boto3 mocks:
 - Path sanitization
@@ -180,7 +180,7 @@ class TestHashPrefixConstant:
 
 
 class TestNormalizeContentHash:
-    """Tests for normalize_content_hash utility (ADR-081 Phase 2c)."""
+    """Tests for normalize_content_hash utility (ADR-307 Phase 2c)."""
 
     def test_strips_sha256_prefix(self):
         """Strips 'sha256:' prefix from prefixed hash."""

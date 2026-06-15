@@ -1,5 +1,5 @@
 """
-OAuth 2.0 Routes (ADR-054)
+OAuth 2.0 Routes (ADR-406)
 
 API endpoints for OAuth 2.0 client management and token flows.
 

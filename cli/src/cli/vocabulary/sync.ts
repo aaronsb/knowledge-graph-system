@@ -1,6 +1,6 @@
 /**
  * Vocabulary Sync Command
- * Sync missing edge types from graph to vocabulary (ADR-077)
+ * Sync missing edge types from graph to vocabulary (ADR-611)
  */
 
 import { Command } from 'commander';
@@ -10,7 +10,7 @@ import { coloredCount, separator } from '../colors';
 
 export function createSyncCommand(): Command {
   return new Command('sync')
-    .description('Sync missing edge types from graph to vocabulary (ADR-077). Discovers edge types used in the graph but not registered in vocabulary table/VocabType nodes. Use --dry-run first to preview, then --execute to sync.')
+    .description('Sync missing edge types from graph to vocabulary (ADR-611). Discovers edge types used in the graph but not registered in vocabulary table/VocabType nodes. Use --dry-run first to preview, then --execute to sync.')
     .option('--dry-run', 'Preview missing types without syncing (default)', true)
     .option('--execute', 'Actually sync missing types to vocabulary', false)
     .option('--json', 'Output as JSON for scripting')

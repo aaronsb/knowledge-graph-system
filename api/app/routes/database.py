@@ -39,7 +39,7 @@ def get_database_stats(
     _: None = Depends(require_permission("database", "read")),
 ):
     """
-    Get database statistics including node and relationship counts (ADR-060).
+    Get database statistics including node and relationship counts (ADR-407).
 
     **Authentication:** Requires valid OAuth token
     **Authorization:** Requires `database:read` permission
@@ -130,7 +130,7 @@ def get_database_info(
     _: None = Depends(require_permission("database", "read")),
 ):
     """
-    Get database connection information (ADR-060).
+    Get database connection information (ADR-407).
 
     **Authentication:** Requires valid OAuth token
     **Authorization:** Requires `database:read` permission
@@ -242,7 +242,7 @@ def check_database_health(
                     "status": "error"
                 }
 
-            # Check graph existence (ADR-048: namespace-aware)
+            # Check graph existence (ADR-606: namespace-aware)
             try:
                 # Use facade to verify graph is accessible with proper namespace awareness
                 concept_count = client.facade.count_concepts()
@@ -320,7 +320,7 @@ def get_graph_counters(
     _: None = Depends(require_permission("database", "read")),
 ):
     """
-    Get all graph metrics counters with categorization (ADR-079).
+    Get all graph metrics counters with categorization (ADR-114).
 
     Returns counters organized by type:
     - **snapshot**: Current counts refreshed from actual graph state
@@ -400,7 +400,7 @@ def refresh_graph_counters(
     _: None = Depends(require_permission("database", "execute")),
 ):
     """
-    Refresh all graph metrics counters from current graph state (ADR-079).
+    Refresh all graph metrics counters from current graph state (ADR-114).
 
     This updates the snapshot counters to match current actual counts.
     Safe to call repeatedly (idempotent). Typically called after:
@@ -461,9 +461,9 @@ def execute_cypher_query(
     _: None = Depends(require_permission("database", "execute")),
 ):
     """
-    Execute a custom openCypher/GQL query (ADR-048).
+    Execute a custom openCypher/GQL query (ADR-606).
 
-    **Namespace Safety (ADR-048):**
+    **Namespace Safety (ADR-606):**
     - `namespace='concept'`: Query operates on Concept/Source/Instance nodes (default namespace)
     - `namespace='vocab'`: Query operates on VocabType/VocabCategory nodes
     - `namespace=None` (raw): Full control, no automatic label injection (use with caution)
@@ -525,7 +525,7 @@ def execute_cypher_query(
 
         # Warn if using raw queries without namespace
         if request.namespace is None:
-            warning = "Raw query without namespace - may operate on mixed node types. Consider using namespace='concept' or 'vocab' for safety (ADR-048)."
+            warning = "Raw query without namespace - may operate on mixed node types. Consider using namespace='concept' or 'vocab' for safety (ADR-606)."
             logger.warning(f"User {current_user.username} executing raw cypher query: {request.query[:100]}...")
 
         # Execute query using facade for namespace safety

@@ -6,10 +6,10 @@ deciders:
   - aaronsb
   - claude
 related:
-  - ADR-031
-  - ADR-041
-  - ADR-042
-  - ADR-049
+  - ADR-405
+  - ADR-805
+  - ADR-806
+  - ADR-810
 ---
 
 # ADR-800: Dynamic Model Catalog and OpenRouter Support
@@ -204,7 +204,7 @@ Simpler, but doesn't solve the maintenance burden. Every new model requires a co
 
 ### B. External model registry (separate service or config file)
 
-A YAML/JSON config file or separate microservice for model metadata. Rejected because we already have PostgreSQL for configuration (ADR-041) and adding another config source increases operational complexity.
+A YAML/JSON config file or separate microservice for model metadata. Rejected because we already have PostgreSQL for configuration (ADR-805) and adding another config source increases operational complexity.
 
 ### C. Auto-select cheapest provider for a given model
 

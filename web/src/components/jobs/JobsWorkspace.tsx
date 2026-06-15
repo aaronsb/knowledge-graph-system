@@ -3,7 +3,7 @@
  *
  * Job queue visibility and management with real-time updates.
  * Displays job list with filtering, detail view, and approve/cancel actions.
- * Follows ADR-014 job lifecycle.
+ * Follows ADR-300 job lifecycle.
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';

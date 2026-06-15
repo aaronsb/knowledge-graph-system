@@ -165,7 +165,7 @@ class APIClient {
     depth?: number;
     relationship_types?: string[];
     limit?: number;
-    // ADR-065: Epistemic status filtering
+    // ADR-610: Epistemic status filtering
     include_epistemic_status?: string[];
     exclude_epistemic_status?: string[];
   }): Promise<SubgraphResponse> {
@@ -176,7 +176,7 @@ class APIClient {
         concept_id: params.center_concept_id,
         max_depth: params.depth ?? 1,
         relationship_types: params.relationship_types,
-        // ADR-065: Epistemic status filtering
+        // ADR-610: Epistemic status filtering
         include_epistemic_status: params.include_epistemic_status,
         exclude_epistemic_status: params.exclude_epistemic_status,
       });
@@ -258,7 +258,7 @@ class APIClient {
                 to_id: rel.to_id,
                 relationship_type: rel.rel_type,
                 confidence: rel.confidence,
-                // ADR-065: Vocabulary epistemic status metadata
+                // ADR-610: Vocabulary epistemic status metadata
                 category: rel.category,
                 avg_grounding: rel.avg_grounding,
                 epistemic_status: rel.epistemic_status,
@@ -457,7 +457,7 @@ class APIClient {
   }
 
   /**
-   * Get inter-category flow matrix for chord diagram visualization (ADR-077)
+   * Get inter-category flow matrix for chord diagram visualization (ADR-611)
    * Returns how vocabulary categories connect through shared concept nodes
    */
   async getCategoryFlows(): Promise<{
@@ -472,7 +472,7 @@ class APIClient {
   }
 
   /**
-   * Get image for a source node (ADR-057)
+   * Get image for a source node (ADR-305)
    * @param sourceId - Source ID from concept instance
    * @returns Image URL (blob URL for display)
    */
@@ -485,7 +485,7 @@ class APIClient {
   }
 
   /**
-   * Search source text passages using embeddings (ADR-068 Phase 5)
+   * Search source text passages using embeddings (ADR-812 Phase 5)
    * Searches source document chunks directly, not concepts
    */
   async searchSources(params: {
@@ -502,7 +502,7 @@ class APIClient {
   }
 
   /**
-   * Analyze polarity axis between two concept poles (ADR-070)
+   * Analyze polarity axis between two concept poles (ADR-813)
    * Projects concepts onto bidirectional semantic dimension
    */
   async analyzePolarityAxis(params: {
@@ -795,7 +795,7 @@ class APIClient {
   }
 
   /**
-   * Approve a job for processing (ADR-014)
+   * Approve a job for processing (ADR-300)
    */
   async approveJob(jobId: string): Promise<JobApproveResponse> {
     const response = await this.client.post<JobApproveResponse>(`/jobs/${jobId}/approve`);
@@ -1008,7 +1008,7 @@ class APIClient {
   }
 
   /**
-   * Get current user's effective permissions (ADR-074)
+   * Get current user's effective permissions (ADR-409)
    * Returns role info and a 'can' map for easy permission checking
    */
   async getCurrentUserPermissions(): Promise<{
@@ -1301,7 +1301,7 @@ class APIClient {
   }
 
   /**
-   * Get graph metrics counters organized by type (ADR-079)
+   * Get graph metrics counters organized by type (ADR-114)
    * Returns snapshot counters, activity counters, and legacy structure counters
    */
   async getDatabaseCounters(): Promise<{
@@ -1323,7 +1323,7 @@ class APIClient {
   }
 
   /**
-   * Refresh graph metrics counters from current graph state (ADR-079)
+   * Refresh graph metrics counters from current graph state (ADR-114)
    * Safe to call repeatedly (idempotent)
    */
   async refreshDatabaseCounters(): Promise<{
@@ -1336,7 +1336,7 @@ class APIClient {
   }
 
   // ============================================================
-  // AI CONFIGURATION (ADR-039, ADR-041)
+  // AI CONFIGURATION (ADR-804, ADR-805)
   // ============================================================
 
   /**
@@ -1611,7 +1611,7 @@ class APIClient {
   }
 
   // ============================================================
-  // RBAC MANAGEMENT (ADR-074)
+  // RBAC MANAGEMENT (ADR-409)
   // ============================================================
 
   /**
@@ -1826,7 +1826,7 @@ class APIClient {
   }
 
   // ============================================================
-  // EMBEDDING PROJECTIONS (ADR-078)
+  // EMBEDDING PROJECTIONS (ADR-717)
   // ============================================================
 
   /**
@@ -1922,7 +1922,7 @@ class APIClient {
   }
 
   // ============================================================
-  // ARTIFACT MANAGEMENT (ADR-083)
+  // ARTIFACT MANAGEMENT (ADR-116)
   // ============================================================
 
   /**
@@ -1985,7 +1985,7 @@ class APIClient {
   }
 
   // ============================================================
-  // QUERY DEFINITIONS (ADR-083)
+  // QUERY DEFINITIONS (ADR-116)
   // ============================================================
 
   /**
@@ -2133,7 +2133,7 @@ class APIClient {
   }
 
   // ============================================================
-  // DOCUMENT METHODS (ADR-084)
+  // DOCUMENT METHODS (ADR-507)
   // ============================================================
 
   /**

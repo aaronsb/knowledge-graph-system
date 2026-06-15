@@ -287,7 +287,7 @@ The combination of deterministic editing (graph tool) and intelligent extraction
 - **MCP Protocol:** Tools are exposed via Model Context Protocol for AI agent access
 - **Queue limit:** 20 operations per batch (prevents runaway mutations)
 
-The `graph` tool (ADR-089 Phase 3a) was designed specifically to enable the scaffolding workflow demonstrated here.
+The `graph` tool (ADR-308 Phase 3a) was designed specifically to enable the scaffolding workflow demonstrated here.
 
 ---
 

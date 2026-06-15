@@ -1,5 +1,5 @@
 """
-Concept Service - Deterministic concept CRUD (ADR-089).
+Concept Service - Deterministic concept CRUD (ADR-308).
 
 Orchestrates concept creation/editing without LLM ingestion pipeline.
 Delegates to existing infrastructure:

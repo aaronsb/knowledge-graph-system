@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Lint for unsafe datetime patterns (ADR-056).
+Lint for unsafe datetime patterns (ADR-113).
 
 This linter detects potentially unsafe datetime usage that could lead to
 naive/aware comparison errors.
@@ -20,7 +20,7 @@ Exit codes:
     1 - Violations found (only in --strict mode)
 
 Related:
-    ADR-056: Timezone-Aware Datetime Utilities
+    ADR-113: Timezone-Aware Datetime Utilities
 """
 
 import re
@@ -180,8 +180,8 @@ def format_violation_report(violations: List[Violation], verbose: bool = False) 
             if verbose:
                 lines.append(f"    {v.line_content}")
 
-    lines.append("\n📖 See ADR-056 for migration guide:")
-    lines.append("   docs/architecture/ADR-056-timezone-aware-datetime-utilities.md")
+    lines.append("\n📖 See ADR-113 for migration guide:")
+    lines.append("   docs/architecture/ADR-113-timezone-aware-datetime-utilities.md")
     lines.append("")
 
     return "\n".join(lines)
@@ -190,7 +190,7 @@ def format_violation_report(violations: List[Violation], verbose: bool = False) 
 def main():
     """Main entry point for linter."""
     parser = argparse.ArgumentParser(
-        description="Lint Python code for unsafe datetime patterns (ADR-056)",
+        description="Lint Python code for unsafe datetime patterns (ADR-113)",
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument(

@@ -1,5 +1,5 @@
 /**
- * Artifact Management Commands (ADR-083)
+ * Artifact Management Commands (ADR-116)
  *
  * CLI commands for artifact persistence - storing and retrieving computed results.
  */

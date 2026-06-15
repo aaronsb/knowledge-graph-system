@@ -1,5 +1,5 @@
 /**
- * RBAC Management CLI Commands (ADR-028)
+ * RBAC Management CLI Commands (ADR-404)
  *
  * Commands for managing roles, permissions, and resource types in the dynamic RBAC system.
  */
@@ -25,7 +25,7 @@ import { separator } from './colors';
  */
 export function createRbacCommand(client: KnowledgeGraphClient): Command {
   const rbac = new Command('rbac')
-    .description('Manage roles, permissions, and access control (ADR-028)');
+    .description('Manage roles, permissions, and access control (ADR-404)');
 
   // ========== Resource Commands ==========
 

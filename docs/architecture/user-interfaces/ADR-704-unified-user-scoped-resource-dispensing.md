@@ -5,12 +5,12 @@ deciders:
   - aaronsb
   - claude
 related:
-  - ADR-031
-  - ADR-034
-  - ADR-054
-  - ADR-067
-  - ADR-075
-  - ADR-083
+  - ADR-405
+  - ADR-710
+  - ADR-406
+  - ADR-714
+  - ADR-716
+  - ADR-116
   - ADR-400
   - ADR-705
 ---
@@ -66,7 +66,7 @@ other.
 
 | Axis | Stance |
 |------|--------|
-| **Storage** | Stays per-type and appropriate, and mostly **already exists**. Settings → new validated DTO. Theme → `localStorage` (ADR-075). Credentials → `oauth_clients`/encrypted-OAuth (ADR-031/054). Saved items → `query_definitions`/`artifacts` (ADR-083). **No unification here, by design.** |
+| **Storage** | Stays per-type and appropriate, and mostly **already exists**. Settings → new validated DTO. Theme → `localStorage` (ADR-716). Credentials → `oauth_clients`/encrypted-OAuth (ADR-405/054). Saved items → `query_definitions`/`artifacts` (ADR-116). **No unification here, by design.** |
 | **Dispensing** | Unified. One provider contract, one consolidated access policy, two rendering surfaces. **This is the decision.** |
 
 ### 2. The `UserScopedResource` provider contract
@@ -165,7 +165,7 @@ separate `device`-backed provider and stay in `localStorage`.
 
 This ADR moves no element's storage. **Credentials and grants are never stored in
 the settings DTO.** The credentials provider lists and revokes against the
-existing `oauth_clients`/OAuth machinery (ADR-031/054); the preferences view only
+existing `oauth_clients`/OAuth machinery (ADR-405/054); the preferences view only
 *surfaces* them. Each provider's backing is its own concern.
 
 ### 7. Scope of new work
@@ -243,7 +243,7 @@ exit code the same way `adr lint --check` does.
 
 - **Unify storage too (one per-user store for everything).** Superficially
   simpler. Rejected outright: it would put secrets in a settings blob, discard the
-  encrypted/OAuth model (ADR-031/054) and the existing `query_definitions`/
+  encrypted/OAuth model (ADR-405/054) and the existing `query_definitions`/
   `artifacts` tables, and force one shape onto values with very different
   validation, size, and security needs.
 - **Just add server-side preferences, nothing more (original ADR-704 scope).**

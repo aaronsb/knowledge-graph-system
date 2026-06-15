@@ -5,7 +5,7 @@
  * - Sidebar with collapsible category navigation
  * - Main content area
  *
- * Navigation categories per ADR-067:
+ * Navigation categories per ADR-714:
  * - Explorers (2D, 3D, etc.)
  * - Block Editor
  * - Ingest

@@ -1,5 +1,5 @@
 /**
- * Category Matrix Visualization (ADR-077)
+ * Category Matrix Visualization (ADR-611)
  *
  * Shows a grid of edge types organized by category.
  * Cell color intensity encodes edge count.

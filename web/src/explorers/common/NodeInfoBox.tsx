@@ -10,7 +10,7 @@ import { formatGrounding, formatGroundingWithConfidence, formatDiversity, format
 import { getZIndexValue } from '../../config/zIndex';
 
 /**
- * EvidenceImage - Display image from evidence source (ADR-057)
+ * EvidenceImage - Display image from evidence source (ADR-305)
  */
 const EvidenceImage: React.FC<{ sourceId: string }> = ({ sourceId }) => {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
@@ -312,7 +312,7 @@ export const NodeInfoBox: React.FC<NodeInfoBoxProps> = ({ info, onDismiss, heade
                         <div className="text-foreground italic border-l-2 border-border pl-2">
                           "{instance.quote?.substring(0, 150)}{instance.quote?.length > 150 ? '...' : ''}"
                         </div>
-                        {/* ADR-057: Display image if available */}
+                        {/* ADR-305: Display image if available */}
                         {instance.has_image && instance.source_id && (
                           <EvidenceImage sourceId={instance.source_id} />
                         )}
@@ -328,7 +328,7 @@ export const NodeInfoBox: React.FC<NodeInfoBoxProps> = ({ info, onDismiss, heade
               </div>
             )}
 
-            {/* ADR-051: Provenance Section */}
+            {/* ADR-304: Provenance Section */}
             {detailedData?.provenance && (
               <div className="border-b border-border">
                 <button

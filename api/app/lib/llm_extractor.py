@@ -186,7 +186,7 @@ def extract_concepts(
         existing_concepts: List of existing concepts to avoid duplication
                           Each dict should have 'concept_id' and 'label'
         provider_name: Override provider (default: from AI_PROVIDER env var)
-        age_client: Optional AGEClient for dynamic vocabulary examples (ADR-049)
+        age_client: Optional AGEClient for dynamic vocabulary examples (ADR-810)
 
     Returns:
         Dictionary with 'result' (concepts/instances/relationships), 'tokens', and 'source_id'
@@ -215,7 +215,7 @@ def extract_concepts(
         else:
             existing_concepts_str = "None"
 
-        # Get dynamic direction examples from vocabulary (ADR-049)
+        # Get dynamic direction examples from vocabulary (ADR-810)
         direction_examples = _get_direction_examples(age_client)
 
         # Format the prompt template with relationship types and existing concepts
@@ -249,7 +249,7 @@ def extract_concepts(
 
 
 # DEPRECATED: generate_embedding() has been removed
-# All embedding generation now goes through the unified EmbeddingWorker (ADR-045)
+# All embedding generation now goes through the unified EmbeddingWorker (ADR-809)
 #
 # Migration:
 #   from api.app.services.embedding_worker import get_embedding_worker

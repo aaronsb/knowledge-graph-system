@@ -5,8 +5,8 @@ deciders:
   - aaronsb
   - claude
 related:
-  - ADR-016  # openCypher compatibility
-  - ADR-048  # Query safety & GraphQueryFacade
+  - ADR-208  # openCypher compatibility
+  - ADR-606  # Query safety & GraphQueryFacade
 ---
 
 # ADR-201: In-Memory Graph Acceleration Extension

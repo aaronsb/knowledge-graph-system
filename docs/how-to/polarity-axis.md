@@ -8,7 +8,7 @@ mode: how-to
 
 Polarity axis analysis positions concepts along a semantic spectrum defined by two opposing poles. Given a "positive" and a "negative" concept, the feature projects related concepts onto a −1 to +1 scale and measures how well each concept aligns with either pole — or sits orthogonal to the axis entirely.
 
-Implemented in ADR-070. API endpoint: `POST /query/polarity-axis`. CLI: `kg polarity analyze`. MCP tool: `analyze_polarity_axis`.
+Implemented in ADR-813. API endpoint: `POST /query/polarity-axis`. CLI: `kg polarity analyze`. MCP tool: `analyze_polarity_axis`.
 
 ---
 
@@ -242,7 +242,7 @@ Use `--save-artifact` when the result should persist across sessions. This route
 
 ## Related
 
-- ADR-070 — Polarity Axis Analysis design decision
-- ADR-058 — Polarity Axis Triangulation for Grounding
-- ADR-044 — Probabilistic Truth Convergence (grounding calculation)
+- ADR-813 — Polarity Axis Analysis design decision
+- ADR-811 — Polarity Axis Triangulation for Grounding
+- ADR-808 — Probabilistic Truth Convergence (grounding calculation)
 - [Explore and Query](query.md) — finding concept IDs and traversing relationships

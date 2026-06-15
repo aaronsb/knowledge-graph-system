@@ -1,5 +1,5 @@
 /**
- * Polarity Explorer Workspace (ADR-070)
+ * Polarity Explorer Workspace (ADR-813)
  *
  * Interactive visualization for polarity axis analysis.
  * Projects concepts onto bidirectional semantic dimensions.
@@ -321,7 +321,7 @@ export const PolarityExplorerWorkspace: React.FC = () => {
     navigate('/report');
   }, [selectedAnalysis, addReport, navigate]);
 
-  // Save analysis to artifacts (ADR-083)
+  // Save analysis to artifacts (ADR-116)
   const handleSaveAsArtifact = useCallback(async () => {
     if (!selectedAnalysis) return;
 

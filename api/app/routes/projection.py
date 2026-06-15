@@ -1,5 +1,5 @@
 """
-Projection API routes (ADR-078).
+Projection API routes (ADR-717).
 
 Endpoints for embedding landscape visualization:
 - GET /projection/{ontology} - Get cached projection dataset
@@ -153,7 +153,7 @@ class RegenerateRequest(BaseModel):
     )
     create_artifact: bool = Field(
         default=False,
-        description="Save result as persistent artifact (ADR-083)"
+        description="Save result as persistent artifact (ADR-116)"
     )
 
 
@@ -206,7 +206,7 @@ async def get_projection(
     Supports conditional requests:
     - If-None-Match: changelist_id → returns 304 if unchanged
     """
-    # Check for cached projection from Garage (ADR-079)
+    # Check for cached projection from Garage (ADR-114)
     dataset = get_cached_projection(ontology, embedding_source)
 
     if dataset is None:
@@ -238,7 +238,7 @@ async def regenerate_projection(
     By default, queues a background job. If the ontology is small (< 100 concepts),
     computes synchronously and returns immediately.
     """
-    # Check if cache exists and force=False (ADR-079: Garage storage)
+    # Check if cache exists and force=False (ADR-114: Garage storage)
     if not body.force:
         cached = get_cached_projection(ontology, body.embedding_source)
         if cached is not None:
@@ -310,11 +310,11 @@ async def regenerate_projection(
             embedding_source=body.embedding_source
         )
 
-        # Store to Garage (ADR-079)
+        # Store to Garage (ADR-114)
         from api.app.workers.projection_worker import _store_projection
         _store_projection(ontology, body.embedding_source, dataset)
 
-        # ADR-083: Optionally create artifact for persistence
+        # ADR-116: Optionally create artifact for persistence
         artifact_id = None
         if body.create_artifact:
             from api.app.workers.artifact_helper import create_artifact

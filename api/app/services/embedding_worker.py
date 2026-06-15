@@ -1,5 +1,5 @@
 """
-Unified Embedding Generation Worker (ADR-045).
+Unified Embedding Generation Worker (ADR-809).
 
 Centralized service for all embedding generation tasks:
 - Concept embeddings (during ingestion)
@@ -14,8 +14,8 @@ Usage:
     result = await worker.initialize_builtin_embeddings()
 
 References:
-    - ADR-045: Unified Embedding Generation System
-    - ADR-046: Grounding-Aware Vocabulary Management
+    - ADR-809: Unified Embedding Generation System
+    - ADR-604: Grounding-Aware Vocabulary Management
 """
 
 from typing import Dict, List, Optional, Any

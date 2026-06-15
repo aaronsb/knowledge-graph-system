@@ -16,7 +16,7 @@ set -e
 # - OAUTH_SIGNING_KEY: Secret for signing JWT access tokens
 # - POSTGRES_PASSWORD: PostgreSQL admin password
 # - GARAGE_RPC_SECRET: Garage cluster coordination secret
-# - INTERNAL_KEY_SERVICE_SECRET: Internal service authorization token (ADR-031)
+# - INTERNAL_KEY_SERVICE_SECRET: Internal service authorization token (ADR-405)
 #
 # WHAT IT DOES NOT TOUCH:
 # - Application config (AI providers, embedding settings)
@@ -257,7 +257,7 @@ fi
 if should_reset "ENCRYPTION_KEY" || ! is_secret_valid "ENCRYPTION_KEY"; then
     echo -e "${YELLOW}→ Generating ENCRYPTION_KEY...${NC}"
     VALUE=$(python3 -c "import base64, secrets; print(base64.urlsafe_b64encode(secrets.token_bytes(32)).decode())")
-    update_env_file "ENCRYPTION_KEY" "$VALUE" "Master encryption key for API keys (ADR-031)"
+    update_env_file "ENCRYPTION_KEY" "$VALUE" "Master encryption key for API keys (ADR-405)"
     echo -e "${GREEN}✓ ENCRYPTION_KEY${NC} - generated and saved"
 else
     echo -e "${GREEN}✓ ENCRYPTION_KEY${NC} - already configured"
@@ -267,7 +267,7 @@ fi
 if should_reset "OAUTH_SIGNING_KEY" || ! is_secret_valid "OAUTH_SIGNING_KEY"; then
     echo -e "${YELLOW}→ Generating OAUTH_SIGNING_KEY...${NC}"
     VALUE=$(python3 -c "import secrets; print(secrets.token_hex(32))")
-    update_env_file "OAUTH_SIGNING_KEY" "$VALUE" "OAuth 2.0 access token signing key (ADR-054)"
+    update_env_file "OAUTH_SIGNING_KEY" "$VALUE" "OAuth 2.0 access token signing key (ADR-406)"
     echo -e "${GREEN}✓ OAUTH_SIGNING_KEY${NC} - generated and saved"
 else
     echo -e "${GREEN}✓ OAUTH_SIGNING_KEY${NC} - already configured"
@@ -321,11 +321,11 @@ else
 fi
 
 # 5. INTERNAL_KEY_SERVICE_SECRET (for internal service authorization)
-# This token authorizes services to access encrypted API keys (ADR-031)
+# This token authorizes services to access encrypted API keys (ADR-405)
 if should_reset "INTERNAL_KEY_SERVICE_SECRET" || ! is_secret_valid "INTERNAL_KEY_SERVICE_SECRET"; then
     echo -e "${YELLOW}→ Generating INTERNAL_KEY_SERVICE_SECRET...${NC}"
     VALUE=$(python3 -c "import base64, secrets; print(base64.urlsafe_b64encode(secrets.token_bytes(32)).decode())")
-    update_env_file "INTERNAL_KEY_SERVICE_SECRET" "$VALUE" "Internal service authorization token (ADR-031)"
+    update_env_file "INTERNAL_KEY_SERVICE_SECRET" "$VALUE" "Internal service authorization token (ADR-405)"
     echo -e "${GREEN}✓ INTERNAL_KEY_SERVICE_SECRET${NC} - generated and saved"
 else
     echo -e "${GREEN}✓ INTERNAL_KEY_SERVICE_SECRET${NC} - already configured"

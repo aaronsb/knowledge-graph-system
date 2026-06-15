@@ -3,7 +3,7 @@
 # build-appliance.sh — build the KG x86 thin-appliance VM image (ADR-103 §Stage 2)
 # ============================================================================
 #
-# Produces a bootable qcow2 (and optionally an OVA) that is "ADR-086's cube
+# Produces a bootable qcow2 (and optionally an OVA) that is "ADR-117's cube
 # deployment, baked": a minimal Debian host with Docker + the repo at /opt/kg,
 # configured to pull GHCR images, with a oneshot first-boot unit that mints
 # per-instance secrets and starts the platform.

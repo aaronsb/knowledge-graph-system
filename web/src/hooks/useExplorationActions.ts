@@ -27,7 +27,7 @@
  *   4. Depth defaults are exported constants, not magic numbers scattered
  *      across call sites.
  *
- * Affirms ADR-500 (GraphProgram as canonical execution) and ADR-083
+ * Affirms ADR-500 (GraphProgram as canonical execution) and ADR-116
  * (`explorationSession` as canonical ledger).
  *
  * @verified c02127db

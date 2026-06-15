@@ -5,7 +5,7 @@ Calculate and Store Grounding Strength for All Concepts
 Batch process to calculate grounding strength for all concepts in the graph
 and persist the values to enable faster queries and epistemic status measurement.
 
-Grounding calculation uses polarity axis projection (ADR-044) to determine
+Grounding calculation uses polarity axis projection (ADR-808) to determine
 how well-supported each concept is based on incoming relationship semantics.
 
 Usage:

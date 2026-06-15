@@ -6,10 +6,10 @@ deciders:
   - aaronsb
   - claude
 related:
-  - ADR-034
-  - ADR-035
-  - ADR-078
-  - ADR-085
+  - ADR-710
+  - ADR-711
+  - ADR-717
+  - ADR-718
 ---
 
 # ADR-702: Unified Graph Rendering Engine
@@ -120,7 +120,7 @@ An ADR is warranted because we are committing to a *direction*:
 
 This is a one-way decision with downstream implications for plugin authors,
 performance expectations, and the scope of future visualization ADRs. Hence
-a dedicated ADR rather than a subsection of ADR-034.
+a dedicated ADR rather than a subsection of ADR-710.
 
 ---
 
@@ -143,7 +143,7 @@ pair render as quadratic bezier curves via vertex-shader curve tessellation
 deferred.
 
 The public API of the engine is a scene component that accepts the existing
-`ExplorerPlugin` `ExplorerProps` shape from ADR-034, emits the existing
+`ExplorerPlugin` `ExplorerProps` shape from ADR-710, emits the existing
 selection/hover signal contract, and is wrapped by plugin components that
 consume the engine and add surface-specific chrome (settings panel, legend,
 node info box, context menu).
@@ -210,7 +210,7 @@ approximation; this is explicitly future work, not part of this ADR.
 
 ### Plugin surface
 
-Plugins implement the existing `ExplorerPlugin` interface from ADR-034 and
+Plugins implement the existing `ExplorerPlugin` interface from ADR-710 and
 embed the engine component as their scene. The engine exposes:
 
 ```ts
@@ -313,7 +313,7 @@ through the engine.
 - **Existing widgets (`NodeInfoBox`, `EdgeInfoBox`, `ContextMenu`,
   `StatsPanel`, `Legend`, `PanelStack`)** are reused unchanged via the
   signal contract.
-- **`ExplorerPlugin` interface from ADR-034** is unchanged. Plugins that
+- **`ExplorerPlugin` interface from ADR-710** is unchanged. Plugins that
   adopt the engine conform to the same contract as those that don't,
   enabling per-surface incremental migration.
 - **`categoryColors.ts` palette** continues to be the source of truth for
@@ -380,7 +380,7 @@ removing a third independent stack.
 
 ### Phase 4 (optional) — Document Explorer adopts engine traits
 
-The document explorer (ADR-085) has a specific radial layout and its own
+The document explorer (ADR-718) has a specific radial layout and its own
 interaction model. It does not need full engine adoption. It may adopt
 specific engine traits à la carte — the palette helper, the signal contract
 for widgets, the `CaretMarker` pattern, the distance-culled `<Html>` label
@@ -630,7 +630,7 @@ assumed when this ADR was written:
 
 ### What the original intent still buys
 
-ADR-085's concern — the Document Explorer has "a specific radial
+ADR-718's concern — the Document Explorer has "a specific radial
 layout and its own interaction model" — is preserved, but at the
 **UX layer rather than the rendering layer**: distinct node glyphs
 (document vs. concept), its own color scheme, document viewer, sidebar,

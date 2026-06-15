@@ -12,10 +12,10 @@ prompt:
   independently of extraction (ADR-802 §2 / #378), fail-loud at the end.
 - `_resolve_vision_model()` / `_catalog_vision_model_ids()` — catalog-driven
   vision model resolution by the per-row `supports_vision` flag (ADR-800/801).
-- `LITERAL_DESCRIPTION_PROMPT` — the ADR-057-validated literal transcription
+- `LITERAL_DESCRIPTION_PROMPT` — the ADR-305-validated literal transcription
   prompt the ingestion worker passes to `describe_image`.
 
-Research Findings (ADR-057, Nov 2025):
+Research Findings (ADR-305, Nov 2025):
 - Primary: GPT-4o Vision (100% reliable, excellent literal descriptions)
 - Alternate: Claude Sonnet Vision (similar quality to GPT-4o)
 - Optional: Ollama (Granite, LLaVA) — inconsistent quality, use only when
@@ -183,7 +183,7 @@ def resolve_vision_selection(
 
 
 # Literal description prompt (validated in research, Nov 2025).
-# Passed by the ingestion worker to AIProvider.describe_image (ADR-057).
+# Passed by the ingestion worker to AIProvider.describe_image (ADR-305).
 # See docs/research/vision-testing/FINDINGS.md
 LITERAL_DESCRIPTION_PROMPT = """
 Describe everything visible in this image literally and exhaustively.

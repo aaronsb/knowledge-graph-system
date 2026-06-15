@@ -1,5 +1,5 @@
 /**
- * Edge CRUD Commands (ADR-089 Phase 2)
+ * Edge CRUD Commands (ADR-308 Phase 2)
  *
  * Direct creation, listing, and management of edges (relationships) in the knowledge graph.
  * Supports both non-interactive (flags) and interactive (-i) modes.

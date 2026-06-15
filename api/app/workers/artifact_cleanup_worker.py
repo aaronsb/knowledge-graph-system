@@ -1,5 +1,5 @@
 """
-Artifact Cleanup Worker (ADR-083).
+Artifact Cleanup Worker (ADR-116).
 
 Scheduled worker that maintains artifact storage health:
 - Deletes expired artifacts (past expires_at)

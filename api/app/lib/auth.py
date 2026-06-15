@@ -1,5 +1,5 @@
 """
-Authentication Utilities (ADR-054 - OAuth 2.0)
+Authentication Utilities (ADR-406 - OAuth 2.0)
 
 Core utilities for password hashing and OAuth token management.
 OAuth access tokens are implemented as JWTs signed with OAUTH_SIGNING_KEY.
@@ -198,7 +198,7 @@ def validate_password_strength(password: str) -> tuple[bool, Optional[str]]:
     """
     Validate password meets minimum security requirements.
 
-    Requirements (per ADR-027):
+    Requirements (per ADR-403):
     - Minimum 8 characters
     - At least one uppercase letter
     - At least one lowercase letter

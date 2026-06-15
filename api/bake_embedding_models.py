@@ -5,7 +5,7 @@ BOTH `api/Dockerfile` (CPU / x86 / arm64 / NVIDIA) and `api/Dockerfile.rocm-host
 (AMD ROCm). Keeping it in one script means the image variants cannot drift —
 an earlier copy-paste bake lived only in api/Dockerfile and silently skipped the
 ROCm image, so AMD builds re-downloaded at runtime. See ADR-103 (nomic-first
-appliance) and ADR-039 (local embedding service).
+appliance) and ADR-804 (local embedding service).
 
 The models are LOADED, not merely downloaded, so the `trust_remote_code`
 dynamic-module cache (HF_HOME/modules) is populated too — offline loads need it.

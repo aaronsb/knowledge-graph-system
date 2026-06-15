@@ -1,5 +1,5 @@
 """
-Epistemic Confidence Analyzer (ADR-063 extension).
+Epistemic Confidence Analyzer (ADR-503 extension).
 
 Calculates epistemic confidence based on neighborhood richness to determine
 how meaningful a grounding score is. A concept with sparse neighborhood
@@ -21,8 +21,8 @@ Caching (ADR-201 Phase 5f):
     for the same concept return instantly from cache.
 
 References:
-    - ADR-044: Probabilistic Truth Convergence
-    - ADR-063: Semantic Diversity as Authenticity Signal
+    - ADR-808: Probabilistic Truth Convergence
+    - ADR-503: Semantic Diversity as Authenticity Signal
     - .claude/findings-grounding-presentation.md
     - .claude/additional-scoring-findings.md
 """

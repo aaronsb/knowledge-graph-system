@@ -29,9 +29,9 @@ Legacy ADRs (1-99) predate the domain system.
 
 | ADR | Topic |
 |-----|-------|
-| ADR-016 | openCypher compatibility (not Neo4j Cypher) |
-| ADR-028 | Dynamic RBAC permissions |
-| ADR-048 | Query safety & GraphQueryFacade |
-| ADR-061 | Operator architecture |
-| ADR-082 | User scoping & groups |
-| ADR-083 | Artifact persistence pattern |
+| ADR-208 | openCypher compatibility (not Neo4j Cypher) |
+| ADR-404 | Dynamic RBAC permissions |
+| ADR-606 | Query safety & GraphQueryFacade |
+| ADR-211 | Operator architecture |
+| ADR-410 | User scoping & groups |
+| ADR-116 | Artifact persistence pattern |

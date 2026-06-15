@@ -1,6 +1,6 @@
 /**
  * Vocabulary Status Commands
- * Status overview and list of all edge types (ADR-032)
+ * Status overview and list of all edge types (ADR-603)
  */
 
 import { Command } from 'commander';
@@ -11,7 +11,7 @@ import { plotBezierCurve, formatCurveSummary, type CurveMarker, type ZoneLabel }
 
 export function createStatusCommand(): Command {
   return new Command('status')
-    .description('Show current vocabulary status including size, zone (GREEN/WATCH/DANGER/EMERGENCY per ADR-032), aggressiveness, and thresholds.')
+    .description('Show current vocabulary status including size, zone (GREEN/WATCH/DANGER/EMERGENCY per ADR-603), aggressiveness, and thresholds.')
     .action(async () => {
       try {
         const client = createClientFromEnv();
@@ -117,7 +117,7 @@ export function createStatusCommand(): Command {
 
 export function createListCommand(): Command {
   return new Command('list')
-    .description('List all edge types with statistics, categories, and confidence scores (ADR-047).')
+    .description('List all edge types with statistics, categories, and confidence scores (ADR-605).')
     .option('--inactive', 'Include inactive/deprecated types')
     .option('--no-builtin', 'Exclude builtin types')
     .option('--sort <fields>', 'Sort by comma-separated fields: edges, type, conf, grounding, category, status (default: edges)')
@@ -211,7 +211,7 @@ export function createListCommand(): Command {
             const builtinMark = type.is_builtin ? colors.status.dim(' [B]') : '';
             const edgeCount = type.edge_count !== null && type.edge_count !== undefined ? type.edge_count : 0;
 
-            // ADR-047: Show confidence if available
+            // ADR-605: Show confidence if available
             let confDisplay = '';
             if (type.category_confidence !== null && type.category_confidence !== undefined) {
               const confPercent = (type.category_confidence * 100).toFixed(0);
@@ -229,7 +229,7 @@ export function createListCommand(): Command {
               confDisplay = colors.status.dim('  --  ');
             }
 
-            // ADR-065: Show grounding if available
+            // ADR-610: Show grounding if available
             let groundingDisplay = '';
             if (type.avg_grounding !== null && type.avg_grounding !== undefined) {
               const groundingVal = type.avg_grounding;

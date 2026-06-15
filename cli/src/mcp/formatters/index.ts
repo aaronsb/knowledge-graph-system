@@ -39,7 +39,7 @@ export {
   formatMcpAllowedPaths,
 } from './system.js';
 
-// Epistemic status formatters (ADR-065)
+// Epistemic status formatters (ADR-610)
 export {
   formatEpistemicStatusList,
   formatEpistemicStatusDetails,
@@ -49,7 +49,7 @@ export {
 // Source and polarity formatters
 export { formatSourceSearchResults, formatPolarityAxisResults } from './source.js';
 
-// Document formatters (ADR-084)
+// Document formatters (ADR-507)
 export {
   formatDocumentSearchResults,
   formatDocumentList,
@@ -58,7 +58,7 @@ export {
   formatDocumentConceptsDetailed,
 } from './document.js';
 
-// Graph CRUD formatters (ADR-089)
+// Graph CRUD formatters (ADR-308)
 export {
   formatGraphConceptResult,
   formatGraphEdgeResult,

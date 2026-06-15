@@ -1,5 +1,5 @@
 """
-Grounding hydration on /query/related (ADR-044, #280 follow-up).
+Grounding hydration on /query/related (ADR-808, #280 follow-up).
 
 The original ADR-201 Phase 5f acceleration shipped grounding hydration on
 /search/concepts and /query/connect but skipped /query/related — the route
@@ -65,7 +65,7 @@ class TestRelatedConceptsGroundingHydration:
     ):
         """
         With include_grounding=True (the default), each related concept carries
-        the full ADR-044 quartet: grounding_strength, confidence_level,
+        the full ADR-808 quartet: grounding_strength, confidence_level,
         confidence_score, grounding_display.
         """
         with patch("api.app.routes.queries.get_age_client") as mock_age_factory, \
@@ -103,7 +103,7 @@ class TestRelatedConceptsGroundingHydration:
     ):
         """
         With include_grounding=False, grounding fields are null and the
-        batch hydrator is never called — caller opted out for speed (ADR-044).
+        batch hydrator is never called — caller opted out for speed (ADR-808).
         """
         with patch("api.app.routes.queries.get_age_client") as mock_age_factory, \
              patch("api.app.routes.queries._hydrate_grounding_batch") as mock_hydrate, \

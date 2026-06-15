@@ -58,10 +58,10 @@ All objects land in a single Garage bucket (`kg-storage` by default, overridden 
 
 | Namespace | Purpose | Key pattern | ADR |
 |---|---|---|---|
-| `sources/` | Full original documents | `sources/{ontology}/{hash32}.{ext}` (first 32 hex chars of SHA-256) | ADR-081 |
-| `images/` | Original image files | `images/{ontology}/{source_id}.{ext}` | ADR-057 |
-| `artifacts/` | Computed results | `artifacts/{type}/{id}.json` | ADR-083 |
-| `projections/` | Projection snapshots | `projections/{ontology}/{embedding_source}/latest.json` and `…/{timestamp}.json` | ADR-079 |
+| `sources/` | Full original documents | `sources/{ontology}/{hash32}.{ext}` (first 32 hex chars of SHA-256) | ADR-307 |
+| `images/` | Original image files | `images/{ontology}/{source_id}.{ext}` | ADR-305 |
+| `artifacts/` | Computed results | `artifacts/{type}/{id}.json` | ADR-116 |
+| `projections/` | Projection snapshots | `projections/{ontology}/{embedding_source}/latest.json` and `…/{timestamp}.json` | ADR-114 |
 
 ## Data flow: document ingestion
 
@@ -260,6 +260,6 @@ The catalog facade (`api/app/lib/catalog_facade.py`) is the reference implementa
 
 - **ADR-207** — canonical clock, contract shapes, and alternatives considered.
 - **ADR-203** — the graph epoch event log (logical-time and lifetime analytics).
-- **ADR-079 / migration 033** — `graph_change_counter` origin and the AGE-bypasses-triggers constraint.
-- **ADR-057, ADR-081, ADR-083** — image, source document, and artifact storage in Garage.
-- **ADR-082** — user scoping and artifact ownership.
+- **ADR-114 / migration 033** — `graph_change_counter` origin and the AGE-bypasses-triggers constraint.
+- **ADR-305, ADR-307, ADR-116** — image, source document, and artifact storage in Garage.
+- **ADR-410** — user scoping and artifact ownership.

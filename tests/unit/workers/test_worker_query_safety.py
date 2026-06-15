@@ -2,7 +2,7 @@
 Regression guard: workers must not reach past the GraphQueryFacade for graph
 queries.
 
-The GraphQueryFacade (ADR-048) is the namespace-safe entry point for all
+The GraphQueryFacade (ADR-606) is the namespace-safe entry point for all
 Cypher executed against Apache AGE. Workers that reach for the raw escape
 hatch (`facade.execute_raw(...)`) or bypass the facade entirely
 (`age_client._execute_cypher(...)`) lose audit trail, namespace safety, and

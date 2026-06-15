@@ -1,6 +1,6 @@
 /**
  * Vocabulary Consolidation Commands
- * AI-assisted consolidation and manual merge (ADR-032)
+ * AI-assisted consolidation and manual merge (ADR-603)
  */
 
 import { Command } from 'commander';
@@ -11,7 +11,7 @@ import { coloredCount, separator } from '../colors';
 /** Create the `vocab consolidate` command — LLM-grounded vocabulary merge and prune workflow. */
 export function createConsolidateCommand(): Command {
   return new Command('consolidate')
-    .description('AI-assisted vocabulary consolidation workflow (AITL - AI-in-the-loop, ADR-032). Analyzes vocabulary via embeddings, identifies similar pairs above threshold, presents merge recommendations.')
+    .description('AI-assisted vocabulary consolidation workflow (AITL - AI-in-the-loop, ADR-603). Analyzes vocabulary via embeddings, identifies similar pairs above threshold, presents merge recommendations.')
     .option('-t, --target <size>', 'Target vocabulary size', '90')
     .option('--threshold <value>', 'Auto-execute threshold (0.0-1.0)', '0.90')
     .option('--dry-run', 'Preview candidates without executing (no merges, no pruning)')

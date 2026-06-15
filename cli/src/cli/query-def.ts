@@ -1,5 +1,5 @@
 /**
- * Query Definition Commands (ADR-083)
+ * Query Definition Commands (ADR-116)
  *
  * CLI commands for managing saved query definitions.
  */

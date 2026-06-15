@@ -1,5 +1,5 @@
 """
-Projection Storage Service - Embedding landscape projections (ADR-079, ADR-080).
+Projection Storage Service - Embedding landscape projections (ADR-114, ADR-115).
 
 This service handles storage and retrieval of projection artifacts - the 3D
 coordinate mappings of concept embeddings for visualization.
@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 class ProjectionStorageService:
     """
-    Projection artifact storage for embedding landscape visualization (ADR-079).
+    Projection artifact storage for embedding landscape visualization (ADR-114).
 
     Stores both the latest projection and timestamped historical snapshots
     for tracking semantic landscape evolution over time.

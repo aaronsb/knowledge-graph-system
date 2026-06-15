@@ -5,7 +5,7 @@ deciders:
   - aaronsb
   - claude
 related:
-  - ADR-039
+  - ADR-804
 ---
 
 # ADR-103: Distribution strategy: nomic-first thin appliance with app-store tenancy
@@ -40,7 +40,7 @@ Two technical facts shape the strategy:
 
 1. **The embedding/reasoning split is already a code path, not a thing to
    build.** `LocalEmbeddingProvider` does on-device embeddings via
-   sentence-transformers and explicitly cannot extract (ADR-039). Concept
+   sentence-transformers and explicitly cannot extract (ADR-804). Concept
    *extraction/reasoning* is a separate provider path that calls a remote LLM.
    This lets the appliance own the cheap, private, edge-friendly compute
    (embeddings, vector similarity, graph storage — the user's data) while
@@ -122,7 +122,7 @@ operator-help/API-doc defaults).
 The first Stage-2 artifact is an x86 qcow2/OVA. Its build contract (tooling in
 `appliance/`) records the non-obvious decisions:
 
-- **The appliance is ADR-086's "cube" deployment, baked.** Not a new installer:
+- **The appliance is ADR-117's "cube" deployment, baked.** Not a new installer:
   a minimal Debian host with Docker + the repo at `/opt/kg`, `image-source=ghcr`,
   reusing the tested `operator.sh init --headless` path verbatim. `install.sh`'s
   standalone curl-fetch is *staged at bake time* instead of run at install time.

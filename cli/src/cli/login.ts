@@ -4,7 +4,7 @@
  * Creates a personal OAuth client using GitHub CLI-style authentication.
  * Stores long-lived client credentials (client_id + client_secret) in config file.
  *
- * ADR-054: Unified OAuth Architecture
+ * ADR-406: Unified OAuth Architecture
  * - All clients use OAuth 2.0 flows (no JWT sessions)
  * - kg CLI uses personal OAuth clients (client credentials grant)
  * - Similar to: gh auth login, gcloud auth login, aws configure

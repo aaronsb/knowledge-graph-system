@@ -11,7 +11,7 @@
  *   kg cat concept X → kg search details X
  *
  * Architecture: Clean delegation with no business logic
- * See: ADR-029 - CLI Theory of Operation
+ * See: ADR-709 - CLI Theory of Operation
  *
  * User-configurable aliases:
  *   Commands can have user-defined aliases via config.aliases
@@ -70,11 +70,11 @@ const RESOURCE_ROUTES = {
   concept: ['search'],
   concepts: ['search'],
 
-  // Artifacts (ADR-083)
+  // Artifacts (ADR-116)
   artifact: ['artifact'],
   artifacts: ['artifact'],
 
-  // Sources (ADR-081)
+  // Sources (ADR-307)
   source: ['source'],
   sources: ['source'],
 };
@@ -123,7 +123,7 @@ function getResourceRoute(resource: string): string[] | null {
 }
 
 /**
- * Apply user-configured aliases to a command (ADR-029)
+ * Apply user-configured aliases to a command (ADR-709)
  *
  * Loads aliases from config and applies them to the command using .alias()
  *
@@ -188,7 +188,7 @@ function createLsCommand(rootCommand: Command): Command {
       }
     });
 
-  // Apply user-configured aliases (ADR-029)
+  // Apply user-configured aliases (ADR-709)
   applyAliases(cmd, 'ls');
 
   return cmd;
@@ -239,7 +239,7 @@ function createStatCommand(rootCommand: Command): Command {
       executeCommand(rootCommand, route, args);
     });
 
-  // Apply user-configured aliases (ADR-029)
+  // Apply user-configured aliases (ADR-709)
   applyAliases(cmd, 'stat');
 
   return cmd;
@@ -293,7 +293,7 @@ function createRmCommand(rootCommand: Command): Command {
       executeCommand(rootCommand, route, args);
     });
 
-  // Apply user-configured aliases (ADR-029)
+  // Apply user-configured aliases (ADR-709)
   applyAliases(cmd, 'rm');
 
   return cmd;
@@ -302,7 +302,7 @@ function createRmCommand(rootCommand: Command): Command {
 /**
  * Create the cat (display/show details) verb command
  *
- * Aliases are loaded from user config (ADR-029)
+ * Aliases are loaded from user config (ADR-709)
  */
 function createCatCommand(rootCommand: Command): Command {
   const cmd = new Command('cat')
@@ -385,7 +385,7 @@ function createCatCommand(rootCommand: Command): Command {
       }
     });
 
-  // Apply user-configured aliases (ADR-029)
+  // Apply user-configured aliases (ADR-709)
   applyAliases(cmd, 'cat');
 
   return cmd;

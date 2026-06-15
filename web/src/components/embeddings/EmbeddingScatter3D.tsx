@@ -1,5 +1,5 @@
 /**
- * 3D Scatter Plot for Embedding Landscape (ADR-078)
+ * 3D Scatter Plot for Embedding Landscape (ADR-717)
  *
  * Uses Three.js for WebGL rendering of concept embeddings in 3D space.
  * Supports multiple ontologies with different colors, hover labels, and camera controls.

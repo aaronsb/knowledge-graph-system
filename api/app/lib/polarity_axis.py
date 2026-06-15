@@ -1,5 +1,5 @@
 """
-Polarity Axis Analysis - Direct Query (ADR-070).
+Polarity Axis Analysis - Direct Query (ADR-813).
 
 Analyzes bidirectional semantic dimensions by projecting concepts onto
 polarity axes formed by opposing concept poles.
@@ -147,7 +147,7 @@ def fetch_concept_with_embedding(
     Raises:
         ValueError: If concept not found or missing embedding
     """
-    # Query concept details using facade (ADR-048 namespace safety)
+    # Query concept details using facade (ADR-606 namespace safety)
     # Return individual properties to get flattened dict (not vertex structure)
     results = age_client.facade.match_concepts(
         where="c.concept_id = $concept_id",
@@ -171,7 +171,7 @@ def fetch_concept_with_embedding(
     else:
         raise ValueError(f"Unexpected embedding format: {type(embedding)}")
 
-    # Calculate grounding (ADR-058)
+    # Calculate grounding (ADR-811)
     try:
         grounding = age_client.calculate_grounding_strength_semantic(concept_id)
     except Exception as e:
@@ -294,7 +294,7 @@ def discover_candidate_concepts_parallel(
     parallel_config = None
 ) -> List[str]:
     """
-    Auto-discover concepts related to the poles (PARALLEL VERSION - ADR-071).
+    Auto-discover concepts related to the poles (PARALLEL VERSION - ADR-505).
 
     Uses GraphParallelizer for 100x+ speedup on max_hops=2 queries.
     Falls back to sequential implementation for max_hops > 2.
@@ -477,7 +477,7 @@ def analyze_polarity_axis(
         auto_discover: Auto-discover candidates if not provided
         max_candidates: Max candidates for auto-discovery
         max_hops: Max hops for auto-discovery
-        use_parallel: Use parallel discovery (ADR-071, default: True)
+        use_parallel: Use parallel discovery (ADR-505, default: True)
         parallel_config: Optional ParallelQueryConfig for testing/tuning (legacy)
         discovery_slot_pct: Discovery slot percentage (0.0-1.0, ADR-071a)
         max_workers: Maximum parallel workers for 2-hop queries

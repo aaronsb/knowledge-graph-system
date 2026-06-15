@@ -13,10 +13,10 @@ related: [22, 25, 26, 32, 46, 47, 52, 53, 65, 77, 100, 200, 206, 703]
 
 The vocabulary system is a **self-regulating agentic cycle**, structurally the
 twin of ontology annealing (ADR-200). Relationship types grow from LLM
-extraction (ADR-025), are auto-categorized via embeddings (ADR-047), scored by
-grounding contribution (ADR-046), classified by epistemic status (ADR-065), and
+extraction (ADR-601), are auto-categorized via embeddings (ADR-605), scored by
+grounding contribution (ADR-604), classified by epistemic status (ADR-610), and
 periodically **consolidated** — the expansion/consolidation "dreaming" cycle of
-ADR-052, driven by zone pressure (ADR-032: COMFORT/WATCH/DANGER/EMERGENCY) and
+ADR-607, driven by zone pressure (ADR-603: COMFORT/WATCH/DANGER/EMERGENCY) and
 an AITL consolidation worker that produces merge proposals. This is a loop that
 restructures the vocabulary on a heartbeat, much as the annealing worker
 restructures ontologies.
@@ -80,7 +80,7 @@ The MVP is **present-information plus triggers** — it surfaces state and
 (per-proposal merge approval is deferred to the target-state Merge tab).
 
 This is **not** an explorer plugin (explorers visualize graph *data*; this
-operates the vocabulary *cycle* — the Edge Explorer, ADR-077, already covers
+operates the vocabulary *cycle* — the Edge Explorer, ADR-611, already covers
 visualization). It follows the non-explorer admin pattern of the Ontology tab.
 
 The aggressiveness curve renders read-only in the MVP (the CLI already produces
@@ -159,7 +159,7 @@ the synchronous CLI path remains valid.
 
 ### 4. Permission model
 
-Reuses existing RBAC (ADR-028 / ADR-082), parallel to ADR-703's ontology gates:
+Reuses existing RBAC (ADR-404 / ADR-410), parallel to ADR-703's ontology gates:
 
 | Action | Minimum capability |
 |--------|-------------------|
@@ -281,8 +281,8 @@ gaps above are scoped entirely to the deferred full Merge tab.
 - Non-CLI operators can finally see vocabulary zone/pressure and review
   consolidation proposals without terminal access.
 - Reuses established patterns wholesale — OntologyTab cohort, `AdminDashboard`
-  tab registration, ADR-046 Bézier infrastructure (for the deferred Profiles
-  tab), ADR-028/082 permission gating.
+  tab registration, ADR-604 Bézier infrastructure (for the deferred Profiles
+  tab), ADR-404/082 permission gating.
 
 ### Negative
 
@@ -305,7 +305,7 @@ gaps above are scoped entirely to the deferred full Merge tab.
 - New RBAC resources (`vocabulary:read/write`, `vocabulary_config:read/write`)
   need registration if not already present.
 - The category-flow chord diagram (deferred Health tab) could be shared with the
-  Edge Explorer (ADR-077).
+  Edge Explorer (ADR-611).
 
 ## Alternatives Considered
 
@@ -325,7 +325,7 @@ Register vocabulary management as an explorer alongside Force Graph, Document
 Explorer, etc.
 
 **Rejected because:** vocabulary administration *operates a cycle*; explorers
-*visualize data*. The Edge Explorer (ADR-077) already handles vocabulary
+*visualize data*. The Edge Explorer (ADR-611) already handles vocabulary
 visualization. ADR-703 drew the same boundary for ontologies (operate at
 `/admin`, explore at `/explore`).
 
@@ -366,7 +366,7 @@ Recommended order, mirroring ADR-703's incremental graduation:
    tab toward the dedicated route.
 3. **Interactive Config** — promote the read-only Configuration panel to editable
    (`PUT /admin/vocabulary/config`) with live zone preview.
-4. **Profiles tab** — the Bézier curve editor (ADR-046 infrastructure). Deferred;
+4. **Profiles tab** — the Bézier curve editor (ADR-604 infrastructure). Deferred;
    not load-bearing for operating the loop.
 5. **Health tab** — epistemic diagnostics and category-flow chord diagram.
 6. **Full Merge tab** — depends on the two backend gaps (persisted review,
@@ -386,17 +386,17 @@ landing Dashboard.
   MVP→route path, and permission model this ADR mirrors)
 - **ADR-100** — Database-driven job dispatch (the queue the §1a unified
   `/vocabulary/jobs` endpoint enqueues onto; parity with `/ontology/annealing-cycle`)
-- **ADR-052** — Vocabulary Expansion-Consolidation Cycle (the "dreaming" loop
+- **ADR-607** — Vocabulary Expansion-Consolidation Cycle (the "dreaming" loop
   this interface operates)
-- **ADR-032** — Automatic edge vocabulary expansion with zones (COMFORT/WATCH/
+- **ADR-603** — Automatic edge vocabulary expansion with zones (COMFORT/WATCH/
   DANGER/EMERGENCY pressure surfaced in the Vocabulary Pressure panel)
-- **ADR-022** — Original 30-type taxonomy (the vocabulary this interface manages)
-- **ADR-025** — Dynamic relationship vocabulary (capture and expansion model)
-- **ADR-026** — Autonomous vocabulary curation (AITL consolidation workflow)
-- **ADR-046** — Grounding-aware vocabulary management & Bézier profiles (scoring
+- **ADR-600** — Original 30-type taxonomy (the vocabulary this interface manages)
+- **ADR-601** — Dynamic relationship vocabulary (capture and expansion model)
+- **ADR-602** — Autonomous vocabulary curation (AITL consolidation workflow)
+- **ADR-604** — Grounding-aware vocabulary management & Bézier profiles (scoring
   model; curve infrastructure for the deferred Profiles tab)
-- **ADR-047** — Probabilistic vocabulary categorization (category confidence)
-- **ADR-053** — Vocabulary embedding similarity (similar/opposite detection)
-- **ADR-065** — Epistemic status classification (health measurement model)
-- **ADR-077** — Vocabulary explorers (visualization complement — explores data;
+- **ADR-605** — Probabilistic vocabulary categorization (category confidence)
+- **ADR-608** — Vocabulary embedding similarity (similar/opposite detection)
+- **ADR-610** — Epistemic status classification (health measurement model)
+- **ADR-611** — Vocabulary explorers (visualization complement — explores data;
   this ADR operates the cycle)

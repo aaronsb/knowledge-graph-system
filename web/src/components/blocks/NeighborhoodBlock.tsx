@@ -7,7 +7,7 @@ import { Handle, Position, type NodeProps } from 'reactflow';
 import { Network } from 'lucide-react';
 import type { BlockData, NeighborhoodBlockParams } from '../../types/blocks';
 
-// ADR-065: Available epistemic statuses
+// ADR-610: Available epistemic statuses
 const EPISTEMIC_STATUSES = [
   'AFFIRMATIVE',
   'CONTESTED',
@@ -120,7 +120,7 @@ export const NeighborhoodBlock: React.FC<NodeProps<BlockData>> = ({ data }) => {
         </div>
       </div>
 
-      {/* ADR-065: Epistemic Status Filters */}
+      {/* ADR-610: Epistemic Status Filters */}
       <div className="mt-3 space-y-1">
         <button
           onClick={() => setShowFilters(!showFilters)}

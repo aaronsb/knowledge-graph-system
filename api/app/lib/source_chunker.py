@@ -1,5 +1,5 @@
 """
-Source text chunker for embedding generation (ADR-068).
+Source text chunker for embedding generation (ADR-812).
 
 Provides sentence-based chunking with offset tracking for:
 - Embedding generation (target ~500 chars per chunk)

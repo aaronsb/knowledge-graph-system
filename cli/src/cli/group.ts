@@ -1,5 +1,5 @@
 /**
- * Group Management Commands (ADR-082)
+ * Group Management Commands (ADR-410)
  *
  * CLI commands for managing groups and group membership.
  */

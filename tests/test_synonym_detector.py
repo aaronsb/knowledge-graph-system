@@ -1,7 +1,7 @@
 """
 Tests for synonym_detector.py
 
-Validates embedding-based synonym detection for edge type merging (ADR-032).
+Validates embedding-based synonym detection for edge type merging (ADR-603).
 
 Note: SynonymDetector._get_edge_type_embedding imports AGEClient for
 database lookups, which isn't available in tests. We patch it via

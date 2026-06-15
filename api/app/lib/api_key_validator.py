@@ -2,7 +2,7 @@
 API Key Validation at Startup
 
 Validates configured API keys during API startup and updates validation status
-in the database (ADR-041). Validation failures are logged but do not block startup.
+in the database (ADR-805). Validation failures are logged but do not block startup.
 """
 
 import logging
@@ -37,7 +37,7 @@ def validate_openrouter_key(api_key: str) -> tuple[bool, Optional[str]]:
 
 def validate_api_keys_at_startup() -> Dict[str, bool]:
     """
-    Validate all configured API keys at startup (ADR-041).
+    Validate all configured API keys at startup (ADR-805).
 
     This function:
     1. Loads all configured API keys from the database

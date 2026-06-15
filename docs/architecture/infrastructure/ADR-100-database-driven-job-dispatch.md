@@ -5,9 +5,9 @@ deciders:
   - aaronsb
   - claude
 related:
-  - ADR-014
-  - ADR-028
-  - ADR-050
+  - ADR-300
+  - ADR-404
+  - ADR-111
 ---
 
 # ADR-100: Database-Driven Job Dispatch
@@ -32,7 +32,7 @@ Additionally, the two dispatch paths make the system hard to reason about: seria
 
 ### What works well today
 
-The job *state machine* (pending → approved → running → completed/failed) is already in PostgreSQL. The worker registry, progress tracking via SSE, and checkpoint/resume are solid. ADR-014's approval workflow and ADR-050's scheduling layer both work correctly. The problem is specifically in **how work gets dispatched to threads**, not in the job lifecycle itself.
+The job *state machine* (pending → approved → running → completed/failed) is already in PostgreSQL. The worker registry, progress tracking via SSE, and checkpoint/resume are solid. ADR-300's approval workflow and ADR-111's scheduling layer both work correctly. The problem is specifically in **how work gets dispatched to threads**, not in the job lifecycle itself.
 
 ## Decision
 
@@ -142,7 +142,7 @@ A `priority` column (integer, higher = more urgent, default 0) on the jobs table
 
 ### Stale job recovery
 
-Jobs stuck in `running` beyond the lane's `stale_timeout_minutes` are reset to `approved` by the existing scheduler loop (ADR-050). The `claimed_by` and `claimed_at` columns make this query straightforward:
+Jobs stuck in `running` beyond the lane's `stale_timeout_minutes` are reset to `approved` by the existing scheduler loop (ADR-111). The `claimed_by` and `claimed_at` columns make this query straightforward:
 
 ```sql
 UPDATE kg_api.jobs
@@ -158,7 +158,7 @@ Serial ingestion ordering is maintained by the claim query's `ORDER BY priority 
 
 ### RBAC integration
 
-Job control operations are gated by RBAC permissions (ADR-028). The migration adds these permissions to the platform admin role:
+Job control operations are gated by RBAC permissions (ADR-404). The migration adds these permissions to the platform admin role:
 
 | Permission | Scope | Operations |
 |------------|-------|------------|
@@ -229,8 +229,8 @@ A future ADR could address shared connection pooling if connection counts remain
 
 ### Neutral
 
-- **ADR-050 scheduler unchanged.** The scheduler still creates jobs on schedule. It just stops calling `execute_job_async()` directly — the poll loop picks up approved jobs.
-- **ADR-014 approval workflow unchanged.** The approval step still transitions jobs to `approved`. The difference is what happens after: polling replaces push.
+- **ADR-111 scheduler unchanged.** The scheduler still creates jobs on schedule. It just stops calling `execute_job_async()` directly — the poll loop picks up approved jobs.
+- **ADR-300 approval workflow unchanged.** The approval step still transitions jobs to `approved`. The difference is what happens after: polling replaces push.
 - **Worker code unchanged.** The `execute_job()` method and individual worker functions don't change. Only the dispatch layer around them changes.
 - **Serial chaining removed.** `_process_next_serial_job()` and `queue_serial_job()` are deleted. The poll loop handles ordering naturally.
 - **RBAC scope.** `workers:manage` and `workers:view` are new permission resources. Existing user-facing job permissions (`jobs:read`) are unchanged.

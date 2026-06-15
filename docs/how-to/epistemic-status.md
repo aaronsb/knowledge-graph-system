@@ -170,7 +170,7 @@ Check when statuses were last measured via the `v.status_measured_at` property o
 
 ## Related
 
-- ADR-065 — Vocabulary-Based Provenance Relationships
-- ADR-044 — Probabilistic Truth Convergence (grounding calculation)
+- ADR-610 — Vocabulary-Based Provenance Relationships
+- ADR-808 — Probabilistic Truth Convergence (grounding calculation)
 - `api/app/lib/query_facade.py` — `GraphQueryFacade.match_concept_relationships()`
 - [Grounding and Epistemic Confidence](../explanation/grounding.md)

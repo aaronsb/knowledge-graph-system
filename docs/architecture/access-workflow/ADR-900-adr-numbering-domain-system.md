@@ -5,24 +5,25 @@ deciders:
   - aaronsb
   - claude
 related:
-  - ADR-087
+  - ADR-908
 ---
 
 # ADR-900: ADR Numbering Domain System
 
 ## Context
 
-The first decision records were numbered sequentially — ADR-001 through ADR-038
-— with no relationship between a number and the part of the system it touched.
-That works until the catalog grows. By the time it held several dozen records,
-the flat sequence told you nothing: ADR-031 and ADR-032 could be about embeddings
-and OAuth, adjacent only by accident of authoring order.
+The first decision records were numbered sequentially, with no relationship
+between a number and the part of the system it touched. That works until the
+catalog grows. By the time it held several dozen records, the flat sequence told
+you nothing: two adjacent numbers could touch embeddings and OAuth, related only
+by the accident of authoring order.
 
 We introduced a domain-based scheme to fix that. Each subsystem reserves a band
-of 100 numbers, so the leading digits of an ADR number place it in the system at
-a glance. The scheme is configured in `docs/architecture/adr.yaml` and enforced by
-`docs/scripts/adr`, but it was never written down as a decision. This ADR records
-it, and extends the same idea to the `docs/` tree.
+of 100 numbers, so the leading digit of an ADR number places it in the system at
+a glance. The scheme is configured in `docs/architecture/adr.yaml` and enforced
+by `docs/scripts/adr`. This ADR records it, extends the same idea to the `docs/`
+tree, and (as of the 2026-06-15 amendment below) renumbers the pre-domain records
+into their bands rather than leaving them stranded.
 
 ## Decision
 
@@ -48,22 +49,20 @@ A new ADR takes the next free number in its domain band: `adr new <domain>
 "<title>"` assigns it and scaffolds the file under the domain's folder.
 
 A decision that grows into distinct parts uses **decimal sub-numbers**:
-`ADR-032.1` is the decision, `ADR-032.2` a follow-on (implementation notes, an
-appendix, later findings). The bare base number (`ADR-032`) is the *family*
-identifier: a `related: ADR-032` reference cites the decision as a whole and is
-satisfied by any of its parts, while `related: ADR-032.2` targets one part
+`ADR-603.1` is the decision, `ADR-603.2` a follow-on (implementation notes, an
+appendix, later findings). The bare base number (`ADR-603`) is the *family*
+identifier: a `related: ADR-603` reference cites the decision as a whole and is
+satisfied by any of its parts, while `related: ADR-603.2` targets one part
 exactly. The graph linter (§5) resolves references this way.
 
-### 2. Legacy range is frozen
+### 2. The pre-domain range is retired (1–99)
 
-ADRs 1–99 predate the domain scheme. They are **frozen at their numbers** —
-we do not renumber them. Renumbering would break every cross-reference (in ADRs,
-code comments, commit messages, and external links) for no benefit beyond
-cosmetic tidiness. The legacy range is declared in `adr.yaml` (`legacy.range:
-[1, 99]`); the linter resolves a legacy ADR's domain from its folder rather than
-its number, so a frozen ADR-004 living in `access-workflow/` still reports as
-`meta`. New decisions always use domain numbering; the legacy band only shrinks
-as old ADRs are superseded, never by mass renumber.
+ADRs in the 1–99 range predate the domain scheme. They have been **renumbered
+into their domain bands** (see the amendment below) and the **1–99 range is
+retired**: no ADR uses it, and any reference into that range is invalid and fails
+the lint guard (§5). Each ADR's domain is recorded by its folder *and*, now, by
+its number. The range is declared in `adr.yaml` so the tooling knows it is
+retired.
 
 ### 3. Frontmatter contract
 
@@ -85,53 +84,82 @@ record replaces or revises. The status set is defined in `adr.yaml`.
 ### 4. Extension to the documentation tree
 
 The same first-octet idea extends to `docs/` pages through a **documentation
-catalog** (ADR-087). Each page carries a catalog ID of the form
+catalog** (ADR-908). Each page carries a catalog ID of the form
 `<domain-digit>.<MODE-letter>.<serial>` — the leading digit is the *same* domain
 octet used here, so a page and the ADRs that govern it share a number space. The
 mode letter is the page's Diátaxis mode. The full scheme, the mode letters, and
-the page-to-domain map are ADR-087's concern; this ADR only fixes the shared
+the page-to-domain map are ADR-908's concern; this ADR only fixes the shared
 domain digit as the common key.
 
-### 5. Graph linting
+### 5. Graph linting + the retired-range guard
 
 The numbering scheme is only useful if it holds. `docs/scripts/adr lint`
-validates ADR frontmatter today; ADR-087 introduces `docs/scripts/doclint.py`,
-which treats ADRs and docs as a single **decision graph** (nodes = records,
-edges = `related`/`supersedes`) and lints it for dangling references, orphans,
-cycles, and domain×mode coverage. Linting is enforced on `docs/` and warns on
-ADRs until the ADR frontmatter sweep completes.
+validates ADR frontmatter; `docs/scripts/doclint.py` (ADR-908) treats ADRs and
+docs as a single **decision graph** (nodes = records, edges =
+`related`/`supersedes`) and lints it for dangling references, orphans, cycles,
+and domain×mode coverage. It is enforced on both docs and ADRs in CI.
+
+doclint also carries a **retired-range guard**: it scans the docs *and* the
+source tree for any reference into the retired range and fails the build. Because
+the range is vacated, this needs no crosswalk table — a reference into it is, by
+definition, stale. This is what lets the renumber be a clean break: once
+everything lints green, the migration scaffolding (mapping table, aliases) is
+deleted, and the guard prevents the old numbers from creeping back. (A genuine
+historical mention can opt out with a `doclint-allow-retired` marker on the line;
+this ADR and `adr.yaml`, which define the range, are exempt.)
 
 ## Consequences
 
 ### Positive
 
-- An ADR number tells you the subsystem at a glance.
+- An ADR number tells you the subsystem at a glance — now for the whole corpus,
+  not just records authored after the scheme existed.
 - New records get a number and a home folder mechanically (`adr new`).
 - Docs and ADRs share a domain key, so "everything about auth" is one query.
-- Freezing the legacy range keeps every existing reference valid.
+- The retired-range guard makes stale pre-domain references a build failure, so
+  they cannot silently accumulate.
 
 ### Negative
 
-- The legacy 1–99 band is a permanent special case the tooling must tolerate.
+- The renumber rewrote references across docs and code. References outside the
+  repo (git history, closed issues, the ingested graph) still cite old numbers;
+  those are not rewritten — `git log --follow` on a file recovers the mapping.
 - Domain assignment for a genuinely cross-cutting decision is a judgment call
   (resolved by picking the dominant subsystem, or `meta` when truly cross-cutting).
+  The renumber inherited each ADR's existing folder; a misfiled ADR keeps its
+  (wrong) domain until re-filed.
 
 ### Neutral
 
 - The scheme is data, not code: `adr.yaml` is the single source of truth, and
   both `adr` and `doclint.py` read it.
 
+## Amendment (2026-06-15): renumber the pre-domain ADRs
+
+This ADR originally **froze** the 1–99 range — renumbering was rejected as
+"breaks every cross-reference for a cosmetic gain." That trade-off flipped once
+the catalog reached ~76% pre-domain records, making the first-octet benefit
+mostly aspirational, and once the reference graph (doclint) made the rewrite
+mechanical:
+
+- A generated old→new map assigned each pre-domain ADR the next free slot in its
+  domain band (decimal sub-parts renumbered as a unit).
+- Every `ADR-<old>` reference was rewritten across docs and the source tree.
+- A repo-wide scan confirmed zero references into 1–99 remained, after which the
+  mapping table and transitional `aliases` were deleted — the retired-range guard
+  (§5) is the only standing mechanism, and it needs no table.
+
+The cost the original freeze feared (broken references) was paid down by
+automation and a guard, not avoided. External references are the residual; the
+rename history in git is their crosswalk.
+
 ## Alternatives Considered
 
-### Flat sequential numbering (the original)
+### Keep the pre-domain range frozen (the original decision)
 
-Rejected going forward: the number carries no information, and the catalog is now
-large enough that grouping by subsystem matters. Kept for the frozen legacy band.
-
-### Renumber the legacy ADRs into domains
-
-Rejected: breaks every existing cross-reference for a cosmetic gain. The folder
-already records a legacy ADR's domain; its number need not.
+Rejected on amendment: with most of the corpus pre-domain, "the number encodes
+the domain" was false for the majority, and the tooling carried a permanent
+special case. Automation made the renumber cheap enough to be worth it.
 
 ### Per-domain restart (auth-001, infra-001, …)
 

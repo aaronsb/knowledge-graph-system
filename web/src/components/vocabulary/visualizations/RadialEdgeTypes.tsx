@@ -1,5 +1,5 @@
 /**
- * Radial Edge Types Visualization (ADR-077)
+ * Radial Edge Types Visualization (ADR-611)
  *
  * Shows edge types arranged as spokes radiating from center,
  * grouped by category. Bar length encodes edge count.

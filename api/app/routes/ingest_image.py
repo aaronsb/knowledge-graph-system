@@ -1,5 +1,5 @@
 """
-Image Ingestion API routes (ADR-057)
+Image Ingestion API routes (ADR-305)
 
 Dedicated endpoint for multimodal image ingestion with visual embeddings and
 context injection. Follows the "hairpin pattern": image → prose → concepts.
@@ -24,7 +24,7 @@ from ..models.ingest import IngestionOptions
 from ..models.job import JobSubmitResponse, DuplicateJobResponse
 from ..dependencies.auth import CurrentUser, require_permission
 
-# ADR-057: Only health check remains in endpoint (heavy work moved to worker)
+# ADR-305: Only health check remains in endpoint (heavy work moved to worker)
 from ..lib.visual_embeddings import check_visual_embedding_health
 
 router = APIRouter(prefix="/ingest", tags=["ingestion"])
@@ -70,7 +70,7 @@ async def run_image_job_analysis(job_id: str, auto_approve: bool = False):
 
     Similar to text ingestion but accounts for vision processing costs.
 
-    ADR-014 workflow:
+    ADR-300 workflow:
     1. Analyze job (estimates vision + extraction costs)
     2. Update job status → awaiting_approval
     3. If auto_approve, immediately approve and execute
@@ -139,7 +139,7 @@ async def run_image_job_analysis(job_id: str, auto_approve: bool = False):
 @router.post(
     "/image",
     response_model=JobSubmitResponse | DuplicateJobResponse,
-    summary="Submit image for multimodal ingestion (ADR-057)"
+    summary="Submit image for multimodal ingestion (ADR-305)"
 )
 async def ingest_image(
     background_tasks: BackgroundTasks,
@@ -153,7 +153,7 @@ async def ingest_image(
     processing_mode: str = Form("serial", description="Processing mode: serial or parallel"),
     vision_provider: Optional[str] = Form(None, description="Vision provider override (openai/anthropic/ollama); unset resolves the active/default vision provider per ADR-802"),
     vision_model: Optional[str] = Form(None, description="Vision model name (optional, uses provider default)"),
-    # ADR-051: Source metadata (optional)
+    # ADR-304: Source metadata (optional)
     source_type: Optional[str] = Form(None, description="Source type: file, mcp, api"),
     source_path: Optional[str] = Form(None, description="Full filesystem path (file ingestion only)"),
     source_hostname: Optional[str] = Form(None, description="Hostname where ingestion initiated")
@@ -161,7 +161,7 @@ async def ingest_image(
     """
     Submit an image for multimodal ingestion using vision AI and visual embeddings.
 
-    **ADR-057 Multimodal Ingestion Pipeline (Hairpin Pattern):**
+    **ADR-305 Multimodal Ingestion Pipeline (Hairpin Pattern):**
 
     1. **Image Upload**: Accept PNG, JPEG, GIF, WebP, BMP (max 10MB)
     2. **Visual Embedding**: Generate 768-dim embedding with Nomic Vision v1.5
@@ -184,7 +184,7 @@ async def ingest_image(
       described as "same vector space as text"; that co-spatiality is neither
       required nor used — corrected per ADR-803.)
 
-    **Workflow (ADR-014):**
+    **Workflow (ADR-300):**
     1. Submit image → Job created with status `pending`
     2. Analysis runs (estimates vision + extraction costs)
     3. Job status → `awaiting_approval` with cost/time estimates
@@ -297,7 +297,7 @@ async def ingest_image(
             "max_words": options.get_max_words(),
             "overlap_words": options.overlap_words
         },
-        # ADR-051: Source metadata (optional, best-effort provenance)
+        # ADR-304: Source metadata (optional, best-effort provenance)
         "source_type": source_type or "api",
         "source_path": source_path,
         "source_hostname": source_hostname,

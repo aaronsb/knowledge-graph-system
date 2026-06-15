@@ -5,12 +5,12 @@ deciders:
   - aaronsb
   - claude
 related:
-  - ADR-079
+  - ADR-114
   - ADR-201
   - ADR-203
-  - ADR-083
-  - ADR-079
-  - ADR-080
+  - ADR-116
+  - ADR-114
+  - ADR-115
   - ADR-801
   - ADR-802
 ---
@@ -41,8 +41,8 @@ independently at a different time, for a different subsystem:
 | Derivation | Storage tier | Version signal it reads | Tracking issue |
 |---|---|---|---|
 | Grounding / polarity scores | in-memory cache | `graph_accel.generation` (ADR-201) | #422 |
-| Artifacts (analyses, projections, saved results) | PostgreSQL inline / Garage S3 | `graph_change_counter` via `get_graph_epoch()` (ADR-079) | #233 |
-| Catalog index (`kg_api.catalog_node`) | materialized table | `graph_change_counter` via `get_graph_epoch()` (ADR-079) | — |
+| Artifacts (analyses, projections, saved results) | PostgreSQL inline / Garage S3 | `graph_change_counter` via `get_graph_epoch()` (ADR-114) | #233 |
+| Catalog index (`kg_api.catalog_node`) | materialized table | `graph_change_counter` via `get_graph_epoch()` (ADR-114) | — |
 
 Each independently re-implements the same four-part lifecycle:
 
@@ -74,7 +74,7 @@ The comparisons above are not even measured against the same clock:
 
 | Signal | Defined | Nature |
 |---|---|---|
-| `graph_change_counter` (`get_graph_epoch()`) | ADR-079, migration 033 | composite **count checksum** of graph objects |
+| `graph_change_counter` (`get_graph_epoch()`) | ADR-114, migration 033 | composite **count checksum** of graph objects |
 | `graph_accel.generation` | ADR-201, migration 051 | separate invalidation counter for the in-memory layer |
 | `kg_api.graph_epochs` event log | ADR-203, migration 063 | monotonic mutation event log, *explicitly "distinct from `graph_change_counter`"* |
 

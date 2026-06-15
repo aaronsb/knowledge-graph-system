@@ -3,7 +3,7 @@ AI Provider abstraction layer for concept extraction and embeddings.
 
 Supports multiple providers (OpenAI, Anthropic) with configurable models.
 
-API Key Loading (ADR-031):
+API Key Loading (ADR-405):
 - First tries encrypted key store (system_api_keys table)
 - Falls back to environment variables (.env or direct)
 - Maintains backward compatibility
@@ -135,7 +135,7 @@ class ToolCallResponse:
     raw_response: Any = None
 
 
-# Default prompt for image description (ADR-033 Phase 1).
+# Default prompt for image description (ADR-302 Phase 1).
 IMAGE_DESCRIPTION_PROMPT = """Analyze this image for knowledge extraction. Provide a detailed description:
 
 **Text Content:** Transcribe ALL visible text exactly as written (titles, headings, bullets, labels, annotations).
@@ -153,7 +153,7 @@ Be thorough - capture information density over brevity. Focus on facts and struc
 
 def _load_api_key(provider: str, explicit_key: Optional[str] = None, env_var: Optional[str] = None, service_token: Optional[str] = None) -> Optional[str]:
     """
-    Load API key with fallback chain (ADR-031).
+    Load API key with fallback chain (ADR-405).
 
     Priority order:
     1. Explicit key provided as parameter
@@ -461,14 +461,14 @@ class AIProvider(ABC):
         temperature: float = 0.3,
     ) -> Dict[str, Any]:
         """
-        Generate detailed description of an image using multimodal AI (ADR-057).
+        Generate detailed description of an image using multimodal AI (ADR-305).
 
         The single image->prose capability for the whole system — both the
         synchronous ingest route (`routes/ingest.py`) and the async image
-        worker (`workers/ingestion_worker.py`, the ADR-057-validated path)
+        worker (`workers/ingestion_worker.py`, the ADR-305-validated path)
         call this method. The defaults reproduce the route's historical
         behaviour; the worker passes explicit args to reproduce the literal
-        transcription path (ADR-057): LITERAL prompt, no high-detail, temp 0.1.
+        transcription path (ADR-305): LITERAL prompt, no high-detail, temp 0.1.
 
         Args:
             image_data: Raw image bytes (PNG, JPEG, etc.)
@@ -547,7 +547,7 @@ class OpenAIProvider(AIProvider):
     ):
         from openai import OpenAI
 
-        # Load API key with fallback chain (ADR-031)
+        # Load API key with fallback chain (ADR-405)
         self.api_key = _load_api_key("openai", api_key, "OPENAI_API_KEY")
         if not self.api_key:
             raise ValueError(
@@ -558,7 +558,7 @@ class OpenAIProvider(AIProvider):
             )
 
         # Configure retry behavior (exponential backoff built into SDK)
-        # Load from database (ADR-041) or fall back to env/defaults
+        # Load from database (ADR-805) or fall back to env/defaults
         from .rate_limiter import get_provider_max_retries
         max_retries = get_provider_max_retries("openai")
 
@@ -1192,7 +1192,7 @@ class AnthropicProvider(AIProvider):
     ):
         from anthropic import Anthropic
 
-        # Load API key with fallback chain (ADR-031)
+        # Load API key with fallback chain (ADR-405)
         self.api_key = _load_api_key("anthropic", api_key, "ANTHROPIC_API_KEY")
         if not self.api_key:
             raise ValueError(
@@ -1203,7 +1203,7 @@ class AnthropicProvider(AIProvider):
             )
 
         # Configure retry behavior (exponential backoff built into SDK)
-        # Load from database (ADR-041) or fall back to env/defaults
+        # Load from database (ADR-805) or fall back to env/defaults
         from .rate_limiter import get_provider_max_retries
         max_retries = get_provider_max_retries("anthropic")
 
@@ -2114,7 +2114,7 @@ class OpenRouterProvider(AIProvider):
 
 class OllamaProvider(AIProvider):
     """
-    Local LLM inference provider using Ollama (ADR-042).
+    Local LLM inference provider using Ollama (ADR-806).
 
     Ollama wraps llama.cpp and provides:
     - Local inference (no API costs)
@@ -2557,7 +2557,7 @@ class OllamaProvider(AIProvider):
         is accepted (ignored) for a uniform signature. Local inference reports
         no token usage, so 'tokens' is always zeros.
 
-        Note: Ollama vision is the OPTIONAL / unvalidated path (ADR-057 found it
+        Note: Ollama vision is the OPTIONAL / unvalidated path (ADR-305 found it
         inconsistent); this method is kept functional behind the unified
         contract but is not golden-tested.
 
@@ -2742,7 +2742,7 @@ def get_embedding_provider() -> Optional[AIProvider]:
     """
     Get the configured embedding provider (may be different from extraction provider).
 
-    Database-first approach (ADR-039):
+    Database-first approach (ADR-804):
     - Checks if LocalEmbeddingProvider is available (model manager initialized)
     - If yes, returns LocalEmbeddingProvider
     - If no, returns None (caller will use default provider's embeddings)
@@ -2911,7 +2911,7 @@ def validate_provider_key(provider: str, api_key: str) -> tuple[bool, Optional[s
 
 def get_provider(provider_name: Optional[str] = None) -> AIProvider:
     """
-    Factory function to get the configured AI provider (ADR-041).
+    Factory function to get the configured AI provider (ADR-805).
 
     Configuration source depends on DEVELOPMENT_MODE:
     - DEVELOPMENT_MODE=true: Uses environment variables (.env file)
@@ -2940,7 +2940,7 @@ def get_provider(provider_name: Optional[str] = None) -> AIProvider:
                                        from the catalog
             OPENAI_API_KEY: Required for embeddings (or configure local via database)
 
-        For Local Embeddings (ADR-039):
+        For Local Embeddings (ADR-804):
             Configure via database: POST /admin/embedding/config
             See kg_api.embedding_config table for parameters
 

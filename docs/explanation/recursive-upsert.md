@@ -68,7 +68,7 @@ The decision uses two tiers:
 
 The label-boosted tier catches paraphrased descriptions of an identically-named concept that would fall just below the strict threshold. Without it, "Machine learning safety" and "Machine learning safety: alignment concerns" would create two nodes when one would be correct.
 
-The current implementation uses a Python NumPy full scan over all stored embeddings. This is O(N) per concept — acceptable at the scales Kappa Graph currently runs (thousands of concepts), and replaceable with HNSW approximate-nearest-neighbor indexing when graphs grow larger (ADR-055).
+The current implementation uses a Python NumPy full scan over all stored embeddings. This is O(N) per concept — acceptable at the scales Kappa Graph currently runs (thousands of concepts), and replaceable with HNSW approximate-nearest-neighbor indexing when graphs grow larger (ADR-112).
 
 ### Stage 3: Create new concept
 
@@ -96,11 +96,11 @@ Concepts that appear across many documents accumulate more evidence and higher g
 
 ## Relationship-type categorization: the edge vocabulary
 
-When the LLM discovers a relationship type not already in the vocabulary — say, "ENHANCES" — the system must decide what kind of relationship it is. This is handled by probabilistic vocabulary categorization (ADR-047).
+When the LLM discovers a relationship type not already in the vocabulary — say, "ENHANCES" — the system must decide what kind of relationship it is. This is handled by probabilistic vocabulary categorization (ADR-605).
 
 ### Discovery during ingestion
 
-The pipeline calls `normalize_relationship_type()` to fuzzy-match the new type against the existing vocabulary. If no match is found, the type is accepted as new (ADR-032) and written with the temporary category `llm_generated`:
+The pipeline calls `normalize_relationship_type()` to fuzzy-match the new type against the existing vocabulary. If no match is found, the type is accepted as new (ADR-603) and written with the temporary category `llm_generated`:
 
 ```python
 age_client.add_edge_type(
@@ -108,11 +108,11 @@ age_client.add_edge_type(
     category="llm_generated",
     added_by="llm_extractor",
     is_builtin=False,
-    auto_categorize=True   # triggers ADR-047 categorization
+    auto_categorize=True   # triggers ADR-605 categorization
 )
 ```
 
-### Automatic categorization (ADR-047)
+### Automatic categorization (ADR-605)
 
 The `VocabularyCategorizer` (`api/app/lib/vocabulary_categorizer.py`) assigns the new type to one of 11 semantic categories by computing cosine similarity between the new type's embedding and a set of hand-validated seed types.
 
@@ -169,7 +169,7 @@ Three feedback loops improve match quality over time, without any explicit retra
 
 **Vocabulary growth.** Each new relationship type the LLM discovers — once categorized — becomes available for fuzzy matching in subsequent ingestion runs. The vocabulary grows with the corpus, reducing the rate of novel type discovery over time.
 
-**Grounding feedback (ADR-028, ADR-044, ADR-058).** Concepts with high grounding strength (consistent evidence across sources, supported by connected concepts) are more semantically stable. Low grounding may indicate extraction noise. This signal can guide threshold tuning: if low-grounding concepts are proliferating, the merge threshold may be too permissive.
+**Grounding feedback (ADR-404, ADR-808, ADR-811).** Concepts with high grounding strength (consistent evidence across sources, supported by connected concepts) are more semantically stable. Low grounding may indicate extraction noise. This signal can guide threshold tuning: if low-grounding concepts are proliferating, the merge threshold may be too permissive.
 
 ---
 
@@ -177,9 +177,9 @@ Three feedback loops improve match quality over time, without any explicit retra
 
 **Conservative merge by default.** The strict threshold (0.85) creates new concepts when similarity is ambiguous rather than merging. Duplicates can be merged later — via `kg vocab consolidate` or manually. False merges are harder to undo, so the system prefers the recoverable error.
 
-**O(N) full scan.** At current graph sizes, the NumPy full scan adds 10–50ms per concept and is acceptable. ADR-055 documents the path to HNSW indexing when this becomes a bottleneck.
+**O(N) full scan.** At current graph sizes, the NumPy full scan adds 10–50ms per concept and is acceptable. ADR-112 documents the path to HNSW indexing when this becomes a bottleneck.
 
-**LLM context window.** Showing 30 existing concepts to the LLM costs roughly 300 tokens per extraction chunk and does not scale past approximately 100 concepts in context. Future work (ADR-072) explores semantic retrieval to replace the fixed list with a targeted selection.
+**LLM context window.** Showing 30 existing concepts to the LLM costs roughly 300 tokens per extraction chunk and does not scale past approximately 100 concepts in context. Future work (ADR-306) explores semantic retrieval to replace the fixed list with a targeted selection.
 
 ---
 
@@ -220,12 +220,12 @@ kg vocab update RELATIONSHIP_TYPE --category causation --manual
 
 ## Related ADRs
 
-- **ADR-028:** Grounding Strength Calculation
-- **ADR-032:** Automatic Edge Vocabulary Expansion
-- **ADR-044:** Probabilistic Truth Convergence
-- **ADR-047:** Probabilistic Vocabulary Categorization
-- **ADR-048:** GraphQueryFacade (namespace safety — ensures `:Concept` labels in all upsert queries)
-- **ADR-055:** HNSW Vector Indexing (O(N) → O(log N) migration path)
-- **ADR-058:** Polarity Axis Triangulation
-- **ADR-065:** Epistemic Status Classification
-- **ADR-072:** Configuration-Driven Matching
+- **ADR-404:** Grounding Strength Calculation
+- **ADR-603:** Automatic Edge Vocabulary Expansion
+- **ADR-808:** Probabilistic Truth Convergence
+- **ADR-605:** Probabilistic Vocabulary Categorization
+- **ADR-606:** GraphQueryFacade (namespace safety — ensures `:Concept` labels in all upsert queries)
+- **ADR-112:** HNSW Vector Indexing (O(N) → O(log N) migration path)
+- **ADR-811:** Polarity Axis Triangulation
+- **ADR-610:** Epistemic Status Classification
+- **ADR-306:** Configuration-Driven Matching

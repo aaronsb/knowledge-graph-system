@@ -1,5 +1,5 @@
 """
-Epistemic Re-measurement Worker (ADR-065 Phase 2).
+Epistemic Re-measurement Worker (ADR-610 Phase 2).
 
 Executes epistemic status measurement for all vocabulary types and resets
 the vocabulary_change_counter delta. Triggered by EpistemicRemeasurementLauncher
@@ -74,7 +74,7 @@ def run_epistemic_remeasurement_worker(
             })
 
             # Measure all vocabulary types
-            # This also resets the vocabulary_change_counter delta to 0 (see ADR-065)
+            # This also resets the vocabulary_change_counter delta to 0 (see ADR-610)
             results = service.measure_all_vocabulary(
                 sample_size=sample_size,
                 store=store

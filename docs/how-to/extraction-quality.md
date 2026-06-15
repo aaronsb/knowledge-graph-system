@@ -8,7 +8,7 @@ mode: how-to
 
 Different AI providers produce different graph characteristics from the same document. This page helps you choose a provider based on measured trade-offs between concept volume, schema compliance, speed, and cost.
 
-All providers flow through the same Kappa Graph ingestion pipeline — the same chunker, relationship normalizer, and embeddings. Quality differences are model-dependent, not architectural (ADR-042).
+All providers flow through the same Kappa Graph ingestion pipeline — the same chunker, relationship normalizer, and embeddings. Quality differences are model-dependent, not architectural (ADR-806).
 
 ---
 
@@ -44,7 +44,7 @@ The figures below come from a single test document (a 6-chunk philosophical lect
 
 ### What "canonical adherence" means for your graph
 
-Each time a model emits a relationship type that is not in the canonical 30-type taxonomy, the fuzzy matcher tries to correct it. When no good match exists, the system accepts the new type and adds it to the vocabulary (ADR-032). After 100 documents:
+Each time a model emits a relationship type that is not in the canonical 30-type taxonomy, the fuzzy matcher tries to correct it. When no good match exists, the system accepts the new type and adds it to the vocabulary (ADR-603). After 100 documents:
 
 | Provider | Estimated relationship types | Canonical | Non-canonical |
 |---|---|---|---|
@@ -188,5 +188,5 @@ Compare: concept count, relationship count, unique relationship types, and canon
 
 - [Configure AI Providers](ai-providers.md) — set API keys, switch providers, configure Ollama
 - [Consolidate Vocabulary](vocabulary.md) — repair schema drift from non-canonical types
-- ADR-042 — local LLM inference architecture
-- ADR-032 — relationship type acceptance and vocabulary growth policy
+- ADR-806 — local LLM inference architecture
+- ADR-603 — relationship type acceptance and vocabulary growth policy

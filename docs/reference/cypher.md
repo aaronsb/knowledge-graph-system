@@ -74,7 +74,7 @@ These differ from Neo4j behavior and affect every query in this document.
 
 | Constraint | Detail |
 |---|---|
-| No `shortestPath()` | AGE does not implement Neo4j's `shortestPath()` or `SHORTEST` keyword. Use variable-length patterns or application-level BFS (ADR-076). See [AGE issue #2162](https://github.com/apache/age/issues/2162). |
+| No `shortestPath()` | AGE does not implement Neo4j's `shortestPath()` or `SHORTEST` keyword. Use variable-length patterns or application-level BFS (ADR-506). See [AGE issue #2162](https://github.com/apache/age/issues/2162). |
 | `ORDER BY` on paths | AGE does not support `ORDER BY` on path variables directly. Extract a sortable value with `WITH` first. |
 | Variable-length path cost | `-[*1..N]-` enumerates all paths (exponential). Keep `N ≤ 4` for interactive queries. See [AGE issue #195](https://github.com/apache/age/issues/195). |
 | Result type | AGE returns `agtype`. Parse with `_parse_agtype()` in Python; extract column names with `_extract_column_spec()`. |
@@ -586,7 +586,7 @@ ORDER BY len
 
 - Apache AGE documentation: <https://age.apache.org/age-manual/master/intro/overview.html>
 - openCypher language reference: <https://s3.amazonaws.com/artifacts.opencypher.org/openCypher9.pdf>
-- AGE vs Neo4j differences: ADR-016
-- Path-finding optimization: ADR-076
+- AGE vs Neo4j differences: ADR-208
+- Path-finding optimization: ADR-506
 - AGE `shortestPath()` issue: <https://github.com/apache/age/issues/2162>
 - AGE variable-length path performance: <https://github.com/apache/age/issues/195>

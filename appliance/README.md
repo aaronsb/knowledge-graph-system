@@ -4,7 +4,7 @@ Build tooling for the **x86 thin-appliance VM image** — Stage 2 of the
 distribution strategy in
 [ADR-103](../docs/architecture/infrastructure/ADR-103-distribution-strategy-nomic-first-thin-appliance-with-app-store-tenancy.md).
 
-The appliance is **ADR-086's "cube" deployment, baked into a VM**: a minimal
+The appliance is **ADR-117's "cube" deployment, baked into a VM**: a minimal
 Debian host with Docker + the repo at `/opt/kg`, configured to pull GHCR images,
 plus a oneshot first-boot unit that mints per-instance secrets and starts the
 platform. It is **thin** — container images are pulled on first boot, so updates

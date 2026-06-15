@@ -2194,7 +2194,7 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
 
-        # Backup restore (ADR-015) and document/image ingest stream multipart
+        # Backup restore (ADR-107) and document/image ingest stream multipart
         # bodies that scale with the data. nginx's 1 MB default rejects them
         # with 413 before they reach the endpoint. Bounded (not 0/unlimited):
         # this cap runs before the route's auth dependency and nginx buffers
@@ -2245,7 +2245,7 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto https;
 
-        # Backup restore (ADR-015) and document/image ingest stream multipart
+        # Backup restore (ADR-107) and document/image ingest stream multipart
         # bodies that scale with the data. nginx's 1 MB default rejects them
         # with 413 before they reach the endpoint. Bounded (not 0/unlimited):
         # this cap runs before the route's auth dependency and nginx buffers

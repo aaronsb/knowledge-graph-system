@@ -5,14 +5,14 @@ deciders:
   - aaronsb
   - claude
 related:
-  - ADR-017
-  - ADR-027
-  - ADR-028
-  - ADR-031
-  - ADR-054
-  - ADR-060
-  - ADR-074
-  - ADR-082
+  - ADR-402
+  - ADR-403
+  - ADR-404
+  - ADR-405
+  - ADR-406
+  - ADR-407
+  - ADR-409
+  - ADR-410
 ---
 
 # ADR-400: Operative RBAC and Endpoint Security Baseline
@@ -20,10 +20,10 @@ related:
 ## Context
 
 The authentication and authorization design of this platform accreted across nine
-legacy-numbered ADRs (ADR-017, 027, 028, 031, 054, 060, 062, 074, 082) and a long
+legacy-numbered ADRs (ADR-402, 027, 028, 031, 054, 060, 062, 074, 082) and a long
 chain of SQL migrations. Over time the **documents drifted from the implementation**.
-Most of the governing ADRs were never accepted — ADR-017, 028, 060, and 074 are still
-`Proposed`, ADR-027 is `Superseded` — yet the system shipped a concrete RBAC model
+Most of the governing ADRs were never accepted — ADR-402, 028, 060, and 074 are still
+`Proposed`, ADR-403 is `Superseded` — yet the system shipped a concrete RBAC model
 seeded by migrations and enforced by Python code that quietly overran what those
 proposals describe.
 
@@ -33,23 +33,23 @@ the platform on the open internet, reconstructed the **operative** model from th
 migration chain and the enforcement code (treating the ADRs only as a cross-check) and
 confirmed six material divergences:
 
-1. **ADR-060** documents three security levels enforced via `require_role("admin")`.
+1. **ADR-407** documents three security levels enforced via `require_role("admin")`.
    In reality `require_role` checks only the `primary_role` string with no hierarchy —
    `require_role("admin")` would *reject* the seeded default admin (upgraded to
    `platform_admin` by migration 038). The live mechanism is `require_permission`
    against seeded grants with check-time `parent_role` inheritance.
-2. **ADR-074** implies the admin/platform_admin split removed critical operations from
+2. **ADR-409** implies the admin/platform_admin split removed critical operations from
    `admin`. Migrations 037/040/057 re-granted `backups:restore`, full graph CRUD, and
    `workers:manage` back to `admin`.
-3. **ADR-027/074** state user creation is admin-gated. In reality `POST /auth/register`
+3. **ADR-403/074** state user creation is admin-gated. In reality `POST /auth/register`
    is public and writes a client-supplied role (the validator permits `platform_admin`).
-4. **ADR-054** is mostly accurate (legacy login + API-key auth removed) but residual
+4. **ADR-406** is mostly accurate (legacy login + API-key auth removed) but residual
    dead surfaces remain (`get_api_key_user()` queries a dropped table;
    `OAuth2PasswordBearer` still advertises `tokenUrl=/auth/login`).
-5. **ADR-028** presents `kg_auth.has_permission()` as the canonical, hierarchy-aware
+5. **ADR-404** presents `kg_auth.has_permission()` as the canonical, hierarchy-aware
    check. The SQL function ignores `primary_role` and does not walk `parent_role`; the
    authoritative path is the Python `PermissionChecker`.
-6. **ADR-028** describes a `jobs` resource with `read/write/approve/delete`. Migration
+6. **ADR-404** describes a `jobs` resource with `read/write/approve/delete`. Migration
    041 re-registered jobs as `read/cancel/delete` and orphaned the baseline
    `jobs:write`/`approve` grants; the baseline `roles`/`resources` resources were
    superseded by the `rbac` resource.
@@ -151,13 +151,13 @@ admin-only**), `query_definitions` (035), `resource_grants`/`groups` (034, via
 
 ### Relationship to other ADRs
 
-- **Supersedes** (drifted/contradicted): ADR-017, ADR-027, ADR-028, ADR-060, ADR-074.
+- **Supersedes** (drifted/contradicted): ADR-402, ADR-403, ADR-404, ADR-407, ADR-409.
   Their historical context is preserved; their normative claims are replaced by this
   baseline.
-- **Cross-references** (still accurate, remain in force): **ADR-031** (encrypted API key
-  storage), **ADR-054** (OAuth 2.0 client management — modulo the residual dead surfaces
-  it should be updated to acknowledge), **ADR-082** (user scoping and artifact ownership
-  — the ownership model above), **ADR-062** (MCP file-ingestion security — the audit
+- **Cross-references** (still accurate, remain in force): **ADR-405** (encrypted API key
+  storage), **ADR-406** (OAuth 2.0 client management — modulo the residual dead surfaces
+  it should be updated to acknowledge), **ADR-410** (user scoping and artifact ownership
+  — the ownership model above), **ADR-408** (MCP file-ingestion security — the audit
   confirmed the client-side path allowlist is the correct trust boundary; workers never
   dereference client-supplied paths).
 

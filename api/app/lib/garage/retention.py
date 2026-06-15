@@ -1,5 +1,5 @@
 """
-Retention Policy Manager - Storage lifecycle management (ADR-080).
+Retention Policy Manager - Storage lifecycle management (ADR-115).
 
 This module manages retention policies for different artifact types stored
 in Garage, preventing unbounded storage growth while preserving important data.

@@ -1,7 +1,7 @@
 /**
  * MCP File Access Configuration Commands
  *
- * ADR-062: MCP File Ingestion Security Model
+ * ADR-408: MCP File Ingestion Security Model
  *
  * Manage path allowlist for secure file/directory ingestion from MCP server.
  */
@@ -22,7 +22,7 @@ export const mcpConfigCommand = setCommandHelp(
   'Manage MCP file access allowlist',
   `Manage path allowlist for secure file/directory ingestion from MCP server.
 
-Security Model (ADR-062):
+Security Model (ADR-408):
 - Fail-secure validation (blocked patterns checked first)
 - Explicit allowlist (no access without configuration)
 - CLI-only management (agent can read, not write)

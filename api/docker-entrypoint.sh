@@ -13,7 +13,7 @@
 # `cp -n` never clobbers, so models a user later switches to or adds, and any
 # updated weights, are preserved across restarts. After seeding,
 # EmbeddingModelManager's local_files_only-first load finds the weights and
-# never touches the network. See ADR-103 (nomic-first appliance) and ADR-039.
+# never touches the network. See ADR-103 (nomic-first appliance) and ADR-804.
 set -e
 
 SEED=/opt/hf-seed

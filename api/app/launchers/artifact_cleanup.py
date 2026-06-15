@@ -1,5 +1,5 @@
 """
-Artifact Cleanup Launcher (ADR-083).
+Artifact Cleanup Launcher (ADR-116).
 
 Scheduled launcher that triggers cleanup of expired artifacts.
 Runs daily to maintain storage health.

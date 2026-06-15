@@ -1,5 +1,5 @@
 """
-Query Definitions Routes (ADR-083)
+Query Definitions Routes (ADR-116)
 
 API endpoints for managing saved query definitions - recipes that can be re-executed.
 """

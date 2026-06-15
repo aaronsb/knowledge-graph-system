@@ -1,5 +1,5 @@
 """
-Edge Routes - Deterministic edge CRUD (ADR-089).
+Edge Routes - Deterministic edge CRUD (ADR-308).
 
 Thin HTTP layer that delegates to EdgeService.
 Handles:

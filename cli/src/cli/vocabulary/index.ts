@@ -1,5 +1,5 @@
 /**
- * Vocabulary Management Commands (ADR-032)
+ * Vocabulary Management Commands (ADR-603)
  * Consolidated entry point for all vocabulary subcommands
  */
 
@@ -19,7 +19,7 @@ import { createSyncCommand } from './sync';
 export const vocabularyCommand = setCommandHelp(
   new Command('vocabulary'),
   'Vocabulary management and consolidation',
-  'Edge vocabulary management and consolidation. Manages relationship types between concepts including builtin types (30 predefined), custom types (LLM-extracted from documents), categories (semantic groupings), consolidation (AI-assisted merging via AITL - ADR-032), and auto-categorization (probabilistic via embeddings - ADR-047). Features zone-based management (GREEN/WATCH/DANGER/EMERGENCY) and LLM-determined relationship direction (ADR-049).'
+  'Edge vocabulary management and consolidation. Manages relationship types between concepts including builtin types (30 predefined), custom types (LLM-extracted from documents), categories (semantic groupings), consolidation (AI-assisted merging via AITL - ADR-603), and auto-categorization (probabilistic via embeddings - ADR-605). Features zone-based management (GREEN/WATCH/DANGER/EMERGENCY) and LLM-determined relationship direction (ADR-810).'
 )
   .alias('vocab')
   .showHelpAfterError('(add --help for additional information)')

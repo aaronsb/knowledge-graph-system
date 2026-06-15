@@ -6,8 +6,8 @@ deciders:
   - claude
 related:
   - ADR-400
-  - ADR-048
-  - ADR-060
+  - ADR-606
+  - ADR-407
 ---
 
 # ADR-401: Deterministic Security Enforcement Baseline

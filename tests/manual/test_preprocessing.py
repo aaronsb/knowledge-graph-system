@@ -74,7 +74,7 @@ def test_docs_directory():
     # Test a few complex ones
     test_files = [
         'docs/api/OPENCYPHER_QUERIES.md',
-        'docs/architecture/ADR-016-apache-age-migration.md',
+        'docs/architecture/ADR-208-apache-age-migration.md',
         'docs/guides/QUICKSTART.md',
     ]
 
@@ -160,7 +160,7 @@ This paragraph has `inline_code` and even longer inline code like `MATCH (c:Conc
 
 ## Conclusion
 
-This tests various edge cases from ADR-023.
+This tests various edge cases from ADR-301.
 '''
 
     print(f"\n{'='*80}")

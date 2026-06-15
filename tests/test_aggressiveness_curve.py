@@ -2,7 +2,7 @@
 Unit tests for aggressiveness_curve.py module.
 
 Tests Cubic Bezier implementation and aggressiveness calculation for
-automatic edge vocabulary expansion (ADR-032).
+automatic edge vocabulary expansion (ADR-603).
 
 Test Coverage:
 - CubicBezier class: bezier(), solve_x(), get_y_for_x()
@@ -92,7 +92,7 @@ class TestCubicBezier:
         """
         Test that 'aggressive' profile stays low until 75%, then accelerates.
 
-        This is the RECOMMENDED profile per ADR-032.
+        This is the RECOMMENDED profile per ADR-603.
         CubicBezier(0.1, 0.0, 0.9, 1.0)
         """
         curve = AGGRESSIVENESS_CURVES["aggressive"]
@@ -506,7 +506,7 @@ class TestCurveIntegration:
 
     def test_batching_scenario(self):
         """
-        Test scenario from ADR-032: batching with buffer.
+        Test scenario from ADR-603: batching with buffer.
 
         At 91 types, prune to 85 (excess + buffer) to avoid immediate re-trigger.
         """

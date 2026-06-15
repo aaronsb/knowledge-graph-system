@@ -5,8 +5,8 @@ deciders:
   - aaronsb
   - claude
 related:
-  - ADR-039
-  - ADR-086
+  - ADR-804
+  - ADR-117
   - ADR-100
 ---
 
@@ -255,7 +255,7 @@ worth the marginal user.
 The wheel-based ROCm variants (`rocm60` / `rocm61`) defined in this ADR
 were never published. Operationally they were a paper specification —
 the build args existed in `api/Dockerfile`, the `derive_kg_api_image_tag`
-helper routed `GPU_MODE=amd` to `:latest` as a stub, and ADR-043's CPU
+helper routed `GPU_MODE=amd` to `:latest` as a stub, and ADR-807's CPU
 fallback caught the inevitable failure on every AMD install that picked
 that path. The init wizard advertised an option ("AMD GPU (ROCm 6.x —
 preview)") that resolved to a CUDA-bundled CPU image — exactly the
@@ -278,7 +278,7 @@ The removal:
   callers that still pass it.
 
 What stays: the `amd-host` path (rocm/pytorch official base image, ROCm
-7.x), the ADR-043 CPU fallback, and the multi-GPU `ROCR_VISIBLE_DEVICES`
+7.x), the ADR-807 CPU fallback, and the multi-GPU `ROCR_VISIBLE_DEVICES`
 note in the wizard.
 
 Rationale for the change: ADR-101's original "Drop ROCm support and

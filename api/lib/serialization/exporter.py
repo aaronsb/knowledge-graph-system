@@ -195,7 +195,7 @@ class DataExporter:
                 "full_text": str(record.get("full_text", "")).strip('"'),
             }
 
-            # Add Garage fields if present (sources may predate ADR-081)
+            # Add Garage fields if present (sources may predate ADR-307)
             if garage_key and garage_key != "None":
                 source["garage_key"] = garage_key
             if content_type and content_type != "None":
@@ -574,7 +574,7 @@ class DataExporter:
     @staticmethod
     def export_vocabulary(client: AGEClient) -> List[Dict[str, Any]]:
         """
-        Export relationship vocabulary table (ADR-032)
+        Export relationship vocabulary table (ADR-603)
 
         Exports all edge types from kg_api.relationship_vocabulary table,
         including builtin types and extended vocabulary discovered during ingestion.
@@ -639,7 +639,7 @@ class DataExporter:
     @staticmethod
     def _log_vocabulary_summary(relationships: List[Dict[str, Any]], vocabulary: List[Dict[str, Any]]):
         """
-        Log vocabulary-aware summary of backed up relationships (ADR-032)
+        Log vocabulary-aware summary of backed up relationships (ADR-603)
 
         Instead of logging every relationship, provide a high-level view of
         edge type distribution similar to kg db stats.

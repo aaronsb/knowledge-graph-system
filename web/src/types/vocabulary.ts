@@ -8,7 +8,7 @@
  */
 
 /**
- * Vocabulary pressure zone (ADR-032 / ZoneEnum). Lowercase to match the API.
+ * Vocabulary pressure zone (ADR-603 / ZoneEnum). Lowercase to match the API.
  * Kept as a permissive string union so alternate labels don't break typing.
  */
 export type VocabularyZone =

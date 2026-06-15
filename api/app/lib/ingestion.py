@@ -239,16 +239,16 @@ def process_chunk(
     existing_concepts: List[Dict[str, Any]],
     recent_concept_ids: List[str],
     verbose: bool = True,
-    # ADR-051: Provenance metadata for edge tracking
+    # ADR-304: Provenance metadata for edge tracking
     job_id: Optional[str] = None,
     document_id: Optional[str] = None,
     user_id: Optional[str] = None,
-    # ADR-057: Image source metadata
+    # ADR-305: Image source metadata
     content_type: str = "document",
     storage_key: Optional[str] = None,
     visual_embedding: Optional[List[float]] = None,
     text_embedding: Optional[List[float]] = None,
-    # ADR-081: Source document lifecycle
+    # ADR-307: Source document lifecycle
     garage_key: Optional[str] = None,
     content_hash: Optional[str] = None,
     # ADR-203: Graph epoch event_id tagging Instances created during this job
@@ -270,9 +270,9 @@ def process_chunk(
         existing_concepts: List of existing concepts for LLM context
         recent_concept_ids: List to track recent concept IDs
         verbose: Show detailed concept summary
-        job_id: Job ID creating these relationships (ADR-051 provenance)
-        document_id: Document hash (content_hash) for edge metadata (ADR-051)
-        user_id: User who initiated this ingestion (ADR-051 provenance)
+        job_id: Job ID creating these relationships (ADR-304 provenance)
+        document_id: Document hash (content_hash) for edge metadata (ADR-304)
+        user_id: User who initiated this ingestion (ADR-304 provenance)
 
     Returns:
         Updated list of recent concept IDs
@@ -280,7 +280,7 @@ def process_chunk(
     Raises:
         Exception: If processing fails
     """
-    # ADR-051: Generate unique source ID using document hash (not filename)
+    # ADR-304: Generate unique source ID using document hash (not filename)
     # This ensures source_id is unique per document content, preventing collisions
     # when multiple documents share the same filename (e.g., "text_input")
     if document_id:
@@ -303,12 +303,12 @@ def process_chunk(
             paragraph=chunk.chunk_number,  # Using chunk number as paragraph
             full_text=chunk.text,
             file_path=file_path,  # Track actual source file
-            # ADR-057: Image source metadata
+            # ADR-305: Image source metadata
             content_type=content_type,
             storage_key=storage_key,
             visual_embedding=visual_embedding,
             embedding=text_embedding,
-            # ADR-081: Source document lifecycle
+            # ADR-307: Source document lifecycle
             garage_key=garage_key,
             content_hash=content_hash,
             char_offset_start=chunk.start_char,
@@ -320,7 +320,7 @@ def process_chunk(
     except Exception as e:
         raise Exception(f"Failed to create Source node: {e}")
 
-    # Step 1.5: Generate source embeddings (ADR-068 Phase 2)
+    # Step 1.5: Generate source embeddings (ADR-812 Phase 2)
     # Synchronous call - embeddings generated as part of ingestion
     try:
         from api.app.workers.source_embedding_worker import generate_source_embeddings
@@ -363,7 +363,7 @@ def process_chunk(
             text=chunk.text,
             source_id=source_id,
             existing_concepts=context_concepts,
-            age_client=age_client  # ADR-049: Pass client for dynamic direction examples
+            age_client=age_client  # ADR-810: Pass client for dynamic direction examples
         )
         extraction = extraction_response["result"]
         extraction_tokens = extraction_response.get("tokens", 0)
@@ -578,12 +578,12 @@ def process_chunk(
             llm_to_id = rel["to_concept_id"]
             llm_rel_type = rel["relationship_type"]
             confidence = rel.get("confidence", 1.0)  # Default to 1.0 if missing
-            direction_semantics = rel.get("direction_semantics", "outward")  # ADR-049: LLM-determined direction
+            direction_semantics = rel.get("direction_semantics", "outward")  # ADR-810: LLM-determined direction
         except (KeyError, TypeError) as e:
             logger.warning(f"  ⚠ Skipping invalid relationship structure: {e}")
             continue
 
-        # Validate direction_semantics (ADR-049)
+        # Validate direction_semantics (ADR-810)
         if direction_semantics not in ["outward", "inward", "bidirectional"]:
             logger.warning(f"  ⚠ Invalid direction_semantics '{direction_semantics}' for {llm_rel_type}, defaulting to 'outward'")
             direction_semantics = "outward"
@@ -596,7 +596,7 @@ def process_chunk(
         )
 
         if not canonical_type:
-            # ADR-032: Automatically accept new edge types for vocabulary expansion
+            # ADR-603: Automatically accept new edge types for vocabulary expansion
             # Instead of skipping, use the LLM's type and mark it as uncategorized
             canonical_type = llm_rel_type.strip().upper()
             category = "llm_generated"
@@ -612,7 +612,7 @@ def process_chunk(
                     description=f"LLM-generated relationship type from ingestion",
                     added_by="llm_extractor",
                     is_builtin=False,
-                    direction_semantics=direction_semantics,  # ADR-049: Store LLM's direction decision
+                    direction_semantics=direction_semantics,  # ADR-810: Store LLM's direction decision
                     ai_provider=provider  # Pass provider for automatic embedding generation
                 )
                 # Only log if this call actually added the type (not if it already existed)
@@ -642,7 +642,7 @@ def process_chunk(
                 rel_type=canonical_type,
                 category=category,
                 confidence=confidence,
-                # ADR-051: Add provenance metadata to edges
+                # ADR-304: Add provenance metadata to edges
                 created_by=user_id,
                 source="llm_extraction",
                 job_id=job_id,

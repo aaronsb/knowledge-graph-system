@@ -27,12 +27,12 @@ These tools enable semantic search, concept exploration, and graph traversal dir
 - [`ontology`](#ontology) - Manage ontologies (knowledge domains/collections): list all, get info, list files, or delete. Use action parameter to specify operation.
 - [`job`](#job) - Manage ingestion jobs: get status, list jobs, approve, cancel, delete, or cleanup. Use action parameter to specify operation.
 - [`ingest`](#ingest) - Ingest content into the knowledge graph: submit text, inspect files, ingest files, or ingest directories. Use action parameter to specify operation.
-- [`source`](#source) - Retrieve original source content (text or image) for a source node (ADR-057).
-- [`epistemic_status`](#epistemic-status) - Vocabulary epistemic status classification (ADR-065 Phase 2). Knowledge validation state for relationship types.
-- [`analyze_polarity_axis`](#analyze-polarity-axis) - Analyze bidirectional semantic dimension (polarity axis) between two concept poles (ADR-070).
-- [`artifact`](#artifact) - Manage saved artifacts (ADR-083). Artifacts persist computed results like search results, projections, and polarity analyses for later recall.
-- [`document`](#document) - Work with documents: list all, show content, or get concepts (ADR-084).
-- [`graph`](#graph) - Create, edit, delete, and list concepts and edges in the knowledge graph (ADR-089).
+- [`source`](#source) - Retrieve original source content (text or image) for a source node (ADR-305).
+- [`epistemic_status`](#epistemic-status) - Vocabulary epistemic status classification (ADR-610 Phase 2). Knowledge validation state for relationship types.
+- [`analyze_polarity_axis`](#analyze-polarity-axis) - Analyze bidirectional semantic dimension (polarity axis) between two concept poles (ADR-813).
+- [`artifact`](#artifact) - Manage saved artifacts (ADR-116). Artifacts persist computed results like search results, projections, and polarity analyses for later recall.
+- [`document`](#document) - Work with documents: list all, show content, or get concepts (ADR-507).
+- [`graph`](#graph) - Create, edit, delete, and list concepts and edges in the knowledge graph (ADR-308).
 - [`program`](#program) - Compose and execute GraphProgram queries against the knowledge graph (ADR-500).
 - [`epoch`](#epoch) - Read the graph epoch event log (ADR-203).
 - [`catalog`](#catalog) - Browse what is actually stored in the knowledge graph (ADR-501).
@@ -51,13 +51,13 @@ CONCEPT SEARCH (type: "concepts", default) - Find concepts by semantic similarit
 - Image indicators: Visual evidence when available
 - Document sources: Where concepts originated
 
-SOURCE SEARCH (type: "sources") - Find source text passages directly (ADR-068):
+SOURCE SEARCH (type: "sources") - Find source text passages directly (ADR-812):
 - Searches source document embeddings, not concept embeddings
 - Returns matched text chunks with character offsets for highlighting
 - Shows concepts extracted from those passages
 - Useful for RAG workflows and finding original context
 
-DOCUMENT SEARCH (type: "documents") - Find documents by semantic similarity (ADR-084):
+DOCUMENT SEARCH (type: "documents") - Find documents by semantic similarity (ADR-507):
 - Searches at document level (aggregates source chunks)
 - Returns documents ranked by best matching chunk similarity
 - Shows concepts extracted from each document
@@ -225,7 +225,7 @@ Ingest content into the knowledge graph: submit text, inspect files, ingest file
 
 ### source
 
-Retrieve original source content (text or image) for a source node (ADR-057).
+Retrieve original source content (text or image) for a source node (ADR-305).
 
 For IMAGE sources: Returns the image for visual verification
 For TEXT sources: Returns full_text content with metadata (document, paragraph, offsets)
@@ -246,7 +246,7 @@ Source IDs appear in search results and concept details evidence. Use concept (a
 
 ### epistemic_status
 
-Vocabulary epistemic status classification (ADR-065 Phase 2). Knowledge validation state for relationship types.
+Vocabulary epistemic status classification (ADR-610 Phase 2). Knowledge validation state for relationship types.
 
 Three actions available:
 - "list": List all vocabulary types with epistemic status classifications (AFFIRMATIVE/CONTESTED/CONTRADICTORY/HISTORICAL/INSUFFICIENT_DATA/UNCLASSIFIED)
@@ -282,7 +282,7 @@ Concept (action: "related") and connect accept include_epistemic_status/exclude_
 
 ### analyze_polarity_axis
 
-Analyze bidirectional semantic dimension (polarity axis) between two concept poles (ADR-070).
+Analyze bidirectional semantic dimension (polarity axis) between two concept poles (ADR-813).
 
 Projects concepts onto an axis formed by opposing semantic poles (e.g., Modern ↔ Traditional, Centralized ↔ Distributed). Returns:
 - Axis quality and magnitude (semantic distinctness)
@@ -317,7 +317,7 @@ Requires concept IDs for poles — use search to find opposing concepts first. U
 
 ### artifact
 
-Manage saved artifacts (ADR-083). Artifacts persist computed results like search results, projections, and polarity analyses for later recall.
+Manage saved artifacts (ADR-116). Artifacts persist computed results like search results, projections, and polarity analyses for later recall.
 
 Three actions available:
 - "list": List artifacts with optional filtering by type, representation, or ontology
@@ -347,7 +347,7 @@ Use artifacts to:
 
 ### document
 
-Work with documents: list all, show content, or get concepts (ADR-084).
+Work with documents: list all, show content, or get concepts (ADR-507).
 
 Three actions available:
 - "list": List all documents with optional ontology filter
@@ -374,7 +374,7 @@ Use search tool with type="documents" to find documents semantically. Use docume
 
 ### graph
 
-Create, edit, delete, and list concepts and edges in the knowledge graph (ADR-089).
+Create, edit, delete, and list concepts and edges in the knowledge graph (ADR-308).
 
 This tool provides deterministic graph editing without going through the LLM ingest pipeline.
 Use for manual curation, agent-driven knowledge building, and precise graph manipulation.

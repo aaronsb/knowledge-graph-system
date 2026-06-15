@@ -1,5 +1,5 @@
 """
-Pydantic models for deterministic edge CRUD (ADR-089).
+Pydantic models for deterministic edge CRUD (ADR-308).
 
 These models support direct relationship creation/editing between concepts
 without going through LLM ingestion.
@@ -27,7 +27,7 @@ class EdgeSource(str, Enum):
 
 class RelationshipCategory(str, Enum):
     """
-    Semantic category of the relationship (ADR-022).
+    Semantic category of the relationship (ADR-600).
 
     Categories help with query filtering and visualization.
     """

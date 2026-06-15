@@ -4,7 +4,7 @@
  * Mounts the r3f Canvas and the scene composition (instanced nodes +
  * indexed edges, GPU force sim). Camera, sim axis count, and drag plane
  * dispatch from `settings.projection` ('2D' or '3D'). Consumes the
- * ExplorerPlugin contract from ADR-034; engine primitives come from the
+ * ExplorerPlugin contract from ADR-710; engine primitives come from the
  * scene/ subdirectory per ADR-702.
  *
  * Node palette: built per-dataset from the ontologies present

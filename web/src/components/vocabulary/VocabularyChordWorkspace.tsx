@@ -1,5 +1,5 @@
 /**
- * Vocabulary Chord Workspace (ADR-077)
+ * Vocabulary Chord Workspace (ADR-611)
  *
  * Query-specific vocabulary analysis that works with graph data
  * from 2D/3D explorers. Shows chord diagram for the current subgraph's

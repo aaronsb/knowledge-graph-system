@@ -2,7 +2,7 @@
 Unit tests for category_classifier.py module.
 
 Tests embedding-based category classification for automatic edge vocabulary
-expansion (ADR-032).
+expansion (ADR-603).
 
 Test Coverage:
 - CategoryClassification dataclass

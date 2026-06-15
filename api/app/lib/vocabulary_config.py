@@ -1,7 +1,7 @@
 """
 Vocabulary Configuration Management
 
-Handles reading and writing vocabulary configuration from database (ADR-032 + Migration 017).
+Handles reading and writing vocabulary configuration from database (ADR-603 + Migration 017).
 Provides functions for managing thresholds, profiles, and aggressiveness curves.
 """
 

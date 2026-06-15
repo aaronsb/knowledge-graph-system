@@ -41,7 +41,7 @@ kg admin extraction set --provider <provider> --model <model>
 
 ## Store API keys
 
-Keys are validated against the provider before being stored encrypted in `kg_api.system_api_keys` (ADR-031). Plaintext is never returned after storage.
+Keys are validated against the provider before being stored encrypted in `kg_api.system_api_keys` (ADR-405). Plaintext is never returned after storage.
 
 ```bash
 # Via operator (interactive prompt)

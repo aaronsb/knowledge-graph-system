@@ -180,5 +180,5 @@ When adding new development scripts:
 - [API Auth Testing Research](../../docs/testing/API_AUTH_TESTING_RESEARCH.md)
 - [API Auth Audit Summary](../../docs/testing/API_AUTH_AUDIT_SUMMARY.md)
 - [Testing Framework](./test/README.md)
-- [ADR-054: OAuth 2.0 Authentication](../../docs/architecture/ADR-054-oauth-authentication.md)
-- [ADR-028: Dynamic RBAC](../../docs/architecture/ADR-028-dynamic-rbac.md)
+- [ADR-406: OAuth 2.0 Authentication](../../docs/architecture/ADR-406-oauth-authentication.md)
+- [ADR-404: Dynamic RBAC](../../docs/architecture/ADR-404-dynamic-rbac.md)

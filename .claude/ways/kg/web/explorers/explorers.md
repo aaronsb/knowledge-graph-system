@@ -95,5 +95,5 @@ on a driver that does honour it.
 ## Reference
 
 - ADR-702 (`docs/architecture/user-interfaces/ADR-702-unified-graph-rendering-engine.md`) — the unified-engine commitment
-- ADR-034 — the ExplorerPlugin contract every explorer follows
+- ADR-710 — the ExplorerPlugin contract every explorer follows
 - `web/src/explorers/ForceGraph/scene/` — engine primitives (Scene, Nodes, Edges, Arrows, NodeLabels, EdgeLabels, useSim, useForceSim, useGpuForceSim, useDragHandler)

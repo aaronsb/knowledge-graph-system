@@ -1,5 +1,5 @@
 """
-Edge Service - Deterministic edge CRUD (ADR-089).
+Edge Service - Deterministic edge CRUD (ADR-308).
 
 Orchestrates edge (relationship) creation/editing without LLM ingestion.
 Delegates to AGEClient for graph operations.

@@ -1,5 +1,5 @@
 /**
- * Admin Commands (ADR-036)
+ * Admin Commands (ADR-712)
  * System administration: status, backup, restore, scheduler, AI config
  */
 
@@ -41,16 +41,16 @@ export const adminCommand = setCommandHelp(
   .addCommand(schedulerCommand)
   .addCommand(workersCommand);
 
-// ADR-027: Register user management commands
+// ADR-403: Register user management commands
 registerAuthAdminCommand(adminCommand);
 
-// ADR-028: Register RBAC management commands
+// ADR-404: Register RBAC management commands
 const client = createClientFromEnv();
 const rbacCommand = createRbacCommand(client);
 configureColoredHelp(rbacCommand);
 adminCommand.addCommand(rbacCommand);
 
-// ADR-039, ADR-041, ADR-802: Register AI configuration commands
+// ADR-804, ADR-805, ADR-802: Register AI configuration commands
 const embeddingCommand = createEmbeddingCommand(client);
 const extractionCommand = createExtractionCommand(client);
 const visionCommand = createVisionCommand(client);

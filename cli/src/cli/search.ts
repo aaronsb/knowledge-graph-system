@@ -18,7 +18,7 @@ import {
 import * as nodePath from 'path';
 
 /**
- * Format grounding strength for display (ADR-044)
+ * Format grounding strength for display (ADR-808)
  * This is the fallback when grounding_display is not available.
  */
 function formatGroundingStrength(grounding: number): string {
@@ -103,7 +103,7 @@ function formatGroundingWithConfidence(
 }
 
 /**
- * Format diversity score for display (ADR-063)
+ * Format diversity score for display (ADR-503)
  */
 function formatDiversity(diversity: number, relatedCount: number): string {
   const diversityPercent = (diversity * 100).toFixed(1);
@@ -122,7 +122,7 @@ function formatDiversity(diversity: number, relatedCount: number): string {
 }
 
 /**
- * Format authenticated diversity for display (ADR-044 + ADR-063)
+ * Format authenticated diversity for display (ADR-808 + ADR-503)
  */
 function formatAuthenticatedDiversity(authDiv: number): string {
   const percent = (Math.abs(authDiv) * 100).toFixed(1);
@@ -149,12 +149,12 @@ const queryCommand = setCommandHelp(
       .option('--min-similarity <number>', 'Minimum similarity score (0.0-1.0, default 0.7=70%, lower to 0.5 for broader matches)', '0.7')
       .option('--no-evidence', 'Hide evidence quotes (shown by default)')
       .option('--no-images', 'Hide inline image display (shown by default if chafa installed)')
-      .option('--no-grounding', 'Disable grounding strength calculation (ADR-044 probabilistic truth convergence) for faster results')
-      .option('--no-diversity', 'Disable semantic diversity calculation (ADR-063 authenticity signal) for faster results')
+      .option('--no-grounding', 'Disable grounding strength calculation (ADR-808 probabilistic truth convergence) for faster results')
+      .option('--no-diversity', 'Disable semantic diversity calculation (ADR-503 authenticity signal) for faster results')
       .option('--diversity-hops <number>', 'Maximum traversal depth for diversity (1-3, default 2)', '2')
       .option('--download <directory>', 'Download images to specified directory instead of displaying inline')
       .option('--json', 'Output raw JSON instead of formatted text for scripting')
-      .option('--save-artifact', 'Save result as persistent artifact (ADR-083)')
+      .option('--save-artifact', 'Save result as persistent artifact (ADR-116)')
       .action(async (query, options, command) => {
         try {
           const client = createClientFromEnv();
@@ -201,17 +201,17 @@ const queryCommand = setCommandHelp(
             console.log(`   ${colors.ui.key('Documents:')} ${colors.evidence.document(concept.documents.join(', '))}`);
             console.log(`   ${colors.ui.key('Evidence:')} ${colors.evidence.count(String(concept.evidence_count))} instances`);
 
-            // Display grounding with confidence-awareness (ADR-044 + grounding × confidence model)
+            // Display grounding with confidence-awareness (ADR-808 + grounding × confidence model)
             if (concept.grounding_strength !== undefined || concept.grounding_display) {
               console.log(`   ${colors.ui.key('Grounding:')} ${formatGroundingWithConfidence(concept.grounding_strength, concept.grounding_display, concept.confidence_level, concept.confidence_score)}`);
             }
 
-            // Display diversity if available (ADR-063)
+            // Display diversity if available (ADR-503)
             if (concept.diversity_score !== undefined && concept.diversity_score !== null && concept.diversity_related_count !== undefined) {
               console.log(`   ${colors.ui.key('Diversity:')} ${formatDiversity(concept.diversity_score, concept.diversity_related_count)}`);
             }
 
-            // Display authenticated diversity if available (ADR-044 + ADR-063)
+            // Display authenticated diversity if available (ADR-808 + ADR-503)
             if (concept.authenticated_diversity !== undefined && concept.authenticated_diversity !== null) {
               console.log(`   ${colors.ui.key('Authenticated:')} ${formatAuthenticatedDiversity(concept.authenticated_diversity)}`);
             }
@@ -226,7 +226,7 @@ const queryCommand = setCommandHelp(
                 console.log(`      ${colors.ui.bullet(`${idx + 1}.`)} ${colors.evidence.document(inst.document)} ${colors.evidence.paragraph(`(para ${inst.paragraph})`)}`);
                 console.log(`         ${colors.evidence.quote(`"${truncatedQuote}"`)}`);
 
-                // ADR-057: Handle images if available
+                // ADR-305: Handle images if available
                 if (inst.has_image && inst.source_id) {
                   const downloadDir = options.download;
 
@@ -283,7 +283,7 @@ const queryCommand = setCommandHelp(
             console.log(colors.status.dim(`   Try: kg search query "${query}" --min-similarity ${result.suggested_threshold}\n`));
           }
 
-          // ADR-083: Save result as artifact if requested
+          // ADR-116: Save result as artifact if requested
           if (options.saveArtifact && result.count > 0) {
             try {
               const artifactResult = await client.createArtifact({
@@ -322,7 +322,7 @@ const showCommand = setCommandHelp(
       .alias('details')  // backwards compatibility
       .showHelpAfterError()
       .argument('<concept-id>', 'Concept ID to retrieve (from search results)')
-      .option('--no-grounding', 'Disable grounding strength calculation (ADR-044 probabilistic truth convergence) for faster results')
+      .option('--no-grounding', 'Disable grounding strength calculation (ADR-808 probabilistic truth convergence) for faster results')
       .option('--json', 'Output raw JSON instead of formatted text for scripting')
       .action(async (conceptId, options, command) => {
         try {
@@ -347,7 +347,7 @@ const showCommand = setCommandHelp(
           console.log(`${colors.ui.key('Search Terms:')} ${colors.concept.searchTerms(concept.search_terms.join(', '))}`);
           console.log(`${colors.ui.key('Documents:')} ${colors.evidence.document(concept.documents.join(', '))}`);
 
-          // Display grounding with confidence-awareness (ADR-044 + grounding × confidence model)
+          // Display grounding with confidence-awareness (ADR-808 + grounding × confidence model)
           if (concept.grounding_strength !== undefined || concept.grounding_display) {
             console.log(`${colors.ui.key('Grounding:')} ${formatGroundingWithConfidence(concept.grounding_strength, concept.grounding_display, concept.confidence_level, concept.confidence_score)}`);
           }
@@ -387,9 +387,9 @@ const relatedCommand = setCommandHelp(
       .argument('<concept-id>', 'Starting concept ID for traversal')
       .option('-d, --depth <number>', 'Maximum traversal depth in hops (1-2 fast, 3-4 moderate, 5 slow)', '2')
       .option('-t, --types <types...>', 'Filter by relationship types (IMPLIES, ENABLES, SUPPORTS, etc. - see kg vocab list)')
-      .option('--include-epistemic <statuses...>', 'Only include relationships with these epistemic statuses (ADR-065): AFFIRMATIVE, CONTESTED, CONTRADICTORY, HISTORICAL')
-      .option('--exclude-epistemic <statuses...>', 'Exclude relationships with these epistemic statuses (ADR-065)')
-      .option('--no-grounding', 'Disable grounding strength calculation (ADR-044 probabilistic truth convergence) for faster results')
+      .option('--include-epistemic <statuses...>', 'Only include relationships with these epistemic statuses (ADR-610): AFFIRMATIVE, CONTESTED, CONTRADICTORY, HISTORICAL')
+      .option('--exclude-epistemic <statuses...>', 'Exclude relationships with these epistemic statuses (ADR-610)')
+      .option('--no-grounding', 'Disable grounding strength calculation (ADR-808 probabilistic truth convergence) for faster results')
       .option('--json', 'Output raw JSON instead of formatted text for scripting')
       .action(async (conceptId, options, command) => {
         try {
@@ -400,10 +400,10 @@ const relatedCommand = setCommandHelp(
             concept_id: conceptId,
             max_depth: parseInt(options.depth),
             relationship_types: options.types,
-            // ADR-065: Epistemic status filtering
+            // ADR-610: Epistemic status filtering
             include_epistemic_status: options.includeEpistemic,
             exclude_epistemic_status: options.excludeEpistemic,
-            // ADR-044: hydrate grounding for parity with search/connect (#280)
+            // ADR-808: hydrate grounding for parity with search/connect (#280)
             include_grounding: includeGrounding,
           });
 
@@ -454,8 +454,8 @@ const connectCommand = setCommandHelp(
       .option('--no-grounding', 'Disable grounding strength calculation (faster)')
       .option('--download <directory>', 'Download images to specified directory instead of displaying inline')
       .option('--json', 'Output raw JSON instead of formatted text')
-      .option('--include-epistemic <statuses...>', 'Only include relationships with these epistemic statuses (ADR-065): AFFIRMATIVE, CONTESTED, CONTRADICTORY, HISTORICAL')
-      .option('--exclude-epistemic <statuses...>', 'Exclude relationships with these epistemic statuses (ADR-065)')
+      .option('--include-epistemic <statuses...>', 'Only include relationships with these epistemic statuses (ADR-610): AFFIRMATIVE, CONTESTED, CONTRADICTORY, HISTORICAL')
+      .option('--exclude-epistemic <statuses...>', 'Exclude relationships with these epistemic statuses (ADR-610)')
       .addHelpText('after', `
 Examples:
   $ kg search connect concept-id-123 concept-id-456
@@ -470,7 +470,7 @@ Notes:
   - Use specific 2-3 word phrases for better semantic matching
   - Lower --min-similarity (e.g., 0.3) to find weaker concept matches
   - Error messages suggest threshold adjustments when near-misses exist
-  - Use --include-epistemic to filter by relationship confidence level (ADR-065)
+  - Use --include-epistemic to filter by relationship confidence level (ADR-610)
       `)
       .action(async (from, to, options, command) => {
         try {
@@ -500,7 +500,7 @@ Notes:
               max_hops: parseInt(options.maxHops),
               include_evidence: includeEvidence,
               include_grounding: includeGrounding,
-              // ADR-065: Epistemic status filtering
+              // ADR-610: Epistemic status filtering
               include_epistemic_status: options.includeEpistemic,
               exclude_epistemic_status: options.excludeEpistemic
             });
@@ -513,7 +513,7 @@ Notes:
               threshold: parseFloat(options.minSimilarity),
               include_evidence: includeEvidence,
               include_grounding: includeGrounding,
-              // ADR-065: Epistemic status filtering
+              // ADR-610: Epistemic status filtering
               include_epistemic_status: options.includeEpistemic,
               exclude_epistemic_status: options.excludeEpistemic
             });
@@ -559,7 +559,7 @@ Notes:
                   console.log(`     ${colors.status.dim(node.description)}`);
                 }
 
-                // Display grounding with confidence-awareness (ADR-044 + grounding × confidence model)
+                // Display grounding with confidence-awareness (ADR-808 + grounding × confidence model)
                 if (includeGrounding && (node.grounding_strength !== undefined || node.grounding_display)) {
                   console.log(`     ${colors.ui.key('Grounding:')} ${formatGroundingWithConfidence(node.grounding_strength, node.grounding_display, node.confidence_level, node.confidence_score)}`);
                 }
@@ -574,7 +574,7 @@ Notes:
                     console.log(`        ${colors.ui.bullet(`${idx + 1}.`)} ${colors.evidence.document(inst.document)} ${colors.evidence.paragraph(`(para ${inst.paragraph})`)}`);
                     console.log(`           ${colors.evidence.quote(`"${truncatedQuote}"`)}`);
 
-                    // ADR-057: Handle images if available
+                    // ADR-305: Handle images if available
                     if (inst.has_image && inst.source_id) {
                       const downloadDir = options.download;
 
@@ -641,7 +641,7 @@ Notes:
 const sourcesCommand = setCommandHelp(
   new Command('sources'),
   'Search source text by semantic similarity',
-  'Search source documents directly using embeddings - returns matched text with related concepts (ADR-068)'
+  'Search source documents directly using embeddings - returns matched text with related concepts (ADR-812)'
 )
       .showHelpAfterError()
       .argument('<query>', 'Search query text (searches source embeddings, not concept embeddings)')
@@ -768,7 +768,7 @@ export const searchCommand = setCommandHelp(
   .option('-l, --limit <number>', 'Maximum number of results to return', '10')
   .option('--min-similarity <number>', 'Minimum similarity score (0.0-1.0)', '0.7')
   .option('--json', 'Output raw JSON instead of formatted text')
-  .option('--save-artifact', 'Save result as persistent artifact (ADR-083)')
+  .option('--save-artifact', 'Save result as persistent artifact (ADR-116)')
   .action(async (query, options, command) => {
     // If no query provided and no subcommand matched, show help
     if (!query) {
@@ -844,7 +844,7 @@ export const searchCommand = setCommandHelp(
         console.log(colors.status.dim(`   Try: kg search "${query}" --min-similarity ${result.suggested_threshold}\n`));
       }
 
-      // ADR-083: Save result as artifact if requested
+      // ADR-116: Save result as artifact if requested
       if (options.saveArtifact && result.count > 0) {
         try {
           const artifactResult = await client.createArtifact({

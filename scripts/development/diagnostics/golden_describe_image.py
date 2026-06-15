@@ -1,5 +1,5 @@
 """
-Golden fidelity check for the #457 vision facade collapse (ADR-802 §4, ADR-057).
+Golden fidelity check for the #457 vision facade collapse (ADR-802 §4, ADR-305).
 
 LLM output at temperature 0.1 is near-deterministic but NOT byte-identical
 run-to-run, so a text diff would be noisy even comparing old-vs-old. The
@@ -14,7 +14,7 @@ assert it equals the reconstructed old vision_providers request, for the same
 
 Part 2 (live, optional): run the real worker path (resolve_vision_selection →
 get_provider → describe_image) against the configured Anthropic provider on a
-real ADR-057 research image, and print the description so quality is eyeballable.
+real ADR-305 research image, and print the description so quality is eyeballable.
 
 Run inside the API container:
     docker exec kg-api-dev python scripts/development/diagnostics/golden_describe_image.py
@@ -29,7 +29,7 @@ from api.app.lib.ai_providers import AnthropicProvider, _anthropic_drops_samplin
 from api.app.lib.vision_providers import LITERAL_DESCRIPTION_PROMPT, resolve_vision_selection
 
 import os
-# Default to an ADR-057 research image; override with GOLDEN_IMAGE for an
+# Default to an ADR-305 research image; override with GOLDEN_IMAGE for an
 # ad-hoc article (e.g. the Old Town Wichita cowtown photos).
 IMAGE_PATH = os.getenv("GOLDEN_IMAGE", "docs/research/vision-testing/test-images/old_western_town_scene.jpg")
 MODEL = "claude-sonnet-4-6"  # representative active vision model
@@ -38,7 +38,7 @@ MODEL = "claude-sonnet-4-6"  # representative active vision model
 def _old_vision_providers_anthropic_request(image_bytes, prompt, model):
     """Reconstruct EXACTLY the request the deleted
     vision_providers.AnthropicVisionProvider.describe_image built, for a
-    png/jpeg image (the ADR-057-validated formats)."""
+    png/jpeg image (the ADR-305-validated formats)."""
     image_b64 = base64.b64encode(image_bytes).decode("utf-8")
     mime_type = "image/png" if image_bytes.startswith(b"\x89PNG") else "image/jpeg"
     request_kwargs = {

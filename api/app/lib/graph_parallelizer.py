@@ -1,5 +1,5 @@
 """
-Graph Query Parallelizer - ADR-071
+Graph Query Parallelizer - ADR-505
 
 Parallel execution for n-hop graph queries using connection pooling and threading.
 
@@ -143,7 +143,7 @@ class GraphParallelizer:
             raise ValueError(
                 f"max_hops={max_hops} not supported. "
                 "Parallel queries only support max_hops <= 2 to prevent exponential explosion. "
-                "See ADR-071 'Hilariously Bad Scenarios' for details."
+                "See ADR-505 'Hilariously Bad Scenarios' for details."
             )
 
         exclude_ids = exclude_ids or set()

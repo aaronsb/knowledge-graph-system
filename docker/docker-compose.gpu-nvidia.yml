@@ -18,7 +18,7 @@
 #   - CUDA: ~1-2ms per embedding
 #   - CPU: ~5-10ms per embedding
 #
-# See ADR-043 for resource management details.
+# See ADR-807 for resource management details.
 # ============================================================================
 
 services:

@@ -1,5 +1,5 @@
 """
-Authentication Models (ADR-027)
+Authentication Models (ADR-403)
 
 Pydantic models for authentication request/response schemas.
 """
@@ -21,7 +21,7 @@ class UserBase(BaseModel):
     @field_validator('role')
     @classmethod
     def validate_role(cls, v: str) -> str:
-        """Ensure role is one of the allowed values (ADR-074: includes platform_admin)"""
+        """Ensure role is one of the allowed values (ADR-409: includes platform_admin)"""
         allowed_roles = ['read_only', 'contributor', 'curator', 'admin', 'platform_admin']
         if v not in allowed_roles:
             raise ValueError(f"Role must be one of: {', '.join(allowed_roles)}")
@@ -97,7 +97,7 @@ class UserUpdate(BaseModel):
     @field_validator('role')
     @classmethod
     def validate_role(cls, v: Optional[str]) -> Optional[str]:
-        """Ensure role is one of the allowed values (ADR-074: includes platform_admin)"""
+        """Ensure role is one of the allowed values (ADR-409: includes platform_admin)"""
         if v is None:
             return v
         allowed_roles = ['read_only', 'contributor', 'curator', 'admin', 'platform_admin']

@@ -1,6 +1,6 @@
 /**
  * Admin Backup Commands
- * Backup, list-backups, and restore operations (ADR-036)
+ * Backup, list-backups, and restore operations (ADR-712)
  */
 
 import { Command } from 'commander';
@@ -14,7 +14,7 @@ import { prompt, promptPassword, trackJobWithPolling } from './utils';
 
 export function createBackupCommand(): Command {
   return new Command('backup')
-    .description('Create database backup (ADR-036) - full system or per-ontology, in restorable JSON or Gephi GEXF format')
+    .description('Create database backup (ADR-712) - full system or per-ontology, in restorable JSON or Gephi GEXF format')
     .option('--type <type>', 'Backup type: "full" (entire graph) or "ontology" (single namespace)')
     .option('--ontology <name>', 'Ontology name (required if --type ontology)')
     .option('--output <filename>', 'Custom output filename (auto-generated if not specified)')

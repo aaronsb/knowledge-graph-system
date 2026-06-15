@@ -1,6 +1,6 @@
 /**
  * Admin Scheduler Commands
- * Job scheduler management (ADR-014)
+ * Job scheduler management (ADR-300)
  */
 
 import { Command } from 'commander';
@@ -10,7 +10,7 @@ import { separator, coloredCount } from '../colors';
 
 export function createSchedulerCommand(): Command {
   const schedulerCommand = new Command('scheduler')
-    .description('Job scheduler management (ADR-014 job queue) - monitor worker status, cleanup stale jobs');
+    .description('Job scheduler management (ADR-300 job queue) - monitor worker status, cleanup stale jobs');
 
   // scheduler status
   schedulerCommand.addCommand(

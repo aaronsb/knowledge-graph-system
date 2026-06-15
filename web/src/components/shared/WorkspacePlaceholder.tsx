@@ -73,7 +73,7 @@ export const WorkspacePlaceholder: React.FC<WorkspacePlaceholderProps> = ({
 
           <div className="mt-6 text-center text-sm text-muted-foreground">
             <p>This workspace is under development.</p>
-            <p className="mt-1">See ADR-067 for architecture details.</p>
+            <p className="mt-1">See ADR-714 for architecture details.</p>
           </div>
         </div>
       </div>

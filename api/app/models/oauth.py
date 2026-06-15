@@ -1,5 +1,5 @@
 """
-OAuth 2.0 Models (ADR-054)
+OAuth 2.0 Models (ADR-406)
 
 Pydantic models for OAuth 2.0 client management and token flows.
 """

@@ -3,7 +3,7 @@
  *
  * Supports execution modes:
  * - Interactive: Run query in UI (current behavior)
- * - Published: Expose as API endpoint (future - ADR-066)
+ * - Published: Expose as API endpoint (future - ADR-504)
  */
 
 import React from 'react';
@@ -41,7 +41,7 @@ export const StartBlock: React.FC<NodeProps<BlockData>> = ({ data }) => {
         </button>
         <button
           className="flex items-center gap-1 px-2 py-1 rounded bg-muted dark:bg-gray-700 text-muted-foreground dark:text-gray-400 opacity-50 cursor-not-allowed"
-          title="Coming soon: Expose as API endpoint (ADR-066)"
+          title="Coming soon: Expose as API endpoint (ADR-504)"
           disabled
         >
           <Globe className="w-3 h-3" />

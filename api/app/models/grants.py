@@ -1,5 +1,5 @@
 """
-Grants and Groups Models (ADR-082)
+Grants and Groups Models (ADR-410)
 
 Pydantic models for groups and resource grants API endpoints.
 """

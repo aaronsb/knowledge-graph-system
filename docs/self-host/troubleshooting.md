@@ -155,7 +155,7 @@ If PostgreSQL fails to start due to corruption:
 
 ### Can't log in
 
-Kappa Graph uses OAuth. The `POST /auth/login` endpoint was removed in ADR-054 — authentication flows through `/auth/oauth/login-and-authorize`.
+Kappa Graph uses OAuth. The `POST /auth/login` endpoint was removed in ADR-406 — authentication flows through `/auth/oauth/login-and-authorize`.
 
 Check that an OAuth client is registered:
 

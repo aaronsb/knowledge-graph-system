@@ -20,35 +20,31 @@ _Containers, deployment, backup, storage, networking_
 
 | ADR | Title | Status |
 |-----|-------|--------|
-| [ADR-012](./infrastructure/ADR-012-api-server-architecture.md) | API Server Architecture for Scalable Neo4j Access | Accepted |
-| [ADR-015](./infrastructure/ADR-015-backup-restore-streaming.md) | Backup/Restore Streaming Architecture | Accepted |
-| [ADR-018](./infrastructure/ADR-018-server-sent-events-streaming.md) | Server-Sent Events for Real-Time Progress Streaming | Draft |
-| [ADR-020](./infrastructure/ADR-020-admin-module-architecture.md) | Admin Module Architecture Pattern | Accepted |
-| [ADR-021](./infrastructure/ADR-021-live-man-switch-ai-safety.md) | Live Man Switch - AI Safety for Critical Operations | Superseded |
-| [ADR-050](./infrastructure/ADR-050-scheduled-jobs-system.md) | Scheduled Jobs System | Proposed |
-| [ADR-055](./infrastructure/ADR-055-cdn-serverless-deployment-model.md) | CDN and Serverless Deployment Model | Proposed |
-| [ADR-056](./infrastructure/ADR-056-timezone-aware-datetime-utilities.md) | Timezone-Aware Datetime Utilities | Accepted |
-| [ADR-079](./infrastructure/ADR-079-projection-artifact-storage.md) | Projection Artifact Storage in Garage | Accepted |
-| [ADR-080](./infrastructure/ADR-080-garage-service-architecture.md) | Garage Service Architecture | Proposed |
-| [ADR-083](./infrastructure/ADR-083-artifact-persistence-pattern.md) | Artifact Persistence Pattern | Accepted |
-| [ADR-086](./infrastructure/ADR-086-deployment-topology.md) | Deployment Topology (Dev/Stable Split) | Draft |
-| [ADR-088](./infrastructure/ADR-088-semantic-election-protocol.md) | Semantic Election Protocol for Distributed Concept Placement | Proposed |
 | [ADR-100](./infrastructure/ADR-100-database-driven-job-dispatch.md) | Database-Driven Job Dispatch | Accepted |
 | [ADR-101](./infrastructure/ADR-101-rocm-image-variant-and-install-time-selection.md) | ROCm Image Variant and Install-Time Selection | Accepted |
 | [ADR-102](./infrastructure/ADR-102-portable-backup-and-restore-with-clone-merge-semantics.md) | Portable Backup and Restore with Clone/Merge Semantics | Accepted |
 | [ADR-103](./infrastructure/ADR-103-distribution-strategy-nomic-first-thin-appliance-with-app-store-tenancy.md) | Distribution strategy: nomic-first thin appliance with app-store tenancy | Proposed |
 | [ADR-104](./infrastructure/ADR-104-unified-provisioning-architecture-install-path-convergence-and-first-run-claim-protocol.md) | Unified provisioning architecture: install-path convergence and first-run claim protocol | Draft |
-| [ADR-105](./infrastructure/ADR-105-scenario-driven-tls-via-in-vm-traefik-router.md) | Scenario-driven TLS via an in-VM Traefik router | Draft |
+| [ADR-105](./infrastructure/ADR-105-scenario-driven-tls-via-in-vm-traefik-router.md) | Scenario-driven TLS via an in-VM Traefik router | Accepted |
+| [ADR-106](./infrastructure/ADR-106-api-server-architecture.md) | API Server Architecture for Scalable Neo4j Access | Accepted |
+| [ADR-107](./infrastructure/ADR-107-backup-restore-streaming.md) | Backup/Restore Streaming Architecture | Accepted |
+| [ADR-108](./infrastructure/ADR-108-server-sent-events-streaming.md) | Server-Sent Events for Real-Time Progress Streaming | Draft |
+| [ADR-109](./infrastructure/ADR-109-admin-module-architecture.md) | Admin Module Architecture Pattern | Accepted |
+| [ADR-110](./infrastructure/ADR-110-live-man-switch-ai-safety.md) | Live Man Switch - AI Safety for Critical Operations | Superseded |
+| [ADR-111](./infrastructure/ADR-111-scheduled-jobs-system.md) | Scheduled Jobs System | Proposed |
+| [ADR-112](./infrastructure/ADR-112-cdn-serverless-deployment-model.md) | CDN and Serverless Deployment Model | Proposed |
+| [ADR-113](./infrastructure/ADR-113-timezone-aware-datetime-utilities.md) | Timezone-Aware Datetime Utilities | Accepted |
+| [ADR-114](./infrastructure/ADR-114-projection-artifact-storage.md) | Projection Artifact Storage in Garage | Accepted |
+| [ADR-115](./infrastructure/ADR-115-garage-service-architecture.md) | Garage Service Architecture | Proposed |
+| [ADR-116](./infrastructure/ADR-116-artifact-persistence-pattern.md) | Artifact Persistence Pattern | Accepted |
+| [ADR-117](./infrastructure/ADR-117-deployment-topology.md) | Deployment Topology (Dev/Stable Split) | Draft |
+| [ADR-118](./infrastructure/ADR-118-semantic-election-protocol.md) | Semantic Election Protocol for Distributed Concept Placement | Proposed |
 
 ## Database/Schema
 _Apache AGE, migrations, schema design, PostgreSQL_
 
 | ADR | Title | Status |
 |-----|-------|--------|
-| [ADR-016](./database-schema/ADR-016-apache-age-migration.md) | Apache AGE Migration (Neo4j Replacement) | Proposed |
-| [ADR-024](./database-schema/ADR-024-multi-schema-postgresql-architecture.md) | Multi-Schema PostgreSQL Architecture | Proposed |
-| [ADR-040](./database-schema/ADR-040-database-schema-migrations.md) | Database Schema Migration Management | Proposed |
-| [ADR-061](./database-schema/ADR-061-operator-pattern-lifecycle.md) | Operator Pattern for Platform Lifecycle Management | Accepted |
 | [ADR-200](./database-schema/ADR-200-annealing-ontologies-self-organizing-knowledge-graph-structure.md) | Annealing Ontologies — Self-Organizing Knowledge Graph Structure | Accepted |
 | [ADR-201](./database-schema/ADR-201-in-memory-graph-acceleration-extension.md) | In-Memory Graph Acceleration Extension | Draft |
 | [ADR-202](./database-schema/ADR-202-timestamp-timezone-normalization.md) | Timestamp Timezone Normalization | Proposed |
@@ -57,133 +53,137 @@ _Apache AGE, migrations, schema design, PostgreSQL_
 | [ADR-205](./database-schema/ADR-205-postgresql-18-migration.md) | PostgreSQL 18 Migration | Draft |
 | [ADR-206](./database-schema/ADR-206-closed-vocabulary-annealing-actions-with-tiered-escalation-and-epistemic-ledger.md) | Closed-Vocabulary Annealing Actions with Tiered Escalation and Epistemic Ledger | Draft |
 | [ADR-207](./database-schema/ADR-207-derived-state-freshness-contract.md) | A Uniform Freshness Contract for Materialized Graph Derivations | Accepted |
+| [ADR-208](./database-schema/ADR-208-apache-age-migration.md) | Apache AGE Migration (Neo4j Replacement) | Proposed |
+| [ADR-209](./database-schema/ADR-209-multi-schema-postgresql-architecture.md) | Multi-Schema PostgreSQL Architecture | Proposed |
+| [ADR-210](./database-schema/ADR-210-database-schema-migrations.md) | Database Schema Migration Management | Proposed |
+| [ADR-211](./database-schema/ADR-211-operator-pattern-lifecycle.md) | Operator Pattern for Platform Lifecycle Management | Accepted |
 
 ## Ingestion
 _Content processing, jobs, extraction, deduplication_
 
 | ADR | Title | Status |
 |-----|-------|--------|
-| [ADR-014](./ingestion-content/ADR-014-job-approval-workflow.md) | Job Approval Workflow with Pre-Ingestion Analysis | Draft |
-| [ADR-023](./ingestion-content/ADR-023-markdown-structured-content-preprocessing.md) | Markdown Structured Content Preprocessing | Proposed |
-| [ADR-033](./ingestion-content/ADR-033-multimodal-ingestion-configurable-prompts.md) | Multimodal Image Ingestion with Configurable Prompt System | Proposed |
-| [ADR-037](./ingestion-content/ADR-037-human-guided-graph-editing.md) | Human-Guided Graph Editing | Proposed |
-| [ADR-051](./ingestion-content/ADR-051.1-graph-document-deduplication.md) | Graph-Based Provenance Tracking | Proposed |
-| [ADR-051](./ingestion-content/ADR-051.2-api-changes.md) | API Changes for Graph-Based Document Deduplication | Draft |
-| [ADR-057](./ingestion-content/ADR-057.1-multimodal-image-ingestion.md) | Multimodal Image Ingestion with Visual Context Injection | Proposed |
-| [ADR-057.2](./ingestion-content/ADR-057.2-appendix-single-vs-two-stage.md) | Appendix: Single-Stage vs Two-Stage Image Processing | Draft |
-| [ADR-072](./ingestion-content/ADR-072-concept-matching-strategies.md) | Concept Matching Strategies and Configuration | Draft |
-| [ADR-081](./ingestion-content/ADR-081-source-document-lifecycle.md) | Source Document Lifecycle | Proposed |
-| [ADR-089](./ingestion-content/ADR-089-deterministic-node-edge-creation.md) | Deterministic Node and Edge Creation | Draft |
+| [ADR-300](./ingestion-content/ADR-300-job-approval-workflow.md) | Job Approval Workflow with Pre-Ingestion Analysis | Draft |
+| [ADR-301](./ingestion-content/ADR-301-markdown-structured-content-preprocessing.md) | Markdown Structured Content Preprocessing | Proposed |
+| [ADR-302](./ingestion-content/ADR-302-multimodal-ingestion-configurable-prompts.md) | Multimodal Image Ingestion with Configurable Prompt System | Proposed |
+| [ADR-303](./ingestion-content/ADR-303-human-guided-graph-editing.md) | Human-Guided Graph Editing | Proposed |
+| [ADR-304.1](./ingestion-content/ADR-304.1-graph-document-deduplication.md) | Graph-Based Provenance Tracking | Proposed |
+| [ADR-304.2](./ingestion-content/ADR-304.2-api-changes.md) | API Changes for Graph-Based Document Deduplication | Draft |
+| [ADR-305.1](./ingestion-content/ADR-305.1-multimodal-image-ingestion.md) | Multimodal Image Ingestion with Visual Context Injection | Proposed |
+| [ADR-305.2](./ingestion-content/ADR-305.2-appendix-single-vs-two-stage.md) | Appendix: Single-Stage vs Two-Stage Image Processing | Draft |
+| [ADR-306](./ingestion-content/ADR-306-concept-matching-strategies.md) | Concept Matching Strategies and Configuration | Draft |
+| [ADR-307](./ingestion-content/ADR-307-source-document-lifecycle.md) | Source Document Lifecycle | Proposed |
+| [ADR-308](./ingestion-content/ADR-308-deterministic-node-edge-creation.md) | Deterministic Node and Edge Creation | Draft |
 
 ## Auth/Security
 _RBAC, OAuth, API keys, endpoint security_
 
 | ADR | Title | Status |
 |-----|-------|--------|
-| [ADR-017](./authentication-security/ADR-017-sensitive-auth-verification.md) | Client-Initiated Token Revocation for Elevated Operations | Superseded |
-| [ADR-027](./authentication-security/ADR-027-user-management-api.md) | User Management API with Lightweight JWT Authentication | Superseded |
-| [ADR-028](./authentication-security/ADR-028-dynamic-rbac-system.md) | Dynamic Role-Based Access Control (RBAC) System | Superseded |
-| [ADR-031](./authentication-security/ADR-031-encrypted-api-key-storage.md) | Encrypted API Key Storage with Container Secrets | Accepted |
-| [ADR-054](./authentication-security/ADR-054-oauth-client-management.md) | OAuth 2.0 Client Management for Multi-Client Authentication | Accepted |
-| [ADR-060](./authentication-security/ADR-060-endpoint-security-architecture.md) | API Endpoint Security Architecture | Superseded |
-| [ADR-062](./authentication-security/ADR-062-mcp-file-ingestion-security.md) | MCP File Ingestion Security Model | Draft |
-| [ADR-074](./authentication-security/ADR-074-platform-admin-role.md) | Platform Admin Role | Superseded |
-| [ADR-082](./authentication-security/ADR-082-user-scoping-artifact-ownership.md) | User Scoping and Artifact Ownership Model | Accepted |
 | [ADR-400](./authentication-security/ADR-400-operative-rbac-and-endpoint-security-baseline.md) | Operative RBAC and Endpoint Security Baseline | Accepted |
 | [ADR-401](./authentication-security/ADR-401-deterministic-security-enforcement-baseline.md) | Deterministic Security Enforcement Baseline | Draft |
+| [ADR-402](./authentication-security/ADR-402-sensitive-auth-verification.md) | Client-Initiated Token Revocation for Elevated Operations | Superseded |
+| [ADR-403](./authentication-security/ADR-403-user-management-api.md) | User Management API with Lightweight JWT Authentication | Superseded |
+| [ADR-404](./authentication-security/ADR-404-dynamic-rbac-system.md) | Dynamic Role-Based Access Control (RBAC) System | Superseded |
+| [ADR-405](./authentication-security/ADR-405-encrypted-api-key-storage.md) | Encrypted API Key Storage with Container Secrets | Accepted |
+| [ADR-406](./authentication-security/ADR-406-oauth-client-management.md) | OAuth 2.0 Client Management for Multi-Client Authentication | Accepted |
+| [ADR-407](./authentication-security/ADR-407-endpoint-security-architecture.md) | API Endpoint Security Architecture | Superseded |
+| [ADR-408](./authentication-security/ADR-408-mcp-file-ingestion-security.md) | MCP File Ingestion Security Model | Draft |
+| [ADR-409](./authentication-security/ADR-409-platform-admin-role.md) | Platform Admin Role | Superseded |
+| [ADR-410](./authentication-security/ADR-410-user-scoping-artifact-ownership.md) | User Scoping and Artifact Ownership Model | Accepted |
 
 ## Query/Search
 _Pathfinding, projections, diversity, search_
 
 | ADR | Title | Status |
 |-----|-------|--------|
-| [ADR-030](./query-search/ADR-030-concept-deduplication-validation.md) | Concept Deduplication Quality Validation | Accepted |
-| [ADR-063](./query-search/ADR-063-semantic-diversity-authenticity-signal.md) | Semantic Diversity as Authenticity Signal | Draft |
-| [ADR-066](./query-search/ADR-066-published-query-endpoints.md) | Published Query Endpoints | Proposed |
-| [ADR-071](./query-search/ADR-071-parallel-graph-queries.md) | Parallel Graph Query Optimization | Accepted |
-| [ADR-071.1](./query-search/ADR-071.1-parallel-implementation-findings.md) | Parallel Graph Query Implementation Findings | Accepted |
-| [ADR-076](./query-search/ADR-076-pathfinding-optimization.md) | Pathfinding Optimization for Apache AGE | Proposed |
-| [ADR-076.1](./query-search/ADR-076.1-pathfinding-baseline.md) | Pathfinding Performance Baseline | Accepted |
-| [ADR-084](./query-search/ADR-084-document-search.md) | Document-Level Search | Proposed |
 | [ADR-500](./query-search/ADR-500-graph-program-dsl-and-ast-architecture.md) | Graph Program DSL and AST Architecture | Draft |
 | [ADR-501](./query-search/ADR-501-catalog-browse-facade.md) | Catalog Browse Facade | Proposed |
+| [ADR-502](./query-search/ADR-502-concept-deduplication-validation.md) | Concept Deduplication Quality Validation | Accepted |
+| [ADR-503](./query-search/ADR-503-semantic-diversity-authenticity-signal.md) | Semantic Diversity as Authenticity Signal | Draft |
+| [ADR-504](./query-search/ADR-504-published-query-endpoints.md) | Published Query Endpoints | Proposed |
+| [ADR-505](./query-search/ADR-505-parallel-graph-queries.md) | Parallel Graph Query Optimization | Accepted |
+| [ADR-505.1](./query-search/ADR-505.1-parallel-implementation-findings.md) | Parallel Graph Query Implementation Findings | Accepted |
+| [ADR-506](./query-search/ADR-506-pathfinding-optimization.md) | Pathfinding Optimization for Apache AGE | Proposed |
+| [ADR-506.1](./query-search/ADR-506.1-pathfinding-baseline.md) | Pathfinding Performance Baseline | Accepted |
+| [ADR-507](./query-search/ADR-507-document-search.md) | Document-Level Search | Proposed |
 
 ## Vocabulary
 _Relationships, grounding, categorization_
 
 | ADR | Title | Status |
 |-----|-------|--------|
-| [ADR-022](./vocabulary-relationships/ADR-022-semantic-relationship-taxonomy.md) | Semantically Sparse 30-Type Relationship Taxonomy | Accepted |
-| [ADR-025](./vocabulary-relationships/ADR-025-dynamic-relationship-vocabulary.md) | Dynamic Relationship Vocabulary Management | Proposed |
-| [ADR-026](./vocabulary-relationships/ADR-026-autonomous-vocabulary-curation.md) | Autonomous Vocabulary Curation and Ontology Management | Proposed |
-| [ADR-032](./vocabulary-relationships/ADR-032.1-automatic-edge-vocabulary-expansion.md) | Automatic Edge Vocabulary Expansion with Intelligent Pruning | Proposed |
-| [ADR-032.2](./vocabulary-relationships/ADR-032.2-implementation-notes.md) | Implementation Quick Reference | Accepted |
-| [ADR-046](./vocabulary-relationships/ADR-046-grounding-aware-vocabulary-management.md) | Grounding-Aware Vocabulary Management | Proposed |
-| [ADR-047](./vocabulary-relationships/ADR-047-probabilistic-vocabulary-categorization.md) | Probabilistic Vocabulary Categorization | Accepted |
-| [ADR-048](./vocabulary-relationships/ADR-048-vocabulary-metadata-as-graph.md) | Vocabulary Metadata as First-Class Graph | Accepted |
-| [ADR-052](./vocabulary-relationships/ADR-052-vocabulary-expansion-consolidation-cycle.md) | Vocabulary Expansion-Consolidation Cycle (The "Dreaming" Pattern) | Accepted |
-| [ADR-053](./vocabulary-relationships/ADR-053-eager-vocabulary-categorization.md) | Eager Vocabulary Categorization | Accepted |
-| [ADR-059](./vocabulary-relationships/ADR-059-llm-determined-relationship-direction.md) | LLM-Determined Relationship Direction Semantics | Proposed |
-| [ADR-065](./vocabulary-relationships/ADR-065-vocabulary-based-provenance-relationships.md) | Vocabulary-Based Provenance Relationships | Accepted |
-| [ADR-077](./vocabulary-relationships/ADR-077-vocabulary-explorers.md) | Vocabulary Explorers | Draft |
+| [ADR-600](./vocabulary-relationships/ADR-600-semantic-relationship-taxonomy.md) | Semantically Sparse 30-Type Relationship Taxonomy | Accepted |
+| [ADR-601](./vocabulary-relationships/ADR-601-dynamic-relationship-vocabulary.md) | Dynamic Relationship Vocabulary Management | Proposed |
+| [ADR-602](./vocabulary-relationships/ADR-602-autonomous-vocabulary-curation.md) | Autonomous Vocabulary Curation and Ontology Management | Proposed |
+| [ADR-603.1](./vocabulary-relationships/ADR-603.1-automatic-edge-vocabulary-expansion.md) | Automatic Edge Vocabulary Expansion with Intelligent Pruning | Proposed |
+| [ADR-603.2](./vocabulary-relationships/ADR-603.2-implementation-notes.md) | Implementation Quick Reference | Accepted |
+| [ADR-604](./vocabulary-relationships/ADR-604-grounding-aware-vocabulary-management.md) | Grounding-Aware Vocabulary Management | Proposed |
+| [ADR-605](./vocabulary-relationships/ADR-605-probabilistic-vocabulary-categorization.md) | Probabilistic Vocabulary Categorization | Accepted |
+| [ADR-606](./vocabulary-relationships/ADR-606-vocabulary-metadata-as-graph.md) | Vocabulary Metadata as First-Class Graph | Accepted |
+| [ADR-607](./vocabulary-relationships/ADR-607-vocabulary-expansion-consolidation-cycle.md) | Vocabulary Expansion-Consolidation Cycle (The "Dreaming" Pattern) | Accepted |
+| [ADR-608](./vocabulary-relationships/ADR-608-eager-vocabulary-categorization.md) | Eager Vocabulary Categorization | Accepted |
+| [ADR-609](./vocabulary-relationships/ADR-609-llm-determined-relationship-direction.md) | LLM-Determined Relationship Direction Semantics | Proposed |
+| [ADR-610](./vocabulary-relationships/ADR-610-vocabulary-based-provenance-relationships.md) | Vocabulary-Based Provenance Relationships | Accepted |
+| [ADR-611](./vocabulary-relationships/ADR-611-vocabulary-explorers.md) | Vocabulary Explorers | Draft |
 
 ## Interfaces
 _CLI, web, FUSE, MCP, visualization_
 
 | ADR | Title | Status |
 |-----|-------|--------|
-| [ADR-011](./user-interfaces/ADR-011-cli-admin-separation.md) | CLI and Admin Tooling Separation | Accepted |
-| [ADR-013](./user-interfaces/ADR-013-unified-typescript-client.md) | Unified TypeScript Client (CLI + MCP Server) | Accepted |
-| [ADR-019](./user-interfaces/ADR-019-type-based-table-formatting.md) | Type-Based Table Formatting System | Accepted |
-| [ADR-029](./user-interfaces/ADR-029-cli-theory-of-operation.md) | CLI Theory of Operation - Hybrid Unix/Domain-Specific Design | Proposed |
-| [ADR-034](./user-interfaces/ADR-034-graph-visualization-query-workbench.md) | Graph Visualization & Interactive Query Explorers | Proposed |
-| [ADR-035](./user-interfaces/ADR-035-explorer-methods-uses-capabilities.md) | Explorer Methods, Uses, and Capabilities | Proposed |
-| [ADR-036](./user-interfaces/ADR-036-universal-visual-query-builder.md) | Universal Visual Query Builder | Proposed |
-| [ADR-064](./user-interfaces/ADR-064-specialized-truth-convergence-visualizations.md) | Specialized Truth Convergence Visualizations | Proposed |
-| [ADR-067](./user-interfaces/ADR-067-web-app-workstation-architecture.md) | Web Application Workstation Architecture | Proposed |
-| [ADR-069](./user-interfaces/ADR-069-semantic-fuse-filesystem.md) | Semantic FUSE Filesystem | Accepted |
-| [ADR-069.1](./user-interfaces/ADR-069.1-fuse-implementation-specifics.md) | FUSE Driver Implementation Specifics | Proposed |
-| [ADR-075](./user-interfaces/ADR-075-postmodern-theme.md) | Postmodern Theme System | Proposed |
-| [ADR-078](./visualization/ADR-078-embedding-landscape-explorer.md) | Embedding Landscape Explorer | Accepted |
-| [ADR-085](./visualization/ADR-085-document-explorer.md) | Document Explorer with Radial Concept Visualization | Proposed |
 | [ADR-700](./user-interfaces/ADR-700-ontology-explorer.md) | Ontology Explorer | Draft |
 | [ADR-701](./user-interfaces/ADR-701-vocabulary-administration-interface.md) | Vocabulary Administration Interface | Draft |
 | [ADR-702](./user-interfaces/ADR-702-unified-graph-rendering-engine.md) | Unified Graph Rendering Engine | Proposed |
 | [ADR-703](./user-interfaces/ADR-703-ontology-lifecycle-administration-interface.md) | Ontology Lifecycle Administration Interface | Draft |
 | [ADR-704](./user-interfaces/ADR-704-unified-user-scoped-resource-dispensing.md) | Unified User-Scoped Resource Dispensing | Draft |
 | [ADR-705](./user-interfaces/ADR-705-session-visibility-and-declarative-capability-gating.md) | Session Visibility and Declarative Capability Gating | Draft |
+| [ADR-706](./user-interfaces/ADR-706-cli-admin-separation.md) | CLI and Admin Tooling Separation | Accepted |
+| [ADR-707](./user-interfaces/ADR-707-unified-typescript-client.md) | Unified TypeScript Client (CLI + MCP Server) | Accepted |
+| [ADR-708](./user-interfaces/ADR-708-type-based-table-formatting.md) | Type-Based Table Formatting System | Accepted |
+| [ADR-709](./user-interfaces/ADR-709-cli-theory-of-operation.md) | CLI Theory of Operation - Hybrid Unix/Domain-Specific Design | Proposed |
+| [ADR-710](./user-interfaces/ADR-710-graph-visualization-query-workbench.md) | Graph Visualization & Interactive Query Explorers | Proposed |
+| [ADR-711](./user-interfaces/ADR-711-explorer-methods-uses-capabilities.md) | Explorer Methods, Uses, and Capabilities | Proposed |
+| [ADR-712](./user-interfaces/ADR-712-universal-visual-query-builder.md) | Universal Visual Query Builder | Proposed |
+| [ADR-713](./user-interfaces/ADR-713-specialized-truth-convergence-visualizations.md) | Specialized Truth Convergence Visualizations | Proposed |
+| [ADR-714](./user-interfaces/ADR-714-web-app-workstation-architecture.md) | Web Application Workstation Architecture | Proposed |
+| [ADR-715](./user-interfaces/ADR-715-semantic-fuse-filesystem.md) | Semantic FUSE Filesystem | Accepted |
+| [ADR-715.1](./user-interfaces/ADR-715.1-fuse-implementation-specifics.md) | FUSE Driver Implementation Specifics | Proposed |
+| [ADR-716](./user-interfaces/ADR-716-postmodern-theme.md) | Postmodern Theme System | Proposed |
+| [ADR-717](./visualization/ADR-717-embedding-landscape-explorer.md) | Embedding Landscape Explorer | Accepted |
+| [ADR-718](./visualization/ADR-718-document-explorer.md) | Document Explorer with Radial Concept Visualization | Proposed |
 
 ## AI/Embeddings
 _Providers, extraction, convergence, prompts_
 
 | ADR | Title | Status |
 |-----|-------|--------|
-| [ADR-039](./ai-embeddings/ADR-039-local-embedding-service.md) | Local Embedding Service with Hybrid Client/Server Architecture | Proposed |
-| [ADR-041](./ai-embeddings/ADR-041-ai-extraction-config.md) | AI Extraction Provider Configuration | Proposed |
-| [ADR-042](./ai-embeddings/ADR-042-local-extraction-inference.md) | Local LLM Inference for Concept Extraction | Accepted |
-| [ADR-043](./ai-embeddings/ADR-043-single-node-resource-management.md) | Single-Node Resource Management for Local Inference | Accepted |
-| [ADR-044](./ai-embeddings/ADR-044-probabilistic-truth-convergence.md) | Probabilistic Truth Convergence Through Contradiction Resolution | Proposed |
-| [ADR-045](./ai-embeddings/ADR-045-unified-embedding-generation.md) | Unified Embedding Generation System | Proposed |
-| [ADR-049](./ai-embeddings/ADR-049-rate-limiting-and-concurrency.md) | Rate Limiting and Per-Provider Concurrency Management | Accepted |
-| [ADR-058](./ai-embeddings/ADR-058-polarity-axis-triangulation.md) | Polarity Axis Triangulation for Grounding Calculation | Accepted |
-| [ADR-068](./ai-embeddings/ADR-068-source-text-embeddings.md) | Source Text Embeddings for Grounding Truth Retrieval | Accepted |
-| [ADR-070](./ai-embeddings/ADR-070-polarity-axis-analysis.md) | Polarity Axis Analysis for Bidirectional Semantic Dimensions | Accepted |
 | [ADR-800](./ai-embeddings/ADR-800-dynamic-model-catalog-and-openrouter-support.md) | Dynamic Model Catalog and OpenRouter Support | Accepted |
 | [ADR-801](./ai-embeddings/ADR-801-uniform-provider-configuration-contract.md) | Uniform Provider Configuration Contract | Draft |
 | [ADR-802](./ai-embeddings/ADR-802-unify-vision-providers-under-the-uniform-provider-contract.md) | Unify Vision Providers Under the Uniform Provider Contract | Accepted |
 | [ADR-803](./ai-embeddings/ADR-803-modality-embedding-architecture-universal-text-space-and-independent-per-modality-embedders.md) | Modality Embedding Architecture — Universal Text Space and Independent Per-Modality Embedders | Accepted |
+| [ADR-804](./ai-embeddings/ADR-804-local-embedding-service.md) | Local Embedding Service with Hybrid Client/Server Architecture | Proposed |
+| [ADR-805](./ai-embeddings/ADR-805-ai-extraction-config.md) | AI Extraction Provider Configuration | Proposed |
+| [ADR-806](./ai-embeddings/ADR-806-local-extraction-inference.md) | Local LLM Inference for Concept Extraction | Accepted |
+| [ADR-807](./ai-embeddings/ADR-807-single-node-resource-management.md) | Single-Node Resource Management for Local Inference | Accepted |
+| [ADR-808](./ai-embeddings/ADR-808-probabilistic-truth-convergence.md) | Probabilistic Truth Convergence Through Contradiction Resolution | Proposed |
+| [ADR-809](./ai-embeddings/ADR-809-unified-embedding-generation.md) | Unified Embedding Generation System | Proposed |
+| [ADR-810](./ai-embeddings/ADR-810-rate-limiting-and-concurrency.md) | Rate Limiting and Per-Provider Concurrency Management | Accepted |
+| [ADR-811](./ai-embeddings/ADR-811-polarity-axis-triangulation.md) | Polarity Axis Triangulation for Grounding Calculation | Accepted |
+| [ADR-812](./ai-embeddings/ADR-812-source-text-embeddings.md) | Source Text Embeddings for Grounding Truth Retrieval | Accepted |
+| [ADR-813](./ai-embeddings/ADR-813-polarity-axis-analysis.md) | Polarity Axis Analysis for Bidirectional Semantic Dimensions | Accepted |
 
 ## Meta/Process
 _Documentation, workflow, access models, ADR system_
 
 | ADR | Title | Status |
 |-----|-------|--------|
-| [ADR-001](./access-workflow/ADR-001-multi-tier-agent-access.md) | Multi-Tier Agent Access Model | Proposed |
-| [ADR-002](./access-workflow/ADR-002-node-fitness-scoring.md) | Node Fitness Scoring System | Proposed |
-| [ADR-003](./access-workflow/ADR-003-semantic-tool-hints.md) | Semantic Tool Hint Networks | Proposed |
-| [ADR-004](./access-workflow/ADR-004-pure-graph-design.md) | Pure Graph Design (Library Metaphor) | Proposed |
-| [ADR-005](./access-workflow/ADR-005-source-text-tracking.md) | Source Text Tracking and Retrieval | Proposed |
-| [ADR-006](./access-workflow/ADR-006-staging-migration-workflows.md) | Staging and Migration Workflows | Proposed |
-| [ADR-038](./access-workflow/ADR-038-official-project-apparel.md) | Official Project Apparel Design Specifications | Proposed |
-| [ADR-087](./access-workflow/ADR-087-documentation-strategy.md) | Documentation Strategy and Audience Framework | Draft |
-| [ADR-900](./access-workflow/ADR-900-adr-numbering-domain-system.md) | ADR Numbering Domain System | Draft |
+| [ADR-900](./access-workflow/ADR-900-adr-numbering-domain-system.md) | ADR Numbering Domain System | Accepted |
+| [ADR-901](./access-workflow/ADR-901-multi-tier-agent-access.md) | Multi-Tier Agent Access Model | Proposed |
+| [ADR-902](./access-workflow/ADR-902-node-fitness-scoring.md) | Node Fitness Scoring System | Proposed |
+| [ADR-903](./access-workflow/ADR-903-semantic-tool-hints.md) | Semantic Tool Hint Networks | Proposed |
+| [ADR-904](./access-workflow/ADR-904-pure-graph-design.md) | Pure Graph Design (Library Metaphor) | Proposed |
+| [ADR-905](./access-workflow/ADR-905-source-text-tracking.md) | Source Text Tracking and Retrieval | Proposed |
+| [ADR-906](./access-workflow/ADR-906-staging-migration-workflows.md) | Staging and Migration Workflows | Proposed |
+| [ADR-907](./access-workflow/ADR-907-official-project-apparel.md) | Official Project Apparel Design Specifications | Proposed |
+| [ADR-908](./access-workflow/ADR-908-documentation-strategy.md) | Documentation Strategy and Audience Framework | Accepted |

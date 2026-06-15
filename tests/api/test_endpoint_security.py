@@ -1,9 +1,9 @@
 """
-Endpoint Security Tests (ADR-060)
+Endpoint Security Tests (ADR-407)
 
 Integration tests for endpoint security levels across the API.
 
-Security Levels (ADR-060):
+Security Levels (ADR-407):
 - PUBLIC: No authentication required (health, docs, OAuth flows)
 - USER: Requires authentication (queries, ingest, reads)
 - ADMIN: Requires admin role (system admin, RBAC, destructive ops)

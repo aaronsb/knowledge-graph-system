@@ -517,7 +517,7 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
         }
       >
         <p className="text-sm text-muted-foreground mb-4">
-          Counters for tracking graph changes and cache invalidation (ADR-079).
+          Counters for tracking graph changes and cache invalidation (ADR-114).
         </p>
         {dbCounters?.current_snapshot ? (
           <>

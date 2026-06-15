@@ -2,7 +2,7 @@
  * CostDisplay - Format and display cost estimates
  *
  * Shows cost ranges for extraction and embedding operations.
- * Used in job approval workflow (ADR-014).
+ * Used in job approval workflow (ADR-300).
  */
 
 import React from 'react';

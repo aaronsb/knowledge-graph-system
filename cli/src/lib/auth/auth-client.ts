@@ -79,7 +79,7 @@ export interface APIKeyListResponse {
   count: number;
 }
 
-// ========== OAuth 2.0 Types (ADR-054) ==========
+// ========== OAuth 2.0 Types (ADR-406) ==========
 
 export interface OAuthClientCreateRequest {
   username: string;
@@ -127,7 +127,7 @@ export class AuthClient {
   /**
    * Login with username/password (OAuth2 password flow)
    *
-   * @deprecated Use createPersonalOAuthClient() instead (ADR-054 unified OAuth)
+   * @deprecated Use createPersonalOAuthClient() instead (ADR-406 unified OAuth)
    * @param request Username and password
    * @returns JWT token and user details
    * @throws 401 if credentials invalid, 400 if validation fails
@@ -148,7 +148,7 @@ export class AuthClient {
   }
 
   /**
-   * Create a personal OAuth client (ADR-054 - GitHub CLI-style authentication)
+   * Create a personal OAuth client (ADR-406 - GitHub CLI-style authentication)
    *
    * This is the preferred authentication method for CLI tools.
    * Flow:
@@ -189,7 +189,7 @@ export class AuthClient {
   }
 
   /**
-   * Get OAuth access token using client credentials grant (ADR-054)
+   * Get OAuth access token using client credentials grant (ADR-406)
    *
    * Use this after creating a personal OAuth client to get access tokens.
    * Access tokens are short-lived and should be refreshed as needed.
@@ -222,7 +222,7 @@ export class AuthClient {
   }
 
   /**
-   * Delete a personal OAuth client (ADR-054)
+   * Delete a personal OAuth client (ADR-406)
    *
    * Called by `kg logout` to revoke OAuth credentials.
    * Requires authentication with a valid access token.

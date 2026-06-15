@@ -1,5 +1,5 @@
 """
-Garage Client - Backward compatibility re-export (ADR-080).
+Garage Client - Backward compatibility re-export (ADR-115).
 
 This file exists for backward compatibility with existing imports.
 All functionality has been refactored into the modular garage package:

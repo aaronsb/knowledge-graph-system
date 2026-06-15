@@ -9,7 +9,7 @@ Usage:
     aggressiveness = curve.get_y_for_x(0.75)  # At 75% of window
 
 References:
-    - ADR-032: Automatic Edge Vocabulary Expansion
+    - ADR-603: Automatic Edge Vocabulary Expansion
     - CSS cubic-bezier: https://cubic-bezier.com
     - Bezier curves: https://en.wikipedia.org/wiki/Bézier_curve
 """

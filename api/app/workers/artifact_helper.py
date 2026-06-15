@@ -1,5 +1,5 @@
 """
-Artifact Helper for Workers (ADR-083 Phase 4).
+Artifact Helper for Workers (ADR-116 Phase 4).
 
 Provides utilities for workers to create artifacts from job results and
 link them to their originating jobs. Encapsulates the common pattern of:

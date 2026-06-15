@@ -1,5 +1,5 @@
 """
-Vocabulary Consolidation Worker (ADR-050).
+Vocabulary Consolidation Worker (ADR-111).
 
 Consolidates similar/redundant vocabulary types based on hysteresis thresholds.
 This worker is triggered by the VocabConsolidationLauncher when the inactive
@@ -115,7 +115,7 @@ def run_vocab_consolidate_worker(
                 "dry_run": not auto_mode
             }
 
-            # Refresh graph metrics after consolidation (ADR-079: cache invalidation)
+            # Refresh graph metrics after consolidation (ADR-114: cache invalidation)
             try:
                 conn = client.pool.getconn()
                 try:

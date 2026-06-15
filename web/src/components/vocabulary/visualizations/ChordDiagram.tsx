@@ -1,5 +1,5 @@
 /**
- * Chord Diagram for Category Flow Visualization (ADR-077)
+ * Chord Diagram for Category Flow Visualization (ADR-611)
  *
  * Shows how edge categories connect through shared concepts.
  * When two edges meet at the same concept, their categories are connected.

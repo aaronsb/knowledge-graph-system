@@ -1,5 +1,5 @@
 """
-Polarity Axis Analysis Worker (ADR-070, ADR-083).
+Polarity Axis Analysis Worker (ADR-813, ADR-116).
 
 Computes polarity axis analysis as an async job with artifact persistence.
 Projects concepts onto an axis formed by two opposing semantic poles.
@@ -11,7 +11,7 @@ Job Parameters:
     - auto_discover: Whether to auto-discover related concepts
     - max_candidates: Maximum candidates for auto-discovery
     - max_hops: Maximum graph hops for discovery
-    - create_artifact: Whether to persist result as artifact (ADR-083)
+    - create_artifact: Whether to persist result as artifact (ADR-116)
 """
 
 import logging
@@ -120,7 +120,7 @@ def run_polarity_worker(
             "progress": f"Analyzed {concept_count} concepts"
         })
 
-        # ADR-083: Create artifact if requested
+        # ADR-116: Create artifact if requested
         artifact_id = None
         if create_artifact:
             from api.app.workers.artifact_helper import create_job_artifact, get_job_user_id

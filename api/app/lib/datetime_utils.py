@@ -1,5 +1,5 @@
 """
-Timezone-Aware Datetime Utilities (ADR-056)
+Timezone-Aware Datetime Utilities (ADR-113)
 
 Centralized datetime helpers to prevent naive/aware comparison errors.
 All functions return timezone-aware datetimes in UTC.
@@ -28,8 +28,8 @@ Usage:
 
 Related ADRs:
 -------------
-- ADR-056: Timezone-Aware Datetime Utilities (this module)
-- ADR-054: OAuth Client Management (uses these utilities)
+- ADR-113: Timezone-Aware Datetime Utilities (this module)
+- ADR-406: OAuth Client Management (uses these utilities)
 """
 
 from datetime import datetime, timedelta, timezone

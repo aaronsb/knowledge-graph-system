@@ -6,7 +6,7 @@
  * setting on the same plugin — the engine dispatches camera, drag plane,
  * and simulation axis count from `settings.projection`.
  *
- * Follows ADR-034 Explorer Plugin Interface.
+ * Follows ADR-710 Explorer Plugin Interface.
  */
 
 import { Network } from 'lucide-react';

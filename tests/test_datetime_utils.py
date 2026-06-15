@@ -1,5 +1,5 @@
 """
-Tests for datetime_utils module (ADR-056)
+Tests for datetime_utils module (ADR-113)
 
 Tests timezone-aware datetime utilities to prevent naive/aware comparison errors.
 """

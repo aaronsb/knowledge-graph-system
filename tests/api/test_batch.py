@@ -1,5 +1,5 @@
 """
-Batch Graph Operations API tests (ADR-089 Phase 1b).
+Batch Graph Operations API tests (ADR-308 Phase 1b).
 
 Tests for batch creation of concepts and edges with transaction support.
 """

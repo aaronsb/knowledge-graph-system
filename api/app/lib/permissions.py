@@ -1,5 +1,5 @@
 """
-Dynamic RBAC Permission Checker (ADR-028)
+Dynamic RBAC Permission Checker (ADR-404)
 
 Implements fine-grained, scoped permission checking with:
 - Global permissions

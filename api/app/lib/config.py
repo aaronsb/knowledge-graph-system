@@ -5,7 +5,7 @@ This module provides a single source of truth for determining whether the system
 is running in development mode (.env configuration) or production mode (database
 configuration).
 
-ADR-041: AI Extraction Provider Configuration
+ADR-805: AI Extraction Provider Configuration
 """
 
 import os

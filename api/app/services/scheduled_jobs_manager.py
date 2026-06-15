@@ -1,5 +1,5 @@
 """
-Job Scheduler for automated maintenance tasks (ADR-050).
+Job Scheduler for automated maintenance tasks (ADR-111).
 
 Simple scheduler that triggers launchers based on cron schedules stored in
 PostgreSQL. Uses advisory locks for multi-worker safety and distinguishes

@@ -2,7 +2,7 @@
 Epistemic Status Service
 
 Measures epistemic status for vocabulary types by sampling edges and calculating
-grounding dynamically (ADR-065 Phase 2).
+grounding dynamically (ADR-610 Phase 2).
 
 Philosophy (Bounded Locality + Satisficing):
 - Grounding is calculated at query time with limited recursion depth

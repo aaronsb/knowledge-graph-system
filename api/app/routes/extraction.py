@@ -1,7 +1,7 @@
 """
 AI Extraction Configuration Routes
 
-API endpoints for AI extraction provider configuration management (ADR-041).
+API endpoints for AI extraction provider configuration management (ADR-805).
 
 Public endpoints:
 - GET /extraction/config - Get AI extraction configuration summary

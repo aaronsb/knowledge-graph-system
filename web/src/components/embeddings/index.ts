@@ -1,5 +1,5 @@
 /**
- * Embedding Landscape module (ADR-078)
+ * Embedding Landscape module (ADR-717)
  */
 
 export { EmbeddingLandscapeWorkspace } from './EmbeddingLandscapeWorkspace';

@@ -1,5 +1,5 @@
 /**
- * OAuth Token Refresh Manager (ADR-054)
+ * OAuth Token Refresh Manager (ADR-406)
  *
  * Handles automatic token refresh using refresh_token grant.
  *

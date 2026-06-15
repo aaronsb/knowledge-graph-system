@@ -76,7 +76,7 @@ import * as path from 'path';
 import pkg from '../package.json';
 
 /**
- * Default parameters for graph queries (ADR-048 Query Safety)
+ * Default parameters for graph queries (ADR-606 Query Safety)
  *
  * Aligned with CLI defaults so MCP agents get the same results as CLI users.
  * The API server enforces its own safety limits on the backend.
@@ -134,12 +134,12 @@ const server = new Server(
  * Negative grounding often shows the most interesting problems/contradictions.
  */
 
-// OAuth access token storage for authenticated session (ADR-054)
+// OAuth access token storage for authenticated session (ADR-406)
 let oauthAccessToken: string | null = null;
 let tokenRefreshTimer: NodeJS.Timeout | null = null;
 
 /**
- * Get OAuth access token using client credentials grant (ADR-054)
+ * Get OAuth access token using client credentials grant (ADR-406)
  * Returns the token and expiry time in milliseconds
  */
 async function getOAuthAccessToken(): Promise<{ token: string; expiresInMs: number } | null> {
@@ -216,7 +216,7 @@ function scheduleTokenRefresh(expiresInMs: number): void {
 }
 
 /**
- * Initialize OAuth authentication using client credentials (ADR-054)
+ * Initialize OAuth authentication using client credentials (ADR-406)
  *
  * Requires KG_OAUTH_CLIENT_ID and KG_OAUTH_CLIENT_SECRET environment variables.
  * This allows the MCP server to authenticate transparently without
@@ -248,7 +248,7 @@ async function initializeAuth(): Promise<void> {
 
 /**
  * Create an authenticated API client
- * If we have an OAuth access token, inject it into the client (ADR-054)
+ * If we have an OAuth access token, inject it into the client (ADR-406)
  */
 function createAuthenticatedClient(): KnowledgeGraphClient {
   const client = createClientFromEnv();
@@ -329,7 +329,7 @@ function getSessionOntology(): string {
 /**
  * Tool Definitions
  *
- * Consolidated from 22 tools to 6 tools + 5 resources (ADR-013)
+ * Consolidated from 22 tools to 6 tools + 5 resources (ADR-707)
  */
 
 // List available tools
@@ -374,13 +374,13 @@ CONCEPT SEARCH (type: "concepts", default) - Find concepts by semantic similarit
 - Image indicators: Visual evidence when available
 - Document sources: Where concepts originated
 
-SOURCE SEARCH (type: "sources") - Find source text passages directly (ADR-068):
+SOURCE SEARCH (type: "sources") - Find source text passages directly (ADR-812):
 - Searches source document embeddings, not concept embeddings
 - Returns matched text chunks with character offsets for highlighting
 - Shows concepts extracted from those passages
 - Useful for RAG workflows and finding original context
 
-DOCUMENT SEARCH (type: "documents") - Find documents by semantic similarity (ADR-084):
+DOCUMENT SEARCH (type: "documents") - Find documents by semantic similarity (ADR-507):
 - Searches at document level (aggregates source chunks)
 - Returns documents ranked by best matching chunk similarity
 - Shows concepts extracted from each document
@@ -488,7 +488,7 @@ For multi-step workflows (search → connect → expand → filter), compose the
               items: { type: 'string' },
               description: 'Filter relationships (e.g., ["SUPPORTS", "CONTRADICTS"]). Constrains traversal, not just results — if the first hop is structural, filtering to semantic types may return empty. Omit for broadest results, then narrow.',
             },
-            // ADR-065: Epistemic status filtering (for related and connect)
+            // ADR-610: Epistemic status filtering (for related and connect)
             include_epistemic_status: {
               type: 'array',
               items: { type: 'string' },
@@ -773,7 +773,7 @@ For multi-step workflows (search → connect → expand → filter), compose the
       },
       {
         name: 'source',
-        description: `Retrieve original source content (text or image) for a source node (ADR-057).
+        description: `Retrieve original source content (text or image) for a source node (ADR-305).
 
 For IMAGE sources: Returns the image for visual verification
 For TEXT sources: Returns full_text content with metadata (document, paragraph, offsets)
@@ -798,7 +798,7 @@ Source IDs appear in search results and concept details evidence. Use concept (a
       },
       {
         name: 'epistemic_status',
-        description: `Vocabulary epistemic status classification (ADR-065 Phase 2). Knowledge validation state for relationship types.
+        description: `Vocabulary epistemic status classification (ADR-610 Phase 2). Knowledge validation state for relationship types.
 
 Three actions available:
 - "list": List all vocabulary types with epistemic status classifications (AFFIRMATIVE/CONTESTED/CONTRADICTORY/HISTORICAL/INSUFFICIENT_DATA/UNCLASSIFIED)
@@ -856,7 +856,7 @@ Concept (action: "related") and connect accept include_epistemic_status/exclude_
       },
       {
         name: 'analyze_polarity_axis',
-        description: `Analyze bidirectional semantic dimension (polarity axis) between two concept poles (ADR-070).
+        description: `Analyze bidirectional semantic dimension (polarity axis) between two concept poles (ADR-813).
 
 Projects concepts onto an axis formed by opposing semantic poles (e.g., Modern ↔ Traditional, Centralized ↔ Distributed). Returns:
 - Axis quality and magnitude (semantic distinctness)
@@ -911,7 +911,7 @@ Requires concept IDs for poles — use search to find opposing concepts first. U
       },
       {
         name: 'artifact',
-        description: `Manage saved artifacts (ADR-083). Artifacts persist computed results like search results, projections, and polarity analyses for later recall.
+        description: `Manage saved artifacts (ADR-116). Artifacts persist computed results like search results, projections, and polarity analyses for later recall.
 
 Three actions available:
 - "list": List artifacts with optional filtering by type, representation, or ontology
@@ -965,7 +965,7 @@ Use artifacts to:
       },
       {
         name: 'document',
-        description: `Work with documents: list all, show content, or get concepts (ADR-084).
+        description: `Work with documents: list all, show content, or get concepts (ADR-507).
 
 Three actions available:
 - "list": List all documents with optional ontology filter
@@ -1012,10 +1012,10 @@ Use search tool with type="documents" to find documents semantically. Use docume
           required: ['action'],
         },
       },
-      // ADR-089 Phase 3a: Graph CRUD Tool
+      // ADR-308 Phase 3a: Graph CRUD Tool
       {
         name: 'graph',
-        description: `Create, edit, delete, and list concepts and edges in the knowledge graph (ADR-089).
+        description: `Create, edit, delete, and list concepts and edges in the knowledge graph (ADR-308).
 
 This tool provides deterministic graph editing without going through the LLM ingest pipeline.
 Use for manual curation, agent-driven knowledge building, and precise graph manipulation.
@@ -1503,7 +1503,7 @@ server.setRequestHandler(ListResourcesRequestSchema, async () => {
       {
         uri: 'mcp/allowed-paths',
         name: 'MCP File Access Allowlist',
-        description: 'Path allowlist configuration for secure file/directory ingestion (ADR-062)',
+        description: 'Path allowlist configuration for secure file/directory ingestion (ADR-408)',
         mimeType: 'application/json'
       },
       {
@@ -1699,7 +1699,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const ontology = toolArgs.ontology as string | undefined;
 
         if (searchType === 'sources') {
-          // ADR-068 Phase 5: Source text search
+          // ADR-812 Phase 5: Source text search
           const result = await client.searchSources({
             query,
             limit,
@@ -1715,7 +1715,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             content: [{ type: 'text', text: formattedText }],
           };
         } else if (searchType === 'documents') {
-          // ADR-084: Document search
+          // ADR-507: Document search
           const result = await client.searchDocuments({
             query,
             limit,
@@ -1780,10 +1780,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
               concept_id: toolArgs.concept_id as string,
               max_depth: toolArgs.max_depth as number || DEFAULT_MAX_DEPTH,
               relationship_types: toolArgs.relationship_types as string[] | undefined,
-              // ADR-065: Epistemic status filtering
+              // ADR-610: Epistemic status filtering
               include_epistemic_status: toolArgs.include_epistemic_status as string[] | undefined,
               exclude_epistemic_status: toolArgs.exclude_epistemic_status as string[] | undefined,
-              // ADR-044: hydrate grounding for parity with search/connect-by-search (#280)
+              // ADR-808: hydrate grounding for parity with search/connect-by-search (#280)
               include_grounding: toolArgs.include_grounding !== false,
             });
 
@@ -1804,7 +1804,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                 max_hops: toolArgs.max_hops as number || DEFAULT_MAX_HOPS,
                 include_grounding: true,
                 include_evidence: true,
-                // ADR-065: Epistemic status filtering
+                // ADR-610: Epistemic status filtering
                 include_epistemic_status: toolArgs.include_epistemic_status as string[] | undefined,
                 exclude_epistemic_status: toolArgs.exclude_epistemic_status as string[] | undefined,
               });
@@ -1825,7 +1825,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                 threshold: toolArgs.threshold as number || DEFAULT_SEMANTIC_THRESHOLD,
                 include_grounding: true,
                 include_evidence: true,
-                // ADR-065: Epistemic status filtering
+                // ADR-610: Epistemic status filtering
                 include_epistemic_status: toolArgs.include_epistemic_status as string[] | undefined,
                 exclude_epistemic_status: toolArgs.exclude_epistemic_status as string[] | undefined,
               });
@@ -2762,7 +2762,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         }
       }
 
-      // ADR-089 Phase 3a: Graph CRUD Tool Handler (Refactored)
+      // ADR-308 Phase 3a: Graph CRUD Tool Handler (Refactored)
       case 'graph': {
         const action = toolArgs.action as string;
         const entity = toolArgs.entity as string;

@@ -2,7 +2,7 @@
 AI Vision Configuration Management
 
 Loads and saves the active vision (image->prose) provider selection from/to
-the database, mirroring ai_extraction_config (ADR-041) under the ADR-802
+the database, mirroring ai_extraction_config (ADR-805) under the ADR-802
 decision that vision is a first-class provider capability resolved
 independently like embedding.
 

@@ -1,5 +1,5 @@
 /**
- * Artifact Store - Zustand State Management (ADR-083)
+ * Artifact Store - Zustand State Management (ADR-116)
  *
  * Manages artifact metadata for persistent storage of computed results.
  * Payloads are cached separately in localStorage with LRU eviction.

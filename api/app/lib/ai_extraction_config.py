@@ -2,7 +2,7 @@
 AI Extraction Configuration Management
 
 Handles loading and saving AI extraction configuration from/to the database.
-Implements database-first configuration (ADR-041).
+Implements database-first configuration (ADR-805).
 """
 
 import logging

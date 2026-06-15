@@ -419,7 +419,7 @@ async def list_ontologies(
     current_user: CurrentUser
 ):
     """
-    List all ontologies in the knowledge graph (ADR-060).
+    List all ontologies in the knowledge graph (ADR-407).
 
     Returns summary statistics for each ontology including
     file count, chunk count, and concept count.
@@ -1091,7 +1091,7 @@ async def get_ontology_info(
     current_user: CurrentUser
 ):
     """
-    Get detailed information about a specific ontology (ADR-060).
+    Get detailed information about a specific ontology (ADR-407).
 
     Includes:
     - File count and list of files
@@ -1263,7 +1263,7 @@ async def get_ontology_files(
     current_user: CurrentUser
 ):
     """
-    List all files in a specific ontology with their statistics (ADR-060).
+    List all files in a specific ontology with their statistics (ADR-407).
 
     **Authentication:** Requires valid OAuth token
     **Authorization:** Requires `ontologies:read` permission
@@ -1417,14 +1417,14 @@ async def delete_ontology(
     ),
 ):
     """
-    Delete an ontology and all its data (Admin only - ADR-060).
+    Delete an ontology and all its data (Admin only - ADR-407).
 
     **WARNING: This action cannot be undone!**
 
     Deletes:
     - All Source nodes belonging to the ontology
     - All Instance nodes linked to those sources
-    - All DocumentMeta nodes for this ontology (ADR-051: provenance metadata)
+    - All DocumentMeta nodes for this ontology (ADR-304: provenance metadata)
     - Orphaned Concept nodes (concepts with no remaining sources)
     - All source embeddings for deleted sources (kg_api.source_embeddings)
     - All job records for this ontology (enables clean re-ingestion)
@@ -1483,7 +1483,7 @@ async def delete_ontology(
             reason="operator-initiated delete via API",
         )
 
-        # ADR-057/ADR-081: Clean up ALL Garage objects before deleting sources
+        # ADR-305/ADR-307: Clean up ALL Garage objects before deleting sources
         # This includes: images, source documents, and projections
         try:
             from ..lib.garage import get_image_storage, get_source_storage, get_projection_storage
@@ -1508,7 +1508,7 @@ async def delete_ontology(
                 if image_deleted_count > 0:
                     logger.info(f"Deleted {image_deleted_count} images from Garage for ontology '{ontology_name}'")
 
-            # 2. Delete source documents (ADR-081)
+            # 2. Delete source documents (ADR-307)
             try:
                 source_storage = get_source_storage()
                 source_docs_deleted = source_storage.delete_by_ontology(ontology_name)
@@ -1517,7 +1517,7 @@ async def delete_ontology(
             except Exception as e:
                 logger.warning(f"Failed to delete source documents from Garage: {e}")
 
-            # 3. Delete projections (ADR-079)
+            # 3. Delete projections (ADR-114)
             try:
                 projections = get_projection_storage()
                 projections_deleted = projections.delete_all(ontology_name)
@@ -1575,7 +1575,7 @@ async def delete_ontology(
                 if conn:
                     client.pool.putconn(conn)
 
-        # ADR-051: Delete DocumentMeta nodes for this ontology
+        # ADR-304: Delete DocumentMeta nodes for this ontology
         # This ensures cascade deletion of provenance metadata
         doc_meta_result = client._execute_cypher("""
             MATCH (d:DocumentMeta {ontology: $name})
@@ -1654,7 +1654,7 @@ async def rename_ontology(
     _: None = Depends(require_permission("ontologies", "create"))
 ):
     """
-    Rename an ontology (Admin only - ADR-060).
+    Rename an ontology (Admin only - ADR-407).
 
     Updates all Source nodes' document property from old_name to new_name.
     This operation is fast and safe - only affects Source nodes in the specified ontology.

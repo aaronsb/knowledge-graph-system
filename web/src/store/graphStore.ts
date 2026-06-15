@@ -234,7 +234,7 @@ interface GraphStore {
   blockBuilderExpanded: boolean;
   setBlockBuilderExpanded: (expanded: boolean) => void;
 
-  // Polarity Explorer state (ADR-070)
+  // Polarity Explorer state (ADR-813)
   polarityState: {
     selectedPositivePole: { concept_id: string; label: string; description?: string } | null;
     selectedNegativePole: { concept_id: string; label: string; description?: string } | null;
@@ -508,14 +508,14 @@ export const useGraphStore = create<GraphStore>()(
   blockBuilderExpanded: true,
   setBlockBuilderExpanded: (expanded) => set({ blockBuilderExpanded: expanded }),
 
-  // Polarity Explorer state (ADR-070)
+  // Polarity Explorer state (ADR-813)
   polarityState: {
     selectedPositivePole: null,
     selectedNegativePole: null,
     analysisHistory: [],
     selectedAnalysisId: null,
     maxCandidates: 20,
-    maxHops: 3, // Increased from 1 - BFS optimization (ADR-076) makes higher hops practical
+    maxHops: 3, // Increased from 1 - BFS optimization (ADR-506) makes higher hops practical
     minSimilarity: 0.6, // Similarity threshold for pole search
     autoDiscover: true,
     activeTab: 'search',

@@ -249,7 +249,7 @@ api/app/
 Set environment variables in `.env`:
 
 ```bash
-# Job Queue configuration (ADR-024: PostgreSQL by default)
+# Job Queue configuration (ADR-209: PostgreSQL by default)
 QUEUE_TYPE=postgresql  # "postgresql" (production) or "inmemory" (testing only)
 
 # AI provider (used by workers)
@@ -269,7 +269,7 @@ POSTGRES_PASSWORD=password
 
 The system uses an abstract `JobQueue` interface with two implementations:
 
-### PostgreSQL Queue (Recommended - ADR-024)
+### PostgreSQL Queue (Recommended - ADR-209)
 - **Production ready**: MVCC concurrency, no write locks
 - **Connection pooling**: Handle concurrent operations efficiently
 - **JSONB support**: Native JSON storage (not serialized strings)

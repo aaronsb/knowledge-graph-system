@@ -1,7 +1,7 @@
 """
 Tests for pruning_strategies.py
 
-Validates three-tier decision model (naive/HITL/AITL) for vocabulary management (ADR-032).
+Validates three-tier decision model (naive/HITL/AITL) for vocabulary management (ADR-603).
 """
 
 import pytest

@@ -7,7 +7,7 @@ import chalk from 'chalk';
 import ora from 'ora';
 import * as fs from 'fs';
 import * as nodePath from 'path';  // Renamed to avoid shadowing with parameter names
-import * as os from 'os';  // ADR-051: Get hostname for provenance
+import * as os from 'os';  // ADR-304: Get hostname for provenance
 import { createClientFromEnv } from '../api/client';
 import { IngestRequest, JobStatus, DuplicateJobResponse, JobSubmitResponse } from '../types';
 import { getConfig } from '../lib/config';
@@ -16,7 +16,7 @@ import { setCommandHelp } from './help-formatter';
 export const ingestCommand = setCommandHelp(
   new Command('ingest'),
   'Ingest documents into the knowledge graph',
-  'Ingest documents into the knowledge graph. Processes documents and extracts concepts, relationships, and evidence. Supports three modes: single file (one document), directory (batch ingest multiple files), and raw text (ingest text directly without a file). All operations create jobs (ADR-014) that can be monitored via "kg job" commands. Workflow: submit → chunk (semantic boundaries ~1000 words with overlap) → create job → optional approval → process (LLM extract, embed concepts, match existing, insert graph) → complete.'
+  'Ingest documents into the knowledge graph. Processes documents and extracts concepts, relationships, and evidence. Supports three modes: single file (one document), directory (batch ingest multiple files), and raw text (ingest text directly without a file). All operations create jobs (ADR-300) that can be monitored via "kg job" commands. Workflow: submit → chunk (semantic boundaries ~1000 words with overlap) → create job → optional approval → process (LLM extract, embed concepts, match existing, insert graph) → complete.'
 )
   .showHelpAfterError('(add --help for additional information)')
   .showSuggestionAfterError();
@@ -24,7 +24,7 @@ export const ingestCommand = setCommandHelp(
 // Ingest file command
 ingestCommand
   .command('file <path>')
-  .description('Ingest a single document file. Reads file, chunks text into semantic segments (~1000 words with overlap), submits job, returns job ID. Optionally waits for completion with -w. Supports text files (.txt, .md, .rst), PDF documents (.pdf), and other API-supported formats. By default: auto-approves (starts immediately), uses serial processing (chunks see previous concepts for clean deduplication, slower but higher quality), detects duplicates (file hash checked, returns existing job if found). Use --force to bypass duplicate detection, --parallel for faster processing of large documents (may create duplicate concepts), --no-approve to require manual approval (ADR-014), -w to wait for completion (polls until complete, shows progress).')
+  .description('Ingest a single document file. Reads file, chunks text into semantic segments (~1000 words with overlap), submits job, returns job ID. Optionally waits for completion with -w. Supports text files (.txt, .md, .rst), PDF documents (.pdf), and other API-supported formats. By default: auto-approves (starts immediately), uses serial processing (chunks see previous concepts for clean deduplication, slower but higher quality), detects duplicates (file hash checked, returns existing job if found). Use --force to bypass duplicate detection, --parallel for faster processing of large documents (may create duplicate concepts), --no-approve to require manual approval (ADR-300), -w to wait for completion (polls until complete, shows progress).')
   .requiredOption('-o, --ontology <name>', 'Ontology/collection name (named collection or knowledge domain)')
   .option('-f, --force', 'Force re-ingestion even if duplicate (bypasses hash check, creates new job)', false)
   .option('--no-approve', 'Require manual approval before processing (job enters awaiting_approval state, must approve via "kg job approve <id>"). Default: auto-approve.')
@@ -53,13 +53,13 @@ ingestCommand
         ontology: options.ontology,
         filename: options.filename,
         force: options.force,
-        auto_approve: autoApprove,  // ADR-014: Auto-approve flag
+        auto_approve: autoApprove,  // ADR-300: Auto-approve flag
         processing_mode: options.parallel ? 'parallel' : 'serial',
         options: {
           target_words: parseInt(options.targetWords),
           overlap_words: parseInt(options.overlapWords),
         },
-        // ADR-051: Source provenance metadata
+        // ADR-304: Source provenance metadata
         source_type: 'file',
         source_path: nodePath.resolve(path),  // Convert to absolute path
         source_hostname: os.hostname(),
@@ -112,7 +112,7 @@ ingestCommand
 // Ingest directory command
 ingestCommand
   .command('directory <dir>')
-  .description('Ingest all matching files from a directory (batch processing). Scans directory for files matching patterns (default: text *.md *.txt, images *.png *.jpg *.jpeg *.gif *.webp), optionally recurses into subdirectories (-r with depth limit), groups files by ontology (single ontology via -o OR auto-create from subdirectory names via --directories-as-ontologies), and submits batch jobs. Auto-detects file type: images use vision pipeline (ADR-057), text files use standard extraction. Use --dry-run to preview what would be ingested without submitting (checks duplicates, shows skip/submit counts). Directory-as-ontology mode: each subdirectory becomes separate ontology named after directory, useful for organizing knowledge domains by folder structure. Examples: "physics/" → "physics" ontology, "chemistry/organic/" → "organic" ontology.')
+  .description('Ingest all matching files from a directory (batch processing). Scans directory for files matching patterns (default: text *.md *.txt, images *.png *.jpg *.jpeg *.gif *.webp), optionally recurses into subdirectories (-r with depth limit), groups files by ontology (single ontology via -o OR auto-create from subdirectory names via --directories-as-ontologies), and submits batch jobs. Auto-detects file type: images use vision pipeline (ADR-305), text files use standard extraction. Use --dry-run to preview what would be ingested without submitting (checks duplicates, shows skip/submit counts). Directory-as-ontology mode: each subdirectory becomes separate ontology named after directory, useful for organizing knowledge domains by folder structure. Examples: "physics/" → "physics" ontology, "chemistry/organic/" → "organic" ontology.')
   .option('-o, --ontology <name>', 'Ontology/collection name (required unless --directories-as-ontologies). Single ontology receives all files.')
   .option('-p, --pattern <patterns...>', 'File patterns to match (glob patterns). Text and image extensions supported.', ['*.md', '*.txt', '*.png', '*.jpg', '*.jpeg', '*.gif', '*.webp', '*.bmp'])
   .option('-r, --recurse', 'Enable recursive scanning of subdirectories. MUST combine with --depth. Examples: "--recurse --depth 1" (one level), "--recurse --depth 2" (two levels), "--recurse --depth all" (unlimited). Default depth is 0 (current dir only).', false)
@@ -234,7 +234,7 @@ ingestCommand
             force: options.force,
             auto_approve: false,  // Don't matter for dry-run, but set conservative
             processing_mode: 'serial',
-            // ADR-051: Source provenance metadata
+            // ADR-304: Source provenance metadata
             source_type: 'file',
             source_path: nodePath.resolve(filePath),
             source_hostname: os.hostname(),
@@ -330,7 +330,7 @@ ingestCommand
             target_words: parseInt(options.targetWords),
             overlap_words: parseInt(options.overlapWords),
           },
-          // ADR-051: Source provenance metadata
+          // ADR-304: Source provenance metadata
           source_type: 'file',
           source_path: nodePath.resolve(filePath),
           source_hostname: os.hostname(),
@@ -340,7 +340,7 @@ ingestCommand
           // Route to appropriate API based on file type
           let result;
           if (isImageFile(filePath)) {
-            // Image ingestion (ADR-057)
+            // Image ingestion (ADR-305)
             const imageRequest = {
               ontology: request.ontology,
               filename: request.filename,
@@ -430,12 +430,12 @@ ingestCommand
         ontology: options.ontology,
         filename: options.filename,
         force: options.force,
-        auto_approve: autoApprove,  // ADR-014: Auto-approve flag
+        auto_approve: autoApprove,  // ADR-300: Auto-approve flag
         processing_mode: options.parallel ? 'parallel' : 'serial',
         options: {
           target_words: parseInt(options.targetWords),
         },
-        // ADR-051: Source provenance metadata (stdin/direct text input)
+        // ADR-304: Source provenance metadata (stdin/direct text input)
         source_type: 'stdin',
       };
 
@@ -637,10 +637,10 @@ function printJobResult(result: any) {
   }
 }
 
-// Ingest image command (ADR-057)
+// Ingest image command (ADR-305)
 ingestCommand
   .command('image <path>')
-  .description('Ingest an image file using multimodal vision AI (ADR-057). Converts image to prose description using GPT-4o Vision, generates visual embeddings with Nomic Vision v1.5, then extracts concepts via standard pipeline. Supports PNG, JPEG, GIF, WebP, BMP (max 10MB). Research validated: GPT-4o 100% reliable, Nomic Vision 0.847 clustering quality (27% better than CLIP). See docs/research/vision-testing/')
+  .description('Ingest an image file using multimodal vision AI (ADR-305). Converts image to prose description using GPT-4o Vision, generates visual embeddings with Nomic Vision v1.5, then extracts concepts via standard pipeline. Supports PNG, JPEG, GIF, WebP, BMP (max 10MB). Research validated: GPT-4o 100% reliable, Nomic Vision 0.847 clustering quality (27% better than CLIP). See docs/research/vision-testing/')
   .requiredOption('-o, --ontology <name>', 'Ontology/collection name')
   .option('-f, --force', 'Force re-ingestion even if duplicate', false)
   .option('--no-approve', 'Require manual approval before processing. Default: auto-approve.')
@@ -696,7 +696,7 @@ ingestCommand
           auto_approve: autoApprove,
           vision_provider: options.visionProvider,
           vision_model: options.visionModel,
-          // ADR-051: Source metadata
+          // ADR-304: Source metadata
           source_type: 'file' as const,
           source_path: nodePath.resolve(path),
           source_hostname: os.hostname(),

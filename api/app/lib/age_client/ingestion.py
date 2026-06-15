@@ -5,7 +5,7 @@ Handles CRUD operations for the core graph entities created during
 document ingestion: Source, Concept, and Instance nodes, plus the
 edges that link them (APPEARS, EVIDENCED_BY, FROM_SOURCE).
 
-Also includes DocumentMeta operations (ADR-051/081) for tracking
+Also includes DocumentMeta operations (ADR-304/081) for tracking
 document-level metadata and deduplication.
 
 Entity flow during ingestion:
@@ -202,7 +202,7 @@ class IngestionMixin:
         storage_key: str = None,
         visual_embedding: list = None,
         embedding: list = None,
-        # ADR-081: Source document lifecycle
+        # ADR-307: Source document lifecycle
         garage_key: str = None,
         content_hash: str = None,
         char_offset_start: int = None,
@@ -218,15 +218,15 @@ class IngestionMixin:
             paragraph: Paragraph/chunk number in the document
             full_text: Full text content of the paragraph (prose for images, original text for documents)
             file_path: Path to the source file (optional)
-            content_type: Type of content - "document" or "image" (ADR-057)
-            storage_key: MinIO object key for image storage (images only, ADR-057)
-            visual_embedding: 768-dim visual embedding from Nomic Vision (images only, ADR-057)
-            embedding: Text embedding of full_text (both documents and image prose, ADR-057)
-            garage_key: Garage object key for source document (ADR-081)
-            content_hash: SHA-256 hash of original document content (ADR-081)
-            char_offset_start: Starting character position in original document (ADR-081)
-            char_offset_end: Ending character position in original document (ADR-081)
-            chunk_index: Zero-based chunk index for ordering (ADR-081)
+            content_type: Type of content - "document" or "image" (ADR-305)
+            storage_key: MinIO object key for image storage (images only, ADR-305)
+            visual_embedding: 768-dim visual embedding from Nomic Vision (images only, ADR-305)
+            embedding: Text embedding of full_text (both documents and image prose, ADR-305)
+            garage_key: Garage object key for source document (ADR-307)
+            content_hash: SHA-256 hash of original document content (ADR-307)
+            char_offset_start: Starting character position in original document (ADR-307)
+            char_offset_end: Ending character position in original document (ADR-307)
+            chunk_index: Zero-based chunk index for ordering (ADR-307)
 
         Returns:
             Dictionary with created node properties
@@ -235,7 +235,7 @@ class IngestionMixin:
             ValueError: If offset parameters are invalid
             Exception: If node creation fails
         """
-        # ADR-081: Validate offset parameters
+        # ADR-307: Validate offset parameters
         if char_offset_start is not None and char_offset_start < 0:
             raise ValueError(f"char_offset_start must be >= 0, got {char_offset_start}")
         if char_offset_end is not None and char_offset_end < 0:
@@ -579,7 +579,7 @@ class IngestionMixin:
         rel_type: str,
         category: str,
         confidence: float,
-        # ADR-051: Edge metadata for provenance tracking
+        # ADR-304: Edge metadata for provenance tracking
         created_by: Optional[str] = None,
         source: str = "llm_extraction",
         job_id: Optional[str] = None,
@@ -612,11 +612,11 @@ class IngestionMixin:
             Relationship type validation happens in ingestion layer via normalize_relationship_type().
             This method trusts that rel_type has been normalized to one of the 30 canonical types.
 
-            ADR-051: Edge metadata enables:
+            ADR-304: Edge metadata enables:
             - Audit trail: "Which job created this relationship?"
             - Human vs LLM distinction: Weight human-curated relationships differently
             - Cascade delete: Delete all edges from a document
-            - MCP silent storage: Metadata NOT exposed to Claude (ADR-044)
+            - MCP silent storage: Metadata NOT exposed to Claude (ADR-808)
         """
         if not 0.0 <= confidence <= 1.0:
             raise ValueError(f"Confidence must be between 0.0 and 1.0, got {confidence}")
@@ -665,12 +665,12 @@ class IngestionMixin:
             )
 
     # =========================================================================
-    # Document Metadata (ADR-051/081)
+    # Document Metadata (ADR-304/081)
     # =========================================================================
 
     def get_document_meta(self, content_hash: str, ontology: str) -> Optional[Dict[str, Any]]:
         """
-        Check if a document already exists in the graph (ADR-051).
+        Check if a document already exists in the graph (ADR-304).
 
         Used for deduplication: checks graph (persistent state) instead of
         jobs table (ephemeral log). This prevents job deletion from breaking
@@ -738,13 +738,13 @@ class IngestionMixin:
         hostname: Optional[str] = None,
         ingested_at: Optional[str] = None,
         source_ids: Optional[List[str]] = None,
-        # ADR-081: Source document lifecycle
+        # ADR-307: Source document lifecycle
         garage_key: Optional[str] = None,
         content_type: str = "document",
         storage_key: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
-        Create a DocumentMeta node and link it to Source nodes (ADR-051, ADR-081).
+        Create a DocumentMeta node and link it to Source nodes (ADR-304, ADR-307).
 
         Tracks successfully ingested documents as first-class graph citizens.
         Enables deduplication via graph (persistent) instead of jobs table (ephemeral).
@@ -762,9 +762,9 @@ class IngestionMixin:
             hostname: Hostname where ingested (optional, CLI only)
             ingested_at: ISO timestamp (optional, defaults to now())
             source_ids: List of source_ids to link via HAS_SOURCE relationship (optional)
-            garage_key: Garage object key for source document (ADR-081)
+            garage_key: Garage object key for source document (ADR-307)
             content_type: "document" or "image" (default: "document")
-            storage_key: Garage object key for image binary (ADR-057, images only)
+            storage_key: Garage object key for image binary (ADR-305, images only)
 
         Returns:
             Created DocumentMeta node properties
@@ -813,10 +813,10 @@ class IngestionMixin:
             properties["file_path"] = file_path
         if hostname:
             properties["hostname"] = hostname
-        # ADR-081: Link to source document in Garage
+        # ADR-307: Link to source document in Garage
         if garage_key:
             properties["garage_key"] = garage_key
-        # ADR-057: Image binary location in Garage
+        # ADR-305: Image binary location in Garage
         if storage_key:
             properties["storage_key"] = storage_key
 

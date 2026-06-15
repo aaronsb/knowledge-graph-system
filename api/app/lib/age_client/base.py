@@ -65,7 +65,7 @@ class BaseMixin:
 
         try:
             # Create connection pool for better performance
-            # ThreadedConnectionPool for thread-safe access (parallel requests, ADR-071)
+            # ThreadedConnectionPool for thread-safe access (parallel requests, ADR-505)
             self.pool = psycopg2.pool.ThreadedConnectionPool(
                 1,  # minconn
                 20,  # maxconn (supports up to 16 parallel workers + buffer)
@@ -86,7 +86,7 @@ class BaseMixin:
                 f"Cannot connect to PostgreSQL at {self.host}:{self.port}: {e}"
             )
 
-        # Lazy-loaded facade for namespace-safe queries (ADR-048)
+        # Lazy-loaded facade for namespace-safe queries (ADR-606)
         self._facade = None
 
         # Lazy-loaded graph facade for accelerated traversal (ADR-201)

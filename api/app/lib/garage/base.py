@@ -1,5 +1,5 @@
 """
-Garage Base Client - Core S3 operations and credential management (ADR-080).
+Garage Base Client - Core S3 operations and credential management (ADR-115).
 
 This module provides the foundational S3 client that all storage services depend on.
 It handles:
@@ -32,7 +32,7 @@ def _get_garage_credentials() -> tuple[str, str]:
     """
     Get Garage credentials from encrypted key store or environment.
 
-    Tries encrypted database storage first (ADR-031), falls back to environment
+    Tries encrypted database storage first (ADR-405), falls back to environment
     variables for backward compatibility.
 
     Returns:
@@ -113,7 +113,7 @@ class GarageBaseClient:
         """
         Initialize Garage base client.
 
-        Credentials are loaded from encrypted key store (ADR-031) if available,
+        Credentials are loaded from encrypted key store (ADR-405) if available,
         falling back to environment variables for backward compatibility.
 
         Args:

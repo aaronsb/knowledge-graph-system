@@ -72,7 +72,7 @@ fi
 log "WEB_HOSTNAME=${IP}"
 
 # --- Assemble the operator init invocation -----------------------------------
-# Mirrors ADR-086's cube deployment. --gpu=cpu: the generic VM appliance assumes
+# Mirrors ADR-117's cube deployment. --gpu=cpu: the generic VM appliance assumes
 # no GPU passthrough; nomic embeddings run on CPU. Reasoning creds are passed
 # through only if provision.env supplied them — otherwise --skip-ai-config.
 INIT_ARGS=(

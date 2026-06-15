@@ -1,5 +1,5 @@
 /**
- * Batch Operations Commands (ADR-089 Phase 1b)
+ * Batch Operations Commands (ADR-308 Phase 1b)
  *
  * Import batch JSON files containing concepts and edges.
  */

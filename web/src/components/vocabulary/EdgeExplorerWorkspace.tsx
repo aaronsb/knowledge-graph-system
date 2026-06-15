@@ -1,5 +1,5 @@
 /**
- * Edge Explorer Workspace (ADR-077)
+ * Edge Explorer Workspace (ADR-611)
  *
  * System-wide vocabulary exploration with three view modes:
  * - Chord: Category flow diagram

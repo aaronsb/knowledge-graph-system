@@ -1,5 +1,5 @@
 /**
- * Block Diagram Store - Persistence for visual block query diagrams (ADR-083)
+ * Block Diagram Store - Persistence for visual block query diagrams (ADR-116)
  *
  * Uses query_definitions API for persistence with localStorage as cache/fallback.
  * Designed for account-based persistence with offline support.

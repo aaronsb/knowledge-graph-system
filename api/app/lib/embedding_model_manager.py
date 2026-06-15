@@ -4,7 +4,7 @@ Embedding Model Manager - Singleton pattern for local embedding models.
 Manages heavy sentence-transformers and transformers models that should be loaded
 once at startup and reused across all requests.
 
-Supports multiple loaders (ADR-039 + migration 055):
+Supports multiple loaders (ADR-804 + migration 055):
 - sentence-transformers: SentenceTransformer (nomic, bge, etc.)
 - transformers: AutoModel + AutoTokenizer (SigLIP text, custom models)
 - api: No local model needed (OpenAI, etc.)

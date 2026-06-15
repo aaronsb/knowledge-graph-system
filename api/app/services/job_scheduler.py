@@ -7,7 +7,7 @@ Runs periodic maintenance tasks:
 - Delete old failed jobs (7 days retention for debugging)
 - Expire stale annealing proposals past their TTL (7 days)
 
-Based on ADR-014: Job Approval Workflow
+Based on ADR-300: Job Approval Workflow
 """
 
 import asyncio

@@ -1,7 +1,7 @@
 """
 Pruning Strategies for Automatic Edge Vocabulary Expansion.
 
-Implements three-tier decision model for vocabulary management (ADR-032):
+Implements three-tier decision model for vocabulary management (ADR-603):
 - Naive: Algorithmic decisions only (auto-merge/prune)
 - HITL: Human-in-the-loop (all decisions need approval)
 - AITL: AI-in-the-loop (AI makes tactical decisions, humans set strategy)
@@ -36,8 +36,8 @@ Usage:
         print(f"Human review: {action.reasoning}")
 
 References:
-    - ADR-032: Automatic Edge Vocabulary Expansion
-    - ADR-025: Dynamic Relationship Vocabulary
+    - ADR-603: Automatic Edge Vocabulary Expansion
+    - ADR-601: Dynamic Relationship Vocabulary
 """
 
 from typing import Dict, List, Optional, Literal
@@ -47,7 +47,7 @@ import asyncio
 import json
 import logging
 
-# Type imports for other ADR-032 modules
+# Type imports for other ADR-603 modules
 from api.app.lib.synonym_detector import SynonymCandidate, SynonymStrength
 from api.app.lib.vocabulary_scoring import EdgeTypeScore
 from api.app.lib.llm_utils import call_llm_sync
@@ -90,7 +90,7 @@ async def llm_evaluate_merge(
     This is the core AITL worker function. It asks the LLM:
     1. Are these truly synonyms or do they have semantic distinctions?
     2. If synonyms, what's a better unified name?
-    3. ADR-065: Are their epistemic states compatible for merging?
+    3. ADR-610: Are their epistemic states compatible for merging?
 
     Args:
         type1: First edge type name
@@ -99,8 +99,8 @@ async def llm_evaluate_merge(
         type2_edge_count: Number of edges using type2
         similarity: Embedding similarity score (0.0-1.0)
         ai_provider: AI provider instance (OpenAI/Anthropic)
-        type1_epistemic_status: Epistemic status of type1 (ADR-065)
-        type2_epistemic_status: Epistemic status of type2 (ADR-065)
+        type1_epistemic_status: Epistemic status of type1 (ADR-610)
+        type2_epistemic_status: Epistemic status of type2 (ADR-610)
 
     Returns:
         MergeDecision with structured decision
@@ -117,7 +117,7 @@ async def llm_evaluate_merge(
     """
 
     # Construct prompt for LLM
-    # ADR-065: Include epistemic status context if available
+    # ADR-610: Include epistemic status context if available
     epistemic_context = ""
     if type1_epistemic_status or type2_epistemic_status:
         epistemic_context = f"""
@@ -926,7 +926,7 @@ if __name__ == "__main__":
     import asyncio
     import sys
 
-    print("Pruning Strategies - ADR-032 Implementation")
+    print("Pruning Strategies - ADR-603 Implementation")
     print("=" * 60)
     print()
     print("This module implements three-tier decision model:")

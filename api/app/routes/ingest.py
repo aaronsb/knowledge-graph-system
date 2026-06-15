@@ -45,7 +45,7 @@ async def run_job_analysis(job_id: str, auto_approve: bool = False):
     """
     Background task to analyze job and optionally auto-approve.
 
-    ADR-014 workflow:
+    ADR-300 workflow:
     1. Analyze job (fast, no LLM calls)
     2. Update job with analysis and status -> awaiting_approval
     3. If auto_approve, immediately approve and execute
@@ -126,7 +126,7 @@ async def ingest_document(
     min_words: Optional[int] = Form(None, description="Minimum words per chunk"),
     max_words: Optional[int] = Form(None, description="Maximum words per chunk"),
     overlap_words: int = Form(200, description="Overlap between chunks"),
-    # ADR-051: Source metadata (optional, best-effort provenance tracking)
+    # ADR-304: Source metadata (optional, best-effort provenance tracking)
     source_type: Optional[str] = Form(None, description="Source type: file, stdin, mcp, api"),
     source_path: Optional[str] = Form(None, description="Full filesystem path (file ingestion only)"),
     source_hostname: Optional[str] = Form(None, description="Hostname where ingestion initiated")
@@ -137,11 +137,11 @@ async def ingest_document(
     **Authentication:** Requires valid OAuth token
     **Authorization:** Requires `ingest:create` permission
 
-    Implements ADR-014 job approval workflow with cost estimation before processing.
+    Implements ADR-300 job approval workflow with cost estimation before processing.
     Documents are chunked, analyzed by LLM for concept extraction, and upserted to
     the graph with semantic relationships.
 
-    **Workflow (ADR-014):**
+    **Workflow (ADR-300):**
     1. Submit document → Job created with status `pending`
     2. Analysis runs automatically (fast, estimates costs without LLM calls)
     3. Job status → `awaiting_approval` with cost/time estimates
@@ -183,7 +183,7 @@ async def ingest_document(
     queue = get_job_queue()
     age_client = AGEClient()
     try:
-        hasher = ContentHasher(queue, age_client)  # ADR-051: Pass age_client for graph checks
+        hasher = ContentHasher(queue, age_client)  # ADR-304: Pass age_client for graph checks
 
         # ADR-200 Phase 2: Frozen ontologies reject ingestion
         if age_client.is_ontology_frozen(ontology):
@@ -195,7 +195,7 @@ async def ingest_document(
         # Read file content
         content = await file.read()
 
-        # ADR-033: Multimodal image ingestion
+        # ADR-302: Multimodal image ingestion
         # If this is an image, use vision AI to describe it, then process description as text
         if _is_image_file(file.filename):
             from ..lib.ai_providers import get_provider, IMAGE_DESCRIPTION_PROMPT
@@ -281,7 +281,7 @@ async def ingest_document(
                 "max_words": options.get_max_words(),
                 "overlap_words": options.overlap_words
             },
-            # ADR-051: Source metadata (optional, best-effort provenance)
+            # ADR-304: Source metadata (optional, best-effort provenance)
             "source_type": source_type,
             "source_path": source_path,
             "source_hostname": source_hostname
@@ -290,7 +290,7 @@ async def ingest_document(
         # Enqueue job (status: "pending")
         job_id = queue.enqueue("ingestion", job_data)
 
-        # ADR-014: Trigger analysis instead of immediate execution
+        # ADR-300: Trigger analysis instead of immediate execution
         background_tasks.add_task(run_job_analysis, job_id, auto_approve)
 
         # Return job info
@@ -323,7 +323,7 @@ async def ingest_text(
     processing_mode: str = Form("serial", description="Processing mode: serial or parallel (default: serial for clean concept matching)"),
     target_words: int = Form(1000, description="Target words per chunk"),
     overlap_words: int = Form(200, description="Overlap between chunks"),
-    # ADR-051: Source metadata (optional, best-effort provenance tracking)
+    # ADR-304: Source metadata (optional, best-effort provenance tracking)
     source_type: Optional[str] = Form(None, description="Source type: file, stdin, mcp, api"),
     source_path: Optional[str] = Form(None, description="Full filesystem path (file ingestion only)"),
     source_hostname: Optional[str] = Form(None, description="Hostname where ingestion initiated")
@@ -335,7 +335,7 @@ async def ingest_text(
     **Authorization:** Requires `ingest:create` permission
 
     Alternative to file upload for direct text submission. Implements the same
-    ADR-014 approval workflow and deduplication as the file-based endpoint.
+    ADR-300 approval workflow and deduplication as the file-based endpoint.
 
     **When to Use:**
     - Pasting text directly from clipboard or editor
@@ -373,7 +373,7 @@ async def ingest_text(
     queue = get_job_queue()
     age_client = AGEClient()
     try:
-        hasher = ContentHasher(queue, age_client)  # ADR-051: Pass age_client for graph checks
+        hasher = ContentHasher(queue, age_client)  # ADR-304: Pass age_client for graph checks
 
         # ADR-200 Phase 2: Frozen ontologies reject ingestion
         if age_client.is_ontology_frozen(ontology):
@@ -422,7 +422,7 @@ async def ingest_text(
                 "max_words": int(target_words * 1.5),
                 "overlap_words": overlap_words
             },
-            # ADR-051: Source metadata (optional, best-effort provenance)
+            # ADR-304: Source metadata (optional, best-effort provenance)
             "source_type": source_type,
             "source_path": source_path,
             "source_hostname": source_hostname
@@ -431,7 +431,7 @@ async def ingest_text(
         # Enqueue job (status: "pending")
         job_id = queue.enqueue("ingestion", job_data)
 
-        # ADR-014: Trigger analysis instead of immediate execution
+        # ADR-300: Trigger analysis instead of immediate execution
         background_tasks.add_task(run_job_analysis, job_id, auto_approve)
 
         # Return job info

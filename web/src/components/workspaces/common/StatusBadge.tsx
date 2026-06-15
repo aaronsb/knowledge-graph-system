@@ -2,7 +2,7 @@
  * StatusBadge - Job status indicator with icon and color
  *
  * Displays job status consistently across all workspace components.
- * Follows ADR-014 job lifecycle states.
+ * Follows ADR-300 job lifecycle states.
  */
 
 import React from 'react';

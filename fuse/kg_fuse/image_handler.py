@@ -269,7 +269,7 @@ class ImageHandler:
     # ── Ingestion ────────────────────────────────────────────────────
 
     async def ingest_image(self, ontology: str, filename: str, content: bytes) -> dict:
-        """Submit image to dedicated image ingestion API (ADR-057) and track the job."""
+        """Submit image to dedicated image ingestion API (ADR-305) and track the job."""
         files = {"file": (filename, content)}
         data = {
             "ontology": ontology,

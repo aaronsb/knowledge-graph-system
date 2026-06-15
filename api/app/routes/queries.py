@@ -38,13 +38,13 @@ from ..models.queries import (
     CypherQueryResponse,
     CypherNode,
     CypherRelationship,
-    # ADR-068 Phase 3: Source search models
+    # ADR-812 Phase 3: Source search models
     SourceSearchRequest,
     SourceSearchResponse,
     SourceSearchResult,
     SourceConcept,
     SourceChunk,
-    # ADR-070: Polarity axis models
+    # ADR-813: Polarity axis models
     PolarityAxisRequest,
     PolarityAxisResponse
 )
@@ -261,7 +261,7 @@ def resolve_epistemic_filters_to_rel_types(
     exclude_epistemic_status: Optional[List[str]] = None
 ) -> Optional[List[str]]:
     """
-    Resolve epistemic status filters to list of allowed relationship types (ADR-065).
+    Resolve epistemic status filters to list of allowed relationship types (ADR-610).
 
     Queries VocabType nodes to find relationship types matching the epistemic status criteria.
     Returns None if no filtering requested, or a list of relationship types if filtering active.
@@ -531,7 +531,7 @@ async def search_concepts(
     request: SearchRequest
 ):
     """
-    Search for concepts using semantic similarity with vector embeddings (ADR-060).
+    Search for concepts using semantic similarity with vector embeddings (ADR-407).
 
     **Authentication:** Requires valid OAuth token
     **Authorization:** Requires `graph:read` permission
@@ -644,7 +644,7 @@ async def search_concepts(
                     confidence_score = hydrated.get('confidence_score')
                     grounding_display = hydrated.get('grounding_display')
 
-                # Calculate semantic diversity if requested (ADR-063)
+                # Calculate semantic diversity if requested (ADR-503)
                 diversity_score = None
                 diversity_related_count = None
                 authenticated_diversity = None
@@ -662,7 +662,7 @@ async def search_concepts(
                     except Exception as e:
                         logger.warning(f"Failed to calculate diversity for {concept_id}: {e}")
 
-                # Fetch sample evidence instances if requested (ADR-057: include image metadata, ADR-051: include provenance)
+                # Fetch sample evidence instances if requested (ADR-305: include image metadata, ADR-304: include provenance)
                 sample_evidence = None
                 if request.include_evidence:
                     evidence_instances_query = client._execute_cypher(
@@ -770,7 +770,7 @@ async def search_concepts(
                         except Exception as e:
                             logger.warning(f"Failed to calculate grounding for top match {top_concept_id}: {e}")
 
-                    # Calculate diversity for top match if requested (ADR-063)
+                    # Calculate diversity for top match if requested (ADR-503)
                     top_diversity_score = None
                     top_diversity_related_count = None
                     top_authenticated_diversity = None
@@ -788,7 +788,7 @@ async def search_concepts(
                         except Exception as e:
                             logger.warning(f"Failed to calculate diversity for top match {top_concept_id}: {e}")
 
-                    # Fetch sample evidence for top match if requested (ADR-057: include image metadata, ADR-051: include provenance)
+                    # Fetch sample evidence for top match if requested (ADR-305: include image metadata, ADR-304: include provenance)
                     top_sample_evidence = None
                     if request.include_evidence:
                         top_evidence_instances_query = client._execute_cypher(
@@ -861,7 +861,7 @@ async def search_sources(
     request: SourceSearchRequest
 ):
     """
-    Search source text using semantic similarity on embeddings (ADR-068 Phase 3).
+    Search source text using semantic similarity on embeddings (ADR-812 Phase 3).
 
     **Authentication:** Requires valid OAuth token
     **Authorization:** Requires `graph:read` permission
@@ -946,7 +946,7 @@ async def search_sources(
         # 4. Batch-fetch Source nodes and concepts from AGE
         client = get_age_client()
         try:
-            # Batch-fetch all Source nodes at once (ADR-048 namespace safety)
+            # Batch-fetch all Source nodes at once (ADR-606 namespace safety)
             sources_data = client.graph.match_sources(
                 where="s.source_id IN $source_ids",
                 params={"source_ids": top_source_ids}
@@ -1014,7 +1014,7 @@ async def get_concept_details(
     diversity_max_hops: int = 2
 ):
     """
-    Get detailed information about a specific concept including all evidence and relationships (ADR-060).
+    Get detailed information about a specific concept including all evidence and relationships (ADR-407).
 
     **Authentication:** Requires valid OAuth token
     **Authorization:** Requires `graph:read` permission
@@ -1069,7 +1069,7 @@ async def get_concept_details(
         concept = concept_result['c']
         documents = concept_result['documents']
 
-        # Get instances (ADR-057: include image metadata, ADR-051: include provenance from DocumentMeta)
+        # Get instances (ADR-305: include image metadata, ADR-304: include provenance from DocumentMeta)
         instances_result = client._execute_cypher("""
             MATCH (c:Concept {concept_id: $cid})-[:EVIDENCED_BY]->(i:Instance)
             MATCH (i)-[:FROM_SOURCE]->(s:Source)
@@ -1117,12 +1117,12 @@ async def get_concept_details(
                 paragraph=record['paragraph'],
                 source_id=record['source_id'],
                 full_text=record.get('full_text'),
-                # ADR-057: Image metadata
+                # ADR-305: Image metadata
                 content_type=record.get('content_type'),
                 has_image=record.get('content_type') == 'image' and record.get('storage_key') is not None,
                 image_uri=f"/api/sources/{record['source_id']}/image" if record.get('content_type') == 'image' and record.get('storage_key') else None,
                 storage_key=record.get('storage_key'),
-                # ADR-051: Source provenance from DocumentMeta (with AGE OPTIONAL MATCH workaround)
+                # ADR-304: Source provenance from DocumentMeta (with AGE OPTIONAL MATCH workaround)
                 filename=record.get('filename') or ontology_filenames.get(record.get('document')),
                 source_type=record.get('source_type'),
                 source_path=record.get('source_path'),
@@ -1131,8 +1131,8 @@ async def get_concept_details(
             for record in instances_raw
         ]
 
-        # Get relationships with ADR-051 edge provenance metadata and ADR-065 vocabulary epistemic status
-        # ADR-048: Read category via :IN_CATEGORY relationship (not property)
+        # Get relationships with ADR-304 edge provenance metadata and ADR-610 vocabulary epistemic status
+        # ADR-606: Read category via :IN_CATEGORY relationship (not property)
         relationships_result = client._execute_cypher("""
             MATCH (c:Concept {concept_id: $cid})-[r]->(related:Concept)
             OPTIONAL MATCH (v:VocabType {name: type(r)})-[:IN_CATEGORY]->(cat:VocabCategory)
@@ -1150,12 +1150,12 @@ async def get_concept_details(
         for record in (relationships_result or []):
             props = record['props'] if record['props'] else {}
 
-            # ADR-051: Convert created_by from int (user ID) to string
+            # ADR-304: Convert created_by from int (user ID) to string
             created_by = props.get('created_by')
             if created_by is not None:
                 created_by = str(created_by)
 
-            # ADR-065: Extract avg_grounding from epistemic_stats JSON
+            # ADR-610: Extract avg_grounding from epistemic_stats JSON
             avg_grounding = None
             vocab_epistemic_stats = record.get('vocab_epistemic_stats')
             if vocab_epistemic_stats and isinstance(vocab_epistemic_stats, dict):
@@ -1166,13 +1166,13 @@ async def get_concept_details(
                 to_label=record['to_label'],
                 rel_type=record['rel_type'],
                 confidence=props.get('confidence'),
-                # ADR-051: Edge provenance metadata
+                # ADR-304: Edge provenance metadata
                 created_by=created_by,
                 source=props.get('source'),
                 job_id=props.get('job_id'),
                 document_id=props.get('document_id'),
                 created_at=props.get('created_at'),
-                # ADR-065: Vocabulary epistemic status metadata
+                # ADR-610: Vocabulary epistemic status metadata
                 category=record.get('vocab_category'),
                 avg_grounding=avg_grounding,
                 epistemic_status=record.get('vocab_epistemic_status')
@@ -1182,7 +1182,7 @@ async def get_concept_details(
         # Extract properties from AGE vertex structure: {id, label, properties: {...}}
         props = concept.get('properties', {})
 
-        # Calculate grounding strength if requested (ADR-044)
+        # Calculate grounding strength if requested (ADR-808)
         grounding_strength = None
         confidence_level = None
         confidence_score = None
@@ -1199,7 +1199,7 @@ async def get_concept_details(
             except Exception as e:
                 logger.warning(f"Failed to calculate grounding for {concept_id}: {e}")
 
-        # Calculate semantic diversity if requested (ADR-063)
+        # Calculate semantic diversity if requested (ADR-503)
         diversity_score = None
         diversity_related_count = None
         authenticated_diversity = None
@@ -1217,7 +1217,7 @@ async def get_concept_details(
             except Exception as e:
                 logger.warning(f"Failed to calculate diversity for {concept_id}: {e}")
 
-        # ADR-051: Query provenance information
+        # ADR-304: Query provenance information
         # This finds DocumentMeta nodes linked to the concept via Source nodes
         provenance = None
         try:
@@ -1243,7 +1243,7 @@ async def get_concept_details(
                 # Build provenance documents list
                 prov_docs = []
                 for rec in provenance_result:
-                    # ADR-051: Convert ingested_by from int (user ID) to string
+                    # ADR-304: Convert ingested_by from int (user ID) to string
                     ingested_by = rec.get('ingested_by')
                     if ingested_by is not None:
                         ingested_by = str(ingested_by)
@@ -1276,10 +1276,10 @@ async def get_concept_details(
             confidence_level=confidence_level,
             confidence_score=confidence_score,
             grounding_display=grounding_display,
-            diversity_score=diversity_score,  # ADR-063
-            diversity_related_count=diversity_related_count,  # ADR-063
-            authenticated_diversity=authenticated_diversity,  # ADR-044 + ADR-063
-            provenance=provenance  # ADR-051
+            diversity_score=diversity_score,  # ADR-503
+            diversity_related_count=diversity_related_count,  # ADR-503
+            authenticated_diversity=authenticated_diversity,  # ADR-808 + ADR-503
+            provenance=provenance  # ADR-304
         )
 
     except HTTPException:
@@ -1297,7 +1297,7 @@ async def find_related_concepts(
     request: RelatedConceptsRequest
 ):
     """
-    Find concepts related through graph traversal using breadth-first search (ADR-060).
+    Find concepts related through graph traversal using breadth-first search (ADR-407).
 
     **Authentication:** Requires valid OAuth token
     **Authorization:** Requires `graph:read` permission
@@ -1339,7 +1339,7 @@ async def find_related_concepts(
     """
     client = get_age_client()
     try:
-        # ADR-065: Resolve epistemic status filters to relationship types
+        # ADR-610: Resolve epistemic status filters to relationship types
         status_filtered_types = resolve_epistemic_filters_to_rel_types(
             client,
             request.include_epistemic_status,
@@ -1366,7 +1366,7 @@ async def find_related_concepts(
             relationship_types=final_rel_types
         )
 
-        # ADR-044: batch-hydrate grounding + confidence when requested.
+        # ADR-808: batch-hydrate grounding + confidence when requested.
         # Same pattern as /search/concepts (batch query for all results,
         # then look up per-concept). Cached against graph_accel.generation
         # so repeated traversals are warm.
@@ -1410,7 +1410,7 @@ async def find_connection(
     request: FindConnectionRequest
 ):
     """
-    Find shortest paths between two concepts using exact concept IDs (ADR-060).
+    Find shortest paths between two concepts using exact concept IDs (ADR-407).
 
     **Authentication:** Requires valid OAuth token
     **Authorization:** Requires `graph:read` permission
@@ -1446,7 +1446,7 @@ async def find_connection(
     """
     client = get_age_client()
     try:
-        # ADR-065: Resolve epistemic status filters to relationship types
+        # ADR-610: Resolve epistemic status filters to relationship types
         allowed_rel_types = resolve_epistemic_filters_to_rel_types(
             client,
             request.include_epistemic_status,
@@ -1489,7 +1489,7 @@ async def find_connection_by_search(
     request: FindConnectionBySearchRequest
 ):
     """
-    Find shortest paths between two concepts using semantic phrase matching (ADR-060).
+    Find shortest paths between two concepts using semantic phrase matching (ADR-407).
 
     **Authentication:** Requires valid OAuth token
     **Authorization:** Requires `graph:read` permission
@@ -1599,7 +1599,7 @@ async def find_connection_by_search(
 
         logger.info(f"Found concept matches: '{from_label}' ({from_concept_id}, {from_similarity:.1%}) -> '{to_label}' ({to_concept_id}, {to_similarity:.1%})")
 
-        # ADR-065: Resolve epistemic status filters to relationship types
+        # ADR-610: Resolve epistemic status filters to relationship types
         allowed_rel_types = resolve_epistemic_filters_to_rel_types(
             client,
             request.include_epistemic_status,
@@ -1652,7 +1652,7 @@ async def execute_cypher_query(
     request: CypherQueryRequest
 ):
     """
-    Execute a read-only openCypher query against the Apache AGE graph (ADR-060).
+    Execute a read-only openCypher query against the Apache AGE graph (ADR-407).
 
     **Authentication:** Requires valid OAuth token.
 
@@ -1789,7 +1789,7 @@ async def analyze_polarity_axis_endpoint(
     request: PolarityAxisRequest
 ):
     """
-    Analyze bidirectional semantic dimension (polarity axis) between two concept poles (ADR-070).
+    Analyze bidirectional semantic dimension (polarity axis) between two concept poles (ADR-813).
 
     **Authentication:** Requires valid OAuth token
     **Authorization:** Requires `graph:read` permission
@@ -1882,7 +1882,7 @@ async def analyze_polarity_axis_endpoint(
 
 
 class PolarityJobRequest(BaseModel):
-    """Request for async polarity analysis with artifact creation (ADR-083)."""
+    """Request for async polarity analysis with artifact creation (ADR-116)."""
     positive_pole_id: str
     negative_pole_id: str
     candidate_ids: Optional[List[str]] = None
@@ -1910,7 +1910,7 @@ async def submit_polarity_job(
     background_tasks: BackgroundTasks
 ):
     """
-    Submit async polarity axis analysis job with artifact persistence (ADR-083).
+    Submit async polarity axis analysis job with artifact persistence (ADR-116).
 
     **Authentication:** Requires valid OAuth token
     **Authorization:** Requires `graph:read` permission

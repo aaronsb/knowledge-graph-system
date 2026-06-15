@@ -1,5 +1,5 @@
 """
-Grants and Groups Routes (ADR-082)
+Grants and Groups Routes (ADR-410)
 
 API endpoints for group management and resource access grants.
 """

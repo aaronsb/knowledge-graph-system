@@ -5,8 +5,8 @@ deciders:
   - aaronsb
   - claude
 related:
-  - ADR-040
-  - ADR-056
+  - ADR-210
+  - ADR-113
   - ADR-100
 ---
 
@@ -56,9 +56,9 @@ A client-side workaround (appending `Z` if missing) was applied to the CLI, web,
 
 **~75 columns already use `TIMESTAMPTZ`** — auth tables, embedding configs, ontology tables, etc.
 
-### Python Datetime Patterns (related to ADR-056)
+### Python Datetime Patterns (related to ADR-113)
 
-ADR-056 introduced `datetime_utils.py` with `utcnow()` and friends. However, adoption is incomplete (21 of 34 violations remain). Three competing patterns exist in the API:
+ADR-113 introduced `datetime_utils.py` with `utcnow()` and friends. However, adoption is incomplete (21 of 34 violations remain). Three competing patterns exist in the API:
 
 | Pattern | Timezone | Correct? |
 |---------|----------|----------|
@@ -77,7 +77,7 @@ With `TIMESTAMPTZ` columns, PostgreSQL + psycopg2 will return aware datetimes to
 
 - Database: all columns `TIMESTAMPTZ`
 - API serialization: ISO 8601 with `Z` suffix (or `+00:00`)
-- Python: `datetime_utils.utcnow()` per ADR-056
+- Python: `datetime_utils.utcnow()` per ADR-113
 - JavaScript/TypeScript: parse as UTC, display in user's locale
 
 ### Migration
@@ -164,7 +164,7 @@ ON CONFLICT (version) DO NOTHING;
 ### Benefits
 
 - JSON serialization will include timezone offset, eliminating client-side guesswork
-- Python code receives aware datetimes from psycopg2, preventing naive/aware comparison errors (ADR-056)
+- Python code receives aware datetimes from psycopg2, preventing naive/aware comparison errors (ADR-113)
 - Schema is consistent: 100% `TIMESTAMPTZ` across all tables
 - Worker status, job durations, and all time-based displays work correctly regardless of client timezone
 
@@ -177,13 +177,13 @@ ON CONFLICT (version) DO NOTHING;
 ### Follow-up Work
 
 - [ ] Implement migration (assign next available migration number)
-- [ ] Complete ADR-056 Python datetime migration (21 remaining violations)
+- [ ] Complete ADR-113 Python datetime migration (21 remaining violations)
 - [ ] Audit FastAPI response models to ensure datetime fields serialize with `Z`/`+00:00`
 - [ ] Remove or annotate Z-append workarounds as defense-in-depth after migration is deployed
 
 ## References
 
-- [ADR-056: Timezone-Aware Datetime Utilities](../infrastructure/ADR-056-timezone-aware-datetime-utilities.md)
-- [ADR-040: Database Schema Migrations](ADR-040-database-schema-migrations.md)
+- [ADR-113: Timezone-Aware Datetime Utilities](../infrastructure/ADR-113-timezone-aware-datetime-utilities.md)
+- [ADR-210: Database Schema Migrations](ADR-210-database-schema-migrations.md)
 - [ADR-100: Database-Driven Job Dispatch](../infrastructure/ADR-100-database-driven-job-dispatch.md)
 - [PostgreSQL TIMESTAMPTZ](https://www.postgresql.org/docs/current/datatype-datetime.html)

@@ -9,7 +9,7 @@ Tests the complete pipeline:
 5. Executing actions based on mode
 6. Verifying database state changes
 
-Author: Claude (ADR-032 Phase 3b)
+Author: Claude (ADR-603 Phase 3b)
 """
 
 import pytest

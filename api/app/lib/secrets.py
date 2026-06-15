@@ -1,5 +1,5 @@
 """
-Secrets management with Docker/Podman secrets support (ADR-031).
+Secrets management with Docker/Podman secrets support (ADR-405).
 
 Provides fallback chain for loading secrets:
 1. Docker/Podman secrets (/run/secrets/<name>)
@@ -108,14 +108,14 @@ _secrets_cache = {}
 
 
 def get_oauth_signing_key() -> str:
-    """Get OAuth signing key for access token generation (ADR-054)"""
+    """Get OAuth signing key for access token generation (ADR-406)"""
     if 'oauth_signing_key' not in _secrets_cache:
         _secrets_cache['oauth_signing_key'] = SecretManager.load_secret("oauth_signing_key", "OAUTH_SIGNING_KEY")
     return _secrets_cache['oauth_signing_key']
 
 
 def get_encryption_key() -> str:
-    """Get master encryption key for API keys (ADR-031)"""
+    """Get master encryption key for API keys (ADR-405)"""
     if 'encryption_key' not in _secrets_cache:
         _secrets_cache['encryption_key'] = SecretManager.load_secret("encryption_master_key", "ENCRYPTION_KEY")
     return _secrets_cache['encryption_key']
@@ -129,7 +129,7 @@ def get_postgres_password() -> str:
 
 
 def get_internal_key_service_secret() -> str:
-    """Get internal key service authorization token (ADR-031)"""
+    """Get internal key service authorization token (ADR-405)"""
     if 'internal_key_service_secret' not in _secrets_cache:
         _secrets_cache['internal_key_service_secret'] = SecretManager.load_secret(
             "internal_key_service_secret",

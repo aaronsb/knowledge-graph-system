@@ -341,7 +341,7 @@ export const configCommand = setCommandHelp(
             });
           }
 
-          // Display section (ADR-057) - show defaults even if not in config
+          // Display section (ADR-305) - show defaults even if not in config
           configRows.push({
             key: 'display.enableChafa',
             value: config.isChafaEnabled() ? 'true' : 'false',
@@ -363,7 +363,7 @@ export const configCommand = setCommandHelp(
             category: 'display'
           });
 
-          // Search section (ADR-057) - show defaults even if not in config
+          // Search section (ADR-305) - show defaults even if not in config
           configRows.push({
             key: 'search.showEvidence',
             value: config.getSearchShowEvidence() ? 'true' : 'false',
@@ -409,10 +409,10 @@ export const configCommand = setCommandHelp(
                     if (val.includes('authenticated')) return colors.status.success(val);
                     if (val.includes('not authenticated')) return colors.status.warning(val);
                   }
-                  // Display section (ADR-057)
+                  // Display section (ADR-305)
                   if (row.key.startsWith('display.') && val === 'true') return colors.status.success(val);
                   if (row.key.startsWith('display.') && val === 'false') return colors.status.dim(val);
-                  // Search section (ADR-057)
+                  // Search section (ADR-305)
                   if (row.key.startsWith('search.') && val === 'true') return colors.status.success(val);
                   if (row.key.startsWith('search.') && val === 'false') return colors.status.dim(val);
                   return val;
@@ -516,7 +516,7 @@ export const configCommand = setCommandHelp(
   )
   .addCommand(
     new Command('auto-approve')
-      .description('Enable or disable automatic approval of ingestion jobs. When enabled, jobs skip the cost estimate review step and start processing immediately (ADR-014).')
+      .description('Enable or disable automatic approval of ingestion jobs. When enabled, jobs skip the cost estimate review step and start processing immediately (ADR-300).')
       .argument('[value]', 'Enable (true/on/yes) or disable (false/off/no). Omit to show current status.', 'status')
       .action(async (value) => {
         try {

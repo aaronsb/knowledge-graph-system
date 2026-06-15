@@ -64,12 +64,12 @@ class JobStatus(BaseModel):
     content_hash: Optional[str] = Field(None, description="Content hash for deduplication")
     ontology: Optional[str] = Field(None, description="Target ontology")
     processing_mode: Optional[str] = Field("serial", description="Processing mode: serial|parallel (default: serial)")
-    # ADR-014: Approval workflow fields
+    # ADR-300: Approval workflow fields
     analysis: Optional[Dict[str, Any]] = Field(None, description="Pre-ingestion analysis (file stats, cost estimates)")
     approved_at: Optional[str] = Field(None, description="Approval timestamp")
     approved_by: Optional[str] = Field(None, description="User who approved (Phase 2)")
     expires_at: Optional[str] = Field(None, description="Expiration timestamp for unapproved jobs")
-    # ADR-051: Source provenance (extracted from job_data for display)
+    # ADR-304: Source provenance (extracted from job_data for display)
     filename: Optional[str] = Field(None, description="Original filename or display name")
     source_type: Optional[str] = Field(None, description="Source type: file, stdin, mcp, api")
     source_path: Optional[str] = Field(None, description="Full filesystem path (file ingestion only)")

@@ -320,7 +320,7 @@ class JobAnalyzer:
                 - embedding_model: Model for embeddings (default: from env)
 
         Returns:
-            Analysis dict matching ADR-014 spec:
+            Analysis dict matching ADR-300 spec:
             {
                 "file_stats": {...},
                 "cost_estimate": {...},

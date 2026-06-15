@@ -6,9 +6,9 @@ deciders:
   - claude
 related:
   - ADR-800
-  - ADR-041
-  - ADR-042
-  - ADR-049
+  - ADR-805
+  - ADR-806
+  - ADR-810
 ---
 
 # ADR-801: Uniform Provider Configuration Contract

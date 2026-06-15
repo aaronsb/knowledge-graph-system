@@ -13,7 +13,7 @@ export interface JobProgress {
   sources_created?: number;
   instances_created?: number;
   relationships_created?: number;
-  // Restore-specific progress fields (ADR-015 Phase 2)
+  // Restore-specific progress fields (ADR-107 Phase 2)
   items_total?: number;  // Total items to restore (concepts, sources, etc.)
   items_processed?: number;  // Items processed so far
   message?: string;  // Progress message
@@ -46,7 +46,7 @@ export interface JobResult {
   filename?: string;
   chunks_processed?: number;
   message?: string;
-  // Restore-specific result fields (ADR-015 Phase 2)
+  // Restore-specific result fields (ADR-107 Phase 2)
   restore_stats?: {
     concepts: number;
     sources: number;
@@ -56,7 +56,7 @@ export interface JobResult {
   checkpoint_created?: boolean;
   checkpoint_deleted?: boolean;
   temp_file_cleaned?: boolean;
-  // Artifact-producing jobs (ADR-083)
+  // Artifact-producing jobs (ADR-116)
   artifact_id?: number;
 }
 
@@ -76,11 +76,11 @@ export interface JobStatus {
   ontology?: string;
   client_id?: string;  // DEPRECATED: kept for backwards compatibility, use user_id instead
   processing_mode?: string;  // Serial or parallel processing
-  analysis?: any;  // Pre-ingestion analysis (ADR-014)
+  analysis?: any;  // Pre-ingestion analysis (ADR-300)
   approved_at?: string;
   approved_by?: string;
   expires_at?: string;
-  // ADR-051: Source provenance metadata
+  // ADR-304: Source provenance metadata
   filename?: string;
   source_type?: string;
   source_path?: string;
@@ -117,10 +117,10 @@ export interface IngestRequest {
   ontology: string;
   filename?: string;
   force?: boolean;
-  auto_approve?: boolean;  // ADR-014: Skip approval step
+  auto_approve?: boolean;  // ADR-300: Skip approval step
   processing_mode?: string;  // Serial or parallel processing
   options?: IngestionOptions;
-  // ADR-051: Source provenance metadata
+  // ADR-304: Source provenance metadata
   source_type?: string;      // "file" | "stdin" | "mcp" | "api"
   source_path?: string;       // Full filesystem path (file ingestion only)
   source_hostname?: string;   // Hostname where ingestion initiated
@@ -140,8 +140,8 @@ export interface SearchRequest {
   offset?: number; // Pagination offset
   ontology?: string; // Filter results to concepts from this ontology only
   include_evidence?: boolean; // Include sample evidence instances (quotes from source text)
-  include_grounding?: boolean; // Include grounding strength (ADR-044: probabilistic truth score)
-  include_diversity?: boolean; // Include semantic diversity (ADR-063: authenticity signal)
+  include_grounding?: boolean; // Include grounding strength (ADR-808: probabilistic truth score)
+  include_diversity?: boolean; // Include semantic diversity (ADR-503: authenticity signal)
   diversity_max_hops?: number; // Maximum traversal depth for diversity (1-3, default 2)
 }
 
@@ -152,14 +152,14 @@ export interface ConceptSearchResult {
   score: number;
   documents: string[];
   evidence_count: number;
-  grounding_strength?: number; // ADR-044: Grounding strength (-1.0 to 1.0)
+  grounding_strength?: number; // ADR-808: Grounding strength (-1.0 to 1.0)
   // Epistemic confidence (grounding × confidence two-dimensional model)
   confidence_level?: string; // 'confident', 'tentative', 'insufficient'
   confidence_score?: number; // Numeric confidence (0.0 to 1.0) - nonlinear saturation reflecting evidence richness
   grounding_display?: string; // Combined label: 'Well-supported', 'Unexplored', 'Contested', etc.
-  diversity_score?: number; // ADR-063: Semantic diversity (0.0 to 1.0)
+  diversity_score?: number; // ADR-503: Semantic diversity (0.0 to 1.0)
   diversity_related_count?: number; // Number of related concepts analyzed for diversity
-  authenticated_diversity?: number; // ADR-044 + ADR-063: sign(grounding) × diversity
+  authenticated_diversity?: number; // ADR-808 + ADR-503: sign(grounding) × diversity
   sample_evidence?: ConceptInstance[]; // Sample evidence instances when include_evidence=true
 }
 
@@ -173,7 +173,7 @@ export interface SearchResponse {
   offset?: number; // Pagination offset used
 }
 
-// Source Search types (ADR-068 Phase 3)
+// Source Search types (ADR-812 Phase 3)
 export interface SourceSearchRequest {
   query: string;
   limit?: number;
@@ -222,7 +222,7 @@ export interface ConceptInstance {
   paragraph: number;
   source_id: string;
   full_text?: string; // Full chunk text for grounding
-  // ADR-057: Image metadata
+  // ADR-305: Image metadata
   content_type?: string; // 'image' for image sources, 'text' or null for text
   has_image?: boolean; // True if source has associated image
   image_uri?: string; // URI to retrieve image: /api/sources/{source_id}/image
@@ -244,24 +244,24 @@ export interface ConceptDetailsResponse {
   documents: string[];
   instances: ConceptInstance[];
   relationships: ConceptRelationship[];
-  grounding_strength?: number; // ADR-044: Grounding strength (-1.0 to 1.0)
+  grounding_strength?: number; // ADR-808: Grounding strength (-1.0 to 1.0)
   // Epistemic confidence (grounding × confidence two-dimensional model)
   confidence_level?: string; // 'confident', 'tentative', 'insufficient'
   confidence_score?: number; // Numeric confidence (0.0 to 1.0) - nonlinear saturation reflecting evidence richness
   grounding_display?: string; // Combined label: 'Well-supported', 'Unexplored', 'Contested', etc.
-  diversity_score?: number; // ADR-063: Semantic diversity (0.0 to 1.0)
+  diversity_score?: number; // ADR-503: Semantic diversity (0.0 to 1.0)
   diversity_related_count?: number; // Number of related concepts analyzed for diversity
-  authenticated_diversity?: number; // ADR-044 + ADR-063: sign(grounding) × diversity
+  authenticated_diversity?: number; // ADR-808 + ADR-503: sign(grounding) × diversity
 }
 
 export interface RelatedConceptsRequest {
   concept_id: string;
   relationship_types?: string[];
   max_depth?: number;
-  // ADR-065: Epistemic status filtering
+  // ADR-610: Epistemic status filtering
   include_epistemic_status?: string[]; // Filter to only include relationships with these epistemic statuses
   exclude_epistemic_status?: string[]; // Exclude relationships with these epistemic statuses
-  // ADR-044: parity with search/connect — hydrates grounding_strength on each result
+  // ADR-808: parity with search/connect — hydrates grounding_strength on each result
   include_grounding?: boolean;
 }
 
@@ -270,7 +270,7 @@ export interface RelatedConcept {
   label: string;
   distance: number;
   path_types: string[];
-  // ADR-044: populated when include_grounding=true
+  // ADR-808: populated when include_grounding=true
   grounding_strength?: number;
   confidence_level?: string;
   confidence_score?: number;
@@ -289,8 +289,8 @@ export interface FindConnectionRequest {
   to_id: string;
   max_hops?: number;
   include_evidence?: boolean; // Include sample evidence instances for each concept in paths
-  include_grounding?: boolean; // Include grounding strength for each concept in paths (ADR-044)
-  // ADR-065: Epistemic status filtering
+  include_grounding?: boolean; // Include grounding strength for each concept in paths (ADR-808)
+  // ADR-610: Epistemic status filtering
   include_epistemic_status?: string[]; // Filter to only include relationships with these epistemic statuses
   exclude_epistemic_status?: string[]; // Exclude relationships with these epistemic statuses
 }
@@ -299,14 +299,14 @@ export interface PathNode {
   id: string;
   label: string;
   description?: string; // Factual 1-2 sentence definition
-  grounding_strength?: number; // ADR-044: Grounding strength (-1.0 to 1.0)
+  grounding_strength?: number; // ADR-808: Grounding strength (-1.0 to 1.0)
   // Epistemic confidence (grounding × confidence two-dimensional model)
   confidence_level?: string; // 'confident', 'tentative', 'insufficient'
   confidence_score?: number; // Numeric confidence (0.0 to 1.0)
   grounding_display?: string; // Combined label: 'Well-supported', 'Unexplored', 'Contested', etc.
-  diversity_score?: number; // ADR-063: Diversity score (0.0 to 1.0)
-  diversity_related_count?: number; // ADR-063: Number of related concepts
-  authenticated_diversity?: number; // ADR-063: Authenticated diversity
+  diversity_score?: number; // ADR-503: Diversity score (0.0 to 1.0)
+  diversity_related_count?: number; // ADR-503: Number of related concepts
+  authenticated_diversity?: number; // ADR-503: Authenticated diversity
   sample_evidence?: ConceptInstance[]; // Sample evidence instances when include_evidence=true
 }
 
@@ -330,8 +330,8 @@ export interface FindConnectionBySearchRequest {
   max_hops?: number;
   threshold?: number;
   include_evidence?: boolean; // Include sample evidence instances for each concept in paths
-  include_grounding?: boolean; // Include grounding strength for each concept in paths (ADR-044)
-  // ADR-065: Epistemic status filtering
+  include_grounding?: boolean; // Include grounding strength for each concept in paths (ADR-808)
+  // ADR-610: Epistemic status filtering
   include_epistemic_status?: string[]; // Filter to only include relationships with these epistemic statuses
   exclude_epistemic_status?: string[]; // Exclude relationships with these epistemic statuses
 }
@@ -706,7 +706,7 @@ export interface ListBackupsResponse {
 // positional args (backupFilePath, mode, onUploadProgress, epoch) + multipart
 // FormData and returns an inline result type — these interfaces were never used.
 
-// ========== RBAC Types (ADR-028) ==========
+// ========== RBAC Types (ADR-404) ==========
 
 // Resource Types
 export interface ResourceCreate {
@@ -824,7 +824,7 @@ export interface PermissionCheckResponse {
   reason?: string;
 }
 
-// ========== AI Configuration Types (ADR-039, ADR-041) ==========
+// ========== AI Configuration Types (ADR-804, ADR-805) ==========
 
 // Embedding Configuration
 export interface EmbeddingConfigResponse {
@@ -947,7 +947,7 @@ export interface DeleteApiKeyResponse {
   provider: string;
 }
 
-// Projection Types (ADR-078)
+// Projection Types (ADR-717)
 export interface ProjectionAlgorithmsResponse {
   available: string[];
   default: string;
@@ -1007,7 +1007,7 @@ export interface ProjectionRegenerateResponse {
   changelist_id?: string | null;
 }
 
-// ========== Concept CRUD Types (ADR-089) ==========
+// ========== Concept CRUD Types (ADR-308) ==========
 
 /**
  * How to handle potential duplicates when creating concepts.
@@ -1159,7 +1159,7 @@ export interface EpochListResponse {
   limit: number;
 }
 
-// ========== Edge CRUD Types (ADR-089) ==========
+// ========== Edge CRUD Types (ADR-308) ==========
 
 /**
  * How this edge was created (provenance tracking).
@@ -1167,7 +1167,7 @@ export interface EpochListResponse {
 export type EdgeSource = 'api_creation' | 'human_curation' | 'llm_extraction' | 'import';
 
 /**
- * Semantic category of the relationship (ADR-022).
+ * Semantic category of the relationship (ADR-600).
  */
 export type RelationshipCategory =
   | 'logical_truth'
@@ -1224,7 +1224,7 @@ export interface EdgeListResponse {
   limit: number;
 }
 
-// ========== Batch Types (ADR-089 Phase 1b) ==========
+// ========== Batch Types (ADR-308 Phase 1b) ==========
 
 /**
  * Concept definition for batch creation.

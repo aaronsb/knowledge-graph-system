@@ -1,5 +1,5 @@
 /**
- * Artifact Types (ADR-083)
+ * Artifact Types (ADR-116)
  *
  * TypeScript types for artifact persistence system.
  */
@@ -112,7 +112,7 @@ export interface ArtifactRegenerateResponse {
 }
 
 /**
- * Query definition (ADR-083)
+ * Query definition (ADR-116)
  */
 export interface QueryDefinition {
   id: number;

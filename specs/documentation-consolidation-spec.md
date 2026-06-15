@@ -168,7 +168,7 @@ Every tracked markdown file under `docs/` (excluding `docs/architecture/`) plus 
 | docs/guides/DEPLOYMENT.md | cut | stale pre-operator.sh; **salvage** Swarm/K8s note → self-host/production.md |
 | docs/guides/CONTAINER_IMAGES.md | merge | self-host/production.md (image tags, release) |
 | docs/guides/ASYNC-ARCHITECTURE.md | keep | explanation/worker-lanes.md |
-| docs/guides/CLI_DEVELOPMENT.md | cut | narrow auth-internal; covered by ADR-054/029 + docstrings |
+| docs/guides/CLI_DEVELOPMENT.md | cut | narrow auth-internal; covered by ADR-406/029 + docstrings |
 | docs/guides/CROSS_ONTOLOGY_LINKING.md | cut | experiment log; **salvage** best-practices → how-to/query.md |
 | docs/guides/EPISTEMIC-STATUS-FILTERING.md | merge | how-to/epistemic-status.md (trim; generate param table) |
 | docs/guides/FUSE_FILESYSTEM.md | keep | how-to/fuse.md |
@@ -271,16 +271,16 @@ Every tracked markdown file under `docs/` (excluding `docs/architecture/`) plus 
 | docs/research/epistemic-confidence.md | keep | explanation/grounding.md (merge w/ understanding-grounding) |
 | docs/research/t-sne-viz.md | keep | explanation/embedding-landscape.md (trim library section) |
 | docs/research/code-intelligence-platforms-comparison.md | cut | positioning essay |
-| docs/research/emergent-visual-relationships.md | cut | finding in ADR-046 |
+| docs/research/emergent-visual-relationships.md | cut | finding in ADR-604 |
 | docs/research/graph-object-platform-exploration.md | cut | design memo → ADR (§7 Q7) |
 | docs/research/headless-install-analysis.md | cut | superseded by shipped install.sh |
 | docs/research/llm-knowledge-extraction-research-2024-2025.md | cut | dated literature survey |
 | docs/research/polarity-axis-findings.md | cut | unimplemented experiment |
 | docs/research/polarity-axis-visualization.md | cut | proposal; feature shipped |
 | docs/research/vision-testing/README.md | cut | pre-implementation scratch |
-| docs/research/vision-testing/FINDINGS.md | cut | decision in ADR-057 (§7 Q7) |
-| docs/research/vision-testing/EMBEDDING_COMPARISON_REPORT.md | cut | decision in ADR-057 (§7 Q7) |
-| docs/research/vision-testing/RESEARCH_SUMMARY.md | cut | decision in ADR-057 (§7 Q7) |
+| docs/research/vision-testing/FINDINGS.md | cut | decision in ADR-305 (§7 Q7) |
+| docs/research/vision-testing/EMBEDDING_COMPARISON_REPORT.md | cut | decision in ADR-305 (§7 Q7) |
+| docs/research/vision-testing/RESEARCH_SUMMARY.md | cut | decision in ADR-305 (§7 Q7) |
 
 ### docs/testing/
 
@@ -440,8 +440,8 @@ Do not mix the two registers in one page.
 
 **Q4 — Schema reference generator is net-new.** CLI/MCP/FUSE generators exist; a `reference/schema.md` generator parsing `schema/00_baseline.sql` + migrations does not. Decide: build it now (in scope), keep a hand-written page with a staleness warning, or drop schema reference from the public site. Until decided, the nav entry is omitted.
 
-**Q5 — Accuracy fixes during the merge.** The audit found concrete bugs to fix while merging, not carry forward: `/admin/users` should be `/users`; CLI config path is `~/.config/kg/config.json` not `~/.kg/`; `operator.sh models list` does not exist; Node minimum is 20.12.0 not 18; `POST /auth/login` was removed (ADR-054); Postgres is 18 / AGE 1.7.0 not 16 / 1.5.0; the `--auto` vocab flag does not exist; the extraction-config restart contradiction. Confirm these are in-scope for the rewrite rather than separate issues.
+**Q5 — Accuracy fixes during the merge.** The audit found concrete bugs to fix while merging, not carry forward: `/admin/users` should be `/users`; CLI config path is `~/.config/kg/config.json` not `~/.kg/`; `operator.sh models list` does not exist; Node minimum is 20.12.0 not 18; `POST /auth/login` was removed (ADR-406); Postgres is 18 / AGE 1.7.0 not 16 / 1.5.0; the `--auto` vocab flag does not exist; the extraction-config restart contradiction. Confirm these are in-scope for the rewrite rather than separate issues.
 
 **Q6 — `docs/media/` retention.** 30+ screenshots are referenced mainly by pages being cut or merged. A surviving page that links a pruned image fails the mkdocs build. Confirm which screenshots survive into `get-started/what-and-why.md` so unused assets prune safely in the same pass.
 
-**Q7 — Research artifacts being cut.** The graph-object-platform exploration and vision-testing reports informed shipped decisions. The disposition assumes ADR-046/ADR-057 capture the rationale. Per the project's "verify feature state in code, not ADR prose" guidance, confirm those ADRs are sufficient before the sources are deleted.
+**Q7 — Research artifacts being cut.** The graph-object-platform exploration and vision-testing reports informed shipped decisions. The disposition assumes ADR-604/ADR-305 capture the rationale. Per the project's "verify feature state in code, not ADR prose" guidance, confirm those ADRs are sufficient before the sources are deleted.

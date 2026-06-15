@@ -242,7 +242,7 @@ def temp_file(tmp_path):
 
 
 # ============================================================================
-# OAuth 2.0 Authentication Fixtures (ADR-054, ADR-060)
+# OAuth 2.0 Authentication Fixtures (ADR-406, ADR-407)
 # ============================================================================
 
 @pytest.fixture
@@ -437,7 +437,7 @@ def mock_oauth_validation(monkeypatch, test_user_credentials, test_admin_credent
         "api.app.dependencies.auth.validate_oauth_access_token",
         mock_validate
     )
-    # Patch scope checking for ADR-089 routes
+    # Patch scope checking for ADR-308 routes
     monkeypatch.setattr(
         "api.app.dependencies.auth.get_token_scopes",
         mock_get_scopes

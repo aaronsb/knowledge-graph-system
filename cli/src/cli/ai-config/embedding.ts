@@ -1,5 +1,5 @@
 /**
- * Embedding Commands (ADR-039 + Migration 055)
+ * Embedding Commands (ADR-804 + Migration 055)
  * Manages embedding profile configuration (text + image model slots)
  */
 
@@ -479,7 +479,7 @@ function createEmbeddingDeleteCommand(client: KnowledgeGraphClient): Command {
 }
 
 /**
- * Show comprehensive embedding status (ADR-068 Phase 4)
+ * Show comprehensive embedding status (ADR-812 Phase 4)
  */
 function createEmbeddingStatusCommand(client: KnowledgeGraphClient): Command {
   return new Command('status')
@@ -582,11 +582,11 @@ function createEmbeddingStatusCommand(client: KnowledgeGraphClient): Command {
 }
 
 /**
- * Regenerate embeddings (ADR-068 Phase 4)
+ * Regenerate embeddings (ADR-812 Phase 4)
  */
 function createEmbeddingRegenerateCommand(client: KnowledgeGraphClient): Command {
   const cmd = new Command('regenerate')
-    .description('Regenerate vector embeddings for all graph text entities: concepts, sources, vocabulary (ADR-068 Phase 4) - useful after changing embedding model or repairing missing embeddings')
+    .description('Regenerate vector embeddings for all graph text entities: concepts, sources, vocabulary (ADR-812 Phase 4) - useful after changing embedding model or repairing missing embeddings')
     .option('--type <type>', 'Type of embeddings to regenerate: concept, source, vocabulary, all')
     .option('--only-missing', 'Only generate for entities without embeddings (skip existing) - applies to concept and source types', false)
     .option('--only-incompatible', 'Only regenerate embeddings with mismatched model/dimensions (for model migrations)', false)

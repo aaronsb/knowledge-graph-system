@@ -1,5 +1,5 @@
 """
-Probabilistic Vocabulary Categorization (ADR-047).
+Probabilistic Vocabulary Categorization (ADR-605).
 
 Automatically assigns semantic categories to LLM-generated relationship types
 using embedding similarity to 30 builtin seed types.
@@ -30,9 +30,9 @@ Usage:
     results = await categorizer.refresh_all_categories()
 
 References:
-    - ADR-047: Probabilistic Vocabulary Categorization
-    - ADR-044: Probabilistic Truth Convergence (grounding strength pattern)
-    - ADR-045: Unified Embedding Generation (provides embeddings)
+    - ADR-605: Probabilistic Vocabulary Categorization
+    - ADR-808: Probabilistic Truth Convergence (grounding strength pattern)
+    - ADR-809: Unified Embedding Generation (provides embeddings)
 """
 
 from typing import Dict, List, Optional, Tuple
@@ -58,7 +58,7 @@ CATEGORY_SEEDS = {
     'modification': ['CONFIGURES', 'UPDATES', 'ENHANCES', 'OPTIMIZES', 'IMPROVES']
 }
 
-# Confidence thresholds (ADR-047)
+# Confidence thresholds (ADR-605)
 CONFIDENCE_HIGH = 0.70  # ≥70%: Auto-categorize confidently
 CONFIDENCE_MEDIUM = 0.50  # 50-69%: Auto-categorize with warning
 CONFIDENCE_LOW = 0.50  # <50%: Flag for curator review
@@ -83,7 +83,7 @@ class VocabularyCategorizer:
     """
     Assigns semantic categories to vocabulary types using embedding similarity.
 
-    Implements ADR-047 probabilistic categorization:
+    Implements ADR-605 probabilistic categorization:
     - Uses cosine similarity to seed types
     - Max similarity (satisficing, not mean)
     - Confidence-based thresholds
@@ -293,7 +293,7 @@ class VocabularyCategorizer:
 
         Updates:
         1. relationship_vocabulary table (PostgreSQL)
-        2. :VocabType node (graph) - ADR-048
+        2. :VocabType node (graph) - ADR-606
 
         Args:
             assignment: CategoryAssignment to store
@@ -323,7 +323,7 @@ class VocabularyCategorizer:
             )
         )
 
-        # Update :VocabType graph node (ADR-048 Phase 3.3)
+        # Update :VocabType graph node (ADR-606 Phase 3.3)
         # Update :IN_CATEGORY relationship to reflect new category
         try:
             cypher_query = """

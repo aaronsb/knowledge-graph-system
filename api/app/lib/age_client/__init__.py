@@ -42,7 +42,7 @@ class AGEClient(
     - BaseMixin: Connection pool, Cypher execution, AGE type parsing
     - IngestionMixin: Source/Concept/Instance CRUD, graph linking, document metadata
     - QueryMixin: Vector search, learned knowledge, query/graph/epoch facades
-    - GroundingMixin: Polarity axis caching + grounding strength calculation (ADR-044)
+    - GroundingMixin: Polarity axis caching + grounding strength calculation (ADR-808)
     - OntologyMixin: Ontology node CRUD and lifecycle management
     - OntologyScoringMixin: Ontology scoring, analytics, and annealing mutations
     - OntologyEdgesMixin: Inter-ontology edges and proposal execution primitives

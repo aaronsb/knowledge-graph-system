@@ -248,7 +248,7 @@ def test_list_jobs_by_client_id(api_client, auth_headers_user):
 @pytest.mark.api
 @pytest.mark.integration
 def test_auto_approve_job(api_client, auth_headers_user):
-    """Test auto-approve workflow (ADR-014)"""
+    """Test auto-approve workflow (ADR-300)"""
     # Create a job with auto_approve=true
     ingest_data = {
         "text": "Test content for auto-approve",

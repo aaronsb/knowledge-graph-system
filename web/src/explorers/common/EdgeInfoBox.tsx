@@ -14,13 +14,13 @@ export interface EdgeInfoBoxProps {
     type: string;
     confidence: number;
     category?: string;
-    // ADR-051: Edge provenance metadata
+    // ADR-304: Edge provenance metadata
     created_by?: string;
     source?: string;
     job_id?: string;
     document_id?: string;
     created_at?: string;
-    // ADR-065: Vocabulary epistemic status metadata
+    // ADR-610: Vocabulary epistemic status metadata
     avg_grounding?: number;
     epistemic_status?: string;
     x: number;
@@ -80,7 +80,7 @@ export const EdgeInfoBox: React.FC<EdgeInfoBoxProps> = ({ info, onDismiss }) => 
                   <span className="font-medium text-card-foreground">{info.category}</span>
                 </div>
               )}
-              {/* ADR-065: Epistemic status metadata */}
+              {/* ADR-610: Epistemic status metadata */}
               {info.avg_grounding !== undefined && (
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Grounding:</span>
@@ -95,7 +95,7 @@ export const EdgeInfoBox: React.FC<EdgeInfoBoxProps> = ({ info, onDismiss }) => 
                   <span className="font-medium text-card-foreground text-xs">{info.epistemic_status}</span>
                 </div>
               )}
-              {/* ADR-051: Provenance metadata section */}
+              {/* ADR-304: Provenance metadata section */}
               {(info.created_by || info.source || info.job_id || info.document_id || info.created_at) && (
                 <>
                   <div className="pt-2 border-t border-border">

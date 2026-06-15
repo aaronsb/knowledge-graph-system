@@ -1,5 +1,5 @@
 /**
- * Query Definition Store - Zustand State Management (ADR-083)
+ * Query Definition Store - Zustand State Management (ADR-116)
  *
  * Manages query definitions for reusable saved queries.
  * Query definitions store the parameters needed to regenerate artifacts.

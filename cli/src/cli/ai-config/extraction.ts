@@ -1,5 +1,5 @@
 /**
- * Extraction Commands (ADR-041)
+ * Extraction Commands (ADR-805)
  * Manages AI extraction model configuration
  */
 
@@ -28,7 +28,7 @@ function createExtractionConfigCommand(client: KnowledgeGraphClient): Command {
         console.log(`  ${colors.ui.key('JSON Mode:')} ${config.supports_json_mode ? colors.status.success('Yes') : colors.status.dim('No')}`);
         console.log(`  ${colors.ui.key('Max Tokens:')} ${colors.ui.value(config.max_tokens)}`);
 
-        // Show rate limiting configuration (ADR-049)
+        // Show rate limiting configuration (ADR-810)
         if (config.max_concurrent_requests !== undefined || config.max_retries !== undefined) {
           console.log(`\n  ${colors.ui.header('Rate Limiting Configuration:')}`);
           if (config.max_concurrent_requests !== undefined) {
@@ -39,7 +39,7 @@ function createExtractionConfigCommand(client: KnowledgeGraphClient): Command {
           }
         }
 
-        // Show local provider configuration (ADR-042)
+        // Show local provider configuration (ADR-806)
         if (config.provider === 'ollama' || config.provider === 'vllm') {
           console.log(`\n  ${colors.ui.header('Local Inference Configuration:')}`);
           if (config.base_url) {
@@ -107,7 +107,7 @@ function createExtractionSetCommand(client: KnowledgeGraphClient): Command {
         if (options.jsonMode !== undefined) config.supports_json_mode = options.jsonMode;
         if (options.maxTokens) config.max_tokens = options.maxTokens;
 
-        // Local provider options (ADR-042)
+        // Local provider options (ADR-806)
         if (options.baseUrl) config.base_url = options.baseUrl;
         if (options.temperature !== undefined) config.temperature = options.temperature;
         if (options.topP !== undefined) config.top_p = options.topP;
@@ -172,7 +172,7 @@ function createExtractionSetCommand(client: KnowledgeGraphClient): Command {
  */
 export function createExtractionCommand(client: KnowledgeGraphClient): Command {
   const extractionCommand = new Command('extraction')
-    .description('Manage AI extraction model configuration (ADR-041)');
+    .description('Manage AI extraction model configuration (ADR-805)');
 
   extractionCommand.addCommand(createExtractionConfigCommand(client));
   extractionCommand.addCommand(createExtractionSetCommand(client));

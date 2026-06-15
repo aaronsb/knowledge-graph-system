@@ -1,5 +1,5 @@
 """
-OAuth Utility Functions Tests (ADR-054)
+OAuth Utility Functions Tests (ADR-406)
 
 Unit tests for OAuth 2.0 utility functions in api/app/lib/oauth_utils.py.
 

@@ -65,7 +65,7 @@ async function showBanner() {
     console.log(`  ${colors.ui.key('API:')} ${colors.ui.value(apiUrl)} ${colors.status.error('✗')}`);
   }
 
-  // Show auto-approve status (ADR-014) - only if enabled
+  // Show auto-approve status (ADR-300) - only if enabled
   const config = getConfig();
   const autoApprove = config.getAutoApprove();
   if (autoApprove) {
@@ -97,14 +97,14 @@ export const subcommands: Command[] = [
   ingestCommand,
   jobsCommand,
   searchCommand,
-  documentCommand,  // ADR-084: Document search
+  documentCommand,  // ADR-507: Document search
   databaseCommand,
   ontologyCommand,
   sourceCommand,
   vocabularyCommand,
-  conceptCommand,   // ADR-089: Concept CRUD
-  edgeCommand,      // ADR-089: Edge CRUD
-  batchCommand,     // ADR-089: Batch operations
+  conceptCommand,   // ADR-308: Concept CRUD
+  edgeCommand,      // ADR-308: Edge CRUD
+  batchCommand,     // ADR-308: Batch operations
   adminCommand,
   polarityCommand,
   projectionCommand,
@@ -158,14 +158,14 @@ export async function registerCommands(program: Command) {
     program.addCommand(cmd);
   });
 
-  // ADR-027: Register authentication commands (login, logout)
+  // ADR-403: Register authentication commands (login, logout)
   registerLoginCommand(program);
   registerLogoutCommand(program);
 
-  // ADR-054: Register OAuth client management commands
+  // ADR-406: Register OAuth client management commands
   registerOAuthCommand(program);
 
-  // ADR-029: Register Unix-style verb shortcuts (ls, rm, stat, cat)
+  // ADR-709: Register Unix-style verb shortcuts (ls, rm, stat, cat)
   const verbCommands = createVerbRouter(program);
   verbCommands.forEach(cmd => {
     configureColoredHelp(cmd);

@@ -7,11 +7,11 @@ deciders:
 related:
   - ADR-104
   - ADR-103
-  - ADR-086
-  - ADR-061
-  - ADR-054
-  - ADR-016
-  - ADR-080
+  - ADR-117
+  - ADR-211
+  - ADR-406
+  - ADR-208
+  - ADR-115
 ---
 
 # ADR-105: Scenario-driven TLS via an in-VM Traefik router

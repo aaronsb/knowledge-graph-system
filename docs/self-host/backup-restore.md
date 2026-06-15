@@ -55,7 +55,7 @@ docker exec "$PG" pg_dump -U admin -d knowledge_graph --format=custom > backup.d
 
 ### Via the CLI (application-level)
 
-The `kg admin` commands produce a JSON-format backup of graph data through the API (ADR-036). These are useful for sharing ontologies or protecting against expensive re-ingestion costs, but they are not a substitute for a full `pg_dump` for disaster recovery.
+The `kg admin` commands produce a JSON-format backup of graph data through the API (ADR-712). These are useful for sharing ontologies or protecting against expensive re-ingestion costs, but they are not a substitute for a full `pg_dump` for disaster recovery.
 
 ```bash
 # Full database backup (non-interactive)
@@ -316,7 +316,7 @@ The `schema_migrations` table is included in every `pg_dump`, so a restored data
 
 ## Related
 
-- [ADR-040: Database Schema Migration Management](../architecture/INDEX.md)
+- [ADR-210: Database Schema Migration Management](../architecture/INDEX.md)
 - [ADR-205: AGE graph OID coupling across PostgreSQL major versions](../architecture/INDEX.md)
 - [Backup Object Format](../reference/backup-object-spec.md)
 - [Upgrading](upgrading.md)

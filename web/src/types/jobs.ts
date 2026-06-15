@@ -2,10 +2,10 @@
  * Job Types
  *
  * Types matching the REST API responses for job management.
- * Based on ADR-014 approval workflow.
+ * Based on ADR-300 approval workflow.
  */
 
-// Job status values following the ADR-014 lifecycle
+// Job status values following the ADR-300 lifecycle
 export type JobStatusValue =
   | 'pending'           // Initial state, analysis running
   | 'awaiting_approval' // Analysis complete, requires user approval
@@ -63,7 +63,7 @@ export interface JobResult {
   message?: string;
 }
 
-// Pre-ingestion analysis (ADR-014)
+// Pre-ingestion analysis (ADR-300)
 export interface CostEstimate {
   extraction: {
     model: string;
@@ -117,7 +117,7 @@ export interface JobStatus {
   approved_at?: string;
   approved_by?: string;
   expires_at?: string;
-  // ADR-051: Source provenance metadata
+  // ADR-304: Source provenance metadata
   filename?: string;
   source_type?: string;
   source_path?: string;

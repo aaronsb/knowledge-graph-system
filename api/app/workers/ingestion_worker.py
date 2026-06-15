@@ -203,7 +203,7 @@ def run_ingestion_worker(
     ontology = job_data["ontology"]
     options = job_data.get("options", {})
 
-    # Check if this is an image job (ADR-057)
+    # Check if this is an image job (ADR-305)
     is_image_job = "image_bytes" in job_data
 
     if is_image_job:
@@ -224,7 +224,7 @@ def run_ingestion_worker(
             logger.error(f"Failed to generate visual embedding: {e}")
             raise Exception(f"Visual embedding generation failed: {str(e)}")
 
-        # Step 2: Convert image to prose description (ADR-057 literal path).
+        # Step 2: Convert image to prose description (ADR-305 literal path).
         #
         # The vision capability slot resolves INDEPENDENTLY of extraction
         # (ADR-802 §2 / #378): resolve_vision_selection picks the provider/model
@@ -331,13 +331,13 @@ def run_ingestion_worker(
         content = base64.b64decode(content_b64)
     filename = job_data.get("filename", f"upload_{datetime.now().strftime('%Y%m%d_%H%M%S')}")
 
-    # ADR-081: Pre-ingestion source document storage
+    # ADR-307: Pre-ingestion source document storage
     # Store document in Garage BEFORE chunking for:
     # - Model evolution insurance (re-extract with future LLMs)
-    # - FUSE filesystem support (ADR-069)
+    # - FUSE filesystem support (ADR-715)
     # - Bidirectional recovery capability
     if not is_image_job:
-        # ADR-081: Pre-ingestion Garage storage is REQUIRED
+        # ADR-307: Pre-ingestion Garage storage is REQUIRED
         # If Garage fails, something is fundamentally wrong with the platform.
         # Fail fast to alert the operator rather than silently degrading.
         from api.app.lib.garage import get_source_storage, SourceMetadata
@@ -574,16 +574,16 @@ def run_ingestion_worker(
                 existing_concepts=existing_concepts,
                 recent_concept_ids=recent_concept_ids,
                 verbose=False,  # Suppress detailed output in background
-                # ADR-051: Pass provenance metadata for edge tracking
+                # ADR-304: Pass provenance metadata for edge tracking
                 job_id=job_id,
                 document_id=job_data["content_hash"],
                 user_id=job_data.get("user_id"),
-                # ADR-057: Pass image metadata for multimodal sources
+                # ADR-305: Pass image metadata for multimodal sources
                 content_type=job_data.get("content_type", "document"),
                 storage_key=job_data.get("storage_key"),
                 visual_embedding=job_data.get("visual_embedding"),
                 text_embedding=None,  # Will be generated during concept extraction
-                # ADR-081: Pass source document storage metadata
+                # ADR-307: Pass source document storage metadata
                 garage_key=job_data.get("source_garage_key"),
                 content_hash=job_data.get("source_content_hash"),
                 # ADR-203: Tag Instances created during this chunk with the job's epoch
@@ -615,11 +615,11 @@ def run_ingestion_worker(
                 }
             })
 
-        # ADR-051: Create DocumentMeta node after successful ingestion
+        # ADR-304: Create DocumentMeta node after successful ingestion
         # This makes the graph the source of truth for deduplication,
         # preventing job deletion from breaking duplicate detection
         try:
-            # Reconstruct source_ids using document_id pattern (ADR-051)
+            # Reconstruct source_ids using document_id pattern (ADR-304)
             # Must match pattern in ingestion.py: {document_id[:12]}_chunk{n}
             document_id = job_data["content_hash"]
             source_ids = [
@@ -640,10 +640,10 @@ def run_ingestion_worker(
                 file_path=job_data.get("source_path"),         # Full path (not tmp_path)
                 hostname=job_data.get("source_hostname"),      # Hostname where ingested
                 source_ids=source_ids,
-                # ADR-081: Link to source document in Garage
+                # ADR-307: Link to source document in Garage
                 garage_key=job_data.get("source_garage_key"),
                 content_type=job_data.get("content_type", "document"),
-                # ADR-057: Image binary location in Garage
+                # ADR-305: Image binary location in Garage
                 storage_key=job_data.get("storage_key"),
             )
             logger.info(f"✓ Created DocumentMeta node: {job_data['content_hash'][:16]}... ({stats.sources_created} sources)")
@@ -666,7 +666,7 @@ def run_ingestion_worker(
             logger.warning(f"Failed to create SCOPED_BY edges: {e}")
             # Non-fatal: s.document on Source nodes still provides ontology membership
 
-        # Sync any new vocabulary types (ADR-077)
+        # Sync any new vocabulary types (ADR-611)
         # Edge types may be used in the graph during ingestion but not registered
         # in the vocabulary table. This ensures all types are registered.
         try:
@@ -677,7 +677,7 @@ def run_ingestion_worker(
             # Non-fatal - log but don't fail the job
             logger.warning(f"Failed to sync vocabulary: {e}")
 
-        # Refresh graph metrics after ingestion (ADR-079: cache invalidation)
+        # Refresh graph metrics after ingestion (ADR-114: cache invalidation)
         # This updates the counters used for projection cache invalidation
         try:
             conn = age_client.pool.getconn()

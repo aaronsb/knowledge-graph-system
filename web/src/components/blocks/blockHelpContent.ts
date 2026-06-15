@@ -79,7 +79,7 @@ export const blockHelpContent: Record<BlockType, BlockHelpContent> = {
     title: 'Source Search',
     tag: 'SMART',
     tagColor: 'amber',
-    description: 'Search source text passages directly using embeddings. Finds original document chunks where concepts were extracted from (ADR-068).',
+    description: 'Search source text passages directly using embeddings. Finds original document chunks where concepts were extracted from (ADR-812).',
     parameters: [
       { name: 'Query', description: 'Natural language phrase to search for in source text' },
       { name: 'Ontology', description: 'Optional filter by ontology/document name' },

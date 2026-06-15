@@ -35,22 +35,22 @@ class WorkerEntry(NamedTuple):
 WORKER_REGISTRY: dict[str, WorkerEntry] = {
     # --- interactive lane: user-initiated, latency-sensitive ---
     "ingestion":               WorkerEntry(run_ingestion_worker,               "interactive"),
-    "ingest_image":            WorkerEntry(run_ingestion_worker,               "interactive"),  # ADR-057
-    "polarity":                WorkerEntry(run_polarity_worker,                "interactive"),  # ADR-070+083
+    "ingest_image":            WorkerEntry(run_ingestion_worker,               "interactive"),  # ADR-305
+    "polarity":                WorkerEntry(run_polarity_worker,                "interactive"),  # ADR-813+083
 
     # --- maintenance lane: background, can wait ---
-    "projection":              WorkerEntry(run_projection_worker,              "maintenance"),  # ADR-078
-    "vocab_refresh":           WorkerEntry(run_vocab_refresh_worker,           "maintenance"),  # ADR-050
-    "epistemic_remeasurement": WorkerEntry(run_epistemic_remeasurement_worker, "maintenance"),  # ADR-065
+    "projection":              WorkerEntry(run_projection_worker,              "maintenance"),  # ADR-717
+    "vocab_refresh":           WorkerEntry(run_vocab_refresh_worker,           "maintenance"),  # ADR-111
+    "epistemic_remeasurement": WorkerEntry(run_epistemic_remeasurement_worker, "maintenance"),  # ADR-610
     "vocab_embedding":         WorkerEntry(run_vocab_embedding_worker,         "maintenance"),  # Migration 069
     "ontology_annealing":      WorkerEntry(run_annealing_worker,              "maintenance"),  # ADR-200
     "proposal_execution":      WorkerEntry(run_proposal_execution_worker,     "maintenance"),  # ADR-200
 
     # --- system lane: infrastructure housekeeping ---
     "restore":                 WorkerEntry(run_restore_worker,                 "system"),
-    "vocab_consolidate":       WorkerEntry(run_vocab_consolidate_worker,       "system"),       # ADR-050
-    "artifact_cleanup":        WorkerEntry(run_artifact_cleanup_worker,        "system"),       # ADR-083
-    "source_embedding":        WorkerEntry(run_source_embedding_worker,        "system"),       # ADR-068
+    "vocab_consolidate":       WorkerEntry(run_vocab_consolidate_worker,       "system"),       # ADR-111
+    "artifact_cleanup":        WorkerEntry(run_artifact_cleanup_worker,        "system"),       # ADR-116
+    "source_embedding":        WorkerEntry(run_source_embedding_worker,        "system"),       # ADR-812
 }
 # fmt: on
 

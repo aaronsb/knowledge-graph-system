@@ -157,7 +157,7 @@ class JobQueue(ABC):
 
 class PostgreSQLJobQueue(JobQueue):
     """
-    PostgreSQL-backed job queue (ADR-024).
+    PostgreSQL-backed job queue (ADR-209).
 
     Benefits over SQLite:
     - MVCC: No write-lock contention
@@ -205,7 +205,7 @@ class PostgreSQLJobQueue(JobQueue):
             password=password
         )
 
-        # Create thread pool for worker execution (ADR-031: Non-blocking workers)
+        # Create thread pool for worker execution (ADR-405: Non-blocking workers)
         import concurrent.futures
         import os
 
@@ -234,7 +234,7 @@ class PostgreSQLJobQueue(JobQueue):
 
     def execute_job_async(self, job_id: str):
         """
-        Execute job in thread pool (non-blocking) - ADR-031.
+        Execute job in thread pool (non-blocking) - ADR-405.
 
         This submits the job to a thread pool executor, allowing the FastAPI
         event loop to continue processing other requests while the job runs.
@@ -278,7 +278,7 @@ class PostgreSQLJobQueue(JobQueue):
                 """, (
                     job_id,
                     job_type,
-                    "pending",  # ADR-014: Start as pending for analysis
+                    "pending",  # ADR-300: Start as pending for analysis
                     job_data.get("ontology"),
                     job_data.get("user_id", 1),  # Default to admin user (id=1) for system jobs
                     job_data.get("content_hash"),
@@ -332,7 +332,7 @@ class PostgreSQLJobQueue(JobQueue):
                             # If parsing fails, leave as None
                             job[json_field] = None
 
-                # ADR-051: Extract source provenance fields from job_data for display
+                # ADR-304: Extract source provenance fields from job_data for display
                 if job.get('job_data'):
                     job['filename'] = job['job_data'].get('filename')
                     job['source_type'] = job['job_data'].get('source_type')
@@ -369,7 +369,7 @@ class PostgreSQLJobQueue(JobQueue):
                         set_clauses.append(f"{key} = %s")
                         params.append(value)
                     elif key == 'artifact_id':
-                        # ADR-083: Link job to created artifact
+                        # ADR-116: Link job to created artifact
                         set_clauses.append("artifact_id = %s")
                         params.append(value)
 
@@ -518,7 +518,7 @@ class PostgreSQLJobQueue(JobQueue):
                                 # If parsing fails, leave as None
                                 job[json_field] = None
 
-                    # ADR-051: Extract source provenance fields from job_data for display
+                    # ADR-304: Extract source provenance fields from job_data for display
                     if job.get('job_data'):
                         job['filename'] = job['job_data'].get('filename')
                         job['source_type'] = job['job_data'].get('source_type')
@@ -738,7 +738,7 @@ class PostgreSQLJobQueue(JobQueue):
                             # If parsing fails, leave as None
                             job[json_field] = None
 
-                # ADR-051: Extract source provenance fields from job_data for display
+                # ADR-304: Extract source provenance fields from job_data for display
                 if job.get('job_data'):
                     job['filename'] = job['job_data'].get('filename')
                     job['source_type'] = job['job_data'].get('source_type')
@@ -942,13 +942,13 @@ def init_job_queue(queue_type: str = "postgresql", **kwargs) -> JobQueue:
     Factory function to initialize job queue.
 
     Args:
-        queue_type: "postgresql" (default, ADR-024+050) or "redis" (future)
+        queue_type: "postgresql" (default, ADR-209+050) or "redis" (future)
         **kwargs: Implementation-specific config
     """
     global _job_queue_instance
 
     if queue_type == "postgresql":
-        # ADR-024+050: PostgreSQL job queue with unified kg_api.jobs table
+        # ADR-209+050: PostgreSQL job queue with unified kg_api.jobs table
         _job_queue_instance = PostgreSQLJobQueue(
             host=kwargs.get("host", os.getenv("POSTGRES_HOST", "localhost")),
             port=kwargs.get("port", int(os.getenv("POSTGRES_PORT", "5432"))),

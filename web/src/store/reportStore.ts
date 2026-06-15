@@ -1,5 +1,5 @@
 /**
- * Report Store - Zustand State Management (ADR-083)
+ * Report Store - Zustand State Management (ADR-116)
  *
  * Manages report state for tabular views of graph/polarity data.
  * Reports are sent from explorers (2D, 3D, Polarity) via "Send to Reports".
@@ -126,7 +126,7 @@ export interface Report {
   // Recalculation tracking
   lastCalculatedAt?: string;
   previousValues?: PreviousValues;
-  // API-specific fields (ADR-083)
+  // API-specific fields (ADR-116)
   artifactId?: number;
   isSynced?: boolean;
   isFresh?: boolean;
