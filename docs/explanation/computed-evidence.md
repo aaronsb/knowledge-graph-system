@@ -1,3 +1,9 @@
+---
+id: 6.E.01
+domain: vocab
+mode: explanation
+---
+
 # Computed Evidence over Asserted Truth
 
 This page explains why Kappa Graph models knowledge as computed evidence rather than asserted truth, and why bi-temporal "valid time" is deliberately absent from the design.

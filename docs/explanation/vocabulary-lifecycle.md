@@ -1,3 +1,9 @@
+---
+id: 6.E.03
+domain: vocab
+mode: explanation
+---
+
 # Vocabulary Lifecycle
 
 Relationship types in Kappa Graph accumulate from document ingestion and require active management to stay coherent. The consolidation pipeline scores, merges, and prunes edge types using a combination of embedding similarity and LLM judgment.

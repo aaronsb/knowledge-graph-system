@@ -1,3 +1,9 @@
+---
+id: 8.E.01
+domain: ai
+mode: explanation
+---
+
 # Embedding Landscape
 
 Kappa Graph stores concepts, evidence instances, and edge text as high-dimensional vectors. Visualizing those vectors as a 2D map reveals semantic neighborhoods, outliers, and ontological groupings that are invisible in raw graph traversal. This page explains how dimensionality reduction works, which algorithms to use at different scales, and how to compose multiple embedding types into a coherent visualization.

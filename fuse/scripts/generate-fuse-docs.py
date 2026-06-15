@@ -103,6 +103,15 @@ def generate_markdown(modules: list[dict]) -> str:
     """Generate a single markdown document from extracted module data."""
     lines = []
 
+    # Documentation-catalog frontmatter (ADR-087). Emitted here, not hand-injected,
+    # because this page is overwritten on every docs build. domain=ui (FUSE),
+    # mode=reference. Stripped from GitHub Pages (mkdocs ignores unknown keys).
+    lines.append("---")
+    lines.append("id: 7.R.05")
+    lines.append("domain: ui")
+    lines.append("mode: reference")
+    lines.append("---")
+    lines.append("")
     lines.append("# FUSE Driver API Reference (Auto-Generated)")
     lines.append("")
     lines.append("> **Auto-Generated Documentation**")

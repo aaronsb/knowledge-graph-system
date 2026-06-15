@@ -1,3 +1,9 @@
+---
+id: 5.H.01
+domain: query
+mode: how-to
+---
+
 # Explore and Query
 
 Search concepts by meaning, traverse relationships, find paths between ideas, and replay saved explorations — from the CLI, the REST API, MCP, or the web interface.

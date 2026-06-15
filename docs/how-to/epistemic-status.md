@@ -1,3 +1,9 @@
+---
+id: 6.H.01
+domain: vocab
+mode: how-to
+---
+
 # Filter by Epistemic Status
 
 Epistemic status filtering narrows relationship queries to only those vocabulary types whose grounding patterns meet a confidence threshold. Before filtering is available, you must measure and store those patterns with the CLI.

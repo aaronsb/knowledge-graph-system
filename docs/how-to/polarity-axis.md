@@ -1,3 +1,9 @@
+---
+id: 8.H.04
+domain: ai
+mode: how-to
+---
+
 # Analyze a Polarity Axis
 
 Polarity axis analysis positions concepts along a semantic spectrum defined by two opposing poles. Given a "positive" and a "negative" concept, the feature projects related concepts onto a −1 to +1 scale and measures how well each concept aligns with either pole — or sits orthogonal to the axis entirely.

@@ -359,6 +359,15 @@ def render(tables, table_comments, column_comments, migrations):
     today = date.today().isoformat()
     out = []
 
+    # Documentation-catalog frontmatter (ADR-087). Emitted here, not hand-injected,
+    # because this page is overwritten on every docs build. domain=db (schema),
+    # mode=reference. Stripped from GitHub Pages (mkdocs ignores unknown keys).
+    out.append("---")
+    out.append("id: 2.R.01")
+    out.append("domain: db")
+    out.append("mode: reference")
+    out.append("---")
+    out.append("")
     out.append("# Database Schema")
     out.append("")
     out.append(

@@ -129,6 +129,10 @@ async function main() {
 
   // Generate index
   const index = [];
+  // Documentation-catalog frontmatter (ADR-087). Emitted here, not hand-injected,
+  // because this page is overwritten on every docs build. Stripped from GitHub
+  // Pages (mkdocs ignores unknown keys). domain=ui (CLI), mode=reference.
+  index.push('---\nid: 7.R.03\ndomain: ui\nmode: reference\n---\n');
   index.push('# CLI Command Reference (Auto-Generated)\n');
   index.push('> **Auto-Generated Documentation**');
   index.push('> ');

@@ -1,3 +1,9 @@
+---
+id: 7.R.03
+domain: ui
+mode: reference
+---
+
 # CLI Command Reference (Auto-Generated)
 
 > **Auto-Generated Documentation**

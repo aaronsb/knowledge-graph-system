@@ -1,3 +1,9 @@
+---
+id: 9.R.01
+domain: meta
+mode: reference
+---
+
 # Test Suite
 
 The Kappa Graph test suite spans three runtimes — Python/pytest (API), TypeScript/Jest (CLI), and

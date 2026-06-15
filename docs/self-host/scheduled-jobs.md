@@ -1,3 +1,9 @@
+---
+id: 1.O.06
+domain: infra
+mode: operations
+---
+
 # Scheduled Jobs
 
 Kappa Graph runs background jobs on a timer to keep vocabulary, epistemic measurements, and ontology structure in sync as your graph evolves.

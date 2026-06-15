@@ -1,3 +1,9 @@
+---
+id: 3.E.01
+domain: ingest
+mode: explanation
+---
+
 # How Kappa Graph Works
 
 Kappa Graph extracts structured knowledge from documents, stores it as a typed concept graph, and lets humans and AI agents query that graph by meaning rather than keyword. Unlike a RAG system that retrieves raw text chunks by similarity, Kappa Graph stores knowledge as structured relationships that accumulate and persist across documents and queries.

@@ -1,3 +1,9 @@
+---
+id: 8.H.02
+domain: ai
+mode: how-to
+---
+
 # Configure Embeddings
 
 Kappa Graph stores concepts as embedding vectors for similarity search. Embeddings are managed through profiles — each profile bundles a provider, model, dimensions, precision, and resource settings. One profile is active at a time.

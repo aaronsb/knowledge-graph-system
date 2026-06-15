@@ -1,3 +1,9 @@
+---
+id: 1.O.07
+domain: infra
+mode: operations
+---
+
 # TLS and Certificates
 
 Kappa Graph uses Traefik as its in-VM router and TLS terminator. The cert posture is driven by a deployment scenario — you declare where the appliance runs, and `operator.sh init` derives the right mode. The full design rationale is in [ADR-105](../architecture/infrastructure/ADR-105-scenario-driven-tls-via-in-vm-traefik-router.md).

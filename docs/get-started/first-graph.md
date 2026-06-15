@@ -1,3 +1,9 @@
+---
+id: 3.T.01
+domain: ingest
+mode: tutorial
+---
+
 # Your First Graph
 
 This tutorial walks you through installing the `kg` CLI, connecting to a running Kappa Graph platform, ingesting your first document, and viewing the concepts extracted from it.

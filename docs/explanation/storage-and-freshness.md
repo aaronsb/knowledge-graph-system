@@ -1,3 +1,9 @@
+---
+id: 2.E.01
+domain: db
+mode: explanation
+---
+
 # Storage and Freshness
 
 Kappa Graph stores data across three tiers — Apache AGE, PostgreSQL, and Garage S3 — and maintains a freshness contract that keeps derived caches consistent with the graph they were built from. This page explains the tier boundaries, the data flow through them, and how the freshness clock works.

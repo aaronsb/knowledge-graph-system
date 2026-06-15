@@ -1,3 +1,9 @@
+---
+id: 7.H.01
+domain: ui
+mode: how-to
+---
+
 # Use the FUSE Drive
 
 `kg-fuse` mounts your Kappa Graph as a virtual filesystem. Browse ontologies as directories, create semantic queries with `mkdir`, ingest documents by copying files, and tune search results through virtual files — all from your terminal or file manager.

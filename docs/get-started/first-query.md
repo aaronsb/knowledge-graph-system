@@ -1,3 +1,9 @@
+---
+id: 5.T.01
+domain: query
+mode: tutorial
+---
+
 # Your First Query
 
 This tutorial walks through querying a Kappa Graph knowledge graph with real commands and real output. By the end you will have searched for concepts, examined evidence, traversed relationships, and found a path between two ideas.

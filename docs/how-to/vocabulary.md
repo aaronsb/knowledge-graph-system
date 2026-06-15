@@ -1,3 +1,9 @@
+---
+id: 6.H.02
+domain: vocab
+mode: how-to
+---
+
 # Consolidate Vocabulary
 
 Edge vocabulary consolidation merges synonymous relationship types in your graph, reducing fragmentation and simplifying queries.

@@ -1,3 +1,9 @@
+---
+id: 1.O.08
+domain: infra
+mode: operations
+---
+
 # Troubleshooting
 
 This page covers common failure modes for Kappa Graph self-hosted deployments, including platform containers and client tools.

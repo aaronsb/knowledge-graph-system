@@ -1,3 +1,9 @@
+---
+id: 3.E.02
+domain: ingest
+mode: explanation
+---
+
 # Recursive Upsert
 
 Recursive upsert is the mechanism by which Kappa Graph merges new knowledge into an existing graph rather than appending it as isolated fragments. It operates in two interlocked passes: concept deduplication during ingestion, and relationship-type categorization after the LLM discovers a new edge label.

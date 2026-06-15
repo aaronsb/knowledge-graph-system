@@ -1,3 +1,9 @@
+---
+id: 1.O.04
+domain: infra
+mode: operations
+---
+
 # Production Deployment
 
 This page covers deploying Kappa Graph on a production server: pulling pre-built images from

@@ -1,3 +1,9 @@
+---
+id: 5.R.02
+domain: query
+mode: reference
+---
+
 # GraphProgram Security Model
 
 This page defines the security guarantees, threat model, and defense-in-depth layers for the GraphProgram system (ADR-500). It is written for implementers building the executor and validators, and for security reviewers evaluating trust boundaries.

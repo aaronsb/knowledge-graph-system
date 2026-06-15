@@ -1,3 +1,9 @@
+---
+id: 9.E.02
+domain: meta
+mode: explanation
+---
+
 # Kappa Graph — κ(G)
 
 Kappa Graph extracts concepts from documents, tracks how well-supported each concept is across your corpus, and preserves contradictions rather than resolving them.

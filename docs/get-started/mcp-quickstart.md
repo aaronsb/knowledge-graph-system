@@ -1,3 +1,9 @@
+---
+id: 7.T.01
+domain: ui
+mode: tutorial
+---
+
 # Connect via MCP
 
 The Kappa Graph MCP server gives Claude and other MCP-compatible AI clients direct access to your graph — search, traversal, ingestion, and job management — during a conversation.

@@ -1,3 +1,9 @@
+---
+id: 6.E.02
+domain: vocab
+mode: explanation
+---
+
 # Grounding and Epistemic Confidence
 
 Grounding measures how well-supported a concept is across your corpus — not whether the concept is universally true. A concept with high grounding means your sources agree on it. A concept with low or negative grounding means your sources disagree, or too few have weighed in. The quality of grounding depends entirely on the quality and diversity of the sources you ingest.

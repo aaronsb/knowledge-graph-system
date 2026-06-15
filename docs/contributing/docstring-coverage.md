@@ -1,3 +1,9 @@
+---
+id: 9.H.01
+domain: meta
+mode: how-to
+---
+
 # Docstring Coverage
 
 `scripts/development/lint/docstring_coverage.py` measures docstring coverage and tracks freshness across Python, TypeScript, and Rust source files in Kappa Graph. Run it from anywhere inside the repository — it finds the project root automatically.

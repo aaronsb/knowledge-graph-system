@@ -1,3 +1,9 @@
+---
+id: 5.R.01
+domain: query
+mode: reference
+---
+
 # Cypher Patterns
 
 openCypher queries for exploring and analyzing a Kappa Graph. All examples run against Apache AGE 1.7.0 on PostgreSQL 18 via the `knowledge_graph` AGE graph.

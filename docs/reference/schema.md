@@ -1,3 +1,9 @@
+---
+id: 2.R.01
+domain: db
+mode: reference
+---
+
 # Database Schema
 
 Relational schema for the Kappa Graph control plane. The knowledge graph itself (concepts, sources, instances, and their typed edges) lives in the Apache AGE `knowledge_graph` graph; the tables below hold operational state, authorization, and observability around it.

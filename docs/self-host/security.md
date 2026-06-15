@@ -1,3 +1,9 @@
+---
+id: 4.O.01
+domain: auth
+mode: operations
+---
+
 # Security and Access
 
 Kappa Graph uses OAuth 2.0 client credentials for API authentication, role-based access control (RBAC) for authorization, and Fernet-encrypted storage for LLM API keys.

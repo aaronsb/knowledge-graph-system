@@ -1,3 +1,9 @@
+---
+id: 1.O.02
+domain: infra
+mode: operations
+---
+
 # Configuration Reference
 
 This page covers all configuration files and environment variables for a Kappa Graph self-hosted deployment.

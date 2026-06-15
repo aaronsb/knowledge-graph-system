@@ -1,3 +1,9 @@
+---
+id: 7.R.02
+domain: ui
+mode: reference
+---
+
 # MCP Session Context
 
 Two MCP tools — `session_context` and `session_ingest` — give agents persistent memory across sessions by reading from and writing to the Kappa Graph.

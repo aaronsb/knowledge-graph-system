@@ -1,3 +1,9 @@
+---
+id: 3.T.02
+domain: ingest
+mode: tutorial
+---
+
 # Mining a Git Repository
 
 This tutorial walks through ingesting a GitHub repository's commit and pull-request history into Kappa Graph, so you can query why decisions were made and trace how features evolved.

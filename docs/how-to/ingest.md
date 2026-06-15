@@ -1,3 +1,9 @@
+---
+id: 3.H.01
+domain: ingest
+mode: how-to
+---
+
 # Ingest Documents
 
 Add documents to Kappa Graph so their concepts and relationships become queryable.

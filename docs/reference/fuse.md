@@ -1,3 +1,9 @@
+---
+id: 7.R.05
+domain: ui
+mode: reference
+---
+
 # FUSE Driver API Reference (Auto-Generated)
 
 > **Auto-Generated Documentation**

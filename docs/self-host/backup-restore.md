@@ -1,3 +1,9 @@
+---
+id: 1.O.01
+domain: infra
+mode: operations
+---
+
 # Backup and Restore
 
 This page covers backing up and restoring a Kappa Graph installation: the PostgreSQL database (graph, config, users) and the Garage document store. It also explains how schema migrations work and how to apply them manually when needed.

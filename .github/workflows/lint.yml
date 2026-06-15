@@ -66,6 +66,31 @@ jobs:
         run: |
           python3 scripts/development/lint/link_check.py --fail-on-broken
 
+  docs-catalog-lint:
+    name: Docs Catalog Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install PyYAML
+        run: pip install pyyaml
+
+      - name: Lint documentation catalog (frontmatter + decision graph)
+        # Validates the docs catalog (ADR-087): id/domain/mode frontmatter,
+        # the related/supersedes reference graph, and nav membership. Catalog
+        # pages are enforced (errors fail); ADR frontmatter only warns until the
+        # ADR sweep lands (#520 fast-follow), so --enforce-adrs is intentionally
+        # omitted here.
+        run: |
+          python3 docs/scripts/doclint.py --check
+
   # TODO: Add full test infrastructure in future
   # pytest-unit:
   #   name: Unit Tests

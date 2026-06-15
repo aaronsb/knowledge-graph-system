@@ -1,3 +1,9 @@
+---
+id: 1.O.05
+domain: infra
+mode: operations
+---
+
 # Quick Start
 
 This page covers installing Kappa Graph on a server and connecting client tools to it. Choose your path:

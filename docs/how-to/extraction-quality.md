@@ -1,3 +1,9 @@
+---
+id: 8.H.03
+domain: ai
+mode: how-to
+---
+
 # Compare Extraction Quality
 
 Different AI providers produce different graph characteristics from the same document. This page helps you choose a provider based on measured trade-offs between concept volume, schema compliance, speed, and cost.

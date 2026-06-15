@@ -1,3 +1,9 @@
+---
+id: 1.E.01
+domain: infra
+mode: explanation
+---
+
 # Worker Lanes and Concurrency
 
 Kappa Graph processes documents through a multi-stage pipeline — chunking, LLM extraction, concept

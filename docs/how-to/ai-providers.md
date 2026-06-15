@@ -1,3 +1,9 @@
+---
+id: 8.H.01
+domain: ai
+mode: how-to
+---
+
 # Configure AI Providers
 
 Kappa Graph uses an LLM to extract concepts and relationships from documents during ingestion. This page covers how to set an extraction provider, store API keys, tune extraction parameters, and switch providers.

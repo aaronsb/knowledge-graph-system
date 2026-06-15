@@ -1,16 +1,124 @@
 ---
-status: Draft
-date: 2026-01-17
+status: Accepted
+date: 2026-06-15
 deciders:
   - aaronsb
   - claude
+related:
+  - ADR-900
+  - ADR-061
+  - ADR-086
+amends: 2026-01-18 audience-framework decision (see Amendment below)
 ---
 
 # ADR-087: Documentation Strategy and Audience Framework
 
-Status: Proposed
-Date: 2026-01-18
-Deciders: @aaronsb, @claude
+> **Status:** Accepted (amended 2026-06-15). The original 2026-01 decision —
+> recorded below from "The Real Point" onward — framed documentation by
+> *audience*. The amendment that follows supersedes the audience-based *folder
+> layout* (§2) with a Diátaxis taxonomy and a documentation catalog, while
+> keeping the original principles (§5). Read the amendment first; the original
+> text is retained as the historical record.
+
+## Amendment (2026-06-15): Diátaxis Taxonomy + Documentation Catalog
+
+### What changed and why
+
+The 2026-01 decision was directionally right: operators, users, developers, and
+agents have different needs, and the old docs mixed them. But organizing the
+*folder tree* by audience (`concepts/`, `using/`, `operating/`) made every
+feature live in several places at once — an operator's TLS page and a user's TLS
+page drift apart, and a contributor never knows which one to edit. Audience is a
+real lens, but it is the wrong axis for the directory structure.
+
+We adopt **Diátaxis** as the organizing taxonomy instead. Each page has one
+*mode* and serves one reader job:
+
+| Mode | Folder | The page answers |
+|------|--------|------------------|
+| Tutorial | `get-started/` | "Walk me through my first success." |
+| How-to | `how-to/` | "I have a goal; give me the steps." |
+| Reference | `reference/` | "State the facts I look up." |
+| Explanation | `explanation/` | "Help me understand why." |
+| Operations | `self-host/` | "I run the platform; deploy and keep it healthy." |
+
+`self-host/` is a fifth, operations-flavored section — Diátaxis-adjacent rather
+than canonical — because running the appliance is a distinct, large reader job.
+Architecture/ADRs remain a separate tree (the builder-pair audience) reachable
+from their index.
+
+The consolidation that applied this taxonomy is recorded in
+`specs/documentation-consolidation-spec.md` (an intermediary spec, not an ADR):
+**154 hand-written pages collapsed to 47**, with reference material generated
+from code and an explicit `mkdocs.yml` nav.
+
+### The documentation catalog (frontmatter IDs)
+
+Diátaxis tells a *reader* where to look. It does not give the *maintainers* a
+stable handle on each page — a way to say "this is the auth reference page" that
+survives renames, moves, and rewrites. For that, every page carries a catalog ID
+in its frontmatter, the way an IKEA part or an automotive component carries a
+part number that is invisible on the showroom floor:
+
+```yaml
+---
+id: 4.R.01          # <domain-digit>.<MODE-letter>.<serial>
+domain: auth         # ADR-900 domain key — the shared "first octet"
+mode: reference      # Diátaxis: tutorial | how-to | reference | explanation | operations
+---
+```
+
+- **domain** reuses the ADR-900 domain bands (1 infra · 2 db · 3 ingest ·
+  4 auth · 5 query · 6 vocab · 7 ui · 8 ai · 9 meta). A doc and the ADRs that
+  govern it share the leading digit, so "everything about auth" spans both trees.
+- **mode** is the Diátaxis mode (letter `T` / `H` / `R` / `E` / `O` in the ID).
+- **serial** is a 2-digit sequence within `(domain, mode)`.
+
+These keys are **management metadata, not display**. mkdocs ignores unknown
+frontmatter keys, so the catalog is stripped from GitHub Pages — readers never
+see `4.R.01`, maintainers and the linter do. Diátaxis stays a *principle* for
+readers; the catalog is the *index* for maintainers. The two are facets of the
+same page, not competing schemes.
+
+Generated reference pages (`reference/{cli,mcp,fuse,schema}.md`) are overwritten
+by their generators on every docs build, so their frontmatter is **emitted by the
+generator**, not hand-injected — otherwise the next regen wipes it.
+
+### Graph linting
+
+The catalog is enforced by `docs/scripts/doclint.py`, which extends the ADR
+linter's approach (it reuses `adr.yaml`'s domain config) and treats docs and ADRs
+as one **decision graph**: nodes are records, edges are `related`/`supersedes`
+references. It lints for:
+
+1. **Frontmatter validity** — every doc has a well-formed `id`/`domain`/`mode`;
+   the ID's domain digit and mode letter agree with the `domain`/`mode` fields.
+2. **Reference graph** — every `related`/`supersedes` target resolves (no
+   dangling references), no orphan pages outside the nav, no supersede cycles.
+3. **Coverage matrix** — which `(domain, mode)` cells are populated, surfacing
+   gaps (e.g. an auth subsystem with reference but no how-to).
+
+Linting is **enforced on `docs/`** (errors fail CI) and **warns on ADRs** until
+the ADR frontmatter sweep lands (tracked separately as the #520 fast-follow).
+
+### Numbering freeze
+
+Per ADR-900, legacy ADRs (1–99) are frozen at their numbers — we do not
+renumber. The doc catalog's domain digit is keyed to the *current* domain bands;
+legacy ADRs resolve their domain by folder, so the shared-octet relationship
+holds without touching their numbers.
+
+### What this amendment supersedes
+
+- **§2 "Organize by Audience, Not Feature"** and its `concepts/ using/
+  operating/` folder tree are superseded by the Diátaxis taxonomy above.
+- **§5 "Documentation Principles"** stands unchanged — progressive disclosure,
+  task-orientation, no "astral plane" language, currency. The voice guide
+  (`docs/contributing/voice.md`) operationalizes these.
+- The audience analysis (§1, §3, §4) stands as *context*: it explains *why* the
+  modes exist (who each mode serves), even though it no longer dictates folders.
+
+---
 
 ## The Real Point
 

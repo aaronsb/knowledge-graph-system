@@ -1,3 +1,9 @@
+---
+id: 7.R.04
+domain: ui
+mode: reference
+---
+
 # MCP Server Tool Reference (Auto-Generated)
 
 > **Auto-Generated Documentation**

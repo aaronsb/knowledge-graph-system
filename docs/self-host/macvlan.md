@@ -1,3 +1,9 @@
+---
+id: 1.O.03
+domain: infra
+mode: operations
+---
+
 # Dedicated IP with macvlan
 
 macvlan networking gives a Kappa Graph deployment its own MAC address and LAN IP, making the platform appear as a distinct host on your network. Use this when ports 80/443 on the Docker host are already in use, or when you want the service reachable at a stable LAN address without a reverse proxy in front of it.

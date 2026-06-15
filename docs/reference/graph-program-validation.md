@@ -1,3 +1,9 @@
+---
+id: 5.R.04
+domain: query
+mode: reference
+---
+
 # GraphProgram Validation
 
 The API validates every GraphProgram AST before execution. Validation is server-side authoritative — client-side pre-validation is useful for fast feedback but is never sufficient. Programs submitted from the web app, CLI, MCP, or an agent pass through the same pipeline.

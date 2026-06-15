@@ -1,3 +1,9 @@
+---
+id: 9.E.01
+domain: meta
+mode: explanation
+---
+
 # What is Kappa Graph?
 
 Kappa Graph transforms documents into a queryable graph of concepts and the typed relationships between them. You feed it documents; it extracts concepts, maps edges like IMPLIES, CONTRADICTS, and ENABLES between them, and stores those connections with provenance back to the source text.

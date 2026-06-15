@@ -1,3 +1,9 @@
+---
+id: 5.E.01
+domain: query
+mode: explanation
+---
+
 # GraphProgram DSL
 
 A GraphProgram is a JSON AST that describes a bounded sequence of set-algebraic operations against the Kappa Graph knowledge base. Every authoring surface — web UI, CLI, MCP tools, and AI agents — compiles to the same AST and submits it to the same API executor.

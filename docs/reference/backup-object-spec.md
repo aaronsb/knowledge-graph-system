@@ -1,3 +1,9 @@
+---
+id: 1.R.01
+domain: infra
+mode: reference
+---
+
 # Backup Object Format
 
 **Format version:** `kg-backup/2`  

@@ -1,3 +1,9 @@
+---
+id: 1.O.09
+domain: infra
+mode: operations
+---
+
 # Upgrading
 
 This page covers how to upgrade a running Kappa Graph installation to a new version.
