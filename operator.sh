@@ -203,6 +203,14 @@ cmd_start() {
     cd "$DOCKER_DIR"
     run_compose up -d api web
 
+    # Bring up the in-VM router when enabled (ADR-105). cmd_start ups services by
+    # name, so the traefik overlay being in the compose command isn't enough — it
+    # must be named explicitly.
+    if [ "$ROUTER_MODE" = "traefik" ]; then
+        echo -e "${BLUE}→ Starting router (traefik)...${NC}"
+        run_compose up -d traefik
+    fi
+
     # Wait for API health
     echo -e "${BLUE}→ Waiting for API...${NC}"
     for i in {1..30}; do
