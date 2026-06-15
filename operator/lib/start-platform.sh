@@ -149,6 +149,18 @@ start_application() {
                     [ "$TLS_MODE" = "manual" ]      && [ -f docker-compose.traefik-tls-manual.yml ]      && compose_cmd="$compose_cmd -f docker-compose.traefik-tls-manual.yml"
                     # letsencrypt: dns-01 uses the lego DNS overlay; otherwise TLS-ALPN-01.
                     if [ "$TLS_MODE" = "letsencrypt" ]; then
+                        # The letsencrypt overlays pin tls.domains[0].main=${TLS_DOMAIN}
+                        # so ACME knows which host to issue for. headless-init writes
+                        # TLS_DOMAIN to .env, but a hand-edited or pre-upgrade .env may
+                        # lack it — derive a launch-time fallback from EXTERNAL_URL so an
+                        # empty label never silently disables cert issuance.
+                        if [ -z "${TLS_DOMAIN:-}" ] && [ -n "${EXTERNAL_URL:-}" ]; then
+                            TLS_DOMAIN="${EXTERNAL_URL#*://}"; TLS_DOMAIN="${TLS_DOMAIN%%[:/]*}"
+                            export TLS_DOMAIN
+                        fi
+                        if [ -z "${TLS_DOMAIN:-}" ] || [ "$TLS_DOMAIN" = "localhost" ]; then
+                            echo -e "${YELLOW}⚠ TLS_MODE=letsencrypt but TLS_DOMAIN='${TLS_DOMAIN:-}' is not a public FQDN — Let's Encrypt cannot issue a cert. Set a public hostname via --external-url / EXTERNAL_URL.${NC}"
+                        fi
                         if [ "${ACME_CHALLENGE:-tls-alpn-01}" = "dns-01" ] && [ -f docker-compose.traefik-tls-letsencrypt-dns.yml ]; then
                             compose_cmd="$compose_cmd -f docker-compose.traefik-tls-letsencrypt-dns.yml"
                         elif [ -f docker-compose.traefik-tls-letsencrypt.yml ]; then
