@@ -17,13 +17,11 @@
 #     serves the ACME http challenge on the entrypoint ahead of the redirect, but
 #     the interaction is version-sensitive — if HTTP-01 fails to validate, drop
 #     the `web.http.redirections.*` lines (let :80 serve plain) while issuing.
-#   * DNS-01 via lego (e.g. porkbun) — OPT-IN, private-only. Adds an account-wide
-#     DNS credential to the appliance, so prefer `manual` (cert issued off-box).
-#     If you accept the blast radius:
-#       --certificatesresolvers.le.acme.dnschallenge=true
-#       --certificatesresolvers.le.acme.dnschallenge.provider=porkbun
-#     and pass PORKBUN_API_KEY / PORKBUN_SECRET_API_KEY into the traefik env
-#     (lego reads them). ~100 providers ship with lego; porkbun is native.
+#   * DNS-01 via lego (e.g. porkbun) — the path for a PRIVATE box (no inbound
+#     :443/:80). It is its own overlay now: docker-compose.traefik-tls-letsencrypt-dns.yml,
+#     selected by `--tls=letsencrypt --acme-challenge=dns-01`. It adds an
+#     account-scoped DNS credential to the appliance (a real blast radius — scope
+#     the key to the one zone), so it stays opt-in; tls-alpn-01 is the default.
 #
 # Requires LE_EMAIL in the environment (ACME account contact).
 # Set LE_CASERVER to the staging directory while testing to avoid rate limits:

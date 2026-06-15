@@ -44,6 +44,8 @@ EXTERNAL_URL=""
 ROUTER_MODE="none"
 TLS_MODE="none"
 LE_EMAIL=""
+ACME_CHALLENGE="tls-alpn-01"
+ACME_DNS_PROVIDER="porkbun"
 SKIP_AI_CONFIG=false
 SKIP_CLI=false
 SHOW_HELP=false
@@ -107,12 +109,25 @@ ${BOLD}Web Configuration:${NC}
                           • selfsigned: Traefik's built-in self-signed cert
                           • manual: operator-supplied cert+key in docker/certs/
                             (tls.crt + tls.key); cert issued off-box
-                          • letsencrypt: Traefik ACME (TLS-ALPN-01); needs --le-email
+                          • letsencrypt: Traefik ACME, real auto-renewing cert.
+                            Challenge selected by --acme-challenge; needs --le-email
                           • offload: HTTP in-VM, edge terminates TLS (EXTERNAL_URL
                             scheme becomes https). Assumes an external reverse
                             proxy does TLS + path routing (/ -> web, /api -> api);
                             nothing in-box enforces it.
   --le-email EMAIL        ACME account contact for --tls=letsencrypt
+  --acme-challenge TYPE   ACME challenge for --tls=letsencrypt:
+                          • tls-alpn-01 (default): secretless, served on :443;
+                            requires the box reachable from the internet on :443
+                          • dns-01: proves control via a DNS TXT record — the only
+                            challenge that works for a PRIVATE box with a public
+                            name. Uses lego (built into Traefik). Set --dns-provider
+                            and supply that provider's credentials in the env.
+  --dns-provider NAME     DNS provider for --acme-challenge=dns-01 (default: porkbun;
+                          lego ships ~100). For porkbun, set PORKBUN_API_KEY and
+                          PORKBUN_SECRET_API_KEY in the environment (e.g. via the
+                          appliance provision.env); they are written to .env and
+                          read by Traefik/lego — never passed on the command line.
 
 ${BOLD}AI Configuration:${NC}
   --ai-provider PROVIDER  AI extraction provider (openai, anthropic, openrouter)
@@ -294,6 +309,22 @@ parse_args() {
                 LE_EMAIL="$2"
                 shift 2
                 ;;
+            --acme-challenge=*)
+                ACME_CHALLENGE="${1#*=}"
+                shift
+                ;;
+            --acme-challenge)
+                ACME_CHALLENGE="$2"
+                shift 2
+                ;;
+            --dns-provider=*)
+                ACME_DNS_PROVIDER="${1#*=}"
+                shift
+                ;;
+            --dns-provider)
+                ACME_DNS_PROVIDER="$2"
+                shift 2
+                ;;
             *)
                 echo -e "${RED}Unknown option: $1${NC}"
                 echo "Use --help for usage information"
@@ -362,6 +393,36 @@ validate_config() {
     if [[ "$TLS_MODE" == "letsencrypt" && -z "$LE_EMAIL" ]]; then
         echo -e "${RED}✗ --tls=letsencrypt requires --le-email (ACME account contact)${NC}"
         errors=$((errors + 1))
+    fi
+    # ACME challenge (ADR-105 §4): tls-alpn-01 (default) or dns-01 (lego).
+    case "$ACME_CHALLENGE" in
+        tls-alpn-01|dns-01) ;;
+        *)
+            echo -e "${RED}✗ Invalid --acme-challenge: $ACME_CHALLENGE (must be tls-alpn-01|dns-01)${NC}"
+            errors=$((errors + 1))
+            ;;
+    esac
+    # dns-01 only makes sense for the letsencrypt mode.
+    if [[ "$ACME_CHALLENGE" == "dns-01" && "$TLS_MODE" != "letsencrypt" ]]; then
+        echo -e "${RED}✗ --acme-challenge=dns-01 requires --tls=letsencrypt${NC}"
+        errors=$((errors + 1))
+    fi
+    # dns-01 needs the DNS provider's credentials in the environment so lego can
+    # write the TXT record. Currently porkbun is wired; other providers add their
+    # own env vars to the dns overlay.
+    if [[ "$TLS_MODE" == "letsencrypt" && "$ACME_CHALLENGE" == "dns-01" ]]; then
+        case "$ACME_DNS_PROVIDER" in
+            porkbun)
+                if [[ -z "${PORKBUN_API_KEY:-}" || -z "${PORKBUN_SECRET_API_KEY:-}" ]]; then
+                    echo -e "${RED}✗ --dns-provider=porkbun needs PORKBUN_API_KEY and PORKBUN_SECRET_API_KEY in the environment${NC}"
+                    errors=$((errors + 1))
+                fi
+                ;;
+            *)
+                echo -e "${RED}✗ Unsupported --dns-provider: $ACME_DNS_PROVIDER (wired: porkbun)${NC}"
+                errors=$((errors + 1))
+                ;;
+        esac
     fi
 
     # Validate external URL (ADR-105): must be a scheme+host, no trailing path.
@@ -576,6 +637,22 @@ main() {
         fi
     fi
 
+    # DNS-01 provider credentials → .env (read by Traefik/lego in the dns overlay).
+    # Upsert from the environment so the secret never appears in argv or logs.
+    if [[ "$TLS_MODE" == "letsencrypt" && "$ACME_CHALLENGE" == "dns-01" && "$ACME_DNS_PROVIDER" == "porkbun" ]]; then
+        _upsert_env() {  # $1=key $2=value
+            if ! grep -q "^$1=" "$PROJECT_ROOT/.env" 2>/dev/null; then
+                echo "$1=$2" >> "$PROJECT_ROOT/.env"
+            else
+                sed -i "s|^$1=.*|$1=$2|" "$PROJECT_ROOT/.env"
+            fi
+        }
+        grep -q '^# DNS-01 provider credentials' "$PROJECT_ROOT/.env" 2>/dev/null || \
+            echo "# DNS-01 provider credentials (ADR-105 §4; read by Traefik/lego)" >> "$PROJECT_ROOT/.env"
+        _upsert_env PORKBUN_API_KEY "$PORKBUN_API_KEY"
+        _upsert_env PORKBUN_SECRET_API_KEY "$PORKBUN_SECRET_API_KEY"
+    fi
+
     echo -e "${GREEN}✓ Secrets generated${NC}"
     echo -e "${GREEN}✓ Web hostname: $WEB_HOSTNAME${NC}"
     echo -e "${GREEN}✓ External URL: $EXTERNAL_URL${NC}"
@@ -596,6 +673,8 @@ COMPOSE_FILE=$COMPOSE_FILE
 IMAGE_SOURCE=$IMAGE_SOURCE
 ROUTER_MODE=$ROUTER_MODE
 TLS_MODE=$TLS_MODE
+ACME_CHALLENGE=$ACME_CHALLENGE
+ACME_DNS_PROVIDER=$ACME_DNS_PROVIDER
 EXTERNAL_URL=$EXTERNAL_URL
 INITIALIZED_AT=$(date -Iseconds)
 EOF

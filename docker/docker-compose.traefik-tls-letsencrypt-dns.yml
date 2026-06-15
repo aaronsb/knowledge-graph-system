@@ -1,0 +1,67 @@
+# ============================================================================
+# Knowledge Graph System — Let's Encrypt via DNS-01 (ADR-105 §4, mode = letsencrypt + dns-01)
+# ============================================================================
+# Layers on docker-compose.traefik-tls.yml. Same as the TLS-ALPN-01 letsencrypt
+# overlay, but the ACME challenge is DNS-01 through lego's provider factory.
+# Traefik obtains and AUTO-RENEWS a real cert; `operator.sh recert` is a no-op.
+#
+# WHY DNS-01: TLS-ALPN-01 and HTTP-01 require Let's Encrypt to reach the box from
+# the internet (:443 / :80). A PRIVATE deployment (RFC-1918 address, no inbound
+# NAT) cannot satisfy them. DNS-01 proves control of the name by writing a TXT
+# record, so it works for a private box that owns a public DNS name — this is the
+# only ACME challenge that does. It is the converged, in-container equivalent of
+# the old install.sh acme.sh+porkbun flow.
+#
+# TRUST POSTURE (ADR-105 §7): DNS-01 places an account-scoped DNS API credential
+# inside the appliance. That is a real blast radius — scope the porkbun key to
+# the one zone where possible, and prefer this only for private/trusted boxes.
+# For internet-exposed boxes, the secretless TLS-ALPN-01 overlay is the default.
+#
+# PROVIDER: lego (built into Traefik) ships ~100 DNS providers; porkbun is native.
+# The provider is selected by KG_ACME_DNS_PROVIDER (default porkbun); its
+# credentials are read by lego from the traefik container environment. To add a
+# different provider, set KG_ACME_DNS_PROVIDER and pass that provider's env vars
+# in the `environment:` block below (see lego docs for the variable names).
+#
+# Requires in the environment (.env): LE_EMAIL, PORKBUN_API_KEY,
+# PORKBUN_SECRET_API_KEY. Set LE_CASERVER to staging while testing to avoid
+# rate limits: https://acme-staging-v02.api.letsencrypt.org/directory
+#
+# COMMAND IS REPLACED: restate the full TLS command and add the ACME resolver.
+# ============================================================================
+
+services:
+  traefik:
+    command:
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --providers.docker.network=knowledge-graph-router
+      - --entrypoints.web.address=:80
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      - --entrypoints.websecure.address=:443
+      - --certificatesresolvers.le.acme.dnschallenge=true
+      - --certificatesresolvers.le.acme.dnschallenge.provider=${KG_ACME_DNS_PROVIDER:-porkbun}
+      - --certificatesresolvers.le.acme.email=${LE_EMAIL}
+      - --certificatesresolvers.le.acme.storage=/etc/traefik/acme/acme.json
+      - --certificatesresolvers.le.acme.caserver=${LE_CASERVER:-https://acme-v02.api.letsencrypt.org/directory}
+    environment:
+      # lego reads the DNS provider credentials from the environment. porkbun is
+      # the default provider; other providers read their own variables (add them
+      # here when KG_ACME_DNS_PROVIDER changes).
+      - PORKBUN_API_KEY=${PORKBUN_API_KEY:-}
+      - PORKBUN_SECRET_API_KEY=${PORKBUN_SECRET_API_KEY:-}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # acme.json (account + issued certs) — Traefik creates it 0600. Persist it
+      # so renewals survive restarts and we don't re-hit ACME rate limits.
+      - ${KG_ACME_DIR:-./acme}:/etc/traefik/acme
+
+  web:
+    labels:
+      # Attach the ACME resolver to the websecure router defined in traefik-tls.yml.
+      - traefik.http.routers.kgweb-tls.tls.certresolver=le
+
+  api:
+    labels:
+      - traefik.http.routers.kgapi-tls.tls.certresolver=le

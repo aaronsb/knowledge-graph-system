@@ -113,7 +113,14 @@ get_compose_cmd() {
             selfsigned|manual|letsencrypt)
                 [ -f "$DOCKER_DIR/docker-compose.traefik-tls.yml" ] && cmd="$cmd -f $DOCKER_DIR/docker-compose.traefik-tls.yml"
                 [ "$TLS_MODE" = "manual" ]      && [ -f "$DOCKER_DIR/docker-compose.traefik-tls-manual.yml" ]      && cmd="$cmd -f $DOCKER_DIR/docker-compose.traefik-tls-manual.yml"
-                [ "$TLS_MODE" = "letsencrypt" ] && [ -f "$DOCKER_DIR/docker-compose.traefik-tls-letsencrypt.yml" ] && cmd="$cmd -f $DOCKER_DIR/docker-compose.traefik-tls-letsencrypt.yml"
+                # letsencrypt: dns-01 uses the lego DNS overlay; otherwise TLS-ALPN-01.
+                if [ "$TLS_MODE" = "letsencrypt" ]; then
+                    if [ "${ACME_CHALLENGE:-tls-alpn-01}" = "dns-01" ] && [ -f "$DOCKER_DIR/docker-compose.traefik-tls-letsencrypt-dns.yml" ]; then
+                        cmd="$cmd -f $DOCKER_DIR/docker-compose.traefik-tls-letsencrypt-dns.yml"
+                    elif [ -f "$DOCKER_DIR/docker-compose.traefik-tls-letsencrypt.yml" ]; then
+                        cmd="$cmd -f $DOCKER_DIR/docker-compose.traefik-tls-letsencrypt.yml"
+                    fi
+                fi
                 ;;
         esac
     fi

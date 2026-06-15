@@ -27,6 +27,9 @@ ENV_FILE="$WORKSPACE/.env"
 TLS_MODE="none"
 [ -f "$CONFIG_FILE" ] && TLS_MODE="$(grep -E '^TLS_MODE=' "$CONFIG_FILE" 2>/dev/null | cut -d= -f2 || true)"
 TLS_MODE="${TLS_MODE:-none}"
+ACME_CHALLENGE="tls-alpn-01"
+[ -f "$CONFIG_FILE" ] && ACME_CHALLENGE="$(grep -E '^ACME_CHALLENGE=' "$CONFIG_FILE" 2>/dev/null | cut -d= -f2 || true)"
+ACME_CHALLENGE="${ACME_CHALLENGE:-tls-alpn-01}"
 
 # KG_CERT_DIR: read it from .env — the SAME file `docker compose --env-file`
 # substitutes into the manual overlay's cert mount — so recert checks exactly the
@@ -102,7 +105,7 @@ case "$TLS_MODE" in
         echo -e "${GREEN}✓ selfsigned: Traefik serves/regenerates its built-in cert — nothing to renew.${NC}"
         ;;
     letsencrypt)
-        echo -e "${GREEN}✓ letsencrypt: Traefik's ACME resolver auto-renews — nothing to do.${NC}"
+        echo -e "${GREEN}✓ letsencrypt (${ACME_CHALLENGE}): Traefik's ACME resolver auto-renews — nothing to do.${NC}"
         echo -e "  Inspect issued certs: docker logs <traefik> | grep -i acme"
         ;;
     offload)
