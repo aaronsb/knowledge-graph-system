@@ -108,11 +108,22 @@ qemu-img convert -O qcow2 "${BASE_IMG}" "${OUT_QCOW}"
 qemu-img resize "${OUT_QCOW}" "${DISK_SIZE}"
 
 # --- 4. Customize in place with virt-customize -------------------------------
-# Docker via the official convenience script (gives docker-ce + the v2 compose
-# plugin operator.sh needs). python3/openssl/curl/git: secret-gen + operator.
-# Cockpit (optional): host control plane on :9090.
+# Docker from the official apt repository (docker-ce + the v2 compose plugin
+# operator.sh needs). We use the repo, NOT the get.docker.com convenience script:
+# the script is fragile under virt-customize's offline/no-systemd context (it can
+# leave docker.service unregistered, so the subsequent offline `systemctl enable
+# docker` fails), and Docker themselves do not recommend it for production images.
+# The apt repo installs docker.service deterministically, so the offline enable
+# works. python3/openssl/curl/git: secret-gen + operator. Cockpit (optional): :9090.
+case "${DEBIAN_VER}" in
+    12) DEBIAN_CODENAME="bookworm" ;;
+    11) DEBIAN_CODENAME="bullseye" ;;
+    13) DEBIAN_CODENAME="trixie" ;;
+    *)  die "unknown Debian release ${DEBIAN_VER}; add its codename to build-appliance.sh" ;;
+esac
 PKGS="qemu-guest-agent,ca-certificates,curl,python3,openssl,git,jq"
 [ "${WITH_COCKPIT}" = "true" ] && PKGS="${PKGS},cockpit"
+DOCKER_PKGS="docker-ce,docker-ce-cli,containerd.io,docker-buildx-plugin,docker-compose-plugin"
 
 VC_ARGS=(
     -a "${OUT_QCOW}"
@@ -120,7 +131,13 @@ VC_ARGS=(
     --hostname "kg-appliance"
     --run-command 'apt-get update'
     --install "${PKGS}"
-    --run-command 'curl -fsSL https://get.docker.com | sh'
+    # Docker's official apt repo (keyring + source), then install docker-ce.
+    --run-command 'install -m 0755 -d /etc/apt/keyrings'
+    --run-command 'curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc'
+    --run-command 'chmod a+r /etc/apt/keyrings/docker.asc'
+    --run-command "printf 'deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian ${DEBIAN_CODENAME} stable\n' > /etc/apt/sources.list.d/docker.list"
+    --run-command 'apt-get update'
+    --install "${DOCKER_PKGS}"
     --run-command 'systemctl enable docker qemu-guest-agent'
     # --- stage the repo at /opt/kg (git archive, prefix kg/) ---
     --upload "${REPO_TAR}:/tmp/kg-repo.tar"
@@ -142,7 +159,7 @@ VC_ARGS=(
 )
 [ "${WITH_COCKPIT}" = "true" ] && VC_ARGS+=( --run-command 'systemctl enable cockpit.socket' )
 
-log "customizing image (no VM boot; --network lets apt + get.docker.com fetch)..."
+log "customizing image (no VM boot; --network lets apt fetch base + docker repo)..."
 [ "${WITH_COCKPIT}" = "true" ] && log "  including Cockpit host console (:9090)" || log "  Cockpit disabled (--no-cockpit)"
 virt-customize "${VC_ARGS[@]}"
 
