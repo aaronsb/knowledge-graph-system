@@ -100,6 +100,9 @@ get_compose_cmd() {
     # SSL overlay (if configured)
     [ -f "$DOCKER_DIR/docker-compose.ssl.yml" ] && cmd="$cmd -f $DOCKER_DIR/docker-compose.ssl.yml"
 
+    # Traefik router overlay (ADR-105) when enabled
+    [ "$ROUTER_MODE" = "traefik" ] && [ -f "$DOCKER_DIR/docker-compose.traefik.yml" ] && cmd="$cmd -f $DOCKER_DIR/docker-compose.traefik.yml"
+
     # Dev mode overlay (adds hot reload, source mounts)
     [ "$DEV_MODE" = "true" ] && [ -f "$DOCKER_DIR/docker-compose.dev.yml" ] && cmd="$cmd -f $DOCKER_DIR/docker-compose.dev.yml"
 

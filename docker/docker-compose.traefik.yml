@@ -1,0 +1,69 @@
+# ============================================================================
+# Knowledge Graph System — in-VM Traefik router (ADR-105)
+# ============================================================================
+# Single front door for the appliance: one ingress routes by path to the web
+# SPA and the API, so the CLI / FUSE / MCP get a consistent endpoint regardless
+# of internal container ports.
+#
+#   http://<host>/        -> web   (nginx static SPA, container :80)
+#   http://<host>/api/... -> api   (:8000, /api prefix stripped)
+#
+# This overlay is HTTP-only (ADR-105 migration step 1) — it proves routing
+# before any TLS. Cert termination (selfsigned / letsencrypt / manual / offload)
+# lands in a later PR as Traefik certResolvers.
+#
+# Activated by ROUTER_MODE=traefik (operator get_compose_cmd / start-platform).
+# Default ROUTER_MODE=none leaves this overlay out entirely — no behavior change.
+#
+# Usage (manual):
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml \
+#     -f docker-compose.ghcr.yml -f docker-compose.traefik.yml up -d
+# ============================================================================
+
+services:
+  traefik:
+    # Traefik Proxy core is MIT-licensed (ADR-105 licensing posture). Pinned.
+    image: traefik:v3.3.1
+    container_name: ${CONTAINER_PREFIX:-knowledge-graph}-traefik
+    restart: unless-stopped
+    command:
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      # web + api sit on several networks (kg-internal, kg-network, lannet);
+      # pin the routable one so Traefik resolves the right container IP.
+      - --providers.docker.network=knowledge-graph-network
+      - --entrypoints.web.address=:80
+    ports:
+      - "${KG_HTTP_PORT:-80}:80"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - kg-network
+    depends_on:
+      - web
+      - api
+
+  web:
+    # SPA calls the API same-origin through the router, not a separate port.
+    environment:
+      VITE_API_URL: /api
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=knowledge-graph-network
+      # Catch-all (lowest priority): everything not matched by /api goes to web.
+      - "traefik.http.routers.kgweb.rule=PathPrefix(`/`)"
+      - traefik.http.routers.kgweb.entrypoints=web
+      - traefik.http.routers.kgweb.priority=1
+      - traefik.http.services.kgweb.loadbalancer.server.port=80
+
+  api:
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=knowledge-graph-network
+      # Higher priority than the web catch-all so /api wins.
+      - "traefik.http.routers.kgapi.rule=PathPrefix(`/api`)"
+      - traefik.http.routers.kgapi.entrypoints=web
+      - traefik.http.routers.kgapi.priority=10
+      - traefik.http.middlewares.kgapi-strip.stripprefix.prefixes=/api
+      - traefik.http.routers.kgapi.middlewares=kgapi-strip
+      - traefik.http.services.kgapi.loadbalancer.server.port=8000
