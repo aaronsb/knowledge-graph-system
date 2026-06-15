@@ -85,6 +85,42 @@ def adr_counts() -> Counter:
 
 
 # ============================================================================
+# Rendering
+# ============================================================================
+
+def render_table(headers, rows, aligns=None, rule_before_last=False) -> str:
+    """Render a box-drawn grid (Unicode borders).
+
+    aligns is a per-column list of 'l'/'r'; rule_before_last draws a separator
+    above the final row (for a totals line).
+    """
+    cols = len(headers)
+    aligns = aligns or ["l"] * cols
+    widths = [
+        max([len(str(headers[i]))] + [len(str(r[i])) for r in rows])
+        for i in range(cols)
+    ]
+
+    def cell(value, i):
+        s = str(value)
+        return s.rjust(widths[i]) if aligns[i] == "r" else s.ljust(widths[i])
+
+    def rule(left, mid, right):
+        return left + mid.join("─" * (widths[i] + 2) for i in range(cols)) + right
+
+    def row(cells):
+        return "│ " + " │ ".join(cell(cells[i], i) for i in range(cols)) + " │"
+
+    out = [rule("┌", "┬", "┐"), row(headers), rule("├", "┼", "┤")]
+    body = rows[:-1] if rule_before_last else rows
+    out += [row(r) for r in body]
+    if rule_before_last:
+        out += [rule("├", "┼", "┤"), row(rows[-1])]
+    out.append(rule("└", "┴", "┘"))
+    return "\n".join(out)
+
+
+# ============================================================================
 # Commands
 # ============================================================================
 
@@ -96,21 +132,21 @@ def cmd_coverage(args) -> int:
     modes = list(doclint.MODE_LETTER)            # tutorial..operations, in order
     letters = [doclint.MODE_LETTER[m] for m in modes]
     grid = Counter((n.domain, n.mode) for n in pages if n.domain and n.mode)
-
     domains = list(cfg["domains"])               # adr.yaml order = octet order
-    head = f"{'domain':9} " + " ".join(f"{l:>3}" for l in letters) + "   docs  ADRs"
-    print(f"\nDocumentation catalog coverage  "
-          f"({len(pages)} pages · {len(domains)} domains × {len(modes)} modes)\n")
-    print(head)
-    print("-" * len(head))
+
+    headers = ["domain"] + letters + ["docs", "ADRs"]
+    rows = []
     for dom in domains:
         cells = [grid.get((dom, m), 0) for m in modes]
-        row = f"{dom:9} " + " ".join(f"{c if c else '·':>3}" for c in cells)
-        print(f"{row}   {sum(cells):>4}  {adrs.get(dom, 0):>4}")
-    print("-" * len(head))
+        rows.append([dom] + [c if c else "·" for c in cells]
+                    + [sum(cells), adrs.get(dom, 0)])
     totals = [sum(grid.get((d, m), 0) for d in domains) for m in modes]
-    print(f"{'total':9} " + " ".join(f"{t:>3}" for t in totals)
-          + f"   {len(pages):>4}  {sum(adrs.values()):>4}")
+    rows.append(["total"] + totals + [len(pages), sum(adrs.values())])
+    aligns = ["l"] + ["r"] * (len(headers) - 1)
+
+    print(f"\nDocumentation catalog coverage  "
+          f"({len(pages)} pages · {len(domains)} domains × {len(modes)} modes)\n")
+    print(render_table(headers, rows, aligns, rule_before_last=True))
     print("\n  Modes: " + " · ".join(f"{doclint.MODE_LETTER[m]} {m}" for m in modes))
     return 0
 
@@ -130,13 +166,13 @@ def cmd_list(args) -> int:
     }
     pages.sort(key=keymap[args.sort])
 
-    print(f"\n{'id':9} {'domain':8} {'mode':12} title")
-    print("-" * 72)
-    for p in pages:
-        flag = "  !!" if p.issues else ""
-        print(f"{(p.key or '?'):9} {(p.domain or '?'):8} "
-              f"{(p.mode or '?'):12} {p.title}{flag}")
-    print(f"\n{len(pages)} page(s)" + (f"  ('!!' = frontmatter issue)"
+    headers = ["id", "domain", "mode", "title"]
+    rows = [[p.key or "?", p.domain or "?", p.mode or "?",
+             p.title + ("  !!" if p.issues else "")] for p in pages]
+    if rows:
+        print()
+        print(render_table(headers, rows))
+    print(f"\n{len(pages)} page(s)" + ("  ('!!' = frontmatter issue)"
           if any(p.issues for p in pages) else ""))
     return 0
 
