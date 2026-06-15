@@ -164,6 +164,68 @@ source." Project stance: **maximize openness; the moat is how to use the system,
 not the code or hosting.** Dependency choices optimize for openness and
 rug-pull-resistance, never code protection.
 
+## Diagrams
+
+### In-VM topology — one router, one stable endpoint
+
+How the pieces relate: every client reaches the platform through a single Traefik
+ingress, which routes by path to web / api / management regardless of internal
+ports. This is what gives the CLI / FUSE / MCP a consistent endpoint.
+
+```mermaid
+flowchart LR
+    B[Browser]
+    C[kg CLI]
+    F[FUSE driver]
+    M[MCP server]
+    B --> T
+    C --> T
+    F --> T
+    M --> T
+    subgraph vm[Appliance VM]
+        T[Traefik router<br>:80 / :443<br>TLS termination + routing]
+        T -->|/| W[web — static assets]
+        T -->|/api| A[api :8000]
+        T -->|/mgmt| MG[management]
+        A --> P[(Postgres + AGE)]
+        A --> G[(Garage S3)]
+    end
+```
+
+### Scenario → mode selection — how the choice functions
+
+The operator declares *where it runs*; that derives the cert mode and who
+terminates TLS. No one reasons about four cert modes cold.
+
+```mermaid
+flowchart TD
+    Q1{Where does it run?}
+    Q1 -->|dev box, no VM| DEV[dev<br>HTTP only · no Traefik]
+    Q1 -->|appliance VM| Q2{Network exposure?}
+    Q2 -->|trusted LAN<br>private IP| PRIV[private<br>Traefik + manual / self-signed<br>cert issued off-box]
+    Q2 -->|behind LB / proxy| PROX[proxied<br>Traefik HTTP-only<br>edge terminates · EXTERNAL_URL]
+    Q2 -->|public IP<br>:80 reachable| INET[internet<br>Traefik + LE HTTP-01 / TLS-ALPN]
+    Q2 -->|public<br>behind NAT / CF| NAT[public-nat<br>Traefik + DNS-01 delegation<br>or tunnel]
+```
+
+### Offload handoff — why `EXTERNAL_URL` is load-bearing
+
+In `proxied`, the edge holds the cert and terminates TLS; the appliance speaks
+plain HTTP but must still emit `https` URLs. The contract makes that correct.
+
+```mermaid
+sequenceDiagram
+    participant U as Browser (https)
+    participant E as Edge proxy
+    participant T as in-VM Traefik (http)
+    participant A as api
+    U->>E: HTTPS request
+    Note over E: terminates TLS, holds the cert
+    E->>T: HTTP + X-Forwarded-Proto: https
+    T->>A: route /api (plain HTTP)
+    A-->>U: redirect_uri derived from EXTERNAL_URL (https)
+```
+
 ## Consequences
 
 ### Positive
