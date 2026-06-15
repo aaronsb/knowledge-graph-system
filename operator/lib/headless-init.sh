@@ -43,6 +43,7 @@ WEB_HOSTNAME=""
 EXTERNAL_URL=""
 ROUTER_MODE="none"
 TLS_MODE="none"
+LE_EMAIL=""
 SKIP_AI_CONFIG=false
 SKIP_CLI=false
 SHOW_HELP=false
@@ -98,11 +99,16 @@ ${BOLD}Web Configuration:${NC}
   --router MODE           Ingress router (ADR-105):
                           • none (default): direct per-service ports
                           • traefik: unified HTTP ingress (/ -> web, /api -> api)
-  --tls MODE              TLS termination at the in-VM router (requires
-                          --router=traefik):
+  --tls MODE              TLS termination (ADR-105). selfsigned/manual/letsencrypt
+                          require --router=traefik; :80 redirects to :443:
                           • none (default): HTTP only on :80
-                          • selfsigned: HTTPS on :443 with Traefik's built-in
-                            self-signed cert, :80 redirects to :443
+                          • selfsigned: Traefik's built-in self-signed cert
+                          • manual: operator-supplied cert+key in docker/certs/
+                            (tls.crt + tls.key); cert issued off-box
+                          • letsencrypt: Traefik ACME (TLS-ALPN-01); needs --le-email
+                          • offload: HTTP in-VM, edge terminates TLS (EXTERNAL_URL
+                            scheme becomes https)
+  --le-email EMAIL        ACME account contact for --tls=letsencrypt
 
 ${BOLD}AI Configuration:${NC}
   --ai-provider PROVIDER  AI extraction provider (openai, anthropic, openrouter)
@@ -276,6 +282,14 @@ parse_args() {
                 TLS_MODE="$2"
                 shift 2
                 ;;
+            --le-email=*)
+                LE_EMAIL="${1#*=}"
+                shift
+                ;;
+            --le-email)
+                LE_EMAIL="$2"
+                shift 2
+                ;;
             *)
                 echo -e "${RED}Unknown option: $1${NC}"
                 echo "Use --help for usage information"
@@ -324,15 +338,25 @@ validate_config() {
         errors=$((errors + 1))
     fi
 
-    # Validate TLS mode (ADR-105). PR2-B ships none|selfsigned; manual /
-    # letsencrypt / offload land in a later step.
-    if [[ "$TLS_MODE" != "none" && "$TLS_MODE" != "selfsigned" ]]; then
-        echo -e "${RED}✗ Invalid --tls: $TLS_MODE (must be 'none' or 'selfsigned')${NC}"
-        errors=$((errors + 1))
+    # Validate TLS mode (ADR-105): none | selfsigned | manual | letsencrypt | offload.
+    case "$TLS_MODE" in
+        none|selfsigned|manual|letsencrypt|offload) ;;
+        *)
+            echo -e "${RED}✗ Invalid --tls: $TLS_MODE (must be none|selfsigned|manual|letsencrypt|offload)${NC}"
+            errors=$((errors + 1))
+            ;;
+    esac
+    # In-VM termination modes need the router. (offload terminates at the edge and
+    # none has no TLS, so neither requires traefik.)
+    if [[ "$TLS_MODE" == "selfsigned" || "$TLS_MODE" == "manual" || "$TLS_MODE" == "letsencrypt" ]]; then
+        if [[ "$ROUTER_MODE" != "traefik" ]]; then
+            echo -e "${RED}✗ --tls=$TLS_MODE requires --router=traefik${NC}"
+            errors=$((errors + 1))
+        fi
     fi
-    # TLS termination only makes sense behind the in-VM router.
-    if [[ "$TLS_MODE" != "none" && "$ROUTER_MODE" != "traefik" ]]; then
-        echo -e "${RED}✗ --tls=$TLS_MODE requires --router=traefik${NC}"
+    # Let's Encrypt needs an ACME account email.
+    if [[ "$TLS_MODE" == "letsencrypt" && -z "$LE_EMAIL" ]]; then
+        echo -e "${RED}✗ --tls=letsencrypt requires --le-email (ACME account contact)${NC}"
         errors=$((errors + 1))
     fi
 
@@ -536,6 +560,16 @@ main() {
         echo "EXTERNAL_URL=$EXTERNAL_URL" >> "$PROJECT_ROOT/.env"
     else
         sed -i "s|^EXTERNAL_URL=.*|EXTERNAL_URL=$EXTERNAL_URL|" "$PROJECT_ROOT/.env"
+    fi
+
+    # Add LE_EMAIL to .env when set (consumed by the letsencrypt overlay's ACME resolver)
+    if [ -n "$LE_EMAIL" ]; then
+        if ! grep -q '^LE_EMAIL=' "$PROJECT_ROOT/.env" 2>/dev/null; then
+            echo "# Let's Encrypt ACME account contact (ADR-105 letsencrypt mode)" >> "$PROJECT_ROOT/.env"
+            echo "LE_EMAIL=$LE_EMAIL" >> "$PROJECT_ROOT/.env"
+        else
+            sed -i "s|^LE_EMAIL=.*|LE_EMAIL=$LE_EMAIL|" "$PROJECT_ROOT/.env"
+        fi
     fi
 
     echo -e "${GREEN}✓ Secrets generated${NC}"

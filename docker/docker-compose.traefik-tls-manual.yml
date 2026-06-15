@@ -1,0 +1,37 @@
+# ============================================================================
+# Knowledge Graph System — manual cert mode (ADR-105 §3, cert mode = manual)
+# ============================================================================
+# Layers on docker-compose.traefik-tls.yml. The operator supplies the cert+key
+# off-box (e.g. issued on a host that DOES hold the DNS credential), drops them
+# into ${KG_CERT_DIR:-./certs}/tls.{crt,key}, and Traefik's file provider serves
+# them as the default certificate for the tls=true routers.
+#
+#   This is cube's path: the kg.broccoli.house cert is issued on `north`
+#   (acme.sh + porkbun DNS-01) and copied here — NO DNS key ever lives on the
+#   appliance (ADR-105 §7 trust posture).
+#
+# Renewal: the operator re-supplies the cert near expiry; the file provider
+# (--providers.file.watch) hot-reloads it without a restart. `operator.sh recert`
+# verifies/nudges this — see operator/lib/recert.sh.
+#
+# COMMAND IS REPLACED: restate the full TLS command from traefik-tls.yml and add
+# the file provider. The tls=true router labels come from traefik-tls.yml (merged).
+# ============================================================================
+
+services:
+  traefik:
+    command:
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --providers.docker.network=knowledge-graph-router
+      - --entrypoints.web.address=:80
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      - --entrypoints.websecure.address=:443
+      # File provider supplies the operator's cert as the default certificate.
+      - --providers.file.directory=/etc/traefik/dynamic
+      - --providers.file.watch=true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik/dynamic:/etc/traefik/dynamic:ro
+      - ${KG_CERT_DIR:-./certs}:/etc/traefik/certs:ro

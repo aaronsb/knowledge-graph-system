@@ -1,5 +1,5 @@
 ---
-status: Draft
+status: Accepted
 date: 2026-06-14
 deciders:
   - aaronsb
@@ -284,5 +284,30 @@ Incremental, each step shippable:
 8. Deploy cube as **private / manual** (cert issued off-box on north; no DNS key
    on cube) — the first real exercise, and a faithful rehearsal of **proxied**.
 
-_This revises the acme.sh/nginx mechanism of this same ADR (still Draft,
-unmerged); the decision's thesis is unchanged._
+_This revises the acme.sh/nginx mechanism of this same ADR; the decision's
+thesis is unchanged._
+
+### Implementation status
+
+- **Step 1 — done** (PR #517): in-VM Traefik HTTP router, `ROUTER_MODE=traefik`,
+  `docker-compose.traefik.yml` + `nginx.router.conf`; appliance CI asserts the
+  unified ingress.
+- **Step 4 — done** (PR2 commit A): `EXTERNAL_URL` (scheme+host) as the single
+  source of public identity; OAuth redirect + web `VITE_*` derive from it, fixing
+  the http/https registration mismatch (was `headless-init.sh:515`).
+- **Steps 3, 5 — done** (PR2 commits B, C): `TLS_MODE` = `none` / `selfsigned` /
+  `manual` / `letsencrypt` / `offload`. `selfsigned` = Traefik default cert;
+  `manual` = file provider over an operator-supplied cert (`docker/certs/`);
+  `letsencrypt` = ACME TLS-ALPN-01 (HTTP-01 / DNS-01-via-lego documented as
+  opt-in); `offload` = HTTP in-VM + `EXTERNAL_URL=https`. `operator/lib/recert.sh`
+  is the thin verify/no-op dispatcher. Appliance CI exercises the `selfsigned`
+  HTTPS path end-to-end (`:80`→`:443` redirect + `https` web/api).
+- **Steps 2, 6 — deferred**: the `install.sh` SECTION 9 convergence and a single
+  scenario→config generator are not yet folded in; the modes ship as composable
+  Traefik overlays selected by `TLS_MODE` for now.
+- **Step 8 — pending**: cube deploy as **private / manual** (cert issued off-box
+  on `north`; no DNS key on cube).
+
+DNS-01 on the appliance stays **opt-in, private-only** (§7): the wired Let's
+Encrypt default is secretless TLS-ALPN-01, and cube uses `manual` precisely so no
+DNS credential ever lands on the box.

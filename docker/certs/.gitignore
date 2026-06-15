@@ -1,0 +1,4 @@
+# Manual cert mode (ADR-105): the operator drops tls.crt / tls.key here.
+# Never commit real key material.
+*
+!.gitignore

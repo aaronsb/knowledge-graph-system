@@ -106,10 +106,16 @@ get_compose_cmd() {
     # SSL overlay (if configured)
     [ -f "$DOCKER_DIR/docker-compose.ssl.yml" ] && cmd="$cmd -f $DOCKER_DIR/docker-compose.ssl.yml"
 
-    # Traefik router overlay (ADR-105) when enabled; TLS overlay layers on top.
+    # Traefik router overlay (ADR-105) + TLS overlays selected by TLS_MODE.
     if [ "$ROUTER_MODE" = "traefik" ] && [ -f "$DOCKER_DIR/docker-compose.traefik.yml" ]; then
         cmd="$cmd -f $DOCKER_DIR/docker-compose.traefik.yml"
-        [ "$TLS_MODE" != "none" ] && [ -f "$DOCKER_DIR/docker-compose.traefik-tls.yml" ] && cmd="$cmd -f $DOCKER_DIR/docker-compose.traefik-tls.yml"
+        case "$TLS_MODE" in
+            selfsigned|manual|letsencrypt)
+                [ -f "$DOCKER_DIR/docker-compose.traefik-tls.yml" ] && cmd="$cmd -f $DOCKER_DIR/docker-compose.traefik-tls.yml"
+                [ "$TLS_MODE" = "manual" ]      && [ -f "$DOCKER_DIR/docker-compose.traefik-tls-manual.yml" ]      && cmd="$cmd -f $DOCKER_DIR/docker-compose.traefik-tls-manual.yml"
+                [ "$TLS_MODE" = "letsencrypt" ] && [ -f "$DOCKER_DIR/docker-compose.traefik-tls-letsencrypt.yml" ] && cmd="$cmd -f $DOCKER_DIR/docker-compose.traefik-tls-letsencrypt.yml"
+                ;;
+        esac
     fi
 
     # Dev mode overlay (adds hot reload, source mounts)
