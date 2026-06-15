@@ -93,6 +93,31 @@ else
     INIT_ARGS+=( --skip-ai-config )
 fi
 
+# --- TLS / ingress (ADR-105) -------------------------------------------------
+# Declarative TLS via provision.env. For a PRIVATE box with a public DNS name,
+# --tls=letsencrypt --acme-challenge=dns-01 (porkbun) is the self-renewing path:
+# DNS-01 is the only ACME challenge that works without inbound :443/:80. The DNS
+# provider credentials are exported into the operator's env (never the command
+# line) so the operator persists them to .env for Traefik/lego.
+[ -n "${KG_EXTERNAL_URL:-}" ] && INIT_ARGS+=( --external-url="${KG_EXTERNAL_URL}" )
+if [ -n "${KG_TLS_MODE:-}" ]; then
+    # In-VM TLS modes need the traefik router; default it so provision.env can
+    # just set KG_TLS_MODE.
+    INIT_ARGS+=( --router="${KG_ROUTER:-traefik}" --tls="${KG_TLS_MODE}" )
+    [ -n "${KG_LE_EMAIL:-}" ] && INIT_ARGS+=( --le-email="${KG_LE_EMAIL}" )
+    if [ -n "${KG_ACME_CHALLENGE:-}" ]; then
+        INIT_ARGS+=( --acme-challenge="${KG_ACME_CHALLENGE}" )
+        [ -n "${KG_DNS_PROVIDER:-}" ] && INIT_ARGS+=( --dns-provider="${KG_DNS_PROVIDER}" )
+        [ -n "${KG_PORKBUN_API_KEY:-}" ] && export PORKBUN_API_KEY="${KG_PORKBUN_API_KEY}"
+        [ -n "${KG_PORKBUN_SECRET_API_KEY:-}" ] && export PORKBUN_SECRET_API_KEY="${KG_PORKBUN_SECRET_API_KEY}"
+        log "TLS: ${KG_TLS_MODE} via ${KG_ACME_CHALLENGE} (${KG_DNS_PROVIDER:-porkbun})."
+    else
+        log "TLS: ${KG_TLS_MODE}."
+    fi
+elif [ -n "${KG_ROUTER:-}" ]; then
+    INIT_ARGS+=( --router="${KG_ROUTER}" )
+fi
+
 # --- Provision: mint per-instance secrets + start the standalone stack -------
 # Tee to a log so we can recover the generated admin password (operator prints
 # it once to stdout; there's no read-it-back path since it's stored encrypted).

@@ -13,10 +13,10 @@ Kappa Graph uses Traefik as its in-VM router and TLS terminator. The cert postur
 | Scenario | Where it runs | TLS terminator | Default cert mode |
 |----------|--------------|----------------|-------------------|
 | `dev` | containers on a dev box, no VM | none | HTTP only |
-| `private` | appliance VM on a trusted LAN, private IP | in-VM Traefik | `manual` (preferred) or `selfsigned` |
-| `internet` | VM with a public IP, `:443` reachable | in-VM Traefik | `letsencrypt` |
+| `private` | appliance VM on a trusted LAN, private IP | in-VM Traefik | `letsencrypt` + `dns-01` (self-renewing), or `selfsigned` / `manual` |
+| `internet` | VM with a public IP, `:443` reachable | in-VM Traefik | `letsencrypt` (TLS-ALPN-01) |
 | `proxied` | behind an edge load balancer or proxy | edge | `offload` |
-| `public-nat` | public IP behind NAT or Cloudflare | in-VM Traefik or tunnel | DNS-01 delegation or `offload` |
+| `public-nat` | public IP behind NAT or Cloudflare | in-VM Traefik or tunnel | `letsencrypt` + `dns-01`, or `offload` |
 
 ## TLS modes
 
@@ -25,7 +25,7 @@ Four modes map to Traefik `certResolver` configurations:
 | Mode | Mechanism | Who renews |
 |------|-----------|------------|
 | `selfsigned` | Traefik's built-in default cert | Traefik (automatic) |
-| `letsencrypt` | Traefik ACME resolver — TLS-ALPN-01 by default | Traefik (automatic) |
+| `letsencrypt` | Traefik ACME resolver — TLS-ALPN-01 (default) or DNS-01 via `--acme-challenge` | Traefik (automatic) |
 | `manual` | Traefik file provider, operator-supplied cert | Operator re-supplies; Traefik hot-reloads |
 | `offload` | HTTP in-VM; edge proxy terminates TLS | Upstream (recert is a no-op) |
 
@@ -51,6 +51,17 @@ Pass `--router=traefik` and `--tls=<mode>` to `operator.sh init --headless`:
   --web-hostname=kg.example.com \
   ...
 
+# Let's Encrypt via DNS-01 (PRIVATE box, no inbound :443 — self-renewing)
+# PORKBUN_API_KEY / PORKBUN_SECRET_API_KEY must be in the environment.
+./operator.sh init --headless \
+  --router=traefik \
+  --tls=letsencrypt \
+  --acme-challenge=dns-01 \
+  --dns-provider=porkbun \
+  --le-email=admin@example.com \
+  --external-url=https://kg.example.com \
+  ...
+
 # Operator-supplied cert (manual mode)
 ./operator.sh init --headless \
   --router=traefik \
@@ -67,7 +78,7 @@ Pass `--router=traefik` and `--tls=<mode>` to `operator.sh init --headless`:
   ...
 ```
 
-`--tls=selfsigned`, `--tls=manual`, and `--tls=letsencrypt` require `--router=traefik`. `--tls=letsencrypt` requires `--le-email`. No restart is needed after init — the modes are composable overlays selected at startup.
+`--tls=selfsigned`, `--tls=manual`, and `--tls=letsencrypt` require `--router=traefik`. `--tls=letsencrypt` requires `--le-email`. `--acme-challenge=dns-01` requires `--tls=letsencrypt` and the DNS provider's credentials in the environment (porkbun: `PORKBUN_API_KEY` + `PORKBUN_SECRET_API_KEY`). No restart is needed after init — the modes are composable overlays selected at startup.
 
 `--external-url` sets the scheme+host the app uses for OAuth redirect URIs, cookie domains, and frontend links. When `--tls` is set and `--external-url` is omitted, init derives it as `https://<web-hostname>` automatically.
 
@@ -116,25 +127,41 @@ To check cert status:
 
 To replace an expiring cert, copy the new `tls.crt` and `tls.key` into `docker/certs/` (or `KG_CERT_DIR`). Traefik picks it up within seconds without a restart.
 
-## DNS-01 via lego (opt-in, private-only)
+## Let's Encrypt via DNS-01 (private box, self-renewing)
 
-Traefik ships lego, which supports ~100 DNS providers natively. DNS-01 is useful when `:80` and `:443` are not publicly reachable (e.g., NAT or Cloudflare proxy). It is **opt-in and restricted to private deployments** because it requires an account-wide DNS credential on the appliance (porkbun keys are not per-zone scoped — see ADR-105 §7 for the trust posture).
+TLS-ALPN-01 and HTTP-01 require Let's Encrypt to reach the box from the internet on `:443`/`:80`. A **private** deployment (RFC-1918 address, no inbound NAT) cannot satisfy them. DNS-01 proves control of the name by writing a TXT record, so it is the **only** ACME challenge that works for a private box with a public DNS name — and it auto-renews in-container, the converged equivalent of the old `install.sh` acme.sh+porkbun flow.
 
-To enable DNS-01, edit `docker/docker-compose.traefik-tls-letsencrypt.yml` and replace the `tlsChallenge` resolver flags with:
-
-```yaml
-- --certificatesresolvers.le.acme.dnschallenge=true
-- --certificatesresolvers.le.acme.dnschallenge.provider=porkbun
-```
-
-Then add the provider credentials to the Traefik environment:
+It is a selectable option on `letsencrypt`, not a file edit:
 
 ```bash
+# In .env (read by Traefik/lego — written here automatically by init):
 PORKBUN_API_KEY=pk1_...
 PORKBUN_SECRET_API_KEY=sk1_...
+
+./operator.sh init \
+  --router=traefik \
+  --tls=letsencrypt \
+  --acme-challenge=dns-01 \
+  --dns-provider=porkbun \
+  --le-email=you@example.com \
+  --external-url=https://kg.example.com
 ```
 
-For other providers, substitute the lego provider name and its required environment variables. The [lego documentation](https://go-acme.github.io/lego/dns/) lists all supported providers.
+The operator reads `PORKBUN_API_KEY`/`PORKBUN_SECRET_API_KEY` from the environment (never the command line) and persists them to `.env`; Traefik's lego resolver does the DNS-01 dance and renews automatically. `operator.sh recert` is a no-op.
+
+On the **appliance**, set the same via `provision.env` — declarative, no shell:
+
+```ini
+KG_EXTERNAL_URL=https://kg.example.com
+KG_TLS_MODE=letsencrypt
+KG_ACME_CHALLENGE=dns-01
+KG_DNS_PROVIDER=porkbun
+KG_LE_EMAIL=you@example.com
+KG_PORKBUN_API_KEY=pk1_...
+KG_PORKBUN_SECRET_API_KEY=sk1_...
+```
+
+**Trust posture (ADR-105 §7):** DNS-01 places an account-scoped DNS API credential inside the appliance — a real blast radius. Scope the porkbun key to the one zone where possible, and prefer DNS-01 only for private/trusted boxes; `tls-alpn-01` stays the default for internet-exposed boxes. lego ships ~100 providers ([docs](https://go-acme.github.io/lego/dns/)); porkbun is wired here. For another provider, set `--dns-provider` and add its env vars to `docker/docker-compose.traefik-tls-letsencrypt-dns.yml`.
 
 ## Offload mode
 
