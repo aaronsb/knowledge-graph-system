@@ -13,10 +13,10 @@
       
       
       
-        <link rel="prev" href="../ADR-062-mcp-file-ingestion-security/">
+        <link rel="prev" href="../ADR-104-unified-provisioning-architecture-install-path-convergence-and-first-run-claim-protocol/">
       
       
-        <link rel="next" href="../ADR-082-user-scoping-artifact-ownership/">
+        <link rel="next" href="../../ingestion-content/ADR-014-job-approval-workflow/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>ADR-074: Platform Admin Role - Knowledge Graph System</title>
+        <title>ADR-105: Scenario-driven TLS via an in-VM Traefik router - Knowledge Graph System</title>
       
     
     
@@ -68,7 +68,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#adr-074-platform-admin-role" class="md-skip">
+        <a href="#adr-105-scenario-driven-tls-via-an-in-vm-traefik-router" class="md-skip">
           Skip to content
         </a>
       
@@ -104,7 +104,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              ADR-074: Platform Admin Role
+              ADR-105: Scenario-driven TLS via an in-VM Traefik router
             
           </span>
         </div>
@@ -6026,20 +6026,18 @@
                 
   
   
-    
   
   
-  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9_4" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9_4" >
         
           
           <label class="md-nav__link" for="__nav_9_4" id="__nav_9_4_label" tabindex="0">
@@ -6060,7 +6058,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_9_4_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_9_4_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_9_4">
             <span class="md-nav__icon md-icon"></span>
             
@@ -6078,7 +6076,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-017-sensitive-auth-verification/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-017-sensitive-auth-verification/" class="md-nav__link">
         
   
   
@@ -6113,7 +6111,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-027-user-management-api/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-027-user-management-api/" class="md-nav__link">
         
   
   
@@ -6148,7 +6146,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-028-dynamic-rbac-system/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-028-dynamic-rbac-system/" class="md-nav__link">
         
   
   
@@ -6183,7 +6181,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-031-encrypted-api-key-storage/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-031-encrypted-api-key-storage/" class="md-nav__link">
         
   
   
@@ -6218,7 +6216,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-054-oauth-client-management/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-054-oauth-client-management/" class="md-nav__link">
         
   
   
@@ -6253,7 +6251,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-060-endpoint-security-architecture/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-060-endpoint-security-architecture/" class="md-nav__link">
         
   
   
@@ -6288,7 +6286,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-062-mcp-file-ingestion-security/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-062-mcp-file-ingestion-security/" class="md-nav__link">
         
   
   
@@ -6320,44 +6318,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADR-074: Platform Admin Role
-  
-
-    
-  </span>
-  
-  
-    
-  
-  
-    <span class="md-status md-status--Superseded"></span>
-  
-
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../authentication-security/ADR-074-platform-admin-role/" class="md-nav__link">
         
   
   
@@ -6380,491 +6344,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#context" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Context
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#decision" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Decision
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Decision">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#goals" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Goals
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#default-admin-tiers-customizable" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Default Admin Tiers (Customizable)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#new-resource-types" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        New Resource Types
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="New Resource Types">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#platform-administration-resources-critical" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Platform Administration Resources (Critical)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#content-data-resources" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Content &amp; Data Resources
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#identity-access-resources" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Identity &amp; Access Resources
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#system-resources" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        System Resources
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#platform-administration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Platform Administration
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#content-data" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Content &amp; Data
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#identity-access" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Identity &amp; Access
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#no-permission-required-authenticated-only" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        No Permission Required (Authenticated Only)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#new-role-platform_admin" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        New Role: platform_admin
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#no-hardcoded-bypass-security-decision" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        No Hardcoded Bypass (Security Decision)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#default-permission-mapping" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Default Permission Mapping
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Default Permission Mapping">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#contributor-role-existing-extended" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Contributor Role (existing, extended)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#curator-role-existing-extended" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Curator Role (existing, extended)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#admin-role-existing-extended" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Admin Role (existing, extended)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#platform-admin-role-new-default" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Platform Admin Role (new default)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#cli-role-management" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        CLI Role Management
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#implementation-checklist" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Implementation Checklist
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Implementation Checklist">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#phase-1-database-migration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 1: Database Migration
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#api-documentation-standard" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        API Documentation Standard
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-2-cli-role-management" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 2: CLI Role Management
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-3-api-endpoint-protection" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 3: API Endpoint Protection
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-4-web-ui-updates" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 4: Web UI Updates
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-5-documentation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 5: Documentation
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#migration-sql" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Migration SQL
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#consequences" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Consequences
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Consequences">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#positive" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Positive
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#negative" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Negative
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#neutral" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Neutral
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#alternatives-considered" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Alternatives Considered
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Alternatives Considered">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-add-actions-to-existing-resources" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. Add Actions to Existing Resources
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-single-super-admin-flag" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Single Super-Admin Flag
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-hardcoded-bypass-for-platform_admin" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Hardcoded Bypass for platform_admin
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-immutable-core-permissions" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. Immutable Core Permissions
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#related-adrs" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Related ADRs
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -6877,7 +6356,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-082-user-scoping-artifact-ownership/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-082-user-scoping-artifact-ownership/" class="md-nav__link">
         
   
   
@@ -6912,7 +6391,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-400-operative-rbac-and-endpoint-security-baseline/" class="md-nav__link">
+      <a href="../../authentication-security/ADR-400-operative-rbac-and-endpoint-security-baseline/" class="md-nav__link">
         
   
   
@@ -7427,18 +6906,20 @@
                 
   
   
+    
   
   
+  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9_6" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9_6" checked>
         
           
           <label class="md-nav__link" for="__nav_9_6" id="__nav_9_6_label" tabindex="0">
@@ -7459,7 +6940,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_9_6_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_9_6_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_9_6">
             <span class="md-nav__icon md-icon"></span>
             
@@ -7477,7 +6958,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../infrastructure/ADR-012-api-server-architecture/" class="md-nav__link">
+      <a href="../ADR-012-api-server-architecture/" class="md-nav__link">
         
   
   
@@ -7512,7 +6993,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../infrastructure/ADR-015-backup-restore-streaming/" class="md-nav__link">
+      <a href="../ADR-015-backup-restore-streaming/" class="md-nav__link">
         
   
   
@@ -7547,7 +7028,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../infrastructure/ADR-018-server-sent-events-streaming/" class="md-nav__link">
+      <a href="../ADR-018-server-sent-events-streaming/" class="md-nav__link">
         
   
   
@@ -7582,7 +7063,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../infrastructure/ADR-020-admin-module-architecture/" class="md-nav__link">
+      <a href="../ADR-020-admin-module-architecture/" class="md-nav__link">
         
   
   
@@ -7617,7 +7098,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../infrastructure/ADR-021-live-man-switch-ai-safety/" class="md-nav__link">
+      <a href="../ADR-021-live-man-switch-ai-safety/" class="md-nav__link">
         
   
   
@@ -7652,7 +7133,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../infrastructure/ADR-050-scheduled-jobs-system/" class="md-nav__link">
+      <a href="../ADR-050-scheduled-jobs-system/" class="md-nav__link">
         
   
   
@@ -7687,7 +7168,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../infrastructure/ADR-055-cdn-serverless-deployment-model/" class="md-nav__link">
+      <a href="../ADR-055-cdn-serverless-deployment-model/" class="md-nav__link">
         
   
   
@@ -7722,7 +7203,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../infrastructure/ADR-056-timezone-aware-datetime-utilities/" class="md-nav__link">
+      <a href="../ADR-056-timezone-aware-datetime-utilities/" class="md-nav__link">
         
   
   
@@ -7757,7 +7238,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../infrastructure/ADR-079-projection-artifact-storage/" class="md-nav__link">
+      <a href="../ADR-079-projection-artifact-storage/" class="md-nav__link">
         
   
   
@@ -7792,7 +7273,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../infrastructure/ADR-080-garage-service-architecture/" class="md-nav__link">
+      <a href="../ADR-080-garage-service-architecture/" class="md-nav__link">
         
   
   
@@ -7827,7 +7308,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../infrastructure/ADR-083-artifact-persistence-pattern/" class="md-nav__link">
+      <a href="../ADR-083-artifact-persistence-pattern/" class="md-nav__link">
         
   
   
@@ -7862,7 +7343,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../infrastructure/ADR-086-deployment-topology/" class="md-nav__link">
+      <a href="../ADR-086-deployment-topology/" class="md-nav__link">
         
   
   
@@ -7897,7 +7378,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../infrastructure/ADR-088-semantic-election-protocol/" class="md-nav__link">
+      <a href="../ADR-088-semantic-election-protocol/" class="md-nav__link">
         
   
   
@@ -7932,7 +7413,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../infrastructure/ADR-100-database-driven-job-dispatch/" class="md-nav__link">
+      <a href="../ADR-100-database-driven-job-dispatch/" class="md-nav__link">
         
   
   
@@ -7967,7 +7448,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../infrastructure/ADR-101-rocm-image-variant-and-install-time-selection/" class="md-nav__link">
+      <a href="../ADR-101-rocm-image-variant-and-install-time-selection/" class="md-nav__link">
         
   
   
@@ -8002,7 +7483,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../infrastructure/ADR-102-portable-backup-and-restore-with-clone-merge-semantics/" class="md-nav__link">
+      <a href="../ADR-102-portable-backup-and-restore-with-clone-merge-semantics/" class="md-nav__link">
         
   
   
@@ -8037,7 +7518,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../infrastructure/ADR-103-distribution-strategy-nomic-first-thin-appliance-with-app-store-tenancy/" class="md-nav__link">
+      <a href="../ADR-103-distribution-strategy-nomic-first-thin-appliance-with-app-store-tenancy/" class="md-nav__link">
         
   
   
@@ -8072,7 +7553,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../infrastructure/ADR-104-unified-provisioning-architecture-install-path-convergence-and-first-run-claim-protocol/" class="md-nav__link">
+      <a href="../ADR-104-unified-provisioning-architecture-install-path-convergence-and-first-run-claim-protocol/" class="md-nav__link">
         
   
   
@@ -8104,10 +7585,44 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../infrastructure/ADR-105-scenario-driven-tls-via-in-vm-traefik-router/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-105: Scenario-driven TLS via an in-VM Traefik router
+  
+
+    
+  </span>
+  
+  
+    
+  
+  
+    <span class="md-status md-status--Draft"></span>
+  
+
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -8130,6 +7645,314 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Context">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#two-needs-that-converge-on-the-same-component" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Two needs that converge on the same component
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-realization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The realization
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deployment-is-not-one-size-fits-all" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deployment is not one-size-fits-all
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Decision">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-deployment-scenarios-the-spine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Deployment scenarios (the spine)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-traefik-is-the-in-vm-router" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Traefik is the in-VM router
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-modes-are-traefik-certresolver-configs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Modes are Traefik certResolver configs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-lego-is-the-dns-provider-factory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. lego is the DNS provider factory
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-lifecycle-traefik-owns-renewal-recertsh-shrinks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Lifecycle: Traefik owns renewal; recert.sh shrinks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-offload-external_url-contract-proxy-agnostic-traefik-as-reference-edge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Offload = EXTERNAL_URL contract, proxy-agnostic, Traefik as reference edge
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-trust-posture-by-exposure-credential-blast-radius" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Trust posture by exposure (credential blast radius)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#8-what-we-still-own-the-glue" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. What we still own (the glue)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#licensing-commercial-posture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Licensing &amp; commercial posture
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#diagrams" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Diagrams
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Diagrams">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#in-vm-topology-one-router-one-stable-endpoint" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        In-VM topology — one router, one stable endpoint
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#scenario-mode-selection-how-the-choice-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scenario → mode selection — how the choice functions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#offload-handoff-why-external_url-is-load-bearing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Offload handoff — why EXTERNAL_URL is load-bearing
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Consequences">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#positive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Positive
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#negative" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Negative
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#neutral" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Neutral
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#alternatives-considered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alternatives Considered
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#migration-note-non-binding-sketch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Migration Note (non-binding sketch)
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -11101,6 +10924,45 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Context">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#two-needs-that-converge-on-the-same-component" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Two needs that converge on the same component
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-realization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The realization
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deployment-is-not-one-size-fits-all" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deployment is not one-size-fits-all
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -11116,10 +10978,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#goals" class="md-nav__link">
+  <a href="#1-deployment-scenarios-the-spine" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Goals
+        1. Deployment scenarios (the spine)
       
     </span>
   </a>
@@ -11127,10 +10989,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#default-admin-tiers-customizable" class="md-nav__link">
+  <a href="#2-traefik-is-the-in-vm-router" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Default Admin Tiers (Customizable)
+        2. Traefik is the in-VM router
       
     </span>
   </a>
@@ -11138,22 +11000,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#new-resource-types" class="md-nav__link">
+  <a href="#3-modes-are-traefik-certresolver-configs" class="md-nav__link">
     <span class="md-ellipsis">
       
-        New Resource Types
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="New Resource Types">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#platform-administration-resources-critical" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Platform Administration Resources (Critical)
+        3. Modes are Traefik certResolver configs
       
     </span>
   </a>
@@ -11161,10 +11011,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#content-data-resources" class="md-nav__link">
+  <a href="#4-lego-is-the-dns-provider-factory" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Content &amp; Data Resources
+        4. lego is the DNS provider factory
       
     </span>
   </a>
@@ -11172,10 +11022,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#identity-access-resources" class="md-nav__link">
+  <a href="#5-lifecycle-traefik-owns-renewal-recertsh-shrinks" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Identity &amp; Access Resources
+        5. Lifecycle: Traefik owns renewal; recert.sh shrinks
       
     </span>
   </a>
@@ -11183,10 +11033,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#system-resources" class="md-nav__link">
+  <a href="#6-offload-external_url-contract-proxy-agnostic-traefik-as-reference-edge" class="md-nav__link">
     <span class="md-ellipsis">
       
-        System Resources
+        6. Offload = EXTERNAL_URL contract, proxy-agnostic, Traefik as reference edge
       
     </span>
   </a>
@@ -11194,10 +11044,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#platform-administration" class="md-nav__link">
+  <a href="#7-trust-posture-by-exposure-credential-blast-radius" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Platform Administration
+        7. Trust posture by exposure (credential blast radius)
       
     </span>
   </a>
@@ -11205,10 +11055,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#content-data" class="md-nav__link">
+  <a href="#8-what-we-still-own-the-glue" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Content &amp; Data
+        8. What we still own (the glue)
       
     </span>
   </a>
@@ -11216,120 +11066,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#identity-access" class="md-nav__link">
+  <a href="#licensing-commercial-posture" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Identity &amp; Access
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#no-permission-required-authenticated-only" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        No Permission Required (Authenticated Only)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#new-role-platform_admin" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        New Role: platform_admin
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#no-hardcoded-bypass-security-decision" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        No Hardcoded Bypass (Security Decision)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#default-permission-mapping" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Default Permission Mapping
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Default Permission Mapping">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#contributor-role-existing-extended" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Contributor Role (existing, extended)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#curator-role-existing-extended" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Curator Role (existing, extended)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#admin-role-existing-extended" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Admin Role (existing, extended)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#platform-admin-role-new-default" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Platform Admin Role (new default)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#cli-role-management" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        CLI Role Management
+        Licensing &amp; commercial posture
       
     </span>
   </a>
@@ -11342,22 +11082,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#implementation-checklist" class="md-nav__link">
+  <a href="#diagrams" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Implementation Checklist
+        Diagrams
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Implementation Checklist">
+    <nav class="md-nav" aria-label="Diagrams">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#phase-1-database-migration" class="md-nav__link">
+  <a href="#in-vm-topology-one-router-one-stable-endpoint" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Phase 1: Database Migration
+        In-VM topology — one router, one stable endpoint
       
     </span>
   </a>
@@ -11365,10 +11105,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#api-documentation-standard" class="md-nav__link">
+  <a href="#scenario-mode-selection-how-the-choice-functions" class="md-nav__link">
     <span class="md-ellipsis">
       
-        API Documentation Standard
+        Scenario → mode selection — how the choice functions
       
     </span>
   </a>
@@ -11376,43 +11116,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#phase-2-cli-role-management" class="md-nav__link">
+  <a href="#offload-handoff-why-external_url-is-load-bearing" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Phase 2: CLI Role Management
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-3-api-endpoint-protection" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 3: API Endpoint Protection
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-4-web-ui-updates" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 4: Web UI Updates
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-5-documentation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 5: Documentation
+        Offload handoff — why EXTERNAL_URL is load-bearing
       
     </span>
   </a>
@@ -11421,17 +11128,6 @@
         
       </ul>
     </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#migration-sql" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Migration SQL
-      
-    </span>
-  </a>
   
 </li>
       
@@ -11494,63 +11190,13 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Alternatives Considered">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-add-actions-to-existing-resources" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. Add Actions to Existing Resources
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-single-super-admin-flag" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Single Super-Admin Flag
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-hardcoded-bypass-for-platform_admin" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Hardcoded Bypass for platform_admin
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-immutable-core-permissions" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. Immutable Core Permissions
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
 </li>
       
         <li class="md-nav__item">
-  <a href="#related-adrs" class="md-nav__link">
+  <a href="#migration-note-non-binding-sketch" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Related ADRs
+        Migration Note (non-binding sketch)
       
     </span>
   </a>
@@ -11577,890 +11223,328 @@
   
 
 
-<h1 id="adr-074-platform-admin-role">ADR-074: Platform Admin Role</h1>
-<blockquote>
-<p><strong>Superseded by <a href="../ADR-400-operative-rbac-and-endpoint-security-baseline/">ADR-400</a>.</strong>
-Retained for historical context. The admin/platform_admin split described here was
-partially re-merged by later migrations (037/040/057 re-granted critical ops to admin);
-the operative role capabilities are defined in ADR-400.</p>
-</blockquote>
+<h1 id="adr-105-scenario-driven-tls-via-an-in-vm-traefik-router">ADR-105: Scenario-driven TLS via an in-VM Traefik router</h1>
 <h2 id="context">Context</h2>
-<p>The current RBAC system (ADR-028) provides four builtin roles:
-- <code>read_only</code> - Read access to public resources
-- <code>contributor</code> - Can create and modify content
-- <code>curator</code> - Can approve and manage content
-- <code>admin</code> - Full system access</p>
-<p>However, "admin" currently covers both routine administrative tasks (user management, job queue management) and critical platform operations (API key management, embedding configuration, backups). These have significantly different risk profiles:</p>
-<table>
-<thead>
-<tr>
-<th>Operation Type</th>
-<th>Examples</th>
-<th>Risk Level</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>User Admin</td>
-<td>Create/delete users, assign roles</td>
-<td>Medium</td>
-</tr>
-<tr>
-<td>Content Admin</td>
-<td>Delete OAuth clients, manage job queue</td>
-<td>Medium</td>
-</tr>
-<tr>
-<td>Platform Admin</td>
-<td>API keys, embedding regeneration, restore backups</td>
-<td><strong>Critical</strong></td>
-</tr>
-</tbody>
-</table>
-<p>Additionally, platform admins have full power over the RBAC system itself. If they misconfigure permissions (including their own), recovery requires operational intervention - re-running the migration script to restore default permissions. This is intentional: there is no "magic bypass" that could be exploited.</p>
+<p>ADR-104 converged the <strong>provisioning</strong> contract across install paths but
+explicitly deferred TLS: <em>"<code>install.sh</code> still owns concerns the others don't
+(SSL/Let's Encrypt, macvlan, host shim); convergence targets provisioning, not
+those."</em> This ADR picks up the certificate carve-out — but the investigation
+turned up a better shape than the one first drafted.</p>
+<h3 id="two-needs-that-converge-on-the-same-component">Two needs that converge on the same component</h3>
+<ol>
+<li><strong>HTTPS parity across install paths.</strong> All cert logic lives in <code>install.sh</code>
+   only (<code>SECTION 9</code>, ~460 lines: acme.sh/certbot, four modes, nginx config gen,
+   compose overlay, renewal cron). The modern <code>operator.sh init</code> / appliance path
+   cannot stand up TLS — it merely <em>consumes</em> a <code>docker-compose.ssl.yml</code> overlay
+   if one exists (<code>common.sh:142</code>, <code>start-platform.sh:140</code>) and exposes
+   <code>operator.sh recert</code>, which dispatches to <strong><code>operator/lib/recert.sh</code> — a file
+   that does not exist</strong> (<code>operator.sh:906</code>). Deploy via the appliance path and
+   you get HTTP only.</li>
+<li><strong>A consistent service endpoint.</strong> The appliance exposes management, web, and
+   API surfaces. The CLI, FUSE driver, MCP server, and any other API client need
+   a <em>stable</em> endpoint regardless of internal container ports. nginx-embedded-in-
+   the-web-container cannot cleanly be that single front door.</li>
+</ol>
+<h3 id="the-realization">The realization</h3>
+<p>We were about to hand-build — a DNS-provider registry, a renewal cron, nginx TLS
+config — <strong>what a reverse proxy already provides</strong>. An in-VM router supplies all
+of it: ACME (HTTP-01, TLS-ALPN-01, and DNS-01 via <strong>lego</strong>, which ships ~100
+providers including <strong>porkbun</strong>), <strong>automatic renewal</strong>, and host/path/port
+routing. Adopting one turns "build a certificate system" into "configure one and
+wire our app to it" — less code, and the code we keep is glue and policy, not
+ACME protocol or crypto.</p>
+<h3 id="deployment-is-not-one-size-fits-all">Deployment is not one-size-fits-all</h3>
+<p>The right TLS posture depends on <em>where</em> the appliance runs. There are five real
+scenarios with materially different network exposure and credential trust.</p>
 <h2 id="decision">Decision</h2>
-<h3 id="goals">Goals</h3>
-<ol>
-<li><strong>Register missing resource types</strong> - Platform operations need RBAC protection</li>
-<li><strong>Provide sensible defaults</strong> - Out-of-box role mappings that work for common use cases</li>
-<li><strong>Enable customization</strong> - Platform admins can create custom roles with any permission set</li>
-<li><strong>CLI management</strong> - Full role/permission management via <code>kg</code> CLI</li>
-</ol>
-<p>The RBAC system (ADR-028) is already fully flexible. This ADR adds the missing pieces to make it useful for platform administration.</p>
-<h3 id="default-admin-tiers-customizable">Default Admin Tiers (Customizable)</h3>
-<p>These are <strong>default</strong> role configurations. Platform admins can create additional roles with any combination of permissions:</p>
-<ol>
-<li><strong>Regular User</strong> - Manage own resources (OAuth clients, personal settings)</li>
-<li><strong>Admin</strong> - Existing role for user/content management</li>
-<li><strong>Platform Admin</strong> - New default role for critical operations</li>
-</ol>
-<p><strong>Example customization:</strong> A platform admin could create a <code>backup_operator</code> role with only <code>backups:read</code> and <code>backups:create</code> permissions (but not <code>restore</code>), or a <code>readonly_admin</code> role that can view but not modify platform settings.</p>
-<h3 id="new-resource-types">New Resource Types</h3>
-<p>Register <strong>15 resource types</strong> with <strong>domain-specific actions</strong> (not generic CRUD):</p>
-<h4 id="platform-administration-resources-critical">Platform Administration Resources (Critical)</h4>
+<p>Adopt <strong>Traefik (MIT) as the appliance's in-VM router</strong>, drive its TLS behavior
+from an explicit <strong>deployment scenario</strong>, and keep the four mode <em>names</em> as
+Traefik <code>certResolver</code> configurations. The surviving thesis from this ADR's first
+draft holds — converge cert management, four modes, offload is an <code>EXTERNAL_URL</code>
+contract, self-signed default, trust-posture by exposure — only the <em>mechanism</em>
+changes from acme.sh/nginx to Traefik/lego.</p>
+<h3 id="1-deployment-scenarios-the-spine">1. Deployment scenarios (the spine)</h3>
 <table>
 <thead>
 <tr>
-<th>Resource</th>
-<th>Actions</th>
-<th>Description</th>
+<th>Scenario</th>
+<th>Network / IP</th>
+<th>TLS terminator</th>
+<th>Cert posture</th>
+<th>DNS auth <strong>on appliance</strong></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>api_keys</code></td>
-<td>read, write, delete</td>
-<td>Manage AI provider API keys</td>
+<td><strong>dev</strong></td>
+<td>containers on a dev box, no VM</td>
+<td>none</td>
+<td><strong>HTTP only</strong></td>
+<td>none</td>
 </tr>
 <tr>
-<td><code>embedding_config</code></td>
-<td>read, create, delete, activate, reload, regenerate</td>
-<td>Embedding system</td>
+<td><strong>private</strong></td>
+<td>appliance VM on trusted LAN, real name → <strong>private IP</strong>; may offer DHCP/route/DNS</td>
+<td>in-VM Traefik</td>
+<td><strong>manual</strong> (cert issued off-box) / self-signed / internal DNS-01</td>
+<td>none (preferred); account-key tolerable <em>only here</em></td>
 </tr>
 <tr>
-<td><code>extraction_config</code></td>
-<td>read, write</td>
-<td>AI extraction provider settings</td>
+<td><strong>internet</strong></td>
+<td>single VM on a cloud, <strong>public IP</strong></td>
+<td>in-VM Traefik</td>
+<td><strong>Let's Encrypt HTTP-01 / TLS-ALPN-01</strong> (no DNS key)</td>
+<td>none</td>
 </tr>
 <tr>
-<td><code>backups</code></td>
-<td>read, create, restore</td>
-<td>Backup/restore (restore ≠ create!)</td>
+<td><strong>proxied</strong></td>
+<td>inside an env with an LB/reverse proxy</td>
+<td><strong>edge</strong></td>
+<td><strong>offload</strong> (<code>EXTERNAL_URL</code>, plain HTTP in VM)</td>
+<td>none</td>
+</tr>
+<tr>
+<td><strong>public-nat</strong></td>
+<td>public but behind NAT / Cloudflare</td>
+<td>in-VM Traefik or tunnel</td>
+<td><strong>DNS-01 via challenge delegation</strong> (<code>CNAME _acme-challenge → acme-dns</code>) or tunnel-terminated</td>
+<td>challenge-only (never zone key)</td>
 </tr>
 </tbody>
 </table>
-<h4 id="content-data-resources">Content &amp; Data Resources</h4>
+<p><code>operator init</code> selects/derives the scenario; the scenario derives the mode. The
+operator chooses <em>where it runs</em>, not <em>which of four cert modes to reason about</em>.</p>
+<h3 id="2-traefik-is-the-in-vm-router">2. Traefik is the in-VM router</h3>
+<p>Present in every appliance scenario (absent in <strong>dev</strong>, HTTP-only in <strong>proxied</strong>).
+A single ingress routes by host/path to management / web / API, giving the stable
+endpoint the CLI / FUSE / MCP need. It <strong>replaces nginx-in-the-web-container for
+ingress</strong> (the web image goes back to just serving static assets).</p>
+<h3 id="3-modes-are-traefik-certresolver-configs">3. Modes are Traefik <code>certResolver</code> configs</h3>
 <table>
 <thead>
 <tr>
-<th>Resource</th>
-<th>Actions</th>
-<th>Description</th>
+<th>Mode</th>
+<th>Traefik mechanism</th>
+<th>Default?</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>ontologies</code></td>
-<td>read, create, delete</td>
-<td>Ontology management (no update - names immutable)</td>
+<td><code>selfsigned</code></td>
+<td>default/generated cert served by Traefik</td>
+<td><strong>yes</strong> — appliance handles itself</td>
 </tr>
 <tr>
-<td><code>graph</code></td>
-<td>read, execute</td>
-<td>Query the knowledge graph (execute = raw Cypher)</td>
+<td><code>letsencrypt</code></td>
+<td>ACME resolver: <code>httpChallenge</code> / <code>tlsChallenge</code> / <code>dnsChallenge</code> (lego)</td>
+<td>—</td>
 </tr>
 <tr>
-<td><code>ingest</code></td>
-<td>create</td>
-<td>Submit documents for ingestion</td>
+<td><code>manual</code></td>
+<td>file provider points at an operator-supplied cert+key</td>
+<td>—</td>
 </tr>
 <tr>
-<td><code>sources</code></td>
-<td>read</td>
-<td>Retrieve source documents and images</td>
-</tr>
-<tr>
-<td><code>vocabulary</code></td>
-<td>read, write</td>
-<td>Vocabulary type management</td>
-</tr>
-<tr>
-<td><code>vocabulary_config</code></td>
-<td>read, write, create, delete</td>
-<td>Vocabulary profiles and settings</td>
-</tr>
-<tr>
-<td><code>database</code></td>
-<td>read, execute</td>
-<td>Database stats and direct queries</td>
+<td><code>offload</code></td>
+<td>Traefik in HTTP-only mode; edge terminates</td>
+<td>—</td>
 </tr>
 </tbody>
 </table>
-<h4 id="identity-access-resources">Identity &amp; Access Resources</h4>
+<h3 id="4-lego-is-the-dns-provider-factory">4. lego is the DNS provider factory</h3>
+<p>The hand-built provider registry <strong>dissolves</strong>. A DNS-01 deployment names a lego
+provider (<code>porkbun</code>, <code>cloudflare</code>, …) and passes credentials to the resolver.
+porkbun is native. Adding a provider is lego's concern, not ours.</p>
+<h3 id="5-lifecycle-traefik-owns-renewal-recertsh-shrinks">5. Lifecycle: Traefik owns renewal; <code>recert.sh</code> shrinks</h3>
+<p>Per-mode ownership, now mostly delegated to Traefik:</p>
 <table>
 <thead>
 <tr>
-<th>Resource</th>
-<th>Actions</th>
-<th>Description</th>
+<th>Mode</th>
+<th>Issue</th>
+<th>Renew</th>
+<th>Owner</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>users</code></td>
-<td>read, write, delete</td>
-<td>User account management</td>
+<td><code>selfsigned</code></td>
+<td>Traefik</td>
+<td>regenerate near expiry</td>
+<td><strong>appliance (Traefik)</strong></td>
 </tr>
 <tr>
-<td><code>oauth_clients</code></td>
-<td>read, write, create, delete</td>
-<td>OAuth client management (all clients)</td>
+<td><code>letsencrypt</code></td>
+<td>Traefik ACME</td>
+<td><strong>Traefik auto-renews</strong></td>
+<td><strong>appliance (Traefik)</strong></td>
 </tr>
 <tr>
-<td><code>rbac</code></td>
-<td>read, write, create, delete</td>
-<td>RBAC roles, resources, and permissions</td>
+<td><code>manual</code></td>
+<td>operator, off-box</td>
+<td>operator re-supplies (Traefik file-provider hot-reloads)</td>
+<td>operator; appliance <strong>warns</strong> near expiry</td>
+</tr>
+<tr>
+<td><code>offload</code></td>
+<td>upstream</td>
+<td>upstream</td>
+<td><strong>upstream — <code>recert</code> is a no-op</strong></td>
 </tr>
 </tbody>
 </table>
-<h4 id="system-resources">System Resources</h4>
-<table>
-<thead>
-<tr>
-<th>Resource</th>
-<th>Actions</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>admin</code></td>
-<td>status</td>
-<td>View admin dashboard status</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Why domain-specific actions?</strong></p>
-<p>Generic "write" conflates different operations:
-- <code>POST /admin/backup</code> = <strong>create</strong> a backup
-- <code>POST /admin/restore</code> = <strong>restore</strong> from backup (very different!)
-- <code>POST /admin/embedding/config/{id}/activate</code> = <strong>activate</strong> (not create or update)
-- <code>POST /admin/embedding/regenerate</code> = <strong>regenerate</strong> all embeddings</p>
-<p>Each action maps 1:1 to an API operation. Permission check is a direct tuple lookup - no joins:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">require_permission</span><span class="p">(</span><span class="s2">&quot;backups&quot;</span><span class="p">,</span> <span class="s2">&quot;restore&quot;</span><span class="p">)</span>      <span class="c1"># Direct lookup</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">require_permission</span><span class="p">(</span><span class="s2">&quot;embedding_config&quot;</span><span class="p">,</span> <span class="s2">&quot;activate&quot;</span><span class="p">)</span>
-</code></pre></div>
-<p><strong>Action-to-Endpoint Mapping:</strong></p>
-<h4 id="platform-administration">Platform Administration</h4>
-<table>
-<thead>
-<tr>
-<th>Resource</th>
-<th>Action</th>
-<th>Endpoint</th>
-<th>HTTP</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>api_keys</code></td>
-<td>read</td>
-<td><code>/admin/keys</code></td>
-<td>GET</td>
-</tr>
-<tr>
-<td><code>api_keys</code></td>
-<td>write</td>
-<td><code>/admin/keys/{provider}</code></td>
-<td>POST</td>
-</tr>
-<tr>
-<td><code>api_keys</code></td>
-<td>delete</td>
-<td><code>/admin/keys/{provider}</code></td>
-<td>DELETE</td>
-</tr>
-<tr>
-<td><code>embedding_config</code></td>
-<td>read</td>
-<td><code>/admin/embedding/config</code>, <code>/admin/embedding/configs</code></td>
-<td>GET</td>
-</tr>
-<tr>
-<td><code>embedding_config</code></td>
-<td>create</td>
-<td><code>/admin/embedding/config</code></td>
-<td>POST</td>
-</tr>
-<tr>
-<td><code>embedding_config</code></td>
-<td>delete</td>
-<td><code>/admin/embedding/config/{id}</code></td>
-<td>DELETE</td>
-</tr>
-<tr>
-<td><code>embedding_config</code></td>
-<td>activate</td>
-<td><code>/admin/embedding/config/{id}/activate</code></td>
-<td>POST</td>
-</tr>
-<tr>
-<td><code>embedding_config</code></td>
-<td>reload</td>
-<td><code>/admin/embedding/config/reload</code></td>
-<td>POST</td>
-</tr>
-<tr>
-<td><code>embedding_config</code></td>
-<td>regenerate</td>
-<td><code>/admin/embedding/regenerate</code></td>
-<td>POST</td>
-</tr>
-<tr>
-<td><code>extraction_config</code></td>
-<td>read</td>
-<td><code>/admin/extraction/config</code></td>
-<td>GET</td>
-</tr>
-<tr>
-<td><code>extraction_config</code></td>
-<td>write</td>
-<td><code>/admin/extraction/config</code></td>
-<td>POST</td>
-</tr>
-<tr>
-<td><code>backups</code></td>
-<td>read</td>
-<td><code>/admin/backups</code></td>
-<td>GET</td>
-</tr>
-<tr>
-<td><code>backups</code></td>
-<td>create</td>
-<td><code>/admin/backup</code></td>
-<td>POST</td>
-</tr>
-<tr>
-<td><code>backups</code></td>
-<td>restore</td>
-<td><code>/admin/restore</code></td>
-<td>POST</td>
-</tr>
-<tr>
-<td><code>admin</code></td>
-<td>status</td>
-<td><code>/admin/status</code></td>
-<td>GET</td>
-</tr>
-</tbody>
-</table>
-<h4 id="content-data">Content &amp; Data</h4>
-<table>
-<thead>
-<tr>
-<th>Resource</th>
-<th>Action</th>
-<th>Endpoint</th>
-<th>HTTP</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>ontologies</code></td>
-<td>read</td>
-<td><code>/ontology/</code>, <code>/ontology/{name}</code>, <code>/ontology/{name}/files</code></td>
-<td>GET</td>
-</tr>
-<tr>
-<td><code>ontologies</code></td>
-<td>create</td>
-<td>(via ingest)</td>
-<td>POST</td>
-</tr>
-<tr>
-<td><code>ontologies</code></td>
-<td>delete</td>
-<td><code>/ontology/{name}</code></td>
-<td>DELETE</td>
-</tr>
-<tr>
-<td><code>graph</code></td>
-<td>read</td>
-<td><code>/query/search</code>, <code>/query/concept/{id}</code>, <code>/query/related</code>, <code>/query/connect</code>, <code>/query/connect-by-search</code>, <code>/query/sources/search</code>, <code>/query/polarity-axis</code></td>
-<td>GET/POST</td>
-</tr>
-<tr>
-<td><code>graph</code></td>
-<td>execute</td>
-<td><code>/query/cypher</code></td>
-<td>POST</td>
-</tr>
-<tr>
-<td><code>ingest</code></td>
-<td>create</td>
-<td><code>/ingest</code>, <code>/ingest/text</code></td>
-<td>POST</td>
-</tr>
-<tr>
-<td><code>sources</code></td>
-<td>read</td>
-<td><code>/sources/{id}</code>, <code>/sources/{id}/image</code></td>
-<td>GET</td>
-</tr>
-<tr>
-<td><code>vocabulary</code></td>
-<td>read</td>
-<td><code>/vocabulary/status</code>, <code>/vocabulary/types</code>, <code>/vocabulary/similar/{type}</code>, <code>/vocabulary/analyze/{type}</code>, <code>/vocabulary/category-scores/{type}</code>, <code>/vocabulary/epistemic-status</code>, <code>/vocabulary/epistemic-status/{type}</code></td>
-<td>GET</td>
-</tr>
-<tr>
-<td><code>vocabulary</code></td>
-<td>write</td>
-<td><code>/vocabulary/types</code>, <code>/vocabulary/merge</code>, <code>/vocabulary/consolidate</code>, <code>/vocabulary/generate-embeddings</code>, <code>/vocabulary/refresh-categories</code>, <code>/vocabulary/epistemic-status/measure</code></td>
-<td>POST</td>
-</tr>
-<tr>
-<td><code>vocabulary_config</code></td>
-<td>read</td>
-<td><code>/admin/vocabulary/config</code>, <code>/admin/vocabulary/profiles</code>, <code>/admin/vocabulary/profiles/{name}</code></td>
-<td>GET</td>
-</tr>
-<tr>
-<td><code>vocabulary_config</code></td>
-<td>write</td>
-<td><code>/admin/vocabulary/config</code></td>
-<td>PUT</td>
-</tr>
-<tr>
-<td><code>vocabulary_config</code></td>
-<td>create</td>
-<td><code>/admin/vocabulary/profiles</code></td>
-<td>POST</td>
-</tr>
-<tr>
-<td><code>vocabulary_config</code></td>
-<td>delete</td>
-<td><code>/admin/vocabulary/profiles/{name}</code></td>
-<td>DELETE</td>
-</tr>
-<tr>
-<td><code>database</code></td>
-<td>read</td>
-<td><code>/database/stats</code>, <code>/database/info</code></td>
-<td>GET</td>
-</tr>
-<tr>
-<td><code>database</code></td>
-<td>execute</td>
-<td><code>/database/query</code></td>
-<td>POST</td>
-</tr>
-</tbody>
-</table>
-<h4 id="identity-access">Identity &amp; Access</h4>
-<table>
-<thead>
-<tr>
-<th>Resource</th>
-<th>Action</th>
-<th>Endpoint</th>
-<th>HTTP</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>users</code></td>
-<td>read</td>
-<td><code>/users</code>, <code>/users/{id}</code></td>
-<td>GET</td>
-</tr>
-<tr>
-<td><code>users</code></td>
-<td>write</td>
-<td><code>/users/{id}</code></td>
-<td>PUT</td>
-</tr>
-<tr>
-<td><code>users</code></td>
-<td>delete</td>
-<td><code>/users/{id}</code></td>
-<td>DELETE</td>
-</tr>
-<tr>
-<td><code>oauth_clients</code></td>
-<td>read</td>
-<td><code>/auth/oauth/clients</code>, <code>/auth/oauth/clients/{id}</code></td>
-<td>GET</td>
-</tr>
-<tr>
-<td><code>oauth_clients</code></td>
-<td>write</td>
-<td><code>/auth/oauth/clients/{id}</code>, <code>/auth/oauth/clients/{id}/rotate-secret</code></td>
-<td>PATCH/POST</td>
-</tr>
-<tr>
-<td><code>oauth_clients</code></td>
-<td>create</td>
-<td><code>/auth/oauth/clients</code></td>
-<td>POST</td>
-</tr>
-<tr>
-<td><code>oauth_clients</code></td>
-<td>delete</td>
-<td><code>/auth/oauth/clients/{id}</code></td>
-<td>DELETE</td>
-</tr>
-<tr>
-<td><code>rbac</code></td>
-<td>read</td>
-<td><code>/rbac/resources</code>, <code>/rbac/resources/{type}</code>, <code>/rbac/roles</code>, <code>/rbac/roles/{name}</code>, <code>/rbac/permissions</code>, <code>/rbac/user-roles/{id}</code></td>
-<td>GET</td>
-</tr>
-<tr>
-<td><code>rbac</code></td>
-<td>write</td>
-<td><code>/rbac/resources/{type}</code>, <code>/rbac/roles/{name}</code></td>
-<td>PUT</td>
-</tr>
-<tr>
-<td><code>rbac</code></td>
-<td>create</td>
-<td><code>/rbac/resources</code>, <code>/rbac/roles</code>, <code>/rbac/permissions</code>, <code>/rbac/user-roles</code></td>
-<td>POST</td>
-</tr>
-<tr>
-<td><code>rbac</code></td>
-<td>delete</td>
-<td><code>/rbac/resources/{type}</code>, <code>/rbac/roles/{name}</code>, <code>/rbac/permissions/{id}</code>, <code>/rbac/user-roles/{id}</code></td>
-<td>DELETE</td>
-</tr>
-</tbody>
-</table>
-<h4 id="no-permission-required-authenticated-only">No Permission Required (Authenticated Only)</h4>
-<p>These endpoints require a valid token but no specific permission:</p>
-<table>
-<thead>
-<tr>
-<th>Endpoint</th>
-<th>HTTP</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>/users/me</code></td>
-<td>GET</td>
-<td>Get current user profile</td>
-</tr>
-<tr>
-<td><code>/auth/me</code></td>
-<td>PUT</td>
-<td>Update own profile</td>
-</tr>
-<tr>
-<td><code>/auth/oauth/clients/personal/*</code></td>
-<td>ALL</td>
-<td>Manage own OAuth clients</td>
-</tr>
-<tr>
-<td><code>/auth/oauth/tokens</code>, <code>/auth/oauth/tokens/{hash}</code></td>
-<td>GET/DELETE</td>
-<td>Manage own tokens</td>
-</tr>
-<tr>
-<td><code>/rbac/check-permission</code></td>
-<td>POST</td>
-<td>Check own permissions</td>
-</tr>
-</tbody>
-</table>
-<h3 id="new-role-platform_admin">New Role: <code>platform_admin</code></h3>
-<ul>
-<li><strong>Parent Role:</strong> <code>admin</code> (inherits all admin permissions)</li>
-<li><strong>Is Builtin:</strong> TRUE (cannot be deleted)</li>
-<li><strong>Description:</strong> Full platform access including critical operations</li>
-</ul>
-<h3 id="no-hardcoded-bypass-security-decision">No Hardcoded Bypass (Security Decision)</h3>
-<p>The <code>platform_admin</code> role has <strong>no special bypass</strong> in the permission checker. All access is validated through the normal RBAC system. This means:</p>
-<ol>
-<li><strong>Full auditability</strong> - All platform_admin actions go through permission checks</li>
-<li><strong>No hidden privileges</strong> - Permissions work exactly as documented</li>
-<li><strong>Self-lockout is possible</strong> - If platform_admin deletes their own permissions, they lose access</li>
-</ol>
-<p><strong>Recovery procedure</strong> if locked out:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Re-run the idempotent migration to restore default permissions</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>knowledge-graph-postgres<span class="w"> </span>psql<span class="w"> </span>-U<span class="w"> </span>admin<span class="w"> </span>-d<span class="w"> </span>knowledge_graph<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span>-f<span class="w"> </span>/workspace/schema/migrations/NNN_platform_admin_resources.sql
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="c1"># Or via operator container</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>kg-operator<span class="w"> </span>python<span class="w"> </span>/workspace/operator/admin/apply_migration.py<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">  </span>NNN_platform_admin_resources.sql
-</code></pre></div></p>
-<p>The migration uses <code>ON CONFLICT DO NOTHING</code>, so it safely restores any missing permissions without affecting existing ones.</p>
-<h3 id="default-permission-mapping">Default Permission Mapping</h3>
-<p>These are the <strong>default</strong> permissions seeded by the migration. They can be modified via CLI or API.</p>
-<h4 id="contributor-role-existing-extended">Contributor Role (existing, extended)</h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>graph:            read
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>ingest:           create
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>sources:          read
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>vocabulary:       read
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>ontologies:       read
-</code></pre></div>
-<h4 id="curator-role-existing-extended">Curator Role (existing, extended)</h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>(inherits from contributor)
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>vocabulary:       read, write
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>ontologies:       read, create
-</code></pre></div>
-<h4 id="admin-role-existing-extended">Admin Role (existing, extended)</h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>(inherits from curator)
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>api_keys:         read
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>embedding_config: read
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>extraction_config: read
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>oauth_clients:    read, create, delete
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>ontologies:       read, create
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>backups:          read
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>users:            read, write, delete
-<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>rbac:             read
-<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>vocabulary_config: read
-<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>database:         read
-<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>admin:            status
-</code></pre></div>
-<h4 id="platform-admin-role-new-default">Platform Admin Role (new default)</h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>(inherits from admin)
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>api_keys:         read, write, delete
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>embedding_config: read, create, delete, activate, reload, regenerate
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>extraction_config: read, write
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>oauth_clients:    read, write, create, delete
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>ontologies:       read, create, delete
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>backups:          read, create, restore
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>rbac:             read, write, create, delete
-<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>vocabulary_config: read, write, create, delete
-<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>database:         read, execute
-<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>graph:            read, execute
-</code></pre></div>
-<p>Note: Role inheritance means <code>platform_admin</code> gets all permissions from <code>admin</code>, which gets all from <code>curator</code>, which gets all from <code>contributor</code>. Explicit permissions are still granted for clarity and to ensure roles work even if inheritance is modified.</p>
-<h3 id="cli-role-management">CLI Role Management</h3>
-<p>The <code>kg</code> CLI should support full RBAC management:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># List roles and resources</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>kg<span class="w"> </span>rbac<span class="w"> </span>roles<span class="w"> </span>list
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>kg<span class="w"> </span>rbac<span class="w"> </span>resources<span class="w"> </span>list
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="c1"># Create custom role</span>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>kg<span class="w"> </span>rbac<span class="w"> </span>roles<span class="w"> </span>create<span class="w"> </span>backup_operator<span class="w"> </span>--description<span class="w"> </span><span class="s2">&quot;Can create backups only&quot;</span>
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>
-<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="c1"># Grant permissions to role</span>
-<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>kg<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>grant<span class="w"> </span>backup_operator<span class="w"> </span>backups<span class="w"> </span><span class="nb">read</span>
-<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>kg<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>grant<span class="w"> </span>backup_operator<span class="w"> </span>backups<span class="w"> </span>create
-<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="c1"># Note: NOT granting &#39;restore&#39; - this role can only create, not restore</span>
-<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a>
-<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="c1"># List permissions for a role</span>
-<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a>kg<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>list<span class="w"> </span>--role<span class="w"> </span>backup_operator
-<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a>
-<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a><span class="c1"># Assign role to user</span>
-<a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a>kg<span class="w"> </span>admin<span class="w"> </span>users<span class="w"> </span>assign-role<span class="w"> </span>alice<span class="w"> </span>backup_operator
-<a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a>
-<a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a><span class="c1"># Revoke permission</span>
-<a id="__codelineno-6-20" name="__codelineno-6-20" href="#__codelineno-6-20"></a>kg<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>revoke<span class="w"> </span>backup_operator<span class="w"> </span>backups<span class="w"> </span>create
-<a id="__codelineno-6-21" name="__codelineno-6-21" href="#__codelineno-6-21"></a>
-<a id="__codelineno-6-22" name="__codelineno-6-22" href="#__codelineno-6-22"></a><span class="c1"># Delete custom role (fails if users assigned)</span>
-<a id="__codelineno-6-23" name="__codelineno-6-23" href="#__codelineno-6-23"></a>kg<span class="w"> </span>rbac<span class="w"> </span>roles<span class="w"> </span>delete<span class="w"> </span>backup_operator
-</code></pre></div>
-<p>This enables platform admins to create arbitrary role configurations without code changes.</p>
-<h2 id="implementation-checklist">Implementation Checklist</h2>
-<h3 id="phase-1-database-migration">Phase 1: Database Migration</h3>
-<ul>
-<li>[ ] Create migration file <code>schema/migrations/NNN_platform_admin_resources.sql</code></li>
-<li>[ ] Register new resource types (idempotent with <code>ON CONFLICT DO NOTHING</code>)</li>
-<li>[ ] Create <code>platform_admin</code> role with parent_role = 'admin'</li>
-<li>[ ] Grant default permissions to <code>admin</code> role for new resources</li>
-<li>[ ] Grant default permissions to <code>platform_admin</code> role for new resources</li>
-<li>[ ] Test migration is idempotent (can run multiple times safely)</li>
-<li>[ ] Document recovery procedure in operator guide</li>
-</ul>
-<h3 id="api-documentation-standard">API Documentation Standard</h3>
-<p>All endpoint docstrings should follow this authorization documentation format:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="sd">&quot;&quot;&quot;</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="sd">Endpoint description...</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="sd">**Authorization:** Requires `resource:action` permission</span>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="sd">Example...</span>
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="sd">&quot;&quot;&quot;</span>
-</code></pre></div>
-<p>For authenticated-but-not-admin endpoints:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="sd">&quot;&quot;&quot;</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="sd">**Authorization:** Authenticated users (any valid token)</span>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="sd">&quot;&quot;&quot;</span>
-</code></pre></div></p>
-<p>This replaces the legacy "Requires admin role" text with specific resource:action requirements,
-making the API self-documenting for RBAC.</p>
-<h3 id="phase-2-cli-role-management">Phase 2: CLI Role Management</h3>
-<p>Add RBAC management commands to <code>kg</code> CLI:</p>
-<ul>
-<li>[ ] <code>kg rbac roles list</code> - List all roles with their properties</li>
-<li>[ ] <code>kg rbac roles create &lt;name&gt;</code> - Create custom role</li>
-<li>[ ] <code>kg rbac roles delete &lt;name&gt;</code> - Delete custom role (not builtin)</li>
-<li>[ ] <code>kg rbac resources list</code> - List all resource types and actions</li>
-<li>[ ] <code>kg rbac permissions list</code> - List permissions (filterable by role/resource)</li>
-<li>[ ] <code>kg rbac permissions grant &lt;role&gt; &lt;resource&gt; &lt;action&gt;</code> - Grant permission</li>
-<li>[ ] <code>kg rbac permissions revoke &lt;role&gt; &lt;resource&gt; &lt;action&gt;</code> - Revoke permission</li>
-<li>[ ] <code>kg admin users assign-role &lt;user&gt; &lt;role&gt;</code> - Assign role to user</li>
-<li>[ ] <code>kg admin users revoke-role &lt;user&gt; &lt;role&gt;</code> - Revoke role from user</li>
-</ul>
-<h3 id="phase-3-api-endpoint-protection">Phase 3: API Endpoint Protection</h3>
-<p>Update endpoints to use RBAC permission checks:</p>
-<ul>
-<li>[ ] <code>/admin/keys/*</code> - require <code>api_keys</code> resource permissions</li>
-<li>[ ] <code>/admin/embedding/*</code> - require <code>embedding_config</code> resource permissions</li>
-<li>[ ] <code>/admin/extraction/*</code> - require <code>extraction_config</code> resource permissions</li>
-<li>[ ] <code>/auth/oauth/clients</code> (admin view) - require <code>oauth_clients</code> resource permissions</li>
-<li>[ ] <code>/ontology/{name}</code> DELETE - require <code>ontologies:delete</code> permission</li>
-<li>[ ] <code>/admin/backup</code> and <code>/admin/restore</code> - require <code>backups</code> resource permissions</li>
-</ul>
-<h3 id="phase-4-web-ui-updates">Phase 4: Web UI Updates</h3>
-<ul>
-<li>[ ] Update AdminDashboard to check permissions for each tab/section</li>
-<li>[ ] Hide/disable features based on user's effective permissions</li>
-<li>[ ] Add visual indicator for platform admin users</li>
-<li>[ ] Show appropriate error messages for permission denied</li>
-</ul>
-<h3 id="phase-5-documentation">Phase 5: Documentation</h3>
-<ul>
-<li>[ ] Update <code>docs/reference/api/ADMIN-ENDPOINTS.md</code> with new access levels</li>
-<li>[ ] Add Platform Admin setup to operator documentation</li>
-<li>[ ] Document CLI role management commands</li>
-<li>[ ] Update CLAUDE.md with platform admin workflow</li>
-</ul>
-<h2 id="migration-sql">Migration SQL</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1">-- Migration: Platform Admin Resources and Role (ADR-074)</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="c1">-- Idempotent: Safe to run multiple times</span>
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="c1">-- Recovery: Re-run this migration to restore default permissions if locked out</span>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="k">BEGIN</span><span class="p">;</span>
-<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>
-<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="c1">-- =============================================================================</span>
-<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="c1">-- Register All Resource Types</span>
-<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="c1">-- =============================================================================</span>
-<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>
-<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">resources</span><span class="w"> </span><span class="p">(</span><span class="n">resource_type</span><span class="p">,</span><span class="w"> </span><span class="n">description</span><span class="p">,</span><span class="w"> </span><span class="n">available_actions</span><span class="p">,</span><span class="w"> </span><span class="n">supports_scoping</span><span class="p">,</span><span class="w"> </span><span class="n">registered_by</span><span class="p">)</span>
-<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a><span class="k">VALUES</span>
-<a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a><span class="w">    </span><span class="c1">-- Platform Administration (Critical)</span>
-<a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;api_keys&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;API key management for AI providers&#39;</span><span class="p">,</span>
-<a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a><span class="w">     </span><span class="nb">ARRAY</span><span class="p">[</span><span class="s1">&#39;read&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;write&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;delete&#39;</span><span class="p">],</span><span class="w"> </span><span class="k">FALSE</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;system&#39;</span><span class="p">),</span>
-<a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;embedding_config&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;Embedding model configuration and operations&#39;</span><span class="p">,</span>
-<a id="__codelineno-9-17" name="__codelineno-9-17" href="#__codelineno-9-17"></a><span class="w">     </span><span class="nb">ARRAY</span><span class="p">[</span><span class="s1">&#39;read&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;create&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;delete&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;activate&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;reload&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;regenerate&#39;</span><span class="p">],</span><span class="w"> </span><span class="k">FALSE</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;system&#39;</span><span class="p">),</span>
-<a id="__codelineno-9-18" name="__codelineno-9-18" href="#__codelineno-9-18"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;extraction_config&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;AI extraction provider configuration&#39;</span><span class="p">,</span>
-<a id="__codelineno-9-19" name="__codelineno-9-19" href="#__codelineno-9-19"></a><span class="w">     </span><span class="nb">ARRAY</span><span class="p">[</span><span class="s1">&#39;read&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;write&#39;</span><span class="p">],</span><span class="w"> </span><span class="k">FALSE</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;system&#39;</span><span class="p">),</span>
-<a id="__codelineno-9-20" name="__codelineno-9-20" href="#__codelineno-9-20"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;backups&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;System backup and restore operations&#39;</span><span class="p">,</span>
-<a id="__codelineno-9-21" name="__codelineno-9-21" href="#__codelineno-9-21"></a><span class="w">     </span><span class="nb">ARRAY</span><span class="p">[</span><span class="s1">&#39;read&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;create&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;restore&#39;</span><span class="p">],</span><span class="w"> </span><span class="k">FALSE</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;system&#39;</span><span class="p">),</span>
-<a id="__codelineno-9-22" name="__codelineno-9-22" href="#__codelineno-9-22"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;admin&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;Admin dashboard and status&#39;</span><span class="p">,</span>
-<a id="__codelineno-9-23" name="__codelineno-9-23" href="#__codelineno-9-23"></a><span class="w">     </span><span class="nb">ARRAY</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">],</span><span class="w"> </span><span class="k">FALSE</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;system&#39;</span><span class="p">),</span>
-<a id="__codelineno-9-24" name="__codelineno-9-24" href="#__codelineno-9-24"></a>
-<a id="__codelineno-9-25" name="__codelineno-9-25" href="#__codelineno-9-25"></a><span class="w">    </span><span class="c1">-- Content &amp; Data</span>
-<a id="__codelineno-9-26" name="__codelineno-9-26" href="#__codelineno-9-26"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;ontologies&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;Ontology management including deletion&#39;</span><span class="p">,</span>
-<a id="__codelineno-9-27" name="__codelineno-9-27" href="#__codelineno-9-27"></a><span class="w">     </span><span class="nb">ARRAY</span><span class="p">[</span><span class="s1">&#39;read&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;create&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;delete&#39;</span><span class="p">],</span><span class="w"> </span><span class="k">FALSE</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;system&#39;</span><span class="p">),</span>
-<a id="__codelineno-9-28" name="__codelineno-9-28" href="#__codelineno-9-28"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;graph&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;Knowledge graph queries&#39;</span><span class="p">,</span>
-<a id="__codelineno-9-29" name="__codelineno-9-29" href="#__codelineno-9-29"></a><span class="w">     </span><span class="nb">ARRAY</span><span class="p">[</span><span class="s1">&#39;read&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;execute&#39;</span><span class="p">],</span><span class="w"> </span><span class="k">FALSE</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;system&#39;</span><span class="p">),</span>
-<a id="__codelineno-9-30" name="__codelineno-9-30" href="#__codelineno-9-30"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;ingest&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;Document ingestion&#39;</span><span class="p">,</span>
-<a id="__codelineno-9-31" name="__codelineno-9-31" href="#__codelineno-9-31"></a><span class="w">     </span><span class="nb">ARRAY</span><span class="p">[</span><span class="s1">&#39;create&#39;</span><span class="p">],</span><span class="w"> </span><span class="k">FALSE</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;system&#39;</span><span class="p">),</span>
-<a id="__codelineno-9-32" name="__codelineno-9-32" href="#__codelineno-9-32"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;sources&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;Source document retrieval&#39;</span><span class="p">,</span>
-<a id="__codelineno-9-33" name="__codelineno-9-33" href="#__codelineno-9-33"></a><span class="w">     </span><span class="nb">ARRAY</span><span class="p">[</span><span class="s1">&#39;read&#39;</span><span class="p">],</span><span class="w"> </span><span class="k">FALSE</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;system&#39;</span><span class="p">),</span>
-<a id="__codelineno-9-34" name="__codelineno-9-34" href="#__codelineno-9-34"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;vocabulary&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;Vocabulary type management&#39;</span><span class="p">,</span>
-<a id="__codelineno-9-35" name="__codelineno-9-35" href="#__codelineno-9-35"></a><span class="w">     </span><span class="nb">ARRAY</span><span class="p">[</span><span class="s1">&#39;read&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;write&#39;</span><span class="p">],</span><span class="w"> </span><span class="k">FALSE</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;system&#39;</span><span class="p">),</span>
-<a id="__codelineno-9-36" name="__codelineno-9-36" href="#__codelineno-9-36"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;vocabulary_config&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;Vocabulary configuration and profiles&#39;</span><span class="p">,</span>
-<a id="__codelineno-9-37" name="__codelineno-9-37" href="#__codelineno-9-37"></a><span class="w">     </span><span class="nb">ARRAY</span><span class="p">[</span><span class="s1">&#39;read&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;write&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;create&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;delete&#39;</span><span class="p">],</span><span class="w"> </span><span class="k">FALSE</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;system&#39;</span><span class="p">),</span>
-<a id="__codelineno-9-38" name="__codelineno-9-38" href="#__codelineno-9-38"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;database&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;Database statistics and queries&#39;</span><span class="p">,</span>
-<a id="__codelineno-9-39" name="__codelineno-9-39" href="#__codelineno-9-39"></a><span class="w">     </span><span class="nb">ARRAY</span><span class="p">[</span><span class="s1">&#39;read&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;execute&#39;</span><span class="p">],</span><span class="w"> </span><span class="k">FALSE</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;system&#39;</span><span class="p">),</span>
-<a id="__codelineno-9-40" name="__codelineno-9-40" href="#__codelineno-9-40"></a>
-<a id="__codelineno-9-41" name="__codelineno-9-41" href="#__codelineno-9-41"></a><span class="w">    </span><span class="c1">-- Identity &amp; Access</span>
-<a id="__codelineno-9-42" name="__codelineno-9-42" href="#__codelineno-9-42"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;users&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;User account management&#39;</span><span class="p">,</span>
-<a id="__codelineno-9-43" name="__codelineno-9-43" href="#__codelineno-9-43"></a><span class="w">     </span><span class="nb">ARRAY</span><span class="p">[</span><span class="s1">&#39;read&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;write&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;delete&#39;</span><span class="p">],</span><span class="w"> </span><span class="k">FALSE</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;system&#39;</span><span class="p">),</span>
-<a id="__codelineno-9-44" name="__codelineno-9-44" href="#__codelineno-9-44"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;oauth_clients&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;OAuth client management (all clients)&#39;</span><span class="p">,</span>
-<a id="__codelineno-9-45" name="__codelineno-9-45" href="#__codelineno-9-45"></a><span class="w">     </span><span class="nb">ARRAY</span><span class="p">[</span><span class="s1">&#39;read&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;write&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;create&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;delete&#39;</span><span class="p">],</span><span class="w"> </span><span class="k">FALSE</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;system&#39;</span><span class="p">),</span>
-<a id="__codelineno-9-46" name="__codelineno-9-46" href="#__codelineno-9-46"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;rbac&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;RBAC roles, resources, and permissions&#39;</span><span class="p">,</span>
-<a id="__codelineno-9-47" name="__codelineno-9-47" href="#__codelineno-9-47"></a><span class="w">     </span><span class="nb">ARRAY</span><span class="p">[</span><span class="s1">&#39;read&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;write&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;create&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;delete&#39;</span><span class="p">],</span><span class="w"> </span><span class="k">FALSE</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;system&#39;</span><span class="p">)</span>
-<a id="__codelineno-9-48" name="__codelineno-9-48" href="#__codelineno-9-48"></a><span class="k">ON</span><span class="w"> </span><span class="n">CONFLICT</span><span class="w"> </span><span class="p">(</span><span class="n">resource_type</span><span class="p">)</span><span class="w"> </span><span class="k">DO</span><span class="w"> </span><span class="k">NOTHING</span><span class="p">;</span>
-<a id="__codelineno-9-49" name="__codelineno-9-49" href="#__codelineno-9-49"></a>
-<a id="__codelineno-9-50" name="__codelineno-9-50" href="#__codelineno-9-50"></a><span class="c1">-- =============================================================================</span>
-<a id="__codelineno-9-51" name="__codelineno-9-51" href="#__codelineno-9-51"></a><span class="c1">-- Create Platform Admin Role</span>
-<a id="__codelineno-9-52" name="__codelineno-9-52" href="#__codelineno-9-52"></a><span class="c1">-- =============================================================================</span>
-<a id="__codelineno-9-53" name="__codelineno-9-53" href="#__codelineno-9-53"></a>
-<a id="__codelineno-9-54" name="__codelineno-9-54" href="#__codelineno-9-54"></a><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">roles</span><span class="w"> </span><span class="p">(</span><span class="n">role_name</span><span class="p">,</span><span class="w"> </span><span class="n">display_name</span><span class="p">,</span><span class="w"> </span><span class="n">description</span><span class="p">,</span><span class="w"> </span><span class="n">is_builtin</span><span class="p">,</span><span class="w"> </span><span class="n">is_active</span><span class="p">,</span><span class="w"> </span><span class="n">parent_role</span><span class="p">)</span>
-<a id="__codelineno-9-55" name="__codelineno-9-55" href="#__codelineno-9-55"></a><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span>
-<a id="__codelineno-9-56" name="__codelineno-9-56" href="#__codelineno-9-56"></a><span class="w">    </span><span class="s1">&#39;platform_admin&#39;</span><span class="p">,</span>
-<a id="__codelineno-9-57" name="__codelineno-9-57" href="#__codelineno-9-57"></a><span class="w">    </span><span class="s1">&#39;Platform Administrator&#39;</span><span class="p">,</span>
-<a id="__codelineno-9-58" name="__codelineno-9-58" href="#__codelineno-9-58"></a><span class="w">    </span><span class="s1">&#39;Full platform access including critical operations. Recovery requires re-running migration.&#39;</span><span class="p">,</span>
-<a id="__codelineno-9-59" name="__codelineno-9-59" href="#__codelineno-9-59"></a><span class="w">    </span><span class="k">TRUE</span><span class="p">,</span>
-<a id="__codelineno-9-60" name="__codelineno-9-60" href="#__codelineno-9-60"></a><span class="w">    </span><span class="k">TRUE</span><span class="p">,</span>
-<a id="__codelineno-9-61" name="__codelineno-9-61" href="#__codelineno-9-61"></a><span class="w">    </span><span class="s1">&#39;admin&#39;</span>
-<a id="__codelineno-9-62" name="__codelineno-9-62" href="#__codelineno-9-62"></a><span class="p">)</span>
-<a id="__codelineno-9-63" name="__codelineno-9-63" href="#__codelineno-9-63"></a><span class="k">ON</span><span class="w"> </span><span class="n">CONFLICT</span><span class="w"> </span><span class="p">(</span><span class="n">role_name</span><span class="p">)</span><span class="w"> </span><span class="k">DO</span><span class="w"> </span><span class="k">NOTHING</span><span class="p">;</span>
-<a id="__codelineno-9-64" name="__codelineno-9-64" href="#__codelineno-9-64"></a>
-<a id="__codelineno-9-65" name="__codelineno-9-65" href="#__codelineno-9-65"></a><span class="c1">-- =============================================================================</span>
-<a id="__codelineno-9-66" name="__codelineno-9-66" href="#__codelineno-9-66"></a><span class="c1">-- Grant Permissions to Contributor Role (content access)</span>
-<a id="__codelineno-9-67" name="__codelineno-9-67" href="#__codelineno-9-67"></a><span class="c1">-- =============================================================================</span>
-<a id="__codelineno-9-68" name="__codelineno-9-68" href="#__codelineno-9-68"></a>
-<a id="__codelineno-9-69" name="__codelineno-9-69" href="#__codelineno-9-69"></a><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">role_permissions</span><span class="w"> </span><span class="p">(</span><span class="n">role_name</span><span class="p">,</span><span class="w"> </span><span class="n">resource_type</span><span class="p">,</span><span class="w"> </span><span class="n">action</span><span class="p">,</span><span class="w"> </span><span class="n">scope_type</span><span class="p">,</span><span class="w"> </span><span class="k">granted</span><span class="p">)</span>
-<a id="__codelineno-9-70" name="__codelineno-9-70" href="#__codelineno-9-70"></a><span class="k">VALUES</span>
-<a id="__codelineno-9-71" name="__codelineno-9-71" href="#__codelineno-9-71"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;contributor&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;graph&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;read&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;global&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">),</span>
-<a id="__codelineno-9-72" name="__codelineno-9-72" href="#__codelineno-9-72"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;contributor&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;ingest&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;create&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;global&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">),</span>
-<a id="__codelineno-9-73" name="__codelineno-9-73" href="#__codelineno-9-73"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;contributor&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;sources&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;read&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;global&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">),</span>
-<a id="__codelineno-9-74" name="__codelineno-9-74" href="#__codelineno-9-74"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;contributor&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;vocabulary&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;read&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;global&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">),</span>
-<a id="__codelineno-9-75" name="__codelineno-9-75" href="#__codelineno-9-75"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;contributor&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;ontologies&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;read&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;global&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">)</span>
-<a id="__codelineno-9-76" name="__codelineno-9-76" href="#__codelineno-9-76"></a><span class="k">ON</span><span class="w"> </span><span class="n">CONFLICT</span><span class="w"> </span><span class="k">DO</span><span class="w"> </span><span class="k">NOTHING</span><span class="p">;</span>
-<a id="__codelineno-9-77" name="__codelineno-9-77" href="#__codelineno-9-77"></a>
-<a id="__codelineno-9-78" name="__codelineno-9-78" href="#__codelineno-9-78"></a><span class="c1">-- =============================================================================</span>
-<a id="__codelineno-9-79" name="__codelineno-9-79" href="#__codelineno-9-79"></a><span class="c1">-- Grant Permissions to Curator Role (content management)</span>
-<a id="__codelineno-9-80" name="__codelineno-9-80" href="#__codelineno-9-80"></a><span class="c1">-- =============================================================================</span>
-<a id="__codelineno-9-81" name="__codelineno-9-81" href="#__codelineno-9-81"></a>
-<a id="__codelineno-9-82" name="__codelineno-9-82" href="#__codelineno-9-82"></a><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">role_permissions</span><span class="w"> </span><span class="p">(</span><span class="n">role_name</span><span class="p">,</span><span class="w"> </span><span class="n">resource_type</span><span class="p">,</span><span class="w"> </span><span class="n">action</span><span class="p">,</span><span class="w"> </span><span class="n">scope_type</span><span class="p">,</span><span class="w"> </span><span class="k">granted</span><span class="p">)</span>
-<a id="__codelineno-9-83" name="__codelineno-9-83" href="#__codelineno-9-83"></a><span class="k">VALUES</span>
-<a id="__codelineno-9-84" name="__codelineno-9-84" href="#__codelineno-9-84"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;curator&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;vocabulary&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;write&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;global&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">),</span>
-<a id="__codelineno-9-85" name="__codelineno-9-85" href="#__codelineno-9-85"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;curator&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;ontologies&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;create&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;global&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">)</span>
-<a id="__codelineno-9-86" name="__codelineno-9-86" href="#__codelineno-9-86"></a><span class="k">ON</span><span class="w"> </span><span class="n">CONFLICT</span><span class="w"> </span><span class="k">DO</span><span class="w"> </span><span class="k">NOTHING</span><span class="p">;</span>
-<a id="__codelineno-9-87" name="__codelineno-9-87" href="#__codelineno-9-87"></a>
-<a id="__codelineno-9-88" name="__codelineno-9-88" href="#__codelineno-9-88"></a><span class="c1">-- =============================================================================</span>
-<a id="__codelineno-9-89" name="__codelineno-9-89" href="#__codelineno-9-89"></a><span class="c1">-- Grant Permissions to Admin Role (user/system management, read-only platform)</span>
-<a id="__codelineno-9-90" name="__codelineno-9-90" href="#__codelineno-9-90"></a><span class="c1">-- =============================================================================</span>
-<a id="__codelineno-9-91" name="__codelineno-9-91" href="#__codelineno-9-91"></a>
-<a id="__codelineno-9-92" name="__codelineno-9-92" href="#__codelineno-9-92"></a><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">role_permissions</span><span class="w"> </span><span class="p">(</span><span class="n">role_name</span><span class="p">,</span><span class="w"> </span><span class="n">resource_type</span><span class="p">,</span><span class="w"> </span><span class="n">action</span><span class="p">,</span><span class="w"> </span><span class="n">scope_type</span><span class="p">,</span><span class="w"> </span><span class="k">granted</span><span class="p">)</span>
-<a id="__codelineno-9-93" name="__codelineno-9-93" href="#__codelineno-9-93"></a><span class="k">VALUES</span>
-<a id="__codelineno-9-94" name="__codelineno-9-94" href="#__codelineno-9-94"></a><span class="w">    </span><span class="c1">-- Platform resources: read only</span>
-<a id="__codelineno-9-95" name="__codelineno-9-95" href="#__codelineno-9-95"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;admin&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;api_keys&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;read&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;global&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">),</span>
-<a id="__codelineno-9-96" name="__codelineno-9-96" href="#__codelineno-9-96"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;admin&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;embedding_config&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;read&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;global&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">),</span>
-<a id="__codelineno-9-97" name="__codelineno-9-97" href="#__codelineno-9-97"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;admin&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;extraction_config&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;read&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;global&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">),</span>
-<a id="__codelineno-9-98" name="__codelineno-9-98" href="#__codelineno-9-98"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;admin&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;backups&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;read&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;global&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">),</span>
-<a id="__codelineno-9-99" name="__codelineno-9-99" href="#__codelineno-9-99"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;admin&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;admin&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;status&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;global&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">),</span>
-<a id="__codelineno-9-100" name="__codelineno-9-100" href="#__codelineno-9-100"></a><span class="w">    </span><span class="c1">-- OAuth Clients: full access</span>
-<a id="__codelineno-9-101" name="__codelineno-9-101" href="#__codelineno-9-101"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;admin&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;oauth_clients&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;read&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;global&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">),</span>
-<a id="__codelineno-9-102" name="__codelineno-9-102" href="#__codelineno-9-102"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;admin&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;oauth_clients&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;create&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;global&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">),</span>
-<a id="__codelineno-9-103" name="__codelineno-9-103" href="#__codelineno-9-103"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;admin&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;oauth_clients&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;delete&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;global&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">),</span>
-<a id="__codelineno-9-104" name="__codelineno-9-104" href="#__codelineno-9-104"></a><span class="w">    </span><span class="c1">-- Users: full access</span>
-<a id="__codelineno-9-105" name="__codelineno-9-105" href="#__codelineno-9-105"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;admin&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;users&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;read&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;global&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">),</span>
-<a id="__codelineno-9-106" name="__codelineno-9-106" href="#__codelineno-9-106"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;admin&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;users&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;write&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;global&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">),</span>
-<a id="__codelineno-9-107" name="__codelineno-9-107" href="#__codelineno-9-107"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;admin&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;users&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;delete&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;global&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">),</span>
-<a id="__codelineno-9-108" name="__codelineno-9-108" href="#__codelineno-9-108"></a><span class="w">    </span><span class="c1">-- RBAC: read only</span>
-<a id="__codelineno-9-109" name="__codelineno-9-109" href="#__codelineno-9-109"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;admin&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;rbac&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;read&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;global&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">),</span>
-<a id="__codelineno-9-110" name="__codelineno-9-110" href="#__codelineno-9-110"></a><span class="w">    </span><span class="c1">-- Vocabulary config: read only</span>
-<a id="__codelineno-9-111" name="__codelineno-9-111" href="#__codelineno-9-111"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;admin&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;vocabulary_config&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;read&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;global&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">),</span>
-<a id="__codelineno-9-112" name="__codelineno-9-112" href="#__codelineno-9-112"></a><span class="w">    </span><span class="c1">-- Database: read only</span>
-<a id="__codelineno-9-113" name="__codelineno-9-113" href="#__codelineno-9-113"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;admin&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;database&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;read&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;global&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">)</span>
-<a id="__codelineno-9-114" name="__codelineno-9-114" href="#__codelineno-9-114"></a><span class="k">ON</span><span class="w"> </span><span class="n">CONFLICT</span><span class="w"> </span><span class="k">DO</span><span class="w"> </span><span class="k">NOTHING</span><span class="p">;</span>
-<a id="__codelineno-9-115" name="__codelineno-9-115" href="#__codelineno-9-115"></a>
-<a id="__codelineno-9-116" name="__codelineno-9-116" href="#__codelineno-9-116"></a><span class="c1">-- =============================================================================</span>
-<a id="__codelineno-9-117" name="__codelineno-9-117" href="#__codelineno-9-117"></a><span class="c1">-- Grant Full Permissions to Platform Admin Role</span>
-<a id="__codelineno-9-118" name="__codelineno-9-118" href="#__codelineno-9-118"></a><span class="c1">-- =============================================================================</span>
-<a id="__codelineno-9-119" name="__codelineno-9-119" href="#__codelineno-9-119"></a>
-<a id="__codelineno-9-120" name="__codelineno-9-120" href="#__codelineno-9-120"></a><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">role_permissions</span><span class="w"> </span><span class="p">(</span><span class="n">role_name</span><span class="p">,</span><span class="w"> </span><span class="n">resource_type</span><span class="p">,</span><span class="w"> </span><span class="n">action</span><span class="p">,</span><span class="w"> </span><span class="n">scope_type</span><span class="p">,</span><span class="w"> </span><span class="k">granted</span><span class="p">)</span>
-<a id="__codelineno-9-121" name="__codelineno-9-121" href="#__codelineno-9-121"></a><span class="k">VALUES</span>
-<a id="__codelineno-9-122" name="__codelineno-9-122" href="#__codelineno-9-122"></a><span class="w">    </span><span class="c1">-- API Keys: full access</span>
-<a id="__codelineno-9-123" name="__codelineno-9-123" href="#__codelineno-9-123"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;platform_admin&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;api_keys&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;read&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;global&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">),</span>
-<a id="__codelineno-9-124" name="__codelineno-9-124" href="#__codelineno-9-124"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;platform_admin&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;api_keys&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;write&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;global&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">),</span>
-<a id="__codelineno-9-125" name="__codelineno-9-125" href="#__codelineno-9-125"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;platform_admin&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;api_keys&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;delete&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;global&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">),</span>
-<a id="__codelineno-9-126" name="__codelineno-9-126" href="#__codelineno-9-126"></a><span class="w">    </span><span class="c1">-- Embedding Config: full access</span>
-<a id="__codelineno-9-127" name="__codelineno-9-127" href="#__codelineno-9-127"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;platform_admin&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;embedding_config&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;read&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;global&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">),</span>
-<a id="__codelineno-9-128" name="__codelineno-9-128" href="#__codelineno-9-128"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;platform_admin&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;embedding_config&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;create&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;global&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">),</span>
-<a id="__codelineno-9-129" name="__codelineno-9-129" href="#__codelineno-9-129"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;platform_admin&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;embedding_config&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;delete&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;global&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">),</span>
-<a id="__codelineno-9-130" name="__codelineno-9-130" href="#__codelineno-9-130"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;platform_admin&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;embedding_config&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;activate&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;global&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">),</span>
-<a id="__codelineno-9-131" name="__codelineno-9-131" href="#__codelineno-9-131"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;platform_admin&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;embedding_config&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;reload&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;global&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">),</span>
-<a id="__codelineno-9-132" name="__codelineno-9-132" href="#__codelineno-9-132"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;platform_admin&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;embedding_config&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;regenerate&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;global&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">),</span>
-<a id="__codelineno-9-133" name="__codelineno-9-133" href="#__codelineno-9-133"></a><span class="w">    </span><span class="c1">-- Extraction Config: full access</span>
-<a id="__codelineno-9-134" name="__codelineno-9-134" href="#__codelineno-9-134"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;platform_admin&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;extraction_config&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;read&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;global&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">),</span>
-<a id="__codelineno-9-135" name="__codelineno-9-135" href="#__codelineno-9-135"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;platform_admin&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;extraction_config&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;write&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;global&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">),</span>
-<a id="__codelineno-9-136" name="__codelineno-9-136" href="#__codelineno-9-136"></a><span class="w">    </span><span class="c1">-- OAuth Clients: full access</span>
-<a id="__codelineno-9-137" name="__codelineno-9-137" href="#__codelineno-9-137"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;platform_admin&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;oauth_clients&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;read&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;global&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">),</span>
-<a id="__codelineno-9-138" name="__codelineno-9-138" href="#__codelineno-9-138"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;platform_admin&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;oauth_clients&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;write&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;global&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">),</span>
-<a id="__codelineno-9-139" name="__codelineno-9-139" href="#__codelineno-9-139"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;platform_admin&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;oauth_clients&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;create&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;global&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">),</span>
-<a id="__codelineno-9-140" name="__codelineno-9-140" href="#__codelineno-9-140"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;platform_admin&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;oauth_clients&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;delete&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;global&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">),</span>
-<a id="__codelineno-9-141" name="__codelineno-9-141" href="#__codelineno-9-141"></a><span class="w">    </span><span class="c1">-- Ontologies: full access including delete</span>
-<a id="__codelineno-9-142" name="__codelineno-9-142" href="#__codelineno-9-142"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;platform_admin&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;ontologies&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;delete&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;global&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">),</span>
-<a id="__codelineno-9-143" name="__codelineno-9-143" href="#__codelineno-9-143"></a><span class="w">    </span><span class="c1">-- Backups: full access including restore</span>
-<a id="__codelineno-9-144" name="__codelineno-9-144" href="#__codelineno-9-144"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;platform_admin&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;backups&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;read&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;global&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">),</span>
-<a id="__codelineno-9-145" name="__codelineno-9-145" href="#__codelineno-9-145"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;platform_admin&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;backups&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;create&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;global&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">),</span>
-<a id="__codelineno-9-146" name="__codelineno-9-146" href="#__codelineno-9-146"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;platform_admin&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;backups&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;restore&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;global&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">),</span>
-<a id="__codelineno-9-147" name="__codelineno-9-147" href="#__codelineno-9-147"></a><span class="w">    </span><span class="c1">-- RBAC: full access</span>
-<a id="__codelineno-9-148" name="__codelineno-9-148" href="#__codelineno-9-148"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;platform_admin&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;rbac&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;read&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;global&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">),</span>
-<a id="__codelineno-9-149" name="__codelineno-9-149" href="#__codelineno-9-149"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;platform_admin&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;rbac&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;write&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;global&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">),</span>
-<a id="__codelineno-9-150" name="__codelineno-9-150" href="#__codelineno-9-150"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;platform_admin&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;rbac&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;create&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;global&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">),</span>
-<a id="__codelineno-9-151" name="__codelineno-9-151" href="#__codelineno-9-151"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;platform_admin&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;rbac&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;delete&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;global&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">),</span>
-<a id="__codelineno-9-152" name="__codelineno-9-152" href="#__codelineno-9-152"></a><span class="w">    </span><span class="c1">-- Vocabulary config: full access</span>
-<a id="__codelineno-9-153" name="__codelineno-9-153" href="#__codelineno-9-153"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;platform_admin&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;vocabulary_config&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;read&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;global&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">),</span>
-<a id="__codelineno-9-154" name="__codelineno-9-154" href="#__codelineno-9-154"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;platform_admin&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;vocabulary_config&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;write&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;global&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">),</span>
-<a id="__codelineno-9-155" name="__codelineno-9-155" href="#__codelineno-9-155"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;platform_admin&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;vocabulary_config&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;create&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;global&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">),</span>
-<a id="__codelineno-9-156" name="__codelineno-9-156" href="#__codelineno-9-156"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;platform_admin&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;vocabulary_config&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;delete&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;global&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">),</span>
-<a id="__codelineno-9-157" name="__codelineno-9-157" href="#__codelineno-9-157"></a><span class="w">    </span><span class="c1">-- Database: full access including execute</span>
-<a id="__codelineno-9-158" name="__codelineno-9-158" href="#__codelineno-9-158"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;platform_admin&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;database&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;read&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;global&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">),</span>
-<a id="__codelineno-9-159" name="__codelineno-9-159" href="#__codelineno-9-159"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;platform_admin&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;database&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;execute&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;global&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">),</span>
-<a id="__codelineno-9-160" name="__codelineno-9-160" href="#__codelineno-9-160"></a><span class="w">    </span><span class="c1">-- Graph: execute (raw Cypher)</span>
-<a id="__codelineno-9-161" name="__codelineno-9-161" href="#__codelineno-9-161"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;platform_admin&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;graph&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;execute&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;global&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">)</span>
-<a id="__codelineno-9-162" name="__codelineno-9-162" href="#__codelineno-9-162"></a><span class="k">ON</span><span class="w"> </span><span class="n">CONFLICT</span><span class="w"> </span><span class="k">DO</span><span class="w"> </span><span class="k">NOTHING</span><span class="p">;</span>
-<a id="__codelineno-9-163" name="__codelineno-9-163" href="#__codelineno-9-163"></a>
-<a id="__codelineno-9-164" name="__codelineno-9-164" href="#__codelineno-9-164"></a><span class="k">COMMIT</span><span class="p">;</span>
-</code></pre></div>
+<p><code>operator/lib/recert.sh</code> becomes thin: trigger/verify for <code>manual</code>, no-op for
+<code>offload</code>; Traefik handles <code>letsencrypt</code>/<code>selfsigned</code> internally. It still makes
+<code>operator.sh recert</code> real, but it is no longer a renewal engine.</p>
+<h3 id="6-offload-external_url-contract-proxy-agnostic-traefik-as-reference-edge">6. Offload = <code>EXTERNAL_URL</code> contract, proxy-agnostic, Traefik as reference edge</h3>
+<p>"Behind a proxy" is a first-class mode whose contract is: the operator declares
+the public URL <strong>including scheme</strong> (<code>EXTERNAL_URL=https://kg.example.com</code>), and
+the app derives scheme-sensitive outputs (OAuth <code>redirect_uri</code>, cookies, links)
+from it while trusting <code>X-Forwarded-Proto/Host/For</code>. Concretely this fixes
+<code>headless-init.sh:496</code> (<code>http://${WEB_HOSTNAME}/callback</code> — scheme hardcoded) and
+the API-side OAuth client registration.</p>
+<p>The contract is <strong>proxy-agnostic</strong> (works behind nginx / Caddy / ALB /
+Cloudflare). Because the appliance speaks Traefik internally, we <strong>recommend (not
+require) Traefik as the reference edge</strong> and ship a drop-in router+service snippet
+— the offload handoff becomes Traefik-to-Traefik with matching forwarded-header
+defaults. Anyone else writes their own five lines against the same contract.</p>
+<h3 id="7-trust-posture-by-exposure-credential-blast-radius">7. Trust posture by exposure (credential blast radius)</h3>
+<p>The unacceptable risk is a network-exposed box holding a credential that can
+rewrite the <strong>whole DNS zone</strong> (porkbun keys are account-wide — no per-zone
+scoping). So: <strong>DNS authority on the appliance is zero by default and downgradable
+to zero in every public scenario.</strong> An account-wide key is tolerable <em>only</em> in
+<strong>private</strong> (contained, private-IP blast radius), and even there off-box issuance
+(<strong>manual</strong> mode) is preferred. Public scenarios use HTTP-01 / TLS-ALPN (no key),
+<strong>offload</strong> (no cert), or challenge <strong>delegation</strong> (a credential that can do
+nothing but answer one challenge). <code>--manage-dns</code> self-FQDN, if ever built, is
+opt-in and private-only; lego manages challenge TXT only, never A records.</p>
+<h3 id="8-what-we-still-own-the-glue">8. What we still own (the glue)</h3>
+<p>Traefik is not magic. We own: <strong>scenario → Traefik config generation</strong> (the new
+core task, replacing the cert-factory extraction); the <strong>topology change</strong> (add
+Traefik, route web/api behind it); <strong><code>EXTERNAL_URL</code> + the OAuth redirect-scheme
+fix</strong> (our app's bug, not Traefik's); <strong>policy/trust enforcement</strong> (which resolver
+per scenario, warn on account-wide key when <code>EXTERNAL_URL</code> is public, the off-box
+manual path); the <strong>offload snippet</strong>; and the <strong>wizard/flags</strong> UX.</p>
+<h3 id="licensing-commercial-posture">Licensing &amp; commercial posture</h3>
+<p><strong>Traefik Proxy core and lego are MIT</strong> — permissive, irrevocable on shipped
+versions, <strong>no network-copyleft</strong>. A managed-fleet/SaaS built on the bundled
+Traefik incurs only an attribution obligation; no reconsideration needed.
+<strong>Traefik Enterprise/Hub</strong> are optional fleet-scale products (centralized control
+plane, distributed ACME, API gateway) — the legitimate, additive purchase for a
+<em>proxied/offload edge at fleet scale</em>, not a forced unlock of baseline function.
+This is the <strong>anti-Neo4j</strong>: the core capability we depend on is fully MIT and
+complete. The stack's only copyleft component is <strong>Garage (AGPL-3.0)</strong> — a
+deliberate, accepted choice; run upstream-unmodified it imposes only "offer
+source." Project stance: <strong>maximize openness; the moat is how to use the system,
+not the code or hosting.</strong> Dependency choices optimize for openness and
+rug-pull-resistance, never code protection.</p>
+<h2 id="diagrams">Diagrams</h2>
+<h3 id="in-vm-topology-one-router-one-stable-endpoint">In-VM topology — one router, one stable endpoint</h3>
+<p>How the pieces relate: every client reaches the platform through a single Traefik
+ingress, which routes by path to web / api / management regardless of internal
+ports. This is what gives the CLI / FUSE / MCP a consistent endpoint.</p>
+<pre class="mermaid"><code>flowchart LR
+    B[Browser]
+    C[kg CLI]
+    F[FUSE driver]
+    M[MCP server]
+    B --&gt; T
+    C --&gt; T
+    F --&gt; T
+    M --&gt; T
+    subgraph vm[Appliance VM]
+        T[Traefik router&lt;br&gt;:80 / :443&lt;br&gt;TLS termination + routing]
+        T --&gt;|/| W[web — static assets]
+        T --&gt;|/api| A[api :8000]
+        T --&gt;|/mgmt| MG[management]
+        A --&gt; P[(Postgres + AGE)]
+        A --&gt; G[(Garage S3)]
+    end</code></pre>
+<h3 id="scenario-mode-selection-how-the-choice-functions">Scenario → mode selection — how the choice functions</h3>
+<p>The operator declares <em>where it runs</em>; that derives the cert mode and who
+terminates TLS. No one reasons about four cert modes cold.</p>
+<pre class="mermaid"><code>flowchart TD
+    Q1{Where does it run?}
+    Q1 --&gt;|dev box, no VM| DEV[dev&lt;br&gt;HTTP only · no Traefik]
+    Q1 --&gt;|appliance VM| Q2{Network exposure?}
+    Q2 --&gt;|trusted LAN&lt;br&gt;private IP| PRIV[private&lt;br&gt;Traefik + manual / self-signed&lt;br&gt;cert issued off-box]
+    Q2 --&gt;|behind LB / proxy| PROX[proxied&lt;br&gt;Traefik HTTP-only&lt;br&gt;edge terminates · EXTERNAL_URL]
+    Q2 --&gt;|public IP&lt;br&gt;:80 reachable| INET[internet&lt;br&gt;Traefik + LE HTTP-01 / TLS-ALPN]
+    Q2 --&gt;|public&lt;br&gt;behind NAT / CF| NAT[public-nat&lt;br&gt;Traefik + DNS-01 delegation&lt;br&gt;or tunnel]</code></pre>
+<h3 id="offload-handoff-why-external_url-is-load-bearing">Offload handoff — why <code>EXTERNAL_URL</code> is load-bearing</h3>
+<p>In <code>proxied</code>, the edge holds the cert and terminates TLS; the appliance speaks
+plain HTTP but must still emit <code>https</code> URLs. The contract makes that correct.</p>
+<pre class="mermaid"><code>sequenceDiagram
+    participant U as Browser (https)
+    participant E as Edge proxy
+    participant T as in-VM Traefik (http)
+    participant A as api
+    U-&gt;&gt;E: HTTPS request
+    Note over E: terminates TLS, holds the cert
+    E-&gt;&gt;T: HTTP + X-Forwarded-Proto: https
+    T-&gt;&gt;A: route /api (plain HTTP)
+    A--&gt;&gt;U: redirect_uri derived from EXTERNAL_URL (https)</code></pre>
 <h2 id="consequences">Consequences</h2>
 <h3 id="positive">Positive</h3>
 <ul>
-<li><strong>Fully customizable</strong> - default roles are starting points, not constraints</li>
-<li><strong>CLI management</strong> - platform admins can create/modify roles without code changes</li>
-<li><strong>Full auditability</strong> - no hidden bypasses, all access through RBAC</li>
-<li><strong>No security backdoors</strong> - platform_admin follows same rules as everyone</li>
-<li>Extensible: new platform resources can be added to migration</li>
-<li>Backwards compatible: existing <code>admin</code> users retain their access level</li>
-<li>Recovery is explicit and auditable (requires operational access to run migration)</li>
+<li><strong>Less code, not more</strong>: the DNS-provider registry, renewal cron, and nginx TLS
+  config are deleted; Traefik/lego own ACME, renewal, and routing.</li>
+<li>One <strong>stable ingress</strong> for management/web/API → consistent CLI/FUSE/MCP endpoint.</li>
+<li>HTTPS parity across all install paths; <code>operator.sh recert</code> stops dangling.</li>
+<li>Scenarios make mode-selection <strong>defensible</strong> instead of asking operators to
+  reason about four cert modes cold.</li>
+<li>All load-bearing dependencies stay permissively licensed.</li>
 </ul>
 <h3 id="negative">Negative</h3>
 <ul>
-<li>More concepts to understand (resources, roles, permissions, scopes)</li>
-<li>Migration adds ~35 new permission rows as defaults</li>
-<li><strong>Self-lockout is possible</strong> - users can delete their own permissions</li>
-<li>Recovery requires container/database access (not self-service)</li>
+<li><strong>Topology change</strong>: Traefik replacing nginx-in-web ingress touches the
+  appliance control plane (ADR-103/104) and how static assets are served. This is
+  a deliberate re-plumb, <strong>not a behavior-preserving refactor</strong>.</li>
+<li>A new component (Traefik) in the appliance image.</li>
+<li><code>install.sh</code>'s existing, working SSL section is <strong>replaced</strong>, not extracted —
+  must not regress existing production installs (e.g. cube's prior install).</li>
 </ul>
 <h3 id="neutral">Neutral</h3>
 <ul>
-<li>Existing admin users need manual upgrade to platform_admin for critical access</li>
-<li>Web UI needs updates to reflect permission-based visibility</li>
-<li>Operators must document and practice recovery procedure</li>
-<li>Default roles serve as templates, not enforced structures</li>
+<li>Mode <em>names</em> and the four-mode taxonomy are unchanged; the offload <code>EXTERNAL_URL</code>
+  contract and trust posture survive from the first draft intact.</li>
+<li>Self-managed DNS A-records (DDNS) remain out of scope — lego does challenge TXT
+  only.</li>
 </ul>
 <h2 id="alternatives-considered">Alternatives Considered</h2>
-<h3 id="1-add-actions-to-existing-resources">1. Add Actions to Existing Resources</h3>
-<p>Instead of new resources, add actions like <code>manage_api_keys</code> to existing <code>users</code> resource.</p>
-<p><strong>Rejected:</strong> Conflates unrelated concerns and makes permission auditing harder.</p>
-<h3 id="2-single-super-admin-flag">2. Single Super-Admin Flag</h3>
-<p>Add <code>is_super_admin</code> boolean to users table.</p>
-<p><strong>Rejected:</strong> Doesn't integrate with RBAC system, harder to audit and manage.</p>
-<h3 id="3-hardcoded-bypass-for-platform_admin">3. Hardcoded Bypass for platform_admin</h3>
-<p>Add code in PermissionChecker that always returns <code>True</code> for platform_admin role.</p>
-<p><strong>Rejected:</strong> Creates security backdoor that bypasses audit trail. If attacker gains platform_admin role, they have invisible unrestricted access. Self-lockout prevention is not worth the security tradeoff - recovery via migration is acceptable.</p>
-<h3 id="4-immutable-core-permissions">4. Immutable Core Permissions</h3>
-<p>Use database triggers to prevent deletion of platform_admin permissions.</p>
-<p><strong>Rejected:</strong> Adds complexity without meaningful benefit. If platform_admin wants to lock themselves out, the trigger would need to be bypassed anyway. Migration-based recovery is simpler.</p>
-<h2 id="related-adrs">Related ADRs</h2>
 <ul>
-<li><a href="../ADR-027-user-management-api/">ADR-027: Authentication</a> - User authentication</li>
-<li><a href="../ADR-028-dynamic-rbac-system/">ADR-028: Dynamic RBAC System</a> - Core RBAC implementation</li>
-<li><a href="../ADR-031-encrypted-api-key-storage/">ADR-031: API Key Management</a> - Encrypted API key storage</li>
+<li><strong>Hand-rolled acme.sh/nginx cert factory</strong> (this ADR's first draft). Rejected:
+  rebuilds what Traefik provides and leaves us maintaining security-sensitive ACME
+  and renewal code.</li>
+<li><strong>Per-mode certs without a router.</strong> Rejected: solves TLS but not the
+  consistent-endpoint need; we'd still bolt on routing separately.</li>
+<li><strong>Require Traefik at the edge for offload.</strong> Rejected: couples offload to one
+  proxy; the contract must stay proxy-agnostic.</li>
+<li><strong>Caddy instead of Traefik</strong> (Apache-2.0, native ACME, on-demand TLS). A genuine
+  peer; rejected for now on Traefik's provider ecosystem and existing operator
+  familiarity. Revisit if the open-core optics ever bite — both are permissive.</li>
 </ul>
+<h2 id="migration-note-non-binding-sketch">Migration Note (non-binding sketch)</h2>
+<p>Incremental, each step shippable:</p>
+<ol>
+<li>Add a Traefik service to the appliance topology; route web + API behind it
+   (HTTP first, no TLS) — proves routing without touching certs.</li>
+<li>Generate Traefik static + dynamic config from <code>scenario</code> + <code>EXTERNAL_URL</code>
+   (this is the new shared module — "configure-traefik," not "configure-ssl").</li>
+<li>Wire <code>certResolver</code>s: self-signed default; LE <code>http</code>/<code>tlsChallenge</code>;
+   <code>dnsChallenge</code> via lego; <code>manual</code> file provider.</li>
+<li>Introduce <code>EXTERNAL_URL</code>; fix the OAuth redirect scheme (<code>headless-init.sh:496</code></li>
+<li>API client registration); honor <code>X-Forwarded-Proto</code>.</li>
+<li>Thin <code>operator/lib/recert.sh</code>: <code>manual</code> re-supply + <code>offload</code> no-op; Traefik
+   owns LE/self-signed renewal. <code>operator.sh recert</code> works.</li>
+<li>Replace <code>install.sh</code> SECTION 9 with the shared generator; verify no regression
+   for existing standalone installs.</li>
+<li>Ship the offload Traefik snippet + scenario docs.</li>
+<li>Deploy cube as <strong>private / manual</strong> (cert issued off-box on north; no DNS key
+   on cube) — the first real exercise, and a faithful rehearsal of <strong>proxied</strong>.</li>
+</ol>
+<p><em>This revises the acme.sh/nginx mechanism of this same ADR (still Draft,
+unmerged); the decision's thesis is unchanged.</em></p>
 
 
 
