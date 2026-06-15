@@ -40,6 +40,7 @@ AI_PROVIDER=""
 AI_MODEL=""
 AI_KEY=""
 WEB_HOSTNAME=""
+ROUTER_MODE="none"
 SKIP_AI_CONFIG=false
 SKIP_CLI=false
 SHOW_HELP=false
@@ -88,6 +89,9 @@ ${BOLD}Web Configuration:${NC}
   --web-hostname HOST     Public hostname for web access (e.g., kg.example.com)
                           Used for OAuth redirect URIs and API URL
                           Default: localhost (for local dev) or localhost:3000
+  --router MODE           Ingress router (ADR-105):
+                          • none (default): direct per-service ports
+                          • traefik: unified HTTP ingress (/ -> web, /api -> api)
 
 ${BOLD}AI Configuration:${NC}
   --ai-provider PROVIDER  AI extraction provider (openai, anthropic, openrouter)
@@ -237,6 +241,14 @@ parse_args() {
                 WEB_HOSTNAME="$2"
                 shift 2
                 ;;
+            --router=*)
+                ROUTER_MODE="${1#*=}"
+                shift
+                ;;
+            --router)
+                ROUTER_MODE="$2"
+                shift 2
+                ;;
             *)
                 echo -e "${RED}Unknown option: $1${NC}"
                 echo "Use --help for usage information"
@@ -276,6 +288,12 @@ validate_config() {
     # Validate image source
     if [[ "$IMAGE_SOURCE" != "local" && "$IMAGE_SOURCE" != "ghcr" ]]; then
         echo -e "${RED}✗ Invalid --image-source: $IMAGE_SOURCE (must be 'local' or 'ghcr')${NC}"
+        errors=$((errors + 1))
+    fi
+
+    # Validate router mode (ADR-105)
+    if [[ "$ROUTER_MODE" != "none" && "$ROUTER_MODE" != "traefik" ]]; then
+        echo -e "${RED}✗ Invalid --router: $ROUTER_MODE (must be 'none' or 'traefik')${NC}"
         errors=$((errors + 1))
     fi
 
@@ -456,6 +474,7 @@ CONTAINER_PREFIX=$CONTAINER_PREFIX
 CONTAINER_SUFFIX=$CONTAINER_SUFFIX
 COMPOSE_FILE=$COMPOSE_FILE
 IMAGE_SOURCE=$IMAGE_SOURCE
+ROUTER_MODE=$ROUTER_MODE
 INITIALIZED_AT=$(date -Iseconds)
 EOF
 

@@ -58,6 +58,9 @@ load_config() {
     fi
     DEV_MODE="${DEV_MODE:-false}"
     GPU_MODE="${GPU_MODE:-cpu}"
+    # ADR-105 in-VM router; default off so non-traefik deployments are unchanged.
+    ROUTER_MODE="${ROUTER_MODE:-none}"
+    export ROUTER_MODE
     # Dev mode uses local builds by default, standalone uses GHCR
     if [ "$DEV_MODE" = "true" ]; then
         IMAGE_SOURCE="${IMAGE_SOURCE:-local}"
@@ -99,6 +102,9 @@ get_compose_cmd() {
 
     # SSL overlay (if configured)
     [ -f "$DOCKER_DIR/docker-compose.ssl.yml" ] && cmd="$cmd -f $DOCKER_DIR/docker-compose.ssl.yml"
+
+    # Traefik router overlay (ADR-105) when enabled
+    [ "$ROUTER_MODE" = "traefik" ] && [ -f "$DOCKER_DIR/docker-compose.traefik.yml" ] && cmd="$cmd -f $DOCKER_DIR/docker-compose.traefik.yml"
 
     # Dev mode overlay (adds hot reload, source mounts)
     [ "$DEV_MODE" = "true" ] && [ -f "$DOCKER_DIR/docker-compose.dev.yml" ] && cmd="$cmd -f $DOCKER_DIR/docker-compose.dev.yml"
@@ -196,6 +202,14 @@ cmd_start() {
     echo -e "${BLUE}→ Starting application (api, web)...${NC}"
     cd "$DOCKER_DIR"
     run_compose up -d api web
+
+    # Bring up the in-VM router when enabled (ADR-105). cmd_start ups services by
+    # name, so the traefik overlay being in the compose command isn't enough — it
+    # must be named explicitly.
+    if [ "$ROUTER_MODE" = "traefik" ]; then
+        echo -e "${BLUE}→ Starting router (traefik)...${NC}"
+        run_compose up -d traefik
+    fi
 
     # Wait for API health
     echo -e "${BLUE}→ Waiting for API...${NC}"

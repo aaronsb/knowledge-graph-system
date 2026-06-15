@@ -14,7 +14,9 @@ name: Appliance Integration (GHCR images)
 #   * the appliance's real first-boot path — operator.sh init --headless
 #     --image-source=ghcr — provisions per-instance secrets and brings the stack
 #     up healthy;
-#   * the #502 fail-closed secret assertions don't ship a placeholder.
+#   * the #502 fail-closed secret assertions don't ship a placeholder;
+#   * the ADR-105 in-VM Traefik router (--router=traefik) serves a unified HTTP
+#     ingress: http://localhost/ -> web, http://localhost/api -> api.
 #
 # Runs on the runner's native CPU, so it finishes in minutes and barely touches
 # the Actions minute budget. The qcow2/OVA is built locally and attached to
@@ -68,9 +70,16 @@ jobs:
             --image-source=ghcr \
             --gpu=cpu \
             --web-hostname=localhost \
+            --router=traefik \
             --skip-cli \
             --skip-ai-config \
             --password-mode=random
+
+      - name: Bring up the router (full stack incl. Traefik)
+        # ROUTER_MODE=traefik is persisted to .operator.conf above; a full
+        # `start` brings the stack up with the traefik overlay (web/api gain
+        # routing labels, traefik joins the network). Idempotent if already up.
+        run: ./operator.sh start
 
       - name: Wait for platform health
         # api /health gates on postgres+garage healthy and the nomic model load;
@@ -89,6 +98,27 @@ jobs:
             sleep 10
           done
           echo "timed out (api=$ok_api web=$ok_web)"
+          exit 1
+
+      - name: Verify Traefik unified HTTP ingress (ADR-105)
+        # The whole point of ROUTER_MODE=traefik: one front door routes to both
+        # the SPA and the API. Prove http://localhost/ serves web and
+        # http://localhost/api/health reaches the API (with /api stripped).
+        run: |
+          deadline=$((SECONDS + 120))
+          while [ "$SECONDS" -lt "$deadline" ]; do
+            if curl -fsS http://localhost/ >/dev/null 2>&1 \
+               && curl -fsS http://localhost/api/health >/dev/null 2>&1; then
+              echo "::notice::Traefik ingress healthy — / → web, /api → api"
+              echo "--- /api/health via ingress ---"
+              curl -fsS http://localhost/api/health; echo
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "::error::Traefik unified ingress did not come up on :80"
+          docker ps -a
+          docker logs "$(docker ps -aqf name=traefik | head -1)" 2>&1 | tail -40 || true
           exit 1
 
       - name: Assert no placeholder secrets shipped (#502)

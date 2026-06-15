@@ -38,6 +38,7 @@ _Containers, deployment, backup, storage, networking_
 | [ADR-102](./infrastructure/ADR-102-portable-backup-and-restore-with-clone-merge-semantics.md) | Portable Backup and Restore with Clone/Merge Semantics | Accepted |
 | [ADR-103](./infrastructure/ADR-103-distribution-strategy-nomic-first-thin-appliance-with-app-store-tenancy.md) | Distribution strategy: nomic-first thin appliance with app-store tenancy | Proposed |
 | [ADR-104](./infrastructure/ADR-104-unified-provisioning-architecture-install-path-convergence-and-first-run-claim-protocol.md) | Unified provisioning architecture: install-path convergence and first-run claim protocol | Draft |
+| [ADR-105](./infrastructure/ADR-105-scenario-driven-tls-via-in-vm-traefik-router.md) | Scenario-driven TLS via an in-VM Traefik router | Draft |
 
 ## Database/Schema
 _Apache AGE, migrations, schema design, PostgreSQL_
@@ -89,6 +90,7 @@ _RBAC, OAuth, API keys, endpoint security_
 | [ADR-074](./authentication-security/ADR-074-platform-admin-role.md) | Platform Admin Role | Superseded |
 | [ADR-082](./authentication-security/ADR-082-user-scoping-artifact-ownership.md) | User Scoping and Artifact Ownership Model | Accepted |
 | [ADR-400](./authentication-security/ADR-400-operative-rbac-and-endpoint-security-baseline.md) | Operative RBAC and Endpoint Security Baseline | Accepted |
+| [ADR-401](./authentication-security/ADR-401-deterministic-security-enforcement-baseline.md) | Deterministic Security Enforcement Baseline | Draft |
 
 ## Query/Search
 _Pathfinding, projections, diversity, search_

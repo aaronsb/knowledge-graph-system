@@ -32,6 +32,10 @@ load_operator_config() {
     CONTAINER_SUFFIX="${CONTAINER_SUFFIX:-}"
     COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.yml}"
     IMAGE_SOURCE="${IMAGE_SOURCE:-local}"
+    # ADR-105: in-VM Traefik router. `none` (default) leaves the platform on
+    # direct per-service ports; `traefik` adds the unified HTTP ingress overlay.
+    ROUTER_MODE="${ROUTER_MODE:-none}"
+    export ROUTER_MODE
 
     # ADR-101: derive kg-api image tag via the shared helper (see
     # operator/lib/image-tag.sh for the single source of truth).
@@ -142,6 +146,11 @@ get_compose_cmd() {
     # Add SSL overlay if present
     if [ -f "$DOCKER_DIR/docker-compose.ssl.yml" ]; then
         cmd="$cmd -f $DOCKER_DIR/docker-compose.ssl.yml"
+    fi
+
+    # Add Traefik router overlay (ADR-105) when enabled
+    if [ "$ROUTER_MODE" = "traefik" ] && [ -f "$DOCKER_DIR/docker-compose.traefik.yml" ]; then
+        cmd="$cmd -f $DOCKER_DIR/docker-compose.traefik.yml"
     fi
 
     # Add dev overlay if in development mode
