@@ -140,8 +140,17 @@ start_application() {
         # SSL overlay (can apply to either mode)
         [ -f docker-compose.ssl.yml ] && compose_cmd="$compose_cmd -f docker-compose.ssl.yml"
 
-        # Traefik router overlay (ADR-105) when enabled
-        [ "$ROUTER_MODE" = "traefik" ] && [ -f docker-compose.traefik.yml ] && compose_cmd="$compose_cmd -f docker-compose.traefik.yml"
+        # Traefik router overlay (ADR-105) + TLS overlays selected by TLS_MODE.
+        if [ "$ROUTER_MODE" = "traefik" ] && [ -f docker-compose.traefik.yml ]; then
+            compose_cmd="$compose_cmd -f docker-compose.traefik.yml"
+            case "${TLS_MODE:-none}" in
+                selfsigned|manual|letsencrypt)
+                    [ -f docker-compose.traefik-tls.yml ] && compose_cmd="$compose_cmd -f docker-compose.traefik-tls.yml"
+                    [ "$TLS_MODE" = "manual" ]      && [ -f docker-compose.traefik-tls-manual.yml ]      && compose_cmd="$compose_cmd -f docker-compose.traefik-tls-manual.yml"
+                    [ "$TLS_MODE" = "letsencrypt" ] && [ -f docker-compose.traefik-tls-letsencrypt.yml ] && compose_cmd="$compose_cmd -f docker-compose.traefik-tls-letsencrypt.yml"
+                    ;;
+            esac
+        fi
 
         compose_cmd="$compose_cmd --env-file $ENV_FILE"
 

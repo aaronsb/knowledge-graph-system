@@ -1,0 +1,19 @@
+# Traefik dynamic configuration — manual cert mode (ADR-105).
+# Loaded by the file provider (--providers.file.directory=/etc/traefik/dynamic).
+#
+# Points the default TLS store at the operator-supplied cert+key mounted at
+# /etc/traefik/certs (from ${KG_CERT_DIR:-./certs}). Any tls=true router with no
+# certResolver — i.e. the kgweb-tls / kgapi-tls routers — serves this cert.
+#
+# Drop your PEM cert chain and private key here before `--tls=manual`:
+#   ${KG_CERT_DIR:-docker/certs}/tls.crt   (leaf + intermediates)
+#   ${KG_CERT_DIR:-docker/certs}/tls.key   (private key, keep 0600)
+tls:
+  stores:
+    default:
+      defaultCertificate:
+        certFile: /etc/traefik/certs/tls.crt
+        keyFile: /etc/traefik/certs/tls.key
+  certificates:
+    - certFile: /etc/traefik/certs/tls.crt
+      keyFile: /etc/traefik/certs/tls.key

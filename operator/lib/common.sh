@@ -36,6 +36,17 @@ load_operator_config() {
     # direct per-service ports; `traefik` adds the unified HTTP ingress overlay.
     ROUTER_MODE="${ROUTER_MODE:-none}"
     export ROUTER_MODE
+    # ADR-105: TLS termination mode for the in-VM router. `none` (default) keeps
+    # the HTTP-only ingress; `selfsigned` adds the websecure :443 entrypoint with
+    # Traefik's built-in self-signed cert. Only meaningful with ROUTER_MODE=traefik.
+    TLS_MODE="${TLS_MODE:-none}"
+    export TLS_MODE
+    # ADR-105: public base URL (scheme+host). Single source of public identity —
+    # the web overlay substitutes it into VITE_* so the OAuth redirect scheme
+    # matches what init registered. Empty default lets compose fall back to
+    # http://localhost; init writes the real value to both .env and .operator.conf.
+    EXTERNAL_URL="${EXTERNAL_URL:-}"
+    export EXTERNAL_URL
 
     # ADR-101: derive kg-api image tag via the shared helper (see
     # operator/lib/image-tag.sh for the single source of truth).
@@ -148,9 +159,21 @@ get_compose_cmd() {
         cmd="$cmd -f $DOCKER_DIR/docker-compose.ssl.yml"
     fi
 
-    # Add Traefik router overlay (ADR-105) when enabled
+    # Add Traefik router overlay (ADR-105) when enabled, plus the TLS overlays
+    # selected by TLS_MODE. selfsigned/manual/letsencrypt terminate TLS in-VM and
+    # share the websecure baseline (traefik-tls.yml); manual and letsencrypt add a
+    # cert-source overlay on top. `offload` and `none` stay HTTP-only at the router.
     if [ "$ROUTER_MODE" = "traefik" ] && [ -f "$DOCKER_DIR/docker-compose.traefik.yml" ]; then
         cmd="$cmd -f $DOCKER_DIR/docker-compose.traefik.yml"
+        case "$TLS_MODE" in
+            selfsigned|manual|letsencrypt)
+                [ -f "$DOCKER_DIR/docker-compose.traefik-tls.yml" ] && cmd="$cmd -f $DOCKER_DIR/docker-compose.traefik-tls.yml"
+                case "$TLS_MODE" in
+                    manual)      [ -f "$DOCKER_DIR/docker-compose.traefik-tls-manual.yml" ]      && cmd="$cmd -f $DOCKER_DIR/docker-compose.traefik-tls-manual.yml" ;;
+                    letsencrypt) [ -f "$DOCKER_DIR/docker-compose.traefik-tls-letsencrypt.yml" ] && cmd="$cmd -f $DOCKER_DIR/docker-compose.traefik-tls-letsencrypt.yml" ;;
+                esac
+                ;;
+        esac
     fi
 
     # Add dev overlay if in development mode

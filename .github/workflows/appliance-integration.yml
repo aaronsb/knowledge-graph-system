@@ -15,8 +15,9 @@ name: Appliance Integration (GHCR images)
 #     --image-source=ghcr — provisions per-instance secrets and brings the stack
 #     up healthy;
 #   * the #502 fail-closed secret assertions don't ship a placeholder;
-#   * the ADR-105 in-VM Traefik router (--router=traefik) serves a unified HTTP
-#     ingress: http://localhost/ -> web, http://localhost/api -> api.
+#   * the ADR-105 in-VM Traefik router (--router=traefik --tls=selfsigned) serves
+#     a unified HTTPS ingress: :80 redirects to :443, https://localhost/ -> web,
+#     https://localhost/api -> api (selfsigned default cert).
 #
 # Runs on the runner's native CPU, so it finishes in minutes and barely touches
 # the Actions minute budget. The qcow2/OVA is built locally and attached to
@@ -71,6 +72,7 @@ jobs:
             --gpu=cpu \
             --web-hostname=localhost \
             --router=traefik \
+            --tls=selfsigned \
             --skip-cli \
             --skip-ai-config \
             --password-mode=random
@@ -100,23 +102,33 @@ jobs:
           echo "timed out (api=$ok_api web=$ok_web)"
           exit 1
 
-      - name: Verify Traefik unified HTTP ingress (ADR-105)
-        # The whole point of ROUTER_MODE=traefik: one front door routes to both
-        # the SPA and the API. Prove http://localhost/ serves web and
-        # http://localhost/api/health reaches the API (with /api stripped).
+      - name: Verify Traefik unified HTTPS ingress (ADR-105, TLS=selfsigned)
+        # The whole point of ROUTER_MODE=traefik + TLS_MODE=selfsigned: one HTTPS
+        # front door routes to both the SPA and the API, and plain HTTP redirects
+        # to it. Prove all three: :80 -> 301 https, https:// serves web,
+        # https:///api/health reaches the API (/api stripped). -k: the selfsigned
+        # default cert is untrusted by design.
         run: |
           deadline=$((SECONDS + 120))
           while [ "$SECONDS" -lt "$deadline" ]; do
-            if curl -fsS http://localhost/ >/dev/null 2>&1 \
-               && curl -fsS http://localhost/api/health >/dev/null 2>&1; then
-              echo "::notice::Traefik ingress healthy — / → web, /api → api"
-              echo "--- /api/health via ingress ---"
-              curl -fsS http://localhost/api/health; echo
-              exit 0
+            code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost/ 2>/dev/null || echo 000)
+            if [ "$code" = "301" ] || [ "$code" = "308" ]; then
+              # Assert the :80 redirect actually targets https:// (not just any 3xx),
+              # then that https serves web and reaches the API. -k: selfsigned cert.
+              if curl -sI http://localhost/ | grep -qi '^location: https://' \
+                 && curl -fsSk https://localhost/ >/dev/null 2>&1 \
+                 && curl -fsSk https://localhost/api/health >/dev/null 2>&1; then
+                echo "::notice::Traefik HTTPS ingress healthy — :80 → $code https, / → web, /api → api"
+                echo "--- :80 redirect target ---"
+                curl -sI http://localhost/ | grep -i '^location:' || true
+                echo "--- /api/health via https ingress ---"
+                curl -fsSk https://localhost/api/health; echo
+                exit 0
+              fi
             fi
             sleep 5
           done
-          echo "::error::Traefik unified ingress did not come up on :80"
+          echo "::error::Traefik HTTPS ingress did not come up (last :80 code=$code)"
           docker ps -a
           docker logs "$(docker ps -aqf name=traefik | head -1)" 2>&1 | tail -40 || true
           exit 1

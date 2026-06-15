@@ -40,7 +40,10 @@ AI_PROVIDER=""
 AI_MODEL=""
 AI_KEY=""
 WEB_HOSTNAME=""
+EXTERNAL_URL=""
 ROUTER_MODE="none"
+TLS_MODE="none"
+LE_EMAIL=""
 SKIP_AI_CONFIG=false
 SKIP_CLI=false
 SHOW_HELP=false
@@ -89,9 +92,27 @@ ${BOLD}Web Configuration:${NC}
   --web-hostname HOST     Public hostname for web access (e.g., kg.example.com)
                           Used for OAuth redirect URIs and API URL
                           Default: localhost (for local dev) or localhost:3000
+  --external-url URL      Public base URL — scheme+host, no path (ADR-105).
+                          Single source of public identity: OAuth redirect and
+                          API URL derive from it. e.g. https://kg.example.com
+                          Default: http://<web-hostname> (https when --tls set).
+                          If you remap KG_HTTPS_PORT/KG_HTTP_PORT off 443/80,
+                          include the port here (e.g. https://host:8443).
   --router MODE           Ingress router (ADR-105):
                           • none (default): direct per-service ports
                           • traefik: unified HTTP ingress (/ -> web, /api -> api)
+  --tls MODE              TLS termination (ADR-105). selfsigned/manual/letsencrypt
+                          require --router=traefik; :80 redirects to :443:
+                          • none (default): HTTP only on :80
+                          • selfsigned: Traefik's built-in self-signed cert
+                          • manual: operator-supplied cert+key in docker/certs/
+                            (tls.crt + tls.key); cert issued off-box
+                          • letsencrypt: Traefik ACME (TLS-ALPN-01); needs --le-email
+                          • offload: HTTP in-VM, edge terminates TLS (EXTERNAL_URL
+                            scheme becomes https). Assumes an external reverse
+                            proxy does TLS + path routing (/ -> web, /api -> api);
+                            nothing in-box enforces it.
+  --le-email EMAIL        ACME account contact for --tls=letsencrypt
 
 ${BOLD}AI Configuration:${NC}
   --ai-provider PROVIDER  AI extraction provider (openai, anthropic, openrouter)
@@ -241,12 +262,36 @@ parse_args() {
                 WEB_HOSTNAME="$2"
                 shift 2
                 ;;
+            --external-url=*)
+                EXTERNAL_URL="${1#*=}"
+                shift
+                ;;
+            --external-url)
+                EXTERNAL_URL="$2"
+                shift 2
+                ;;
             --router=*)
                 ROUTER_MODE="${1#*=}"
                 shift
                 ;;
             --router)
                 ROUTER_MODE="$2"
+                shift 2
+                ;;
+            --tls=*)
+                TLS_MODE="${1#*=}"
+                shift
+                ;;
+            --tls)
+                TLS_MODE="$2"
+                shift 2
+                ;;
+            --le-email=*)
+                LE_EMAIL="${1#*=}"
+                shift
+                ;;
+            --le-email)
+                LE_EMAIL="$2"
                 shift 2
                 ;;
             *)
@@ -295,6 +340,42 @@ validate_config() {
     if [[ "$ROUTER_MODE" != "none" && "$ROUTER_MODE" != "traefik" ]]; then
         echo -e "${RED}✗ Invalid --router: $ROUTER_MODE (must be 'none' or 'traefik')${NC}"
         errors=$((errors + 1))
+    fi
+
+    # Validate TLS mode (ADR-105): none | selfsigned | manual | letsencrypt | offload.
+    case "$TLS_MODE" in
+        none|selfsigned|manual|letsencrypt|offload) ;;
+        *)
+            echo -e "${RED}✗ Invalid --tls: $TLS_MODE (must be none|selfsigned|manual|letsencrypt|offload)${NC}"
+            errors=$((errors + 1))
+            ;;
+    esac
+    # In-VM termination modes need the router. (offload terminates at the edge and
+    # none has no TLS, so neither requires traefik.)
+    if [[ "$TLS_MODE" == "selfsigned" || "$TLS_MODE" == "manual" || "$TLS_MODE" == "letsencrypt" ]]; then
+        if [[ "$ROUTER_MODE" != "traefik" ]]; then
+            echo -e "${RED}✗ --tls=$TLS_MODE requires --router=traefik${NC}"
+            errors=$((errors + 1))
+        fi
+    fi
+    # Let's Encrypt needs an ACME account email.
+    if [[ "$TLS_MODE" == "letsencrypt" && -z "$LE_EMAIL" ]]; then
+        echo -e "${RED}✗ --tls=letsencrypt requires --le-email (ACME account contact)${NC}"
+        errors=$((errors + 1))
+    fi
+
+    # Validate external URL (ADR-105): must be a scheme+host, no trailing path.
+    # The single source of public identity — OAuth redirect + API URL derive from it.
+    if [[ -n "$EXTERNAL_URL" ]]; then
+        if [[ "$EXTERNAL_URL" != http://* && "$EXTERNAL_URL" != https://* ]]; then
+            echo -e "${RED}✗ Invalid --external-url: $EXTERNAL_URL (must start with http:// or https://)${NC}"
+            errors=$((errors + 1))
+        elif [[ "${EXTERNAL_URL#*://}" == */* && "${EXTERNAL_URL#*://}" != */ ]]; then
+            # Strip scheme; a slash in the remainder (other than a sole trailing /)
+            # means a path was supplied — reject, we want scheme+host only.
+            echo -e "${RED}✗ Invalid --external-url: $EXTERNAL_URL (scheme+host only, no path)${NC}"
+            errors=$((errors + 1))
+        fi
     fi
 
     # Validate AI provider if specified
@@ -397,6 +478,12 @@ main() {
     if [ -n "$WEB_HOSTNAME" ]; then
         echo -e "  Web hostname:      ${BLUE}$WEB_HOSTNAME${NC}"
     fi
+    if [ -n "$EXTERNAL_URL" ]; then
+        echo -e "  External URL:      ${BLUE}$EXTERNAL_URL${NC}"
+    fi
+    if [ "$ROUTER_MODE" != "none" ]; then
+        echo -e "  Router:            ${BLUE}$ROUTER_MODE${NC} (tls: $TLS_MODE)"
+    fi
     if [ "$SKIP_AI_CONFIG" = true ]; then
         echo -e "  AI config:         ${YELLOW}skipped${NC}"
     elif [ -n "$AI_PROVIDER" ]; then
@@ -448,6 +535,20 @@ main() {
         fi
     fi
 
+    # Derive EXTERNAL_URL (ADR-105) if not supplied. Single source of public
+    # identity = scheme+host. Scheme follows TLS_MODE: plain HTTP when the
+    # appliance serves :80 only, https once Traefik terminates TLS. An explicit
+    # --external-url always wins (e.g. behind an offloading edge).
+    if [ -z "$EXTERNAL_URL" ]; then
+        if [ "$TLS_MODE" != "none" ]; then
+            EXTERNAL_URL="https://${WEB_HOSTNAME}"
+        else
+            EXTERNAL_URL="http://${WEB_HOSTNAME}"
+        fi
+    fi
+    # Normalize: strip any trailing slash so "${EXTERNAL_URL}/callback" is clean.
+    EXTERNAL_URL="${EXTERNAL_URL%/}"
+
     # Add WEB_HOSTNAME to .env
     if ! grep -q '^WEB_HOSTNAME=' "$PROJECT_ROOT/.env" 2>/dev/null; then
         echo "" >> "$PROJECT_ROOT/.env"
@@ -457,8 +558,27 @@ main() {
         sed -i "s|^WEB_HOSTNAME=.*|WEB_HOSTNAME=$WEB_HOSTNAME|" "$PROJECT_ROOT/.env"
     fi
 
+    # Add EXTERNAL_URL to .env (consumed by the web overlay for VITE_* substitution)
+    if ! grep -q '^EXTERNAL_URL=' "$PROJECT_ROOT/.env" 2>/dev/null; then
+        echo "# Public base URL (scheme+host) — OAuth redirect + API URL derive from it" >> "$PROJECT_ROOT/.env"
+        echo "EXTERNAL_URL=$EXTERNAL_URL" >> "$PROJECT_ROOT/.env"
+    else
+        sed -i "s|^EXTERNAL_URL=.*|EXTERNAL_URL=$EXTERNAL_URL|" "$PROJECT_ROOT/.env"
+    fi
+
+    # Add LE_EMAIL to .env when set (consumed by the letsencrypt overlay's ACME resolver)
+    if [ -n "$LE_EMAIL" ]; then
+        if ! grep -q '^LE_EMAIL=' "$PROJECT_ROOT/.env" 2>/dev/null; then
+            echo "# Let's Encrypt ACME account contact (ADR-105 letsencrypt mode)" >> "$PROJECT_ROOT/.env"
+            echo "LE_EMAIL=$LE_EMAIL" >> "$PROJECT_ROOT/.env"
+        else
+            sed -i "s|^LE_EMAIL=.*|LE_EMAIL=$LE_EMAIL|" "$PROJECT_ROOT/.env"
+        fi
+    fi
+
     echo -e "${GREEN}✓ Secrets generated${NC}"
     echo -e "${GREEN}✓ Web hostname: $WEB_HOSTNAME${NC}"
+    echo -e "${GREEN}✓ External URL: $EXTERNAL_URL${NC}"
     echo ""
 
     # -------------------------------------------------------------------------
@@ -475,6 +595,8 @@ CONTAINER_SUFFIX=$CONTAINER_SUFFIX
 COMPOSE_FILE=$COMPOSE_FILE
 IMAGE_SOURCE=$IMAGE_SOURCE
 ROUTER_MODE=$ROUTER_MODE
+TLS_MODE=$TLS_MODE
+EXTERNAL_URL=$EXTERNAL_URL
 INITIALIZED_AT=$(date -Iseconds)
 EOF
 
@@ -510,9 +632,13 @@ EOF
         echo -e "${GREEN}✓ Open self-registration disabled (production)${NC}"
     fi
 
-    # Register OAuth client for web app with configured hostname
+    # Register OAuth client for web app. Redirect URI derives from EXTERNAL_URL
+    # (scheme+host) so the registered scheme matches what the web app sends —
+    # under TLS the scheme is https, plain HTTP it is http. (ADR-105: this is the
+    # fix for the latent mismatch where the prod web env emitted https:// while
+    # init registered http://.)
     local POSTGRES_CONTAINER=$(get_container_name postgres)
-    local REDIRECT_URI="http://${WEB_HOSTNAME}/callback"
+    local REDIRECT_URI="${EXTERNAL_URL}/callback"
     echo -e "${BLUE}  Registering OAuth client (kg-web)...${NC}"
     docker exec "$POSTGRES_CONTAINER" psql -U ${POSTGRES_USER:-admin} -d ${POSTGRES_DB:-knowledge_graph} -c \
         "INSERT INTO kg_auth.oauth_clients (client_id, client_name, client_type, redirect_uris, grant_types, scopes)
