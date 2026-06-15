@@ -4,7 +4,7 @@
 Uses Python's ast module to extract module, class, and function docstrings
 without importing the code (no dependency on runtime packages).
 
-Output: docs/reference/fuse/README.md
+Output: docs/reference/fuse.md
 """
 
 import ast
@@ -18,7 +18,7 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 FUSE_ROOT = SCRIPT_DIR.parent
 PROJECT_ROOT = FUSE_ROOT.parent
 SOURCE_DIR = FUSE_ROOT / "kg_fuse"
-OUTPUT_DIR = PROJECT_ROOT / "docs" / "reference" / "fuse"
+OUTPUT_DIR = PROJECT_ROOT / "docs" / "reference"
 
 # Modules to skip in docs
 SKIP_MODULES = {"__init__", "__pycache__"}
@@ -196,7 +196,7 @@ def main():
 
     # Write output (smart writer: only if changed)
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    output_file = OUTPUT_DIR / "README.md"
+    output_file = OUTPUT_DIR / "fuse.md"
 
     if output_file.exists() and output_file.read_text() == content:
         print(f"  {output_file} (unchanged)")

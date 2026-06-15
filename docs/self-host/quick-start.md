@@ -1,0 +1,298 @@
+# Quick Start
+
+This page covers installing Kappa Graph on a server and connecting client tools to it. Choose your path:
+
+| Goal | Section |
+|------|---------|
+| Install the platform on a Linux server | [Platform Installation](#platform-installation) |
+| Install the CLI or MCP client | [Client Tools](#client-tools) |
+| Set up a development environment | [Development Setup](#development-setup) |
+
+---
+
+## Platform Installation
+
+One command installs Kappa Graph on a Linux server:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/aaronsb/knowledge-graph-system/main/install.sh | bash
+```
+
+The interactive installer:
+
+- Installs Docker if not present
+- Downloads container images from GHCR
+- Generates infrastructure secrets
+- Configures TLS (optional)
+- Creates the admin user
+
+### Headless installation
+
+For scripted or CI deployments, pass flags directly:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/aaronsb/knowledge-graph-system/main/install.sh | bash -s -- \
+  --hostname kg.example.com \
+  --ssl letsencrypt \
+  --ssl-email admin@example.com \
+  --ai-provider openai \
+  --ai-key "$OPENAI_API_KEY"
+```
+
+To configure AI credentials after installation, omit the AI flags:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/aaronsb/knowledge-graph-system/main/install.sh | bash -s -- \
+  --hostname 192.168.1.100 \
+  --skip-ai
+```
+
+**Installer flags:**
+
+| Flag | Values | Notes |
+|------|--------|-------|
+| `--hostname` | hostname or IP | Required for headless mode |
+| `--ssl` | `offload`, `selfsigned`, `letsencrypt`, `manual` | Defaults to self-signed |
+| `--ssl-email` | email address | Required for `letsencrypt` |
+| `--ai-provider` | `openai`, `anthropic`, `ollama` | |
+| `--ai-key` | API key string | |
+| `--skip-ai` | — | Configure AI provider after install |
+| `--gpu` | `auto`, `nvidia`, `amd`, `cpu` | |
+| `--admin-password` | password string | Auto-generated if omitted |
+
+### Verify the installation
+
+After the installer completes, check that all containers are healthy:
+
+```bash
+cd ~/knowledge-graph   # or your install directory
+./operator.sh status
+```
+
+Expected output:
+
+```
+Container Status:
+knowledge-graph-postgres   Up (healthy)
+knowledge-graph-garage     Up (healthy)
+kg-api                     Up (healthy)
+kg-web                     Up (healthy)
+kg-operator                Up
+```
+
+In production overlay mode (`--container-prefix=kg`) the infrastructure containers are named `kg-postgres` and `kg-garage`. In development mode, the application containers are `kg-api-dev` and `kg-web-dev`.
+
+Access points after a successful install:
+
+- **Web UI**: `https://your-hostname` (or `http://localhost:3000` in dev mode)
+- **API docs**: `https://your-hostname/api/docs`
+- **Admin username**: `admin` (password shown at end of install, or set via `--admin-password`)
+
+---
+
+## Managing the Platform
+
+`operator.sh` is the primary management tool after installation.
+
+```bash
+# Daily operations
+./operator.sh start              # Start all containers
+./operator.sh stop               # Stop all containers
+./operator.sh status             # Show container health
+./operator.sh restart api        # Restart one service
+
+# Logs
+./operator.sh logs api           # Last 100 lines of API logs
+./operator.sh logs api -f        # Follow API logs
+./operator.sh logs web           # Web container logs
+
+# Updates
+./operator.sh update             # Pull latest images (no restart)
+./operator.sh update operator    # Pull a specific image
+./operator.sh upgrade            # Pull, migrate, and restart
+
+# Maintenance
+./operator.sh teardown           # Remove containers (data volumes kept)
+./operator.sh teardown --full    # Remove containers and volumes
+```
+
+**Configuration shortcuts:**
+
+```bash
+./operator.sh shell              # Open configuration shell (configure.py)
+./operator.sh admin              # Manage the admin user
+./operator.sh ai-provider openai # Switch AI provider
+./operator.sh api-key openai     # Store a provider API key
+./operator.sh embedding          # Configure embeddings
+./operator.sh query 'SQL'        # Run a SQL query against PostgreSQL
+```
+
+Inside the configuration shell (`./operator.sh shell`):
+
+```bash
+configure.py status              # Show current configuration
+configure.py ai-provider openai  # Switch AI provider
+configure.py api-key openai      # Store a provider API key
+configure.py oauth --list        # List OAuth clients
+```
+
+---
+
+## Development Setup
+
+Clone the repository and run the init wizard:
+
+```bash
+git clone https://github.com/aaronsb/knowledge-graph-system.git
+cd knowledge-graph-system
+./operator.sh init
+```
+
+The wizard:
+
+- Generates infrastructure secrets (`.env`)
+- Detects your GPU (NVIDIA, AMD, or CPU)
+- Starts all containers
+- Prompts for admin password and AI provider
+
+For non-interactive development setup:
+
+```bash
+./operator.sh init --headless \
+  --container-mode dev \
+  --gpu auto \
+  --skip-ai-config
+```
+
+Do not edit `.env` manually — it is generated by `./operator.sh init` and managed by the operator.
+
+---
+
+## Client Tools
+
+Kappa Graph ships three client tools: the `kg` CLI, the MCP server (bundled with the CLI), and the optional FUSE filesystem driver.
+
+### All-in-one installer
+
+The client installer detects your OS, installs prerequisites, and configures authentication:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/aaronsb/knowledge-graph-system/main/client-manager.sh | bash
+```
+
+It prompts for the API URL and credentials during setup.
+
+**To upgrade or remove later:**
+
+```bash
+./client-manager.sh --upgrade
+./client-manager.sh --uninstall
+```
+
+### Manual installation
+
+**kg CLI (requires Node.js ≥ 20.12.0):**
+
+```bash
+npm install -g @aaronsb/kg-cli
+```
+
+**FUSE driver (optional):**
+
+```bash
+pipx install kg-fuse
+```
+
+**Manual upgrade:**
+
+```bash
+npm update -g @aaronsb/kg-cli
+pipx upgrade kg-fuse
+```
+
+### Configure the CLI
+
+After installation, point the CLI at your Kappa Graph instance and authenticate:
+
+```bash
+kg config set api_url https://kg.example.com/api
+kg login
+kg health
+```
+
+Configuration is stored at `~/.config/kg/config.json`. The FUSE driver reads credentials from the same file.
+
+### CLI quick reference
+
+```bash
+kg health              # Check API connection
+kg search "query"      # Search concepts
+kg ingest file.pdf     # Ingest a document
+kg --help              # Full command list
+```
+
+### MCP server
+
+The MCP server is included with the CLI. To configure it for Claude Desktop:
+
+```bash
+kg mcp-config          # Generate Claude Desktop config snippet
+kg oauth create-mcp    # Create an OAuth client for the MCP server
+```
+
+### FUSE filesystem
+
+```bash
+kg-fuse init ~/Knowledge   # First-time setup
+kg-fuse mount              # Start all configured mounts
+ls ~/Knowledge/            # Browse ontologies
+kg-fuse status             # Check mount status
+```
+
+See [Use the FUSE Drive](../how-to/fuse.md) for full setup details.
+
+---
+
+## Troubleshooting
+
+**`kg`: command not found after installation**
+
+Ensure `~/.local/bin` is in your PATH:
+
+```bash
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+Add this line to `~/.bashrc` or `~/.zshrc` for persistence.
+
+**Authentication errors**
+
+```bash
+kg logout
+kg login
+```
+
+**Wrong API URL**
+
+```bash
+kg config get api_url
+curl -s https://kg.example.com/api/health
+```
+
+**Platform containers not starting**
+
+```bash
+./operator.sh status
+./operator.sh logs api
+```
+
+For deeper platform issues, see [Troubleshooting](troubleshooting.md).
+
+---
+
+## What's Next?
+
+- [Production Deployment](production.md) — TLS, scaling, monitoring
+- [Configuration Reference](configuration.md) — All settings
+- [Upgrading](upgrading.md) — Version updates
+- [Troubleshooting](troubleshooting.md) — Diagnostics and fixes

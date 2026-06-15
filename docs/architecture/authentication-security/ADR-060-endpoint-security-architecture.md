@@ -605,8 +605,8 @@ async def get_status():
 
 ### Our Implementation
 
-- [API Auth Audit Summary](../../testing/API_AUTH_AUDIT_SUMMARY.md) - Security findings
-- [API Auth Testing Research](../../testing/API_AUTH_TESTING_RESEARCH.md) - Testing patterns
+- API auth audit summary — point-in-time security findings, superseded by the current auth test suite
+- API auth testing patterns — now covered by the auth test suite
 - Audit Tool: `scripts/development/audit-api-auth.sh`
 
 ### Related ADRs

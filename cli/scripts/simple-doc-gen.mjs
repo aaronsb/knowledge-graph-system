@@ -150,8 +150,8 @@ async function main() {
     index.push('');
   });
 
-  writer.write(path.join(outDir, 'README.md'), index.join('\n'));
-  console.log(`✅ Generated: docs/reference/cli/README.md`);
+  writer.write(path.join(__dirname, '../../docs/reference/cli.md'), index.join('\n'));
+  console.log(`✅ Generated: docs/reference/cli.md`);
 
   // Individual command files in commands/ subdirectory
   const commandsDir = path.join(outDir, 'commands');
