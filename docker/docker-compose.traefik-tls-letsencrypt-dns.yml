@@ -61,7 +61,13 @@ services:
     labels:
       # Attach the ACME resolver to the websecure router defined in traefik-tls.yml.
       - traefik.http.routers.kgweb-tls.tls.certresolver=le
+      # Pin the cert hostname. The router rule is host-agnostic PathPrefix(`/`), so
+      # without an explicit domain Traefik has nothing to request a cert for and
+      # ACME never fires (acme.json stays empty). TLS_DOMAIN is the bare host the
+      # operator derived from EXTERNAL_URL.
+      - traefik.http.routers.kgweb-tls.tls.domains[0].main=${TLS_DOMAIN}
 
   api:
     labels:
       - traefik.http.routers.kgapi-tls.tls.certresolver=le
+      - traefik.http.routers.kgapi-tls.tls.domains[0].main=${TLS_DOMAIN}
