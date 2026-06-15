@@ -139,6 +139,21 @@ VC_ARGS=(
     --run-command 'apt-get update'
     --install "${DOCKER_PKGS}"
     --run-command 'systemctl enable docker qemu-guest-agent'
+    # Keep dockerd serving the legacy API version. Docker Engine >=25 raised its
+    # minimum served API to 1.40, but Traefik v3's Docker provider hard-codes
+    # 1.24 (and ignores DOCKER_API_VERSION), so it gets rejected. DOCKER_MIN_API_VERSION
+    # tells the daemon to keep accepting the old API. (Discovered on the cube deploy.)
+    --mkdir /etc/systemd/system/docker.service.d
+    --run-command 'printf "[Service]\nEnvironment=\"DOCKER_MIN_API_VERSION=1.24\"\n" > /etc/systemd/system/docker.service.d/api-compat.conf'
+    # --- MAC-agnostic networking ---
+    # cloud-init, given no network-config in the seed, generates a netplan that
+    # PINS the NIC to its first-boot MAC. Changing the MAC later (e.g. to claim a
+    # DHCP reservation) then leaves the NIC unconfigured. Disable cloud-init's
+    # network rendering and ship a static DHCP netplan matched by NAME, not MAC,
+    # so the image survives a MAC change. (Discovered on the cube deploy.)
+    --run-command 'printf "network: {config: disabled}\n" > /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg'
+    --run-command 'printf "network:\n  version: 2\n  ethernets:\n    primary:\n      match:\n        name: \"e*\"\n      dhcp4: true\n" > /etc/netplan/50-cloud-init.yaml'
+    --run-command 'chmod 600 /etc/netplan/50-cloud-init.yaml'
     # --- stage the repo at /opt/kg (git archive, prefix kg/) ---
     --upload "${REPO_TAR}:/tmp/kg-repo.tar"
     --run-command 'tar -xf /tmp/kg-repo.tar -C /opt && rm -f /tmp/kg-repo.tar'
