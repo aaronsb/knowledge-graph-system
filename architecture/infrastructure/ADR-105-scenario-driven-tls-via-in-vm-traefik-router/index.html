@@ -7614,7 +7614,7 @@
     
   
   
-    <span class="md-status md-status--Draft"></span>
+    <span class="md-status md-status--Accepted"></span>
   
 
   
@@ -7639,7 +7639,7 @@
     
   
   
-    <span class="md-status md-status--Draft"></span>
+    <span class="md-status md-status--Accepted"></span>
   
 
   
@@ -7946,6 +7946,23 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Migration Note (non-binding sketch)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#implementation-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation status
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -11201,6 +11218,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Migration Note (non-binding sketch)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#implementation-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation status
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
     </ul>
@@ -11543,8 +11577,32 @@ plain HTTP but must still emit <code>https</code> URLs. The contract makes that 
 <li>Deploy cube as <strong>private / manual</strong> (cert issued off-box on north; no DNS key
    on cube) — the first real exercise, and a faithful rehearsal of <strong>proxied</strong>.</li>
 </ol>
-<p><em>This revises the acme.sh/nginx mechanism of this same ADR (still Draft,
-unmerged); the decision's thesis is unchanged.</em></p>
+<p><em>This revises the acme.sh/nginx mechanism of this same ADR; the decision's
+thesis is unchanged.</em></p>
+<h3 id="implementation-status">Implementation status</h3>
+<ul>
+<li><strong>Step 1 — done</strong> (PR #517): in-VM Traefik HTTP router, <code>ROUTER_MODE=traefik</code>,
+  <code>docker-compose.traefik.yml</code> + <code>nginx.router.conf</code>; appliance CI asserts the
+  unified ingress.</li>
+<li><strong>Step 4 — done</strong> (PR2 commit A): <code>EXTERNAL_URL</code> (scheme+host) as the single
+  source of public identity; OAuth redirect + web <code>VITE_*</code> derive from it, fixing
+  the http/https registration mismatch (was <code>headless-init.sh:515</code>).</li>
+<li><strong>Steps 3, 5 — done</strong> (PR2 commits B, C): <code>TLS_MODE</code> = <code>none</code> / <code>selfsigned</code> /
+  <code>manual</code> / <code>letsencrypt</code> / <code>offload</code>. <code>selfsigned</code> = Traefik default cert;
+  <code>manual</code> = file provider over an operator-supplied cert (<code>docker/certs/</code>);
+  <code>letsencrypt</code> = ACME TLS-ALPN-01 (HTTP-01 / DNS-01-via-lego documented as
+  opt-in); <code>offload</code> = HTTP in-VM + <code>EXTERNAL_URL=https</code>. <code>operator/lib/recert.sh</code>
+  is the thin verify/no-op dispatcher. Appliance CI exercises the <code>selfsigned</code>
+  HTTPS path end-to-end (<code>:80</code>→<code>:443</code> redirect + <code>https</code> web/api).</li>
+<li><strong>Steps 2, 6 — deferred</strong>: the <code>install.sh</code> SECTION 9 convergence and a single
+  scenario→config generator are not yet folded in; the modes ship as composable
+  Traefik overlays selected by <code>TLS_MODE</code> for now.</li>
+<li><strong>Step 8 — pending</strong>: cube deploy as <strong>private / manual</strong> (cert issued off-box
+  on <code>north</code>; no DNS key on cube).</li>
+</ul>
+<p>DNS-01 on the appliance stays <strong>opt-in, private-only</strong> (§7): the wired Let's
+Encrypt default is secretless TLS-ALPN-01, and cube uses <code>manual</code> precisely so no
+DNS credential ever lands on the box.</p>
 
 
 
