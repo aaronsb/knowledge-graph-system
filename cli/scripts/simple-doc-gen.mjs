@@ -129,6 +129,10 @@ async function main() {
 
   // Generate index
   const index = [];
+  // Documentation-catalog frontmatter (ADR-087). Emitted here, not hand-injected,
+  // because this page is overwritten on every docs build. Stripped from GitHub
+  // Pages (mkdocs ignores unknown keys). domain=ui (CLI), mode=reference.
+  index.push('---\nid: 7.R.03\ndomain: ui\nmode: reference\n---\n');
   index.push('# CLI Command Reference (Auto-Generated)\n');
   index.push('> **Auto-Generated Documentation**');
   index.push('> ');
@@ -150,8 +154,8 @@ async function main() {
     index.push('');
   });
 
-  writer.write(path.join(outDir, 'README.md'), index.join('\n'));
-  console.log(`✅ Generated: docs/reference/cli/README.md`);
+  writer.write(path.join(__dirname, '../../docs/reference/cli.md'), index.join('\n'));
+  console.log(`✅ Generated: docs/reference/cli.md`);
 
   // Individual command files in commands/ subdirectory
   const commandsDir = path.join(outDir, 'commands');

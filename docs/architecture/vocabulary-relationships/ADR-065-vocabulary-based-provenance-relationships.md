@@ -122,7 +122,7 @@ Through successive design decisions—vocabulary expansion-consolidation (ADR-05
 
 **What we're actually building:** A vector-augmented knowledge graph—property graph storage with query-time semantic computation
 
-> **Terminology note:** This is NOT a "tensor network" in the quantum physics/ML sense (no tensor contractions, no GPU tensor operations). We perform **vector operations** (dot products, cosine similarity, projections) on embeddings. The term "vector-augmented" is more accurate than "tensor network." See [RECURSIVE_UPSERT_ARCHITECTURE.md](../../reference/RECURSIVE_UPSERT_ARCHITECTURE.md) for detailed terminology.
+> **Terminology note:** This is NOT a "tensor network" in the quantum physics/ML sense (no tensor contractions, no GPU tensor operations). We perform **vector operations** (dot products, cosine similarity, projections) on embeddings. The term "vector-augmented" is more accurate than "tensor network." See [Recursive Upsert](../../explanation/recursive-upsert.md) for detailed terminology.
 
 ### The Shift from Boolean to Probabilistic
 

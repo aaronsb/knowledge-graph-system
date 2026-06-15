@@ -187,6 +187,10 @@ async function main() {
 
   // Generate index
   const index = [];
+  // Documentation-catalog frontmatter (ADR-087). Emitted here, not hand-injected,
+  // because this page is overwritten on every docs build. domain=ui (MCP),
+  // mode=reference.
+  index.push('---\nid: 7.R.04\ndomain: ui\nmode: reference\n---\n');
   index.push('# MCP Server Tool Reference (Auto-Generated)\n');
   index.push('> **Auto-Generated Documentation**');
   index.push('> ');
@@ -214,8 +218,8 @@ async function main() {
   });
 
   // Write index
-  writer.write(path.join(outDir, 'README.md'), index.join('\n'));
-  console.log(`✅ Generated: docs/reference/mcp/README.md`);
+  writer.write(path.join(__dirname, '../../docs/reference/mcp.md'), index.join('\n'));
+  console.log(`✅ Generated: docs/reference/mcp.md`);
 
   // Generate individual tool files in tools/ subdirectory
   const toolsDir = path.join(outDir, 'tools');

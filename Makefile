@@ -109,7 +109,7 @@ test-fuse: ## Run FUSE driver test suite
 
 ##@ Documentation
 
-docs: docs-cli docs-mcp docs-fuse ## Generate all reference docs
+docs: docs-cli docs-mcp docs-fuse docs-schema ## Generate all reference docs
 
 docs-cli: ## Generate CLI command reference
 	@cd cli && npm run docs:cli
@@ -119,6 +119,9 @@ docs-mcp: ## Generate MCP server tool reference
 
 docs-fuse: ## Generate FUSE driver API reference (markdown)
 	@python3 fuse/scripts/generate-fuse-docs.py
+
+docs-schema: ## Generate database schema reference (markdown)
+	@python3 schema/scripts/generate-schema-docs.py
 
 docs-site: ## Build documentation site (MkDocs)
 	@./site/scripts/docs build

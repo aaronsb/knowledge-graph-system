@@ -4,7 +4,7 @@
 Uses Python's ast module to extract module, class, and function docstrings
 without importing the code (no dependency on runtime packages).
 
-Output: docs/reference/fuse/README.md
+Output: docs/reference/fuse.md
 """
 
 import ast
@@ -18,7 +18,7 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 FUSE_ROOT = SCRIPT_DIR.parent
 PROJECT_ROOT = FUSE_ROOT.parent
 SOURCE_DIR = FUSE_ROOT / "kg_fuse"
-OUTPUT_DIR = PROJECT_ROOT / "docs" / "reference" / "fuse"
+OUTPUT_DIR = PROJECT_ROOT / "docs" / "reference"
 
 # Modules to skip in docs
 SKIP_MODULES = {"__init__", "__pycache__"}
@@ -103,6 +103,15 @@ def generate_markdown(modules: list[dict]) -> str:
     """Generate a single markdown document from extracted module data."""
     lines = []
 
+    # Documentation-catalog frontmatter (ADR-087). Emitted here, not hand-injected,
+    # because this page is overwritten on every docs build. domain=ui (FUSE),
+    # mode=reference. Stripped from GitHub Pages (mkdocs ignores unknown keys).
+    lines.append("---")
+    lines.append("id: 7.R.05")
+    lines.append("domain: ui")
+    lines.append("mode: reference")
+    lines.append("---")
+    lines.append("")
     lines.append("# FUSE Driver API Reference (Auto-Generated)")
     lines.append("")
     lines.append("> **Auto-Generated Documentation**")
@@ -196,7 +205,7 @@ def main():
 
     # Write output (smart writer: only if changed)
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    output_file = OUTPUT_DIR / "README.md"
+    output_file = OUTPUT_DIR / "fuse.md"
 
     if output_file.exists() and output_file.read_text() == content:
         print(f"  {output_file} (unchanged)")
