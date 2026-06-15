@@ -1,6 +1,9 @@
 # Documentation Consolidation Spec
 
-Status: draft intermediary spec — not an ADR. Awaiting owner review.
+Status: approved intermediary spec — not an ADR. Owner ratified 2026-06-15.
+
+**Ratified decisions (§7):** cut depth 69.5% approved (Q0); "Knowledge Graph System" → "Kappa Graph" rename folded into this pass, kg-* identifiers unchanged (Q1, closes task #8); schema-reference generator built this pass (Q4); tracked `endpoint-security-audit-2026-05-28.md` is cut (untracked 06-09 audit untouched). Defaults for the rest: accuracy bugs fixed during the merge (Q5); `ARCHITECTURE_OVERVIEW`/`OPERATOR_ARCHITECTURE` dropped from docs/ nav (Q3); no URL redirects (Q2); unreferenced media pruned in-pass (Q6); research sources deleted only after confirming ADR rationale exists (Q7).
+
 Scope: all 154 tracked markdown files under `docs/` except `docs/architecture/`, plus the three repo-root community files. Untracked paths are out of scope.
 Branch: `docs/refactor-spec-and-rewrite`. Produced by a 21-agent audit (14 section readers + 5 cross-cutting sweeps), synthesized, then adversarially reviewed; the P0/P1 corrections from that review are folded in here.
 
@@ -81,7 +84,7 @@ nav:
       - MCP Tools: reference/mcp.md                    # GENERATED (wireable today)
       - "MCP Session Context": reference/mcp-session-context.md
       - FUSE Driver: reference/fuse.md                 # GENERATED (generator exists, unwired in CI)
-      - "Database Schema": reference/schema.md         # CONDITIONAL — generator is net-new (§7 Q4)
+      - "Database Schema": reference/schema.md         # GENERATED — generator built this pass (§7 Q4)
       - "Cypher Patterns": reference/cypher.md
       - "GraphProgram Specification": reference/graph-program-spec.md
       - "GraphProgram Validation": reference/graph-program-validation.md
