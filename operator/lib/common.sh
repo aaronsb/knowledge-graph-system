@@ -36,6 +36,12 @@ load_operator_config() {
     # direct per-service ports; `traefik` adds the unified HTTP ingress overlay.
     ROUTER_MODE="${ROUTER_MODE:-none}"
     export ROUTER_MODE
+    # ADR-105: public base URL (scheme+host). Single source of public identity —
+    # the web overlay substitutes it into VITE_* so the OAuth redirect scheme
+    # matches what init registered. Empty default lets compose fall back to
+    # http://localhost; init writes the real value to both .env and .operator.conf.
+    EXTERNAL_URL="${EXTERNAL_URL:-}"
+    export EXTERNAL_URL
 
     # ADR-101: derive kg-api image tag via the shared helper (see
     # operator/lib/image-tag.sh for the single source of truth).

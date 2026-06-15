@@ -40,6 +40,7 @@ AI_PROVIDER=""
 AI_MODEL=""
 AI_KEY=""
 WEB_HOSTNAME=""
+EXTERNAL_URL=""
 ROUTER_MODE="none"
 SKIP_AI_CONFIG=false
 SKIP_CLI=false
@@ -89,6 +90,10 @@ ${BOLD}Web Configuration:${NC}
   --web-hostname HOST     Public hostname for web access (e.g., kg.example.com)
                           Used for OAuth redirect URIs and API URL
                           Default: localhost (for local dev) or localhost:3000
+  --external-url URL      Public base URL — scheme+host, no path (ADR-105).
+                          Single source of public identity: OAuth redirect and
+                          API URL derive from it. e.g. https://kg.example.com
+                          Default: http://<web-hostname>
   --router MODE           Ingress router (ADR-105):
                           • none (default): direct per-service ports
                           • traefik: unified HTTP ingress (/ -> web, /api -> api)
@@ -241,6 +246,14 @@ parse_args() {
                 WEB_HOSTNAME="$2"
                 shift 2
                 ;;
+            --external-url=*)
+                EXTERNAL_URL="${1#*=}"
+                shift
+                ;;
+            --external-url)
+                EXTERNAL_URL="$2"
+                shift 2
+                ;;
             --router=*)
                 ROUTER_MODE="${1#*=}"
                 shift
@@ -295,6 +308,20 @@ validate_config() {
     if [[ "$ROUTER_MODE" != "none" && "$ROUTER_MODE" != "traefik" ]]; then
         echo -e "${RED}✗ Invalid --router: $ROUTER_MODE (must be 'none' or 'traefik')${NC}"
         errors=$((errors + 1))
+    fi
+
+    # Validate external URL (ADR-105): must be a scheme+host, no trailing path.
+    # The single source of public identity — OAuth redirect + API URL derive from it.
+    if [[ -n "$EXTERNAL_URL" ]]; then
+        if [[ "$EXTERNAL_URL" != http://* && "$EXTERNAL_URL" != https://* ]]; then
+            echo -e "${RED}✗ Invalid --external-url: $EXTERNAL_URL (must start with http:// or https://)${NC}"
+            errors=$((errors + 1))
+        elif [[ "${EXTERNAL_URL#*://}" == */* && "${EXTERNAL_URL#*://}" != */ ]]; then
+            # Strip scheme; a slash in the remainder (other than a sole trailing /)
+            # means a path was supplied — reject, we want scheme+host only.
+            echo -e "${RED}✗ Invalid --external-url: $EXTERNAL_URL (scheme+host only, no path)${NC}"
+            errors=$((errors + 1))
+        fi
     fi
 
     # Validate AI provider if specified
@@ -397,6 +424,9 @@ main() {
     if [ -n "$WEB_HOSTNAME" ]; then
         echo -e "  Web hostname:      ${BLUE}$WEB_HOSTNAME${NC}"
     fi
+    if [ -n "$EXTERNAL_URL" ]; then
+        echo -e "  External URL:      ${BLUE}$EXTERNAL_URL${NC}"
+    fi
     if [ "$SKIP_AI_CONFIG" = true ]; then
         echo -e "  AI config:         ${YELLOW}skipped${NC}"
     elif [ -n "$AI_PROVIDER" ]; then
@@ -448,6 +478,16 @@ main() {
         fi
     fi
 
+    # Derive EXTERNAL_URL (ADR-105) if not supplied. Single source of public
+    # identity = scheme+host. Until the TLS path lands (PR2-B), the appliance
+    # serves plain HTTP, so the default scheme is http://. Operators terminating
+    # TLS (selfsigned/manual/letsencrypt/offload) pass --external-url=https://…
+    if [ -z "$EXTERNAL_URL" ]; then
+        EXTERNAL_URL="http://${WEB_HOSTNAME}"
+    fi
+    # Normalize: strip any trailing slash so "${EXTERNAL_URL}/callback" is clean.
+    EXTERNAL_URL="${EXTERNAL_URL%/}"
+
     # Add WEB_HOSTNAME to .env
     if ! grep -q '^WEB_HOSTNAME=' "$PROJECT_ROOT/.env" 2>/dev/null; then
         echo "" >> "$PROJECT_ROOT/.env"
@@ -457,8 +497,17 @@ main() {
         sed -i "s|^WEB_HOSTNAME=.*|WEB_HOSTNAME=$WEB_HOSTNAME|" "$PROJECT_ROOT/.env"
     fi
 
+    # Add EXTERNAL_URL to .env (consumed by the web overlay for VITE_* substitution)
+    if ! grep -q '^EXTERNAL_URL=' "$PROJECT_ROOT/.env" 2>/dev/null; then
+        echo "# Public base URL (scheme+host) — OAuth redirect + API URL derive from it" >> "$PROJECT_ROOT/.env"
+        echo "EXTERNAL_URL=$EXTERNAL_URL" >> "$PROJECT_ROOT/.env"
+    else
+        sed -i "s|^EXTERNAL_URL=.*|EXTERNAL_URL=$EXTERNAL_URL|" "$PROJECT_ROOT/.env"
+    fi
+
     echo -e "${GREEN}✓ Secrets generated${NC}"
     echo -e "${GREEN}✓ Web hostname: $WEB_HOSTNAME${NC}"
+    echo -e "${GREEN}✓ External URL: $EXTERNAL_URL${NC}"
     echo ""
 
     # -------------------------------------------------------------------------
@@ -475,6 +524,7 @@ CONTAINER_SUFFIX=$CONTAINER_SUFFIX
 COMPOSE_FILE=$COMPOSE_FILE
 IMAGE_SOURCE=$IMAGE_SOURCE
 ROUTER_MODE=$ROUTER_MODE
+EXTERNAL_URL=$EXTERNAL_URL
 INITIALIZED_AT=$(date -Iseconds)
 EOF
 
@@ -510,9 +560,13 @@ EOF
         echo -e "${GREEN}✓ Open self-registration disabled (production)${NC}"
     fi
 
-    # Register OAuth client for web app with configured hostname
+    # Register OAuth client for web app. Redirect URI derives from EXTERNAL_URL
+    # (scheme+host) so the registered scheme matches what the web app sends —
+    # under TLS the scheme is https, plain HTTP it is http. (ADR-105: this is the
+    # fix for the latent mismatch where the prod web env emitted https:// while
+    # init registered http://.)
     local POSTGRES_CONTAINER=$(get_container_name postgres)
-    local REDIRECT_URI="http://${WEB_HOSTNAME}/callback"
+    local REDIRECT_URI="${EXTERNAL_URL}/callback"
     echo -e "${BLUE}  Registering OAuth client (kg-web)...${NC}"
     docker exec "$POSTGRES_CONTAINER" psql -U ${POSTGRES_USER:-admin} -d ${POSTGRES_DB:-knowledge_graph} -c \
         "INSERT INTO kg_auth.oauth_clients (client_id, client_name, client_type, redirect_uris, grant_types, scopes)
