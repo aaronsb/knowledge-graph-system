@@ -22,10 +22,18 @@ GREEN='\033[0;32m'; YELLOW='\033[1;33m'; RED='\033[0;31m'; BLUE='\033[0;34m'; NC
 # /workspace is the repo root bind-mounted into the operator container.
 WORKSPACE="${WORKSPACE:-/workspace}"
 CONFIG_FILE="$WORKSPACE/.operator.conf"
+ENV_FILE="$WORKSPACE/.env"
 
 TLS_MODE="none"
 [ -f "$CONFIG_FILE" ] && TLS_MODE="$(grep -E '^TLS_MODE=' "$CONFIG_FILE" 2>/dev/null | cut -d= -f2 || true)"
 TLS_MODE="${TLS_MODE:-none}"
+
+# KG_CERT_DIR: read it from .env — the SAME file `docker compose --env-file`
+# substitutes into the manual overlay's cert mount — so recert checks exactly the
+# path Traefik serves from. Explicit environment wins (matches compose precedence).
+if [ -z "${KG_CERT_DIR:-}" ] && [ -f "$ENV_FILE" ]; then
+    KG_CERT_DIR="$(grep -E '^KG_CERT_DIR=' "$ENV_FILE" 2>/dev/null | cut -d= -f2- || true)"
+fi
 
 # Days before expiry at which manual mode starts warning.
 WARN_DAYS="${RECERT_WARN_DAYS:-21}"
@@ -85,7 +93,7 @@ verify_manual() {
     return 0
 }
 
-echo -e "${BLUE}${NC}TLS mode: ${TLS_MODE}"
+echo -e "${BLUE}TLS mode:${NC} ${TLS_MODE}"
 case "$TLS_MODE" in
     manual)
         verify_manual

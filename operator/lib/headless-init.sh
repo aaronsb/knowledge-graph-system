@@ -95,7 +95,9 @@ ${BOLD}Web Configuration:${NC}
   --external-url URL      Public base URL — scheme+host, no path (ADR-105).
                           Single source of public identity: OAuth redirect and
                           API URL derive from it. e.g. https://kg.example.com
-                          Default: http://<web-hostname>
+                          Default: http://<web-hostname> (https when --tls set).
+                          If you remap KG_HTTPS_PORT/KG_HTTP_PORT off 443/80,
+                          include the port here (e.g. https://host:8443).
   --router MODE           Ingress router (ADR-105):
                           • none (default): direct per-service ports
                           • traefik: unified HTTP ingress (/ -> web, /api -> api)
@@ -107,7 +109,9 @@ ${BOLD}Web Configuration:${NC}
                             (tls.crt + tls.key); cert issued off-box
                           • letsencrypt: Traefik ACME (TLS-ALPN-01); needs --le-email
                           • offload: HTTP in-VM, edge terminates TLS (EXTERNAL_URL
-                            scheme becomes https)
+                            scheme becomes https). Assumes an external reverse
+                            proxy does TLS + path routing (/ -> web, /api -> api);
+                            nothing in-box enforces it.
   --le-email EMAIL        ACME account contact for --tls=letsencrypt
 
 ${BOLD}AI Configuration:${NC}

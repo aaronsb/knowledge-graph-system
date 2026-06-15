@@ -1,0 +1,4 @@
+# Let's Encrypt cert mode (ADR-105): Traefik writes acme.json here — it holds
+# the ACME ACCOUNT KEY and issued certs. Never commit it.
+*
+!.gitignore

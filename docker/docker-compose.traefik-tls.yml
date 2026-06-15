@@ -43,8 +43,8 @@ services:
       - --entrypoints.web.http.redirections.entrypoint.scheme=https
       - --entrypoints.websecure.address=:443
     ports:
-      # Base overlay already publishes :80; compose unions, so only add :443 here
-      # (re-listing :80 risks a duplicate published-port allocation).
+      # Base overlay already publishes :80; compose unions ports, so only add
+      # :443 here. (Identical mappings de-dupe; a differing :80 would conflict.)
       - "${KG_HTTPS_PORT:-443}:443"
 
   web:

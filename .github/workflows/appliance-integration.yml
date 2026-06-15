@@ -113,7 +113,10 @@ jobs:
           while [ "$SECONDS" -lt "$deadline" ]; do
             code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost/ 2>/dev/null || echo 000)
             if [ "$code" = "301" ] || [ "$code" = "308" ]; then
-              if curl -fsSk https://localhost/ >/dev/null 2>&1 \
+              # Assert the :80 redirect actually targets https:// (not just any 3xx),
+              # then that https serves web and reaches the API. -k: selfsigned cert.
+              if curl -sI http://localhost/ | grep -qi '^location: https://' \
+                 && curl -fsSk https://localhost/ >/dev/null 2>&1 \
                  && curl -fsSk https://localhost/api/health >/dev/null 2>&1; then
                 echo "::notice::Traefik HTTPS ingress healthy — :80 → $code https, / → web, /api → api"
                 echo "--- :80 redirect target ---"

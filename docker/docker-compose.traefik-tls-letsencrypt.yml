@@ -13,7 +13,10 @@
 #   * HTTP-01  — needs :80 reachable; add
 #       --certificatesresolvers.le.acme.httpchallenge=true
 #       --certificatesresolvers.le.acme.httpchallenge.entrypoint=web
-#     (Traefik bypasses the :80->:443 redirect for /.well-known/acme-challenge.)
+#     NOTE: this overlay restates the :80->:443 entrypoint redirect below. Traefik
+#     serves the ACME http challenge on the entrypoint ahead of the redirect, but
+#     the interaction is version-sensitive — if HTTP-01 fails to validate, drop
+#     the `web.http.redirections.*` lines (let :80 serve plain) while issuing.
 #   * DNS-01 via lego (e.g. porkbun) — OPT-IN, private-only. Adds an account-wide
 #     DNS credential to the appliance, so prefer `manual` (cert issued off-box).
 #     If you accept the blast radius:
