@@ -58,6 +58,9 @@ load_config() {
     fi
     DEV_MODE="${DEV_MODE:-false}"
     GPU_MODE="${GPU_MODE:-cpu}"
+    # ADR-105 in-VM router; default off so non-traefik deployments are unchanged.
+    ROUTER_MODE="${ROUTER_MODE:-none}"
+    export ROUTER_MODE
     # Dev mode uses local builds by default, standalone uses GHCR
     if [ "$DEV_MODE" = "true" ]; then
         IMAGE_SOURCE="${IMAGE_SOURCE:-local}"

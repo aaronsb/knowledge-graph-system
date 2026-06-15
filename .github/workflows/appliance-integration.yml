@@ -118,7 +118,7 @@ jobs:
           done
           echo "::error::Traefik unified ingress did not come up on :80"
           docker ps -a
-          docker logs "$(docker ps -aqf name=traefik)" 2>&1 | tail -40 || true
+          docker logs "$(docker ps -aqf name=traefik | head -1)" 2>&1 | tail -40 || true
           exit 1
 
       - name: Assert no placeholder secrets shipped (#502)
