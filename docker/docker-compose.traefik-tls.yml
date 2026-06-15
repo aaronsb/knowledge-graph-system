@@ -1,0 +1,72 @@
+# ============================================================================
+# Knowledge Graph System — in-VM Traefik TLS termination (ADR-105, step 2)
+# ============================================================================
+# Layers on top of docker-compose.traefik.yml (the HTTP router). It turns the
+# single front door into an HTTPS front door:
+#
+#   http://<host>/...  -> 301 redirect -> https://<host>/...   (entrypoint-level)
+#   https://<host>/        -> web   (TLS terminated by Traefik)
+#   https://<host>/api/... -> api   (TLS terminated, /api prefix stripped)
+#
+# Activated by TLS_MODE != none (operator get_compose_cmd / start-platform),
+# and only meaningful with ROUTER_MODE=traefik. Default TLS_MODE=none leaves
+# this overlay out — the platform stays on the PR1 HTTP-only ingress.
+#
+# CERT SOURCE (this step): none. With no certResolver and no mounted cert,
+# Traefik serves its built-in DEFAULT self-signed certificate for any tls=true
+# router. HTTPS works end-to-end with a browser trust warning — the "appliance
+# handles itself" default (scenario: private / selfsigned). Real certs
+# (manual / letsencrypt / offload) attach as certResolvers in a later step.
+#
+# COMMAND IS REPLACED, NOT MERGED: docker compose replaces a service's `command`
+# wholesale when an overlay redefines it (sequences don't merge). So every flag
+# the base traefik service needs is repeated here, plus the TLS additions.
+#
+# LABELS / PORTS MERGE: compose unions label and port lists across files. We add
+# new websecure routers (kgweb-tls / kgapi-tls) rather than mutate the base http
+# routers — the http routers still match but the entrypoint-level redirect 301s
+# them to https before they proxy, the standard Traefik HTTP->HTTPS pattern.
+# ============================================================================
+
+services:
+  traefik:
+    command:
+      # --- repeated from docker-compose.traefik.yml (command is replaced) ---
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --providers.docker.network=knowledge-graph-router
+      - --entrypoints.web.address=:80
+      # --- TLS additions ---
+      # Redirect all plain-HTTP traffic to HTTPS at the entrypoint level, so it
+      # applies before routing (every http router inherits it).
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      - --entrypoints.websecure.address=:443
+    ports:
+      # Base overlay already publishes :80; compose unions, so only add :443 here
+      # (re-listing :80 risks a duplicate published-port allocation).
+      - "${KG_HTTPS_PORT:-443}:443"
+
+  web:
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=knowledge-graph-router
+      # TLS catch-all (lowest priority): everything not matched by /api -> web.
+      - "traefik.http.routers.kgweb-tls.rule=PathPrefix(`/`)"
+      - traefik.http.routers.kgweb-tls.entrypoints=websecure
+      - traefik.http.routers.kgweb-tls.priority=1
+      # No certResolver -> Traefik serves its built-in self-signed default cert.
+      - traefik.http.routers.kgweb-tls.tls=true
+      - traefik.http.services.kgweb.loadbalancer.server.port=80
+
+  api:
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=knowledge-graph-router
+      - "traefik.http.routers.kgapi-tls.rule=PathPrefix(`/api`)"
+      - traefik.http.routers.kgapi-tls.entrypoints=websecure
+      - traefik.http.routers.kgapi-tls.priority=10
+      - traefik.http.routers.kgapi-tls.tls=true
+      - traefik.http.middlewares.kgapi-strip.stripprefix.prefixes=/api
+      - traefik.http.routers.kgapi-tls.middlewares=kgapi-strip
+      - traefik.http.services.kgapi.loadbalancer.server.port=8000

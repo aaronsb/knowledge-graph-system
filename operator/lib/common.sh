@@ -36,6 +36,11 @@ load_operator_config() {
     # direct per-service ports; `traefik` adds the unified HTTP ingress overlay.
     ROUTER_MODE="${ROUTER_MODE:-none}"
     export ROUTER_MODE
+    # ADR-105: TLS termination mode for the in-VM router. `none` (default) keeps
+    # the HTTP-only ingress; `selfsigned` adds the websecure :443 entrypoint with
+    # Traefik's built-in self-signed cert. Only meaningful with ROUTER_MODE=traefik.
+    TLS_MODE="${TLS_MODE:-none}"
+    export TLS_MODE
     # ADR-105: public base URL (scheme+host). Single source of public identity —
     # the web overlay substitutes it into VITE_* so the OAuth redirect scheme
     # matches what init registered. Empty default lets compose fall back to
@@ -157,6 +162,10 @@ get_compose_cmd() {
     # Add Traefik router overlay (ADR-105) when enabled
     if [ "$ROUTER_MODE" = "traefik" ] && [ -f "$DOCKER_DIR/docker-compose.traefik.yml" ]; then
         cmd="$cmd -f $DOCKER_DIR/docker-compose.traefik.yml"
+        # TLS overlay layers on top of the HTTP router (must come after it).
+        if [ "$TLS_MODE" != "none" ] && [ -f "$DOCKER_DIR/docker-compose.traefik-tls.yml" ]; then
+            cmd="$cmd -f $DOCKER_DIR/docker-compose.traefik-tls.yml"
+        fi
     fi
 
     # Add dev overlay if in development mode

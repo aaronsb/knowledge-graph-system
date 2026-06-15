@@ -61,6 +61,9 @@ load_config() {
     # ADR-105 in-VM router; default off so non-traefik deployments are unchanged.
     ROUTER_MODE="${ROUTER_MODE:-none}"
     export ROUTER_MODE
+    # ADR-105 TLS termination mode (none|selfsigned); only meaningful with traefik.
+    TLS_MODE="${TLS_MODE:-none}"
+    export TLS_MODE
     # Dev mode uses local builds by default, standalone uses GHCR
     if [ "$DEV_MODE" = "true" ]; then
         IMAGE_SOURCE="${IMAGE_SOURCE:-local}"
@@ -103,8 +106,11 @@ get_compose_cmd() {
     # SSL overlay (if configured)
     [ -f "$DOCKER_DIR/docker-compose.ssl.yml" ] && cmd="$cmd -f $DOCKER_DIR/docker-compose.ssl.yml"
 
-    # Traefik router overlay (ADR-105) when enabled
-    [ "$ROUTER_MODE" = "traefik" ] && [ -f "$DOCKER_DIR/docker-compose.traefik.yml" ] && cmd="$cmd -f $DOCKER_DIR/docker-compose.traefik.yml"
+    # Traefik router overlay (ADR-105) when enabled; TLS overlay layers on top.
+    if [ "$ROUTER_MODE" = "traefik" ] && [ -f "$DOCKER_DIR/docker-compose.traefik.yml" ]; then
+        cmd="$cmd -f $DOCKER_DIR/docker-compose.traefik.yml"
+        [ "$TLS_MODE" != "none" ] && [ -f "$DOCKER_DIR/docker-compose.traefik-tls.yml" ] && cmd="$cmd -f $DOCKER_DIR/docker-compose.traefik-tls.yml"
+    fi
 
     # Dev mode overlay (adds hot reload, source mounts)
     [ "$DEV_MODE" = "true" ] && [ -f "$DOCKER_DIR/docker-compose.dev.yml" ] && cmd="$cmd -f $DOCKER_DIR/docker-compose.dev.yml"

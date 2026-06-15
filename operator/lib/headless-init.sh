@@ -42,6 +42,7 @@ AI_KEY=""
 WEB_HOSTNAME=""
 EXTERNAL_URL=""
 ROUTER_MODE="none"
+TLS_MODE="none"
 SKIP_AI_CONFIG=false
 SKIP_CLI=false
 SHOW_HELP=false
@@ -97,6 +98,11 @@ ${BOLD}Web Configuration:${NC}
   --router MODE           Ingress router (ADR-105):
                           • none (default): direct per-service ports
                           • traefik: unified HTTP ingress (/ -> web, /api -> api)
+  --tls MODE              TLS termination at the in-VM router (requires
+                          --router=traefik):
+                          • none (default): HTTP only on :80
+                          • selfsigned: HTTPS on :443 with Traefik's built-in
+                            self-signed cert, :80 redirects to :443
 
 ${BOLD}AI Configuration:${NC}
   --ai-provider PROVIDER  AI extraction provider (openai, anthropic, openrouter)
@@ -262,6 +268,14 @@ parse_args() {
                 ROUTER_MODE="$2"
                 shift 2
                 ;;
+            --tls=*)
+                TLS_MODE="${1#*=}"
+                shift
+                ;;
+            --tls)
+                TLS_MODE="$2"
+                shift 2
+                ;;
             *)
                 echo -e "${RED}Unknown option: $1${NC}"
                 echo "Use --help for usage information"
@@ -307,6 +321,18 @@ validate_config() {
     # Validate router mode (ADR-105)
     if [[ "$ROUTER_MODE" != "none" && "$ROUTER_MODE" != "traefik" ]]; then
         echo -e "${RED}✗ Invalid --router: $ROUTER_MODE (must be 'none' or 'traefik')${NC}"
+        errors=$((errors + 1))
+    fi
+
+    # Validate TLS mode (ADR-105). PR2-B ships none|selfsigned; manual /
+    # letsencrypt / offload land in a later step.
+    if [[ "$TLS_MODE" != "none" && "$TLS_MODE" != "selfsigned" ]]; then
+        echo -e "${RED}✗ Invalid --tls: $TLS_MODE (must be 'none' or 'selfsigned')${NC}"
+        errors=$((errors + 1))
+    fi
+    # TLS termination only makes sense behind the in-VM router.
+    if [[ "$TLS_MODE" != "none" && "$ROUTER_MODE" != "traefik" ]]; then
+        echo -e "${RED}✗ --tls=$TLS_MODE requires --router=traefik${NC}"
         errors=$((errors + 1))
     fi
 
@@ -427,6 +453,9 @@ main() {
     if [ -n "$EXTERNAL_URL" ]; then
         echo -e "  External URL:      ${BLUE}$EXTERNAL_URL${NC}"
     fi
+    if [ "$ROUTER_MODE" != "none" ]; then
+        echo -e "  Router:            ${BLUE}$ROUTER_MODE${NC} (tls: $TLS_MODE)"
+    fi
     if [ "$SKIP_AI_CONFIG" = true ]; then
         echo -e "  AI config:         ${YELLOW}skipped${NC}"
     elif [ -n "$AI_PROVIDER" ]; then
@@ -479,11 +508,15 @@ main() {
     fi
 
     # Derive EXTERNAL_URL (ADR-105) if not supplied. Single source of public
-    # identity = scheme+host. Until the TLS path lands (PR2-B), the appliance
-    # serves plain HTTP, so the default scheme is http://. Operators terminating
-    # TLS (selfsigned/manual/letsencrypt/offload) pass --external-url=https://…
+    # identity = scheme+host. Scheme follows TLS_MODE: plain HTTP when the
+    # appliance serves :80 only, https once Traefik terminates TLS. An explicit
+    # --external-url always wins (e.g. behind an offloading edge).
     if [ -z "$EXTERNAL_URL" ]; then
-        EXTERNAL_URL="http://${WEB_HOSTNAME}"
+        if [ "$TLS_MODE" != "none" ]; then
+            EXTERNAL_URL="https://${WEB_HOSTNAME}"
+        else
+            EXTERNAL_URL="http://${WEB_HOSTNAME}"
+        fi
     fi
     # Normalize: strip any trailing slash so "${EXTERNAL_URL}/callback" is clean.
     EXTERNAL_URL="${EXTERNAL_URL%/}"
@@ -524,6 +557,7 @@ CONTAINER_SUFFIX=$CONTAINER_SUFFIX
 COMPOSE_FILE=$COMPOSE_FILE
 IMAGE_SOURCE=$IMAGE_SOURCE
 ROUTER_MODE=$ROUTER_MODE
+TLS_MODE=$TLS_MODE
 EXTERNAL_URL=$EXTERNAL_URL
 INITIALIZED_AT=$(date -Iseconds)
 EOF
