@@ -58,8 +58,16 @@ services:
 
   web:
     # SPA calls the API same-origin through the router, not a separate port.
+    # The OAuth client_id + redirect_uri must match what operator init registers
+    # (kg-web, redirect = ${EXTERNAL_URL}/callback). The web image's baked
+    # defaults are kg-cli + http://localhost:3000/callback, and prod.yml — which
+    # normally overrides them — is NOT in the appliance/router assembly, so set
+    # them here. Without this, login fails with 400 ("OAuth client 'kg-cli' not
+    # found") at the router-fronted deployment.
     environment:
       VITE_API_URL: /api
+      VITE_OAUTH_CLIENT_ID: kg-web
+      VITE_OAUTH_REDIRECT_URI: ${EXTERNAL_URL:-http://localhost}/callback
     # Serve the SPA over plain HTTP on :80. Overrides the non-router prod mount
     # (nginx.prod.conf does :80 -> 301 https with host-specific certs, which
     # would break the HTTP-only ingress). Same container target wins on merge.
