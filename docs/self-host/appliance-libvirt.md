@@ -98,7 +98,11 @@ sudo virt-install \
 
 First boot pulls images and provisions — watch with `journalctl -u kg-firstboot -f`
 (via the console). The admin password is written to `/root/kg-credentials.txt`
-inside the VM.
+inside the VM. Then sign in to the web UI at the external URL:
+
+![Web UI sign-in at the external URL — app admin via OAuth](../media/appliance/web-login.png)
+<!-- TODO(screenshot): replace placeholder — the web UI sign-in page at
+     https://<host>/ with the trusted cert. -->
 
 ## 3. Managing the box without SSH
 
@@ -148,6 +152,10 @@ Other management surfaces:
   no password** — that's the intended way to a host shell (the serial/SSH root
   login stays locked).
 
+![Console TUI — the Kappa Graph status menu on tty1 over the VNC framebuffer](../media/appliance/console-tui-menu.png)
+<!-- TODO(screenshot): replace placeholder — VNC console showing the kg-console
+     status menu (Platform status / logs / restart / credentials / etc.). -->
+
 ### Remote graphical console (virt-manager / virt-viewer)
 
 Getting the VNC console to open from *another* machine needs three things lined
@@ -185,6 +193,10 @@ ssh -L 5901:localhost:5900 <user>@<libvirt-host>   # keep open
 remote-viewer vnc://localhost:5901                  # or gvncviewer localhost:5901
 ```
 
+![virt-manager graphical console connected to the appliance VM over qemu+ssh](../media/appliance/virt-manager-console.png)
+<!-- TODO(screenshot): replace placeholder — virt-manager (or remote-viewer) VNC
+     console showing the appliance VM. -->
+
 ### Cockpit behind Traefik (`/cockpit`)
 
 Cockpit's own cert on `:9090` is self-signed, and HSTS on the main hostname stops
@@ -206,6 +218,13 @@ can't see directly):
 Log in with the OS account (`kgadmin` by default — see the host-login section
 above). Reset the Cockpit config later with
 `sudo KG_EXTERNAL_URL=https://<host> /opt/kg/appliance/files/kg-cockpit-proxy.sh`.
+
+![Cockpit login at /cockpit — OS account (kgadmin)](../media/appliance/cockpit-login.png)
+<!-- TODO(screenshot): replace placeholder — Cockpit login page at
+     https://<host>/cockpit/ (note the trusted-cert padlock). -->
+
+![Cockpit dashboard — host services, storage, logs, updates](../media/appliance/cockpit-dashboard.png)
+<!-- TODO(screenshot): replace placeholder — Cockpit overview/dashboard after login. -->
 
 ## 4. The certificate
 
