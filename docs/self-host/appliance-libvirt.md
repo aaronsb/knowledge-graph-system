@@ -134,7 +134,12 @@ corrupts the base64.
 Other management surfaces:
 
 - **Cockpit** — `https://<vm-ip>:9090` (host console: services, storage, logs,
-  updates).
+  updates). Cockpit authenticates against **OS accounts**, not the app's OAuth
+  admin. First boot provisions a sudo-enabled login (`kgadmin` by default) — set
+  it declaratively with `KG_HOST_LOGIN_USER` / `KG_HOST_LOGIN_PASSWORD` in
+  `provision.env`, or let it mint a random password recorded in
+  `/root/kg-credentials.txt`. Reset it later with
+  `sudo /opt/kg/appliance/files/kg-host-login.sh`.
 - **virt-manager** — connect to `qemu+ssh://<user>@<host>/system` for lifecycle +
   the VNC console. The remote graphical console has three wiring requirements
   (see below) that each fail with an unhelpful message.
