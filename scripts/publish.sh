@@ -1094,11 +1094,13 @@ cmd_appliance() {
     local out_dir="$PROJECT_ROOT/appliance/out"
     local label="$VERSION"
     local tag="v${VERSION}"
-    local qcow2="$out_dir/kg-appliance-${label}.qcow2"
-    local qcow2_xz="${qcow2}.xz"
-    local ova="$out_dir/kg-appliance-${label}.ova"
 
-    echo -e "${BOLD}Publishing appliance bootstrap image${NC}"
+    # Two kernel variants ship per release (ADR-119): cloud (default, unsuffixed)
+    # and generic (homelab/desktop, "-generic" suffix, hi-res console + AHCI).
+    # Each entry is "<name-suffix>:<--kernel flavor>".
+    local -a variants=( ":cloud" "-generic:generic" )
+
+    echo -e "${BOLD}Publishing appliance bootstrap images (cloud + generic)${NC}"
     echo -e "  Version: ${BLUE}${label}${NC}  →  GitHub release ${BLUE}${tag}${NC}"
     [ "$DRY_RUN" = "true" ] && echo -e "  Mode:    ${YELLOW}DRY RUN${NC}"
     echo ""
@@ -1111,41 +1113,59 @@ cmd_appliance() {
         echo -e "${RED}gh (GitHub CLI) not found${NC}"; echo "  Install: https://cli.github.com/"; exit 1
     fi
 
-    # --- Build (unless --skip-build) -----------------------------------------
+    # --- Build each variant (unless --skip-build) ----------------------------
     if [ "$SKIP_BUILD" = "false" ]; then
-        echo -e "${BLUE}→ Building OVA (kg-appliance-${label})...${NC}"
-        "$PROJECT_ROOT/appliance/build-appliance.sh" --ova --version "$label"
-        echo -e "${GREEN}✓ Build complete${NC}"
+        local v suf kern
+        for v in "${variants[@]}"; do
+            suf="${v%%:*}"; kern="${v##*:}"
+            echo -e "${BLUE}→ Building ${kern} variant (kg-appliance-${label}${suf})...${NC}"
+            "$PROJECT_ROOT/appliance/build-appliance.sh" --ova --version "$label" --kernel "$kern"
+        done
+        echo -e "${GREEN}✓ Builds complete${NC}"
         echo ""
     fi
-    if [ ! -f "$ova" ]; then
-        echo -e "${RED}OVA not found: $ova${NC}"
-        echo -e "  ${DIM}Build it: appliance/build-appliance.sh --ova --version $label${NC}"
-        exit 1
-    fi
+
+    # --- Resolve the asset set for both variants -----------------------------
+    # OVA always; the qcow2's .xz only when a source qcow2 exists this run (a
+    # --skip-build OVA-only run ships just the OVA, never a stale leftover .xz).
+    local -a assets=()
+    local v suf base ova qcow2
+    for v in "${variants[@]}"; do
+        suf="${v%%:*}"; base="kg-appliance-${label}${suf}"
+        ova="$out_dir/${base}.ova"; qcow2="$out_dir/${base}.qcow2"
+        if [ ! -f "$ova" ]; then
+            echo -e "${RED}OVA not found: $ova${NC}"
+            echo -e "  ${DIM}Build it: appliance/build-appliance.sh --ova --version $label --kernel ${v##*:}${NC}"
+            exit 1
+        fi
+        assets+=( "$ova" )
+        [ -f "$qcow2" ] && assets+=( "${qcow2}.xz" )
+    done
 
     # --- Dry run: report intent only, NO side effects (no xz, no SHA file) ---
     if [ "$DRY_RUN" = "true" ]; then
         echo -e "${DIM}Would compress, checksum, and upload to release ${tag}:${NC}"
-        echo "    $(basename "$ova")  ($(du -h "$ova" | cut -f1))"
-        [ -f "$qcow2" ] && echo "    $(basename "$qcow2_xz")  (compressed from $(du -h "$qcow2" | cut -f1) qcow2)"
+        for v in "${variants[@]}"; do
+            suf="${v%%:*}"; base="kg-appliance-${label}${suf}"
+            echo "    ${base}.ova"
+            [ -f "$out_dir/${base}.qcow2" ] && echo "    ${base}.qcow2.xz"
+        done
         echo "    SHA256SUMS"
         return 0
     fi
 
-    # --- Compress the qcow2 FRESH every run -----------------------------------
-    # The .xz name is keyed on the clean VERSION, so a stale same-VERSION .xz
-    # from a prior build must never be reused (xz -f overwrites). Only publish a
-    # .xz when we have a source qcow2 *this* run — a --skip-build OVA-only run
-    # ships just the OVA, never a leftover .xz.
-    if [ -f "$qcow2" ]; then
-        echo -e "${BLUE}→ Compressing qcow2 → .xz (a few minutes)...${NC}"
-        xz -T0 -k -f "$qcow2"
-    fi
+    # --- Compress each variant's qcow2 FRESH every run ------------------------
+    # The .xz name is keyed on the clean VERSION+variant, so a stale same-name .xz
+    # from a prior build must never be reused (xz -f overwrites).
+    for v in "${variants[@]}"; do
+        suf="${v%%:*}"; qcow2="$out_dir/kg-appliance-${label}${suf}.qcow2"
+        if [ -f "$qcow2" ]; then
+            echo -e "${BLUE}→ Compressing $(basename "$qcow2") → .xz (a few minutes)...${NC}"
+            xz -T0 -k -f "$qcow2"
+        fi
+    done
 
     # --- Checksums over exactly the binary assets we publish -----------------
-    local -a assets=( "$ova" )
-    [ -f "$qcow2" ] && assets+=( "$qcow2_xz" )
     echo -e "${BLUE}→ Writing SHA256SUMS${NC}"
     ( cd "$out_dir" && sha256sum $(for a in "${assets[@]}"; do basename "$a"; done) > SHA256SUMS )
     sed 's/^/    /' "$out_dir/SHA256SUMS"
@@ -1163,7 +1183,7 @@ cmd_appliance() {
     echo -e "${BLUE}→ Uploading ${#assets[@]} image asset(s) to ${tag}${NC}"
     gh release upload "$tag" "${assets[@]}" --clobber
     gh release upload "$tag" "$out_dir/SHA256SUMS" --clobber
-    echo -e "${GREEN}✓ Published appliance bootstrap image to release ${tag}${NC}"
+    echo -e "${GREEN}✓ Published ${#assets[@]} appliance asset(s) — cloud + generic — to release ${tag}${NC}"
     echo -e "  ${DIM}Verify: gh release download ${tag} -p 'kg-appliance-*' -p SHA256SUMS && sha256sum -c SHA256SUMS${NC}"
 }
 

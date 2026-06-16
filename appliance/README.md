@@ -41,12 +41,23 @@ boot during the build.
 # also emit an OVA (VMware / VirtualBox)
 ./appliance/build-appliance.sh --ova
 
+# generic kernel — hi-res console for a hypervisor window (homelab/desktop)
+./appliance/build-appliance.sh --ova --kernel generic
+
 # pin a ref / label; opt out of the Cockpit host console
 ./appliance/build-appliance.sh --ref v0.15.1 --version 0.15.1 --ova --no-cockpit
 ```
 
 Artifacts land in `appliance/out/`. The Debian base is cached in
 `appliance/.cache/` between builds (both are git-ignored).
+
+**Kernel variants** (`--kernel`, default `cloud`) — the image ships in two
+flavors, and `publish.sh appliance` builds both (ADR-119):
+
+| Variant | Console | Pick it if… |
+|---------|---------|-------------|
+| `cloud` (default, unsuffixed) | 80×25 VGA | headless / real-cloud — you never look at the VM console (least overhead). |
+| `generic` (`-generic` suffix) | hi-res framebuffer (160×50+) | you run it in a **VirtualBox/VMware/Hyper-V window** and read the console there. Also enables AHCI/SATA (CD-drive config carrier). |
 
 The qcow2/OVA is built **locally** and attached to the matching GitHub Release,
 together with a `SHA256SUMS` file — `./publish.sh appliance` automates the build,
