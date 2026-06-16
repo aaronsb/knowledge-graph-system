@@ -30,6 +30,54 @@ minted per-instance, and the box carries no baked `.env`. The image is built by
   the qemu-guest-agent, the Cockpit host console (`:9090`), or the tty1 console
   TUI over VNC.
 
+## Pick your path
+
+The worked example below (§1–§2) is the **declarative seed** path — pinned
+hostname, self-renewing TLS, zero-touch. Most people don't need that. Three paths,
+by what you're running and which release artifact fits:
+
+| You run… | Use | How |
+|----------|-----|-----|
+| **VirtualBox / VMware / Hyper-V** | `kg-appliance-<ver>-generic.ova` | the hypervisor's **Import Appliance** wizard reads the OVF and builds the VM. Use the **generic** OVA — its console is legible in the VM window; the cloud OVA is 80×25 (see [kernel variants](../../appliance/README.md#build)). |
+| **libvirt / Proxmox / QEMU** | `kg-appliance-<ver>.qcow2.xz` | the **native** path — no OVA. `unxz` and `virt-install --import` (below). |
+| an `.ova` you already have, on libvirt | the `.ova` | libvirt has **no OVA importer**. Prefer the qcow2; or `tar -xf` the OVA and `qemu-img convert` its `*.vmdk` → qcow2. (`virt-v2v` *can* import an OVA, but it's a heavyweight guest-*conversion* tool — overkill for an image that's already KVM-native.) |
+
+> On libvirt/qemu the OVA buys nothing — the qcow2 is native and the OVA is pure
+> friction. Reach for `*.qcow2.xz`. The OVA earns its keep only where there's an
+> import wizard.
+
+### Quick start — qcow2, zero-config (no seed)
+
+```bash
+# download + decompress into a libvirt pool (e.g. /srv/storage/libvirt/images)
+gh release download v<ver> -p 'kg-appliance-<ver>.qcow2.xz' -D <pool-dir>
+unxz <pool-dir>/kg-appliance-<ver>.qcow2.xz
+
+sudo virt-install --name kg-appliance --memory 4096 --vcpus 2 --os-variant debian12 \
+  --import --disk path=<pool-dir>/kg-appliance-<ver>.qcow2,bus=virtio \
+  --network bridge=br0,model=virtio --graphics vnc,listen=127.0.0.1 \
+  --channel unix,target_type=virtio,name=org.qemu.guest_agent.0 --noautoconsole
+```
+
+> **`--import` still needs the full VM definition.** It only means "boot the disk,
+> no installer" — you must pass `--name/--memory/--vcpus/--disk path=…/--network`.
+> A bare `virt-install --import file.qcow2` fails with *"unrecognized arguments"*.
+> In the GUI, use **"Import existing disk image"** and pick OS **Debian 12**.
+
+First boot is **zero-config**: the box takes a DHCP IP, pulls the GHCR images,
+mints per-instance secrets, and comes up on **`http://<ip>:3000`** (HTTP, no TLS).
+The generated admin password is on the console **info** menu and in
+`/root/kg-credentials.txt`; a sudo host login (`kgadmin`) lands there too. Sign in,
+set your own admin password, paste a reasoning key — done. Watch it provision on
+the console (tty1) or `journalctl -u kg-firstboot -f`.
+
+Thereafter the box stays current via `operator.sh upgrade` (pulls fresh GHCR
+images) — the OVA/qcow2 is a one-time **bootstrap seed**, not re-downloaded per
+release ([ADR-103](../architecture/infrastructure/ADR-103-distribution-strategy-nomic-first-thin-appliance-with-app-store-tenancy.md) /
+[ADR-119](../architecture/infrastructure/ADR-119-appliance-configuration-delivery-and-first-boot-orchestration.md)).
+Want TLS + a pinned hostname instead of zero-config? That's the declarative seed —
+read on.
+
 ## 1. The NoCloud seed — attach it as a VIRTIO disk
 
 Provisioning config (`provision.env`) reaches the VM through a cloud-init
@@ -270,6 +318,15 @@ echo | openssl s_client -connect <vm-ip>:443 -servername kg.example.com 2>/dev/n
 
 ## Troubleshooting
 
+- **virt-manager has no "Import OVA" / the OVA won't open** — libvirt has no OVA
+  importer (that's a VirtualBox/VMware/Hyper-V feature). Use the `*.qcow2.xz`
+  artifact instead (["Pick your path"](#pick-your-path)), or unwrap the OVA by hand:
+  `tar -xf kg-appliance-*.ova && qemu-img convert -O qcow2 *-disk1.vmdk kg.qcow2`,
+  then `virt-install --import` that qcow2.
+- **`virt-install --import file.qcow2` → "unrecognized arguments"** — `--import`
+  skips the *installer*, not the VM definition; pass `--name/--memory/--vcpus/--disk
+  path=…/--network` (see the Quick start). The disk must be `--disk path=…`, not a
+  bare positional argument.
 - **`provision.env` ignored / box came up with defaults** — the seed was almost
   certainly attached as a SATA cdrom. The cloud kernel can't see it; reattach as
   a virtio disk (§1). Confirm cloud-init found it: `vmx "cloud-init status --long"`

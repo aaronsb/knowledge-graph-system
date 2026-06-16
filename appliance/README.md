@@ -99,6 +99,12 @@ The appliance has three management layers, in ascending privilege:
 
 ### Interactive (zero config)
 
+> **Which artifact / how to import** depends on your hypervisor — VirtualBox/VMware
+> use the **generic OVA** (import wizard), libvirt/Proxmox use the **qcow2**
+> (`virt-install --import`; the OVA has no native importer there). See
+> [Pick your path](../docs/self-host/appliance-libvirt.md#pick-your-path) for the
+> full table + a copy-paste qcow2 quick-start.
+
 1. Import the qcow2/OVA, give it a **bridged or NAT NIC with internet** (first
    boot pulls images), 2 vCPU / 4 GiB minimum.
 2. Power on. Watch provisioning on the console (tty1) or
