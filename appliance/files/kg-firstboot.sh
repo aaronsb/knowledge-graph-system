@@ -118,6 +118,24 @@ elif [ -n "${KG_ROUTER:-}" ]; then
     INIT_ARGS+=( --router="${KG_ROUTER}" )
 fi
 
+# --- Cockpit behind Traefik at /cockpit (ADR-105) ----------------------------
+# Front the host console through Traefik so it shares the trusted cert (instead
+# of Cockpit's self-signed cert on :9090, which HSTS on the main host won't let a
+# browser click through). Needs the letsencrypt path (the cockpit router uses the
+# `le` resolver) + an external URL. Default on; KG_COCKPIT_PROXY=false opts out.
+# Note: provision.env values are sourced (not exported), so pass what the child
+# script reads explicitly.
+if [ "${KG_COCKPIT_PROXY:-true}" = "true" ] && [ -n "${KG_EXTERNAL_URL:-}" ] \
+        && [ "${KG_TLS_MODE:-}" = "letsencrypt" ] \
+        && [ -x "${KG_DIR}/appliance/files/kg-cockpit-proxy.sh" ]; then
+    log "configuring Cockpit behind Traefik at /cockpit..."
+    if KG_EXTERNAL_URL="${KG_EXTERNAL_URL}" "${KG_DIR}/appliance/files/kg-cockpit-proxy.sh"; then
+        INIT_ARGS+=( --cockpit-proxy )
+    else
+        log "WARNING: cockpit-proxy config failed; Cockpit stays on :9090."
+    fi
+fi
+
 # --- Provision: mint per-instance secrets + start the standalone stack -------
 # Tee to a log so we can recover the generated admin password (operator prints
 # it once to stdout; there's no read-it-back path since it's stored encrypted).
@@ -157,7 +175,10 @@ fi
 HOST_LOGIN_USER="${KG_HOST_LOGIN_USER:-kgadmin}"
 if [ -x "${KG_DIR}/appliance/files/kg-host-login.sh" ]; then
     log "provisioning host-management login '${HOST_LOGIN_USER}'..."
-    "${KG_DIR}/appliance/files/kg-host-login.sh" || log "WARNING: host-login provisioning failed (set it later via kg-host-login.sh)."
+    # provision.env values are sourced, not exported — pass them explicitly.
+    KG_HOST_LOGIN_USER="${KG_HOST_LOGIN_USER:-}" KG_HOST_LOGIN_PASSWORD="${KG_HOST_LOGIN_PASSWORD:-}" \
+        "${KG_DIR}/appliance/files/kg-host-login.sh" \
+        || log "WARNING: host-login provisioning failed (set it later via kg-host-login.sh)."
 fi
 
 # --- Mark done and write the login banner ------------------------------------
@@ -167,6 +188,12 @@ log "provisioning complete; writing login banner."
 CRED_LINE="  Admin pw:  generated — see /root/kg-credentials.txt (or set in the UI)"
 [ -z "${ADMIN_PW}" ] && CRED_LINE="  Admin pw:  set it on first sign-in"
 
+# When Cockpit is fronted by Traefik, point at the trusted-cert URL too.
+COCKPIT_LINE=""
+if [ "${KG_COCKPIT_PROXY:-true}" = "true" ] && [ -n "${KG_EXTERNAL_URL:-}" ] && [ "${KG_TLS_MODE:-}" = "letsencrypt" ]; then
+    COCKPIT_LINE="             also at ${KG_EXTERNAL_URL%/}/cockpit/ (trusted cert, via Traefik)"
+fi
+
 cat > /etc/motd <<EOF
 
   Kappa Graph appliance — ready.
@@ -174,6 +201,7 @@ cat > /etc/motd <<EOF
   Web UI:    http://${IP}:3000/
   Host mgmt: https://${IP}:9090/   (Cockpit — network, storage, logs, updates)
              log in as '${HOST_LOGIN_USER}' (OS account — see /root/kg-credentials.txt)
+${COCKPIT_LINE}
 ${CRED_LINE}
 
   NEXT STEPS (in the web UI):

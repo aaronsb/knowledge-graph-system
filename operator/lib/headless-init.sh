@@ -46,6 +46,7 @@ TLS_MODE="none"
 LE_EMAIL=""
 ACME_CHALLENGE="tls-alpn-01"
 ACME_DNS_PROVIDER="porkbun"
+COCKPIT_PROXY=false
 SKIP_AI_CONFIG=false
 SKIP_CLI=false
 SHOW_HELP=false
@@ -128,6 +129,10 @@ ${BOLD}Web Configuration:${NC}
                           PORKBUN_SECRET_API_KEY in the environment (e.g. via the
                           appliance provision.env); they are written to .env and
                           read by Traefik/lego — never passed on the command line.
+  --cockpit-proxy         Route the Cockpit host console through Traefik at
+                          /cockpit (shares the trusted cert). Requires --router=
+                          traefik + --tls=letsencrypt + Cockpit configured for the
+                          sub-path (the appliance's kg-cockpit-proxy.sh does this).
 
 ${BOLD}AI Configuration:${NC}
   --ai-provider PROVIDER  AI extraction provider (openai, anthropic, openrouter)
@@ -324,6 +329,10 @@ parse_args() {
             --dns-provider)
                 ACME_DNS_PROVIDER="$2"
                 shift 2
+                ;;
+            --cockpit-proxy)
+                COCKPIT_PROXY=true
+                shift
                 ;;
             *)
                 echo -e "${RED}Unknown option: $1${NC}"
@@ -692,6 +701,7 @@ IMAGE_SOURCE=$IMAGE_SOURCE
 ROUTER_MODE=$ROUTER_MODE
 TLS_MODE=$TLS_MODE
 ACME_CHALLENGE=$ACME_CHALLENGE
+COCKPIT_PROXY=$COCKPIT_PROXY
 ACME_DNS_PROVIDER=$ACME_DNS_PROVIDER
 EXTERNAL_URL=$EXTERNAL_URL
 INITIALIZED_AT=$(date -Iseconds)

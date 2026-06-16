@@ -185,6 +185,28 @@ ssh -L 5901:localhost:5900 <user>@<libvirt-host>   # keep open
 remote-viewer vnc://localhost:5901                  # or gvncviewer localhost:5901
 ```
 
+### Cockpit behind Traefik (`/cockpit`)
+
+Cockpit's own cert on `:9090` is self-signed, and HSTS on the main hostname stops
+a browser from clicking through it. So the appliance fronts Cockpit through the
+same Traefik door at **`https://<host>/cockpit/`**, sharing the trusted cert. It's
+on by default (`KG_COCKPIT_PROXY`, when `KG_EXTERNAL_URL` + `KG_TLS_MODE=letsencrypt`
+are set); `=false` opts out and leaves Cockpit only on `:9090`.
+
+How it fits together (Cockpit runs on the *host*, which Traefik's docker provider
+can't see directly):
+- `kg-cockpit-proxy.sh` writes `/etc/cockpit/cockpit.conf` (`UrlRoot=/cockpit`,
+  `Origins` from `KG_EXTERNAL_URL`, `AllowUnencrypted`) so Cockpit serves the
+  sub-path and accepts the proxied origin's login WebSocket.
+- `docker-compose.traefik-cockpit.yml` adds a tiny `socat` sidecar that Traefik
+  routes `/cockpit` to; it TCP-forwards to the host's `:9090` via the Docker
+  host-gateway. A `redirectregex` middleware 301s the bare `/cockpit` → `/cockpit/`
+  (Cockpit drops the slashless prefix, which would otherwise surface as a 502).
+
+Log in with the OS account (`kgadmin` by default — see the host-login section
+above). Reset the Cockpit config later with
+`sudo KG_EXTERNAL_URL=https://<host> /opt/kg/appliance/files/kg-cockpit-proxy.sh`.
+
 ## 4. The certificate
 
 With `KG_TLS_MODE=letsencrypt` + `KG_ACME_CHALLENGE=dns-01`, Traefik obtains and

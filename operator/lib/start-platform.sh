@@ -171,6 +171,12 @@ start_application() {
             esac
         fi
 
+        # Cockpit host console behind Traefik at /cockpit (ADR-105) when enabled.
+        if [ "${COCKPIT_PROXY:-false}" = "true" ] && [ "$ROUTER_MODE" = "traefik" ] \
+                && [ -f docker-compose.traefik-cockpit.yml ]; then
+            compose_cmd="$compose_cmd -f docker-compose.traefik-cockpit.yml"
+        fi
+
         compose_cmd="$compose_cmd --env-file $ENV_FILE"
 
         # Use --no-recreate to avoid recreating already-running containers
@@ -179,6 +185,8 @@ start_application() {
         # Bring up the in-VM router when enabled (ADR-105) — named explicitly so
         # first-boot leaves the unified ingress serving, not just api/web.
         [ "$ROUTER_MODE" = "traefik" ] && $compose_cmd up -d --no-recreate traefik
+        # Bring up the Cockpit proxy sidecar when enabled (ADR-105).
+        [ "${COCKPIT_PROXY:-false}" = "true" ] && [ "$ROUTER_MODE" = "traefik" ] && $compose_cmd up -d --no-recreate cockpit-proxy
 
         # Wait for API health
         echo -e "${BLUE}→ Waiting for API...${NC}"
