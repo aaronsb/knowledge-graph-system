@@ -40,6 +40,7 @@ banner() {
     5) Appliance / credentials info
     6) Platform config shell (operator container)
     7) Login shell (host)
+    c) Cockpit /cockpit access control
     8) Reboot
     9) Power off
   ════════════════════════════════════════════════════════════════
@@ -68,6 +69,24 @@ action() {
         # surface for the graph itself, distinct from a host shell.
         6) echo "  Entering operator container (Ctrl-D returns to this menu)..."; (cd "${KG_DIR}" && ./operator.sh shell) || true ;;
         7) echo "  Launching host login (Ctrl-D returns to this menu)..."; /bin/login || true ;;
+        c|C)
+            echo
+            (cd "${KG_DIR}" && ./operator.sh cockpit-access) 2>&1 | sed 's/^/  /'
+            echo
+            echo "  Restrict who can reach the /cockpit host console (before its login):"
+            echo "    1) Open  — no restriction (default)"
+            echo "    2) Private/LAN only (RFC-1918 ranges)"
+            echo "    3) Custom CIDRs"
+            read -rp "  Choose [1-3], Enter to cancel: " sub
+            case "${sub}" in
+                1) (cd "${KG_DIR}" && ./operator.sh cockpit-access open)    2>&1 | sed 's/^/  /' ;;
+                2) (cd "${KG_DIR}" && ./operator.sh cockpit-access private) 2>&1 | sed 's/^/  /' ;;
+                3) read -rp "  CIDRs (comma-separated, e.g. 192.168.1.0/24): " cidrs
+                   [ -n "${cidrs}" ] && (cd "${KG_DIR}" && ./operator.sh cockpit-access "${cidrs}") 2>&1 | sed 's/^/  /' \
+                       || echo "  (cancelled)" ;;
+                *) echo "  (cancelled)" ;;
+            esac
+            pause ;;
         8) read -rp "  Reboot the appliance? [y/N] " a; [ "${a,,}" = "y" ] && systemctl reboot ;;
         9) read -rp "  Power off the appliance? [y/N] " a; [ "${a,,}" = "y" ] && systemctl poweroff ;;
         *) ;;
@@ -88,6 +107,6 @@ while true; do
     # Exit cleanly on stdin EOF (console detach, or a login subshell closing
     # stdin) so getty respawns us — without the guard the loop busy-spins at
     # 100% CPU and Restart=always never fires because the process stays alive (H3).
-    read -rp "  Select an option [1-9]: " choice || { sleep 1; exit 0; }
+    read -rp "  Select an option [1-9, c]: " choice || { sleep 1; exit 0; }
     action "${choice}"
 done

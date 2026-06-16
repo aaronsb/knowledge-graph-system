@@ -219,6 +219,25 @@ Log in with the OS account (`kgadmin` by default — see the host-login section
 above). Reset the Cockpit config later with
 `sudo KG_EXTERNAL_URL=https://<host> /opt/kg/appliance/files/kg-cockpit-proxy.sh`.
 
+**Gating who can reach it.** Cockpit is root-capable, so a source-IP allowlist
+sits in front of its PAM login (defense in depth). It defaults to **open** (works
+as-is); lock it to a LAN/VPN/admin range from the **console TUI** ("Cockpit
+`/cockpit` access control") or:
+
+```bash
+./operator.sh cockpit-access            # show current
+./operator.sh cockpit-access private    # RFC-1918 only (refuses public IPs)
+./operator.sh cockpit-access 192.168.1.0/24,100.64.0.0/10   # custom (subnet + VPN)
+./operator.sh cockpit-access open       # back to no restriction
+```
+
+Or declaratively at first boot via `KG_COCKPIT_ALLOW_CIDRS` in `provision.env`.
+A future option is mTLS (a client cert) for a cryptographic gate.
+
+> **Rotate the host login.** `kgadmin`'s generated password is stored in cleartext
+> at `/root/kg-credentials.txt` and now also gates `/cockpit`. After first login,
+> change it (`passwd kgadmin`) and shred the file.
+
 ![Cockpit login at /cockpit — OS account (kgadmin)](../media/appliance/cockpit-login.png)
 <!-- TODO(screenshot): replace placeholder — Cockpit login page at
      https://<host>/cockpit/ (note the trusted-cert padlock). -->

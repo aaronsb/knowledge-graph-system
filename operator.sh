@@ -125,6 +125,11 @@ get_compose_cmd() {
         esac
     fi
 
+    # Cockpit host console behind Traefik at /cockpit (ADR-105) when enabled.
+    [ "${COCKPIT_PROXY:-false}" = "true" ] && [ "$ROUTER_MODE" = "traefik" ] \
+        && [ -f "$DOCKER_DIR/docker-compose.traefik-cockpit.yml" ] \
+        && cmd="$cmd -f $DOCKER_DIR/docker-compose.traefik-cockpit.yml"
+
     # Dev mode overlay (adds hot reload, source mounts)
     [ "$DEV_MODE" = "true" ] && [ -f "$DOCKER_DIR/docker-compose.dev.yml" ] && cmd="$cmd -f $DOCKER_DIR/docker-compose.dev.yml"
 
@@ -763,6 +768,47 @@ cmd_restart() {
     fi
 }
 
+# Configure the source-IP allowlist in front of the /cockpit host console.
+# This is defense in depth ahead of Cockpit's own PAM login (a root-capable
+# surface). Default is open (no restriction); lock it to a LAN/VPN/admin range.
+cmd_cockpit_access() {
+    check_env
+    load_config
+
+    if [ "${COCKPIT_PROXY:-false}" != "true" ]; then
+        echo -e "${YELLOW}⚠ Cockpit proxy not enabled (COCKPIT_PROXY != true).${NC}"
+        echo "  Enable it first: provision.env KG_COCKPIT_PROXY=true, or init --cockpit-proxy."
+        exit 1
+    fi
+
+    local arg="${1:-status}" cidrs
+    case "$arg" in
+        status|"")
+            local cur
+            cur="$(grep -E '^KG_COCKPIT_ALLOW_CIDRS=' "$ENV_FILE" 2>/dev/null | cut -d= -f2-)"
+            echo -e "${BLUE}/cockpit allow CIDRs:${NC} ${cur:-0.0.0.0/0,::/0 (open — no restriction)}"
+            echo "Usage: $0 cockpit-access <open|private|CIDR[,CIDR...]>"
+            return 0 ;;
+        open)                 cidrs="0.0.0.0/0,::/0" ;;
+        private|rfc1918|lan)  cidrs="127.0.0.0/8,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16" ;;
+        *)                    cidrs="$arg" ;;   # custom comma-separated CIDR list
+    esac
+
+    # Upsert KG_COCKPIT_ALLOW_CIDRS in .env; compose substitutes it into the
+    # cockpit router's ipallowlist label when the sidecar is (re)created.
+    if grep -qE '^KG_COCKPIT_ALLOW_CIDRS=' "$ENV_FILE" 2>/dev/null; then
+        sed -i "s|^KG_COCKPIT_ALLOW_CIDRS=.*|KG_COCKPIT_ALLOW_CIDRS=$cidrs|" "$ENV_FILE"
+    else
+        echo "KG_COCKPIT_ALLOW_CIDRS=$cidrs" >> "$ENV_FILE"
+    fi
+
+    echo -e "${BLUE}→ Applying /cockpit allowlist: ${BOLD}$cidrs${NC}"
+    cd "$DOCKER_DIR"
+    run_compose up -d --force-recreate cockpit-proxy
+    echo -e "${GREEN}✓ /cockpit access updated${NC}"
+    [ "$cidrs" = "0.0.0.0/0,::/0" ] && echo -e "  ${YELLOW}(open — any source IP that can reach the box)${NC}"
+}
+
 cmd_update() {
     check_env
     load_config
@@ -883,6 +929,10 @@ ${BOLD}Database:${NC}
 ${BOLD}Infrastructure:${NC}
   garage             Manage Garage storage (status, init, repair)
 
+${BOLD}Security:${NC}
+  cockpit-access <x> /cockpit source-IP allowlist: open | private | CIDR[,CIDR...]
+                     (no arg shows current; default open)
+
 ${BOLD}Maintenance:${NC}
   self-update        Update operator.sh and operator container
 
@@ -938,6 +988,9 @@ case "${1:-help}" in
         check_operator
         docker exec "$OPERATOR_CONTAINER" /workspace/operator/lib/recert.sh "$@"
         ;;
+
+    # Cockpit /cockpit source-IP allowlist (defense in depth before PAM login)
+    cockpit-access) shift; cmd_cockpit_access "$@" ;;
 
     # Self-update: update operator.sh and operator container
     self-update)

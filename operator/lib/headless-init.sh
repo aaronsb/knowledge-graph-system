@@ -654,6 +654,18 @@ main() {
         sed -i "s|^TLS_DOMAIN=.*|TLS_DOMAIN=$TLS_DOMAIN|" "$PROJECT_ROOT/.env"
     fi
 
+    # Cockpit /cockpit source-IP allowlist (optional; read from the environment so
+    # it never appears in argv). The overlay defaults to open when this is unset,
+    # so only write it when an operator declared a restriction.
+    if [ -n "${KG_COCKPIT_ALLOW_CIDRS:-}" ]; then
+        if ! grep -q '^KG_COCKPIT_ALLOW_CIDRS=' "$PROJECT_ROOT/.env" 2>/dev/null; then
+            echo "# Cockpit /cockpit source-IP allowlist (operator.sh cockpit-access)" >> "$PROJECT_ROOT/.env"
+            echo "KG_COCKPIT_ALLOW_CIDRS=$KG_COCKPIT_ALLOW_CIDRS" >> "$PROJECT_ROOT/.env"
+        else
+            sed -i "s|^KG_COCKPIT_ALLOW_CIDRS=.*|KG_COCKPIT_ALLOW_CIDRS=$KG_COCKPIT_ALLOW_CIDRS|" "$PROJECT_ROOT/.env"
+        fi
+    fi
+
     # Add LE_EMAIL to .env when set (consumed by the letsencrypt overlay's ACME resolver)
     if [ -n "$LE_EMAIL" ]; then
         if ! grep -q '^LE_EMAIL=' "$PROJECT_ROOT/.env" 2>/dev/null; then
@@ -746,11 +758,20 @@ EOF
     # init registered http://.)
     local POSTGRES_CONTAINER=$(get_container_name postgres)
     local REDIRECT_URI="${EXTERNAL_URL}/callback"
+    # Include the localhost dev callback ONLY for local/dev deployments. On a
+    # public/router-fronted box, a registered http://localhost redirect on a public
+    # OAuth client is an unnecessary standing target (security review H3) — drop it
+    # so only the derived external redirect is accepted.
+    local REDIRECT_ARRAY="ARRAY['${REDIRECT_URI}']"
+    case "$EXTERNAL_URL" in
+        *://localhost*|*://127.0.0.1*)
+            REDIRECT_ARRAY="ARRAY['${REDIRECT_URI}', 'http://localhost:3000/callback']" ;;
+    esac
     echo -e "${BLUE}  Registering OAuth client (kg-web)...${NC}"
     docker exec "$POSTGRES_CONTAINER" psql -U ${POSTGRES_USER:-admin} -d ${POSTGRES_DB:-knowledge_graph} -c \
         "INSERT INTO kg_auth.oauth_clients (client_id, client_name, client_type, redirect_uris, grant_types, scopes)
          VALUES ('kg-web', 'Knowledge Graph Web', 'public',
-                 ARRAY['${REDIRECT_URI}', 'http://localhost:3000/callback'],
+                 ${REDIRECT_ARRAY},
                  ARRAY['authorization_code', 'refresh_token'],
                  ARRAY['*'])
          ON CONFLICT (client_id) DO UPDATE SET
