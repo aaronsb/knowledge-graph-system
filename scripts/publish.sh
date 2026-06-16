@@ -1134,6 +1134,12 @@ cmd_appliance() {
         suf="${v%%:*}"; base="kg-appliance-${label}${suf}"
         ova="$out_dir/${base}.ova"; qcow2="$out_dir/${base}.qcow2"
         if [ ! -f "$ova" ]; then
+            # Post-build, a missing OVA means the build silently failed → hard stop.
+            # With --skip-build, publish whatever IS ready: warn and skip (M1).
+            if [ "$SKIP_BUILD" = "true" ]; then
+                echo -e "${YELLOW}⚠ ${base}.ova not present — skipping ${v##*:} variant (--skip-build)${NC}"
+                continue
+            fi
             echo -e "${RED}OVA not found: $ova${NC}"
             echo -e "  ${DIM}Build it: appliance/build-appliance.sh --ova --version $label --kernel ${v##*:}${NC}"
             exit 1
@@ -1141,15 +1147,14 @@ cmd_appliance() {
         assets+=( "$ova" )
         [ -f "$qcow2" ] && assets+=( "${qcow2}.xz" )
     done
+    if [ "${#assets[@]}" -eq 0 ]; then
+        echo -e "${RED}No appliance OVAs found to publish (build first, or drop --skip-build).${NC}"; exit 1
+    fi
 
     # --- Dry run: report intent only, NO side effects (no xz, no SHA file) ---
     if [ "$DRY_RUN" = "true" ]; then
         echo -e "${DIM}Would compress, checksum, and upload to release ${tag}:${NC}"
-        for v in "${variants[@]}"; do
-            suf="${v%%:*}"; base="kg-appliance-${label}${suf}"
-            echo "    ${base}.ova"
-            [ -f "$out_dir/${base}.qcow2" ] && echo "    ${base}.qcow2.xz"
-        done
+        for a in "${assets[@]}"; do echo "    $(basename "$a")"; done
         echo "    SHA256SUMS"
         return 0
     fi

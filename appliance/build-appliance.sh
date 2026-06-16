@@ -155,7 +155,13 @@ if [ "${KERNEL}" = "generic" ]; then
         --install 'linux-image-amd64'
         # Purge whatever cloud-kernel packages are actually installed (meta +
         # versioned), robust to the exact name; xargs -r no-ops if none match.
-        --run-command "dpkg-query -W -f='\${Package}\n' 'linux-image-*cloud*' 2>/dev/null | xargs -r apt-get purge -y; apt-get autoremove --purge -y"
+        # Use '&&' (not ';') so a failed purge aborts the build rather than being
+        # masked by autoremove's exit status.
+        --run-command "dpkg-query -W -f='\${Package}\n' 'linux-image-*cloud*' 2>/dev/null | xargs -r apt-get purge -y && apt-get autoremove --purge -y"
+        # Hard post-condition (C1): a bootable NON-cloud kernel must survive the
+        # swap, or we'd ship a kernel-less / cloud-only image that the build still
+        # reports as success. Fail loud — independent of the op ordering above.
+        --run-command 'ls /boot/vmlinuz-*-amd64 2>/dev/null | grep -qv cloud || { echo "FATAL: generic kernel swap left no bootable non-cloud kernel"; exit 1; }'
         --append-line '/etc/default/grub:GRUB_GFXMODE=1280x1024'
         --append-line '/etc/default/grub:GRUB_GFXPAYLOAD_LINUX=keep'
         --run-command 'update-grub'
