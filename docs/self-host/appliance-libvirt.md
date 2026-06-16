@@ -136,10 +136,49 @@ Other management surfaces:
 - **Cockpit** — `https://<vm-ip>:9090` (host console: services, storage, logs,
   updates).
 - **virt-manager** — connect to `qemu+ssh://<user>@<host>/system` for lifecycle +
-  the VNC console. (On the client you may need `x11-ssh-askpass` and an
-  `ssh-copy-id` to the libvirt host.)
+  the VNC console. The remote graphical console has three wiring requirements
+  (see below) that each fail with an unhelpful message.
 - **Console TUI** — tty1 over VNC offers status / logs / restart / credentials /
-  operator shell.
+  operator shell. Its **"Login shell (host)"** option drops to a **root shell with
+  no password** — that's the intended way to a host shell (the serial/SSH root
+  login stays locked).
+
+### Remote graphical console (virt-manager / virt-viewer)
+
+Getting the VNC console to open from *another* machine needs three things lined
+up. Each failure mode looks different, so they're easy to chase one at a time:
+
+1. **Key auth the GUI session can use.** virt-manager spawns `ssh` inside your
+   *desktop* session, which often lacks the `SSH_AUTH_SOCK` your terminal has —
+   so it can't see your agent and falls back to a **password prompt**. Pin the
+   key in `~/.ssh/config` so no agent is needed (use a passphrase-less key, or
+   ensure the agent is exported to the GUI session):
+   ```
+   Host <libvirt-host>
+       HostName <libvirt-host>
+       User <user>
+       IdentityFile ~/.ssh/<key>
+       IdentitiesOnly yes
+   ```
+2. **VNC must listen on `127.0.0.1`, not `0.0.0.0`.** With a routable listen
+   address virt-manager tries a **direct** connection to `host:5900` (usually
+   firewalled → *"Viewer was disconnected"*). Binding to localhost forces it to
+   tunnel over SSH instead — and closes the passwordless-VNC exposure. Set it
+   (takes effect after a full power-off, not a reboot):
+   ```bash
+   virsh shutdown <dom>; virt-xml <dom> --edit --graphics listen=127.0.0.1; virsh start <dom>
+   ```
+3. **`netcat` on the libvirt host.** virt-manager's SSH tunnel pipes the VNC
+   socket through `nc` on the remote host; without it the tunnel dies with
+   *"Viewer was disconnected"* and `sh: line 1: nc: command not found`. Install
+   it: `pacman -S openbsd-netcat` (Arch) / `apt install netcat-openbsd` (Debian).
+
+Fallback that needs none of virt-manager's auto-tunnel: forward the port yourself
+and point any VNC viewer at localhost:
+```bash
+ssh -L 5901:localhost:5900 <user>@<libvirt-host>   # keep open
+remote-viewer vnc://localhost:5901                  # or gvncviewer localhost:5901
+```
 
 ## 4. The certificate
 
@@ -184,6 +223,10 @@ echo | openssl s_client -connect <vm-ip>:443 -servername kg.example.com 2>/dev/n
   Ensure `EXTERNAL_URL`/`TLS_DOMAIN` is a public FQDN (not `localhost`) so the
   letsencrypt overlay's `tls.domains` is populated. `operator.sh start` warns when
   it isn't.
+- **virt-manager console "Viewer was disconnected" / asks for a password** — the
+  remote graphical console needs key auth the GUI session can use, VNC bound to
+  `127.0.0.1`, and `netcat` on the libvirt host. See
+  [Remote graphical console](#remote-graphical-console-virt-manager--virt-viewer).
 
 ## See also
 
