@@ -157,7 +157,7 @@ VC_ARGS=(
     # --- stage the repo at /opt/kg (git archive, prefix kg/) ---
     --upload "${REPO_TAR}:/tmp/kg-repo.tar"
     --run-command 'tar -xf /tmp/kg-repo.tar -C /opt && rm -f /tmp/kg-repo.tar'
-    --run-command 'chmod +x /opt/kg/operator.sh /opt/kg/appliance/files/kg-firstboot.sh /opt/kg/appliance/files/kg-console.sh'
+    --run-command 'chmod +x /opt/kg/operator.sh /opt/kg/appliance/files/kg-firstboot.sh /opt/kg/appliance/files/kg-console.sh /opt/kg/appliance/files/kg-host-login.sh'
     # --- first-boot provisioner ---
     --run-command 'cp /opt/kg/appliance/files/kg-firstboot.service /etc/systemd/system/kg-firstboot.service'
     --run-command 'systemctl enable kg-firstboot.service'

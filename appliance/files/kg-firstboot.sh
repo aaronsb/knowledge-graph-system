@@ -149,6 +149,17 @@ EOF
     log "admin password saved to /root/kg-credentials.txt"
 fi
 
+# --- Host-management login (Cockpit :9090 + console "Login shell") ------------
+# Cockpit authenticates against OS accounts, so provision a sudo-enabled system
+# user. Declarative via provision.env (KG_HOST_LOGIN_USER / KG_HOST_LOGIN_PASSWORD);
+# a generated password lands in /root/kg-credentials.txt. Reusable + idempotent —
+# see appliance/files/kg-host-login.sh.
+HOST_LOGIN_USER="${KG_HOST_LOGIN_USER:-kgadmin}"
+if [ -x "${KG_DIR}/appliance/files/kg-host-login.sh" ]; then
+    log "provisioning host-management login '${HOST_LOGIN_USER}'..."
+    "${KG_DIR}/appliance/files/kg-host-login.sh" || log "WARNING: host-login provisioning failed (set it later via kg-host-login.sh)."
+fi
+
 # --- Mark done and write the login banner ------------------------------------
 touch "${SENTINEL}"
 log "provisioning complete; writing login banner."
@@ -162,6 +173,7 @@ cat > /etc/motd <<EOF
 
   Web UI:    http://${IP}:3000/
   Host mgmt: https://${IP}:9090/   (Cockpit — network, storage, logs, updates)
+             log in as '${HOST_LOGIN_USER}' (OS account — see /root/kg-credentials.txt)
 ${CRED_LINE}
 
   NEXT STEPS (in the web UI):
