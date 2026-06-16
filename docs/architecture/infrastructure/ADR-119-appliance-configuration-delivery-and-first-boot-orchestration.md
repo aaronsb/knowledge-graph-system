@@ -81,11 +81,13 @@ predictable address (`/dev/vdb`) so the user points an existing slot at their
 `.img` rather than adding a controller. *(Follow-on, not yet shipped: the current
 `ovf/kg-appliance.ovf.template` declares only the primary disk; until the empty
 slot lands, the carrier is attached as an added virtio disk — the same friction
-this is meant to remove. Tracked with the first-boot orchestration work below.)* The cloud kernel has no AHCI, so the bus is
-virtio ("attach this `.img` as a disk"); we accept that over a one-click
-"attach ISO to CD" because broad compatibility beats the convenience of a kernel
-swap. (Revisitable — an AHCI kernel later would unlock the CD-drive UX without
-changing this model.)
+this is meant to remove. Tracked with the first-boot orchestration work below.)*
+
+The bus the carrier hangs off is governed by the **kernel flavor**, which is now a
+shipped distribution variant (see "Kernel variants" below). The default **cloud**
+kernel has no AHCI, so its carrier is a virtio disk ("attach this `.img` as a
+disk"). The **generic** variant brings AHCI/SATA, unlocking the one-click
+"attach the config ISO to a CD drive" UX for the hypervisors that expect it.
 
 ### B — First boot is presence-driven, not interactive
 
@@ -146,6 +148,27 @@ in the console's *export* flow ("pack and download the config out for re-use"). 
 emits a stock NoCloud seed any cloud-init consumes — it is "a tool to generate
 cloud-init user-data easily," not a custom format.
 
+### E — Kernel variants: cloud (default) and generic (homelab)
+
+The Debian *cloud* kernel ships no DRM/framebuffer or AHCI drivers — fine for a
+headless cloud instance, but it locks the console to 80×25 VGA. That matters
+because of *who looks at the console*: the homelab/desktop user runs the appliance
+in a VirtualBox/VMware/Hyper-V window and reads the console **there** — it never
+occurs to them to switch to tty1 or SSH. For them the cramped 80×25 *is* the
+product. So the image ships as **two variants**, selected at build time
+(`build-appliance.sh --kernel`):
+
+| Variant | Kernel | Console | For |
+|---------|--------|---------|-----|
+| **cloud** (default) | `linux-image-cloud-amd64` | 80×25 VGA (nobody looks) | headless / real-cloud; least overhead. The "expected shape." |
+| **generic** (`-generic` suffix) | `linux-image-amd64` + `GRUB_GFXMODE`/`gfxpayload=keep` | real hi-res framebuffer (legible in a hypervisor window) | homelab/desktop: the person who needs a hand and reads the console window. Also gains AHCI/SATA → the CD-drive carrier UX (§A). |
+
+cloud stays the default because the appliance's headless/edge path is the common
+one and cloud users have other access; generic is the opt-in for the
+console-window user. `publish.sh appliance` ships **both** OVAs/qcow2s on the
+release, and the install docs point VirtualBox/VMware users (the console-window
+crowd) at the **generic** artifact.
+
 ## Consequences
 
 ### Positive
@@ -178,8 +201,9 @@ cloud-init user-data easily," not a custom format.
 ### Neutral
 
 - cloud-init is used as-is (standard datasources), neither demoted nor extended.
-- The bus/kernel trade is revisitable (AHCI kernel → CD-drive UX) without touching
-  this model.
+- The bus/kernel trade is resolved by shipping **two kernel variants** (§E): cloud
+  (default, virtio-only) and generic (AHCI + hi-res console). Neither changes this
+  config-delivery model; they differ only in drivers and console.
 - The builder lands as an operator verb (ADR-211 sink), not a new tool.
 - **Convergence contract (ADR-103).** The OVA is a thin *bootstrap seed*:
   downloaded once, run, then kept current by `operator.sh upgrade` pulling fresh
