@@ -76,9 +76,12 @@ per install (ADR-104 Part A) and never ride the carrier. Reload = same inputs, n
 secrets. The carrier is sensitive when it holds creds and is documented "treat like
 a private key"; the builder (§D) offers an omit-secrets variant.
 
-Because we build the OVA, the OVF **pre-declares an empty virtio slot** at a
+Because we build the OVA, the OVF **will pre-declare an empty virtio slot** at a
 predictable address (`/dev/vdb`) so the user points an existing slot at their
-`.img` rather than adding a controller. The cloud kernel has no AHCI, so the bus is
+`.img` rather than adding a controller. *(Follow-on, not yet shipped: the current
+`ovf/kg-appliance.ovf.template` declares only the primary disk; until the empty
+slot lands, the carrier is attached as an added virtio disk — the same friction
+this is meant to remove. Tracked with the first-boot orchestration work below.)* The cloud kernel has no AHCI, so the bus is
 virtio ("attach this `.img` as a disk"); we accept that over a one-click
 "attach ISO to CD" because broad compatibility beats the convenience of a kernel
 swap. (Revisitable — an AHCI kernel later would unlock the CD-drive UX without

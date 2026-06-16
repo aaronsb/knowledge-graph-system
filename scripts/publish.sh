@@ -1124,36 +1124,47 @@ cmd_appliance() {
         exit 1
     fi
 
-    # --- Compress the qcow2 (the Proxmox/QEMU asset; OVA is already compact) --
-    if [ -f "$qcow2" ] && [ ! -f "$qcow2_xz" ]; then
+    # --- Dry run: report intent only, NO side effects (no xz, no SHA file) ---
+    if [ "$DRY_RUN" = "true" ]; then
+        echo -e "${DIM}Would compress, checksum, and upload to release ${tag}:${NC}"
+        echo "    $(basename "$ova")  ($(du -h "$ova" | cut -f1))"
+        [ -f "$qcow2" ] && echo "    $(basename "$qcow2_xz")  (compressed from $(du -h "$qcow2" | cut -f1) qcow2)"
+        echo "    SHA256SUMS"
+        return 0
+    fi
+
+    # --- Compress the qcow2 FRESH every run -----------------------------------
+    # The .xz name is keyed on the clean VERSION, so a stale same-VERSION .xz
+    # from a prior build must never be reused (xz -f overwrites). Only publish a
+    # .xz when we have a source qcow2 *this* run — a --skip-build OVA-only run
+    # ships just the OVA, never a leftover .xz.
+    if [ -f "$qcow2" ]; then
         echo -e "${BLUE}→ Compressing qcow2 → .xz (a few minutes)...${NC}"
         xz -T0 -k -f "$qcow2"
     fi
 
-    # --- Checksums over exactly the assets we publish ------------------------
+    # --- Checksums over exactly the binary assets we publish -----------------
     local -a assets=( "$ova" )
-    [ -f "$qcow2_xz" ] && assets+=( "$qcow2_xz" )
+    [ -f "$qcow2" ] && assets+=( "$qcow2_xz" )
     echo -e "${BLUE}→ Writing SHA256SUMS${NC}"
     ( cd "$out_dir" && sha256sum $(for a in "${assets[@]}"; do basename "$a"; done) > SHA256SUMS )
     sed 's/^/    /' "$out_dir/SHA256SUMS"
-    assets+=( "$out_dir/SHA256SUMS" )
     echo ""
 
-    if [ "$DRY_RUN" = "true" ]; then
-        echo -e "${DIM}Would upload to release ${tag}:${NC}"
-        for a in "${assets[@]}"; do echo "    $(basename "$a")  ($(du -h "$a" | cut -f1))"; done
-        return 0
-    fi
-
-    # --- Ensure the release exists, then upload (clobber to refresh) ----------
+    # --- Ensure the release exists, then upload ------------------------------
+    # Decoupled from `release`: if $tag doesn't exist this MINTS the GitHub
+    # release — a bootstrap image can ship for a baseline that was never formally
+    # `release`d. Upload binaries first, then SHA256SUMS LAST as the commit
+    # marker, so a mid-upload failure never leaves a checksum ahead of its bytes.
     if ! gh release view "$tag" >/dev/null 2>&1; then
         echo -e "${BLUE}→ Creating release ${tag}${NC}"
         gh release create "$tag" --title "$tag" --notes "${DESCRIPTION:-Appliance bootstrap image ${tag}}"
     fi
-    echo -e "${BLUE}→ Uploading ${#assets[@]} asset(s) to ${tag}${NC}"
+    echo -e "${BLUE}→ Uploading ${#assets[@]} image asset(s) to ${tag}${NC}"
     gh release upload "$tag" "${assets[@]}" --clobber
+    gh release upload "$tag" "$out_dir/SHA256SUMS" --clobber
     echo -e "${GREEN}✓ Published appliance bootstrap image to release ${tag}${NC}"
-    echo -e "  ${DIM}Download: gh release download ${tag} -p 'kg-appliance-*.ova'${NC}"
+    echo -e "  ${DIM}Verify: gh release download ${tag} -p 'kg-appliance-*' -p SHA256SUMS && sha256sum -c SHA256SUMS${NC}"
 }
 
 cmd_all() {
