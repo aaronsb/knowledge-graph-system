@@ -28,6 +28,11 @@
 #     --size SIZE        root disk size (default: 20G)
 #     --output DIR       output directory (default: ./appliance/out)
 #     --ova              also emit an OVA (qcow2 -> vmdk -> OVF wrap)
+#     --kernel FLAVOR    cloud (default) | generic. cloud = lean, headless/cloud
+#                        (console stays 80x25 VGA — nobody looks at it). generic =
+#                        homelab/desktop: real framebuffer console (legible in a
+#                        VirtualBox/VMware window) + AHCI/SATA. generic artifacts
+#                        get a "-generic" name suffix.
 #     --no-cockpit       skip the Cockpit host console (:9090)
 #     --help
 #
@@ -48,6 +53,7 @@ DISK_SIZE="20G"
 OUTPUT_DIR="${SCRIPT_DIR}/out"
 MAKE_OVA="false"
 WITH_COCKPIT="true"
+KERNEL="cloud"
 CACHE_DIR="${SCRIPT_DIR}/.cache"
 
 # --- Parse args --------------------------------------------------------------
@@ -59,11 +65,19 @@ while [ $# -gt 0 ]; do
         --size)        DISK_SIZE="$2"; shift 2 ;;
         --output)      OUTPUT_DIR="$2"; shift 2 ;;
         --ova)         MAKE_OVA="true"; shift ;;
+        --kernel)      KERNEL="$2"; shift 2 ;;
         --no-cockpit)  WITH_COCKPIT="false"; shift ;;
-        --help|-h)     sed -n '2,42p' "${BASH_SOURCE[0]}"; exit 0 ;;
+        --help|-h)     sed -n '2,46p' "${BASH_SOURCE[0]}"; exit 0 ;;
         *) echo "Unknown option: $1" >&2; exit 1 ;;
     esac
 done
+
+case "${KERNEL}" in
+    cloud|generic) ;;
+    *) echo "Unknown --kernel '${KERNEL}' (expected: cloud | generic)" >&2; exit 1 ;;
+esac
+# generic artifacts carry a "-generic" suffix so both variants coexist in out/.
+KSUF=""; [ "${KERNEL}" = "generic" ] && KSUF="-generic"
 
 [ -n "${VERSION}" ] || VERSION="$(cd "${REPO_ROOT}" && git describe --tags --always --dirty 2>/dev/null || echo dev)"
 
@@ -102,7 +116,7 @@ log "archiving repo at ref '${REF}'..."
 (cd "${REPO_ROOT}" && git archive --format=tar --prefix=kg/ "${REF}") > "${REPO_TAR}"
 
 # --- 3. Copy base -> working disk and resize ---------------------------------
-OUT_QCOW="${OUTPUT_DIR}/kg-appliance-${VERSION}.qcow2"
+OUT_QCOW="${OUTPUT_DIR}/kg-appliance-${VERSION}${KSUF}.qcow2"
 log "preparing working disk ${OUT_QCOW} (${DISK_SIZE})..."
 qemu-img convert -O qcow2 "${BASE_IMG}" "${OUT_QCOW}"
 qemu-img resize "${OUT_QCOW}" "${DISK_SIZE}"
@@ -125,12 +139,37 @@ PKGS="qemu-guest-agent,ca-certificates,curl,python3,openssl,git,jq"
 [ "${WITH_COCKPIT}" = "true" ] && PKGS="${PKGS},cockpit"
 DOCKER_PKGS="docker-ce,docker-ce-cli,containerd.io,docker-buildx-plugin,docker-compose-plugin"
 
+# --- Kernel flavor (generic only) --------------------------------------------
+# The Debian *cloud* kernel ships NO DRM/framebuffer drivers, so the console is
+# locked at 80x25 VGA and a higher GRUB_GFXMODE is silently ignored. That is fine
+# for a headless cloud box nobody looks at — but the homelab/desktop user runs
+# this in a VirtualBox/VMware window and reads the console *there* (it never
+# occurs to them to switch to tty1 or SSH). For them, install the generic kernel
+# (virtio-gpu / bochs / vmwgfx DRM) and request a real framebuffer console via
+# GRUB; gfxpayload=keep carries the mode into the kernel. Generic also brings
+# AHCI/SATA — the "attach the config ISO to a CD drive" lever (ADR-119).
+# Expands to nothing for --kernel cloud.
+KERNEL_ARGS=()
+if [ "${KERNEL}" = "generic" ]; then
+    KERNEL_ARGS=(
+        --install 'linux-image-amd64'
+        # Purge whatever cloud-kernel packages are actually installed (meta +
+        # versioned), robust to the exact name; xargs -r no-ops if none match.
+        --run-command "dpkg-query -W -f='\${Package}\n' 'linux-image-*cloud*' 2>/dev/null | xargs -r apt-get purge -y; apt-get autoremove --purge -y"
+        --append-line '/etc/default/grub:GRUB_GFXMODE=1280x1024'
+        --append-line '/etc/default/grub:GRUB_GFXPAYLOAD_LINUX=keep'
+        --run-command 'update-grub'
+    )
+fi
+
 VC_ARGS=(
     -a "${OUT_QCOW}"
     --network
     --hostname "kg-appliance"
     --run-command 'apt-get update'
     --install "${PKGS}"
+    # Kernel flavor: generic swaps cloud→generic + hi-res console; cloud = no-op.
+    "${KERNEL_ARGS[@]}"
     # Docker's official apt repo (keyring + source), then install docker-ce.
     --run-command 'install -m 0755 -d /etc/apt/keyrings'
     --run-command 'curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc'
@@ -176,6 +215,7 @@ VC_ARGS=(
 
 log "customizing image (no VM boot; --network lets apt fetch base + docker repo)..."
 [ "${WITH_COCKPIT}" = "true" ] && log "  including Cockpit host console (:9090)" || log "  Cockpit disabled (--no-cockpit)"
+[ "${KERNEL}" = "generic" ] && log "  generic kernel + hi-res framebuffer console (homelab/desktop variant)" || log "  cloud kernel (lean, headless — console stays 80x25)"
 virt-customize "${VC_ARGS[@]}"
 
 # --- 5. Sparsify -------------------------------------------------------------
@@ -210,7 +250,7 @@ if [ "${MAKE_OVA}" = "true" ]; then
         echo "SHA1(kg-appliance-disk1.vmdk)= $(sha1sum kg-appliance-disk1.vmdk | cut -d' ' -f1)"
       } > kg-appliance.mf
     )
-    OUT_OVA="${OUTPUT_DIR}/kg-appliance-${VERSION}.ova"
+    OUT_OVA="${OUTPUT_DIR}/kg-appliance-${VERSION}${KSUF}.ova"
     ( cd "${OVA_TMP}" && tar -cf "${OUT_OVA}" kg-appliance.ovf kg-appliance.mf kg-appliance-disk1.vmdk )
     log "OVA ready: ${OUT_OVA}"
 fi
