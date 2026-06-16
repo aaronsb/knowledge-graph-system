@@ -183,6 +183,12 @@ get_compose_cmd() {
         esac
     fi
 
+    # Cockpit host console behind Traefik at /cockpit (ADR-105) when enabled.
+    if [ "${COCKPIT_PROXY:-false}" = "true" ] && [ "$ROUTER_MODE" = "traefik" ] \
+            && [ -f "$DOCKER_DIR/docker-compose.traefik-cockpit.yml" ]; then
+        cmd="$cmd -f $DOCKER_DIR/docker-compose.traefik-cockpit.yml"
+    fi
+
     # Add dev overlay if in development mode
     if [ "$DEV_MODE" = "true" ]; then
         if [ -f "$DOCKER_DIR/docker-compose.dev.yml" ]; then

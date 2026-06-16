@@ -1,0 +1,56 @@
+# ============================================================================
+# Knowledge Graph System — Cockpit host console behind Traefik (ADR-105)
+# ============================================================================
+# Routes the appliance's Cockpit host console through the same Traefik front
+# door at https://<host>/cockpit/, so it shares the trusted Let's Encrypt cert
+# instead of Cockpit's self-signed cert on :9090 (which a browser won't trust,
+# and which HSTS on the main hostname refuses to let you click through).
+#
+# Cockpit runs on the VM HOST, not in a container, so Traefik's docker provider
+# can't see it directly. This tiny socat sidecar bridges the gap: Traefik routes
+# /cockpit to the sidecar, which TCP-forwards to the host's :9090 via Docker's
+# host-gateway. No change to Traefik's command or the existing web/api routes.
+#
+# Requires Cockpit configured for the sub-path (UrlRoot=/cockpit + Origins): the
+# appliance's kg-cockpit-proxy.sh writes /etc/cockpit/cockpit.conf from the
+# external URL. Assumes the letsencrypt cert resolver `le` (the router-fronted
+# TLS path); selected by COCKPIT_PROXY=true (operator overlay selection).
+#
+# Cockpit does NOT self-redirect its UrlRoot prefix — a bare /cockpit (no slash)
+# drops the connection (Traefik then reports 502). The redirectregex middleware
+# 301s /cockpit -> /cockpit/ before it reaches the backend. (compose escapes $
+# as $$, so $$1 reaches Traefik as the $1 backreference.)
+# ============================================================================
+
+networks:
+  kg-router:
+    name: knowledge-graph-router
+
+services:
+  cockpit-proxy:
+    # socat L4 forwarder. Pinned by digest (alpine/socat:latest at build time)
+    # for a reproducible, supply-chain-stable sidecar.
+    image: alpine/socat@sha256:2b6b49e9000105672bf70648f8642801791374a24f549d30bed3c3115c13d24c
+    container_name: ${CONTAINER_PREFIX:-knowledge-graph}-cockpit-proxy
+    restart: unless-stopped
+    command: TCP-LISTEN:9090,fork,reuseaddr TCP:host.docker.internal:9090
+    extra_hosts:
+      # Reach Cockpit on the VM host (cockpit.socket listens on *:9090).
+      - "host.docker.internal:host-gateway"
+    networks:
+      - kg-router
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=knowledge-graph-router
+      # Higher priority than the web catch-all (PathPrefix(`/`), priority 1).
+      - "traefik.http.routers.kgcockpit.rule=PathPrefix(`/cockpit`)"
+      - traefik.http.routers.kgcockpit.entrypoints=websecure
+      - traefik.http.routers.kgcockpit.priority=20
+      - traefik.http.routers.kgcockpit.tls=true
+      - traefik.http.routers.kgcockpit.tls.certresolver=le
+      - "traefik.http.routers.kgcockpit.tls.domains[0].main=${TLS_DOMAIN}"
+      - traefik.http.routers.kgcockpit.middlewares=kgcockpit-slash
+      - "traefik.http.middlewares.kgcockpit-slash.redirectregex.regex=^(https?://[^/]+)/cockpit$$"
+      - "traefik.http.middlewares.kgcockpit-slash.redirectregex.replacement=$${1}/cockpit/"
+      - traefik.http.middlewares.kgcockpit-slash.redirectregex.permanent=true
+      - traefik.http.services.kgcockpit.loadbalancer.server.port=9090
