@@ -39,6 +39,7 @@ _Containers, deployment, backup, storage, networking_
 | [ADR-116](./infrastructure/ADR-116-artifact-persistence-pattern.md) | Artifact Persistence Pattern | Accepted |
 | [ADR-117](./infrastructure/ADR-117-deployment-topology.md) | Deployment Topology (Dev/Stable Split) | Draft |
 | [ADR-118](./infrastructure/ADR-118-semantic-election-protocol.md) | Semantic Election Protocol for Distributed Concept Placement | Proposed |
+| [ADR-119](./infrastructure/ADR-119-appliance-configuration-delivery-and-first-boot-orchestration.md) | appliance configuration delivery and first-boot orchestration | Draft |
 
 ## Database/Schema
 _Apache AGE, migrations, schema design, PostgreSQL_

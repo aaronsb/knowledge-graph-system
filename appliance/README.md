@@ -48,10 +48,18 @@ boot during the build.
 Artifacts land in `appliance/out/`. The Debian base is cached in
 `appliance/.cache/` between builds (both are git-ignored).
 
-The qcow2/OVA is built **locally** and attached to a GitHub Release by hand,
-together with a `SHA256SUMS` file (`sha256sum *.qcow2.xz *.ova > SHA256SUMS`) —
-same philosophy as the container images (build where it's fast, push, let CI
-integrate). CI does **not** build the image: emulated `virt-customize` under TCG
+The qcow2/OVA is built **locally** and attached to the matching GitHub Release,
+together with a `SHA256SUMS` file — `./publish.sh appliance` automates the build,
+`.xz` compression, checksums, and upload (the previously-manual step). Same
+philosophy as the container images (build where it's fast, push, let CI
+integrate).
+
+The OVA is a **bootstrap seed, not a per-release artifact** (ADR-103): you
+download it once, run it, and thereafter `operator.sh upgrade` pulls fresh GHCR
+images to stay current. The *images* are the per-release artifacts; the OVA is
+republished only occasionally to move the baseline — hence `publish.sh appliance`
+is its own command, decoupled from `release`. CI does **not** build the image:
+emulated `virt-customize` under TCG
 is slow and re-proves the least-interesting layer. Instead, the
 `appliance-integration.yml` workflow pulls the published GHCR images and runs
 this appliance's real first-boot path (`operator.sh init --headless

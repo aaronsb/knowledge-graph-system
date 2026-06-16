@@ -91,6 +91,8 @@ Publishing:
                             Defaults to rocm72-host only; --force enables deferred variants
   cli                       Publish npm package (@aaronsb/kg-cli)
   fuse                      Publish Python package (kg-fuse) to PyPI
+  appliance                 Build + attach the thin-appliance OVA to the GitHub
+                            release (bootstrap seed; stay current via operator upgrade)
   all                       Publish everything (images, cli, fuse)
 
 Options:
@@ -114,7 +116,7 @@ EOF
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        status|bump|sync-scripts|release|images|images-rocm|all)
+        status|bump|sync-scripts|release|images|images-rocm|appliance|all)
             COMMAND="$1"
             shift
             ;;
@@ -1076,6 +1078,95 @@ cmd_fuse() {
     fi
 }
 
+# cmd_appliance
+#
+# Publish the x86 thin-appliance OVA (+ compressed qcow2) as assets on the
+# current GitHub release. DELIBERATELY decoupled from the per-release cadence:
+# the OVA is a thin *bootstrap seed* (ADR-103) — downloaded once, run, then kept
+# current by `operator.sh upgrade` pulling fresh GHCR images. The container
+# images are the per-release artifacts; the OVA is refreshed occasionally to move
+# the baseline, not on every patch. So this is its own command, not a step in
+# `release`. Automates the previously-manual "attach to a Release by hand" flow
+# (appliance/README.md).
+cmd_appliance() {
+    get_versions
+
+    local out_dir="$PROJECT_ROOT/appliance/out"
+    local label="$VERSION"
+    local tag="v${VERSION}"
+    local qcow2="$out_dir/kg-appliance-${label}.qcow2"
+    local qcow2_xz="${qcow2}.xz"
+    local ova="$out_dir/kg-appliance-${label}.ova"
+
+    echo -e "${BOLD}Publishing appliance bootstrap image${NC}"
+    echo -e "  Version: ${BLUE}${label}${NC}  →  GitHub release ${BLUE}${tag}${NC}"
+    [ "$DRY_RUN" = "true" ] && echo -e "  Mode:    ${YELLOW}DRY RUN${NC}"
+    echo ""
+    echo -e "  ${DIM}Convergence contract (ADR-103): the OVA is a thin bootstrap seed —${NC}"
+    echo -e "  ${DIM}download once, run, then 'operator.sh upgrade' keeps it current via${NC}"
+    echo -e "  ${DIM}GHCR images. Not re-downloaded per release; published occasionally.${NC}"
+    echo ""
+
+    if ! command -v gh &>/dev/null; then
+        echo -e "${RED}gh (GitHub CLI) not found${NC}"; echo "  Install: https://cli.github.com/"; exit 1
+    fi
+
+    # --- Build (unless --skip-build) -----------------------------------------
+    if [ "$SKIP_BUILD" = "false" ]; then
+        echo -e "${BLUE}→ Building OVA (kg-appliance-${label})...${NC}"
+        "$PROJECT_ROOT/appliance/build-appliance.sh" --ova --version "$label"
+        echo -e "${GREEN}✓ Build complete${NC}"
+        echo ""
+    fi
+    if [ ! -f "$ova" ]; then
+        echo -e "${RED}OVA not found: $ova${NC}"
+        echo -e "  ${DIM}Build it: appliance/build-appliance.sh --ova --version $label${NC}"
+        exit 1
+    fi
+
+    # --- Dry run: report intent only, NO side effects (no xz, no SHA file) ---
+    if [ "$DRY_RUN" = "true" ]; then
+        echo -e "${DIM}Would compress, checksum, and upload to release ${tag}:${NC}"
+        echo "    $(basename "$ova")  ($(du -h "$ova" | cut -f1))"
+        [ -f "$qcow2" ] && echo "    $(basename "$qcow2_xz")  (compressed from $(du -h "$qcow2" | cut -f1) qcow2)"
+        echo "    SHA256SUMS"
+        return 0
+    fi
+
+    # --- Compress the qcow2 FRESH every run -----------------------------------
+    # The .xz name is keyed on the clean VERSION, so a stale same-VERSION .xz
+    # from a prior build must never be reused (xz -f overwrites). Only publish a
+    # .xz when we have a source qcow2 *this* run — a --skip-build OVA-only run
+    # ships just the OVA, never a leftover .xz.
+    if [ -f "$qcow2" ]; then
+        echo -e "${BLUE}→ Compressing qcow2 → .xz (a few minutes)...${NC}"
+        xz -T0 -k -f "$qcow2"
+    fi
+
+    # --- Checksums over exactly the binary assets we publish -----------------
+    local -a assets=( "$ova" )
+    [ -f "$qcow2" ] && assets+=( "$qcow2_xz" )
+    echo -e "${BLUE}→ Writing SHA256SUMS${NC}"
+    ( cd "$out_dir" && sha256sum $(for a in "${assets[@]}"; do basename "$a"; done) > SHA256SUMS )
+    sed 's/^/    /' "$out_dir/SHA256SUMS"
+    echo ""
+
+    # --- Ensure the release exists, then upload ------------------------------
+    # Decoupled from `release`: if $tag doesn't exist this MINTS the GitHub
+    # release — a bootstrap image can ship for a baseline that was never formally
+    # `release`d. Upload binaries first, then SHA256SUMS LAST as the commit
+    # marker, so a mid-upload failure never leaves a checksum ahead of its bytes.
+    if ! gh release view "$tag" >/dev/null 2>&1; then
+        echo -e "${BLUE}→ Creating release ${tag}${NC}"
+        gh release create "$tag" --title "$tag" --notes "${DESCRIPTION:-Appliance bootstrap image ${tag}}"
+    fi
+    echo -e "${BLUE}→ Uploading ${#assets[@]} image asset(s) to ${tag}${NC}"
+    gh release upload "$tag" "${assets[@]}" --clobber
+    gh release upload "$tag" "$out_dir/SHA256SUMS" --clobber
+    echo -e "${GREEN}✓ Published appliance bootstrap image to release ${tag}${NC}"
+    echo -e "  ${DIM}Verify: gh release download ${tag} -p 'kg-appliance-*' -p SHA256SUMS && sha256sum -c SHA256SUMS${NC}"
+}
+
 cmd_all() {
     echo -e "${BOLD}Publishing all packages${NC}"
     echo ""
@@ -1100,5 +1191,6 @@ case "$COMMAND" in
     images-rocm)  cmd_images_rocm ;;
     cli)          cmd_cli ;;
     fuse)         cmd_fuse ;;
+    appliance)    cmd_appliance ;;
     all)          cmd_all ;;
 esac

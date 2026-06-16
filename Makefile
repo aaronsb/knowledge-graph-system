@@ -134,6 +134,9 @@ publish: ## Interactive publish wizard
 publish-status: ## Show current versions and auth status
 	@scripts/publish.sh status
 
+publish-appliance: ## Build + attach the appliance OVA to the GitHub release (bootstrap seed)
+	@scripts/publish.sh appliance
+
 ##@ Platform
 
 start: ## Start the platform

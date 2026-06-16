@@ -7,6 +7,7 @@ deciders:
 related:
   - ADR-103
   - ADR-117
+  - ADR-119
   - ADR-211
   - ADR-400
   - ADR-401
@@ -29,7 +30,7 @@ they have drifted into duplicating the parts that should be identical.
 |------|-------|--------|---------------|---------|
 | `operator.sh init` | repo present | **build locally** (default) or pull GHCR | guided wizard / `--headless` | development, source-present hosts |
 | `install.sh` | **curl** from GitHub | **pull GHCR** | wizard / flags | bare-metal production one-liner |
-| appliance first-boot | **pre-baked** repo + Docker | pull GHCR on first boot | declarative (cloud-init) / none | VM / fleet (ADR-103) |
+| appliance first-boot | **pre-baked** repo + Docker | pull GHCR on first boot | declarative / interactive console / none (ADR-119) | VM / fleet (ADR-103) |
 
 The irreducible differences are real and worth keeping: **how files arrive**
 (repo / curl / baked), **where images come from** (build / pull), and **how much
