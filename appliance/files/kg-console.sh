@@ -20,10 +20,24 @@ primary_ip() {
         | awk '{for (i=1;i<=NF;i++) if ($i=="src") {print $(i+1); exit}}'
 }
 
+# Egress interface name + its MAC. Surfaced on the banner so an operator can set a
+# DHCP reservation (pin the appliance to a stable IP) straight from the console —
+# without SSH or hunting through `ip link`. The reservation is also the
+# prerequisite for a public DNS A-record / TLS hostname (ADR-105).
+egress_iface() {
+    ip route get 1.1.1.1 2>/dev/null \
+        | awk '{for (i=1;i<=NF;i++) if ($i=="dev") {print $(i+1); exit}}'
+}
+egress_mac() {
+    local ifc; ifc="$(egress_iface)"
+    [ -n "${ifc}" ] && cat "/sys/class/net/${ifc}/address" 2>/dev/null
+}
+
 pause() { echo; read -rp "  Press Enter to return to the menu... " _; }
 
 banner() {
     local ip; ip="$(primary_ip)"; ip="${ip:-(no network)}"
+    local ifc mac; ifc="$(egress_iface)"; mac="$(egress_mac)"
     clear 2>/dev/null || true
     cat <<EOF
   ════════════════════════════════════════════════════════════════
@@ -32,6 +46,7 @@ banner() {
     Web UI:     http://${ip}:3000/
     Host mgmt:  https://${ip}:9090/   (Cockpit)
     Hostname:   $(hostname)
+    MAC addr:   ${mac:-(unknown)}  on ${ifc:-?}  — pin a DHCP reservation here
   ────────────────────────────────────────────────────────────────
     1) Platform status
     2) Recent API logs
