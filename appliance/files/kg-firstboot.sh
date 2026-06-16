@@ -131,6 +131,9 @@ if [ "${KG_COCKPIT_PROXY:-true}" = "true" ] && [ -n "${KG_EXTERNAL_URL:-}" ] \
     log "configuring Cockpit behind Traefik at /cockpit..."
     if KG_EXTERNAL_URL="${KG_EXTERNAL_URL}" "${KG_DIR}/appliance/files/kg-cockpit-proxy.sh"; then
         INIT_ARGS+=( --cockpit-proxy )
+        # Optional declarative source-IP allowlist — exported so headless-init
+        # persists it to .env (it reads from env, never argv). Unset => open.
+        [ -n "${KG_COCKPIT_ALLOW_CIDRS:-}" ] && export KG_COCKPIT_ALLOW_CIDRS
     else
         log "WARNING: cockpit-proxy config failed; Cockpit stays on :9090."
     fi

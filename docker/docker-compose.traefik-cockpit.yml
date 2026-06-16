@@ -49,7 +49,14 @@ services:
       - traefik.http.routers.kgcockpit.tls=true
       - traefik.http.routers.kgcockpit.tls.certresolver=le
       - "traefik.http.routers.kgcockpit.tls.domains[0].main=${TLS_DOMAIN}"
-      - traefik.http.routers.kgcockpit.middlewares=kgcockpit-slash
+      # Chain: IP allowlist (gate) -> trailing-slash redirect -> Cockpit.
+      - traefik.http.routers.kgcockpit.middlewares=kgcockpit-allow,kgcockpit-slash
+      # Source-IP allowlist in FRONT of Cockpit's PAM login (defense in depth for a
+      # root-capable surface). Default 0.0.0.0/0,::/0 = open (no restriction; works
+      # as-is); set KG_COCKPIT_ALLOW_CIDRS (via `operator.sh cockpit-access` or the
+      # console TUI) to lock it to a LAN/VPN/admin range. Traefik sees the real
+      # client IP (Docker DNAT preserves the source), so this matches the caller.
+      - "traefik.http.middlewares.kgcockpit-allow.ipallowlist.sourcerange=${KG_COCKPIT_ALLOW_CIDRS:-0.0.0.0/0,::/0}"
       - "traefik.http.middlewares.kgcockpit-slash.redirectregex.regex=^(https?://[^/]+)/cockpit$$"
       - "traefik.http.middlewares.kgcockpit-slash.redirectregex.replacement=$${1}/cockpit/"
       - traefik.http.middlewares.kgcockpit-slash.redirectregex.permanent=true
