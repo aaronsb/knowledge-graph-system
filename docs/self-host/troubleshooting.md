@@ -1,7 +1,7 @@
 ---
-id: 1.O.08
+id: 01.011.H
 domain: infra
-mode: operations
+mode: how-to
 ---
 
 # Troubleshooting

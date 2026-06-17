@@ -107,7 +107,7 @@ def generate_markdown(modules: list[dict]) -> str:
     # because this page is overwritten on every docs build. domain=ui (FUSE),
     # mode=reference. Stripped from GitHub Pages (mkdocs ignores unknown keys).
     lines.append("---")
-    lines.append("id: 7.R.05")
+    lines.append("id: 07.005.R")
     lines.append("domain: ui")
     lines.append("mode: reference")
     lines.append("---")

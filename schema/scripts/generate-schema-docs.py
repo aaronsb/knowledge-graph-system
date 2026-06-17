@@ -363,7 +363,7 @@ def render(tables, table_comments, column_comments, migrations):
     # because this page is overwritten on every docs build. domain=db (schema),
     # mode=reference. Stripped from GitHub Pages (mkdocs ignores unknown keys).
     out.append("---")
-    out.append("id: 2.R.01")
+    out.append("id: 02.002.R")
     out.append("domain: db")
     out.append("mode: reference")
     out.append("---")

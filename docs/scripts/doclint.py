@@ -61,11 +61,11 @@ ADR_ANYREF_RE = re.compile(r"\bADR-0*(\d+)(\.\d+)?\b")
 
 MODE_LETTER = {
     "tutorial": "T", "how-to": "H", "reference": "R",
-    "explanation": "E", "operations": "O",
+    "explanation": "E",
 }
 LETTER_MODE = {v: k for k, v in MODE_LETTER.items()}
 
-ID_RE = re.compile(r"^(\d)\.([A-Z])\.(\d{2})$")
+ID_RE = re.compile(r"^(\d{2})\.(\d{3})\.([A-Z])$")
 ADR_REF_RE = re.compile(r"^ADR-(\d+(?:\.\d+)?)$")
 ADR_FILE_RE = re.compile(r"^ADR-(\d+(?:\.\d+)?)")
 
@@ -185,17 +185,17 @@ def build_doc_node(path: Path, digits: dict) -> Node:
     if cid:
         m = ID_RE.match(cid)
         if not m:
-            node.issues.append(("error", f"malformed id: {cid} (want <digit>.<LETTER>.<NN>)"))
+            node.issues.append(("error", f"malformed id: {cid} (want <DD>.<NNN>.<POLE>)"))
         else:
-            digit, letter, _ = m.group(1), m.group(2), m.group(3)
-            if domain in digits and int(digit) != digits[domain]:
+            band, _serial, letter = m.group(1), m.group(2), m.group(3)
+            if domain in digits and int(band) != digits[domain]:
                 node.issues.append(
                     ("error",
-                     f"id domain digit {digit} != domain '{domain}' (expected {digits[domain]})"))
+                     f"id domain band {band} != domain '{domain}' (expected {digits[domain]:02d})"))
             if mode in MODE_LETTER and letter != MODE_LETTER[mode]:
                 node.issues.append(
                     ("error",
-                     f"id mode letter {letter} != mode '{mode}' (expected {MODE_LETTER[mode]})"))
+                     f"id pole {letter} != mode '{mode}' (expected {MODE_LETTER[mode]})"))
 
     node.refs += [("related", r) for r in _as_ref_list(fm.get("related"))]
     node.refs += [("supersedes", r) for r in _as_ref_list(fm.get("supersedes"))]
@@ -347,6 +347,24 @@ def check_orphans(doc_nodes: list, nav_pages: set):
             n.issues.append(("warning", "orphan: not referenced by mkdocs nav"))
 
 
+def check_duplicate_ids(doc_nodes: list):
+    """Flag any catalog id shared by more than one page.
+
+    Serials are scoped to a domain (not domain x mode), so the id is the page's
+    stable handle and must be unique. A collision is a real clash to resolve,
+    not a coincidence — two pages cannot carry the same part number.
+    """
+    by_id = {}
+    for n in doc_nodes:
+        if n.key and not n.key.startswith("?"):
+            by_id.setdefault(n.key, []).append(n)
+    for cid, group in by_id.items():
+        if len(group) > 1:
+            for n in group:
+                mates = ", ".join(sorted(g.rel for g in group if g is not n))
+                n.issues.append(("error", f"duplicate catalog id {cid} (also on: {mates})"))
+
+
 # ============================================================================
 # Coverage
 # ============================================================================
@@ -401,6 +419,7 @@ def main():
     check_references(all_nodes)
     check_supersede_cycles(all_nodes)
     check_orphans(doc_nodes, nav_pages)
+    check_duplicate_ids(doc_nodes)
 
     # ADR issues are warnings unless --enforce-adrs; doc issues are always errors.
     def effective(node, severity):

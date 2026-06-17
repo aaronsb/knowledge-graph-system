@@ -1,7 +1,7 @@
 ---
-id: 4.O.01
+id: 04.001.H
 domain: auth
-mode: operations
+mode: how-to
 ---
 
 # Security and Access

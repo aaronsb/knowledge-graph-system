@@ -1,5 +1,5 @@
 ---
-id: 6.H.01
+id: 06.004.H
 domain: vocab
 mode: how-to
 ---

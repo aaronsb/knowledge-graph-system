@@ -32,20 +32,52 @@ page drift apart, and a contributor never knows which one to edit. Audience is a
 real lens, but it is the wrong axis for the directory structure.
 
 We adopt **Diátaxis** as the organizing taxonomy instead. Each page has one
-*mode* and serves one reader job:
+*mode* — the reader's epistemic posture — and serves one reader job:
 
-| Mode | Folder | The page answers |
-|------|--------|------------------|
-| Tutorial | `get-started/` | "Walk me through my first success." |
-| How-to | `how-to/` | "I have a goal; give me the steps." |
-| Reference | `reference/` | "State the facts I look up." |
-| Explanation | `explanation/` | "Help me understand why." |
-| Operations | `self-host/` | "I run the platform; deploy and keep it healthy." |
+| Mode | The page answers |
+|------|------------------|
+| Tutorial | "Walk me through my first success." |
+| How-to | "I have a goal; give me the steps." |
+| Reference | "State the facts I look up." |
+| Explanation | "Help me understand why." |
 
-`self-host/` is a fifth, operations-flavored section — Diátaxis-adjacent rather
-than canonical — because running the appliance is a distinct, large reader job.
-Architecture/ADRs remain a separate tree (the builder-pair audience) reachable
-from their index.
+These four are not a list to extend — they are a closed 2×2 derived from two
+orthogonal axes (*action* vs *cognition*, *acquisition* vs *application*).
+Tutorial and How-to are action; Reference and Explanation are cognition.
+Tutorial and Reference serve acquisition-adjacent and lookup needs; How-to and
+Explanation serve the working reader. There is no fifth quadrant, because there
+is no third axis. Mode is therefore the *highest* level of the catalog: it
+classifies every page by reader posture alone, independent of subject.
+
+**Folders are reader destinations, not modes.** The default site layout maps
+one mode to one folder — `get-started/` (tutorial), `how-to/`, `reference/`,
+`explanation/` — but a folder may hold several modes when it serves a coherent
+*audience*. `self-host/` is exactly that: the operator's home, holding a
+tutorial (`quick-start`), how-tos (`upgrading`, `tls`, `backup-restore`),
+reference (`configuration`), and explanation (`security`, `production`).
+"Operations" is an **audience facet**, not a mode — it answers *who reads this*
+and *what subsystem* (deployment, networking, backup), which the catalog already
+captures on the **domain** axis (`infra`, with the security model under `auth`).
+It does not belong in the mode slot. Architecture/ADRs likewise remain a
+separate tree (the builder-pair audience) reachable from their index.
+
+> **Correction (2026-06-16).** The 2026-06-15 amendment first defined a fifth
+> mode, `operations` (letter `O`), homed in `self-host/` — "Diátaxis-adjacent."
+> That was a category error: it placed an *audience* label on the *mode* axis,
+> which is reserved for reader posture. Operations content is never outside the
+> four modes (it decomposes into a tutorial, how-tos, reference, and
+> explanation), and its distinct-job-ness lives on the **domain** axis, which
+> the `self-host/` pages already encode correctly (`infra`, plus `auth` for the
+> security model). The mode vocabulary is now the canonical four (`T/H/R/E`);
+> `O` is retired. The same correction reshapes the catalog id from
+> `<digit>.<LETTER>.<serial>` to the octet-style `DD.NNN.P` defined below, so
+> that mode (the mutable part) trails the identity instead of sitting inside it.
+> **Migration:** re-tag the 11 `self-host/` pages to their true mode, drop
+> `operations` from `doclint.py`'s `MODE_LETTER`, renumber every catalog id to
+> `DD.NNN.P` with domain-scoped serials, and update the four reference-page
+> generators (`cli`, `mcp`, `fuse`, `schema`) to emit the new ids. The
+> `self-host/` folder and its nav are unaffected — it remains a multi-mode,
+> audience-coherent destination.
 
 The consolidation that applied this taxonomy is recorded in
 `specs/documentation-consolidation-spec.md` (an intermediary spec, not an ADR):
@@ -62,21 +94,41 @@ part number that is invisible on the showroom floor:
 
 ```yaml
 ---
-id: 4.R.01          # <domain-digit>.<MODE-letter>.<serial>
-domain: auth         # ADR-900 domain key — the shared "first octet"
-mode: reference      # Diátaxis: tutorial | how-to | reference | explanation | operations
+id: 04.001.H         # <DD domain band>.<NNN serial>.<diátaxis pole>
+domain: auth          # ADR-900 domain key — the shared "first octet"
+mode: how-to          # Diátaxis: tutorial | how-to | reference | explanation
 ---
 ```
 
-- **domain** reuses the ADR-900 domain bands (1 infra · 2 db · 3 ingest ·
-  4 auth · 5 query · 6 vocab · 7 ui · 8 ai · 9 meta). A doc and the ADRs that
-  govern it share the leading digit, so "everything about auth" spans both trees.
-- **mode** is the Diátaxis mode (letter `T` / `H` / `R` / `E` / `O` in the ID).
-- **serial** is a 2-digit sequence within `(domain, mode)`.
+The id is a fixed-width, octet-style number — `DD.NNN.P`:
+
+- **domain band (`DD`)** — two digits, the ADR-900 band (`01` infra · `02` db ·
+  `03` ingest · `04` auth · `05` query · `06` vocab · `07` ui · `08` ai ·
+  `09` meta). A doc and the ADRs that govern it share the band, so "everything
+  about auth" spans both trees.
+- **serial (`NNN`)** — a three-digit sequence **scoped to the domain**, not to
+  `(domain, mode)`. Assigned once at creation and never reused. `DD.NNN`
+  together is the page's immutable identity.
+- **pole (`P`)** — the Diátaxis mode as a single trailing letter
+  (`T`/`H`/`R`/`E`). It is a *classifier*, not part of the identity; it must
+  agree with the `mode:` field, and the linter enforces that.
+
+**Why the pole trails and the serial is domain-scoped.** The original scheme was
+`<digit>.<LETTER>.<serial>` with the serial scoped to `(domain, mode)` — which
+baked a *mutable* attribute into the *middle of the identity*. Re-classifying a
+page then forced its part number to change: the 2026-06-16 correction below
+re-shelved eleven `self-host/` pages and, under the old scheme, every one of
+their ids would have churned. A handle that mutates when you re-shelve the part
+is not a handle. Under `DD.NNN.P` the identity is `DD.NNN`; re-classifying flips
+only the trailing pole (`…​.H` → `…​.E`) and the number is untouched. The pole
+stays visible so the id self-documents, but it is a *view* of the `mode:` field,
+never the key. Domain-scoped serials mean the linter can treat any id collision
+as a real clash (`check_duplicate_ids`), since two pages in a domain can never
+legitimately share a serial.
 
 These keys are **management metadata, not display**. mkdocs ignores unknown
 frontmatter keys, so the catalog is stripped from GitHub Pages — readers never
-see `4.R.01`, maintainers and the linter do. Diátaxis stays a *principle* for
+see `04.001.H`, maintainers and the linter do. Diátaxis stays a *principle* for
 readers; the catalog is the *index* for maintainers. The two are facets of the
 same page, not competing schemes.
 

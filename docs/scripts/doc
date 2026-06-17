@@ -129,7 +129,7 @@ def cmd_coverage(args) -> int:
     cfg = _cfg()
     pages = load_pages()
     adrs = adr_counts()
-    modes = list(doclint.MODE_LETTER)            # tutorial..operations, in order
+    modes = list(doclint.MODE_LETTER)            # tutorial..explanation, in order
     letters = [doclint.MODE_LETTER[m] for m in modes]
     grid = Counter((n.domain, n.mode) for n in pages if n.domain and n.mode)
     domains = list(cfg["domains"])               # adr.yaml order = octet order

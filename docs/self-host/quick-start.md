@@ -1,7 +1,7 @@
 ---
-id: 1.O.05
+id: 01.008.H
 domain: infra
-mode: operations
+mode: how-to
 ---
 
 # Quick Start
