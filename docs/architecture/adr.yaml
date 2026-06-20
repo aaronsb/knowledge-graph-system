@@ -83,6 +83,7 @@ legacy:
   range: [1, 99]
   label: "Retired (renumbered into domains 2026-06-15)"
   retired: true   # vacated range — doclint fails the build on any reference into 1–99
+  defining_adr: ADR-900   # the ADR that vacated the range; exempt — it names retired numbers legitimately
 
 # Viewer command for `adr view`
 # Use {file} as placeholder for the file path

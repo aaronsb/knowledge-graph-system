@@ -52,7 +52,8 @@ resolvable edges, no supersede cycles, and the vacated-range guard.
   overwritten every build — their frontmatter is **emitted by the generator**
   (`cli/scripts/*`), never hand-injected, or the next regen wipes it.
 - **Retired-range guard is ON** (`legacy: {retired: true}`): no doc/ADR/source may
-  reference the vacated legacy range (ADR numbers 1–99). The scan honors `.gitignore`, so
+  reference the vacated legacy range (ADR numbers 1–99) — except the defining ADR
+  (`legacy.defining_adr: ADR-900`), which names those numbers legitimately. The scan honors `.gitignore`, so
   gitignored corpora (e.g. `examples/.../claude-ai-history`) and scratch are
   skipped. Raw audit/scan byproducts go to `*-raw.json` (gitignored), not committed.
 - mkdocs strips unknown frontmatter, so catalog ids never reach readers — they are

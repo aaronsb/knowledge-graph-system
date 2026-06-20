@@ -2,9 +2,10 @@
 """
 doc — a librarian for the documentation catalog.
 
-Presents the catalog (frontmatter `id`/`domain`/`mode`, ADR-908) over the shared
-domain bands: a domain×mode coverage matrix, page listings, and a gap report that
-weighs doc coverage against ADR count per domain.
+Presents the catalog (frontmatter `id`/`domain`/`mode`) over the shared domain
+bands: a domain×mode coverage matrix, page listings, and a gap report that weighs
+doc coverage against ADR count per domain. See your project's
+documentation-catalog ADR for the model.
 
 This is the *diagnostic* front-end. The *test* is `doclint` (the CI linter);
 `doc lint` invokes it. Sibling of the `adr` tool — same `adr.yaml` config.

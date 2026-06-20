@@ -4,9 +4,9 @@ doclint — graph-aware linter for the documentation catalog.
 
 Extends the ADR linter (`docs/scripts/adr lint`) from ADRs to the whole `docs/`
 tree, treating docs and ADRs as a single *decision graph*: nodes are records,
-edges are `related`/`supersedes` references. See ADR-302 (unified documentation
-model); generalized from the knowledge-graph-system reference implementation
-(its ADR-908/ADR-900).
+edges are `related`/`supersedes` references. See your project's
+documentation-catalog decision record for the model; this tool was generalized
+from the knowledge-graph-system reference implementation.
 
 It checks:
 
@@ -25,8 +25,10 @@ Portability (this is the canonical, multi-repo tool, not a single project's copy
   ignored, so a repo can adopt the catalog gradually instead of all-at-once.
 - **mkdocs nav is optional.** No `mkdocs.yml` → the orphan check is skipped.
 - **The retired-range guard is opt-in.** Set `legacy: {retired: true}` in
-  `adr.yaml` to fail on references into a vacated pre-domain range (the
-  ADR-900 move). Repos that still use their legacy range leave it off (default).
+  `adr.yaml` to fail on references into a vacated pre-domain range. Set
+  `legacy: {defining_adr: ADR-NNN}` to exempt the ADR that vacated the range (it
+  names retired numbers legitimately). Repos still using their legacy range leave
+  both off (default).
 - **Project root is discovered** (git, then walking up for
   `docs/architecture/adr.yaml`), so the script works whether it is a symlink
   into the ways corpus (agent-ways dogfooding) or a vendored copy in a project.
@@ -99,7 +101,6 @@ RETIRED_SCAN_EXTS = {".md", ".py", ".ts", ".tsx", ".js", ".mjs", ".rs",
                      ".sh", ".yml", ".yaml", ".json"}
 RETIRED_SKIP_PARTS = {"node_modules", "dist", "site", ".git"}
 RETIRED_EXEMPT_NAMES = {"adr.yaml"}
-RETIRED_EXEMPT_PREFIXES = ("ADR-900-",)
 RETIRED_ALLOW_MARKER = "doclint-allow-retired"
 ADR_ANYREF_RE = re.compile(r"\bADR-0*(\d+)(\.\d+)?\b")
 
@@ -165,7 +166,7 @@ def parse_frontmatter(path: Path) -> dict:
 def _as_ref_list(value) -> list:
     """Coerce a related/supersedes value into target strings, stripping wikilinks.
 
-    ADR-302 edges are Obsidian `[[wikilinks]]`; the inside is the catalog id or
+    Catalog edges are Obsidian `[[wikilinks]]`; the inside is the catalog id or
     ADR reference. The aliased form `[[target|alias]]` keeps only `target`. Bare
     strings are accepted too (pre-wikilink ADRs).
     """
@@ -377,15 +378,20 @@ def _retired_scan_files():
     yield from REPO.rglob("*")   # non-git fallback
 
 
-def check_retired_refs(lo: int, hi: int):
-    """Scan repo for references into a vacated pre-domain range (opt-in)."""
+def check_retired_refs(lo: int, hi: int, exempt_prefixes: tuple = ()):
+    """Scan repo for references into a vacated pre-domain range (opt-in).
+
+    exempt_prefixes: filename prefixes to skip — typically the ADR that vacated
+    the range (it names retired numbers legitimately), from adr.yaml
+    legacy.defining_adr.
+    """
     hits = []
     for f in _retired_scan_files():
         if not f.is_file() or f.suffix not in RETIRED_SCAN_EXTS:
             continue
         if RETIRED_SKIP_PARTS & set(f.parts):
             continue
-        if f.name in RETIRED_EXEMPT_NAMES or f.name.startswith(RETIRED_EXEMPT_PREFIXES):
+        if f.name in RETIRED_EXEMPT_NAMES or (exempt_prefixes and f.name.startswith(exempt_prefixes)):
             continue
         try:
             text = f.read_text()
@@ -473,7 +479,9 @@ def main():
     legacy = cfg.get("legacy", {}) or {}
     if legacy.get("retired"):
         lo, hi = (int(x) for x in legacy.get("range", [1, 99]))
-        retired_hits = check_retired_refs(lo, hi)
+        defining = legacy.get("defining_adr")
+        exempt = (f"{defining}-",) if defining else ()
+        retired_hits = check_retired_refs(lo, hi, exempt)
         if retired_hits:
             print(f"\nRetired-range references (ADR-{lo}..{hi} are vacated):")
             for rel, ln, ref in sorted(retired_hits):

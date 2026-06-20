@@ -160,12 +160,18 @@ tooling — was generalized out of this repo into the agent-ways framework as it
 canonical *documentation model* (the framework's own `ADR-302`, unrelated to this
 project's `ADR-302`). This repo is that model's **reference implementation**, and
 `docs/scripts/{doc,doclint.py}` are **vendored copies** of the canonical tools
-(copy-not-symlink, refreshed from canonical). That is why the vendored sources
-cite `ADR-302` (the upstream model) and credit `ADR-908`/`ADR-900` (this repo's
-local decisions) — the two numbers name two different things and both are correct.
-The framework-side reference is prose only: do **not** add `ADR-302` to this ADR's
-`related:` edges, since here that id resolves to the multimodal-ingestion ADR and
-would be a false graph edge.
+(copy-not-symlink, refreshed from canonical). The canonical tools are
+**ADR-number-agnostic** — they refer to "your project's documentation-catalog ADR"
+rather than hardcoding a number — so the vendored copies need no local citation
+patch; *this* ADR (ADR-908) is that documentation-catalog ADR for this repo. One
+caution survives the generalization: the framework's `ADR-302` is a different
+document from this project's `ADR-302` (multimodal ingestion), so do **not** add
+`ADR-302` to this ADR's `related:` edges — here it would resolve to the wrong node
+and become a false graph edge.
+
+The vacated-range guard (`legacy: {retired: true}`) exempts the **defining ADR**
+named by `legacy.defining_adr` (here `ADR-900`), which legitimately names retired
+1–99 numbers; every other doc, ADR, and source file is still policed.
 
 ### Numbering freeze
 
