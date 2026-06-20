@@ -2,12 +2,13 @@
 """
 doc — a librarian for the documentation catalog.
 
-Presents the catalog defined by ADR-087 (frontmatter `id`/`domain`/`mode`) over
-the ADR-900 domain bands: a domain×mode coverage matrix, page listings, and a
-gap report that weighs doc coverage against ADR count per domain.
+Presents the catalog (frontmatter `id`/`domain`/`mode`, ADR-908) over the shared
+domain bands: a domain×mode coverage matrix, page listings, and a gap report that
+weighs doc coverage against ADR count per domain.
 
-This is the *diagnostic* front-end. The *test* is `doclint.py` (the CI linter);
+This is the *diagnostic* front-end. The *test* is `doclint` (the CI linter);
 `doc lint` invokes it. Sibling of the `adr` tool — same `adr.yaml` config.
+Generalized from the knowledge-graph-system reference implementation.
 
 Usage:
     doc                       # coverage matrix (default)
@@ -43,14 +44,20 @@ except ImportError:
 # ============================================================================
 
 def _cfg() -> dict:
-    """Load adr.yaml (domains, ranges, names)."""
-    with open(doclint.ADR_YAML) as f:
-        return yaml.safe_load(f)
+    return doclint.load_config()
+
+
+def _digits() -> dict:
+    return doclint.domain_digits(_cfg())
 
 
 def _title(path: Path) -> str:
     """Return a page's first H1 (its display title), or '(untitled)'."""
-    for line in path.read_text().split("\n"):
+    try:
+        text = path.read_text()
+    except (OSError, UnicodeDecodeError):
+        return "(unreadable)"
+    for line in text.split("\n"):
         m = re.match(r"^#\s+(.+)", line)
         if m:
             return m.group(1).strip()
@@ -58,11 +65,17 @@ def _title(path: Path) -> str:
 
 
 def load_pages() -> list:
-    """Parse every catalog page into a doclint Node, annotated with its title."""
-    digits = doclint.load_domain_digits()
+    """Parse every catalog page into a doclint Node, annotated with its title.
+
+    Honors doclint's opt-in membership: non-catalog prose (no id/domain/mode)
+    yields None and is skipped.
+    """
+    digits = _digits()
     pages = []
     for p in doclint.iter_catalog_pages():
         node = doclint.build_doc_node(p, digits)
+        if node is None:
+            continue
         node.title = _title(p)
         pages.append(node)
     return pages
@@ -89,11 +102,7 @@ def adr_counts() -> Counter:
 # ============================================================================
 
 def render_table(headers, rows, aligns=None, rule_before_last=False) -> str:
-    """Render a box-drawn grid (Unicode borders).
-
-    aligns is a per-column list of 'l'/'r'; rule_before_last draws a separator
-    above the final row (for a totals line).
-    """
+    """Render a box-drawn grid (Unicode borders)."""
     cols = len(headers)
     aligns = aligns or ["l"] * cols
     widths = [
@@ -125,14 +134,13 @@ def render_table(headers, rows, aligns=None, rule_before_last=False) -> str:
 # ============================================================================
 
 def cmd_coverage(args) -> int:
-    """Render the domain×mode coverage matrix with doc and ADR totals."""
     cfg = _cfg()
     pages = load_pages()
     adrs = adr_counts()
-    modes = list(doclint.MODE_LETTER)            # tutorial..explanation, in order
+    modes = list(doclint.MODE_LETTER)
     letters = [doclint.MODE_LETTER[m] for m in modes]
     grid = Counter((n.domain, n.mode) for n in pages if n.domain and n.mode)
-    domains = list(cfg["domains"])               # adr.yaml order = octet order
+    domains = list(cfg["domains"])
 
     headers = ["domain"] + letters + ["docs", "ADRs"]
     rows = []
@@ -152,7 +160,6 @@ def cmd_coverage(args) -> int:
 
 
 def cmd_list(args) -> int:
-    """List catalog pages (optionally filtered by domain/mode)."""
     pages = load_pages()
     if args.domain:
         pages = [p for p in pages if p.domain == args.domain]
@@ -162,13 +169,13 @@ def cmd_list(args) -> int:
     keymap = {
         "id": lambda p: (p.key,),
         "path": lambda p: (p.rel,),
-        "title": lambda p: (p.title.lower(),),
+        "title": lambda p: (getattr(p, "title", "").lower(),),
     }
     pages.sort(key=keymap[args.sort])
 
     headers = ["id", "domain", "mode", "title"]
     rows = [[p.key or "?", p.domain or "?", p.mode or "?",
-             p.title + ("  !!" if p.issues else "")] for p in pages]
+             getattr(p, "title", "") + ("  !!" if p.issues else "")] for p in pages]
     if rows:
         print()
         print(render_table(headers, rows))
@@ -178,7 +185,6 @@ def cmd_list(args) -> int:
 
 
 def cmd_gaps(args) -> int:
-    """Report empty (domain×mode) cells and domains where docs lag ADRs."""
     cfg = _cfg()
     pages = load_pages()
     adrs = adr_counts()
@@ -191,14 +197,13 @@ def cmd_gaps(args) -> int:
     for dom in domains:
         missing = [doclint.MODE_LETTER[m] for m in modes if not grid.get((dom, m))]
         if missing:
-            print(f"  {dom:9} no {', '.join(missing)}")
+            print(f"  {dom:12} no {', '.join(missing)}")
 
     print("\nDoc/ADR imbalance (domains with many decisions, few docs):")
-    rows = sorted(domains, key=lambda d: (per_domain.get(d, 0) - adrs.get(d, 0)))
-    for dom in rows:
+    for dom in sorted(domains, key=lambda d: (per_domain.get(d, 0) - adrs.get(d, 0))):
         nd, na = per_domain.get(dom, 0), adrs.get(dom, 0)
         if na and nd <= max(2, na // 4):
-            print(f"  {dom:9} {na:>3} ADRs → {nd:>2} docs")
+            print(f"  {dom:12} {na:>3} ADRs → {nd:>2} docs")
 
     issues = [p for p in pages if p.issues]
     if issues:
@@ -209,17 +214,16 @@ def cmd_gaps(args) -> int:
 
 
 def cmd_domains(args) -> int:
-    """Print the domain bands (mirrors `adr domains`, catalog-flavored)."""
     cfg = _cfg()
     print("\nCatalog domains (shared first octet with ADRs)\n")
     for key, d in cfg["domains"].items():
         lo, hi = d["range"]
-        print(f"  {lo // 100}  {key:8} {lo}-{hi}  {d['name']}")
+        print(f"  {lo // 100}  {key:12} {lo}-{hi}  {d['name']}")
     return 0
 
 
 def cmd_lint(args) -> int:
-    """Delegate to doclint.py (the catalog test)."""
+    """Delegate to the doclint linter (the catalog test)."""
     cmd = [sys.executable, str(HERE / "doclint.py"), "--check"]
     if args.strict:
         cmd.append("--enforce-adrs")

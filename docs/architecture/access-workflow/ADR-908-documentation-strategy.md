@@ -153,6 +153,20 @@ references. It lints for:
 Linting is **enforced on `docs/`** (errors fail CI) and **warns on ADRs** until
 the ADR frontmatter sweep lands (tracked separately as the #520 fast-follow).
 
+### Upstream: generalized into the agent-ways framework
+
+This catalog — the typed doc+ADR graph, the `DD.NNN.P` id, the `doc`/`doclint`
+tooling — was generalized out of this repo into the agent-ways framework as its
+canonical *documentation model* (the framework's own `ADR-302`, unrelated to this
+project's `ADR-302`). This repo is that model's **reference implementation**, and
+`docs/scripts/{doc,doclint.py}` are **vendored copies** of the canonical tools
+(copy-not-symlink, refreshed from canonical). That is why the vendored sources
+cite `ADR-302` (the upstream model) and credit `ADR-908`/`ADR-900` (this repo's
+local decisions) — the two numbers name two different things and both are correct.
+The framework-side reference is prose only: do **not** add `ADR-302` to this ADR's
+`related:` edges, since here that id resolves to the multimodal-ingestion ADR and
+would be a false graph edge.
+
 ### Numbering freeze
 
 Per ADR-900, legacy ADRs (1–99) are frozen at their numbers — we do not

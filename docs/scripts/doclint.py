@@ -2,35 +2,46 @@
 """
 doclint — graph-aware linter for the documentation catalog.
 
-Extends the ADR linter's approach (`docs/scripts/adr lint`) from ADRs to the
-whole `docs/` tree, treating docs and ADRs as a single *decision graph*: nodes
-are records, edges are `related`/`supersedes` references. See ADR-908
-(documentation catalog) and ADR-900 (numbering domain system).
+Extends the ADR linter (`docs/scripts/adr lint`) from ADRs to the whole `docs/`
+tree, treating docs and ADRs as a single *decision graph*: nodes are records,
+edges are `related`/`supersedes` references. See ADR-302 (unified documentation
+model); generalized from the knowledge-graph-system reference implementation
+(its ADR-908/ADR-900).
 
-It checks three things:
+It checks:
 
 1. Frontmatter validity — every catalog page carries a well-formed
-   `id`/`domain`/`mode`, and the ID's domain digit + mode letter agree with the
+   `id`/`domain`/`mode`; the id's domain band and mode pole agree with the
    `domain`/`mode` fields. Domains come from `adr.yaml` (single source of truth).
 2. Reference graph — every `related`/`supersedes` target resolves (no dangling
-   reference), no supersede cycles, and no catalog page is orphaned from the
-   mkdocs nav.
+   reference), no supersede cycles, and (when a site nav exists) no catalog page
+   is orphaned from it.
 3. Coverage matrix — which `(domain, mode)` cells hold pages, surfacing gaps.
 
-Catalog pages (docs/ outside architecture/) are ENFORCED: their issues are
-errors. ADRs (docs/architecture/) WARN by default; `--enforce-adrs` promotes
-them to errors once the ADR frontmatter sweep lands.
+Portability (this is the canonical, multi-repo tool, not a single project's copy):
+
+- **Catalog membership is opt-in.** A `docs/` page is a catalog node only if it
+  declares catalog frontmatter (`id`/`domain`/`mode`). Un-declared prose is
+  ignored, so a repo can adopt the catalog gradually instead of all-at-once.
+- **mkdocs nav is optional.** No `mkdocs.yml` → the orphan check is skipped.
+- **The retired-range guard is opt-in.** Set `legacy: {retired: true}` in
+  `adr.yaml` to fail on references into a vacated pre-domain range (the
+  ADR-900 move). Repos that still use their legacy range leave it off (default).
+- **Project root is discovered** (git, then walking up for
+  `docs/architecture/adr.yaml`), so the script works whether it is a symlink
+  into the ways corpus (agent-ways dogfooding) or a vendored copy in a project.
 
 Usage:
-    doclint.py [--check] [--enforce-adrs] [--quiet]
+    doclint [--check] [--enforce-adrs] [--quiet]
 
     --check         exit 1 if any errors (CI mode)
     --enforce-adrs  treat ADR issues as errors, not warnings
-    --quiet         suppress the coverage matrix and per-file OK lines
+    --quiet         suppress the coverage matrix
 """
 
 import argparse
 import re
+import subprocess
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -41,53 +52,76 @@ except ImportError:
     print("Error: PyYAML is required (pip install pyyaml).", file=sys.stderr)
     sys.exit(1)
 
-DOCS = Path(__file__).resolve().parent.parent          # docs/
-REPO = DOCS.parent
+
+# ============================================================================
+# Project root discovery (works under symlink or vendored copy)
+# ============================================================================
+
+def get_project_root() -> Path:
+    """Find the project root via git, then by walking up to docs/architecture/."""
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
+            capture_output=True, text=True, timeout=5)
+        if result.returncode == 0:
+            root = Path(result.stdout.strip())
+            if (root / "docs" / "architecture" / "adr.yaml").exists():
+                return root
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        pass
+    candidate = Path.cwd()
+    for _ in range(10):
+        if (candidate / "docs" / "architecture" / "adr.yaml").exists():
+            return candidate
+        if candidate.parent == candidate:
+            break
+        candidate = candidate.parent
+    return Path.cwd()
+
+
+REPO = get_project_root()
+DOCS = REPO / "docs"
 ADR_YAML = DOCS / "architecture" / "adr.yaml"
 MKDOCS_YML = REPO / "mkdocs.yml"
 
-# Retired-range guard (ADR-900): scan these trees for references into the
-# retired pre-domain number range and fail the build.
-RETIRED_SCAN_DIRS = ["docs", "specs", "api", "cli", "fuse", "schema",
-                     "web/src", "operator", "scripts"]
-RETIRED_SCAN_EXTS = {".md", ".py", ".ts", ".tsx", ".js", ".mjs", ".rs",
-                     ".sh", ".yml", ".yaml", ".json"}
-RETIRED_SKIP_PARTS = {"node_modules", "dist", "site", ".git"}
-# Files that define the retired range and may legitimately name it.
-RETIRED_EXEMPT_NAMES = {"adr.yaml"}
-RETIRED_EXEMPT_PREFIXES = ("ADR-900-",)
-RETIRED_ALLOW_MARKER = "doclint-allow-retired"
-ADR_ANYREF_RE = re.compile(r"\bADR-0*(\d+)(\.\d+)?\b")
-
-MODE_LETTER = {
-    "tutorial": "T", "how-to": "H", "reference": "R",
-    "explanation": "E",
-}
-LETTER_MODE = {v: k for k, v in MODE_LETTER.items()}
+MODE_LETTER = {"tutorial": "T", "how-to": "H", "reference": "R", "explanation": "E"}
 
 ID_RE = re.compile(r"^(\d{2})\.(\d{3})\.([A-Z])$")
 ADR_REF_RE = re.compile(r"^ADR-(\d+(?:\.\d+)?)$")
 ADR_FILE_RE = re.compile(r"^ADR-(\d+(?:\.\d+)?)")
+WIKILINK_RE = re.compile(r"^\[\[(.+?)\]\]$")
 
-# Catalog pages live in docs/ but not these subtrees. Generated per-item stubs
-# under reference/{cli,mcp,fuse}/ are excluded from the published site
-# (mkdocs.yml exclude_docs) and are not catalog pages.
-SKIP_DIR_PARTS = {"architecture", "security"}
-SKIP_PREFIXES = ("reference/cli/", "reference/mcp/", "reference/fuse/")
+# Catalog pages live in docs/ but not these subtrees.
+SKIP_DIR_PARTS = {"architecture", "scripts"}
+
+# Retired-range scan (opt-in via adr.yaml legacy.retired).
+RETIRED_SCAN_EXTS = {".md", ".py", ".ts", ".tsx", ".js", ".mjs", ".rs",
+                     ".sh", ".yml", ".yaml", ".json"}
+RETIRED_SKIP_PARTS = {"node_modules", "dist", "site", ".git"}
+RETIRED_EXEMPT_NAMES = {"adr.yaml"}
+RETIRED_EXEMPT_PREFIXES = ("ADR-900-",)
+RETIRED_ALLOW_MARKER = "doclint-allow-retired"
+ADR_ANYREF_RE = re.compile(r"\bADR-0*(\d+)(\.\d+)?\b")
 
 
 # ============================================================================
 # Config
 # ============================================================================
 
-def load_domain_digits() -> dict:
-    """Map domain key -> leading digit, derived from adr.yaml ranges."""
+def load_config() -> dict:
+    if not ADR_YAML.exists():
+        print(f"Error: {ADR_YAML} not found (run from a repo with ADR tooling).",
+              file=sys.stderr)
+        sys.exit(1)
     with open(ADR_YAML) as f:
-        cfg = yaml.safe_load(f)
+        return yaml.safe_load(f) or {}
+
+
+def domain_digits(cfg: dict) -> dict:
+    """Map domain key -> leading digit, derived from adr.yaml ranges."""
     digits = {}
     for key, dcfg in cfg.get("domains", {}).items():
-        lo = dcfg["range"][0]
-        digits[key] = lo // 100
+        digits[key] = dcfg["range"][0] // 100
     return digits
 
 
@@ -97,20 +131,21 @@ def load_domain_digits() -> dict:
 
 @dataclass
 class Node:
-    """A record in the decision graph (a catalog page or an ADR)."""
     kind: str                       # 'doc' | 'adr'
-    key: str                        # catalog id ('4.O.01') or 'ADR-411'
+    key: str                        # catalog id ('04.001.H') or 'ADR-411'
     path: Path
-    rel: str                        # display path, relative to repo root
+    rel: str
     domain: str = None
     mode: str = None
-    refs: list = field(default_factory=list)   # (field_name, target_string)
+    refs: list = field(default_factory=list)    # (field_name, target_string)
     issues: list = field(default_factory=list)  # (severity, message)
 
 
 def parse_frontmatter(path: Path) -> dict:
-    """Return the YAML frontmatter as a dict, or {} if absent/empty."""
-    text = path.read_text()
+    try:
+        text = path.read_text()
+    except (OSError, UnicodeDecodeError):
+        return {}   # skip unreadable/non-UTF-8 files rather than abort the run
     if not text.startswith("---"):
         return {}
     lines = text.split("\n")
@@ -128,52 +163,58 @@ def parse_frontmatter(path: Path) -> dict:
 
 
 def _as_ref_list(value) -> list:
-    """Coerce a related/supersedes frontmatter value into a list of strings."""
+    """Coerce a related/supersedes value into target strings, stripping wikilinks.
+
+    ADR-302 edges are Obsidian `[[wikilinks]]`; the inside is the catalog id or
+    ADR reference. The aliased form `[[target|alias]]` keeps only `target`. Bare
+    strings are accepted too (pre-wikilink ADRs).
+    """
     if not value:
         return []
-    if isinstance(value, str):
-        return [value]
-    if isinstance(value, list):
-        return [str(v) for v in value]
-    return []
+    items = [value] if isinstance(value, str) else value if isinstance(value, list) else []
+    out = []
+    for v in items:
+        s = str(v).strip()
+        m = WIKILINK_RE.match(s)
+        if m:
+            s = m.group(1).split("|", 1)[0].strip()   # [[target|alias]] -> target
+        out.append(s)
+    return out
 
 
 def iter_catalog_pages():
-    """Yield catalog page paths (docs/ outside architecture/ and security/)."""
+    """Yield candidate catalog page paths (docs/ outside skipped subtrees)."""
+    if not DOCS.exists():
+        return
     for p in sorted(DOCS.rglob("*.md")):
-        parts = set(p.relative_to(DOCS).parts)
-        if parts & SKIP_DIR_PARTS:
-            continue
-        rel = str(p.relative_to(DOCS))
-        if rel.startswith(SKIP_PREFIXES):
+        if set(p.relative_to(DOCS).parts) & SKIP_DIR_PARTS:
             continue
         yield p
 
 
 def iter_adrs():
-    """Yield ADR file paths under docs/architecture/."""
-    yield from sorted((DOCS / "architecture").rglob("ADR-*.md"))
+    arch = DOCS / "architecture"
+    if arch.exists():
+        yield from sorted(arch.rglob("ADR-*.md"))
 
 
-# ============================================================================
-# Building the graph
-# ============================================================================
+def build_doc_node(path: Path, digits: dict):
+    """Parse a docs/ page into a catalog Node, or None if it is not a catalog page.
 
-def build_doc_node(path: Path, digits: dict) -> Node:
-    """Parse a catalog page and validate its frontmatter into a Node."""
-    rel = str(path.relative_to(DOCS.parent))
+    Opt-in membership: a page is only a catalog node if it declares at least one
+    of id/domain/mode. That lets a repo adopt the catalog gradually.
+    """
     fm = parse_frontmatter(path)
-    node = Node(kind="doc", key=fm.get("id") or f"?{rel}", path=path, rel=rel)
-
     cid, domain, mode = fm.get("id"), fm.get("domain"), fm.get("mode")
-    node.domain, node.mode = domain, mode
+    if not (cid or domain or mode):
+        return None   # ordinary prose, not (yet) a catalog page
 
-    if not fm:
-        node.issues.append(("error", "missing frontmatter (need id/domain/mode)"))
-        return node
+    rel = str(path.relative_to(REPO))
+    node = Node(kind="doc", key=cid or f"?{rel}", path=path, rel=rel,
+                domain=domain, mode=mode)
 
-    for fname in ("id", "domain", "mode"):
-        if not fm.get(fname):
+    for fname, val in (("id", cid), ("domain", domain), ("mode", mode)):
+        if not val:
             node.issues.append(("error", f"missing frontmatter key: {fname}"))
 
     if domain and domain not in digits:
@@ -187,15 +228,15 @@ def build_doc_node(path: Path, digits: dict) -> Node:
         if not m:
             node.issues.append(("error", f"malformed id: {cid} (want <DD>.<NNN>.<POLE>)"))
         else:
-            band, _serial, letter = m.group(1), m.group(2), m.group(3)
+            band, _serial, letter = m.groups()
             if domain in digits and int(band) != digits[domain]:
                 node.issues.append(
-                    ("error",
-                     f"id domain band {band} != domain '{domain}' (expected {digits[domain]:02d})"))
+                    ("error", f"id domain band {band} != domain '{domain}' "
+                              f"(expected {digits[domain]:02d})"))
             if mode in MODE_LETTER and letter != MODE_LETTER[mode]:
                 node.issues.append(
-                    ("error",
-                     f"id pole {letter} != mode '{mode}' (expected {MODE_LETTER[mode]})"))
+                    ("error", f"id pole {letter} != mode '{mode}' "
+                              f"(expected {MODE_LETTER[mode]})"))
 
     node.refs += [("related", r) for r in _as_ref_list(fm.get("related"))]
     node.refs += [("supersedes", r) for r in _as_ref_list(fm.get("supersedes"))]
@@ -203,8 +244,7 @@ def build_doc_node(path: Path, digits: dict) -> Node:
 
 
 def build_adr_node(path: Path) -> Node:
-    """Parse an ADR into a Node (key from filename, refs from frontmatter)."""
-    rel = str(path.relative_to(DOCS.parent))
+    rel = str(path.relative_to(REPO))
     m = ADR_FILE_RE.match(path.name)
     key = f"ADR-{m.group(1)}" if m else path.stem
     fm = parse_frontmatter(path)
@@ -218,11 +258,13 @@ def build_adr_node(path: Path) -> Node:
 # Graph checks
 # ============================================================================
 
-def collect_nav_pages() -> set:
-    """Return the set of doc paths (relative to docs/) referenced by mkdocs nav."""
+def collect_nav_pages():
+    """Doc paths (relative to docs/) referenced by mkdocs nav, or None if no nav."""
+    if not MKDOCS_YML.exists():
+        return None
+
     class _Loader(yaml.SafeLoader):
         pass
-
     _Loader.add_multi_constructor(
         "tag:yaml.org,2002:python/", lambda loader, suffix, node: None)
     with open(MKDOCS_YML) as f:
@@ -246,21 +288,10 @@ def collect_nav_pages() -> set:
 
 
 def check_references(nodes: list):
-    """Flag related/supersedes targets that resolve to no known node.
-
-    Decimal-ADR convention (ADR-900): a decision may be split into parts
-    (ADR-603.1, ADR-603.2). A bare base reference (`ADR-603`) is the family
-    identifier and is satisfied by any of its parts — references cite the
-    decision, not a specific part. An exact part reference (`ADR-603.2`) must
-    match exactly.
-    """
+    """Flag related/supersedes targets that resolve to no known node."""
     keys = {n.key for n in nodes}
-    base_parts = set()
-    for k in keys:
-        m = re.match(r"^(ADR-\d+)\.\d+$", k)
-        if m:
-            base_parts.add(m.group(1))
-
+    base_parts = {m.group(1) for k in keys
+                  if (m := re.match(r"^(ADR-\d+)\.\d+$", k))}
     for node in nodes:
         for fname, target in node.refs:
             t = target.strip()
@@ -269,54 +300,18 @@ def check_references(nodes: list):
             if t in keys:
                 continue
             if "." not in t and t in base_parts:
-                continue   # base reference satisfied by a part (ADR-603 -> ADR-603.1)
+                continue   # base ref satisfied by a part (ADR-603 -> ADR-603.1)
             node.issues.append(
                 ("error", f"dangling {fname} reference: {t} (no such record)"))
 
 
-def check_retired_refs(lo: int, hi: int):
-    """Scan docs + source for references into the retired number range (ADR-900).
-
-    Returns a list of (relpath, lineno, ref). The files that define the range
-    (this ADR, adr.yaml) are exempt, as is any line carrying the allow-marker.
-    """
-    hits = []
-    for d in RETIRED_SCAN_DIRS:
-        base = REPO / d
-        if not base.exists():
-            continue
-        for f in base.rglob("*"):
-            if not f.is_file() or f.suffix not in RETIRED_SCAN_EXTS:
-                continue
-            if RETIRED_SKIP_PARTS & set(f.parts):
-                continue
-            if f.name in RETIRED_EXEMPT_NAMES or f.name.startswith(RETIRED_EXEMPT_PREFIXES):
-                continue
-            try:
-                text = f.read_text()
-            except (OSError, UnicodeDecodeError):
-                continue
-            if "ADR-" not in text:
-                continue
-            rel = str(f.relative_to(REPO))
-            for ln, line in enumerate(text.split("\n"), 1):
-                if RETIRED_ALLOW_MARKER in line:
-                    continue
-                for m in ADR_ANYREF_RE.finditer(line):
-                    if lo <= int(m.group(1)) <= hi:
-                        hits.append((rel, ln, m.group(0)))
-    return hits
-
-
 def check_supersede_cycles(nodes: list):
-    """Detect cycles in the supersedes relation."""
     edges = {}
     for n in nodes:
         edges.setdefault(n.key, [])
         for fname, target in n.refs:
             if fname == "supersedes":
                 edges[n.key].append(target.strip())
-
     WHITE, GRAY, BLACK = 0, 1, 2
     color = {k: WHITE for k in edges}
     by_key = {n.key: n for n in nodes}
@@ -327,33 +322,27 @@ def check_supersede_cycles(nodes: list):
             if nxt not in color:
                 continue
             if color[nxt] == GRAY:
-                cycle = " -> ".join(stack + [nxt])
                 if k in by_key:
-                    by_key[k].issues.append(("error", f"supersede cycle: {cycle}"))
+                    by_key[k].issues.append(
+                        ("error", f"supersede cycle: {' -> '.join(stack + [nxt])}"))
             elif color[nxt] == WHITE:
                 visit(nxt, stack + [nxt])
         color[k] = BLACK
 
-    for k in edges:
+    for k in list(edges):
         if color[k] == WHITE:
             visit(k, [k])
 
 
-def check_orphans(doc_nodes: list, nav_pages: set):
-    """Flag catalog pages on disk that the mkdocs nav never references."""
+def check_orphans(doc_nodes: list, nav_pages):
+    if nav_pages is None:
+        return
     for n in doc_nodes:
-        rel_to_docs = str(n.path.relative_to(DOCS))
-        if rel_to_docs not in nav_pages:
+        if str(n.path.relative_to(DOCS)) not in nav_pages:
             n.issues.append(("warning", "orphan: not referenced by mkdocs nav"))
 
 
 def check_duplicate_ids(doc_nodes: list):
-    """Flag any catalog id shared by more than one page.
-
-    Serials are scoped to a domain (not domain x mode), so the id is the page's
-    stable handle and must be unique. A collision is a real clash to resolve,
-    not a coincidence — two pages cannot carry the same part number.
-    """
     by_id = {}
     for n in doc_nodes:
         if n.key and not n.key.startswith("?"):
@@ -365,32 +354,77 @@ def check_duplicate_ids(doc_nodes: list):
                 n.issues.append(("error", f"duplicate catalog id {cid} (also on: {mates})"))
 
 
+def _retired_scan_files():
+    """Yield candidate files for the retired-range scan, respecting .gitignore.
+
+    Enumerate via `git ls-files` (tracked + untracked-but-not-ignored) so a
+    gitignored corpus, build tree, or scratch dir is never walked — without it,
+    the scan reads every ignored file in the repo (e.g. a 500MB private corpus).
+    Falls back to rglob for non-git checkouts, preserving portability.
+    """
+    try:
+        out = subprocess.run(
+            ["git", "-C", str(REPO), "ls-files", "--cached", "--others",
+             "--exclude-standard", "-z"],
+            capture_output=True, timeout=30)
+        if out.returncode == 0:
+            for raw in out.stdout.split(b"\x00"):
+                if raw:
+                    yield REPO / raw.decode("utf-8", "surrogateescape")
+            return
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        pass
+    yield from REPO.rglob("*")   # non-git fallback
+
+
+def check_retired_refs(lo: int, hi: int):
+    """Scan repo for references into a vacated pre-domain range (opt-in)."""
+    hits = []
+    for f in _retired_scan_files():
+        if not f.is_file() or f.suffix not in RETIRED_SCAN_EXTS:
+            continue
+        if RETIRED_SKIP_PARTS & set(f.parts):
+            continue
+        if f.name in RETIRED_EXEMPT_NAMES or f.name.startswith(RETIRED_EXEMPT_PREFIXES):
+            continue
+        try:
+            text = f.read_text()
+        except (OSError, UnicodeDecodeError):
+            continue
+        if "ADR-" not in text:
+            continue
+        rel = str(f.relative_to(REPO))
+        for ln, line in enumerate(text.split("\n"), 1):
+            if RETIRED_ALLOW_MARKER in line:
+                continue
+            for m in ADR_ANYREF_RE.finditer(line):
+                if lo <= int(m.group(1)) <= hi:
+                    hits.append((rel, ln, m.group(0)))
+    return hits
+
+
 # ============================================================================
 # Coverage
 # ============================================================================
 
 def print_coverage(doc_nodes: list, digits: dict):
-    """Print a domain x mode matrix of catalog page counts."""
     modes = list(MODE_LETTER)
     grid = {}
     for n in doc_nodes:
         if n.domain and n.mode:
             grid[(n.domain, n.mode)] = grid.get((n.domain, n.mode), 0) + 1
-
     domains = sorted(digits, key=lambda d: digits[d])
-    header = f"{'domain':9} " + " ".join(f"{MODE_LETTER[m]:>3}" for m in modes) + "   tot"
+    header = f"{'domain':12} " + " ".join(f"{MODE_LETTER[m]:>3}" for m in modes) + "   tot"
     print("\nCoverage matrix (catalog pages per domain x mode):")
     print(header)
     print("-" * len(header))
     for d in domains:
         cells = [grid.get((d, m), 0) for m in modes]
-        row = f"{d:9} " + " ".join(f"{c or '.':>3}" for c in cells)
-        print(f"{row}   {sum(cells):>3}")
-    total = sum(grid.values())
+        print(f"{d:12} " + " ".join(f"{c or '.':>3}" for c in cells) + f"   {sum(cells):>3}")
     print("-" * len(header))
-    print(f"{'total':9} " + " ".join(
-        f"{sum(grid.get((d, m), 0) for d in domains):>3}" for m in modes)
-        + f"   {total:>3}")
+    total = sum(grid.values())
+    print(f"{'total':12} " + " ".join(
+        f"{sum(grid.get((d, m), 0) for d in domains):>3}" for m in modes) + f"   {total:>3}")
 
 
 # ============================================================================
@@ -402,17 +436,15 @@ def main():
     parser.add_argument("--check", action="store_true", help="exit 1 on errors (CI mode)")
     parser.add_argument("--enforce-adrs", action="store_true",
                         help="treat ADR issues as errors, not warnings")
-    parser.add_argument("--quiet", action="store_true",
-                        help="suppress coverage matrix and OK lines")
+    parser.add_argument("--quiet", action="store_true", help="suppress coverage matrix")
     args = parser.parse_args()
 
-    digits = load_domain_digits()
+    cfg = load_config()
+    digits = domain_digits(cfg)
     nav_pages = collect_nav_pages()
-    with open(ADR_YAML) as f:
-        retired_lo, retired_hi = (int(x) for x in
-                                  yaml.safe_load(f).get("legacy", {}).get("range", [1, 99]))
 
-    doc_nodes = [build_doc_node(p, digits) for p in iter_catalog_pages()]
+    doc_nodes = [n for p in iter_catalog_pages()
+                 if (n := build_doc_node(p, digits)) is not None]
     adr_nodes = [build_adr_node(p) for p in iter_adrs()]
     all_nodes = doc_nodes + adr_nodes
 
@@ -421,35 +453,34 @@ def main():
     check_orphans(doc_nodes, nav_pages)
     check_duplicate_ids(doc_nodes)
 
-    # ADR issues are warnings unless --enforce-adrs; doc issues are always errors.
     def effective(node, severity):
         if node.kind == "adr" and not args.enforce_adrs and severity == "error":
             return "warning"
         return severity
 
     errors = warnings = 0
-    flagged = [n for n in all_nodes if n.issues]
-    for node in sorted(flagged, key=lambda n: n.rel):
+    for node in sorted((n for n in all_nodes if n.issues), key=lambda n: n.rel):
         print(f"\n{node.rel}  [{node.key}]")
         for severity, msg in node.issues:
             sev = effective(node, severity)
-            icon = "ERROR" if sev == "error" else "warn "
-            print(f"  {icon}  {msg}")
+            print(f"  {'ERROR' if sev == 'error' else 'warn '}  {msg}")
             if sev == "error":
                 errors += 1
             else:
                 warnings += 1
 
-    # Retired-range guard: references into the vacated pre-domain range (ADR-900).
-    retired_hits = check_retired_refs(retired_lo, retired_hi)
-    if retired_hits:
-        print(f"\nRetired-range references (ADR-{retired_lo}..{retired_hi} are "
-              f"renumbered; see ADR-900):")
-        for rel, ln, ref in sorted(retired_hits):
-            print(f"  ERROR  {rel}:{ln}  {ref}")
-        errors += len(retired_hits)
+    # Retired-range guard (opt-in): legacy: {retired: true} in adr.yaml.
+    legacy = cfg.get("legacy", {}) or {}
+    if legacy.get("retired"):
+        lo, hi = (int(x) for x in legacy.get("range", [1, 99]))
+        retired_hits = check_retired_refs(lo, hi)
+        if retired_hits:
+            print(f"\nRetired-range references (ADR-{lo}..{hi} are vacated):")
+            for rel, ln, ref in sorted(retired_hits):
+                print(f"  ERROR  {rel}:{ln}  {ref}")
+            errors += len(retired_hits)
 
-    if not args.quiet:
+    if not args.quiet and doc_nodes:
         print_coverage(doc_nodes, digits)
 
     print(f"\n{'='*60}")
@@ -457,9 +488,7 @@ def main():
     print(f"Summary: {errors} errors, {warnings} warnings")
     print(f"{'='*60}")
 
-    if args.check and errors > 0:
-        return 1
-    return 0
+    return 1 if (args.check and errors > 0) else 0
 
 
 if __name__ == "__main__":

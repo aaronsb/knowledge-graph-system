@@ -6,3 +6,5 @@ projects/
 plans/
 
 # Ways and CLAUDE.md ARE committed (shared team knowledge)
+# ...but raw audit/scan byproducts dropped beside a way are local scratch
+ways/**/*-raw.json
