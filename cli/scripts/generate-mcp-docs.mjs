@@ -190,7 +190,7 @@ async function main() {
   // Documentation-catalog frontmatter (ADR-908). Emitted here, not hand-injected,
   // because this page is overwritten on every docs build. domain=ui (MCP),
   // mode=reference.
-  index.push('---\nid: 7.R.04\ndomain: ui\nmode: reference\n---\n');
+  index.push('---\nid: 07.007.R\ndomain: ui\nmode: reference\n---\n');
   index.push('# MCP Server Tool Reference (Auto-Generated)\n');
   index.push('> **Auto-Generated Documentation**');
   index.push('> ');

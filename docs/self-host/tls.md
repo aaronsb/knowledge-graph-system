@@ -1,7 +1,7 @@
 ---
-id: 1.O.07
+id: 01.010.H
 domain: infra
-mode: operations
+mode: how-to
 ---
 
 # TLS and Certificates

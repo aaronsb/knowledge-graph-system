@@ -1,7 +1,7 @@
 ---
-id: 1.O.01
+id: 01.004.H
 domain: infra
-mode: operations
+mode: how-to
 ---
 
 # Backup and Restore

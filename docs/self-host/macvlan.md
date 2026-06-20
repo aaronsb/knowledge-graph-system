@@ -1,7 +1,7 @@
 ---
-id: 1.O.03
+id: 01.006.H
 domain: infra
-mode: operations
+mode: how-to
 ---
 
 # Dedicated IP with macvlan

@@ -1,7 +1,7 @@
 ---
-id: 1.O.10
+id: 01.003.H
 domain: infra
-mode: operations
+mode: how-to
 ---
 
 # Appliance on libvirt/KVM

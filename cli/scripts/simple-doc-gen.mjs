@@ -132,7 +132,7 @@ async function main() {
   // Documentation-catalog frontmatter (ADR-908). Emitted here, not hand-injected,
   // because this page is overwritten on every docs build. Stripped from GitHub
   // Pages (mkdocs ignores unknown keys). domain=ui (CLI), mode=reference.
-  index.push('---\nid: 7.R.03\ndomain: ui\nmode: reference\n---\n');
+  index.push('---\nid: 07.004.R\ndomain: ui\nmode: reference\n---\n');
   index.push('# CLI Command Reference (Auto-Generated)\n');
   index.push('> **Auto-Generated Documentation**');
   index.push('> ');

@@ -1,7 +1,7 @@
 ---
-id: 1.O.09
+id: 01.012.H
 domain: infra
-mode: operations
+mode: how-to
 ---
 
 # Upgrading

@@ -1,7 +1,7 @@
 ---
-id: 1.O.02
+id: 01.005.R
 domain: infra
-mode: operations
+mode: reference
 ---
 
 # Configuration Reference

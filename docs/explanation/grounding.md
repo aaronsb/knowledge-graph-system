@@ -1,5 +1,5 @@
 ---
-id: 6.E.02
+id: 06.002.E
 domain: vocab
 mode: explanation
 ---
