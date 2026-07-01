@@ -9,7 +9,7 @@ mode: reference
 > **Auto-Generated Documentation**
 > 
 > Generated from CLI source code.
-> Last updated: 2026-06-15
+> Last updated: 2026-07-01
 
 ---
 
@@ -860,21 +860,8 @@ Search and explore the knowledge graph using vector similarity, graph traversal,
 
 **Usage:**
 ```bash
-kg search [query]
+kg search [options]
 ```
-
-**Arguments:**
-
-- `<query>` - Search query (shortcut for: kg search query <term>)
-
-**Options:**
-
-| Option | Description | Default |
-|--------|-------------|---------|
-| `-l, --limit <number>` | Maximum number of results to return | `"10"` |
-| `--min-similarity <number>` | Minimum similarity score (0.0-1.0) | `"0.7"` |
-| `--json` | Output raw JSON instead of formatted text | - |
-| `--save-artifact` | Save result as persistent artifact (ADR-116) | - |
 
 **Subcommands:**
 
