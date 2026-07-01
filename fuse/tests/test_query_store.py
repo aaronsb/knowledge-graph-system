@@ -36,6 +36,17 @@ class TestQuery:
         assert d["threshold"] == 0.8
         assert d["limit"] == 100
 
+    def test_auto_adjusted_defaults_false(self):
+        """A new query has not been auto-adjusted."""
+        assert Query(query_text="test").auto_adjusted is False
+
+    def test_loads_legacy_dict_without_auto_adjusted(self):
+        """Tomls written before auto_adjusted existed still load (back-compat)."""
+        legacy = {"query_text": "x", "threshold": 0.5, "limit": 50,
+                  "exclude": [], "union": [], "symlinks": [], "created_at": ""}
+        q = Query(**legacy)
+        assert q.auto_adjusted is False
+
 
 class TestQueryStore:
     """Tests for QueryStore."""
@@ -154,6 +165,45 @@ class TestQueryStore:
 
         store.update_threshold("ont", "test", -0.5)
         assert store.get_query("ont", "test").threshold == 0.0
+
+    def test_apply_creation_threshold_once(self, store):
+        """apply_creation_threshold adopts the suggested value and stamps auto_adjusted."""
+        store.add_query("ont", "test")
+        assert store.get_query("ont", "test").auto_adjusted is False
+
+        assert store.apply_creation_threshold("ont", "test", 0.43) is True
+        q = store.get_query("ont", "test")
+        assert q.threshold == 0.43
+        assert q.auto_adjusted is True
+
+    def test_apply_creation_threshold_is_idempotent(self, store):
+        """A second creation-time adjustment is a no-op (freeze guard)."""
+        store.add_query("ont", "test")
+        store.apply_creation_threshold("ont", "test", 0.43)
+
+        # Racing / repeat call must not re-adjust.
+        assert store.apply_creation_threshold("ont", "test", 0.20) is False
+        assert store.get_query("ont", "test").threshold == 0.43
+
+    def test_apply_creation_threshold_clamps(self, store):
+        """Suggested thresholds are clamped to 0.0-1.0."""
+        store.add_query("ont", "low")
+        store.apply_creation_threshold("ont", "low", -0.5)
+        assert store.get_query("ont", "low").threshold == 0.0
+
+    def test_apply_creation_threshold_persists(self, store, tmp_path):
+        """auto_adjusted survives a reload from disk."""
+        store.add_query("ont", "test")
+        store.apply_creation_threshold("ont", "test", 0.43)
+
+        reloaded = QueryStore(data_path=tmp_path / "queries.toml")
+        q = reloaded.get_query("ont", "test")
+        assert q.threshold == 0.43
+        assert q.auto_adjusted is True
+
+    def test_apply_creation_threshold_missing_query(self, store):
+        """Adjusting a nonexistent query returns False."""
+        assert store.apply_creation_threshold("ont", "missing", 0.5) is False
 
     def test_add_exclude(self, store):
         """Should add unique exclude terms."""

@@ -29,6 +29,7 @@ class Query:
     union: list[str] = None  # Terms to add (OR)
     symlinks: list[str] = None  # Linked ontology names (OR for sources)
     created_at: str = ""
+    auto_adjusted: bool = False  # True once the creation-time threshold probe has run (freezes auto-adjust)
 
     def __post_init__(self):
         # Initialize mutable defaults
@@ -247,6 +248,26 @@ class QueryStore:
         query = self.get_query(ontology, path)
         if query:
             query.threshold = max(0.0, min(threshold, 1.0))  # Clamp to 0.0-1.0
+            self._save()
+            return True
+        return False
+
+    def apply_creation_threshold(self, ontology: Optional[str], path: str, threshold: float) -> bool:
+        """Adopt the creation-time auto-adjusted threshold, exactly once.
+
+        Called by the mkdir probe (ADR-715.1 "Adaptive Threshold on Creation")
+        when a freshly created query returns no results at its default threshold
+        and the API suggests a lower one. The ``auto_adjusted`` guard makes this
+        idempotent: a second caller (e.g. a racing mkdir) is a no-op, so FUSE
+        never re-adjusts a query after its one-time bootstrap.
+
+        Returns True if the threshold was adopted, False if already adjusted or
+        the query is missing.
+        """
+        query = self.get_query(ontology, path)
+        if query and not query.auto_adjusted:
+            query.threshold = max(0.0, min(threshold, 1.0))  # Clamp to 0.0-1.0
+            query.auto_adjusted = True
             self._save()
             return True
         return False
