@@ -541,6 +541,14 @@ class WriteMixin:
         query = self.query_store.get_query(ontology, query_path)
         if not query or query.auto_adjusted:
             return
+        # ADR-508 floor: a new query inherits the calibrated server default (the noise
+        # floor). Auto-adjust must never lower below it, and a freshly created query
+        # starts AT the default, so there is nothing above it to surface — skip the
+        # probe entirely. (Machinery retained for a possible future path that creates
+        # a query with an explicit, over-tight threshold; that case would floor at the
+        # server default rather than at the API's near-miss suggestion.)
+        if query.threshold is None:
+            return
         default_threshold = query.threshold  # capture before apply_creation_threshold mutates it
 
         body = {"query": query_text, "limit": query.limit}
