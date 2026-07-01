@@ -148,7 +148,7 @@ const queryCommand = setCommandHelp(
       // and bare `kg search query` show help instead of erroring on a missing arg.
       .argument('[query]', 'Natural language search query (2-3 words work best)')
       .option('-l, --limit <number>', 'Maximum number of results to return', '10')
-      .option('--min-similarity <number>', 'Minimum similarity score (0.0-1.0, default 0.7=70%, lower to 0.5 for broader matches)', '0.7')
+      .option('--min-similarity <number>', 'Minimum similarity score (0.0-1.0). Omit to inherit the server default (set via `kg admin search-threshold`).')
       .option('--no-evidence', 'Hide evidence quotes (shown by default)')
       .option('--no-images', 'Hide inline image display (shown by default if chafa installed)')
       .option('--no-grounding', 'Disable grounding strength calculation (ADR-808 probabilistic truth convergence) for faster results')
@@ -174,11 +174,14 @@ const queryCommand = setCommandHelp(
           const shouldShowImages = options.images !== undefined ? options.images : config.getSearchShowImages();
           const includeGrounding = options.grounding !== false; // Default: true
           const includeDiversity = options.diversity !== false; // Default: true
+          // ADR-508: omit when not passed so the server default is inherited (avoid
+          // sending NaN and relying on JSON.stringify coercing it to null).
+          const minSimilarity = options.minSimilarity !== undefined ? parseFloat(options.minSimilarity) : undefined;
 
           const result = await client.searchConcepts({
             query,
             limit: parseInt(options.limit),
-            min_similarity: parseFloat(options.minSimilarity),
+            min_similarity: minSimilarity,
             include_evidence: includeEvidence,
             include_grounding: includeGrounding,
             include_diversity: includeDiversity,
@@ -299,7 +302,7 @@ const queryCommand = setCommandHelp(
                 parameters: {
                   query,
                   limit: parseInt(options.limit),
-                  min_similarity: parseFloat(options.minSimilarity),
+                  min_similarity: minSimilarity,
                   include_evidence: includeEvidence,
                   include_grounding: includeGrounding,
                   include_diversity: includeDiversity,

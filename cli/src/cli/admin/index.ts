@@ -15,6 +15,7 @@ import { createStatusCommand } from './status';
 import { createBackupCommand, createListBackupsCommand, createRestoreCommand, createVerifyBackupCommand } from './backup';
 import { createSchedulerCommand } from './scheduler';
 import { createWorkersCommand } from './workers';
+import { createSearchThresholdCommand } from './search-config';
 
 // Create command instances
 const statusCommand = createStatusCommand();
@@ -39,7 +40,8 @@ export const adminCommand = setCommandHelp(
   .addCommand(restoreCommand)
   .addCommand(verifyBackupCommand)
   .addCommand(schedulerCommand)
-  .addCommand(workersCommand);
+  .addCommand(workersCommand)
+  .addCommand(createSearchThresholdCommand());
 
 // ADR-403: Register user management commands
 registerAuthAdminCommand(adminCommand);

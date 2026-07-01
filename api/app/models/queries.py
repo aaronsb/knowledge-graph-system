@@ -26,7 +26,7 @@ class SearchRequest(BaseModel):
     """
     query: str = Field(..., description="Search query text (2-3 word phrases work best)", min_length=1)
     limit: int = Field(10, description="Maximum number of results to return", ge=1, le=100)
-    min_similarity: float = Field(0.7, description="Minimum similarity score (0.0-1.0, default 70%)", ge=0.0, le=1.0)
+    min_similarity: Optional[float] = Field(None, description="Minimum similarity score (0.0-1.0). Omit to inherit the server-configured default (ADR-508: search_default_similarity_threshold).", ge=0.0, le=1.0)
     offset: int = Field(0, description="Number of results to skip for pagination (default: 0)", ge=0)
     ontology: Optional[str] = Field(None, description="Filter results to concepts from this ontology only")
     include_evidence: bool = Field(False, description="Include sample evidence instances (quotes from source text) for each concept")
@@ -353,9 +353,9 @@ class SourceSearchRequest(BaseModel):
     """
     query: str = Field(..., description="Search query text", min_length=1)
     limit: int = Field(10, description="Maximum number of sources to return", ge=1, le=100)
-    min_similarity: float = Field(
-        DEFAULT_SOURCE_SEARCH_SIMILARITY,
-        description="Minimum similarity score (0.0-1.0, default 0.7=70%)",
+    min_similarity: Optional[float] = Field(
+        None,
+        description="Minimum similarity score (0.0-1.0). Omit to inherit the server-configured default (ADR-508).",
         ge=0.0,
         le=1.0
     )

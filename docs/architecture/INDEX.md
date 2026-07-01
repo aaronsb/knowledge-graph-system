@@ -108,6 +108,7 @@ _Pathfinding, projections, diversity, search_
 | [ADR-506](./query-search/ADR-506-pathfinding-optimization.md) | Pathfinding Optimization for Apache AGE | Proposed |
 | [ADR-506.1](./query-search/ADR-506.1-pathfinding-baseline.md) | Pathfinding Performance Baseline | Accepted |
 | [ADR-507](./query-search/ADR-507-document-search.md) | Document-Level Search | Proposed |
+| [ADR-508](./query-search/ADR-508-configurable-search-similarity-threshold.md) | Configurable Search Similarity Threshold | Draft |
 
 ## Vocabulary
 _Relationships, grounding, categorization_

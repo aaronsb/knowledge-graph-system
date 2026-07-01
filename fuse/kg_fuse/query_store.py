@@ -23,7 +23,7 @@ except ImportError:
 class Query:
     """A user-created query directory definition with .meta control plane settings."""
     query_text: str
-    threshold: float = 0.5  # Default similarity threshold (matches add_query / ADR-715.1)
+    threshold: Optional[float] = None  # None = inherit the server default (ADR-508); a float overrides it
     limit: int = 50  # Default max results
     exclude: list[str] = None  # Terms to exclude (NOT)
     union: list[str] = None  # Terms to add (OR)
@@ -113,7 +113,14 @@ class QueryStore:
             return
 
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        data = {"queries": {k: v.to_dict() for k, v in self.queries.items()}}
+        # TOML has no null type: drop None-valued keys (e.g. an inherited threshold,
+        # ADR-508). They round-trip back to the dataclass default (None) on load.
+        data = {
+            "queries": {
+                k: {kk: vv for kk, vv in v.to_dict().items() if vv is not None}
+                for k, v in self.queries.items()
+            }
+        }
         with open(self.path, "wb") as f:
             tomli_w.dump(data, f)
 
@@ -126,7 +133,9 @@ class QueryStore:
             # TOML table with dotted key
             lines.append(f'[queries."{key}"]')
             lines.append(f'query_text = "{query.query_text}"')
-            lines.append(f"threshold = {query.threshold}")
+            # Omit an inherited (None) threshold — it reloads as the default (ADR-508).
+            if query.threshold is not None:
+                lines.append(f"threshold = {query.threshold}")
             lines.append(f"limit = {query.limit}")
             # Format lists as TOML arrays
             exclude_str = ", ".join(f'"{e}"' for e in query.exclude)
@@ -162,7 +171,7 @@ class QueryStore:
 
         query = Query(
             query_text=query_text,
-            threshold=0.5,  # Lower default for broader matches
+            threshold=None,  # inherit the server default (ADR-508) until auto-adjust or a user write sets one
             created_at=datetime.now().isoformat(),
         )
         self.queries[key] = query
@@ -253,6 +262,19 @@ class QueryStore:
         query = self.get_query(ontology, path)
         if query:
             query.threshold = max(0.0, min(threshold, 1.0))  # Clamp to 0.0-1.0
+            self._save()
+            return True
+        return False
+
+    def clear_threshold(self, ontology: Optional[str], path: str) -> bool:
+        """Reset a query's threshold to None so it inherits the server default (ADR-508).
+
+        The inverse of update_threshold — lets a user revert an explicit override by
+        writing 'inherit' to .meta/threshold (or truncating it).
+        """
+        query = self.get_query(ontology, path)
+        if query:
+            query.threshold = None
             self._save()
             return True
         return False

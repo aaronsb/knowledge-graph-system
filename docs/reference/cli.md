@@ -891,7 +891,7 @@ kg query [query]
 | Option | Description | Default |
 |--------|-------------|---------|
 | `-l, --limit <number>` | Maximum number of results to return | `"10"` |
-| `--min-similarity <number>` | Minimum similarity score (0.0-1.0, default 0.7=70%, lower to 0.5 for broader matches) | `"0.7"` |
+| `--min-similarity <number>` | Minimum similarity score (0.0-1.0). Omit to inherit the server default (set via `kg admin search-threshold`). | - |
 | `--no-evidence` | Hide evidence quotes (shown by default) | - |
 | `--no-images` | Hide inline image display (shown by default if chafa installed) | - |
 | `--no-grounding` | Disable grounding strength calculation (ADR-808 probabilistic truth convergence) for faster results | - |
@@ -2260,6 +2260,7 @@ kg admin [options]
 - `verify-backup` - Validate a backup file without restoring it (runs the server-side oracle)
 - `scheduler` - Job scheduler management (ADR-300 job queue) - monitor worker status, cleanup stale jobs
 - `workers` - Worker lane management (ADR-100) - monitor slot utilization, queue depth, active jobs
+- `search-threshold` - Get or set the default search similarity threshold clients inherit (ADR-508)
 - `user` - User management commands (admin only)
 - `rbac` - Manage roles, permissions, and access control (ADR-404)
 - `embedding` - Manage embedding profiles (text + image model configuration)
@@ -2429,6 +2430,19 @@ kg set <lane>
 | `--stale-timeout <min>` | Stale job timeout in minutes (5–1440) | - |
 | `--enable` | Enable the lane | - |
 | `--disable` | Disable the lane | - |
+
+### search-threshold
+
+Get or set the default search similarity threshold clients inherit (ADR-508)
+
+**Usage:**
+```bash
+kg search-threshold [value]
+```
+
+**Arguments:**
+
+- `<value>` - New threshold 0.0-1.0; omit to show the current value
 
 ### user
 

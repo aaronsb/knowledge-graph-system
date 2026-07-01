@@ -53,6 +53,12 @@ const DEFAULT_TEMPERATURE = '0.1';
 export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
   const { hasPermission } = useAuthStore();
   const canManageWorkers = hasPermission('workers', 'manage');
+  const canSetSearchThreshold = hasPermission('search_config', 'write');
+
+  // ADR-508: server-configured default search similarity threshold
+  const [searchThreshold, setSearchThreshold] = useState<{ threshold: number | null; fallback: number } | null>(null);
+  const [searchThresholdInput, setSearchThresholdInput] = useState<string>('');
+  const [savingThreshold, setSavingThreshold] = useState(false);
 
   // Data states
   const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
@@ -113,7 +119,7 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [status, stats, counters, scheduler, workers, embeddings, extraction, keys, apiInfo, dbEpoch, modelCatalog, supportedProviders] = await Promise.all([
+      const [status, stats, counters, scheduler, workers, embeddings, extraction, keys, apiInfo, dbEpoch, modelCatalog, supportedProviders, searchCfg] = await Promise.all([
         apiClient.getSystemStatus().catch(() => null),
         apiClient.getDatabaseStats().catch(() => null),
         apiClient.getDatabaseCounters().catch(() => null),
@@ -126,6 +132,7 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
         apiClient.getDatabaseEpoch().catch(() => 0),
         apiClient.getModelCatalog().then(r => r.models).catch(() => []),
         apiClient.getProviders().then(r => r.providers).catch(() => []),
+        apiClient.getSearchThreshold().catch(() => null),
       ]);
       setSystemStatus(status);
       setDbStats(stats);
@@ -139,6 +146,10 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
       setApiKeys(keys);
       setCatalog(modelCatalog);
       setProviders(supportedProviders);
+      if (searchCfg) {
+        setSearchThreshold(searchCfg);
+        setSearchThresholdInput(String(searchCfg.threshold ?? searchCfg.fallback));
+      }
 
       // Hydrate each provider card's draft from its saved DB row so the
       // card shows what is actually persisted (two-way source of truth, #8).
@@ -396,8 +407,60 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
     );
   }
 
+  const handleSaveSearchThreshold = async () => {
+    const v = parseFloat(searchThresholdInput);
+    if (Number.isNaN(v) || v < 0 || v > 1) {
+      onError('Search threshold must be a number between 0.0 and 1.0');
+      return;
+    }
+    setSavingThreshold(true);
+    try {
+      const res = await apiClient.setSearchThreshold(v);
+      setSearchThreshold({ threshold: res.threshold, fallback: searchThreshold?.fallback ?? 0.6 });
+    } catch (err) {
+      onError(err instanceof Error ? err.message : 'Failed to save search threshold');
+    } finally {
+      setSavingThreshold(false);
+    }
+  };
+
   return (
     <>
+      {canSetSearchThreshold && (
+        <Section
+          title="Search Similarity Threshold"
+          icon={<Activity className="w-5 h-5" />}
+        >
+          <p className="text-sm text-muted-foreground mb-3">
+            Default minimum cosine similarity for concept search (ADR-508). Clients that don't
+            pass an explicit value inherit this. Higher = fewer, more precise matches; lower =
+            broader, noisier. Current active model's useful range is roughly 0.55–0.65.
+          </p>
+          <div className="flex items-center gap-3">
+            <input
+              type="number"
+              min={0}
+              max={1}
+              step={0.01}
+              value={searchThresholdInput}
+              onChange={(e) => setSearchThresholdInput(e.target.value)}
+              className="w-28 px-3 py-2 rounded-md border border-border bg-background text-foreground"
+            />
+            <button
+              onClick={handleSaveSearchThreshold}
+              disabled={savingThreshold}
+              className="px-4 py-2 rounded-md bg-primary text-primary-foreground disabled:opacity-50"
+            >
+              {savingThreshold ? 'Saving…' : 'Save'}
+            </button>
+            {searchThreshold && (
+              <span className="text-sm text-muted-foreground">
+                Active: {searchThreshold.threshold ?? `${searchThreshold.fallback} (fallback)`}
+              </span>
+            )}
+          </div>
+        </Section>
+      )}
       <Section
         title="System Config"
         icon={<Server className="w-5 h-5" />}

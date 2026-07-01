@@ -123,10 +123,15 @@ class WriteMixin:
                         break
 
             elif entry.meta_key == "threshold":
-                # Extract the float (skip comment lines)
+                # Extract the float, or the 'inherit' sentinel (skip comment lines)
                 for line in content.split("\n"):
                     line = line.strip()
                     if line and not line.startswith("#"):
+                        if line.lower() in ("inherit", "default", "server", "none"):
+                            # ADR-508: revert an explicit override to the server default
+                            self.query_store.clear_threshold(entry.ontology, entry.query_path)
+                            self._invalidate_query_cache(entry.ontology, entry.query_path)
+                            break
                         try:
                             threshold = float(line)
                             self.query_store.update_threshold(entry.ontology, entry.query_path, threshold)
@@ -175,7 +180,11 @@ class WriteMixin:
             elif entry.meta_key == "union":
                 self.query_store.clear_union(entry.ontology, entry.query_path)
                 self._invalidate_query_cache(entry.ontology, entry.query_path)
-            # limit and threshold don't have clear - they just keep their value
+            elif entry.meta_key == "threshold":
+                # ADR-508: truncating threshold reverts it to the inherited server default
+                self.query_store.clear_threshold(entry.ontology, entry.query_path)
+                self._invalidate_query_cache(entry.ontology, entry.query_path)
+            # limit doesn't have clear - it just keeps its value
 
         return await self.getattr(inode, ctx)
 
@@ -541,9 +550,20 @@ class WriteMixin:
         query = self.query_store.get_query(ontology, query_path)
         if not query or query.auto_adjusted:
             return
+        # ADR-508 floor: a new query inherits the calibrated server default (the noise
+        # floor). Auto-adjust must never lower below it, and a freshly created query
+        # starts AT the default, so there is nothing above it to surface — skip the
+        # probe entirely. (Machinery retained for a possible future path that creates
+        # a query with an explicit, over-tight threshold; that case would floor at the
+        # server default rather than at the API's near-miss suggestion.)
+        if query.threshold is None:
+            return
         default_threshold = query.threshold  # capture before apply_creation_threshold mutates it
 
-        body = {"query": query_text, "min_similarity": query.threshold, "limit": query.limit}
+        body = {"query": query_text, "limit": query.limit}
+        # ADR-508: probe at the query's threshold, or the server default when it inherits (None).
+        if query.threshold is not None:
+            body["min_similarity"] = query.threshold
         if ontology is not None:
             body["ontology"] = ontology
 
@@ -565,9 +585,10 @@ class WriteMixin:
             return  # Genuinely no near-misses to reveal.
 
         if self.query_store.apply_creation_threshold(ontology, query_path, suggested):
+            from_label = "server default" if default_threshold is None else default_threshold
             log.info(
                 f"auto-adjusted new query {ontology}/{query_path}: "
-                f"{default_threshold} -> {suggested} (0 results at default)"
+                f"{from_label} -> {suggested} (0 results at default)"
             )
             self._invalidate_query_cache(ontology, query_path)
 

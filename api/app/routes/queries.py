@@ -75,6 +75,7 @@ def _dedupe_evidence(evidence_list: List[ConceptInstance]) -> List[ConceptInstan
             result.append(e)
     return result
 from api.app.lib.age_client import AGEClient
+from api.app.lib.search_config import resolve_search_threshold  # ADR-508
 from api.app.lib.ai_providers import get_provider
 
 
@@ -580,6 +581,10 @@ async def search_concepts(
 
         # Vector similarity search using AGE client
         client = get_age_client()
+        # ADR-508: when the caller omits min_similarity, inherit the server-configured
+        # default. Resolve once and write back so every downstream use (search, hint
+        # computation, threshold_used) sees the effective value.
+        request.min_similarity = resolve_search_threshold(client, request.min_similarity)
         try:
             # Use AGEClient's vector_search method with threshold from request
             # Fetch limit + offset to handle pagination
@@ -905,6 +910,13 @@ async def search_sources(
         }
     """
     try:
+        # ADR-508: inherit the server-configured default when min_similarity is omitted.
+        _cfg_client = get_age_client()
+        try:
+            request.min_similarity = resolve_search_threshold(_cfg_client, request.min_similarity)
+        finally:
+            _cfg_client.close()
+
         # 1. Generate embedding for query
         query_embedding = _generate_source_search_embedding(request.query)
 

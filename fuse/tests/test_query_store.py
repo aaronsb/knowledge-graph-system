@@ -14,7 +14,7 @@ class TestQuery:
         """Query should initialize with correct defaults."""
         q = Query(query_text="test")
         assert q.query_text == "test"
-        assert q.threshold == 0.5
+        assert q.threshold is None  # ADR-508: inherit the server default until set
         assert q.limit == 50
         assert q.exclude == []
         assert q.union == []
@@ -204,6 +204,16 @@ class TestQueryStore:
     def test_apply_creation_threshold_missing_query(self, store):
         """Adjusting a nonexistent query returns False."""
         assert store.apply_creation_threshold("ont", "missing", 0.5) is False
+
+    def test_clear_threshold_reverts_to_inherit(self, store):
+        """clear_threshold resets an explicit override back to None (inherit, ADR-508)."""
+        store.add_query("ont", "test")
+        store.update_threshold("ont", "test", 0.8)
+        assert store.get_query("ont", "test").threshold == 0.8
+
+        assert store.clear_threshold("ont", "test") is True
+        assert store.get_query("ont", "test").threshold is None
+        assert store.clear_threshold("ont", "missing") is False
 
     def test_load_tolerates_unknown_fields(self, tmp_path):
         """A toml written by a newer kg-fuse (extra keys) must still load, not wipe.
