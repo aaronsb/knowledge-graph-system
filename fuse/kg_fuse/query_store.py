@@ -7,7 +7,7 @@ Each directory name becomes a semantic search term.
 
 import os
 import tomllib
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, fields
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
@@ -23,7 +23,7 @@ except ImportError:
 class Query:
     """A user-created query directory definition with .meta control plane settings."""
     query_text: str
-    threshold: float = 0.7  # Default similarity threshold
+    threshold: float = 0.5  # Default similarity threshold (matches add_query / ADR-715.1)
     limit: int = 50  # Default max results
     exclude: list[str] = None  # Terms to exclude (NOT)
     union: list[str] = None  # Terms to add (OR)
@@ -95,8 +95,12 @@ class QueryStore:
             with open(self.path, "rb") as f:
                 data = tomllib.load(f)
 
+            # Drop unknown keys so a file written by a NEWER kg-fuse (with fields
+            # this version doesn't know) still loads instead of raising TypeError
+            # and wiping the whole store. Forward-compat for schema additions.
+            known = {f.name for f in fields(Query)}
             for key, value in data.get("queries", {}).items():
-                self.queries[key] = Query(**value)
+                self.queries[key] = Query(**{k: v for k, v in value.items() if k in known})
         except Exception as e:
             # If file is corrupted, start fresh
             print(f"Warning: Could not load queries from {self.path}: {e}")
@@ -132,6 +136,7 @@ class QueryStore:
             symlinks_str = ", ".join(f'"{s}"' for s in query.symlinks)
             lines.append(f"symlinks = [{symlinks_str}]")
             lines.append(f'created_at = "{query.created_at}"')
+            lines.append(f"auto_adjusted = {str(query.auto_adjusted).lower()}")
             lines.append("")
 
         with open(self.path, "w") as f:
@@ -262,7 +267,7 @@ class QueryStore:
         never re-adjusts a query after its one-time bootstrap.
 
         Returns True if the threshold was adopted, False if already adjusted or
-        the query is missing.
+        the query is missing.  @verified 3271f718f
         """
         query = self.get_query(ontology, path)
         if query and not query.auto_adjusted:

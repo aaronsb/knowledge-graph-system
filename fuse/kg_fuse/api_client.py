@@ -60,16 +60,24 @@ class KnowledgeGraphClient:
         response.raise_for_status()
         return response.json()
 
-    async def post(self, path: str, json: dict = None, data: dict = None, files: dict = None) -> dict:
-        """Make authenticated POST request to API."""
+    async def post(self, path: str, json: dict = None, data: dict = None, files: dict = None,
+                   timeout: Optional[float] = None) -> dict:
+        """Make authenticated POST request to API.
+
+        timeout overrides the client default for this call — pass a short value
+        for latency-sensitive callers (e.g. the mkdir threshold probe) so they
+        degrade quickly instead of blocking on the 30s client default.
+        """
         token = await self._get_token()
         client = await self._get_client()
+        kwargs = {} if timeout is None else {"timeout": timeout}
         response = await client.post(
             path,
             json=json,
             data=data,
             files=files,
             headers={"Authorization": f"Bearer {token}"},
+            **kwargs,
         )
         response.raise_for_status()
         return response.json()

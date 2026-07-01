@@ -14,7 +14,7 @@ class TestQuery:
         """Query should initialize with correct defaults."""
         q = Query(query_text="test")
         assert q.query_text == "test"
-        assert q.threshold == 0.7
+        assert q.threshold == 0.5
         assert q.limit == 50
         assert q.exclude == []
         assert q.union == []
@@ -204,6 +204,32 @@ class TestQueryStore:
     def test_apply_creation_threshold_missing_query(self, store):
         """Adjusting a nonexistent query returns False."""
         assert store.apply_creation_threshold("ont", "missing", 0.5) is False
+
+    def test_load_tolerates_unknown_fields(self, tmp_path):
+        """A toml written by a newer kg-fuse (extra keys) must still load, not wipe.
+
+        Regression guard: Query(**value) with an unknown kwarg would raise, the
+        broad except would discard every query, and the next save would erase the
+        file. _load drops unknown keys instead.
+        """
+        path = tmp_path / "queries.toml"
+        path.write_text(
+            '[queries."ont/test"]\n'
+            'query_text = "test"\n'
+            'threshold = 0.43\n'
+            'limit = 50\n'
+            'exclude = []\n'
+            'union = []\n'
+            'symlinks = []\n'
+            'created_at = ""\n'
+            'auto_adjusted = true\n'
+            'some_future_field = "from a newer version"\n'
+        )
+        store = QueryStore(data_path=path)
+        q = store.get_query("ont", "test")
+        assert q is not None  # not wiped
+        assert q.threshold == 0.43
+        assert q.auto_adjusted is True
 
     def test_add_exclude(self, store):
         """Should add unique exclude terms."""

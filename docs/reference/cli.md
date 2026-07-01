@@ -879,7 +879,7 @@ Search for concepts using vector similarity (embeddings) - use specific phrases 
 
 **Usage:**
 ```bash
-kg query <query>
+kg query [query]
 ```
 
 **Arguments:**

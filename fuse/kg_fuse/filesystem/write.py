@@ -23,6 +23,10 @@ log = logging.getLogger(__name__)
 class WriteMixin:
     """File creation, writing, and mutation operations."""
 
+    # Cap the mkdir threshold-probe latency so query creation stays responsive
+    # (and fails fast) when the API is slow or unreachable. See _auto_adjust_new_query.
+    AUTO_ADJUST_PROBE_TIMEOUT = 5.0
+
     async def create(self, parent_inode: int, name: bytes, mode: int, flags: int, ctx: pyfuse3.RequestContext) -> tuple[pyfuse3.FileInfo, pyfuse3.EntryAttributes]:
         """Create a file in the ingest/ drop box for ingestion."""
         name_str = name.decode("utf-8")
@@ -530,19 +534,23 @@ class WriteMixin:
         adjusted threshold into query.toml rather than printing to a stdout it lacks.
 
         Bound to the one-time creation event and idempotent via
-        ``apply_creation_threshold``, so it never re-adjusts a query. On any API
-        error it logs and leaves the default in place — mkdir still succeeds.
+        ``apply_creation_threshold``, so it never re-adjusts a query. The probe
+        uses a short timeout and any API error is swallowed — mkdir must stay fast
+        and succeed even when the API is slow or unreachable.  @verified 3271f718f
         """
         query = self.query_store.get_query(ontology, query_path)
         if not query or query.auto_adjusted:
             return
+        default_threshold = query.threshold  # capture before apply_creation_threshold mutates it
 
         body = {"query": query_text, "min_similarity": query.threshold, "limit": query.limit}
         if ontology is not None:
             body["ontology"] = ontology
 
         try:
-            result = await self._api.post("/query/search", json=body)
+            # Short timeout: mkdir was previously instant and offline-safe, so cap
+            # the added latency rather than blocking on the 30s client default.
+            result = await self._api.post("/query/search", json=body, timeout=self.AUTO_ADJUST_PROBE_TIMEOUT)
         except Exception as e:
             log.warning(f"auto-adjust probe failed for {ontology}/{query_path}: {e}")
             return
@@ -559,7 +567,7 @@ class WriteMixin:
         if self.query_store.apply_creation_threshold(ontology, query_path, suggested):
             log.info(
                 f"auto-adjusted new query {ontology}/{query_path}: "
-                f"{query.threshold} -> {suggested} (0 results at default)"
+                f"{default_threshold} -> {suggested} (0 results at default)"
             )
             self._invalidate_query_cache(ontology, query_path)
 

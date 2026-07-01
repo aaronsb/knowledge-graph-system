@@ -144,7 +144,9 @@ const queryCommand = setCommandHelp(
   'Search for concepts using vector similarity (embeddings) - use specific phrases for best results'
 )
       .showHelpAfterError()
-      .argument('<query>', 'Natural language search query (2-3 words work best)')
+      // Optional so bare `kg search` (which routes here as the default subcommand)
+      // and bare `kg search query` show help instead of erroring on a missing arg.
+      .argument('[query]', 'Natural language search query (2-3 words work best)')
       .option('-l, --limit <number>', 'Maximum number of results to return', '10')
       .option('--min-similarity <number>', 'Minimum similarity score (0.0-1.0, default 0.7=70%, lower to 0.5 for broader matches)', '0.7')
       .option('--no-evidence', 'Hide evidence quotes (shown by default)')
@@ -156,11 +158,15 @@ const queryCommand = setCommandHelp(
       .option('--json', 'Output raw JSON instead of formatted text for scripting')
       .option('--save-artifact', 'Save result as persistent artifact (ADR-116)')
       .action(async (query, options, command) => {
+        // No query term (bare `kg search` / `kg search query`) → show help, exit 0.
+        if (!query) {
+          command.help();
+          return;
+        }
         try {
           const client = createClientFromEnv();
           const config = getConfig();
-          // Commander v12: parent search also defines --json, so check both levels
-          const jsonOutput = options.json || command.parent?.opts()?.json;
+          const jsonOutput = options.json;
 
           // Use config defaults, allow CLI flags to override
           // Commander.js --no-evidence flag sets options.evidence to false
