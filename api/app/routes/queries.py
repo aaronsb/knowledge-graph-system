@@ -255,6 +255,40 @@ def get_age_client() -> AGEClient:
     return AGEClient()
 
 
+# ADR-508: fallback when the config key is missing/unreadable. Kept in sync with the
+# seed in migration 079.
+DEFAULT_SEARCH_THRESHOLD = 0.6
+
+
+def resolve_search_threshold(client: AGEClient, requested: Optional[float]) -> float:
+    """Resolve the effective search threshold (ADR-508).
+
+    Returns the caller's ``requested`` value when provided, otherwise the
+    server-configured ``search_default_similarity_threshold`` from platform_config,
+    falling back to ``DEFAULT_SEARCH_THRESHOLD`` if the key is unset or unreadable.
+    """
+    if requested is not None:
+        return requested
+    try:
+        conn = client.pool.getconn()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT kg_api.get_platform_config('search_default_similarity_threshold')"
+                )
+                row = cur.fetchone()
+            if row and row[0] is not None and str(row[0]).strip() != "":
+                return float(row[0])
+        finally:
+            client.pool.putconn(conn)
+    except Exception:
+        logger.warning(
+            "Could not read search_default_similarity_threshold; using %.2f",
+            DEFAULT_SEARCH_THRESHOLD, exc_info=True
+        )
+    return DEFAULT_SEARCH_THRESHOLD
+
+
 def resolve_epistemic_filters_to_rel_types(
     age_client: AGEClient,
     include_epistemic_status: Optional[List[str]] = None,
@@ -580,6 +614,10 @@ async def search_concepts(
 
         # Vector similarity search using AGE client
         client = get_age_client()
+        # ADR-508: when the caller omits min_similarity, inherit the server-configured
+        # default. Resolve once and write back so every downstream use (search, hint
+        # computation, threshold_used) sees the effective value.
+        request.min_similarity = resolve_search_threshold(client, request.min_similarity)
         try:
             # Use AGEClient's vector_search method with threshold from request
             # Fetch limit + offset to handle pagination

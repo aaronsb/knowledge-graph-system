@@ -44,7 +44,7 @@ from ..lib.backup_integrity import check_backup_integrity, check_backup_data
 from ..lib.backup_oracle import validate_backup_object
 from ..lib.age_client import AGEClient
 from ..lib.encrypted_keys import EncryptedKeyStore
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from ..constants import API_KEY_PROVIDERS, LOCAL_PROVIDERS, EXTRACTION_PROVIDERS
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -1149,3 +1149,63 @@ async def regenerate_concept_embeddings(
 # - --only-incompatible flag for model migrations
 # - Worker-based architecture for safety
 # ====================================================================
+
+
+# ====================================================================
+# Search configuration (ADR-508): runtime-tunable default similarity threshold
+# ====================================================================
+
+SEARCH_THRESHOLD_KEY = "search_default_similarity_threshold"
+SEARCH_THRESHOLD_FALLBACK = 0.6
+
+
+class SearchThresholdUpdate(BaseModel):
+    """Body for setting the default search similarity threshold (ADR-508)."""
+    threshold: float = Field(..., ge=0.0, le=1.0, description="Default min cosine similarity for /query/search (0.0-1.0)")
+
+
+@router.get("/config/search-threshold")
+async def get_search_threshold(
+    current_user: CurrentUser,
+    _: None = Depends(require_permission("search_config", "read")),
+):
+    """Read the configured default search similarity threshold (ADR-508)."""
+    age_client = AGEClient()
+    conn = age_client.pool.getconn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT kg_api.get_platform_config(%s)", (SEARCH_THRESHOLD_KEY,))
+            row = cur.fetchone()
+        value = row[0] if row and row[0] not in (None, "") else None
+        return {
+            "key": SEARCH_THRESHOLD_KEY,
+            "threshold": float(value) if value is not None else None,
+            "fallback": SEARCH_THRESHOLD_FALLBACK,
+        }
+    finally:
+        age_client.pool.putconn(conn)
+
+
+@router.put("/config/search-threshold")
+async def set_search_threshold(
+    body: SearchThresholdUpdate,
+    current_user: CurrentUser,
+    _: None = Depends(require_permission("search_config", "write")),
+):
+    """Set the default search similarity threshold (ADR-508)."""
+    age_client = AGEClient()
+    conn = age_client.pool.getconn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT kg_api.set_platform_config(%s, %s, %s)",
+                (SEARCH_THRESHOLD_KEY, str(body.threshold), current_user.username),
+            )
+        conn.commit()
+        logger.info(
+            "Search default similarity threshold set to %s by %s",
+            body.threshold, current_user.username,
+        )
+        return {"key": SEARCH_THRESHOLD_KEY, "threshold": body.threshold}
+    finally:
+        age_client.pool.putconn(conn)
