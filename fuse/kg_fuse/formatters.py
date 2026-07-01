@@ -303,7 +303,13 @@ def render_meta_file(meta_key: str, query: Optional[Query], ontology: Optional[s
         return f"# Maximum number of concepts to return. Default is 50.\n{query.limit}\n"
 
     elif meta_key == "threshold":
-        return f"# Minimum similarity score (0.0-1.0). Default is 0.5 (auto-lowered on creation if no results).\n{query.threshold}\n"
+        # None => inherit the server-configured default (ADR-508). Writing a number here overrides it.
+        value = "inherit" if query.threshold is None else query.threshold
+        return (
+            "# Minimum similarity score (0.0-1.0), or 'inherit' to use the server default.\n"
+            "# Write a number to override; auto-lowered on creation if it returns nothing.\n"
+            f"{value}\n"
+        )
 
     elif meta_key == "exclude":
         content = "# Terms to exclude from results (one per line, semantic NOT).\n"
@@ -321,7 +327,10 @@ def render_meta_file(meta_key: str, query: Optional[Query], ontology: Optional[s
         # Read-only debug view of the full query
         lines = ["# Full query state (read-only)", ""]
         lines.append(f'query_text = "{query.query_text}"')
-        lines.append(f"threshold = {query.threshold}")
+        if query.threshold is None:
+            lines.append('threshold = "inherit"  # server default (ADR-508)')
+        else:
+            lines.append(f"threshold = {query.threshold}")
         lines.append(f"limit = {query.limit}")
         exclude_str = ", ".join(f'"{e}"' for e in query.exclude)
         lines.append(f"exclude = [{exclude_str}]")

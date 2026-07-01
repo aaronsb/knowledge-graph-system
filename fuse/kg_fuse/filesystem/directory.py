@@ -556,9 +556,12 @@ class DirectoryMixin:
                 """Search for a single term, optionally across multiple ontologies."""
                 body = {
                     "query": term,
-                    "min_similarity": threshold,
                     "limit": fetch_limit or limit * 2,  # Fetch more for intersection/filtering
                 }
+                # ADR-508: omit min_similarity when the query inherits the server
+                # default (threshold is None); a concrete value overrides it.
+                if threshold is not None:
+                    body["min_similarity"] = threshold
 
                 if ontology is not None:
                     # Scoped query - search single ontology

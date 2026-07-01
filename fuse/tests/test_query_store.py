@@ -14,7 +14,7 @@ class TestQuery:
         """Query should initialize with correct defaults."""
         q = Query(query_text="test")
         assert q.query_text == "test"
-        assert q.threshold == 0.5
+        assert q.threshold is None  # ADR-508: inherit the server default until set
         assert q.limit == 50
         assert q.exclude == []
         assert q.union == []
