@@ -426,41 +426,6 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
 
   return (
     <>
-      {canSetSearchThreshold && (
-        <Section
-          title="Search Similarity Threshold"
-          icon={<Activity className="w-5 h-5" />}
-        >
-          <p className="text-sm text-muted-foreground mb-3">
-            Default minimum cosine similarity for concept search (ADR-508). Clients that don't
-            pass an explicit value inherit this. Higher = fewer, more precise matches; lower =
-            broader, noisier. Current active model's useful range is roughly 0.55–0.65.
-          </p>
-          <div className="flex items-center gap-3">
-            <input
-              type="number"
-              min={0}
-              max={1}
-              step={0.01}
-              value={searchThresholdInput}
-              onChange={(e) => setSearchThresholdInput(e.target.value)}
-              className="w-28 px-3 py-2 rounded-md border border-border bg-background text-foreground"
-            />
-            <button
-              onClick={handleSaveSearchThreshold}
-              disabled={savingThreshold}
-              className="px-4 py-2 rounded-md bg-primary text-primary-foreground disabled:opacity-50"
-            >
-              {savingThreshold ? 'Saving…' : 'Save'}
-            </button>
-            {searchThreshold && (
-              <span className="text-sm text-muted-foreground">
-                Active: {searchThreshold.threshold ?? `${searchThreshold.fallback} (fallback)`}
-              </span>
-            )}
-          </div>
-        </Section>
-      )}
       <Section
         title="System Config"
         icon={<Server className="w-5 h-5" />}
@@ -522,6 +487,42 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
           </div>
         )}
       </Section>
+
+      {canSetSearchThreshold && (
+        <Section
+          title="Search Similarity Threshold"
+          icon={<Activity className="w-5 h-5" />}
+        >
+          <p className="text-sm text-muted-foreground mb-3">
+            Default minimum cosine similarity for concept search (ADR-508). Clients that don't
+            pass an explicit value inherit this. Higher = fewer, more precise matches; lower =
+            broader, noisier. Current active model's useful range is roughly 0.55–0.65.
+          </p>
+          <div className="flex items-center gap-3">
+            <input
+              type="number"
+              min={0}
+              max={1}
+              step={0.01}
+              value={searchThresholdInput}
+              onChange={(e) => setSearchThresholdInput(e.target.value)}
+              className="w-28 px-3 py-2 rounded-md border border-border bg-background text-foreground"
+            />
+            <button
+              onClick={handleSaveSearchThreshold}
+              disabled={savingThreshold}
+              className="px-4 py-2 rounded-md bg-primary text-primary-foreground disabled:opacity-50"
+            >
+              {savingThreshold ? 'Saving…' : 'Save'}
+            </button>
+            {searchThreshold && (
+              <span className="text-sm text-muted-foreground">
+                Active: {searchThreshold.threshold ?? `${searchThreshold.fallback} (fallback)`}
+              </span>
+            )}
+          </div>
+        </Section>
+      )}
 
       <Section
         title="Database Statistics"
