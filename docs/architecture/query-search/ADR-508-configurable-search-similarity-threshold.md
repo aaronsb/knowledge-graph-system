@@ -82,7 +82,20 @@ and have clients **inherit** it rather than hardcode their own.
    `--min-similarity` / `.meta/threshold` still override per query.
 
 4. **Surfaces.** The value is settable via `operator/configure.py platform-config`
-   (already supports it), the new admin API, `kg config`, and a web settings surface.
+   (already supports it), the new admin API, `kg admin search-threshold`, and a web
+   settings surface.
+
+5. **Floor the FUSE auto-adjust (supersedes part of ADR-715.1).** ADR-715.1's `mkdir`
+   auto-adjust lowered a zero-result query's threshold to "show files". Once the
+   default is calibrated (and clients inherit it), that auto-lowering works *against*
+   noise filtering: a gibberish query that returns 0 at the default would be dropped
+   below it and resurface noise. Auto-adjust is therefore **floored at the server
+   default** — it must never lower below it. Because a freshly created FUSE query
+   inherits exactly that default, there is nothing above it to surface at creation, so
+   the `mkdir` probe now no-ops for inherited queries (the common case) — effectively
+   retiring the auto-lower behavior while the calibrated default does the job. The
+   machinery is retained for a possible future path that creates queries with an
+   explicit, over-tight threshold.
 
 Phased delivery: **Phase 1** = schema + API + CLI + FUSE + web (this ADR). **Phase 2**
 = the prefix-application fix + corpus re-embed, gated on a real before/after
@@ -94,7 +107,7 @@ separation eval (separate ADR).
 
 - One place to tune search precision per deployment; ends the split-brain 0.5/0.7 defaults.
 - Operators can raise/lower the floor to match their embedding model and corpus without a redeploy.
-- FUSE `mkdir` auto-adjust (ADR-715.1) becomes meaningfully useful: with the default at 0.6, zero-result cases occur and queries auto-tune down to where real matches live.
+- Noise filtering is consistent across surfaces: CLI/API and FUSE all apply the same calibrated default, and FUSE no longer auto-lowers below it (the floor), so gibberish no longer resurfaces on the FUSE surface.
 - No new tables or mechanisms — reuses `platform_config`, `configure.py`, RBAC admin endpoints.
 
 ### Negative
