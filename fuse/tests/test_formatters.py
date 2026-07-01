@@ -36,3 +36,18 @@ def test_falls_back_to_data_then_unknown_when_no_arg():
         {**_doc(), "ontology": "from-data"}, [{"name": "X"}], TagsConfig(enabled=True)
     )
     assert "**Ontology:** unknown" in format_document(_doc(), [], TagsConfig(enabled=True))
+
+
+def test_query_toml_surfaces_auto_adjusted():
+    """query.toml exposes auto_adjusted so reading it reveals FUSE's creation-time
+    threshold adjustment (ADR-715.1 'the filesystem talking back')."""
+    from kg_fuse.formatters import render_meta_file
+    from kg_fuse.query_store import Query
+
+    adjusted = Query(query_text="Application Security", threshold=0.43, auto_adjusted=True)
+    out = render_meta_file("query.toml", adjusted, ontology=None)
+    assert "auto_adjusted = true" in out
+    assert "threshold = 0.43" in out
+
+    pristine = Query(query_text="Application Security")
+    assert "auto_adjusted = false" in render_meta_file("query.toml", pristine, ontology=None)

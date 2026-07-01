@@ -23,6 +23,10 @@ log = logging.getLogger(__name__)
 class WriteMixin:
     """File creation, writing, and mutation operations."""
 
+    # Cap the mkdir threshold-probe latency so query creation stays responsive
+    # (and fails fast) when the API is slow or unreachable. See _auto_adjust_new_query.
+    AUTO_ADJUST_PROBE_TIMEOUT = 5.0
+
     async def create(self, parent_inode: int, name: bytes, mode: int, flags: int, ctx: pyfuse3.RequestContext) -> tuple[pyfuse3.FileInfo, pyfuse3.EntryAttributes]:
         """Create a file in the ingest/ drop box for ingestion."""
         name_str = name.decode("utf-8")
@@ -507,10 +511,65 @@ class WriteMixin:
             # Can't mkdir under documents_dir, etc.
             raise pyfuse3.FUSEError(errno.EPERM)
 
+        # Adaptive threshold on creation (ADR-715.1): for a single-term leaf query
+        # (parent is root or an ontology — not a nested AND query), probe once and
+        # lower the threshold if the default returns nothing. Nested queries are
+        # excluded because suggested_threshold is undefined across an intersection.
+        if parent_entry.entry_type in ("root", "ontology"):
+            await self._auto_adjust_new_query(ontology, query_path, name_str)
+
         # Invalidate parent cache
         self._invalidate_cache(parent_inode)
 
         return await self.getattr(inode, ctx)
+
+    async def _auto_adjust_new_query(self, ontology: Optional[str], query_path: str, query_text: str) -> None:
+        """Lower a new query's threshold once if it would otherwise show nothing.
+
+        Runs inside mkdir. Probes the API at the query's default threshold; if that
+        yields zero results and the API returns a ``suggested_threshold`` (the same
+        value the CLI surfaces as a hint), adopts it and stamps ``auto_adjusted`` so
+        the first ``ls`` is already populated. This is FUSE's only channel to say
+        "your query is valid — I lowered the bar so you'd get files": it writes the
+        adjusted threshold into query.toml rather than printing to a stdout it lacks.
+
+        Bound to the one-time creation event and idempotent via
+        ``apply_creation_threshold``, so it never re-adjusts a query. The probe
+        uses a short timeout and any API error is swallowed — mkdir must stay fast
+        and succeed even when the API is slow or unreachable.  @verified 3271f718f
+        """
+        query = self.query_store.get_query(ontology, query_path)
+        if not query or query.auto_adjusted:
+            return
+        default_threshold = query.threshold  # capture before apply_creation_threshold mutates it
+
+        body = {"query": query_text, "min_similarity": query.threshold, "limit": query.limit}
+        if ontology is not None:
+            body["ontology"] = ontology
+
+        try:
+            # Short timeout: mkdir was previously instant and offline-safe, so cap
+            # the added latency rather than blocking on the 30s client default.
+            result = await self._api.post("/query/search", json=body, timeout=self.AUTO_ADJUST_PROBE_TIMEOUT)
+        except Exception as e:
+            log.warning(f"auto-adjust probe failed for {ontology}/{query_path}: {e}")
+            return
+
+        # No awaits below this point: on pyfuse3's single-threaded loop this block
+        # runs atomically, so the idempotent apply_creation_threshold fires once.
+        if result.get("results"):
+            return  # Default threshold already returns concepts — nothing to do.
+
+        suggested = result.get("suggested_threshold")
+        if suggested is None:
+            return  # Genuinely no near-misses to reveal.
+
+        if self.query_store.apply_creation_threshold(ontology, query_path, suggested):
+            log.info(
+                f"auto-adjusted new query {ontology}/{query_path}: "
+                f"{default_threshold} -> {suggested} (0 results at default)"
+            )
+            self._invalidate_query_cache(ontology, query_path)
 
     async def rmdir(self, parent_inode: int, name: bytes, ctx: pyfuse3.RequestContext) -> None:
         """Remove a query directory or delete an ontology."""

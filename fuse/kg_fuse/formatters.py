@@ -303,7 +303,7 @@ def render_meta_file(meta_key: str, query: Optional[Query], ontology: Optional[s
         return f"# Maximum number of concepts to return. Default is 50.\n{query.limit}\n"
 
     elif meta_key == "threshold":
-        return f"# Minimum similarity score (0.0-1.0). Default is 0.7.\n{query.threshold}\n"
+        return f"# Minimum similarity score (0.0-1.0). Default is 0.5 (auto-lowered on creation if no results).\n{query.threshold}\n"
 
     elif meta_key == "exclude":
         content = "# Terms to exclude from results (one per line, semantic NOT).\n"
@@ -330,6 +330,7 @@ def render_meta_file(meta_key: str, query: Optional[Query], ontology: Optional[s
         symlinks_str = ", ".join(f'"{s}"' for s in query.symlinks)
         lines.append(f"symlinks = [{symlinks_str}]")
         lines.append(f'created_at = "{query.created_at}"')
+        lines.append(f"auto_adjusted = {str(query.auto_adjusted).lower()}  # threshold auto-lowered by FUSE at creation")
         if ontology:
             lines.append(f'ontology = "{ontology}"')
         else:
