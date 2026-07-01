@@ -1427,6 +1427,22 @@ class APIClient {
   }
 
   /**
+   * Get the server-configured default search similarity threshold (ADR-508)
+   */
+  async getSearchThreshold(): Promise<{ key: string; threshold: number | null; fallback: number }> {
+    const response = await this.client.get('/admin/config/search-threshold');
+    return response.data;
+  }
+
+  /**
+   * Set the server-configured default search similarity threshold (ADR-508)
+   */
+  async setSearchThreshold(threshold: number): Promise<{ key: string; threshold: number }> {
+    const response = await this.client.put('/admin/config/search-threshold', { threshold });
+    return response.data;
+  }
+
+  /**
    * List API keys with validation status (admin)
    */
   async listApiKeys(): Promise<Array<{
