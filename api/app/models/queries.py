@@ -353,9 +353,9 @@ class SourceSearchRequest(BaseModel):
     """
     query: str = Field(..., description="Search query text", min_length=1)
     limit: int = Field(10, description="Maximum number of sources to return", ge=1, le=100)
-    min_similarity: float = Field(
-        DEFAULT_SOURCE_SEARCH_SIMILARITY,
-        description="Minimum similarity score (0.0-1.0, default 0.7=70%)",
+    min_similarity: Optional[float] = Field(
+        None,
+        description="Minimum similarity score (0.0-1.0). Omit to inherit the server-configured default (ADR-508).",
         ge=0.0,
         le=1.0
     )

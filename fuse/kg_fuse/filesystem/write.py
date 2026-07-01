@@ -123,10 +123,15 @@ class WriteMixin:
                         break
 
             elif entry.meta_key == "threshold":
-                # Extract the float (skip comment lines)
+                # Extract the float, or the 'inherit' sentinel (skip comment lines)
                 for line in content.split("\n"):
                     line = line.strip()
                     if line and not line.startswith("#"):
+                        if line.lower() in ("inherit", "default", "server", "none"):
+                            # ADR-508: revert an explicit override to the server default
+                            self.query_store.clear_threshold(entry.ontology, entry.query_path)
+                            self._invalidate_query_cache(entry.ontology, entry.query_path)
+                            break
                         try:
                             threshold = float(line)
                             self.query_store.update_threshold(entry.ontology, entry.query_path, threshold)
@@ -175,7 +180,11 @@ class WriteMixin:
             elif entry.meta_key == "union":
                 self.query_store.clear_union(entry.ontology, entry.query_path)
                 self._invalidate_query_cache(entry.ontology, entry.query_path)
-            # limit and threshold don't have clear - they just keep their value
+            elif entry.meta_key == "threshold":
+                # ADR-508: truncating threshold reverts it to the inherited server default
+                self.query_store.clear_threshold(entry.ontology, entry.query_path)
+                self._invalidate_query_cache(entry.ontology, entry.query_path)
+            # limit doesn't have clear - it just keeps its value
 
         return await self.getattr(inode, ctx)
 

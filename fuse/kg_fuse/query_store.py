@@ -266,6 +266,19 @@ class QueryStore:
             return True
         return False
 
+    def clear_threshold(self, ontology: Optional[str], path: str) -> bool:
+        """Reset a query's threshold to None so it inherits the server default (ADR-508).
+
+        The inverse of update_threshold — lets a user revert an explicit override by
+        writing 'inherit' to .meta/threshold (or truncating it).
+        """
+        query = self.get_query(ontology, path)
+        if query:
+            query.threshold = None
+            self._save()
+            return True
+        return False
+
     def apply_creation_threshold(self, ontology: Optional[str], path: str, threshold: float) -> bool:
         """Adopt the creation-time auto-adjusted threshold, exactly once.
 

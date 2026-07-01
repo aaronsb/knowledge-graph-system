@@ -11,6 +11,7 @@ ApiOp: Calls internal service functions directly (no HTTP), maps to WorkingGraph
 import logging
 from typing import Any, Dict, List, Optional
 
+from api.app.lib.search_config import resolve_search_threshold  # ADR-508
 from api.app.models.program import (
     CypherOp,
     ApiOp,
@@ -197,15 +198,17 @@ def _dispatch_search_concepts(ctx: DispatchContext, params: Dict[str, Any]) -> W
     else:
         embedding = embedding_result
 
+    # ADR-508: inherit the server-configured default when the program omits min_similarity.
+    threshold = resolve_search_threshold(ctx.client, params.get('min_similarity'))
     matches = ctx.client.vector_search(
         embedding,
-        threshold=params.get('min_similarity', 0.7),
+        threshold=threshold,
         top_k=params.get('limit', 10),
     )
 
     nodes = []
     for m in matches:
-        if m.get('similarity', 0) < params.get('min_similarity', 0.7):
+        if m.get('similarity', 0) < threshold:
             continue
         nodes.append(RawNode(
             concept_id=m['concept_id'],
@@ -231,7 +234,7 @@ def _dispatch_search_sources(ctx: DispatchContext, params: Dict[str, Any]) -> Wo
     query_embedding = np.array(embedding)
     source_matches = _search_source_embeddings_by_similarity(
         query_embedding=query_embedding,
-        min_similarity=params.get('min_similarity', 0.7),
+        min_similarity=resolve_search_threshold(ctx.client, params.get('min_similarity')),  # ADR-508
         limit=params.get('limit', 10),
     )
 

@@ -1155,8 +1155,11 @@ async def regenerate_concept_embeddings(
 # Search configuration (ADR-508): runtime-tunable default similarity threshold
 # ====================================================================
 
-SEARCH_THRESHOLD_KEY = "search_default_similarity_threshold"
-SEARCH_THRESHOLD_FALLBACK = 0.6
+from ..lib.search_config import (
+    SEARCH_THRESHOLD_KEY,
+    DEFAULT_SEARCH_THRESHOLD as SEARCH_THRESHOLD_FALLBACK,
+    invalidate_default_cache,
+)
 
 
 class SearchThresholdUpdate(BaseModel):
@@ -1202,6 +1205,7 @@ async def set_search_threshold(
                 (SEARCH_THRESHOLD_KEY, str(body.threshold), current_user.username),
             )
         conn.commit()
+        invalidate_default_cache()  # ADR-508: reflect the new value immediately
         logger.info(
             "Search default similarity threshold set to %s by %s",
             body.threshold, current_user.username,

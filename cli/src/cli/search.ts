@@ -174,11 +174,14 @@ const queryCommand = setCommandHelp(
           const shouldShowImages = options.images !== undefined ? options.images : config.getSearchShowImages();
           const includeGrounding = options.grounding !== false; // Default: true
           const includeDiversity = options.diversity !== false; // Default: true
+          // ADR-508: omit when not passed so the server default is inherited (avoid
+          // sending NaN and relying on JSON.stringify coercing it to null).
+          const minSimilarity = options.minSimilarity !== undefined ? parseFloat(options.minSimilarity) : undefined;
 
           const result = await client.searchConcepts({
             query,
             limit: parseInt(options.limit),
-            min_similarity: parseFloat(options.minSimilarity),
+            min_similarity: minSimilarity,
             include_evidence: includeEvidence,
             include_grounding: includeGrounding,
             include_diversity: includeDiversity,
@@ -299,7 +302,7 @@ const queryCommand = setCommandHelp(
                 parameters: {
                   query,
                   limit: parseInt(options.limit),
-                  min_similarity: parseFloat(options.minSimilarity),
+                  min_similarity: minSimilarity,
                   include_evidence: includeEvidence,
                   include_grounding: includeGrounding,
                   include_diversity: includeDiversity,
