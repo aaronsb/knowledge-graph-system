@@ -574,7 +574,7 @@ def cmd_mount(args: Namespace) -> None:
 
         # daemon mode — print systemd hint if available
         if has_systemd():
-            print(f"{_dim('Info: systemd user services available. Set daemon_mode to \"systemd\" in fuse.json or run kg-fuse init.')}")
+            print(_dim('Info: systemd user services available. Set daemon_mode to "systemd" in fuse.json or run kg-fuse init.'))
 
     if mountpoint:
         mountpoint = os.path.realpath(mountpoint)
