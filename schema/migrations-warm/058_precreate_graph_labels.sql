@@ -5,12 +5,19 @@
 -- threads can race to create the same label, causing:
 --   "relation 'Source' already exists"
 --
--- Fix: explicitly create all known vertex and edge labels at schema init time.
--- Uses DO blocks to check ag_catalog.ag_label before creating (AGE has no
--- CREATE VLABEL IF NOT EXISTS syntax).
+-- Fix: explicitly create all known vertex and edge labels at schema init time
+-- via ag_catalog.create_vlabel()/create_elabel() (AGE's label API — cypher has
+-- no CREATE VLABEL statement). Uses DO blocks to check ag_catalog.ag_label
+-- before creating, since the functions error on existing labels.
 --
 -- Note: Uses EXCEPTION handlers so label creation failures (e.g., AGE not fully
 -- initialized on cold start) are logged as warnings rather than aborting the migration.
+--
+-- History: the original version of this file EXECUTEd
+-- `cypher(..., $$ CREATE VLABEL ... $$)` — the inner $$ terminated the outer
+-- DO $$ quoting, so the file never parsed and version 58 was never recorded
+-- anywhere. Rewritten 2026-07-01; safe to modify in place because it never
+-- successfully applied.
 
 LOAD 'age';
 SET search_path = ag_catalog, "$user", public;
@@ -31,13 +38,11 @@ BEGIN
             WHERE g.name = 'knowledge_graph' AND l.name = lbl AND l.kind = 'v'
         ) THEN
             BEGIN
-                EXECUTE format(
-                    'SELECT * FROM cypher(''knowledge_graph'', $$ CREATE VLABEL %I $$) as (a agtype)',
-                    lbl
-                );
+                -- create_vlabel takes cstring args; text needs an explicit cast
+                PERFORM ag_catalog.create_vlabel('knowledge_graph', lbl::cstring);
                 RAISE NOTICE 'Created vertex label: %', lbl;
             EXCEPTION WHEN OTHERS THEN
-                RAISE NOTICE 'Could not create vertex label % (will be created on first use): %', lbl, SQLERRM;
+                RAISE WARNING 'Could not create vertex label % (will be created on first use): %', lbl, SQLERRM;
             END;
         END IF;
     END LOOP;
@@ -63,13 +68,10 @@ BEGIN
             WHERE g.name = 'knowledge_graph' AND l.name = lbl AND l.kind = 'e'
         ) THEN
             BEGIN
-                EXECUTE format(
-                    'SELECT * FROM cypher(''knowledge_graph'', $$ CREATE ELABEL %I $$) as (a agtype)',
-                    lbl
-                );
+                PERFORM ag_catalog.create_elabel('knowledge_graph', lbl::cstring);
                 RAISE NOTICE 'Created edge label: %', lbl;
             EXCEPTION WHEN OTHERS THEN
-                RAISE NOTICE 'Could not create edge label % (will be created on first use): %', lbl, SQLERRM;
+                RAISE WARNING 'Could not create edge label % (will be created on first use): %', lbl, SQLERRM;
             END;
         END IF;
     END LOOP;
@@ -110,13 +112,10 @@ BEGIN
             WHERE g.name = 'knowledge_graph' AND l.name = lbl AND l.kind = 'e'
         ) THEN
             BEGIN
-                EXECUTE format(
-                    'SELECT * FROM cypher(''knowledge_graph'', $$ CREATE ELABEL %I $$) as (a agtype)',
-                    lbl
-                );
+                PERFORM ag_catalog.create_elabel('knowledge_graph', lbl::cstring);
                 RAISE NOTICE 'Created edge label: %', lbl;
             EXCEPTION WHEN OTHERS THEN
-                RAISE NOTICE 'Could not create edge label % (will be created on first use): %', lbl, SQLERRM;
+                RAISE WARNING 'Could not create edge label % (will be created on first use): %', lbl, SQLERRM;
             END;
         END IF;
     END LOOP;

@@ -115,6 +115,34 @@ CONSTRAINT_KEYWORDS = re.compile(
     re.IGNORECASE,
 )
 
+# Column type: multi-word SQL-standard names first (pg_dump spells these out —
+# "character varying(255)", "timestamp without time zone"), then bare words.
+COLUMN_TYPE = re.compile(
+    r"^((?:character\s+varying|bit\s+varying|double\s+precision|"
+    r"timestamp(?:\s*\(\d+\))?\s+(?:with|without)\s+time\s+zone|"
+    r"time(?:\s*\(\d+\))?\s+(?:with|without)\s+time\s+zone|"
+    r"[A-Za-z_][\w]*)"
+    r"(?:\s*\([\d,\s]*\))?(?:\[\])?)",
+    re.IGNORECASE,
+)
+
+# ALTER TABLE ... ADD CONSTRAINT — how pg_dump emits PKs, FKs, and UNIQUEs
+# (the checkpoint baseline is pg_dump output, so constraints live here, not
+# inline in CREATE TABLE).
+ALTER_CONSTRAINT = re.compile(
+    r"ALTER\s+TABLE\s+(?:ONLY\s+)?([A-Za-z_][\w.]*)\s+"
+    r"ADD\s+CONSTRAINT\s+[A-Za-z_]\w*\s+(.+?);",
+    re.IGNORECASE | re.DOTALL,
+)
+
+# ALTER TABLE ... ALTER COLUMN ... SET DEFAULT — how pg_dump emits serial
+# column defaults (nextval(...)) after creating the sequence.
+ALTER_COL_DEFAULT = re.compile(
+    r"ALTER\s+TABLE\s+(?:ONLY\s+)?([A-Za-z_][\w.]*)\s+"
+    r"ALTER\s+COLUMN\s+(\"?[A-Za-z_]\w*\"?)\s+SET\s+DEFAULT\s+(.+?);",
+    re.IGNORECASE | re.DOTALL,
+)
+
 
 def parse_columns(body: str):
     """Parse a table body into a list of column dicts and a constraint list.
@@ -141,10 +169,7 @@ def parse_columns(body: str):
         rest_norm = " ".join(rest.split())
 
         # Column type is everything up to the first attribute keyword.
-        type_match = re.match(
-            r"^([A-Za-z_][\w]*(?:\s*\([\d,\s]*\))?(?:\[\])?)",
-            rest_norm,
-        )
+        type_match = COLUMN_TYPE.match(rest_norm)
         col_type = type_match.group(1).strip() if type_match else rest_norm
         attrs = rest_norm[len(col_type):].strip() if type_match else ""
 
@@ -185,6 +210,69 @@ def parse_columns(body: str):
             }
         )
     return columns, constraints
+
+
+def apply_alter_constraints(sql: str, tables: dict):
+    """Fold ALTER TABLE ... ADD CONSTRAINT statements into *tables*.
+
+    pg_dump emits primary keys, foreign keys, and unique constraints as
+    separate ALTER TABLE statements after the CREATE TABLEs. Single-column
+    constraints become column flags (PK / UNIQUE / FK → target); everything
+    else lands in the table's constraint list.
+    """
+    for m in ALTER_CONSTRAINT.finditer(sql):
+        qualified = m.group(1).strip('"')
+        definition = " ".join(m.group(2).split())
+        tbl = tables.get(qualified)
+        if tbl is None:
+            continue
+        cols_by_name = {c["name"]: c for c in tbl["columns"]}
+
+        pk = re.match(r"PRIMARY\s+KEY\s*\(([^)]*)\)", definition, re.IGNORECASE)
+        if pk:
+            for col in [c.strip().strip('"') for c in pk.group(1).split(",")]:
+                if col in cols_by_name:
+                    cols_by_name[col]["flags"].insert(0, "PK")
+            continue
+
+        uq = re.match(r"UNIQUE\s*\(([^)]*)\)", definition, re.IGNORECASE)
+        if uq:
+            cols = [c.strip().strip('"') for c in uq.group(1).split(",")]
+            if len(cols) == 1 and cols[0] in cols_by_name:
+                cols_by_name[cols[0]]["flags"].append("UNIQUE")
+            else:
+                tbl["constraints"].append(definition)
+            continue
+
+        fk = re.match(
+            r"FOREIGN\s+KEY\s*\(([^)]*)\)\s*REFERENCES\s+"
+            r"([A-Za-z_][\w.]*\s*(?:\([^)]*\))?)",
+            definition,
+            re.IGNORECASE,
+        )
+        if fk:
+            cols = [c.strip().strip('"') for c in fk.group(1).split(",")]
+            target = " ".join(fk.group(2).split())
+            if len(cols) == 1 and cols[0] in cols_by_name:
+                cols_by_name[cols[0]]["flags"].append(f"FK → {target}")
+            else:
+                tbl["constraints"].append(definition)
+            continue
+
+        tbl["constraints"].append(definition)
+
+    for m in ALTER_COL_DEFAULT.finditer(sql):
+        qualified = m.group(1).strip('"')
+        col_name = m.group(2).strip('"')
+        value = " ".join(m.group(3).split())
+        tbl = tables.get(qualified)
+        if tbl is None:
+            continue
+        for col in tbl["columns"]:
+            if col["name"] == col_name and not any(
+                f.startswith("DEFAULT ") for f in col["flags"]
+            ):
+                col["flags"].append(f"DEFAULT {value}")
 
 
 def find_comments(sql: str):
@@ -347,11 +435,69 @@ def build_table_index():
                     "source": label,
                 }
 
+        apply_alter_constraints(sql, tables)
+
         tcs, ccs = find_comments(sql)
         all_table_comments.update(tcs)
         all_column_comments.update(ccs)
 
     return tables, all_table_comments, all_column_comments
+
+
+FK_FLAG = re.compile(r"FK → ([\w.]+)")
+
+
+def collect_fk_edges(tables: dict):
+    """Extract (child_qualified, parent_qualified, column) FK edges.
+
+    Parents referenced without a schema prefix resolve against the child's
+    schema first, then public.
+    """
+    edges = []
+    for qualified, tbl in tables.items():
+        for col in tbl["columns"]:
+            for flag in col["flags"]:
+                m = FK_FLAG.match(flag)
+                if not m:
+                    continue
+                target = m.group(1).split("(")[0]
+                if "." not in target:
+                    for cand in (f"{tbl['schema']}.{target}", f"public.{target}"):
+                        if cand in tables:
+                            target = cand
+                            break
+                edges.append((qualified, target, col["name"]))
+    return edges
+
+
+def render_er_diagram(schema: str, edges, tables) -> list:
+    """Render a mermaid erDiagram for FK edges whose child is in *schema*.
+
+    Entities use bare table names for readability (mermaid renders natively
+    on GitHub and in mkdocs-material via superfences); names that collide
+    across schemas are disambiguated with a schema__ prefix.
+    """
+    name_schemas = {}
+    for tbl in tables.values():
+        name_schemas.setdefault(tbl["name"], set()).add(tbl["schema"])
+
+    def entity(qualified):
+        tbl = tables[qualified]
+        if len(name_schemas[tbl["name"]]) > 1:
+            return f"{tbl['schema']}__{tbl['name']}"
+        return tbl["name"]
+
+    schema_edges = [
+        (c, p, col) for c, p, col in edges
+        if tables.get(c, {}).get("schema") == schema and p in tables
+    ]
+    if not schema_edges:
+        return []
+    out = ["#### Relationships", "", "```mermaid", "erDiagram"]
+    for child, parent, col in sorted(set(schema_edges)):
+        out.append(f'    {entity(parent)} ||--o{{ {entity(child)} : "{col}"')
+    out.extend(["```", ""])
+    return out
 
 
 def render(tables, table_comments, column_comments, migrations):
@@ -408,6 +554,8 @@ def render(tables, table_comments, column_comments, migrations):
         out.append(f"| `{schema}` | {blurb} | {count} |")
     out.append("")
 
+    fk_edges = collect_fk_edges(tables)
+
     # Per-schema, per-table detail.
     for schema in ordered_schemas:
         out.append(f"## `{schema}`")
@@ -416,6 +564,7 @@ def render(tables, table_comments, column_comments, migrations):
         if blurb:
             out.append(blurb)
             out.append("")
+        out.extend(render_er_diagram(schema, fk_edges, tables))
 
         for qualified, tbl in sorted(by_schema[schema], key=lambda x: x[1]["name"]):
             out.append(f"### `{tbl['name']}`")
@@ -451,12 +600,21 @@ def render(tables, table_comments, column_comments, migrations):
     out.append(
         "Schema evolves through numbered migrations under "
         "`schema/migrations/`. Each is recorded in `public.schema_migrations` "
-        "when applied. The baseline (`00_baseline.sql`) is the consolidated "
-        "starting point; migrations after it are applied in order."
+        "when applied. The baseline (`00_baseline.sql`) is a generated "
+        "checkpoint consolidating migrations 001–080 (see "
+        "`schema/migrations/archived/`); migrations after it are applied "
+        "in order."
     )
     out.append("")
-    out.append("| # | Migration | ADRs | Description |")
-    out.append("|---|---|---|---|")
+    if not migrations:
+        out.append(
+            "No post-checkpoint migrations yet — the baseline is the "
+            "complete current schema."
+        )
+        out.append("")
+    else:
+        out.append("| # | Migration | ADRs | Description |")
+        out.append("|---|---|---|---|")
     for info in migrations:
         ver = info["version"] if info["version"] is not None else ""
         adrs = ", ".join(info["adrs"])

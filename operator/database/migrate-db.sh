@@ -177,8 +177,12 @@ if [ ! -d "$MIGRATIONS_DIR" ]; then
     exit 0
 fi
 
-# Scan for migration files
-for migration_file in "$MIGRATIONS_DIR"/*.sql; do
+# Scan for migration files. archived/ holds migrations consolidated into the
+# checkpoint baseline (schema/00_baseline.sql): fresh databases have all of
+# them recorded by the baseline and skip them; databases created before the
+# checkpoint still find their pending versions there. Scanned first so
+# archived versions sort ahead of post-checkpoint migrations.
+for migration_file in "$MIGRATIONS_DIR"/archived/*.sql "$MIGRATIONS_DIR"/*.sql; do
     [ -f "$migration_file" ] || continue
 
     # Extract version from filename (001_baseline.sql → 001)
@@ -292,9 +296,11 @@ for pending in "${PENDING_MIGRATIONS[@]}"; do
         echo -e "${GRAY}----------------------------------------${NC}"
     fi
 
-    # Apply migration (capture output to detect errors)
-    MIGRATION_OUTPUT=$(run_psql_file "$FILE" 2>&1)
-    MIGRATION_EXIT_CODE=$?
+    # Apply migration (capture output to detect errors). The || arm is
+    # required: under set -e a bare command-substitution assignment aborts
+    # the whole script on psql failure, making the skip-and-retry branch
+    # below unreachable.
+    MIGRATION_OUTPUT=$(run_psql_file "$FILE" 2>&1) && MIGRATION_EXIT_CODE=0 || MIGRATION_EXIT_CODE=$?
 
     # Show output in verbose mode
     if [ "$VERBOSE" = true ]; then
