@@ -8,6 +8,7 @@
     "render-diagram": "node render-schema-diagram.mjs"
   },
   "dependencies": {
+    "@aduh95/viz.js": "3.4.0",
     "@softwaretechnik/dbml-renderer": "1.0.31"
   }
 }

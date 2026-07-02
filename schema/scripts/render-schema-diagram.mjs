@@ -12,12 +12,12 @@
  * viewer with pan, zoom, table search, and click-to-highlight relationships.
  *
  * Runs in CI with nothing but Node (see .github/workflows/docs.yml). The
- * output page is copied verbatim into the mkdocs site and embedded by
- * docs/reference/schema-diagram.md.
+ * output page is copied verbatim into the mkdocs site and embedded (via iframe)
+ * by docs/reference/schema.md.
  *
  * Run directly or via `make docs-schema`.
  *
- * Output: docs/reference/schema-diagram.html
+ * Output: docs/reference/schema-erd.html
  */
 
 import { readFileSync, writeFileSync } from "node:fs";
@@ -36,26 +36,45 @@ const PROJECT_ROOT = resolve(SCRIPT_DIR, "..", "..");
 const DBML_FILE = resolve(PROJECT_ROOT, "docs", "reference", "schema.dbml");
 const OUTPUT_FILE = resolve(PROJECT_ROOT, "docs", "reference", "schema-erd.html");
 
-// Schema → header fill. Must match SCHEMA_COLORS in generate-schema-docs.py;
-// used here only to render the legend (the table fills already live in the SVG).
-const SCHEMA_COLORS = {
-  public: "#475569",
-  kg_api: "#7c3aed",
-  kg_auth: "#2d7d9a",
-  kg_logs: "#2d8e5e",
-};
+// The two theme-sensitive colors baked into the dbml-renderer 1.0.31 SVG (cell
+// fill, ink for text/borders/edges). The viewer recolors these per theme; if a
+// renderer bump changes the palette, prepareSvg() asserts they still appear so
+// the mismatch fails loudly instead of rendering unreadably in dark mode.
+const BAKED_CELL = "#e7e2dd";
+const BAKED_INK = "#29235c";
+
+/**
+ * Schema → header fill, read back from the DBML's own `headercolor:` settings
+ * so the legend can never drift from the colors generate-schema-docs.py baked
+ * into the diagram (single source of truth: the .dbml).
+ */
+function schemaColors(dbml) {
+  const re = /Table\s+"([^"]+)"\."[^"]+"\s+\[headercolor:\s*(#[0-9a-fA-F]{6})\]/g;
+  const map = {};
+  let m;
+  while ((m = re.exec(dbml)) !== null) {
+    if (!(m[1] in map)) map[m[1]] = m[2];
+  }
+  return map;
+}
 
 /** Turn schema.dbml into a packed, near-square Graphviz SVG string. */
 function renderSvg(dbml) {
-  let dot = run(dbml, "dot");
+  const dot = run(dbml, "dot");
   // Component packing: lay out each connected piece, then tile them into a
   // grid (array_c4 = row-major, 4 columns) so disconnected tables don't stack
   // into a strip. Modest separations keep the packed block dense.
-  dot = dot.replace(
+  const packed = dot.replace(
     "rankdir=LR;",
     'rankdir=LR;\n  pack=true;\n  packmode="array_c4";\n  ranksep=0.6;\n  nodesep=0.4;'
   );
-  return vizRenderStringSync(dot, { engine: "dot", format: "svg" });
+  if (packed === dot) {
+    throw new Error(
+      "pack injection failed: 'rankdir=LR;' not found in dbml-renderer dot " +
+        "output — the renderer's format likely changed. Update renderSvg()."
+    );
+  }
+  return vizRenderStringSync(packed, { engine: "dot", format: "svg" });
 }
 
 /**
@@ -64,6 +83,17 @@ function renderSvg(dbml) {
  * The viewBox (which carries the true coordinate extent) is preserved.
  */
 function prepareSvg(svg) {
+  // The viewer's dark theme recolors these two baked colors via CSS. If a
+  // renderer upgrade changes the palette they'd silently stop matching and dark
+  // mode would render unreadably, so fail the build instead.
+  for (const color of [BAKED_CELL, BAKED_INK]) {
+    if (!svg.includes(color)) {
+      throw new Error(
+        `expected baked color ${color} not found in the rendered SVG — the ` +
+          "dbml-renderer palette changed; update BAKED_* and the viewer CSS."
+      );
+    }
+  }
   const viewBox = (svg.match(/viewBox="([^"]+)"/) || [])[1] || "0 0 1000 1000";
   const inner = svg.slice(svg.indexOf("<svg"));
   const openTagEnd = inner.indexOf(">") + 1;
@@ -76,8 +106,8 @@ function prepareSvg(svg) {
 }
 
 /** Build the standalone interactive HTML page. */
-function buildHtml(svg, viewBox) {
-  const legend = Object.entries(SCHEMA_COLORS)
+function buildHtml(svg, viewBox, colors) {
+  const legend = Object.entries(colors)
     .map(
       ([name, color]) =>
         `<span class="chip"><i style="background:${color}"></i>${name}</span>`
@@ -126,9 +156,9 @@ function buildHtml(svg, viewBox) {
      fill/stroke property overrides the SVG presentation attribute, and the
      attribute selector targets exactly those elements. Schema header fills
      (#7c3aed etc.) and white header text are intentionally left alone. */
-  #erd [fill="#e7e2dd"] { fill: var(--erd-cell); }
-  #erd [fill="#29235c"] { fill: var(--erd-ink); }
-  #erd [stroke="#29235c"] { stroke: var(--erd-ink); }
+  #erd [fill="${BAKED_CELL}"] { fill: var(--erd-cell); }
+  #erd [fill="${BAKED_INK}"] { fill: var(--erd-ink); }
+  #erd [stroke="${BAKED_INK}"] { stroke: var(--erd-ink); }
   #erd.focusing .node.dim, #erd.focusing .edge.dim { opacity: var(--dim); }
   #erd .node.hit > * { outline: none; }
   .toolbar {
@@ -378,7 +408,7 @@ ${svg}
 function main() {
   const dbml = readFileSync(DBML_FILE, "utf8");
   const { svg, viewBox } = prepareSvg(renderSvg(dbml));
-  const html = buildHtml(svg, viewBox);
+  const html = buildHtml(svg, viewBox, schemaColors(dbml));
   writeFileSync(OUTPUT_FILE, html);
   const nodes = (svg.match(/class="node"/g) || []).length;
   const edges = (svg.match(/class="edge"/g) || []).length;

@@ -122,7 +122,7 @@ docs-fuse: ## Generate FUSE driver API reference (markdown)
 
 docs-schema: ## Generate database schema reference (markdown + DBML + interactive ERD)
 	@python3 schema/scripts/generate-schema-docs.py
-	@[ -d schema/scripts/node_modules ] || npm --prefix schema/scripts install --silent --no-audit --no-fund
+	@npm --prefix schema/scripts ci --silent --no-audit --no-fund
 	@node schema/scripts/render-schema-diagram.mjs
 
 docs-site: ## Build documentation site (MkDocs)

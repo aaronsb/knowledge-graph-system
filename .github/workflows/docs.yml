@@ -45,7 +45,7 @@ jobs:
           # Schema: markdown + DBML from the DDL, then the interactive ER diagram
           # (render reads schema.dbml, so it must run after the Python generator).
           python3 schema/scripts/generate-schema-docs.py
-          (cd schema/scripts && npm install && node render-schema-diagram.mjs)
+          (cd schema/scripts && npm ci && node render-schema-diagram.mjs)
 
       - name: Build and deploy
         run: mkdocs gh-deploy --force
