@@ -1,0 +1,857 @@
+// Database schema for the Knowledge Graph System control plane.
+// GENERATED FILE — edit the SQL DDL, then run `make docs-schema`.
+// Generated: 2026-07-02
+//
+// Render: schema/scripts/render-schema-diagram.mjs (interactive ERD)
+// Or paste into https://dbdiagram.io to explore/edit.
+
+Table "public"."graph_metrics" [headercolor: #475569] {
+  "metric_name" "character varying(255)" [pk, not null, note: 'Unique metric identifier (e.g., vocabulary_change_counter, concept_count)']
+  "counter" "bigint" [not null, note: 'Increments on every change (create/delete/consolidate) - never decrements']
+  "last_measured_counter" "bigint" [not null, note: 'Counter value when epistemic status was last measured']
+  "last_measured_at" "timestamp without time zone" [note: 'Timestamp when epistemic status was last measured']
+  "updated_at" "timestamp without time zone" [note: 'Timestamp of last counter increment']
+  "notes" "text"
+  Note: 'Change counters for triggering periodic epistemic status measurement'
+}
+
+Table "public"."schema_migrations" [headercolor: #475569] {
+  "version" "integer" [pk, not null, note: 'Sequential migration number (001, 002, 003, ...)']
+  "name" "text" [not null, note: 'Descriptive migration name (e.g., baseline, add_embedding_config)']
+  "applied_at" "timestamp without time zone" [not null, note: 'Timestamp when migration was applied']
+  Note: 'Tracks applied schema migrations for safe schema evolution - ADR-040'
+}
+
+Table "kg_api"."aggressiveness_profiles" [headercolor: #7c3aed] {
+  "profile_name" "character varying(50)" [pk, not null]
+  "control_x1" "double precision" [not null]
+  "control_y1" "double precision" [not null]
+  "control_x2" "double precision" [not null]
+  "control_y2" "double precision" [not null]
+  "description" "text"
+  "is_builtin" "boolean"
+  "created_at" "timestamp without time zone"
+  "updated_at" "timestamp without time zone"
+}
+
+Table "kg_api"."ai_extraction_config" [headercolor: #7c3aed] {
+  "id" "integer" [pk, not null]
+  "provider" "character varying(50)" [not null, unique, note: 'AI provider: openai, anthropic, ollama, or vllm']
+  "model_name" "character varying(200)" [not null, note: 'Model identifier (e.g., gpt-4o, claude-sonnet-4-20250514)']
+  "supports_vision" "boolean" [note: 'Whether the model supports vision/image inputs']
+  "supports_json_mode" "boolean" [note: 'Whether the model supports JSON mode for structured outputs']
+  "max_tokens" "integer" [note: 'Maximum token limit for the model']
+  "created_at" "timestamp with time zone"
+  "updated_at" "timestamp with time zone"
+  "updated_by" "character varying(100)"
+  "active" "boolean" [note: 'Only one config can be active at a time (enforced by unique index)']
+  "base_url" "character varying(255)" [note: 'Base URL for local providers (e.g., http://localhost:11434 for Ollama)']
+  "temperature" "double precision" [note: 'Sampling temperature (0.0-1.0, lower = more consistent). Used by local providers.']
+  "top_p" "double precision" [note: 'Nucleus sampling threshold (0.0-1.0). Used by local providers.']
+  "gpu_layers" "integer" [note: 'GPU layers for inference: -1 = auto, 0 = CPU only, >0 = specific layer count (llama.cpp)']
+  "num_threads" "integer" [note: 'CPU threads for inference (used by local CPU-based providers)']
+  "thinking_mode" "character varying(20)" [note: 'Thinking mode for reasoning models (Ollama 0.12.x+): off, low, medium, high. GPT-OSS: off=low, others pass through. Standard models: off=disabled, low/medium/high=enabled.']
+  "max_concurrent_requests" "integer" [note: 'Maximum number of concurrent API requests allowed for this provider. Limits parallelism to prevent rate limit errors and resource thrashing. Recommended: OpenAI=8, Anthropic=4, Ollama=1']
+  "max_retries" "integer" [note: 'Maximum number of retry attempts for rate-limited requests (429 errors). Uses exponential backoff with jitter: 1s, 2s, 4s, 8s, 16s, 32s, 64s, ... Higher values provide more resilience with multiple workers. Recommended: 8 for cloud providers, 3 for local']
+  Note: 'AI extraction provider configuration for runtime-switchable models - ADR-041'
+}
+
+Table "kg_api"."ai_vision_config" [headercolor: #7c3aed] {
+  "id" "integer" [pk, not null]
+  "provider" "character varying(50)" [not null, unique, note: 'Provider performing image->prose description']
+  "model_name" "character varying(200)" [not null, note: 'Vision model id; ’’ resolves from the catalog supports_vision rows']
+  "max_tokens" "integer"
+  "temperature" "double precision"
+  "created_at" "timestamp with time zone"
+  "updated_at" "timestamp with time zone"
+  "updated_by" "character varying(100)"
+  "active" "boolean" [note: 'Only one vision config active at a time (enforced by partial unique index)']
+  Note: 'Active vision (image->prose) provider selection — ADR-802 / #378. Selection-only; connectivity reused from per-provider config.'
+}
+
+Table "kg_api"."annealing_options" [headercolor: #7c3aed] {
+  "key" "character varying(100)" [pk, not null]
+  "value" "text" [not null]
+  "description" "text"
+  "updated_at" "timestamp with time zone"
+  Note: 'Tunable parameters for ontology annealing cycles (ADR-200 Phase 3b). Code defaults apply when a key is absent; database values override.'
+}
+
+Table "kg_api"."annealing_pressure_history" [headercolor: #7c3aed] {
+  "id" "integer" [pk, not null]
+  "epoch" "integer" [not null]
+  "total_ontologies" "integer" [not null]
+  "total_concepts" "integer" [not null]
+  "avg_concepts_per_ontology" "double precision" [not null]
+  "pressure_score" "double precision" [not null]
+  "pressure_zone" "character varying(20)" [not null]
+  "pressure_recommendation" "jsonb" [not null]
+  "recorded_at" "timestamp with time zone" [not null]
+  Note: 'One row per annealing cycle: ecological snapshot + Bezier pressure read-out (#249, ADR-206 §Phase 3). Drives the web admin ”pressure” panel and the future trend chart.'
+}
+
+Table "kg_api"."annealing_proposals" [headercolor: #7c3aed] {
+  "id" "integer" [pk, not null]
+  "proposal_type" "character varying(20)" [not null]
+  "ontology_name" "character varying(200)" [not null]
+  "anchor_concept_id" "character varying(100)"
+  "target_ontology" "character varying(200)"
+  "reasoning" "text" [not null]
+  "mass_score" "numeric(10,4)"
+  "coherence_score" "numeric(10,4)"
+  "protection_score" "numeric(10,4)"
+  "status" "character varying(20)" [not null]
+  "created_at" "timestamp with time zone" [not null]
+  "created_at_epoch" "integer" [not null]
+  "reviewed_at" "timestamp with time zone"
+  "reviewed_by" "character varying(100)"
+  "reviewer_notes" "text"
+  "expires_at" "timestamp with time zone"
+  "executed_at" "timestamp with time zone"
+  "execution_result" "jsonb"
+  "suggested_name" "character varying(200)"
+  "suggested_description" "text"
+  "proposal_kind" "character varying(20)" [not null]
+  "params" "jsonb"
+}
+
+Table "kg_api"."artifacts" [headercolor: #7c3aed] {
+  "id" "integer" [pk, not null]
+  "artifact_type" "character varying(50)" [not null, note: 'Type of computation: polarity_analysis, projection, etc.']
+  "representation" "character varying(50)" [not null, note: 'Source UI/tool: polarity_explorer, cli, mcp_server, etc.']
+  "name" "character varying(200)"
+  "owner_id" "integer"
+  "graph_epoch" "bigint" [not null, note: 'graph_change_counter at creation for freshness validation']
+  "created_at" "timestamp with time zone" [not null]
+  "expires_at" "timestamp with time zone"
+  "parameters" "jsonb" [not null]
+  "metadata" "jsonb"
+  "inline_result" "jsonb" [note: 'Small results (<10KB) stored inline']
+  "garage_key" "character varying(200)" [note: 'Pointer to Garage blob for large results']
+  "query_definition_id" "integer"
+  "ontology" "character varying(200)"
+  "concept_ids" "text[]" [note: 'Concept IDs involved in this artifact']
+  Note: 'Computed artifact metadata with Garage blob pointers (ADR-083)'
+}
+
+Table "kg_api"."catalog_edge" [headercolor: #7c3aed] {
+  "parent_kind" "character varying(16)" [pk, not null]
+  "parent_id" "text" [pk, not null]
+  "child_kind" "character varying(16)" [pk, not null]
+  "child_id" "text" [pk, not null]
+  "graph_epoch" "bigint" [not null]
+  Note: 'ADR-501: parent->child membership edges projecting canonical :SCOPED_BY (ontology<-document) and :HAS_SOURCE/:APPEARS (document<-concept). A concept may have many parent documents (DAG).'
+}
+
+Table "kg_api"."catalog_node" [headercolor: #7c3aed] {
+  "kind" "character varying(16)" [pk, not null]
+  "node_id" "text" [pk, not null]
+  "name" "text" [not null]
+  "name_lower" "text" [not null]
+  "child_count" "integer" [not null, note: 'Number of direct children (documents-in-ontology, concepts-in-document); 0 for leaf concepts.']
+  "content_type" "character varying(32)"
+  "properties" "jsonb" [not null]
+  "graph_epoch" "bigint" [not null, note: 'graph_change_counter at build time; compared to kg_api.get_graph_epoch() for staleness.']
+  "indexed_at" "timestamp with time zone" [not null]
+  Note: 'ADR-501: materialized identity/metadata for catalog nodes (ontology/document/concept). Source of truth is the AGE graph; rebuilt on graph epoch advance.'
+}
+
+Table "kg_api"."concept_access_stats" [headercolor: #7c3aed] {
+  "concept_id" "character varying(100)" [pk, not null]
+  "access_count" "integer"
+  "last_accessed" "timestamp with time zone"
+  "avg_query_time_ms" "numeric(10,2)"
+  "queries_as_start" "integer"
+  "queries_as_result" "integer"
+  Note: 'Node-level access patterns for caching - ADR-025'
+}
+
+Table "kg_api"."concept_version_metadata" [headercolor: #7c3aed] {
+  "concept_id" "character varying(100)" [pk, not null]
+  "created_in_version" "integer"
+  "last_modified_version" "integer"
+}
+
+Table "kg_api"."edge_usage_stats" [headercolor: #7c3aed] {
+  "from_concept_id" "character varying(100)" [pk, not null]
+  "to_concept_id" "character varying(100)" [pk, not null]
+  "relationship_type" "character varying(100)" [pk, not null]
+  "traversal_count" "integer"
+  "last_traversed" "timestamp with time zone"
+  "avg_query_time_ms" "numeric(10,2)"
+  Note: 'Performance tracking for graph traversals - ADR-025'
+}
+
+Table "kg_api"."embedding_config_legacy" [headercolor: #7c3aed] {
+  "id" "integer" [pk, not null]
+  "provider" "character varying(50)" [not null, note: 'Embedding provider: local (sentence-transformers) or openai']
+  "model_name" "character varying(200)" [not null, note: 'Model identifier (HuggingFace ID for local, OpenAI model name for remote)']
+  "embedding_dimensions" "integer" [not null]
+  "precision" "character varying(20)" [not null]
+  "max_memory_mb" "integer" [note: 'Maximum RAM allocation for local model (local provider only)']
+  "num_threads" "integer" [note: 'CPU threads for inference (local provider only)']
+  "device" "character varying(20)" [note: 'Compute device: cpu, cuda, or mps (local provider only)']
+  "batch_size" "integer" [note: 'Batch size for embedding generation']
+  "max_seq_length" "integer"
+  "normalize_embeddings" "boolean"
+  "created_at" "timestamp with time zone"
+  "updated_at" "timestamp with time zone"
+  "updated_by" "character varying(100)"
+  "active" "boolean" [note: 'Only one config can be active at a time (enforced by unique constraint)']
+  "delete_protected" "boolean" [note: 'Prevents deletion without first removing protection (default configs)']
+  "change_protected" "boolean" [note: 'Prevents changing provider/dimensions without explicit unlock (safety)']
+  Note: 'Resource-aware embedding configuration for local and remote models - ADR-039. Includes preset for nomic-embed-text-v1.5.'
+}
+
+Table "kg_api"."embedding_generation_jobs" [headercolor: #7c3aed] {
+  "job_id" "uuid" [pk, not null]
+  "job_type" "character varying(50)" [not null]
+  "target_types" "character varying(100)[]"
+  "target_count" "integer"
+  "status" "character varying(20)" [not null]
+  "processed_count" "integer"
+  "failed_count" "integer"
+  "embedding_model" "character varying(100)"
+  "embedding_provider" "character varying(50)"
+  "created_at" "timestamp with time zone"
+  "started_at" "timestamp with time zone"
+  "completed_at" "timestamp with time zone"
+  "duration_ms" "integer"
+  "result_summary" "jsonb"
+  "error_message" "text"
+  Note: 'ADR-045: Tracks embedding generation jobs for audit trail and progress monitoring'
+}
+
+Table "kg_api"."embedding_profile" [headercolor: #7c3aed] {
+  "id" "integer" [pk, not null]
+  "name" "character varying(200)" [not null]
+  "vector_space" "character varying(100)" [not null, note: 'Compatibility key for the universal TEXT/prose space (concepts, edges, docs, image-prose). Profiles with the same text vector_space produce comparable text embeddings. Image embeddings are independent — see image_vector_space (ADR-803).']
+  "multimodal" "boolean" [note: 'When true, the text model also handles image embeddings (e.g. SigLIP 2)']
+  "text_provider" "character varying(50)" [not null]
+  "text_model_name" "character varying(200)" [not null]
+  "text_loader" "character varying(50)" [not null, note: 'How to load text model: sentence-transformers, transformers (AutoModel), or api']
+  "text_revision" "character varying(200)"
+  "text_dimensions" "integer" [not null]
+  "text_precision" "character varying(20)"
+  "text_trust_remote_code" "boolean"
+  "image_provider" "character varying(50)"
+  "image_model_name" "character varying(200)"
+  "image_loader" "character varying(50)" [note: 'How to load image model: sentence-transformers, transformers (AutoModel), or api']
+  "image_revision" "character varying(200)"
+  "image_dimensions" "integer"
+  "image_precision" "character varying(20)"
+  "image_trust_remote_code" "boolean"
+  "device" "character varying(20)"
+  "max_memory_mb" "integer"
+  "num_threads" "integer"
+  "batch_size" "integer"
+  "max_seq_length" "integer"
+  "normalize_embeddings" "boolean"
+  "active" "boolean"
+  "delete_protected" "boolean"
+  "change_protected" "boolean"
+  "created_at" "timestamp with time zone"
+  "updated_at" "timestamp with time zone"
+  "updated_by" "character varying(100)"
+  "text_query_prefix" "character varying(200)" [note: 'Prefix prepended for search queries (e.g. search_query: )']
+  "text_document_prefix" "character varying(200)" [note: 'Prefix prepended for stored documents (e.g. search_document: )']
+  "image_vector_space" "character varying(100)" [note: 'Independent vector_space of the image (modality) embedding index (ADR-803). NULL for text-only / multimodal profiles. Never compared to text vector_space.']
+  Note: 'Unified embedding profile with text + image model slots. Replaces embedding_config.'
+}
+
+Table "kg_api"."graph_epoch_kinds" [headercolor: #7c3aed] {
+  "kind" "text" [pk, not null]
+  "semantic_wallclock" "boolean" [not null, note: 'When TRUE, occurred_at is the meaningful timestamp for downstream consumers. When FALSE, occurred_at is recorded for audit/forensics but should not drive time-based queries on the resulting graph state.']
+  "description" "text"
+  Note: 'ADR-203: Discriminator for graph_epochs.kind. semantic_wallclock distinguishes events whose occurred_at is semantically primary (ingestion, edit) from those where it is forensic-only (reasoning, annealing).'
+}
+
+Table "kg_api"."graph_epochs" [headercolor: #7c3aed] {
+  "event_id" "bigint" [pk, not null, note: 'Monotonic logical-time id. Foreign-keyed by Instance.created_at_event_id.']
+  "occurred_at" "timestamp with time zone" [not null]
+  "kind" "text" [not null, note: 'ingestion | reasoning | annealing | edit. Determines whether occurred_at is semantically meaningful for the rows attributable to this event.']
+  "actor" "text"
+  "counter_after" "bigint"
+  "metadata" "jsonb" [not null]
+  "status" "text" [not null, note: 'ADR-207/#384: in_progress (set at record_graph_epoch) | completed | failed. Only in_progress blocks the committed watermark — both completed and failed count toward it (per-chunk commits mean a failed job may have mutated the graph). The completed/failed split is for analytics (drop zero-instance jobs from hot/stale signals), not for freshness.']
+  Note: 'ADR-203: Monotonic event log of graph mutations. Distinct from graph_change_counter (ADR-079) which is a composite cache-invalidation checksum.'
+}
+
+Table "kg_api"."jobs" [headercolor: #7c3aed] {
+  "job_id" "text" [pk, not null, note: 'Unique job identifier (UUID)']
+  "job_type" "text" [not null, note: 'Type of job: ingestion, restore, backup, vocab_refresh, vocab_consolidate']
+  "content_hash" "text" [note: 'SHA256 hash for deduplication (used with ontology to detect duplicates)']
+  "ontology" "text" [note: 'Target ontology for the job']
+  "status" "text" [not null, note: 'Job status: pending_approval, approved, running, completed, failed, cancelled']
+  "progress" "text" [note: 'Progress message for UI display']
+  "result" "text" [note: 'Final result data (JSON)']
+  "error" "text" [note: 'Error message if failed']
+  "created_at" "timestamp without time zone" [not null]
+  "started_at" "timestamp without time zone"
+  "completed_at" "timestamp without time zone"
+  "job_data" "jsonb" [not null, note: 'Job-specific parameters (JSON)']
+  "analysis" "text" [note: 'Pre-approval analysis (cost/time estimates)']
+  "approved_at" "timestamp without time zone" [note: 'When job was approved by user']
+  "approved_by" "text" [note: 'Who approved the job']
+  "expires_at" "timestamp without time zone" [note: 'When pending approval expires']
+  "processing_mode" "text" [note: 'Execution mode: serial or parallel']
+  "job_source" "character varying(50)" [note: 'Source of job creation: user_cli, user_api, scheduled_task, system']
+  "created_by" "character varying(100)" [note: 'User or system identifier that created the job']
+  "is_system_job" "boolean" [note: 'True for system-scheduled jobs (cannot be deleted by users)']
+  "user_id" "integer" [not null, note: 'User who submitted the job (FK to kg_auth.users.id)']
+  "source_filename" "text" [note: 'Display name for source: filename, ”stdin”, or MCP session ID (best-effort metadata)']
+  "source_type" "text" [note: 'Ingestion method: file (CLI file), stdin (pipe), mcp (Claude), api (direct) - enables source-aware queries']
+  "source_path" "text" [note: 'Full filesystem path for file ingestion (null for stdin/mcp/api) - helps identify exact source file']
+  "source_hostname" "text" [note: 'Hostname where ingestion initiated (CLI only, null for MCP/API) - useful for distributed deployments']
+  "artifact_id" "integer" [note: 'Artifact created by this job (ADR-083). NULL for jobs that do not produce artifacts.']
+  "priority" "integer" [not null]
+  "claimed_by" "text"
+  "claimed_at" "timestamp with time zone"
+  "cancelled" "boolean" [not null]
+  "retries" "integer" [not null]
+  "max_retries" "integer" [not null]
+  Note: 'Unified job queue for all background tasks (ingestion, backup, vocab, scheduled)'
+}
+
+Table "kg_api"."ontology_tombstones" [headercolor: #7c3aed] {
+  "name" "character varying(200)" [pk, not null]
+  "removed_at" "timestamp with time zone" [not null]
+  "removed_by" "character varying(100)"
+  "reason" "text"
+  Note: 'Positive operator-intent signal that an ontology was deliberately removed and must not be silently recreated by a subsequent ingest (#402 Defect B2). Operator-initiated delete writes a row; annealing dissolution does not.'
+}
+
+Table "kg_api"."ontology_versions" [headercolor: #7c3aed] {
+  "version_id" "integer" [pk, not null]
+  "version_number" "character varying(20)" [not null, unique]
+  "created_at" "timestamp with time zone" [not null]
+  "created_by" "character varying(100)"
+  "change_summary" "text"
+  "is_active" "boolean"
+  "vocabulary_snapshot" "jsonb" [not null]
+  "types_added" "text[]"
+  "types_aliased" "jsonb"
+  "types_deprecated" "text[]"
+  "backward_compatible" "boolean"
+  "migration_required" "boolean"
+  Note: 'Formal ontology versioning with immutable snapshots - ADR-026'
+}
+
+Table "kg_api"."platform_config" [headercolor: #7c3aed] {
+  "key" "character varying(100)" [pk, not null]
+  "value" "text" [not null]
+  "description" "text"
+  "updated_at" "timestamp with time zone"
+  "updated_by" "character varying(100)"
+  Note: 'Platform lifecycle configuration for operator control plane (ADR-061)'
+}
+
+Table "kg_api"."provider_model_catalog" [headercolor: #7c3aed] {
+  "id" "integer" [pk, not null]
+  "provider" "character varying(50)" [not null]
+  "model_id" "character varying(300)" [not null]
+  "display_name" "character varying(300)"
+  "category" "character varying(50)" [not null]
+  "context_length" "integer"
+  "max_completion_tokens" "integer"
+  "supports_vision" "boolean"
+  "supports_json_mode" "boolean"
+  "supports_tool_use" "boolean"
+  "supports_streaming" "boolean"
+  "price_prompt_per_m" "numeric"
+  "price_completion_per_m" "numeric"
+  "price_cache_read_per_m" "numeric"
+  "enabled" "boolean"
+  "is_default" "boolean"
+  "sort_order" "integer"
+  "upstream_provider" "character varying(100)"
+  "raw_metadata" "jsonb"
+  "fetched_at" "timestamp with time zone"
+  "created_at" "timestamp with time zone"
+  "updated_at" "timestamp with time zone"
+  Note: 'Cached model catalog per AI provider with curation and pricing (ADR-800)'
+}
+
+Table "kg_api"."pruning_recommendations" [headercolor: #7c3aed] {
+  "id" "integer" [pk, not null]
+  "relationship_type" "character varying(100)" [not null]
+  "target_type" "character varying(100)"
+  "action_type" "character varying(50)" [not null]
+  "review_level" "character varying(20)" [not null]
+  "reasoning" "text" [not null]
+  "similarity" "numeric(4,3)"
+  "value_score" "numeric(10,2)"
+  "metadata" "jsonb"
+  "status" "character varying(50)" [not null]
+  "created_at" "timestamp with time zone" [not null]
+  "reviewed_at" "timestamp with time zone"
+  "reviewed_by" "character varying(100)"
+  "reviewer_notes" "text"
+  "executed_at" "timestamp with time zone"
+  "expires_at" "timestamp with time zone"
+  Note: 'Pending vocabulary management actions - ADR-032'
+}
+
+Table "kg_api"."query_definitions" [headercolor: #7c3aed] {
+  "id" "integer" [pk, not null]
+  "name" "character varying(200)" [not null]
+  "definition_type" "character varying(50)" [not null, note: 'Type of query: block_diagram, cypher, search, polarity, connection, exploration, program']
+  "definition" "jsonb" [not null, note: 'Query parameters/structure as JSON']
+  "owner_id" "integer"
+  "created_at" "timestamp with time zone" [not null]
+  "updated_at" "timestamp with time zone" [not null]
+  "metadata" "jsonb" [note: 'Optional metadata (nodeCount, edgeCount, description, etc.)']
+  Note: 'Saved query recipes that can be re-executed (ADR-083)'
+}
+
+Table "kg_api"."rate_limits" [headercolor: #7c3aed] {
+  "client_id" "character varying(100)" [pk, not null]
+  "endpoint" "character varying(200)" [pk, not null]
+  "window_start" "timestamp with time zone" [pk, not null]
+  "request_count" "integer" [not null]
+}
+
+Table "kg_api"."relationship_vocabulary" [headercolor: #7c3aed] {
+  "relationship_type" "character varying(100)" [pk, not null]
+  "description" "text"
+  "category" "character varying(50)"
+  "added_by" "character varying(100)"
+  "added_at" "timestamp with time zone" [not null]
+  "usage_count" "integer"
+  "is_active" "boolean"
+  "is_builtin" "boolean"
+  "synonyms" "character varying(100)[]"
+  "deprecation_reason" "text"
+  "embedding" "jsonb" [note: 'Cached embedding vector (JSONB array) for synonym detection (ADR-032)']
+  "embedding_model" "character varying(100)"
+  "embedding_generated_at" "timestamp with time zone"
+  "grounding_contribution" "double precision" [note: 'ADR-046: Measures impact on concept grounding strength (0.0-1.0). Higher values indicate this edge type significantly affects truth convergence.']
+  "last_grounding_calculated" "timestamp with time zone" [note: 'ADR-046: Timestamp when grounding metrics were last recalculated. Enables staleness detection.']
+  "avg_confidence" "double precision" [note: 'ADR-046: Average confidence score across all edges of this type. Helps identify low-quality edge types.']
+  "semantic_diversity" "double precision" [note: 'ADR-046: Semantic diversity score (0.0-1.0). High diversity may indicate overly broad type; low diversity may indicate well-defined type.']
+  "embedding_quality_score" "double precision" [note: 'ADR-045: Quality score for embedding (based on validation checks like magnitude, dimensionality)']
+  "embedding_validation_status" "character varying(20)" [note: 'ADR-045: Validation status - stale indicates model changed since generation']
+  "category_source" "character varying(20)" [note: 'Source of category assignment: builtin (hand-assigned) or computed (ADR-047)']
+  "category_confidence" "double precision" [note: 'Confidence score (0.0-1.0) for computed categories based on max similarity to seed types']
+  "category_scores" "jsonb" [note: 'Full category similarity breakdown as JSON: {”causation”: 0.85, ”composition”: 0.45, ...}']
+  "category_ambiguous" "boolean" [note: 'True if runner-up category score > 0.70 (potential multi-category type)']
+  "direction_semantics" "character varying(20)" [note: 'LLM-determined direction: outward (from→to), inward (from←to), bidirectional (symmetric). NULL = not yet determined by LLM.']
+  Note: 'Canonical relationship types with embeddings - ADR-025, ADR-032'
+}
+
+Table "kg_api"."scheduled_jobs" [headercolor: #7c3aed] {
+  "id" "integer" [pk, not null]
+  "name" "character varying(100)" [not null, unique, note: 'Unique identifier for the scheduled job']
+  "launcher_class" "character varying(255)" [not null, note: 'Python class name in launcher registry (e.g., CategoryRefreshLauncher)']
+  "schedule_cron" "character varying(100)" [not null, note: 'Cron expression for schedule (e.g., ”0 */6 * * *” = every 6 hours)']
+  "enabled" "boolean" [note: 'Whether this schedule is active (can be disabled on failure)']
+  "max_retries" "integer" [note: 'Max consecutive failures before auto-disabling schedule']
+  "retry_count" "integer" [note: 'Current consecutive failure count (reset on success or skip)']
+  "last_run" "timestamp without time zone" [note: 'Last time the schedule was checked (success, skip, or failure)']
+  "last_success" "timestamp without time zone" [note: 'Last time a job was successfully enqueued']
+  "last_failure" "timestamp without time zone" [note: 'Last time the launcher failed with an exception']
+  "next_run" "timestamp without time zone" [note: 'Calculated next run time (from cron expression or backoff)']
+  "created_at" "timestamp without time zone"
+  "updated_at" "timestamp without time zone"
+  Note: 'Scheduled background jobs: - category_refresh: Re-integrate LLM-generated vocabulary categories (every 6 hours) - vocab_consolidation: Auto-consolidate vocabulary based on hysteresis thresholds (every 12 hours)'
+}
+
+Table "kg_api"."schema_migrations" [headercolor: #7c3aed] {
+  "version" "integer" [pk, not null, note: 'Migration number matching schema/migrations/NNN_*.sql files']
+  "description" "text" [not null, note: 'Human-readable description of what this migration does']
+  "applied_at" "timestamp without time zone" [not null, note: 'When this migration was applied to the database']
+  Note: 'Tracks applied database migrations for backup/restore compatibility. Schema version is included in backups to ensure restore compatibility when database schema evolves. See ADR-015 for details.'
+}
+
+Table "kg_api"."sessions" [headercolor: #7c3aed] {
+  "session_id" "character varying(100)" [pk, not null]
+  "user_id" "integer"
+  "created_at" "timestamp with time zone" [not null]
+  "expires_at" "timestamp with time zone" [not null]
+  "last_activity" "timestamp with time zone" [not null]
+  "metadata" "jsonb"
+}
+
+Table "kg_api"."skipped_relationships" [headercolor: #7c3aed] {
+  "id" "integer" [pk, not null]
+  "relationship_type" "character varying(100)" [not null]
+  "from_concept_label" "character varying(500)"
+  "to_concept_label" "character varying(500)"
+  "job_id" "character varying(50)"
+  "ontology" "character varying(200)"
+  "first_seen" "timestamp with time zone" [not null]
+  "last_seen" "timestamp with time zone" [not null]
+  "occurrence_count" "integer"
+  "sample_context" "jsonb"
+  Note: 'Capture layer for unmatched relationship types - ADR-025'
+}
+
+Table "kg_api"."source_embeddings" [headercolor: #7c3aed] {
+  "embedding_id" "integer" [pk, not null]
+  "source_id" "text" [not null, note: 'Reference to Source node in Apache AGE graph']
+  "chunk_index" "integer" [not null, note: '0-based chunk number within source (e.g., 0, 1, 2...)']
+  "chunk_strategy" "text" [not null, note: 'Chunking strategy used: sentence, paragraph, semantic, or count']
+  "start_offset" "integer" [not null, note: 'Character offset in Source.full_text where chunk starts (0-based)']
+  "end_offset" "integer" [not null, note: 'Character offset in Source.full_text where chunk ends (exclusive)']
+  "chunk_text" "text" [not null, note: 'Actual chunk content stored for verification (should match Source.full_text[start_offset:end_offset])']
+  "chunk_hash" "text" [not null, note: 'SHA256 hash of chunk_text - verifies chunk integrity']
+  "source_hash" "text" [not null, note: 'SHA256 hash of Source.full_text - detects when source text changes (stale embedding indicator)']
+  "embedding" "bytea" [not null, note: 'Vector embedding bytes (float16 or float32 array, packed as bytea)']
+  "embedding_model" "text" [not null, note: 'Embedding model name (e.g., ”nomic-ai/nomic-embed-text-v1.5”, ”text-embedding-3-small”)']
+  "embedding_dimension" "integer" [not null, note: 'Embedding vector dimension (must match system embedding_config for cosine similarity)']
+  "embedding_provider" "text"
+  "created_at" "timestamp with time zone"
+  "updated_at" "timestamp with time zone"
+  Note: 'ADR-068: Embeddings for source text chunks with offset tracking and hash verification'
+}
+
+Table "kg_api"."synonym_clusters" [headercolor: #7c3aed] {
+  "cluster_id" "uuid" [pk, not null]
+  "representative_type" "character varying(100)" [note: 'The canonical type to use when merging cluster members. Usually has highest usage_count or is builtin.']
+  "member_types" "character varying(100)[]"
+  "avg_similarity" "double precision" [note: 'Average cosine similarity between all pairs of member embeddings. Higher values indicate stronger synonym relationship.']
+  "cluster_size" "integer"
+  "total_usage_count" "integer"
+  "detected_at" "timestamp with time zone"
+  "detection_method" "character varying(50)"
+  "is_active" "boolean"
+  "merge_recommended" "boolean"
+  "merge_completed_at" "timestamp with time zone"
+  Note: 'ADR-046: Tracks groups of synonymous edge types discovered through embedding-based semantic similarity (threshold > 0.85)'
+}
+
+Table "kg_api"."system_api_keys" [headercolor: #7c3aed] {
+  "provider" "character varying(50)" [pk, not null, note: 'Provider name: openai, anthropic']
+  "encrypted_key" "bytea" [not null, note: 'Fernet-encrypted API key (AES-128-CBC + HMAC-SHA256)']
+  "updated_at" "timestamp with time zone" [note: 'Last time key was updated']
+  "validation_status" "character varying(20)" [note: 'API key validation state: valid, invalid, or untested']
+  "last_validated_at" "timestamp with time zone" [note: 'Timestamp of last validation check (typically at API startup)']
+  "validation_error" "text" [note: 'Error message from last failed validation attempt']
+  Note: 'Encrypted system API keys for LLM providers (ADR-031, ADR-041)'
+}
+
+Table "kg_api"."system_initialization_status" [headercolor: #7c3aed] {
+  "component" "character varying(50)" [pk, not null]
+  "initialized" "boolean"
+  "initialized_at" "timestamp with time zone"
+  "initialization_job_id" "uuid"
+  "version" "character varying(20)"
+  "metadata" "jsonb"
+  "last_processed_vocab_change_counter" "bigint" [not null, note: 'Snapshot of vocabulary_change_counter at the time this initialization component last completed embedding work. The cold-start and VocabEmbeddingLauncher paths compare current counter vs. this value to detect new work since the last successful run. Replaces the binary `initialized` flag for embedding components (the flag stays for non-counter-driven components). Default 0 means ”no work has completed yet” — correct initial state.']
+  Note: 'ADR-045: Tracks completion of system initialization tasks like cold start embedding generation'
+}
+
+Table "kg_api"."vocabulary_audit" [headercolor: #7c3aed] {
+  "id" "integer" [pk, not null]
+  "relationship_type" "character varying(100)"
+  "action" "character varying(50)" [not null]
+  "performed_by" "character varying(100)"
+  "performed_at" "timestamp with time zone" [not null]
+  "details" "jsonb"
+}
+
+Table "kg_api"."vocabulary_config" [headercolor: #7c3aed] {
+  "key" "character varying(100)" [pk, not null]
+  "value" "text" [not null]
+  "description" "text"
+  "updated_at" "timestamp with time zone" [not null]
+  "updated_by" "character varying(100)"
+  Note: 'System configuration for automatic vocabulary management (ADR-032)'
+}
+
+Table "kg_api"."vocabulary_history" [headercolor: #7c3aed] {
+  "id" "integer" [pk, not null]
+  "relationship_type" "character varying(100)" [not null]
+  "action" "character varying(50)" [not null]
+  "performed_by" "character varying(100)" [not null]
+  "performed_at" "timestamp with time zone" [not null]
+  "target_type" "character varying(100)"
+  "reason" "text"
+  "metadata" "jsonb"
+  "aggressiveness" "numeric(4,3)"
+  "zone" "character varying(20)"
+  "vocab_size_before" "integer"
+  "vocab_size_after" "integer"
+  Note: 'Detailed vocabulary change tracking with context (ADR-032)'
+}
+
+Table "kg_api"."vocabulary_suggestions" [headercolor: #7c3aed] {
+  "id" "integer" [pk, not null]
+  "relationship_type" "character varying(100)" [not null]
+  "suggestion_type" "character varying(50)" [not null]
+  "confidence" "numeric(3,2)" [not null]
+  "suggested_canonical_type" "character varying(100)"
+  "suggested_category" "character varying(50)"
+  "suggested_description" "text"
+  "similar_types" "jsonb"
+  "reasoning" "text"
+  "created_at" "timestamp with time zone" [not null]
+  "reviewed" "boolean"
+  "curator_decision" "character varying(50)"
+  "curator_notes" "text"
+  Note: 'LLM-assisted vocabulary curation suggestions - ADR-026'
+}
+
+Table "kg_api"."worker_lanes" [headercolor: #7c3aed] {
+  "name" "text" [pk, not null]
+  "job_types" "text[]" [not null]
+  "max_slots" "integer" [not null]
+  "poll_interval_ms" "integer" [not null]
+  "stale_timeout_minutes" "integer" [not null]
+  "enabled" "boolean" [not null]
+  "updated_at" "timestamp with time zone" [not null]
+  Note: 'Worker lane configuration for database-driven job dispatch (ADR-100)'
+}
+
+Table "kg_api"."worker_status" [headercolor: #7c3aed] {
+  "worker_id" "character varying(100)" [pk, not null]
+  "last_heartbeat" "timestamp with time zone" [not null]
+  "current_job_id" "character varying(50)"
+  "status" "character varying(50)" [not null]
+  "metadata" "jsonb"
+}
+
+Table "kg_auth"."groups" [headercolor: #2d7d9a] {
+  "id" "integer" [pk, not null]
+  "group_name" "character varying(100)" [not null, unique]
+  "display_name" "character varying(200)"
+  "description" "text"
+  "is_system" "boolean" [note: 'System groups (public, admins) cannot be deleted']
+  "created_at" "timestamp with time zone" [not null]
+  "created_by" "integer"
+  Note: 'Group definitions for collaborative access control (ADR-082)'
+}
+
+Table "kg_auth"."oauth_access_tokens" [headercolor: #2d7d9a] {
+  "token_hash" "character varying(255)" [pk, not null, note: 'SHA256 hash of the actual token (tokens are not stored in plaintext)']
+  "client_id" "character varying(255)" [not null]
+  "user_id" "integer" [note: 'NULL for client_credentials grant (machine-to-machine), set for user-delegated grants']
+  "scopes" "text[]"
+  "expires_at" "timestamp with time zone" [not null, note: 'Access tokens expire in 1 hour']
+  "revoked" "boolean"
+  "created_at" "timestamp with time zone"
+  Note: 'OAuth access tokens issued to clients'
+}
+
+Table "kg_auth"."oauth_authorization_codes" [headercolor: #2d7d9a] {
+  "code" "character varying(255)" [pk, not null]
+  "client_id" "character varying(255)" [not null]
+  "user_id" "integer" [not null]
+  "redirect_uri" "text" [not null]
+  "scopes" "text[]"
+  "code_challenge" "character varying(255)" [note: 'PKCE code challenge (hash of code verifier)']
+  "code_challenge_method" "character varying(10)"
+  "expires_at" "timestamp with time zone" [not null, note: 'Authorization codes expire in 10 minutes']
+  "used" "boolean"
+  "created_at" "timestamp with time zone"
+  Note: 'Temporary authorization codes for OAuth Authorization Code flow (web apps)'
+}
+
+Table "kg_auth"."oauth_clients" [headercolor: #2d7d9a] {
+  "client_id" "character varying(255)" [pk, not null]
+  "client_secret_hash" "character varying(255)"
+  "client_name" "character varying(255)" [not null]
+  "client_type" "character varying(50)" [not null, note: 'public = no client secret (CLI, web apps), confidential = has client secret (MCP server)']
+  "grant_types" "text[]" [not null, note: 'Allowed OAuth grant types: authorization_code, urn:ietf:params:oauth:grant-type:device_code, client_credentials, refresh_token']
+  "redirect_uris" "text[]"
+  "scopes" "text[]"
+  "is_active" "boolean"
+  "created_by" "integer"
+  "created_at" "timestamp with time zone"
+  "metadata" "jsonb"
+  Note: 'OAuth 2.0 client applications registered to use the API'
+}
+
+Table "kg_auth"."oauth_device_codes" [headercolor: #2d7d9a] {
+  "device_code" "character varying(255)" [pk, not null, note: 'Long code used by device for polling']
+  "user_code" "character varying(50)" [not null, unique, note: 'Human-friendly code displayed to user (e.g., ABCD-1234)']
+  "client_id" "character varying(255)" [not null]
+  "user_id" "integer"
+  "scopes" "text[]"
+  "status" "character varying(50)"
+  "expires_at" "timestamp with time zone" [not null, note: 'Device codes expire in 10 minutes']
+  "created_at" "timestamp with time zone"
+  Note: 'Device authorization codes for OAuth Device Authorization Grant flow (CLI tools)'
+}
+
+Table "kg_auth"."oauth_external_provider_tokens" [headercolor: #2d7d9a] {
+  "token_hash" "character varying(255)" [pk, not null]
+  "user_id" "integer"
+  "provider" "character varying(50)"
+  "scopes" "text[]"
+  "expires_at" "timestamp with time zone" [not null]
+  Note: 'OAuth tokens FROM external providers (Google, GitHub, etc.) - not tokens issued by our system'
+}
+
+Table "kg_auth"."oauth_refresh_tokens" [headercolor: #2d7d9a] {
+  "token_hash" "character varying(255)" [pk, not null]
+  "client_id" "character varying(255)" [not null]
+  "user_id" "integer" [not null]
+  "scopes" "text[]"
+  "access_token_hash" "character varying(255)"
+  "expires_at" "timestamp with time zone" [not null, note: 'Refresh tokens expire in 7 days (CLI) or 30 days (web)']
+  "revoked" "boolean"
+  "created_at" "timestamp with time zone"
+  "last_used" "timestamp with time zone" [note: 'Updated when refresh token is used to obtain new access token']
+  Note: 'OAuth refresh tokens for long-lived sessions'
+}
+
+Table "kg_auth"."resource_grants" [headercolor: #2d7d9a] {
+  "id" "integer" [pk, not null]
+  "resource_type" "character varying(50)" [not null, note: 'Type: ontology, artifact, report, etc.']
+  "resource_id" "character varying(200)" [not null, note: 'Specific resource identifier']
+  "principal_type" "character varying(20)" [not null, note: 'Grant to user or group']
+  "principal_id" "integer" [not null]
+  "permission" "character varying(20)" [not null, note: 'read, write, or admin access']
+  "granted_at" "timestamp with time zone" [not null]
+  "granted_by" "integer"
+  Note: 'Instance-level access grants for owned resources (ADR-082)'
+}
+
+Table "kg_auth"."resources" [headercolor: #2d7d9a] {
+  "resource_type" "character varying(100)" [pk, not null]
+  "description" "text"
+  "parent_type" "character varying(100)"
+  "available_actions" "character varying(50)[]" [not null]
+  "supports_scoping" "boolean"
+  "metadata" "jsonb"
+  "registered_at" "timestamp with time zone" [not null]
+  "registered_by" "character varying(100)"
+  Note: 'Dynamic resource type registry (ADR-028)'
+}
+
+Table "kg_auth"."role_permissions" [headercolor: #2d7d9a] {
+  "id" "integer" [pk, not null]
+  "role_name" "character varying(50)" [not null]
+  "resource_type" "character varying(100)" [not null]
+  "action" "character varying(50)" [not null]
+  "scope_type" "character varying(50)"
+  "scope_id" "character varying(200)"
+  "scope_filter" "jsonb"
+  "granted" "boolean" [not null]
+  "inherited_from" "character varying(50)"
+  "created_at" "timestamp with time zone" [not null]
+  "created_by" "integer"
+  Note: 'Dynamic role permissions with scoping (ADR-028)'
+}
+
+Table "kg_auth"."roles" [headercolor: #2d7d9a] {
+  "role_name" "character varying(50)" [pk, not null]
+  "display_name" "character varying(100)" [not null]
+  "description" "text"
+  "is_builtin" "boolean"
+  "is_active" "boolean"
+  "parent_role" "character varying(50)"
+  "created_at" "timestamp with time zone" [not null]
+  "created_by" "integer"
+  "metadata" "jsonb"
+  Note: 'Dynamic role definitions with inheritance (ADR-028)'
+}
+
+Table "kg_auth"."user_groups" [headercolor: #2d7d9a] {
+  "user_id" "integer" [pk, not null]
+  "group_id" "integer" [pk, not null]
+  "added_at" "timestamp with time zone" [not null]
+  "added_by" "integer"
+  Note: 'Group membership assignments (ADR-082)'
+}
+
+Table "kg_auth"."user_roles" [headercolor: #2d7d9a] {
+  "id" "integer" [pk, not null]
+  "user_id" "integer" [not null]
+  "role_name" "character varying(50)" [not null]
+  "scope_type" "character varying(50)"
+  "scope_id" "character varying(200)"
+  "assigned_at" "timestamp with time zone" [not null]
+  "assigned_by" "integer"
+  "expires_at" "timestamp with time zone"
+  Note: 'User role assignments with optional scoping (ADR-028)'
+}
+
+Table "kg_auth"."users" [headercolor: #2d7d9a] {
+  "id" "integer" [pk, not null]
+  "username" "character varying(100)" [not null, unique]
+  "password_hash" "character varying(255)" [not null]
+  "primary_role" "character varying(50)" [not null, note: 'Primary role (backwards compatibility) - user can have additional roles in user_roles table']
+  "created_at" "timestamp with time zone" [not null]
+  "last_login" "timestamp with time zone"
+  "disabled" "boolean"
+}
+
+Table "kg_logs"."api_metrics" [headercolor: #2d8e5e] {
+  "id" "integer" [pk, not null]
+  "timestamp" "timestamp with time zone" [not null]
+  "endpoint" "character varying(200)" [not null]
+  "method" "character varying(10)" [not null]
+  "status_code" "integer" [not null]
+  "duration_ms" "numeric(10,2)" [not null]
+  "client_id" "character varying(100)"
+  "error_message" "text"
+}
+
+Table "kg_logs"."audit_trail" [headercolor: #2d8e5e] {
+  "id" "integer" [pk, not null]
+  "timestamp" "timestamp with time zone" [not null]
+  "user_id" "integer"
+  "action" "character varying(100)" [not null]
+  "resource_type" "character varying(50)" [not null]
+  "resource_id" "character varying(200)"
+  "details" "jsonb"
+  "ip_address" "inet"
+  "user_agent" "text"
+  "outcome" "character varying(50)" [not null]
+}
+
+Table "kg_logs"."health_checks" [headercolor: #2d8e5e] {
+  "id" "integer" [pk, not null]
+  "timestamp" "timestamp with time zone" [not null]
+  "service" "character varying(50)" [not null]
+  "status" "character varying(50)" [not null]
+  "metrics" "jsonb"
+}
+
+Table "kg_logs"."job_events" [headercolor: #2d8e5e] {
+  "id" "integer" [pk, not null]
+  "job_id" "character varying(50)" [not null]
+  "timestamp" "timestamp with time zone" [not null]
+  "event_type" "character varying(50)" [not null]
+  "details" "jsonb"
+}
+
+Ref: "kg_api"."artifacts"."query_definition_id" > "kg_api"."query_definitions"."id"
+Ref: "kg_api"."artifacts"."owner_id" > "kg_auth"."users"."id"
+Ref: "kg_api"."concept_version_metadata"."created_in_version" > "kg_api"."ontology_versions"."version_id"
+Ref: "kg_api"."concept_version_metadata"."last_modified_version" > "kg_api"."ontology_versions"."version_id"
+Ref: "kg_api"."graph_epochs"."kind" > "kg_api"."graph_epoch_kinds"."kind"
+Ref: "kg_api"."jobs"."artifact_id" > "kg_api"."artifacts"."id"
+Ref: "kg_api"."jobs"."user_id" > "kg_auth"."users"."id"
+Ref: "kg_api"."query_definitions"."owner_id" > "kg_auth"."users"."id"
+Ref: "kg_api"."synonym_clusters"."representative_type" > "kg_api"."relationship_vocabulary"."relationship_type"
+Ref: "kg_api"."system_initialization_status"."initialization_job_id" > "kg_api"."embedding_generation_jobs"."job_id"
+Ref: "kg_auth"."groups"."created_by" > "kg_auth"."users"."id"
+Ref: "kg_auth"."oauth_access_tokens"."client_id" > "kg_auth"."oauth_clients"."client_id"
+Ref: "kg_auth"."oauth_access_tokens"."user_id" > "kg_auth"."users"."id"
+Ref: "kg_auth"."oauth_authorization_codes"."client_id" > "kg_auth"."oauth_clients"."client_id"
+Ref: "kg_auth"."oauth_authorization_codes"."user_id" > "kg_auth"."users"."id"
+Ref: "kg_auth"."oauth_clients"."created_by" > "kg_auth"."users"."id"
+Ref: "kg_auth"."oauth_device_codes"."client_id" > "kg_auth"."oauth_clients"."client_id"
+Ref: "kg_auth"."oauth_device_codes"."user_id" > "kg_auth"."users"."id"
+Ref: "kg_auth"."oauth_external_provider_tokens"."user_id" > "kg_auth"."users"."id"
+Ref: "kg_auth"."oauth_refresh_tokens"."access_token_hash" > "kg_auth"."oauth_access_tokens"."token_hash"
+Ref: "kg_auth"."oauth_refresh_tokens"."client_id" > "kg_auth"."oauth_clients"."client_id"
+Ref: "kg_auth"."oauth_refresh_tokens"."user_id" > "kg_auth"."users"."id"
+Ref: "kg_auth"."resource_grants"."granted_by" > "kg_auth"."users"."id"
+Ref: "kg_auth"."resources"."parent_type" > "kg_auth"."resources"."resource_type"
+Ref: "kg_auth"."role_permissions"."resource_type" > "kg_auth"."resources"."resource_type"
+Ref: "kg_auth"."role_permissions"."inherited_from" > "kg_auth"."roles"."role_name"
+Ref: "kg_auth"."role_permissions"."role_name" > "kg_auth"."roles"."role_name"
+Ref: "kg_auth"."role_permissions"."created_by" > "kg_auth"."users"."id"
+Ref: "kg_auth"."roles"."parent_role" > "kg_auth"."roles"."role_name"
+Ref: "kg_auth"."roles"."created_by" > "kg_auth"."users"."id"
+Ref: "kg_auth"."user_groups"."group_id" > "kg_auth"."groups"."id"
+Ref: "kg_auth"."user_groups"."added_by" > "kg_auth"."users"."id"
+Ref: "kg_auth"."user_groups"."user_id" > "kg_auth"."users"."id"
+Ref: "kg_auth"."user_roles"."role_name" > "kg_auth"."roles"."role_name"
+Ref: "kg_auth"."user_roles"."assigned_by" > "kg_auth"."users"."id"
+Ref: "kg_auth"."user_roles"."user_id" > "kg_auth"."users"."id"
+Ref: "kg_auth"."users"."primary_role" > "kg_auth"."roles"."role_name"
