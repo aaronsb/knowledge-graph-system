@@ -101,6 +101,13 @@ RETIRED_SCAN_EXTS = {".md", ".py", ".ts", ".tsx", ".js", ".mjs", ".rs",
                      ".sh", ".yml", ".yaml", ".json"}
 RETIRED_SKIP_PARTS = {"node_modules", "dist", "site", ".git"}
 RETIRED_EXEMPT_NAMES = {"adr.yaml"}
+# Generated reference pages are emitted from source-of-truth (SQL DDL, CLI/MCP
+# schemas) and faithfully surface historical ADR references embedded in that
+# source — e.g. `COMMENT ON ... IS 'ADR-0NN: ...'` baked into the schema
+# baseline. The source (.sql) is already outside RETIRED_SCAN_EXTS, so the
+# guard tolerates those refs at the source; exempting the generated tree keeps
+# that consistent. Fix such refs in the source, not the generated page.
+RETIRED_SKIP_REL_PREFIXES = ("docs/reference/",)
 RETIRED_ALLOW_MARKER = "doclint-allow-retired"
 ADR_ANYREF_RE = re.compile(r"\bADR-0*(\d+)(\.\d+)?\b")
 
@@ -392,6 +399,8 @@ def check_retired_refs(lo: int, hi: int, exempt_prefixes: tuple = ()):
         if RETIRED_SKIP_PARTS & set(f.parts):
             continue
         if f.name in RETIRED_EXEMPT_NAMES or (exempt_prefixes and f.name.startswith(exempt_prefixes)):
+            continue
+        if str(f.relative_to(REPO)).startswith(RETIRED_SKIP_REL_PREFIXES):
             continue
         try:
             text = f.read_text()
