@@ -30,6 +30,7 @@ BASELINE = SCHEMA_ROOT / "00_baseline.sql"
 MIGRATIONS_DIR = SCHEMA_ROOT / "migrations"
 OUTPUT_DIR = PROJECT_ROOT / "docs" / "reference"
 OUTPUT_FILE = OUTPUT_DIR / "schema.md"
+DBML_FILE = OUTPUT_DIR / "schema.dbml"
 
 # Platform versions are pinned in the Postgres image, not in the DDL. Stated
 # here so the reference does not repeat the stale "Postgres 16 / AGE 1.5.0"
@@ -46,6 +47,18 @@ SCHEMA_BLURBS = {
     "kg_auth": "Authentication and authorization (dynamic RBAC).",
     "kg_logs": "Observability: audit trails, metrics, health.",
 }
+
+# Header fill per schema for the interactive ER diagram. Deep, opaque hues so
+# the renderer's white header text stays legible in light and dark themes (one
+# hue = one schema; see the Mermaid/charts way). Tables are colored by schema
+# instead of clustered, which keeps the packed layout compact and near-square.
+SCHEMA_COLORS = {
+    "public": "#475569",  # slate — bookkeeping
+    "kg_api": "#7c3aed",  # violet — core operational service
+    "kg_auth": "#2d7d9a",  # teal — auth/security
+    "kg_logs": "#2d8e5e",  # green — observability
+}
+SCHEMA_COLOR_DEFAULT = "#334155"
 
 
 def strip_sql_comments_inline(line: str) -> str:
@@ -500,6 +513,126 @@ def render_er_diagram(schema: str, edges, tables) -> list:
     return out
 
 
+def _dbml_note(text: str) -> str:
+    """Escape a comment for a DBML single-quoted `note:` string.
+
+    DBML single-quoted strings have no backslash escape, so an embedded
+    apostrophe would terminate the string. Swap ASCII quotes for typographic
+    ones and collapse whitespace to keep the note on one line.
+    """
+    return (
+        " ".join(text.split())
+        .replace("'", "’")
+        .replace('"', "”")
+    )
+
+
+def _dbml_ident(name: str) -> str:
+    """Quote a DBML identifier (schema, table, or column) defensively."""
+    return f'"{name}"'
+
+
+def _parent_ref_column(flags) -> str:
+    """Pull the referenced parent column out of an ``FK → target(col)`` flag."""
+    for flag in flags:
+        m = re.match(r"FK → [\w.]+\s*\(([^)]+)\)", flag)
+        if m:
+            return m.group(1).split(",")[0].strip().strip('"')
+    return ""
+
+
+def _table_pk(tbl) -> str:
+    """Return a table's single primary-key column name, or '' if none/composite."""
+    pks = [c["name"] for c in tbl["columns"] if "PK" in c["flags"]]
+    return pks[0] if len(pks) == 1 else ""
+
+
+def render_dbml(tables, table_comments, column_comments, edges) -> str:
+    """Render the schema as DBML (https://dbml.dbdiagram.io).
+
+    Schema-qualified, quoted table names keep cross-schema name collisions
+    (kg_api.jobs vs kg_logs.jobs) distinct. Column types, PK/NOT NULL/UNIQUE
+    flags, and table/column comments carry through as DBML settings and notes.
+    Foreign keys become ``Ref`` lines. Each table is tinted by schema via
+    ``headercolor`` rather than clustered into a TableGroup: color keeps the
+    schema legible while letting the renderer pack the 60-odd tables into a
+    compact, near-square layout instead of one table-per-schema column. The
+    output is both the render source for the interactive ERD and a portable
+    artifact that pastes directly into dbdiagram.io.
+    """
+    today = date.today().isoformat()
+    out = [
+        "// Database schema for the Knowledge Graph System control plane.",
+        "// GENERATED FILE — edit the SQL DDL, then run `make docs-schema`.",
+        f"// Generated: {today}",
+        "//",
+        "// Render: schema/scripts/render-schema-diagram.mjs (interactive ERD)",
+        "// Or paste into https://dbdiagram.io to explore/edit.",
+        "",
+    ]
+
+    by_schema = {}
+    for qualified, tbl in tables.items():
+        by_schema.setdefault(tbl["schema"], []).append((qualified, tbl))
+
+    schema_order = ["public", "kg_api", "kg_auth", "kg_logs"]
+    ordered = [s for s in schema_order if s in by_schema]
+    ordered += [s for s in sorted(by_schema) if s not in schema_order]
+
+    for schema in ordered:
+        color = SCHEMA_COLORS.get(schema, SCHEMA_COLOR_DEFAULT)
+        for qualified, tbl in sorted(by_schema[schema], key=lambda x: x[1]["name"]):
+            ref = f'{_dbml_ident(schema)}.{_dbml_ident(tbl["name"])}'
+            out.append(f"Table {ref} [headercolor: {color}] {{")
+            for col in tbl["columns"]:
+                settings = []
+                if "PK" in col["flags"]:
+                    settings.append("pk")
+                if "NOT NULL" in col["flags"]:
+                    settings.append("not null")
+                if "UNIQUE" in col["flags"]:
+                    settings.append("unique")
+                comment = column_comments.get(f"{qualified}.{col['name']}", "")
+                if comment:
+                    settings.append(f"note: '{_dbml_note(comment)}'")
+                setting_str = f" [{', '.join(settings)}]" if settings else ""
+                col_type = col["type"] or "text"
+                out.append(
+                    f'  {_dbml_ident(col["name"])} "{col_type}"{setting_str}'
+                )
+            tc = table_comments.get(qualified)
+            if tc:
+                out.append(f"  Note: '{_dbml_note(tc)}'")
+            out.append("}")
+            out.append("")
+
+    # Foreign-key references. Skip any whose endpoints we cannot fully resolve
+    # to a column (DBML refs are column-to-column).
+    seen = set()
+    for child_q, parent_q, child_col in sorted(set(edges)):
+        child = tables.get(child_q)
+        parent = tables.get(parent_q)
+        if not child or not parent:
+            continue
+        child_flags = next(
+            (c["flags"] for c in child["columns"] if c["name"] == child_col), []
+        )
+        parent_col = _parent_ref_column(child_flags) or _table_pk(parent)
+        if not parent_col:
+            continue
+        line = (
+            f'Ref: {_dbml_ident(child["schema"])}.{_dbml_ident(child["name"])}'
+            f'.{_dbml_ident(child_col)} > '
+            f'{_dbml_ident(parent["schema"])}.{_dbml_ident(parent["name"])}'
+            f'.{_dbml_ident(parent_col)}'
+        )
+        if line not in seen:
+            seen.add(line)
+            out.append(line)
+
+    return "\n".join(out) + "\n"
+
+
 def render(tables, table_comments, column_comments, migrations):
     """Render the full markdown page as a string."""
     today = date.today().isoformat()
@@ -532,6 +665,26 @@ def render(tables, table_comments, column_comments, migrations):
     out.append("<!-- GENERATED FILE — edit the SQL DDL, then run "
                "`make docs-schema`. -->")
     out.append(f"<!-- Generated: {today} -->")
+    out.append("")
+
+    # Interactive ER diagram. schema-erd.html is a self-contained page rendered
+    # from schema.dbml by render-schema-diagram.mjs. The iframe src is relative
+    # to the *built* URL (use_directory_urls puts this page at reference/schema/,
+    # so its sibling static file is one level up); the markdown links below are
+    # source-relative and rewritten by mkdocs.
+    out.append("## Diagram")
+    out.append("")
+    out.append(
+        '<iframe src="../schema-erd.html" title="Interactive schema ER diagram" '
+        'loading="lazy" style="width:100%;height:720px;border:1px solid '
+        'var(--md-default-fg-color--lightest,#ccc);border-radius:8px;"></iframe>'
+    )
+    out.append("")
+    out.append(
+        "[Open the diagram full screen ↗](schema-erd.html){target=_blank} · "
+        "generated from [`schema.dbml`](schema.dbml), which you can paste into "
+        "[dbdiagram.io](https://dbdiagram.io) to explore or edit."
+    )
     out.append("")
 
     # Group tables by logical schema.
@@ -657,9 +810,17 @@ def main() -> int:
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     OUTPUT_FILE.write_text(page)
 
+    # DBML source for the interactive ER diagram (rendered by
+    # render-schema-diagram.mjs) and for pasting into dbdiagram.io.
+    fk_edges = collect_fk_edges(tables)
+    dbml = render_dbml(tables, table_comments, column_comments, fk_edges)
+    DBML_FILE.write_text(dbml)
+
     print(
-        f"Generated {OUTPUT_FILE.relative_to(PROJECT_ROOT)} "
-        f"({len(tables)} tables, {len(migrations)} migrations)"
+        f"Generated {OUTPUT_FILE.relative_to(PROJECT_ROOT)} and "
+        f"{DBML_FILE.relative_to(PROJECT_ROOT)} "
+        f"({len(tables)} tables, {len(fk_edges)} FK edges, "
+        f"{len(migrations)} migrations)"
     )
     return 0
 

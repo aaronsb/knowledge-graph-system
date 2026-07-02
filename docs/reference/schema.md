@@ -11,7 +11,13 @@ Relational schema for the Kappa Graph control plane. The knowledge graph itself 
 Backed by PostgreSQL 18 with Apache AGE 1.7.0. This page is generated from `schema/00_baseline.sql` and `schema/migrations/*.sql`; do not edit it by hand.
 
 <!-- GENERATED FILE — edit the SQL DDL, then run `make docs-schema`. -->
-<!-- Generated: 2026-07-01 -->
+<!-- Generated: 2026-07-02 -->
+
+## Diagram
+
+<iframe src="../schema-erd.html" title="Interactive schema ER diagram" loading="lazy" style="width:100%;height:720px;border:1px solid var(--md-default-fg-color--lightest,#ccc);border-radius:8px;"></iframe>
+
+[Open the diagram full screen ↗](schema-erd.html){target=_blank} · generated from [`schema.dbml`](schema.dbml), which you can paste into [dbdiagram.io](https://dbdiagram.io) to explore or edit.
 
 ## Schemas
 

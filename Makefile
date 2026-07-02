@@ -120,8 +120,10 @@ docs-mcp: ## Generate MCP server tool reference
 docs-fuse: ## Generate FUSE driver API reference (markdown)
 	@python3 fuse/scripts/generate-fuse-docs.py
 
-docs-schema: ## Generate database schema reference (markdown)
+docs-schema: ## Generate database schema reference (markdown + DBML + interactive ERD)
 	@python3 schema/scripts/generate-schema-docs.py
+	@npm --prefix schema/scripts ci --silent --no-audit --no-fund
+	@node schema/scripts/render-schema-diagram.mjs
 
 docs-site: ## Build documentation site (MkDocs)
 	@./site/scripts/docs build
