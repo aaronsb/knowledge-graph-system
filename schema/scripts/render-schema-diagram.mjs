@@ -358,10 +358,17 @@ ${svg}
     q = q.trim().toLowerCase();
     shown = q ? ids.filter(function (id) { return id.toLowerCase().indexOf(q) >= 0; }).slice(0, 12) : [];
     active = -1;
-    if (!shown.length) { matchBox.style.display = "none"; matchBox.innerHTML = ""; return; }
-    matchBox.innerHTML = shown.map(function (id) {
-      return '<div data-id="' + id + '">' + id + "</div>";
-    }).join("");
+    matchBox.textContent = "";
+    if (!shown.length) { matchBox.style.display = "none"; return; }
+    // Build rows via the DOM (setAttribute + textContent) rather than an HTML
+    // string, so a table name is never parsed as markup — future identifiers
+    // with unusual characters stay inert.
+    shown.forEach(function (id) {
+      var row = document.createElement("div");
+      row.setAttribute("data-id", id);
+      row.textContent = id;
+      matchBox.appendChild(row);
+    });
     matchBox.style.display = "block";
   }
   function choose(id) {
