@@ -94,7 +94,7 @@ AI extraction provider configuration for runtime-switchable models - ADR-041
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | `integer` | PK; NOT NULL |  |
+| `id` | `integer` | PK; NOT NULL; DEFAULT nextval('kg_api.ai_extraction_config_id_seq'::regclass) |  |
 | `provider` | `character varying(50)` | NOT NULL; UNIQUE | AI provider: openai, anthropic, ollama, or vllm |
 | `model_name` | `character varying(200)` | NOT NULL | Model identifier (e.g., gpt-4o, claude-sonnet-4-20250514) |
 | `supports_vision` | `boolean` | DEFAULT false | Whether the model supports vision/image inputs |
@@ -128,7 +128,7 @@ Active vision (image->prose) provider selection — ADR-802 / #378. Selection-on
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | `integer` | PK; NOT NULL |  |
+| `id` | `integer` | PK; NOT NULL; DEFAULT nextval('kg_api.ai_vision_config_id_seq'::regclass) |  |
 | `provider` | `character varying(50)` | NOT NULL; UNIQUE | Provider performing image->prose description |
 | `model_name` | `character varying(200)` | NOT NULL; DEFAULT ''::character varying | Vision model id; '' resolves from the catalog supports_vision rows |
 | `max_tokens` | `integer` |  |  |
@@ -160,7 +160,7 @@ One row per annealing cycle: ecological snapshot + Bezier pressure read-out (#24
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | `integer` | PK; NOT NULL |  |
+| `id` | `integer` | PK; NOT NULL; DEFAULT nextval('kg_api.annealing_pressure_history_id_seq'::regclass) |  |
 | `epoch` | `integer` | NOT NULL |  |
 | `total_ontologies` | `integer` | NOT NULL |  |
 | `total_concepts` | `integer` | NOT NULL |  |
@@ -178,7 +178,7 @@ One row per annealing cycle: ecological snapshot + Bezier pressure read-out (#24
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | `integer` | PK; NOT NULL |  |
+| `id` | `integer` | PK; NOT NULL; DEFAULT nextval('kg_api.annealing_proposals_id_seq'::regclass) |  |
 | `proposal_type` | `character varying(20)` | NOT NULL |  |
 | `ontology_name` | `character varying(200)` | NOT NULL |  |
 | `anchor_concept_id` | `character varying(100)` |  |  |
@@ -213,7 +213,7 @@ Computed artifact metadata with Garage blob pointers (ADR-083)
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | `integer` | PK; NOT NULL |  |
+| `id` | `integer` | PK; NOT NULL; DEFAULT nextval('kg_api.artifacts_id_seq'::regclass) |  |
 | `artifact_type` | `character varying(50)` | NOT NULL | Type of computation: polarity_analysis, projection, etc. |
 | `representation` | `character varying(50)` | NOT NULL | Source UI/tool: polarity_explorer, cli, mcp_server, etc. |
 | `name` | `character varying(200)` |  |  |
@@ -303,7 +303,7 @@ Resource-aware embedding configuration for local and remote models - ADR-039. In
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | `integer` | PK; NOT NULL |  |
+| `id` | `integer` | PK; NOT NULL; DEFAULT nextval('kg_api.embedding_config_id_seq'::regclass) |  |
 | `provider` | `character varying(50)` | NOT NULL | Embedding provider: local (sentence-transformers) or openai |
 | `model_name` | `character varying(200)` | NOT NULL | Model identifier (HuggingFace ID for local, OpenAI model name for remote) |
 | `embedding_dimensions` | `integer` | NOT NULL |  |
@@ -360,7 +360,7 @@ Unified embedding profile with text + image model slots. Replaces embedding_conf
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | `integer` | PK; NOT NULL |  |
+| `id` | `integer` | PK; NOT NULL; DEFAULT nextval('kg_api.embedding_profile_id_seq'::regclass) |  |
 | `name` | `character varying(200)` | NOT NULL |  |
 | `vector_space` | `character varying(100)` | NOT NULL | Compatibility key for the universal TEXT/prose space (concepts, edges, docs, image-prose). Profiles with the same text vector_space produce comparable text embeddings. Image embeddings are independent — see image_vector_space (ADR-803). |
 | `multimodal` | `boolean` | DEFAULT false | When true, the text model also handles image embeddings (e.g. SigLIP 2) |
@@ -416,7 +416,7 @@ ADR-203: Monotonic event log of graph mutations. Distinct from graph_change_coun
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
-| `event_id` | `bigint` | PK; NOT NULL | Monotonic logical-time id. Foreign-keyed by Instance.created_at_event_id. |
+| `event_id` | `bigint` | PK; NOT NULL; DEFAULT nextval('kg_api.graph_epochs_event_id_seq'::regclass) | Monotonic logical-time id. Foreign-keyed by Instance.created_at_event_id. |
 | `occurred_at` | `timestamp with time zone` | NOT NULL; DEFAULT now() |  |
 | `kind` | `text` | NOT NULL; FK → kg_api.graph_epoch_kinds(kind) | ingestion \| reasoning \| annealing \| edit. Determines whether occurred_at is semantically meaningful for the rows attributable to this event. |
 | `actor` | `text` |  |  |
@@ -488,7 +488,7 @@ Formal ontology versioning with immutable snapshots - ADR-026
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
-| `version_id` | `integer` | PK; NOT NULL |  |
+| `version_id` | `integer` | PK; NOT NULL; DEFAULT nextval('kg_api.ontology_versions_version_id_seq'::regclass) |  |
 | `version_number` | `character varying(20)` | NOT NULL; UNIQUE |  |
 | `created_at` | `timestamp with time zone` | NOT NULL; DEFAULT now() |  |
 | `created_by` | `character varying(100)` |  |  |
@@ -519,7 +519,7 @@ Cached model catalog per AI provider with curation and pricing (ADR-800)
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | `integer` | PK; NOT NULL |  |
+| `id` | `integer` | PK; NOT NULL; DEFAULT nextval('kg_api.provider_model_catalog_id_seq'::regclass) |  |
 | `provider` | `character varying(50)` | NOT NULL |  |
 | `model_id` | `character varying(300)` | NOT NULL |  |
 | `display_name` | `character varying(300)` |  |  |
@@ -552,7 +552,7 @@ Pending vocabulary management actions - ADR-032
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | `integer` | PK; NOT NULL |  |
+| `id` | `integer` | PK; NOT NULL; DEFAULT nextval('kg_api.pruning_recommendations_id_seq'::regclass) |  |
 | `relationship_type` | `character varying(100)` | NOT NULL |  |
 | `target_type` | `character varying(100)` |  |  |
 | `action_type` | `character varying(50)` | NOT NULL |  |
@@ -581,7 +581,7 @@ Saved query recipes that can be re-executed (ADR-083)
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | `integer` | PK; NOT NULL |  |
+| `id` | `integer` | PK; NOT NULL; DEFAULT nextval('kg_api.query_definitions_id_seq'::regclass) |  |
 | `name` | `character varying(200)` | NOT NULL |  |
 | `definition_type` | `character varying(50)` | NOT NULL | Type of query: block_diagram, cypher, search, polarity, connection, exploration, program |
 | `definition` | `jsonb` | NOT NULL | Query parameters/structure as JSON |
@@ -648,7 +648,7 @@ Scheduled background jobs: - category_refresh: Re-integrate LLM-generated vocabu
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | `integer` | PK; NOT NULL |  |
+| `id` | `integer` | PK; NOT NULL; DEFAULT nextval('kg_api.scheduled_jobs_id_seq'::regclass) |  |
 | `name` | `character varying(100)` | NOT NULL; UNIQUE | Unique identifier for the scheduled job |
 | `launcher_class` | `character varying(255)` | NOT NULL | Python class name in launcher registry (e.g., CategoryRefreshLauncher) |
 | `schedule_cron` | `character varying(100)` | NOT NULL | Cron expression for schedule (e.g., "0 */6 * * *" = every 6 hours) |
@@ -689,7 +689,7 @@ Capture layer for unmatched relationship types - ADR-025
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | `integer` | PK; NOT NULL |  |
+| `id` | `integer` | PK; NOT NULL; DEFAULT nextval('kg_api.skipped_relationships_id_seq'::regclass) |  |
 | `relationship_type` | `character varying(100)` | NOT NULL |  |
 | `from_concept_label` | `character varying(500)` |  |  |
 | `to_concept_label` | `character varying(500)` |  |  |
@@ -710,7 +710,7 @@ ADR-068: Embeddings for source text chunks with offset tracking and hash verific
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
-| `embedding_id` | `integer` | PK; NOT NULL |  |
+| `embedding_id` | `integer` | PK; NOT NULL; DEFAULT nextval('kg_api.source_embeddings_embedding_id_seq'::regclass) |  |
 | `source_id` | `text` | NOT NULL | Reference to Source node in Apache AGE graph |
 | `chunk_index` | `integer` | NOT NULL | 0-based chunk number within source (e.g., 0, 1, 2...) |
 | `chunk_strategy` | `text` | NOT NULL | Chunking strategy used: sentence, paragraph, semantic, or count |
@@ -792,7 +792,7 @@ ADR-045: Tracks completion of system initialization tasks like cold start embedd
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | `integer` | PK; NOT NULL |  |
+| `id` | `integer` | PK; NOT NULL; DEFAULT nextval('kg_api.vocabulary_audit_id_seq'::regclass) |  |
 | `relationship_type` | `character varying(100)` |  |  |
 | `action` | `character varying(50)` | NOT NULL |  |
 | `performed_by` | `character varying(100)` |  |  |
@@ -817,7 +817,7 @@ Detailed vocabulary change tracking with context (ADR-032)
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | `integer` | PK; NOT NULL |  |
+| `id` | `integer` | PK; NOT NULL; DEFAULT nextval('kg_api.vocabulary_history_id_seq'::regclass) |  |
 | `relationship_type` | `character varying(100)` | NOT NULL |  |
 | `action` | `character varying(50)` | NOT NULL |  |
 | `performed_by` | `character varying(100)` | NOT NULL |  |
@@ -840,7 +840,7 @@ LLM-assisted vocabulary curation suggestions - ADR-026
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | `integer` | PK; NOT NULL |  |
+| `id` | `integer` | PK; NOT NULL; DEFAULT nextval('kg_api.vocabulary_suggestions_id_seq'::regclass) |  |
 | `relationship_type` | `character varying(100)` | NOT NULL |  |
 | `suggestion_type` | `character varying(50)` | NOT NULL |  |
 | `confidence` | `numeric(3,2)` | NOT NULL |  |
@@ -1048,7 +1048,7 @@ Instance-level access grants for owned resources (ADR-082)
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | `integer` | PK; NOT NULL |  |
+| `id` | `integer` | PK; NOT NULL; DEFAULT nextval('kg_auth.resource_grants_id_seq'::regclass) |  |
 | `resource_type` | `character varying(50)` | NOT NULL | Type: ontology, artifact, report, etc. |
 | `resource_id` | `character varying(200)` | NOT NULL | Specific resource identifier |
 | `principal_type` | `character varying(20)` | NOT NULL | Grant to user or group |
@@ -1084,7 +1084,7 @@ Dynamic role permissions with scoping (ADR-028)
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | `integer` | PK; NOT NULL |  |
+| `id` | `integer` | PK; NOT NULL; DEFAULT nextval('kg_auth.role_permissions_id_seq'::regclass) |  |
 | `role_name` | `character varying(50)` | NOT NULL; FK → kg_auth.roles(role_name) |  |
 | `resource_type` | `character varying(100)` | NOT NULL; FK → kg_auth.resources(resource_type) |  |
 | `action` | `character varying(50)` | NOT NULL |  |
@@ -1129,7 +1129,7 @@ User role assignments with optional scoping (ADR-028)
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | `integer` | PK; NOT NULL |  |
+| `id` | `integer` | PK; NOT NULL; DEFAULT nextval('kg_auth.user_roles_id_seq'::regclass) |  |
 | `user_id` | `integer` | NOT NULL; FK → kg_auth.users(id) |  |
 | `role_name` | `character varying(50)` | NOT NULL; FK → kg_auth.roles(role_name) |  |
 | `scope_type` | `character varying(50)` |  |  |
@@ -1146,7 +1146,7 @@ User role assignments with optional scoping (ADR-028)
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | `integer` | PK; NOT NULL |  |
+| `id` | `integer` | PK; NOT NULL; DEFAULT nextval('kg_auth.users_id_seq'::regclass) |  |
 | `username` | `character varying(100)` | NOT NULL; UNIQUE |  |
 | `password_hash` | `character varying(255)` | NOT NULL |  |
 | `primary_role` | `character varying(50)` | NOT NULL; FK → kg_auth.roles(role_name) | Primary role (backwards compatibility) - user can have additional roles in user_roles table |
@@ -1162,7 +1162,7 @@ Observability: audit trails, metrics, health.
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | `integer` | PK; NOT NULL |  |
+| `id` | `integer` | PK; NOT NULL; DEFAULT nextval('kg_logs.api_metrics_id_seq'::regclass) |  |
 | `timestamp` | `timestamp with time zone` | NOT NULL; DEFAULT now() |  |
 | `endpoint` | `character varying(200)` | NOT NULL |  |
 | `method` | `character varying(10)` | NOT NULL |  |
@@ -1175,7 +1175,7 @@ Observability: audit trails, metrics, health.
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | `integer` | PK; NOT NULL |  |
+| `id` | `integer` | PK; NOT NULL; DEFAULT nextval('kg_logs.audit_trail_id_seq'::regclass) |  |
 | `timestamp` | `timestamp with time zone` | NOT NULL; DEFAULT now() |  |
 | `user_id` | `integer` |  |  |
 | `action` | `character varying(100)` | NOT NULL |  |
@@ -1194,7 +1194,7 @@ Observability: audit trails, metrics, health.
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | `integer` | PK; NOT NULL |  |
+| `id` | `integer` | PK; NOT NULL; DEFAULT nextval('kg_logs.health_checks_id_seq'::regclass) |  |
 | `timestamp` | `timestamp with time zone` | NOT NULL; DEFAULT now() |  |
 | `service` | `character varying(50)` | NOT NULL |  |
 | `status` | `character varying(50)` | NOT NULL |  |
@@ -1208,7 +1208,7 @@ Observability: audit trails, metrics, health.
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | `integer` | PK; NOT NULL |  |
+| `id` | `integer` | PK; NOT NULL; DEFAULT nextval('kg_logs.job_events_id_seq'::regclass) |  |
 | `job_id` | `character varying(50)` | NOT NULL |  |
 | `timestamp` | `timestamp with time zone` | NOT NULL; DEFAULT now() |  |
 | `event_type` | `character varying(50)` | NOT NULL |  |

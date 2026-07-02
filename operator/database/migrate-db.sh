@@ -296,9 +296,11 @@ for pending in "${PENDING_MIGRATIONS[@]}"; do
         echo -e "${GRAY}----------------------------------------${NC}"
     fi
 
-    # Apply migration (capture output to detect errors)
-    MIGRATION_OUTPUT=$(run_psql_file "$FILE" 2>&1)
-    MIGRATION_EXIT_CODE=$?
+    # Apply migration (capture output to detect errors). The || arm is
+    # required: under set -e a bare command-substitution assignment aborts
+    # the whole script on psql failure, making the skip-and-retry branch
+    # below unreachable.
+    MIGRATION_OUTPUT=$(run_psql_file "$FILE" 2>&1) && MIGRATION_EXIT_CODE=0 || MIGRATION_EXIT_CODE=$?
 
     # Show output in verbose mode
     if [ "$VERBOSE" = true ]; then

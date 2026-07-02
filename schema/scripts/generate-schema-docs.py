@@ -135,6 +135,14 @@ ALTER_CONSTRAINT = re.compile(
     re.IGNORECASE | re.DOTALL,
 )
 
+# ALTER TABLE ... ALTER COLUMN ... SET DEFAULT — how pg_dump emits serial
+# column defaults (nextval(...)) after creating the sequence.
+ALTER_COL_DEFAULT = re.compile(
+    r"ALTER\s+TABLE\s+(?:ONLY\s+)?([A-Za-z_][\w.]*)\s+"
+    r"ALTER\s+COLUMN\s+(\"?[A-Za-z_]\w*\"?)\s+SET\s+DEFAULT\s+(.+?);",
+    re.IGNORECASE | re.DOTALL,
+)
+
 
 def parse_columns(body: str):
     """Parse a table body into a list of column dicts and a constraint list.
@@ -252,6 +260,19 @@ def apply_alter_constraints(sql: str, tables: dict):
             continue
 
         tbl["constraints"].append(definition)
+
+    for m in ALTER_COL_DEFAULT.finditer(sql):
+        qualified = m.group(1).strip('"')
+        col_name = m.group(2).strip('"')
+        value = " ".join(m.group(3).split())
+        tbl = tables.get(qualified)
+        if tbl is None:
+            continue
+        for col in tbl["columns"]:
+            if col["name"] == col_name and not any(
+                f.startswith("DEFAULT ") for f in col["flags"]
+            ):
+                col["flags"].append(f"DEFAULT {value}")
 
 
 def find_comments(sql: str):
@@ -452,10 +473,20 @@ def collect_fk_edges(tables: dict):
 def render_er_diagram(schema: str, edges, tables) -> list:
     """Render a mermaid erDiagram for FK edges whose child is in *schema*.
 
-    Table names are unique across schemas today; entities use bare names so
-    the diagram stays readable (mermaid renders natively on GitHub and in
-    mkdocs-material via superfences).
+    Entities use bare table names for readability (mermaid renders natively
+    on GitHub and in mkdocs-material via superfences); names that collide
+    across schemas are disambiguated with a schema__ prefix.
     """
+    name_schemas = {}
+    for tbl in tables.values():
+        name_schemas.setdefault(tbl["name"], set()).add(tbl["schema"])
+
+    def entity(qualified):
+        tbl = tables[qualified]
+        if len(name_schemas[tbl["name"]]) > 1:
+            return f"{tbl['schema']}__{tbl['name']}"
+        return tbl["name"]
+
     schema_edges = [
         (c, p, col) for c, p, col in edges
         if tables.get(c, {}).get("schema") == schema and p in tables
@@ -464,9 +495,7 @@ def render_er_diagram(schema: str, edges, tables) -> list:
         return []
     out = ["#### Relationships", "", "```mermaid", "erDiagram"]
     for child, parent, col in sorted(set(schema_edges)):
-        child_name = tables[child]["name"]
-        parent_name = tables[parent]["name"]
-        out.append(f'    {parent_name} ||--o{{ {child_name} : "{col}"')
+        out.append(f'    {entity(parent)} ||--o{{ {entity(child)} : "{col}"')
     out.extend(["```", ""])
     return out
 

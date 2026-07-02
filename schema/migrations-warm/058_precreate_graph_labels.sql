@@ -42,7 +42,7 @@ BEGIN
                 PERFORM ag_catalog.create_vlabel('knowledge_graph', lbl::cstring);
                 RAISE NOTICE 'Created vertex label: %', lbl;
             EXCEPTION WHEN OTHERS THEN
-                RAISE NOTICE 'Could not create vertex label % (will be created on first use): %', lbl, SQLERRM;
+                RAISE WARNING 'Could not create vertex label % (will be created on first use): %', lbl, SQLERRM;
             END;
         END IF;
     END LOOP;
@@ -71,7 +71,7 @@ BEGIN
                 PERFORM ag_catalog.create_elabel('knowledge_graph', lbl::cstring);
                 RAISE NOTICE 'Created edge label: %', lbl;
             EXCEPTION WHEN OTHERS THEN
-                RAISE NOTICE 'Could not create edge label % (will be created on first use): %', lbl, SQLERRM;
+                RAISE WARNING 'Could not create edge label % (will be created on first use): %', lbl, SQLERRM;
             END;
         END IF;
     END LOOP;
@@ -115,7 +115,7 @@ BEGIN
                 PERFORM ag_catalog.create_elabel('knowledge_graph', lbl::cstring);
                 RAISE NOTICE 'Created edge label: %', lbl;
             EXCEPTION WHEN OTHERS THEN
-                RAISE NOTICE 'Could not create edge label % (will be created on first use): %', lbl, SQLERRM;
+                RAISE WARNING 'Could not create edge label % (will be created on first use): %', lbl, SQLERRM;
             END;
         END IF;
     END LOOP;

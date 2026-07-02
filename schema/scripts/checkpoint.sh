@@ -50,10 +50,10 @@ WORKDIR="${CHECKPOINT_WORKDIR:-/tmp/kg-checkpoint}"
 # Backfill-only migrations (e.g. 024, 043) are no-ops on fresh databases
 # and are intentionally not carried. verify proves this list is sufficient.
 GRAPH_SEED_MIGRATIONS=(
-    "migrations/014_vocabulary_as_graph.sql"
-    "migrations/044_ontology_graph_nodes.sql"
+    "migrations/archived/014_vocabulary_as_graph.sql"
+    "migrations/archived/044_ontology_graph_nodes.sql"
     "migrations-warm/058_precreate_graph_labels.sql"
-    "migrations/078_seed_primordial_ontology.sql"
+    "migrations/archived/078_seed_primordial_ontology.sql"
 )
 
 case "$(uname -m)" in
@@ -122,10 +122,15 @@ start_container() {  # start_container <name> <baseline.sql path>
     fail "$name did not become ready in 120s"
 }
 
-# Migrations in numeric order across cold + warm directories
+# Migrations in numeric order across cold + warm directories. archived/ is
+# NOT included: post-checkpoint, replay = current baseline + migrations 081+.
+# The existence filter keeps unexpanded globs out when a directory is empty.
 migration_files() {
-    printf '%s\n' "$SCHEMA_DIR"/migrations/*.sql "$SCHEMA_DIR"/migrations-warm/*.sql \
-        | awk -F/ '{print $NF "\t" $0}' | sort | cut -f2
+    local f
+    for f in "$SCHEMA_DIR"/migrations/*.sql "$SCHEMA_DIR"/migrations-warm/*.sql; do
+        [ -f "$f" ] || continue
+        printf '%s\n' "$f"
+    done | awk -F/ '{print $NF "\t" $0}' | sort | cut -f2
 }
 
 # ----------------------------------------------------------------------------
@@ -264,6 +269,10 @@ HEADER
 -- Rows come from a valid fully-migrated database; FK triggers are disabled
 -- during load because pg_dump cannot order rows of self-referencing tables
 -- (kg_auth.roles.parent_role). Requires superuser — initdb runs as one.
+--
+-- NOTE: includes development-default credentials seeded by the migrations
+-- (e.g. the default admin user's bcrypt hash). CHANGE THESE IN PRODUCTION —
+-- operator init / configure.py handles rotation on managed deployments.
 SET session_replication_role = replica;
 SECTION
         cat "$WORKDIR/dump_data.sql"

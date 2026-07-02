@@ -6747,6 +6747,10 @@ GRANT SELECT ON TABLE kg_api.vocabulary_config TO PUBLIC;
 -- Rows come from a valid fully-migrated database; FK triggers are disabled
 -- during load because pg_dump cannot order rows of self-referencing tables
 -- (kg_auth.roles.parent_role). Requires superuser — initdb runs as one.
+--
+-- NOTE: includes development-default credentials seeded by the migrations
+-- (e.g. the default admin user's bcrypt hash). CHANGE THESE IN PRODUCTION —
+-- operator init / configure.py handles rotation on managed deployments.
 SET session_replication_role = replica;
 --
 -- PostgreSQL database dump
@@ -8096,7 +8100,7 @@ BEGIN
                 PERFORM ag_catalog.create_vlabel('knowledge_graph', lbl::cstring);
                 RAISE NOTICE 'Created vertex label: %', lbl;
             EXCEPTION WHEN OTHERS THEN
-                RAISE NOTICE 'Could not create vertex label % (will be created on first use): %', lbl, SQLERRM;
+                RAISE WARNING 'Could not create vertex label % (will be created on first use): %', lbl, SQLERRM;
             END;
         END IF;
     END LOOP;
@@ -8125,7 +8129,7 @@ BEGIN
                 PERFORM ag_catalog.create_elabel('knowledge_graph', lbl::cstring);
                 RAISE NOTICE 'Created edge label: %', lbl;
             EXCEPTION WHEN OTHERS THEN
-                RAISE NOTICE 'Could not create edge label % (will be created on first use): %', lbl, SQLERRM;
+                RAISE WARNING 'Could not create edge label % (will be created on first use): %', lbl, SQLERRM;
             END;
         END IF;
     END LOOP;
@@ -8169,7 +8173,7 @@ BEGIN
                 PERFORM ag_catalog.create_elabel('knowledge_graph', lbl::cstring);
                 RAISE NOTICE 'Created edge label: %', lbl;
             EXCEPTION WHEN OTHERS THEN
-                RAISE NOTICE 'Could not create edge label % (will be created on first use): %', lbl, SQLERRM;
+                RAISE WARNING 'Could not create edge label % (will be created on first use): %', lbl, SQLERRM;
             END;
         END IF;
     END LOOP;
