@@ -42,7 +42,10 @@ jobs:
           # docs:cli/docs:mcp import from cli/dist, so the CLI must be built first.
           (cd cli && npm install && npm run build && npm run docs:cli && npm run docs:mcp)
           python3 fuse/scripts/generate-fuse-docs.py
+          # Schema: markdown + DBML from the DDL, then the interactive ER diagram
+          # (render reads schema.dbml, so it must run after the Python generator).
           python3 schema/scripts/generate-schema-docs.py
+          (cd schema/scripts && npm install && node render-schema-diagram.mjs)
 
       - name: Build and deploy
         run: mkdocs gh-deploy --force

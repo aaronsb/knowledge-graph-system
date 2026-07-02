@@ -1,0 +1,13 @@
+{
+  "name": "kg-schema-scripts",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Schema documentation tooling: render the interactive ER diagram from schema.dbml.",
+  "scripts": {
+    "render-diagram": "node render-schema-diagram.mjs"
+  },
+  "dependencies": {
+    "@softwaretechnik/dbml-renderer": "1.0.31"
+  }
+}
