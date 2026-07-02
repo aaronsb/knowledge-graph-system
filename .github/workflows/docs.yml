@@ -39,7 +39,8 @@ jobs:
         # (specs/documentation-consolidation-spec.md §5). Regenerate them on every
         # deploy so they cannot drift from the source of truth.
         run: |
-          (cd cli && npm install && npm run docs:cli && npm run docs:mcp)
+          # docs:cli/docs:mcp import from cli/dist, so the CLI must be built first.
+          (cd cli && npm install && npm run build && npm run docs:cli && npm run docs:mcp)
           python3 fuse/scripts/generate-fuse-docs.py
           python3 schema/scripts/generate-schema-docs.py
 
