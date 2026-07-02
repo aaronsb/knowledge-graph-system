@@ -1,0 +1,8214 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Multi-dimensional knowledge extraction system using Apache AGE">
+      
+      
+        <meta name="author" content="Knowledge Graph System Contributors">
+      
+      
+      
+        <link rel="prev" href="../fuse/">
+      
+      
+        <link rel="next" href="../cypher/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Database Schema - Knowledge Graph System</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#database-schema" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Knowledge Graph System" class="md-header__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Knowledge Graph System
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Database Schema
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/aaronsb/knowledge-graph-system" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aaronsb/knowledge-graph-system
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Knowledge Graph System" class="md-nav__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Knowledge Graph System
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/aaronsb/knowledge-graph-system" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aaronsb/knowledge-graph-system
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Get Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Get Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/what-and-why/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What and Why
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/first-graph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your First Graph
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/first-query/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your First Query
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/mcp-quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Connect via MCP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/github-history/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mining a Git Repo
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-To
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How-To
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/ingest/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ingest Documents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/query/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explore and Query
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/epistemic-status/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Filter by Epistemic Status
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/polarity-axis/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Analyze a Polarity Axis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/fuse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Use the FUSE Drive
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/ai-providers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configure AI Providers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/embeddings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configure Embeddings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/extraction-quality/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Compare Extraction Quality
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/vocabulary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Consolidate Vocabulary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Self-Host
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Self-Host
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/quick-start/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/production/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Production Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/macvlan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dedicated IP (macvlan)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/tls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    TLS and Certificates
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/appliance-libvirt/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Appliance on libvirt/KVM
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security and Access
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/backup-restore/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backup and Restore
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/scheduled-jobs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scheduled Jobs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/upgrading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Upgrading
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explanation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Explanation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/how-it-works/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How It Works
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/computed-evidence/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Computed Evidence over Asserted Truth
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/grounding/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Grounding and Epistemic Confidence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/recursive-upsert/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Recursive Upsert
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/vocabulary-lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vocabulary Lifecycle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/storage-and-freshness/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Storage and Freshness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/worker-lanes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Worker Lanes and Concurrency
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/embedding-landscape/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Embedding Landscape
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/graph-program/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram DSL
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    REST API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mcp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mcp-session-context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Session Context
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../fuse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FUSE Driver
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Database Schema
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Database Schema
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#schemas" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Schemas
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#public" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        public
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="public">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#graph_metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        graph_metrics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#schema_migrations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        schema_migrations
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#kg_api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        kg_api
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="kg_api">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#relationships" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Relationships
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#aggressiveness_profiles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        aggressiveness_profiles
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ai_extraction_config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ai_extraction_config
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ai_vision_config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ai_vision_config
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#annealing_options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        annealing_options
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#annealing_pressure_history" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        annealing_pressure_history
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#annealing_proposals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        annealing_proposals
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#artifacts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        artifacts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#catalog_edge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        catalog_edge
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#catalog_node" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        catalog_node
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#concept_access_stats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        concept_access_stats
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#concept_version_metadata" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        concept_version_metadata
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#edge_usage_stats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        edge_usage_stats
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#embedding_config_legacy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        embedding_config_legacy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#embedding_generation_jobs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        embedding_generation_jobs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#embedding_profile" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        embedding_profile
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#graph_epoch_kinds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        graph_epoch_kinds
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#graph_epochs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        graph_epochs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#jobs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        jobs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ontology_tombstones" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ontology_tombstones
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ontology_versions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ontology_versions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#platform_config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        platform_config
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#provider_model_catalog" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        provider_model_catalog
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pruning_recommendations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        pruning_recommendations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#query_definitions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        query_definitions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rate_limits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        rate_limits
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#relationship_vocabulary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        relationship_vocabulary
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#scheduled_jobs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        scheduled_jobs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#schema_migrations_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        schema_migrations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sessions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sessions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#skipped_relationships" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        skipped_relationships
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#source_embeddings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        source_embeddings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#synonym_clusters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        synonym_clusters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#system_api_keys" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        system_api_keys
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#system_initialization_status" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        system_initialization_status
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#vocabulary_audit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        vocabulary_audit
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#vocabulary_config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        vocabulary_config
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#vocabulary_history" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        vocabulary_history
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#vocabulary_suggestions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        vocabulary_suggestions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worker_lanes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        worker_lanes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worker_status" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        worker_status
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#kg_auth" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        kg_auth
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="kg_auth">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#relationships_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Relationships
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#groups" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        groups
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#oauth_access_tokens" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        oauth_access_tokens
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#oauth_authorization_codes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        oauth_authorization_codes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#oauth_clients" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        oauth_clients
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#oauth_device_codes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        oauth_device_codes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#oauth_external_provider_tokens" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        oauth_external_provider_tokens
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#oauth_refresh_tokens" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        oauth_refresh_tokens
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resource_grants" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        resource_grants
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        resources
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#role_permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        role_permissions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#roles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        roles
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#user_groups" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        user_groups
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#user_roles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        user_roles
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#users" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        users
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#kg_logs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        kg_logs
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="kg_logs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#api_metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        api_metrics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#audit_trail" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        audit_trail
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#health_checks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        health_checks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#job_events" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        job_events
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#migration-history" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Migration history
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cypher/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cypher Patterns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../graph-program-spec/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram Specification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../graph-program-validation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram Validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../graph-program-security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../backup-object-spec/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backup Object Format
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Contributing
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/voice/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Prose & Voice Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/docstring-coverage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docstring Coverage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/test-suite/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Test Suite
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/INDEX/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#schemas" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Schemas
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#public" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        public
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="public">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#graph_metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        graph_metrics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#schema_migrations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        schema_migrations
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#kg_api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        kg_api
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="kg_api">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#relationships" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Relationships
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#aggressiveness_profiles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        aggressiveness_profiles
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ai_extraction_config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ai_extraction_config
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ai_vision_config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ai_vision_config
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#annealing_options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        annealing_options
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#annealing_pressure_history" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        annealing_pressure_history
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#annealing_proposals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        annealing_proposals
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#artifacts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        artifacts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#catalog_edge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        catalog_edge
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#catalog_node" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        catalog_node
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#concept_access_stats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        concept_access_stats
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#concept_version_metadata" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        concept_version_metadata
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#edge_usage_stats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        edge_usage_stats
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#embedding_config_legacy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        embedding_config_legacy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#embedding_generation_jobs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        embedding_generation_jobs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#embedding_profile" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        embedding_profile
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#graph_epoch_kinds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        graph_epoch_kinds
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#graph_epochs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        graph_epochs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#jobs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        jobs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ontology_tombstones" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ontology_tombstones
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ontology_versions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ontology_versions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#platform_config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        platform_config
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#provider_model_catalog" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        provider_model_catalog
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pruning_recommendations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        pruning_recommendations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#query_definitions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        query_definitions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rate_limits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        rate_limits
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#relationship_vocabulary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        relationship_vocabulary
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#scheduled_jobs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        scheduled_jobs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#schema_migrations_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        schema_migrations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sessions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sessions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#skipped_relationships" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        skipped_relationships
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#source_embeddings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        source_embeddings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#synonym_clusters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        synonym_clusters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#system_api_keys" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        system_api_keys
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#system_initialization_status" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        system_initialization_status
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#vocabulary_audit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        vocabulary_audit
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#vocabulary_config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        vocabulary_config
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#vocabulary_history" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        vocabulary_history
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#vocabulary_suggestions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        vocabulary_suggestions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worker_lanes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        worker_lanes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worker_status" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        worker_status
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#kg_auth" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        kg_auth
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="kg_auth">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#relationships_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Relationships
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#groups" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        groups
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#oauth_access_tokens" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        oauth_access_tokens
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#oauth_authorization_codes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        oauth_authorization_codes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#oauth_clients" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        oauth_clients
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#oauth_device_codes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        oauth_device_codes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#oauth_external_provider_tokens" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        oauth_external_provider_tokens
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#oauth_refresh_tokens" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        oauth_refresh_tokens
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resource_grants" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        resource_grants
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        resources
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#role_permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        role_permissions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#roles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        roles
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#user_groups" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        user_groups
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#user_roles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        user_roles
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#users" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        users
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#kg_logs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        kg_logs
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="kg_logs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#api_metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        api_metrics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#audit_trail" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        audit_trail
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#health_checks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        health_checks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#job_events" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        job_events
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#migration-history" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Migration history
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="database-schema">Database Schema</h1>
+<p>Relational schema for the Kappa Graph control plane. The knowledge graph itself (concepts, sources, instances, and their typed edges) lives in the Apache AGE <code>knowledge_graph</code> graph; the tables below hold operational state, authorization, and observability around it.</p>
+<p>Backed by PostgreSQL 18 with Apache AGE 1.7.0. This page is generated from <code>schema/00_baseline.sql</code> and <code>schema/migrations/*.sql</code>; do not edit it by hand.</p>
+<!-- GENERATED FILE — edit the SQL DDL, then run `make docs-schema`. -->
+<!-- Generated: 2026-07-02 -->
+
+<h2 id="schemas">Schemas</h2>
+<table>
+<thead>
+<tr>
+<th>Schema</th>
+<th>Purpose</th>
+<th>Tables</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>public</code></td>
+<td>Cross-schema bookkeeping (migration tracking).</td>
+<td>2</td>
+</tr>
+<tr>
+<td><code>kg_api</code></td>
+<td>API operational state: jobs, sessions, vocabulary, ontology.</td>
+<td>40</td>
+</tr>
+<tr>
+<td><code>kg_auth</code></td>
+<td>Authentication and authorization (dynamic RBAC).</td>
+<td>14</td>
+</tr>
+<tr>
+<td><code>kg_logs</code></td>
+<td>Observability: audit trails, metrics, health.</td>
+<td>4</td>
+</tr>
+</tbody>
+</table>
+<h2 id="public"><code>public</code></h2>
+<p>Cross-schema bookkeeping (migration tracking).</p>
+<h3 id="graph_metrics"><code>graph_metrics</code></h3>
+<p>Change counters for triggering periodic epistemic status measurement</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>metric_name</code></td>
+<td><code>character varying(255)</code></td>
+<td>PK; NOT NULL</td>
+<td>Unique metric identifier (e.g., vocabulary_change_counter, concept_count)</td>
+</tr>
+<tr>
+<td><code>counter</code></td>
+<td><code>bigint</code></td>
+<td>NOT NULL; DEFAULT 0</td>
+<td>Increments on every change (create/delete/consolidate) - never decrements</td>
+</tr>
+<tr>
+<td><code>last_measured_counter</code></td>
+<td><code>bigint</code></td>
+<td>NOT NULL; DEFAULT 0</td>
+<td>Counter value when epistemic status was last measured</td>
+</tr>
+<tr>
+<td><code>last_measured_at</code></td>
+<td><code>timestamp without time zone</code></td>
+<td></td>
+<td>Timestamp when epistemic status was last measured</td>
+</tr>
+<tr>
+<td><code>updated_at</code></td>
+<td><code>timestamp without time zone</code></td>
+<td>DEFAULT CURRENT_TIMESTAMP</td>
+<td>Timestamp of last counter increment</td>
+</tr>
+<tr>
+<td><code>notes</code></td>
+<td><code>text</code></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h3 id="schema_migrations"><code>schema_migrations</code></h3>
+<p>Tracks applied schema migrations for safe schema evolution - ADR-040</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>version</code></td>
+<td><code>integer</code></td>
+<td>PK; NOT NULL</td>
+<td>Sequential migration number (001, 002, 003, ...)</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td><code>text</code></td>
+<td>NOT NULL</td>
+<td>Descriptive migration name (e.g., baseline, add_embedding_config)</td>
+</tr>
+<tr>
+<td><code>applied_at</code></td>
+<td><code>timestamp without time zone</code></td>
+<td>NOT NULL; DEFAULT now()</td>
+<td>Timestamp when migration was applied</td>
+</tr>
+</tbody>
+</table>
+<h2 id="kg_api"><code>kg_api</code></h2>
+<p>API operational state: jobs, sessions, vocabulary, ontology.</p>
+<h4 id="relationships">Relationships</h4>
+<pre class="mermaid"><code>erDiagram
+    query_definitions ||--o{ artifacts : "query_definition_id"
+    users ||--o{ artifacts : "owner_id"
+    ontology_versions ||--o{ concept_version_metadata : "created_in_version"
+    ontology_versions ||--o{ concept_version_metadata : "last_modified_version"
+    graph_epoch_kinds ||--o{ graph_epochs : "kind"
+    artifacts ||--o{ jobs : "artifact_id"
+    users ||--o{ jobs : "user_id"
+    users ||--o{ query_definitions : "owner_id"
+    relationship_vocabulary ||--o{ synonym_clusters : "representative_type"
+    embedding_generation_jobs ||--o{ system_initialization_status : "initialization_job_id"</code></pre>
+<h3 id="aggressiveness_profiles"><code>aggressiveness_profiles</code></h3>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>profile_name</code></td>
+<td><code>character varying(50)</code></td>
+<td>PK; NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>control_x1</code></td>
+<td><code>double precision</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>control_y1</code></td>
+<td><code>double precision</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>control_x2</code></td>
+<td><code>double precision</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>control_y2</code></td>
+<td><code>double precision</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>text</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>is_builtin</code></td>
+<td><code>boolean</code></td>
+<td>DEFAULT false</td>
+<td></td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td><code>timestamp without time zone</code></td>
+<td>DEFAULT now()</td>
+<td></td>
+</tr>
+<tr>
+<td><code>updated_at</code></td>
+<td><code>timestamp without time zone</code></td>
+<td>DEFAULT now()</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Table constraints:</strong></p>
+<ul>
+<li><code>CONSTRAINT aggressiveness_profiles_control_x1_check CHECK (((control_x1 &gt;= (0.0)::double precision) AND (control_x1 &lt;= (1.0)::double precision)))</code></li>
+<li><code>CONSTRAINT aggressiveness_profiles_control_x2_check CHECK (((control_x2 &gt;= (0.0)::double precision) AND (control_x2 &lt;= (1.0)::double precision)))</code></li>
+</ul>
+<h3 id="ai_extraction_config"><code>ai_extraction_config</code></h3>
+<p>AI extraction provider configuration for runtime-switchable models - ADR-041</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td><code>integer</code></td>
+<td>PK; NOT NULL; DEFAULT nextval('kg_api.ai_extraction_config_id_seq'::regclass)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>provider</code></td>
+<td><code>character varying(50)</code></td>
+<td>NOT NULL; UNIQUE</td>
+<td>AI provider: openai, anthropic, ollama, or vllm</td>
+</tr>
+<tr>
+<td><code>model_name</code></td>
+<td><code>character varying(200)</code></td>
+<td>NOT NULL</td>
+<td>Model identifier (e.g., gpt-4o, claude-sonnet-4-20250514)</td>
+</tr>
+<tr>
+<td><code>supports_vision</code></td>
+<td><code>boolean</code></td>
+<td>DEFAULT false</td>
+<td>Whether the model supports vision/image inputs</td>
+</tr>
+<tr>
+<td><code>supports_json_mode</code></td>
+<td><code>boolean</code></td>
+<td>DEFAULT true</td>
+<td>Whether the model supports JSON mode for structured outputs</td>
+</tr>
+<tr>
+<td><code>max_tokens</code></td>
+<td><code>integer</code></td>
+<td></td>
+<td>Maximum token limit for the model</td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>DEFAULT CURRENT_TIMESTAMP</td>
+<td></td>
+</tr>
+<tr>
+<td><code>updated_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>DEFAULT CURRENT_TIMESTAMP</td>
+<td></td>
+</tr>
+<tr>
+<td><code>updated_by</code></td>
+<td><code>character varying(100)</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>active</code></td>
+<td><code>boolean</code></td>
+<td>DEFAULT true</td>
+<td>Only one config can be active at a time (enforced by unique index)</td>
+</tr>
+<tr>
+<td><code>base_url</code></td>
+<td><code>character varying(255)</code></td>
+<td></td>
+<td>Base URL for local providers (e.g., http://localhost:11434 for Ollama)</td>
+</tr>
+<tr>
+<td><code>temperature</code></td>
+<td><code>double precision</code></td>
+<td>DEFAULT 0.1</td>
+<td>Sampling temperature (0.0-1.0, lower = more consistent). Used by local providers.</td>
+</tr>
+<tr>
+<td><code>top_p</code></td>
+<td><code>double precision</code></td>
+<td>DEFAULT 0.9</td>
+<td>Nucleus sampling threshold (0.0-1.0). Used by local providers.</td>
+</tr>
+<tr>
+<td><code>gpu_layers</code></td>
+<td><code>integer</code></td>
+<td>DEFAULT '-1'::integer</td>
+<td>GPU layers for inference: -1 = auto, 0 = CPU only, &gt;0 = specific layer count (llama.cpp)</td>
+</tr>
+<tr>
+<td><code>num_threads</code></td>
+<td><code>integer</code></td>
+<td>DEFAULT 4</td>
+<td>CPU threads for inference (used by local CPU-based providers)</td>
+</tr>
+<tr>
+<td><code>thinking_mode</code></td>
+<td><code>character varying(20)</code></td>
+<td>DEFAULT 'off'::character varying</td>
+<td>Thinking mode for reasoning models (Ollama 0.12.x+): off, low, medium, high. GPT-OSS: off=low, others pass through. Standard models: off=disabled, low/medium/high=enabled.</td>
+</tr>
+<tr>
+<td><code>max_concurrent_requests</code></td>
+<td><code>integer</code></td>
+<td>DEFAULT 4</td>
+<td>Maximum number of concurrent API requests allowed for this provider. Limits parallelism to prevent rate limit errors and resource thrashing. Recommended: OpenAI=8, Anthropic=4, Ollama=1</td>
+</tr>
+<tr>
+<td><code>max_retries</code></td>
+<td><code>integer</code></td>
+<td>DEFAULT 8</td>
+<td>Maximum number of retry attempts for rate-limited requests (429 errors). Uses exponential backoff with jitter: 1s, 2s, 4s, 8s, 16s, 32s, 64s, ... Higher values provide more resilience with multiple workers. Recommended: 8 for cloud providers, 3 for local</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Table constraints:</strong></p>
+<ul>
+<li><code>CONSTRAINT ai_extraction_config_max_concurrent_requests_check CHECK (((max_concurrent_requests &gt;= 1) AND (max_concurrent_requests &lt;= 100)))</code></li>
+<li><code>CONSTRAINT ai_extraction_config_max_retries_check CHECK (((max_retries &gt;= 0) AND (max_retries &lt;= 20)))</code></li>
+<li><code>CONSTRAINT ai_extraction_config_provider_check CHECK (((provider)::text = ANY ((ARRAY['openai'::character varying, 'anthropic'::character varying, 'ollama'::character varying, 'openrouter'::character varying, 'llamacpp'::character varying])::text[])))</code></li>
+<li><code>CONSTRAINT ai_extraction_config_temperature_check CHECK (((temperature &gt;= (0.0)::double precision) AND (temperature &lt;= (1.0)::double precision)))</code></li>
+<li><code>CONSTRAINT ai_extraction_config_thinking_mode_check CHECK (((thinking_mode)::text = ANY ((ARRAY['off'::character varying, 'low'::character varying, 'medium'::character varying, 'high'::character varying])::text[])))</code></li>
+<li><code>CONSTRAINT ai_extraction_config_top_p_check CHECK (((top_p &gt;= (0.0)::double precision) AND (top_p &lt;= (1.0)::double precision)))</code></li>
+</ul>
+<h3 id="ai_vision_config"><code>ai_vision_config</code></h3>
+<p>Active vision (image-&gt;prose) provider selection — ADR-802 / #378. Selection-only; connectivity reused from per-provider config.</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td><code>integer</code></td>
+<td>PK; NOT NULL; DEFAULT nextval('kg_api.ai_vision_config_id_seq'::regclass)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>provider</code></td>
+<td><code>character varying(50)</code></td>
+<td>NOT NULL; UNIQUE</td>
+<td>Provider performing image-&gt;prose description</td>
+</tr>
+<tr>
+<td><code>model_name</code></td>
+<td><code>character varying(200)</code></td>
+<td>NOT NULL; DEFAULT ''::character varying</td>
+<td>Vision model id; '' resolves from the catalog supports_vision rows</td>
+</tr>
+<tr>
+<td><code>max_tokens</code></td>
+<td><code>integer</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>temperature</code></td>
+<td><code>double precision</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>DEFAULT CURRENT_TIMESTAMP</td>
+<td></td>
+</tr>
+<tr>
+<td><code>updated_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>DEFAULT CURRENT_TIMESTAMP</td>
+<td></td>
+</tr>
+<tr>
+<td><code>updated_by</code></td>
+<td><code>character varying(100)</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>active</code></td>
+<td><code>boolean</code></td>
+<td>DEFAULT true</td>
+<td>Only one vision config active at a time (enforced by partial unique index)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Table constraints:</strong></p>
+<ul>
+<li><code>CONSTRAINT ai_vision_config_provider_check CHECK (((provider)::text = ANY ((ARRAY['openai'::character varying, 'anthropic'::character varying, 'ollama'::character varying, 'openrouter'::character varying, 'llamacpp'::character varying])::text[])))</code></li>
+<li><code>CONSTRAINT ai_vision_config_temperature_check CHECK (((temperature IS NULL) OR ((temperature &gt;= (0.0)::double precision) AND (temperature &lt;= (1.0)::double precision))))</code></li>
+</ul>
+<h3 id="annealing_options"><code>annealing_options</code></h3>
+<p>Tunable parameters for ontology annealing cycles (ADR-200 Phase 3b). Code defaults apply when a key is absent; database values override.</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>key</code></td>
+<td><code>character varying(100)</code></td>
+<td>PK; NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>value</code></td>
+<td><code>text</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>text</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>updated_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>DEFAULT now()</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h3 id="annealing_pressure_history"><code>annealing_pressure_history</code></h3>
+<p>One row per annealing cycle: ecological snapshot + Bezier pressure read-out (#249, ADR-206 §Phase 3). Drives the web admin "pressure" panel and the future trend chart.</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td><code>integer</code></td>
+<td>PK; NOT NULL; DEFAULT nextval('kg_api.annealing_pressure_history_id_seq'::regclass)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>epoch</code></td>
+<td><code>integer</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>total_ontologies</code></td>
+<td><code>integer</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>total_concepts</code></td>
+<td><code>integer</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>avg_concepts_per_ontology</code></td>
+<td><code>double precision</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>pressure_score</code></td>
+<td><code>double precision</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>pressure_zone</code></td>
+<td><code>character varying(20)</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>pressure_recommendation</code></td>
+<td><code>jsonb</code></td>
+<td>NOT NULL; DEFAULT '{}'::jsonb</td>
+<td></td>
+</tr>
+<tr>
+<td><code>recorded_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>NOT NULL; DEFAULT now()</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Table constraints:</strong></p>
+<ul>
+<li><code>CONSTRAINT annealing_pressure_history_pressure_score_check CHECK (((pressure_score &gt;= (0.0)::double precision) AND (pressure_score &lt;= (1.0)::double precision)))</code></li>
+</ul>
+<h3 id="annealing_proposals"><code>annealing_proposals</code></h3>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td><code>integer</code></td>
+<td>PK; NOT NULL; DEFAULT nextval('kg_api.annealing_proposals_id_seq'::regclass)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>proposal_type</code></td>
+<td><code>character varying(20)</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>ontology_name</code></td>
+<td><code>character varying(200)</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>anchor_concept_id</code></td>
+<td><code>character varying(100)</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>target_ontology</code></td>
+<td><code>character varying(200)</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>reasoning</code></td>
+<td><code>text</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>mass_score</code></td>
+<td><code>numeric(10,4)</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>coherence_score</code></td>
+<td><code>numeric(10,4)</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>protection_score</code></td>
+<td><code>numeric(10,4)</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td><code>character varying(20)</code></td>
+<td>NOT NULL; DEFAULT 'pending'::character varying</td>
+<td></td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>NOT NULL; DEFAULT now()</td>
+<td></td>
+</tr>
+<tr>
+<td><code>created_at_epoch</code></td>
+<td><code>integer</code></td>
+<td>NOT NULL; DEFAULT 0</td>
+<td></td>
+</tr>
+<tr>
+<td><code>reviewed_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>reviewed_by</code></td>
+<td><code>character varying(100)</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>reviewer_notes</code></td>
+<td><code>text</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>expires_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>DEFAULT (now() + '7 days'::interval)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>executed_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>execution_result</code></td>
+<td><code>jsonb</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>suggested_name</code></td>
+<td><code>character varying(200)</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>suggested_description</code></td>
+<td><code>text</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>proposal_kind</code></td>
+<td><code>character varying(20)</code></td>
+<td>NOT NULL; DEFAULT 'ontology'::character varying</td>
+<td></td>
+</tr>
+<tr>
+<td><code>params</code></td>
+<td><code>jsonb</code></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Table constraints:</strong></p>
+<ul>
+<li><code>CONSTRAINT annealing_proposals_proposal_kind_check CHECK (((proposal_kind)::text = ANY ((ARRAY['ontology'::character varying, 'control'::character varying])::text[])))</code></li>
+<li><code>CONSTRAINT annealing_proposals_proposal_type_check CHECK (((proposal_type)::text = ANY ((ARRAY['CLEAVE'::character varying, 'DISSOLVE'::character varying, 'MERGE'::character varying, 'RENAME'::character varying, 'NO_ACTION'::character varying, 'ESCALATE'::character varying, 'ADJUST_CONTROL'::character varying, 'promotion'::character varying, 'demotion'::character varying])::text[])))</code></li>
+<li><code>CONSTRAINT annealing_proposals_status_check CHECK (((status)::text = ANY ((ARRAY['pending'::character varying, 'approved'::character varying, 'rejected'::character varying, 'expired'::character varying, 'executing'::character varying, 'executed'::character varying, 'failed'::character varying])::text[])))</code></li>
+</ul>
+<h3 id="artifacts"><code>artifacts</code></h3>
+<p>Computed artifact metadata with Garage blob pointers (ADR-083)</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td><code>integer</code></td>
+<td>PK; NOT NULL; DEFAULT nextval('kg_api.artifacts_id_seq'::regclass)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>artifact_type</code></td>
+<td><code>character varying(50)</code></td>
+<td>NOT NULL</td>
+<td>Type of computation: polarity_analysis, projection, etc.</td>
+</tr>
+<tr>
+<td><code>representation</code></td>
+<td><code>character varying(50)</code></td>
+<td>NOT NULL</td>
+<td>Source UI/tool: polarity_explorer, cli, mcp_server, etc.</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td><code>character varying(200)</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>owner_id</code></td>
+<td><code>integer</code></td>
+<td>FK → kg_auth.users(id)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>graph_epoch</code></td>
+<td><code>bigint</code></td>
+<td>NOT NULL</td>
+<td>graph_change_counter at creation for freshness validation</td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>NOT NULL; DEFAULT now()</td>
+<td></td>
+</tr>
+<tr>
+<td><code>expires_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>parameters</code></td>
+<td><code>jsonb</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>metadata</code></td>
+<td><code>jsonb</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>inline_result</code></td>
+<td><code>jsonb</code></td>
+<td></td>
+<td>Small results (&lt;10KB) stored inline</td>
+</tr>
+<tr>
+<td><code>garage_key</code></td>
+<td><code>character varying(200)</code></td>
+<td></td>
+<td>Pointer to Garage blob for large results</td>
+</tr>
+<tr>
+<td><code>query_definition_id</code></td>
+<td><code>integer</code></td>
+<td>FK → kg_api.query_definitions(id)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>ontology</code></td>
+<td><code>character varying(200)</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>concept_ids</code></td>
+<td><code>text[]</code></td>
+<td></td>
+<td>Concept IDs involved in this artifact</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Table constraints:</strong></p>
+<ul>
+<li><code>CONSTRAINT has_content CHECK (((inline_result IS NOT NULL) OR (garage_key IS NOT NULL)))</code></li>
+<li><code>CONSTRAINT valid_artifact_type CHECK (((artifact_type)::text = ANY ((ARRAY['polarity_analysis'::character varying, 'projection'::character varying, 'query_result'::character varying, 'graph_subgraph'::character varying, 'vocabulary_analysis'::character varying, 'epistemic_measurement'::character varying, 'consolidation_result'::character varying, 'search_result'::character varying, 'connection_path'::character varying, 'report'::character varying, 'stats_snapshot'::character varying])::text[])))</code></li>
+<li><code>CONSTRAINT valid_representation CHECK (((representation)::text = ANY ((ARRAY['polarity_explorer'::character varying, 'embedding_landscape'::character varying, 'block_builder'::character varying, 'edge_explorer'::character varying, 'vocabulary_chord'::character varying, 'force_graph_2d'::character varying, 'force_graph_3d'::character varying, 'report_workspace'::character varying, 'cli'::character varying, 'mcp_server'::character varying, 'api_direct'::character varying])::text[])))</code></li>
+</ul>
+<h3 id="catalog_edge"><code>catalog_edge</code></h3>
+<p>ADR-501: parent-&gt;child membership edges projecting canonical :SCOPED_BY (ontology&lt;-document) and :HAS_SOURCE/:APPEARS (document&lt;-concept). A concept may have many parent documents (DAG).</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>parent_kind</code></td>
+<td><code>character varying(16)</code></td>
+<td>PK; NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>parent_id</code></td>
+<td><code>text</code></td>
+<td>PK; NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>child_kind</code></td>
+<td><code>character varying(16)</code></td>
+<td>PK; NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>child_id</code></td>
+<td><code>text</code></td>
+<td>PK; NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>graph_epoch</code></td>
+<td><code>bigint</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h3 id="catalog_node"><code>catalog_node</code></h3>
+<p>ADR-501: materialized identity/metadata for catalog nodes (ontology/document/concept). Source of truth is the AGE graph; rebuilt on graph epoch advance.</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>kind</code></td>
+<td><code>character varying(16)</code></td>
+<td>PK; NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>node_id</code></td>
+<td><code>text</code></td>
+<td>PK; NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td><code>text</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>name_lower</code></td>
+<td><code>text</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>child_count</code></td>
+<td><code>integer</code></td>
+<td>NOT NULL; DEFAULT 0</td>
+<td>Number of direct children (documents-in-ontology, concepts-in-document); 0 for leaf concepts.</td>
+</tr>
+<tr>
+<td><code>content_type</code></td>
+<td><code>character varying(32)</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>properties</code></td>
+<td><code>jsonb</code></td>
+<td>NOT NULL; DEFAULT '{}'::jsonb</td>
+<td></td>
+</tr>
+<tr>
+<td><code>graph_epoch</code></td>
+<td><code>bigint</code></td>
+<td>NOT NULL</td>
+<td>graph_change_counter at build time; compared to kg_api.get_graph_epoch() for staleness.</td>
+</tr>
+<tr>
+<td><code>indexed_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>NOT NULL; DEFAULT now()</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h3 id="concept_access_stats"><code>concept_access_stats</code></h3>
+<p>Node-level access patterns for caching - ADR-025</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>concept_id</code></td>
+<td><code>character varying(100)</code></td>
+<td>PK; NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>access_count</code></td>
+<td><code>integer</code></td>
+<td>DEFAULT 0</td>
+<td></td>
+</tr>
+<tr>
+<td><code>last_accessed</code></td>
+<td><code>timestamp with time zone</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>avg_query_time_ms</code></td>
+<td><code>numeric(10,2)</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>queries_as_start</code></td>
+<td><code>integer</code></td>
+<td>DEFAULT 0</td>
+<td></td>
+</tr>
+<tr>
+<td><code>queries_as_result</code></td>
+<td><code>integer</code></td>
+<td>DEFAULT 0</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h3 id="concept_version_metadata"><code>concept_version_metadata</code></h3>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>concept_id</code></td>
+<td><code>character varying(100)</code></td>
+<td>PK; NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>created_in_version</code></td>
+<td><code>integer</code></td>
+<td>FK → kg_api.ontology_versions(version_id)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>last_modified_version</code></td>
+<td><code>integer</code></td>
+<td>FK → kg_api.ontology_versions(version_id)</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h3 id="edge_usage_stats"><code>edge_usage_stats</code></h3>
+<p>Performance tracking for graph traversals - ADR-025</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>from_concept_id</code></td>
+<td><code>character varying(100)</code></td>
+<td>PK; NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>to_concept_id</code></td>
+<td><code>character varying(100)</code></td>
+<td>PK; NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>relationship_type</code></td>
+<td><code>character varying(100)</code></td>
+<td>PK; NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>traversal_count</code></td>
+<td><code>integer</code></td>
+<td>DEFAULT 0</td>
+<td></td>
+</tr>
+<tr>
+<td><code>last_traversed</code></td>
+<td><code>timestamp with time zone</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>avg_query_time_ms</code></td>
+<td><code>numeric(10,2)</code></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h3 id="embedding_config_legacy"><code>embedding_config_legacy</code></h3>
+<p>Resource-aware embedding configuration for local and remote models - ADR-039. Includes preset for nomic-embed-text-v1.5.</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td><code>integer</code></td>
+<td>PK; NOT NULL; DEFAULT nextval('kg_api.embedding_config_id_seq'::regclass)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>provider</code></td>
+<td><code>character varying(50)</code></td>
+<td>NOT NULL</td>
+<td>Embedding provider: local (sentence-transformers) or openai</td>
+</tr>
+<tr>
+<td><code>model_name</code></td>
+<td><code>character varying(200)</code></td>
+<td>NOT NULL</td>
+<td>Model identifier (HuggingFace ID for local, OpenAI model name for remote)</td>
+</tr>
+<tr>
+<td><code>embedding_dimensions</code></td>
+<td><code>integer</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>precision</code></td>
+<td><code>character varying(20)</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>max_memory_mb</code></td>
+<td><code>integer</code></td>
+<td></td>
+<td>Maximum RAM allocation for local model (local provider only)</td>
+</tr>
+<tr>
+<td><code>num_threads</code></td>
+<td><code>integer</code></td>
+<td></td>
+<td>CPU threads for inference (local provider only)</td>
+</tr>
+<tr>
+<td><code>device</code></td>
+<td><code>character varying(20)</code></td>
+<td></td>
+<td>Compute device: cpu, cuda, or mps (local provider only)</td>
+</tr>
+<tr>
+<td><code>batch_size</code></td>
+<td><code>integer</code></td>
+<td>DEFAULT 8</td>
+<td>Batch size for embedding generation</td>
+</tr>
+<tr>
+<td><code>max_seq_length</code></td>
+<td><code>integer</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>normalize_embeddings</code></td>
+<td><code>boolean</code></td>
+<td>DEFAULT true</td>
+<td></td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>DEFAULT CURRENT_TIMESTAMP</td>
+<td></td>
+</tr>
+<tr>
+<td><code>updated_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>DEFAULT CURRENT_TIMESTAMP</td>
+<td></td>
+</tr>
+<tr>
+<td><code>updated_by</code></td>
+<td><code>character varying(100)</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>active</code></td>
+<td><code>boolean</code></td>
+<td>DEFAULT true</td>
+<td>Only one config can be active at a time (enforced by unique constraint)</td>
+</tr>
+<tr>
+<td><code>delete_protected</code></td>
+<td><code>boolean</code></td>
+<td>DEFAULT false</td>
+<td>Prevents deletion without first removing protection (default configs)</td>
+</tr>
+<tr>
+<td><code>change_protected</code></td>
+<td><code>boolean</code></td>
+<td>DEFAULT false</td>
+<td>Prevents changing provider/dimensions without explicit unlock (safety)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Table constraints:</strong></p>
+<ul>
+<li><code>CONSTRAINT embedding_config_device_check CHECK (((device)::text = ANY ((ARRAY['cpu'::character varying, 'cuda'::character varying, 'mps'::character varying])::text[])))</code></li>
+<li><code>CONSTRAINT embedding_config_precision_check CHECK ((("precision")::text = ANY ((ARRAY['float16'::character varying, 'float32'::character varying])::text[])))</code></li>
+<li><code>CONSTRAINT embedding_config_provider_check CHECK (((provider)::text = ANY ((ARRAY['local'::character varying, 'openai'::character varying])::text[])))</code></li>
+</ul>
+<h3 id="embedding_generation_jobs"><code>embedding_generation_jobs</code></h3>
+<p>ADR-045: Tracks embedding generation jobs for audit trail and progress monitoring</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>job_id</code></td>
+<td><code>uuid</code></td>
+<td>PK; NOT NULL; DEFAULT gen_random_uuid()</td>
+<td></td>
+</tr>
+<tr>
+<td><code>job_type</code></td>
+<td><code>character varying(50)</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>target_types</code></td>
+<td><code>character varying(100)[]</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>target_count</code></td>
+<td><code>integer</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td><code>character varying(20)</code></td>
+<td>NOT NULL; DEFAULT 'pending'::character varying</td>
+<td></td>
+</tr>
+<tr>
+<td><code>processed_count</code></td>
+<td><code>integer</code></td>
+<td>DEFAULT 0</td>
+<td></td>
+</tr>
+<tr>
+<td><code>failed_count</code></td>
+<td><code>integer</code></td>
+<td>DEFAULT 0</td>
+<td></td>
+</tr>
+<tr>
+<td><code>embedding_model</code></td>
+<td><code>character varying(100)</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>embedding_provider</code></td>
+<td><code>character varying(50)</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>DEFAULT CURRENT_TIMESTAMP</td>
+<td></td>
+</tr>
+<tr>
+<td><code>started_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>completed_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>duration_ms</code></td>
+<td><code>integer</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>result_summary</code></td>
+<td><code>jsonb</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>error_message</code></td>
+<td><code>text</code></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Table constraints:</strong></p>
+<ul>
+<li><code>CONSTRAINT embedding_generation_jobs_job_type_check CHECK (((job_type)::text = ANY ((ARRAY['cold_start'::character varying, 'vocabulary_update'::character varying, 'model_migration'::character varying, 'batch_regeneration'::character varying])::text[])))</code></li>
+<li><code>CONSTRAINT embedding_generation_jobs_status_check CHECK (((status)::text = ANY ((ARRAY['pending'::character varying, 'running'::character varying, 'completed'::character varying, 'failed'::character varying, 'cancelled'::character varying])::text[])))</code></li>
+</ul>
+<h3 id="embedding_profile"><code>embedding_profile</code></h3>
+<p>Unified embedding profile with text + image model slots. Replaces embedding_config.</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td><code>integer</code></td>
+<td>PK; NOT NULL; DEFAULT nextval('kg_api.embedding_profile_id_seq'::regclass)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td><code>character varying(200)</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>vector_space</code></td>
+<td><code>character varying(100)</code></td>
+<td>NOT NULL</td>
+<td>Compatibility key for the universal TEXT/prose space (concepts, edges, docs, image-prose). Profiles with the same text vector_space produce comparable text embeddings. Image embeddings are independent — see image_vector_space (ADR-803).</td>
+</tr>
+<tr>
+<td><code>multimodal</code></td>
+<td><code>boolean</code></td>
+<td>DEFAULT false</td>
+<td>When true, the text model also handles image embeddings (e.g. SigLIP 2)</td>
+</tr>
+<tr>
+<td><code>text_provider</code></td>
+<td><code>character varying(50)</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>text_model_name</code></td>
+<td><code>character varying(200)</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>text_loader</code></td>
+<td><code>character varying(50)</code></td>
+<td>NOT NULL</td>
+<td>How to load text model: sentence-transformers, transformers (AutoModel), or api</td>
+</tr>
+<tr>
+<td><code>text_revision</code></td>
+<td><code>character varying(200)</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>text_dimensions</code></td>
+<td><code>integer</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>text_precision</code></td>
+<td><code>character varying(20)</code></td>
+<td>DEFAULT 'float16'::character varying</td>
+<td></td>
+</tr>
+<tr>
+<td><code>text_trust_remote_code</code></td>
+<td><code>boolean</code></td>
+<td>DEFAULT false</td>
+<td></td>
+</tr>
+<tr>
+<td><code>image_provider</code></td>
+<td><code>character varying(50)</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>image_model_name</code></td>
+<td><code>character varying(200)</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>image_loader</code></td>
+<td><code>character varying(50)</code></td>
+<td></td>
+<td>How to load image model: sentence-transformers, transformers (AutoModel), or api</td>
+</tr>
+<tr>
+<td><code>image_revision</code></td>
+<td><code>character varying(200)</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>image_dimensions</code></td>
+<td><code>integer</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>image_precision</code></td>
+<td><code>character varying(20)</code></td>
+<td>DEFAULT 'float16'::character varying</td>
+<td></td>
+</tr>
+<tr>
+<td><code>image_trust_remote_code</code></td>
+<td><code>boolean</code></td>
+<td>DEFAULT false</td>
+<td></td>
+</tr>
+<tr>
+<td><code>device</code></td>
+<td><code>character varying(20)</code></td>
+<td>DEFAULT 'cpu'::character varying</td>
+<td></td>
+</tr>
+<tr>
+<td><code>max_memory_mb</code></td>
+<td><code>integer</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>num_threads</code></td>
+<td><code>integer</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>batch_size</code></td>
+<td><code>integer</code></td>
+<td>DEFAULT 8</td>
+<td></td>
+</tr>
+<tr>
+<td><code>max_seq_length</code></td>
+<td><code>integer</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>normalize_embeddings</code></td>
+<td><code>boolean</code></td>
+<td>DEFAULT true</td>
+<td></td>
+</tr>
+<tr>
+<td><code>active</code></td>
+<td><code>boolean</code></td>
+<td>DEFAULT false</td>
+<td></td>
+</tr>
+<tr>
+<td><code>delete_protected</code></td>
+<td><code>boolean</code></td>
+<td>DEFAULT false</td>
+<td></td>
+</tr>
+<tr>
+<td><code>change_protected</code></td>
+<td><code>boolean</code></td>
+<td>DEFAULT false</td>
+<td></td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>DEFAULT CURRENT_TIMESTAMP</td>
+<td></td>
+</tr>
+<tr>
+<td><code>updated_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>DEFAULT CURRENT_TIMESTAMP</td>
+<td></td>
+</tr>
+<tr>
+<td><code>updated_by</code></td>
+<td><code>character varying(100)</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>text_query_prefix</code></td>
+<td><code>character varying(200)</code></td>
+<td></td>
+<td>Prefix prepended for search queries (e.g. search_query: )</td>
+</tr>
+<tr>
+<td><code>text_document_prefix</code></td>
+<td><code>character varying(200)</code></td>
+<td></td>
+<td>Prefix prepended for stored documents (e.g. search_document: )</td>
+</tr>
+<tr>
+<td><code>image_vector_space</code></td>
+<td><code>character varying(100)</code></td>
+<td></td>
+<td>Independent vector_space of the image (modality) embedding index (ADR-803). NULL for text-only / multimodal profiles. Never compared to text vector_space.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Table constraints:</strong></p>
+<ul>
+<li><code>CONSTRAINT chk_image_loader CHECK ((((image_loader)::text = ANY ((ARRAY['sentence-transformers'::character varying, 'transformers'::character varying, 'api'::character varying])::text[])) OR (image_loader IS NULL)))</code></li>
+<li><code>CONSTRAINT chk_multimodal_no_image CHECK (((NOT multimodal) OR ((image_provider IS NULL) AND (image_model_name IS NULL) AND (image_loader IS NULL) AND (image_dimensions IS NULL))))</code></li>
+<li><code>CONSTRAINT chk_text_loader CHECK (((text_loader)::text = ANY ((ARRAY['sentence-transformers'::character varying, 'transformers'::character varying, 'api'::character varying])::text[])))</code></li>
+</ul>
+<h3 id="graph_epoch_kinds"><code>graph_epoch_kinds</code></h3>
+<p>ADR-203: Discriminator for graph_epochs.kind. semantic_wallclock distinguishes events whose occurred_at is semantically primary (ingestion, edit) from those where it is forensic-only (reasoning, annealing).</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>kind</code></td>
+<td><code>text</code></td>
+<td>PK; NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>semantic_wallclock</code></td>
+<td><code>boolean</code></td>
+<td>NOT NULL</td>
+<td>When TRUE, occurred_at is the meaningful timestamp for downstream consumers. When FALSE, occurred_at is recorded for audit/forensics but should not drive time-based queries on the resulting graph state.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>text</code></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h3 id="graph_epochs"><code>graph_epochs</code></h3>
+<p>ADR-203: Monotonic event log of graph mutations. Distinct from graph_change_counter (ADR-079) which is a composite cache-invalidation checksum.</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>event_id</code></td>
+<td><code>bigint</code></td>
+<td>PK; NOT NULL; DEFAULT nextval('kg_api.graph_epochs_event_id_seq'::regclass)</td>
+<td>Monotonic logical-time id. Foreign-keyed by Instance.created_at_event_id.</td>
+</tr>
+<tr>
+<td><code>occurred_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>NOT NULL; DEFAULT now()</td>
+<td></td>
+</tr>
+<tr>
+<td><code>kind</code></td>
+<td><code>text</code></td>
+<td>NOT NULL; FK → kg_api.graph_epoch_kinds(kind)</td>
+<td>ingestion | reasoning | annealing | edit. Determines whether occurred_at is semantically meaningful for the rows attributable to this event.</td>
+</tr>
+<tr>
+<td><code>actor</code></td>
+<td><code>text</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>counter_after</code></td>
+<td><code>bigint</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>metadata</code></td>
+<td><code>jsonb</code></td>
+<td>NOT NULL; DEFAULT '{}'::jsonb</td>
+<td></td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td><code>text</code></td>
+<td>NOT NULL; DEFAULT 'in_progress'::text</td>
+<td>ADR-207/#384: in_progress (set at record_graph_epoch) | completed | failed. Only in_progress blocks the committed watermark — both completed and failed count toward it (per-chunk commits mean a failed job may have mutated the graph). The completed/failed split is for analytics (drop zero-instance jobs from hot/stale signals), not for freshness.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Table constraints:</strong></p>
+<ul>
+<li><code>CONSTRAINT graph_epochs_status_check CHECK ((status = ANY (ARRAY['in_progress'::text, 'completed'::text, 'failed'::text])))</code></li>
+</ul>
+<h3 id="jobs"><code>jobs</code></h3>
+<p>Unified job queue for all background tasks (ingestion, backup, vocab, scheduled)</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>job_id</code></td>
+<td><code>text</code></td>
+<td>PK; NOT NULL</td>
+<td>Unique job identifier (UUID)</td>
+</tr>
+<tr>
+<td><code>job_type</code></td>
+<td><code>text</code></td>
+<td>NOT NULL</td>
+<td>Type of job: ingestion, restore, backup, vocab_refresh, vocab_consolidate</td>
+</tr>
+<tr>
+<td><code>content_hash</code></td>
+<td><code>text</code></td>
+<td></td>
+<td>SHA256 hash for deduplication (used with ontology to detect duplicates)</td>
+</tr>
+<tr>
+<td><code>ontology</code></td>
+<td><code>text</code></td>
+<td></td>
+<td>Target ontology for the job</td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td><code>text</code></td>
+<td>NOT NULL</td>
+<td>Job status: pending_approval, approved, running, completed, failed, cancelled</td>
+</tr>
+<tr>
+<td><code>progress</code></td>
+<td><code>text</code></td>
+<td></td>
+<td>Progress message for UI display</td>
+</tr>
+<tr>
+<td><code>result</code></td>
+<td><code>text</code></td>
+<td></td>
+<td>Final result data (JSON)</td>
+</tr>
+<tr>
+<td><code>error</code></td>
+<td><code>text</code></td>
+<td></td>
+<td>Error message if failed</td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td><code>timestamp without time zone</code></td>
+<td>NOT NULL; DEFAULT now()</td>
+<td></td>
+</tr>
+<tr>
+<td><code>started_at</code></td>
+<td><code>timestamp without time zone</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>completed_at</code></td>
+<td><code>timestamp without time zone</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>job_data</code></td>
+<td><code>jsonb</code></td>
+<td>NOT NULL</td>
+<td>Job-specific parameters (JSON)</td>
+</tr>
+<tr>
+<td><code>analysis</code></td>
+<td><code>text</code></td>
+<td></td>
+<td>Pre-approval analysis (cost/time estimates)</td>
+</tr>
+<tr>
+<td><code>approved_at</code></td>
+<td><code>timestamp without time zone</code></td>
+<td></td>
+<td>When job was approved by user</td>
+</tr>
+<tr>
+<td><code>approved_by</code></td>
+<td><code>text</code></td>
+<td></td>
+<td>Who approved the job</td>
+</tr>
+<tr>
+<td><code>expires_at</code></td>
+<td><code>timestamp without time zone</code></td>
+<td></td>
+<td>When pending approval expires</td>
+</tr>
+<tr>
+<td><code>processing_mode</code></td>
+<td><code>text</code></td>
+<td>DEFAULT 'serial'::text</td>
+<td>Execution mode: serial or parallel</td>
+</tr>
+<tr>
+<td><code>job_source</code></td>
+<td><code>character varying(50)</code></td>
+<td>DEFAULT 'user_cli'::character varying</td>
+<td>Source of job creation: user_cli, user_api, scheduled_task, system</td>
+</tr>
+<tr>
+<td><code>created_by</code></td>
+<td><code>character varying(100)</code></td>
+<td>DEFAULT 'unknown'::character varying</td>
+<td>User or system identifier that created the job</td>
+</tr>
+<tr>
+<td><code>is_system_job</code></td>
+<td><code>boolean</code></td>
+<td>DEFAULT false</td>
+<td>True for system-scheduled jobs (cannot be deleted by users)</td>
+</tr>
+<tr>
+<td><code>user_id</code></td>
+<td><code>integer</code></td>
+<td>NOT NULL; FK → kg_auth.users(id)</td>
+<td>User who submitted the job (FK to kg_auth.users.id)</td>
+</tr>
+<tr>
+<td><code>source_filename</code></td>
+<td><code>text</code></td>
+<td></td>
+<td>Display name for source: filename, "stdin", or MCP session ID (best-effort metadata)</td>
+</tr>
+<tr>
+<td><code>source_type</code></td>
+<td><code>text</code></td>
+<td></td>
+<td>Ingestion method: file (CLI file), stdin (pipe), mcp (Claude), api (direct) - enables source-aware queries</td>
+</tr>
+<tr>
+<td><code>source_path</code></td>
+<td><code>text</code></td>
+<td></td>
+<td>Full filesystem path for file ingestion (null for stdin/mcp/api) - helps identify exact source file</td>
+</tr>
+<tr>
+<td><code>source_hostname</code></td>
+<td><code>text</code></td>
+<td></td>
+<td>Hostname where ingestion initiated (CLI only, null for MCP/API) - useful for distributed deployments</td>
+</tr>
+<tr>
+<td><code>artifact_id</code></td>
+<td><code>integer</code></td>
+<td>FK → kg_api.artifacts(id)</td>
+<td>Artifact created by this job (ADR-083). NULL for jobs that do not produce artifacts.</td>
+</tr>
+<tr>
+<td><code>priority</code></td>
+<td><code>integer</code></td>
+<td>NOT NULL; DEFAULT 0</td>
+<td></td>
+</tr>
+<tr>
+<td><code>claimed_by</code></td>
+<td><code>text</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>claimed_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>cancelled</code></td>
+<td><code>boolean</code></td>
+<td>NOT NULL; DEFAULT false</td>
+<td></td>
+</tr>
+<tr>
+<td><code>retries</code></td>
+<td><code>integer</code></td>
+<td>NOT NULL; DEFAULT 0</td>
+<td></td>
+</tr>
+<tr>
+<td><code>max_retries</code></td>
+<td><code>integer</code></td>
+<td>NOT NULL; DEFAULT 3</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Table constraints:</strong></p>
+<ul>
+<li><code>CONSTRAINT chk_source_type CHECK (((source_type IS NULL) OR (source_type = ANY (ARRAY['file'::text, 'stdin'::text, 'mcp'::text, 'api'::text]))))</code></li>
+</ul>
+<h3 id="ontology_tombstones"><code>ontology_tombstones</code></h3>
+<p>Positive operator-intent signal that an ontology was deliberately removed and must not be silently recreated by a subsequent ingest (#402 Defect B2). Operator-initiated delete writes a row; annealing dissolution does not.</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>name</code></td>
+<td><code>character varying(200)</code></td>
+<td>PK; NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>removed_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>NOT NULL; DEFAULT now()</td>
+<td></td>
+</tr>
+<tr>
+<td><code>removed_by</code></td>
+<td><code>character varying(100)</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>reason</code></td>
+<td><code>text</code></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h3 id="ontology_versions"><code>ontology_versions</code></h3>
+<p>Formal ontology versioning with immutable snapshots - ADR-026</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>version_id</code></td>
+<td><code>integer</code></td>
+<td>PK; NOT NULL; DEFAULT nextval('kg_api.ontology_versions_version_id_seq'::regclass)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>version_number</code></td>
+<td><code>character varying(20)</code></td>
+<td>NOT NULL; UNIQUE</td>
+<td></td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>NOT NULL; DEFAULT now()</td>
+<td></td>
+</tr>
+<tr>
+<td><code>created_by</code></td>
+<td><code>character varying(100)</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>change_summary</code></td>
+<td><code>text</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>is_active</code></td>
+<td><code>boolean</code></td>
+<td>DEFAULT true</td>
+<td></td>
+</tr>
+<tr>
+<td><code>vocabulary_snapshot</code></td>
+<td><code>jsonb</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>types_added</code></td>
+<td><code>text[]</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>types_aliased</code></td>
+<td><code>jsonb</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>types_deprecated</code></td>
+<td><code>text[]</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>backward_compatible</code></td>
+<td><code>boolean</code></td>
+<td>DEFAULT true</td>
+<td></td>
+</tr>
+<tr>
+<td><code>migration_required</code></td>
+<td><code>boolean</code></td>
+<td>DEFAULT false</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h3 id="platform_config"><code>platform_config</code></h3>
+<p>Platform lifecycle configuration for operator control plane (ADR-061)</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>key</code></td>
+<td><code>character varying(100)</code></td>
+<td>PK; NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>value</code></td>
+<td><code>text</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>text</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>updated_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>DEFAULT now()</td>
+<td></td>
+</tr>
+<tr>
+<td><code>updated_by</code></td>
+<td><code>character varying(100)</code></td>
+<td>DEFAULT 'system'::character varying</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h3 id="provider_model_catalog"><code>provider_model_catalog</code></h3>
+<p>Cached model catalog per AI provider with curation and pricing (ADR-800)</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td><code>integer</code></td>
+<td>PK; NOT NULL; DEFAULT nextval('kg_api.provider_model_catalog_id_seq'::regclass)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>provider</code></td>
+<td><code>character varying(50)</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>model_id</code></td>
+<td><code>character varying(300)</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>display_name</code></td>
+<td><code>character varying(300)</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>category</code></td>
+<td><code>character varying(50)</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>context_length</code></td>
+<td><code>integer</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>max_completion_tokens</code></td>
+<td><code>integer</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>supports_vision</code></td>
+<td><code>boolean</code></td>
+<td>DEFAULT false</td>
+<td></td>
+</tr>
+<tr>
+<td><code>supports_json_mode</code></td>
+<td><code>boolean</code></td>
+<td>DEFAULT false</td>
+<td></td>
+</tr>
+<tr>
+<td><code>supports_tool_use</code></td>
+<td><code>boolean</code></td>
+<td>DEFAULT false</td>
+<td></td>
+</tr>
+<tr>
+<td><code>supports_streaming</code></td>
+<td><code>boolean</code></td>
+<td>DEFAULT true</td>
+<td></td>
+</tr>
+<tr>
+<td><code>price_prompt_per_m</code></td>
+<td><code>numeric</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>price_completion_per_m</code></td>
+<td><code>numeric</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>price_cache_read_per_m</code></td>
+<td><code>numeric</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>enabled</code></td>
+<td><code>boolean</code></td>
+<td>DEFAULT false</td>
+<td></td>
+</tr>
+<tr>
+<td><code>is_default</code></td>
+<td><code>boolean</code></td>
+<td>DEFAULT false</td>
+<td></td>
+</tr>
+<tr>
+<td><code>sort_order</code></td>
+<td><code>integer</code></td>
+<td>DEFAULT 0</td>
+<td></td>
+</tr>
+<tr>
+<td><code>upstream_provider</code></td>
+<td><code>character varying(100)</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>raw_metadata</code></td>
+<td><code>jsonb</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>fetched_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>DEFAULT now()</td>
+<td></td>
+</tr>
+<tr>
+<td><code>updated_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>DEFAULT now()</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Table constraints:</strong></p>
+<ul>
+<li><code>UNIQUE (provider, model_id, category)</code></li>
+</ul>
+<h3 id="pruning_recommendations"><code>pruning_recommendations</code></h3>
+<p>Pending vocabulary management actions - ADR-032</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td><code>integer</code></td>
+<td>PK; NOT NULL; DEFAULT nextval('kg_api.pruning_recommendations_id_seq'::regclass)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>relationship_type</code></td>
+<td><code>character varying(100)</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>target_type</code></td>
+<td><code>character varying(100)</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>action_type</code></td>
+<td><code>character varying(50)</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>review_level</code></td>
+<td><code>character varying(20)</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>reasoning</code></td>
+<td><code>text</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>similarity</code></td>
+<td><code>numeric(4,3)</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>value_score</code></td>
+<td><code>numeric(10,2)</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>metadata</code></td>
+<td><code>jsonb</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td><code>character varying(50)</code></td>
+<td>NOT NULL; DEFAULT 'pending'::character varying</td>
+<td></td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>NOT NULL; DEFAULT now()</td>
+<td></td>
+</tr>
+<tr>
+<td><code>reviewed_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>reviewed_by</code></td>
+<td><code>character varying(100)</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>reviewer_notes</code></td>
+<td><code>text</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>executed_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>expires_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Table constraints:</strong></p>
+<ul>
+<li><code>CONSTRAINT pruning_recommendations_action_type_check CHECK (((action_type)::text = ANY ((ARRAY['merge'::character varying, 'prune'::character varying, 'deprecate'::character varying, 'skip'::character varying])::text[])))</code></li>
+<li><code>CONSTRAINT pruning_recommendations_review_level_check CHECK (((review_level)::text = ANY ((ARRAY['none'::character varying, 'ai'::character varying, 'human'::character varying])::text[])))</code></li>
+<li><code>CONSTRAINT pruning_recommendations_status_check CHECK (((status)::text = ANY ((ARRAY['pending'::character varying, 'approved'::character varying, 'rejected'::character varying, 'executed'::character varying, 'expired'::character varying])::text[])))</code></li>
+</ul>
+<h3 id="query_definitions"><code>query_definitions</code></h3>
+<p>Saved query recipes that can be re-executed (ADR-083)</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td><code>integer</code></td>
+<td>PK; NOT NULL; DEFAULT nextval('kg_api.query_definitions_id_seq'::regclass)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td><code>character varying(200)</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>definition_type</code></td>
+<td><code>character varying(50)</code></td>
+<td>NOT NULL</td>
+<td>Type of query: block_diagram, cypher, search, polarity, connection, exploration, program</td>
+</tr>
+<tr>
+<td><code>definition</code></td>
+<td><code>jsonb</code></td>
+<td>NOT NULL</td>
+<td>Query parameters/structure as JSON</td>
+</tr>
+<tr>
+<td><code>owner_id</code></td>
+<td><code>integer</code></td>
+<td>FK → kg_auth.users(id)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>NOT NULL; DEFAULT now()</td>
+<td></td>
+</tr>
+<tr>
+<td><code>updated_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>NOT NULL; DEFAULT now()</td>
+<td></td>
+</tr>
+<tr>
+<td><code>metadata</code></td>
+<td><code>jsonb</code></td>
+<td>DEFAULT '{}'::jsonb</td>
+<td>Optional metadata (nodeCount, edgeCount, description, etc.)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Table constraints:</strong></p>
+<ul>
+<li><code>CONSTRAINT valid_definition_type CHECK (((definition_type)::text = ANY ((ARRAY['block_diagram'::character varying, 'cypher'::character varying, 'search'::character varying, 'polarity'::character varying, 'connection'::character varying, 'exploration'::character varying, 'program'::character varying])::text[])))</code></li>
+</ul>
+<h3 id="rate_limits"><code>rate_limits</code></h3>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>client_id</code></td>
+<td><code>character varying(100)</code></td>
+<td>PK; NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>endpoint</code></td>
+<td><code>character varying(200)</code></td>
+<td>PK; NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>window_start</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>PK; NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>request_count</code></td>
+<td><code>integer</code></td>
+<td>NOT NULL; DEFAULT 0</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h3 id="relationship_vocabulary"><code>relationship_vocabulary</code></h3>
+<p>Canonical relationship types with embeddings - ADR-025, ADR-032</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>relationship_type</code></td>
+<td><code>character varying(100)</code></td>
+<td>PK; NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>text</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>category</code></td>
+<td><code>character varying(50)</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>added_by</code></td>
+<td><code>character varying(100)</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>added_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>NOT NULL; DEFAULT now()</td>
+<td></td>
+</tr>
+<tr>
+<td><code>usage_count</code></td>
+<td><code>integer</code></td>
+<td>DEFAULT 0</td>
+<td></td>
+</tr>
+<tr>
+<td><code>is_active</code></td>
+<td><code>boolean</code></td>
+<td>DEFAULT true</td>
+<td></td>
+</tr>
+<tr>
+<td><code>is_builtin</code></td>
+<td><code>boolean</code></td>
+<td>DEFAULT false</td>
+<td></td>
+</tr>
+<tr>
+<td><code>synonyms</code></td>
+<td><code>character varying(100)[]</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>deprecation_reason</code></td>
+<td><code>text</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>embedding</code></td>
+<td><code>jsonb</code></td>
+<td></td>
+<td>Cached embedding vector (JSONB array) for synonym detection (ADR-032)</td>
+</tr>
+<tr>
+<td><code>embedding_model</code></td>
+<td><code>character varying(100)</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>embedding_generated_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>grounding_contribution</code></td>
+<td><code>double precision</code></td>
+<td></td>
+<td>ADR-046: Measures impact on concept grounding strength (0.0-1.0). Higher values indicate this edge type significantly affects truth convergence.</td>
+</tr>
+<tr>
+<td><code>last_grounding_calculated</code></td>
+<td><code>timestamp with time zone</code></td>
+<td></td>
+<td>ADR-046: Timestamp when grounding metrics were last recalculated. Enables staleness detection.</td>
+</tr>
+<tr>
+<td><code>avg_confidence</code></td>
+<td><code>double precision</code></td>
+<td></td>
+<td>ADR-046: Average confidence score across all edges of this type. Helps identify low-quality edge types.</td>
+</tr>
+<tr>
+<td><code>semantic_diversity</code></td>
+<td><code>double precision</code></td>
+<td></td>
+<td>ADR-046: Semantic diversity score (0.0-1.0). High diversity may indicate overly broad type; low diversity may indicate well-defined type.</td>
+</tr>
+<tr>
+<td><code>embedding_quality_score</code></td>
+<td><code>double precision</code></td>
+<td></td>
+<td>ADR-045: Quality score for embedding (based on validation checks like magnitude, dimensionality)</td>
+</tr>
+<tr>
+<td><code>embedding_validation_status</code></td>
+<td><code>character varying(20)</code></td>
+<td></td>
+<td>ADR-045: Validation status - stale indicates model changed since generation</td>
+</tr>
+<tr>
+<td><code>category_source</code></td>
+<td><code>character varying(20)</code></td>
+<td>DEFAULT 'builtin'::character varying</td>
+<td>Source of category assignment: builtin (hand-assigned) or computed (ADR-047)</td>
+</tr>
+<tr>
+<td><code>category_confidence</code></td>
+<td><code>double precision</code></td>
+<td></td>
+<td>Confidence score (0.0-1.0) for computed categories based on max similarity to seed types</td>
+</tr>
+<tr>
+<td><code>category_scores</code></td>
+<td><code>jsonb</code></td>
+<td></td>
+<td 0.45_="0.45," 0.85_="0.85," _causation_:="&quot;causation&quot;:" _composition_:="&quot;composition&quot;:" class="..">Full category similarity breakdown as JSON:</td>
+</tr>
+<tr>
+<td><code>category_ambiguous</code></td>
+<td><code>boolean</code></td>
+<td>DEFAULT false</td>
+<td>True if runner-up category score &gt; 0.70 (potential multi-category type)</td>
+</tr>
+<tr>
+<td><code>direction_semantics</code></td>
+<td><code>character varying(20)</code></td>
+<td>DEFAULT NULL::character varying</td>
+<td>LLM-determined direction: outward (from→to), inward (from←to), bidirectional (symmetric). NULL = not yet determined by LLM.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Table constraints:</strong></p>
+<ul>
+<li><code>CONSTRAINT relationship_vocabulary_avg_confidence_check CHECK (((avg_confidence &gt;= (0.0)::double precision) AND (avg_confidence &lt;= (1.0)::double precision)))</code></li>
+<li><code>CONSTRAINT relationship_vocabulary_embedding_quality_score_check CHECK (((embedding_quality_score &gt;= (0.0)::double precision) AND (embedding_quality_score &lt;= (1.0)::double precision)))</code></li>
+<li><code>CONSTRAINT relationship_vocabulary_embedding_validation_status_check CHECK (((embedding_validation_status)::text = ANY ((ARRAY['pending'::character varying, 'valid'::character varying, 'invalid'::character varying, 'stale'::character varying])::text[])))</code></li>
+<li><code>CONSTRAINT relationship_vocabulary_grounding_contribution_check CHECK (((grounding_contribution &gt;= (0.0)::double precision) AND (grounding_contribution &lt;= (1.0)::double precision)))</code></li>
+<li><code>CONSTRAINT relationship_vocabulary_semantic_diversity_check CHECK (((semantic_diversity &gt;= (0.0)::double precision) AND (semantic_diversity &lt;= (1.0)::double precision)))</code></li>
+</ul>
+<h3 id="scheduled_jobs"><code>scheduled_jobs</code></h3>
+<p>Scheduled background jobs: - category_refresh: Re-integrate LLM-generated vocabulary categories (every 6 hours) - vocab_consolidation: Auto-consolidate vocabulary based on hysteresis thresholds (every 12 hours)</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td><code>integer</code></td>
+<td>PK; NOT NULL; DEFAULT nextval('kg_api.scheduled_jobs_id_seq'::regclass)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td><code>character varying(100)</code></td>
+<td>NOT NULL; UNIQUE</td>
+<td>Unique identifier for the scheduled job</td>
+</tr>
+<tr>
+<td><code>launcher_class</code></td>
+<td><code>character varying(255)</code></td>
+<td>NOT NULL</td>
+<td>Python class name in launcher registry (e.g., CategoryRefreshLauncher)</td>
+</tr>
+<tr>
+<td><code>schedule_cron</code></td>
+<td><code>character varying(100)</code></td>
+<td>NOT NULL</td>
+<td>Cron expression for schedule (e.g., "0 <em>/6 * * </em>" = every 6 hours)</td>
+</tr>
+<tr>
+<td><code>enabled</code></td>
+<td><code>boolean</code></td>
+<td>DEFAULT true</td>
+<td>Whether this schedule is active (can be disabled on failure)</td>
+</tr>
+<tr>
+<td><code>max_retries</code></td>
+<td><code>integer</code></td>
+<td>DEFAULT 5</td>
+<td>Max consecutive failures before auto-disabling schedule</td>
+</tr>
+<tr>
+<td><code>retry_count</code></td>
+<td><code>integer</code></td>
+<td>DEFAULT 0</td>
+<td>Current consecutive failure count (reset on success or skip)</td>
+</tr>
+<tr>
+<td><code>last_run</code></td>
+<td><code>timestamp without time zone</code></td>
+<td></td>
+<td>Last time the schedule was checked (success, skip, or failure)</td>
+</tr>
+<tr>
+<td><code>last_success</code></td>
+<td><code>timestamp without time zone</code></td>
+<td></td>
+<td>Last time a job was successfully enqueued</td>
+</tr>
+<tr>
+<td><code>last_failure</code></td>
+<td><code>timestamp without time zone</code></td>
+<td></td>
+<td>Last time the launcher failed with an exception</td>
+</tr>
+<tr>
+<td><code>next_run</code></td>
+<td><code>timestamp without time zone</code></td>
+<td></td>
+<td>Calculated next run time (from cron expression or backoff)</td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td><code>timestamp without time zone</code></td>
+<td>DEFAULT now()</td>
+<td></td>
+</tr>
+<tr>
+<td><code>updated_at</code></td>
+<td><code>timestamp without time zone</code></td>
+<td>DEFAULT now()</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h3 id="schema_migrations_1"><code>schema_migrations</code></h3>
+<p>Tracks applied database migrations for backup/restore compatibility. Schema version is included in backups to ensure restore compatibility when database schema evolves. See ADR-015 for details.</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>version</code></td>
+<td><code>integer</code></td>
+<td>PK; NOT NULL</td>
+<td>Migration number matching schema/migrations/NNN_*.sql files</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>text</code></td>
+<td>NOT NULL</td>
+<td>Human-readable description of what this migration does</td>
+</tr>
+<tr>
+<td><code>applied_at</code></td>
+<td><code>timestamp without time zone</code></td>
+<td>NOT NULL; DEFAULT now()</td>
+<td>When this migration was applied to the database</td>
+</tr>
+</tbody>
+</table>
+<h3 id="sessions"><code>sessions</code></h3>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>session_id</code></td>
+<td><code>character varying(100)</code></td>
+<td>PK; NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>user_id</code></td>
+<td><code>integer</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>NOT NULL; DEFAULT now()</td>
+<td></td>
+</tr>
+<tr>
+<td><code>expires_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>last_activity</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>NOT NULL; DEFAULT now()</td>
+<td></td>
+</tr>
+<tr>
+<td><code>metadata</code></td>
+<td><code>jsonb</code></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h3 id="skipped_relationships"><code>skipped_relationships</code></h3>
+<p>Capture layer for unmatched relationship types - ADR-025</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td><code>integer</code></td>
+<td>PK; NOT NULL; DEFAULT nextval('kg_api.skipped_relationships_id_seq'::regclass)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>relationship_type</code></td>
+<td><code>character varying(100)</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>from_concept_label</code></td>
+<td><code>character varying(500)</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>to_concept_label</code></td>
+<td><code>character varying(500)</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>job_id</code></td>
+<td><code>character varying(50)</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>ontology</code></td>
+<td><code>character varying(200)</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>first_seen</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>NOT NULL; DEFAULT now()</td>
+<td></td>
+</tr>
+<tr>
+<td><code>last_seen</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>NOT NULL; DEFAULT now()</td>
+<td></td>
+</tr>
+<tr>
+<td><code>occurrence_count</code></td>
+<td><code>integer</code></td>
+<td>DEFAULT 1</td>
+<td></td>
+</tr>
+<tr>
+<td><code>sample_context</code></td>
+<td><code>jsonb</code></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Table constraints:</strong></p>
+<ul>
+<li><code>UNIQUE (relationship_type, from_concept_label, to_concept_label)</code></li>
+</ul>
+<h3 id="source_embeddings"><code>source_embeddings</code></h3>
+<p>ADR-068: Embeddings for source text chunks with offset tracking and hash verification</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>embedding_id</code></td>
+<td><code>integer</code></td>
+<td>PK; NOT NULL; DEFAULT nextval('kg_api.source_embeddings_embedding_id_seq'::regclass)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>source_id</code></td>
+<td><code>text</code></td>
+<td>NOT NULL</td>
+<td>Reference to Source node in Apache AGE graph</td>
+</tr>
+<tr>
+<td><code>chunk_index</code></td>
+<td><code>integer</code></td>
+<td>NOT NULL</td>
+<td>0-based chunk number within source (e.g., 0, 1, 2...)</td>
+</tr>
+<tr>
+<td><code>chunk_strategy</code></td>
+<td><code>text</code></td>
+<td>NOT NULL</td>
+<td>Chunking strategy used: sentence, paragraph, semantic, or count</td>
+</tr>
+<tr>
+<td><code>start_offset</code></td>
+<td><code>integer</code></td>
+<td>NOT NULL</td>
+<td>Character offset in Source.full_text where chunk starts (0-based)</td>
+</tr>
+<tr>
+<td><code>end_offset</code></td>
+<td><code>integer</code></td>
+<td>NOT NULL</td>
+<td>Character offset in Source.full_text where chunk ends (exclusive)</td>
+</tr>
+<tr>
+<td><code>chunk_text</code></td>
+<td><code>text</code></td>
+<td>NOT NULL</td>
+<td>Actual chunk content stored for verification (should match Source.full_text[start_offset:end_offset])</td>
+</tr>
+<tr>
+<td><code>chunk_hash</code></td>
+<td><code>text</code></td>
+<td>NOT NULL</td>
+<td>SHA256 hash of chunk_text - verifies chunk integrity</td>
+</tr>
+<tr>
+<td><code>source_hash</code></td>
+<td><code>text</code></td>
+<td>NOT NULL</td>
+<td>SHA256 hash of Source.full_text - detects when source text changes (stale embedding indicator)</td>
+</tr>
+<tr>
+<td><code>embedding</code></td>
+<td><code>bytea</code></td>
+<td>NOT NULL</td>
+<td>Vector embedding bytes (float16 or float32 array, packed as bytea)</td>
+</tr>
+<tr>
+<td><code>embedding_model</code></td>
+<td><code>text</code></td>
+<td>NOT NULL</td>
+<td>Embedding model name (e.g., "nomic-ai/nomic-embed-text-v1.5", "text-embedding-3-small")</td>
+</tr>
+<tr>
+<td><code>embedding_dimension</code></td>
+<td><code>integer</code></td>
+<td>NOT NULL</td>
+<td>Embedding vector dimension (must match system embedding_config for cosine similarity)</td>
+</tr>
+<tr>
+<td><code>embedding_provider</code></td>
+<td><code>text</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>DEFAULT CURRENT_TIMESTAMP</td>
+<td></td>
+</tr>
+<tr>
+<td><code>updated_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>DEFAULT CURRENT_TIMESTAMP</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Table constraints:</strong></p>
+<ul>
+<li><code>CONSTRAINT source_embeddings_check CHECK ((end_offset &gt; start_offset))</code></li>
+<li><code>CONSTRAINT source_embeddings_chunk_index_check CHECK ((chunk_index &gt;= 0))</code></li>
+<li><code>CONSTRAINT source_embeddings_chunk_strategy_check CHECK ((chunk_strategy = ANY (ARRAY['sentence'::text, 'paragraph'::text, 'semantic'::text, 'count'::text])))</code></li>
+<li><code>CONSTRAINT source_embeddings_embedding_dimension_check CHECK ((embedding_dimension &gt; 0))</code></li>
+<li><code>CONSTRAINT source_embeddings_start_offset_check CHECK ((start_offset &gt;= 0))</code></li>
+<li><code>UNIQUE (source_id, chunk_index, chunk_strategy)</code></li>
+</ul>
+<h3 id="synonym_clusters"><code>synonym_clusters</code></h3>
+<p>ADR-046: Tracks groups of synonymous edge types discovered through embedding-based semantic similarity (threshold &gt; 0.85)</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>cluster_id</code></td>
+<td><code>uuid</code></td>
+<td>PK; NOT NULL; DEFAULT gen_random_uuid()</td>
+<td></td>
+</tr>
+<tr>
+<td><code>representative_type</code></td>
+<td><code>character varying(100)</code></td>
+<td>FK → kg_api.relationship_vocabulary(relationship_type)</td>
+<td>The canonical type to use when merging cluster members. Usually has highest usage_count or is builtin.</td>
+</tr>
+<tr>
+<td><code>member_types</code></td>
+<td><code>character varying(100)[]</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>avg_similarity</code></td>
+<td><code>double precision</code></td>
+<td></td>
+<td>Average cosine similarity between all pairs of member embeddings. Higher values indicate stronger synonym relationship.</td>
+</tr>
+<tr>
+<td><code>cluster_size</code></td>
+<td><code>integer</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>total_usage_count</code></td>
+<td><code>integer</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>detected_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>DEFAULT CURRENT_TIMESTAMP</td>
+<td></td>
+</tr>
+<tr>
+<td><code>detection_method</code></td>
+<td><code>character varying(50)</code></td>
+<td>DEFAULT 'embedding_similarity'::character varying</td>
+<td></td>
+</tr>
+<tr>
+<td><code>is_active</code></td>
+<td><code>boolean</code></td>
+<td>DEFAULT true</td>
+<td></td>
+</tr>
+<tr>
+<td><code>merge_recommended</code></td>
+<td><code>boolean</code></td>
+<td>DEFAULT false</td>
+<td></td>
+</tr>
+<tr>
+<td><code>merge_completed_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Table constraints:</strong></p>
+<ul>
+<li><code>CONSTRAINT synonym_clusters_avg_similarity_check CHECK (((avg_similarity &gt;= (0.0)::double precision) AND (avg_similarity &lt;= (1.0)::double precision)))</code></li>
+</ul>
+<h3 id="system_api_keys"><code>system_api_keys</code></h3>
+<p>Encrypted system API keys for LLM providers (ADR-031, ADR-041)</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>provider</code></td>
+<td><code>character varying(50)</code></td>
+<td>PK; NOT NULL</td>
+<td>Provider name: openai, anthropic</td>
+</tr>
+<tr>
+<td><code>encrypted_key</code></td>
+<td><code>bytea</code></td>
+<td>NOT NULL</td>
+<td>Fernet-encrypted API key (AES-128-CBC + HMAC-SHA256)</td>
+</tr>
+<tr>
+<td><code>updated_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>DEFAULT now()</td>
+<td>Last time key was updated</td>
+</tr>
+<tr>
+<td><code>validation_status</code></td>
+<td><code>character varying(20)</code></td>
+<td>DEFAULT 'untested'::character varying</td>
+<td>API key validation state: valid, invalid, or untested</td>
+</tr>
+<tr>
+<td><code>last_validated_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td></td>
+<td>Timestamp of last validation check (typically at API startup)</td>
+</tr>
+<tr>
+<td><code>validation_error</code></td>
+<td><code>text</code></td>
+<td></td>
+<td>Error message from last failed validation attempt</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Table constraints:</strong></p>
+<ul>
+<li><code>CONSTRAINT system_api_keys_validation_status_check CHECK (((validation_status)::text = ANY ((ARRAY['valid'::character varying, 'invalid'::character varying, 'untested'::character varying])::text[])))</code></li>
+</ul>
+<h3 id="system_initialization_status"><code>system_initialization_status</code></h3>
+<p>ADR-045: Tracks completion of system initialization tasks like cold start embedding generation</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>component</code></td>
+<td><code>character varying(50)</code></td>
+<td>PK; NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>initialized</code></td>
+<td><code>boolean</code></td>
+<td>DEFAULT false</td>
+<td></td>
+</tr>
+<tr>
+<td><code>initialized_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>initialization_job_id</code></td>
+<td><code>uuid</code></td>
+<td>FK → kg_api.embedding_generation_jobs(job_id)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>version</code></td>
+<td><code>character varying(20)</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>metadata</code></td>
+<td><code>jsonb</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>last_processed_vocab_change_counter</code></td>
+<td><code>bigint</code></td>
+<td>NOT NULL; DEFAULT 0 CONSTRAINT system_initialization_statu_last_processed_vocab_chang_not_null</td>
+<td>Snapshot of vocabulary_change_counter at the time this initialization component last completed embedding work. The cold-start and VocabEmbeddingLauncher paths compare current counter vs. this value to detect new work since the last successful run. Replaces the binary <code>initialized</code> flag for embedding components (the flag stays for non-counter-driven components). Default 0 means "no work has completed yet" — correct initial state.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="vocabulary_audit"><code>vocabulary_audit</code></h3>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td><code>integer</code></td>
+<td>PK; NOT NULL; DEFAULT nextval('kg_api.vocabulary_audit_id_seq'::regclass)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>relationship_type</code></td>
+<td><code>character varying(100)</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>action</code></td>
+<td><code>character varying(50)</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>performed_by</code></td>
+<td><code>character varying(100)</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>performed_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>NOT NULL; DEFAULT now()</td>
+<td></td>
+</tr>
+<tr>
+<td><code>details</code></td>
+<td><code>jsonb</code></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h3 id="vocabulary_config"><code>vocabulary_config</code></h3>
+<p>System configuration for automatic vocabulary management (ADR-032)</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>key</code></td>
+<td><code>character varying(100)</code></td>
+<td>PK; NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>value</code></td>
+<td><code>text</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>text</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>updated_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>NOT NULL; DEFAULT now()</td>
+<td></td>
+</tr>
+<tr>
+<td><code>updated_by</code></td>
+<td><code>character varying(100)</code></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h3 id="vocabulary_history"><code>vocabulary_history</code></h3>
+<p>Detailed vocabulary change tracking with context (ADR-032)</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td><code>integer</code></td>
+<td>PK; NOT NULL; DEFAULT nextval('kg_api.vocabulary_history_id_seq'::regclass)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>relationship_type</code></td>
+<td><code>character varying(100)</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>action</code></td>
+<td><code>character varying(50)</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>performed_by</code></td>
+<td><code>character varying(100)</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>performed_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>NOT NULL; DEFAULT now()</td>
+<td></td>
+</tr>
+<tr>
+<td><code>target_type</code></td>
+<td><code>character varying(100)</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>reason</code></td>
+<td><code>text</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>metadata</code></td>
+<td><code>jsonb</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>aggressiveness</code></td>
+<td><code>numeric(4,3)</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>zone</code></td>
+<td><code>character varying(20)</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>vocab_size_before</code></td>
+<td><code>integer</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>vocab_size_after</code></td>
+<td><code>integer</code></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Table constraints:</strong></p>
+<ul>
+<li><code>CONSTRAINT vocabulary_history_action_check CHECK (((action)::text = ANY ((ARRAY['added'::character varying, 'merged'::character varying, 'pruned'::character varying, 'deprecated'::character varying, 'reactivated'::character varying])::text[])))</code></li>
+</ul>
+<h3 id="vocabulary_suggestions"><code>vocabulary_suggestions</code></h3>
+<p>LLM-assisted vocabulary curation suggestions - ADR-026</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td><code>integer</code></td>
+<td>PK; NOT NULL; DEFAULT nextval('kg_api.vocabulary_suggestions_id_seq'::regclass)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>relationship_type</code></td>
+<td><code>character varying(100)</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>suggestion_type</code></td>
+<td><code>character varying(50)</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>confidence</code></td>
+<td><code>numeric(3,2)</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>suggested_canonical_type</code></td>
+<td><code>character varying(100)</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>suggested_category</code></td>
+<td><code>character varying(50)</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>suggested_description</code></td>
+<td><code>text</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>similar_types</code></td>
+<td><code>jsonb</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>reasoning</code></td>
+<td><code>text</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>NOT NULL; DEFAULT now()</td>
+<td></td>
+</tr>
+<tr>
+<td><code>reviewed</code></td>
+<td><code>boolean</code></td>
+<td>DEFAULT false</td>
+<td></td>
+</tr>
+<tr>
+<td><code>curator_decision</code></td>
+<td><code>character varying(50)</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>curator_notes</code></td>
+<td><code>text</code></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Table constraints:</strong></p>
+<ul>
+<li><code>CONSTRAINT vocabulary_suggestions_confidence_check CHECK (((confidence &gt;= (0)::numeric) AND (confidence &lt;= (1)::numeric)))</code></li>
+<li><code>CONSTRAINT vocabulary_suggestions_suggestion_type_check CHECK (((suggestion_type)::text = ANY ((ARRAY['alias'::character varying, 'new_type'::character varying])::text[])))</code></li>
+</ul>
+<h3 id="worker_lanes"><code>worker_lanes</code></h3>
+<p>Worker lane configuration for database-driven job dispatch (ADR-100)</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>name</code></td>
+<td><code>text</code></td>
+<td>PK; NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>job_types</code></td>
+<td><code>text[]</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>max_slots</code></td>
+<td><code>integer</code></td>
+<td>NOT NULL; DEFAULT 1</td>
+<td></td>
+</tr>
+<tr>
+<td><code>poll_interval_ms</code></td>
+<td><code>integer</code></td>
+<td>NOT NULL; DEFAULT 5000</td>
+<td></td>
+</tr>
+<tr>
+<td><code>stale_timeout_minutes</code></td>
+<td><code>integer</code></td>
+<td>NOT NULL; DEFAULT 30</td>
+<td></td>
+</tr>
+<tr>
+<td><code>enabled</code></td>
+<td><code>boolean</code></td>
+<td>NOT NULL; DEFAULT true</td>
+<td></td>
+</tr>
+<tr>
+<td><code>updated_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>NOT NULL; DEFAULT now()</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h3 id="worker_status"><code>worker_status</code></h3>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>worker_id</code></td>
+<td><code>character varying(100)</code></td>
+<td>PK; NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>last_heartbeat</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>NOT NULL; DEFAULT now()</td>
+<td></td>
+</tr>
+<tr>
+<td><code>current_job_id</code></td>
+<td><code>character varying(50)</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td><code>character varying(50)</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>metadata</code></td>
+<td><code>jsonb</code></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Table constraints:</strong></p>
+<ul>
+<li><code>CONSTRAINT worker_status_status_check CHECK (((status)::text = ANY ((ARRAY['idle'::character varying, 'running'::character varying, 'error'::character varying, 'stopped'::character varying])::text[])))</code></li>
+</ul>
+<h2 id="kg_auth"><code>kg_auth</code></h2>
+<p>Authentication and authorization (dynamic RBAC).</p>
+<h4 id="relationships_1">Relationships</h4>
+<pre class="mermaid"><code>erDiagram
+    users ||--o{ groups : "created_by"
+    oauth_clients ||--o{ oauth_access_tokens : "client_id"
+    users ||--o{ oauth_access_tokens : "user_id"
+    oauth_clients ||--o{ oauth_authorization_codes : "client_id"
+    users ||--o{ oauth_authorization_codes : "user_id"
+    users ||--o{ oauth_clients : "created_by"
+    oauth_clients ||--o{ oauth_device_codes : "client_id"
+    users ||--o{ oauth_device_codes : "user_id"
+    users ||--o{ oauth_external_provider_tokens : "user_id"
+    oauth_access_tokens ||--o{ oauth_refresh_tokens : "access_token_hash"
+    oauth_clients ||--o{ oauth_refresh_tokens : "client_id"
+    users ||--o{ oauth_refresh_tokens : "user_id"
+    users ||--o{ resource_grants : "granted_by"
+    resources ||--o{ resources : "parent_type"
+    resources ||--o{ role_permissions : "resource_type"
+    roles ||--o{ role_permissions : "inherited_from"
+    roles ||--o{ role_permissions : "role_name"
+    users ||--o{ role_permissions : "created_by"
+    roles ||--o{ roles : "parent_role"
+    users ||--o{ roles : "created_by"
+    groups ||--o{ user_groups : "group_id"
+    users ||--o{ user_groups : "added_by"
+    users ||--o{ user_groups : "user_id"
+    roles ||--o{ user_roles : "role_name"
+    users ||--o{ user_roles : "assigned_by"
+    users ||--o{ user_roles : "user_id"
+    roles ||--o{ users : "primary_role"</code></pre>
+<h3 id="groups"><code>groups</code></h3>
+<p>Group definitions for collaborative access control (ADR-082)</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td><code>integer</code></td>
+<td>PK; NOT NULL; DEFAULT nextval('kg_auth.groups_id_seq'::regclass)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>group_name</code></td>
+<td><code>character varying(100)</code></td>
+<td>NOT NULL; UNIQUE</td>
+<td></td>
+</tr>
+<tr>
+<td><code>display_name</code></td>
+<td><code>character varying(200)</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>text</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>is_system</code></td>
+<td><code>boolean</code></td>
+<td>DEFAULT false</td>
+<td>System groups (public, admins) cannot be deleted</td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>NOT NULL; DEFAULT now()</td>
+<td></td>
+</tr>
+<tr>
+<td><code>created_by</code></td>
+<td><code>integer</code></td>
+<td>FK → kg_auth.users(id)</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h3 id="oauth_access_tokens"><code>oauth_access_tokens</code></h3>
+<p>OAuth access tokens issued to clients</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>token_hash</code></td>
+<td><code>character varying(255)</code></td>
+<td>PK; NOT NULL</td>
+<td>SHA256 hash of the actual token (tokens are not stored in plaintext)</td>
+</tr>
+<tr>
+<td><code>client_id</code></td>
+<td><code>character varying(255)</code></td>
+<td>NOT NULL; FK → kg_auth.oauth_clients(client_id)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>user_id</code></td>
+<td><code>integer</code></td>
+<td>FK → kg_auth.users(id)</td>
+<td>NULL for client_credentials grant (machine-to-machine), set for user-delegated grants</td>
+</tr>
+<tr>
+<td><code>scopes</code></td>
+<td><code>text[]</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>expires_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>NOT NULL</td>
+<td>Access tokens expire in 1 hour</td>
+</tr>
+<tr>
+<td><code>revoked</code></td>
+<td><code>boolean</code></td>
+<td>DEFAULT false</td>
+<td></td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>DEFAULT now()</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h3 id="oauth_authorization_codes"><code>oauth_authorization_codes</code></h3>
+<p>Temporary authorization codes for OAuth Authorization Code flow (web apps)</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>code</code></td>
+<td><code>character varying(255)</code></td>
+<td>PK; NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>client_id</code></td>
+<td><code>character varying(255)</code></td>
+<td>NOT NULL; FK → kg_auth.oauth_clients(client_id)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>user_id</code></td>
+<td><code>integer</code></td>
+<td>NOT NULL; FK → kg_auth.users(id)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>redirect_uri</code></td>
+<td><code>text</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>scopes</code></td>
+<td><code>text[]</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>code_challenge</code></td>
+<td><code>character varying(255)</code></td>
+<td></td>
+<td>PKCE code challenge (hash of code verifier)</td>
+</tr>
+<tr>
+<td><code>code_challenge_method</code></td>
+<td><code>character varying(10)</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>expires_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>NOT NULL</td>
+<td>Authorization codes expire in 10 minutes</td>
+</tr>
+<tr>
+<td><code>used</code></td>
+<td><code>boolean</code></td>
+<td>DEFAULT false</td>
+<td></td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>DEFAULT now()</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Table constraints:</strong></p>
+<ul>
+<li><code>CONSTRAINT oauth_authorization_codes_code_challenge_method_check CHECK (((code_challenge_method)::text = ANY ((ARRAY['S256'::character varying, 'plain'::character varying])::text[])))</code></li>
+</ul>
+<h3 id="oauth_clients"><code>oauth_clients</code></h3>
+<p>OAuth 2.0 client applications registered to use the API</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>client_id</code></td>
+<td><code>character varying(255)</code></td>
+<td>PK; NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>client_secret_hash</code></td>
+<td><code>character varying(255)</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>client_name</code></td>
+<td><code>character varying(255)</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>client_type</code></td>
+<td><code>character varying(50)</code></td>
+<td>NOT NULL</td>
+<td>public = no client secret (CLI, web apps), confidential = has client secret (MCP server)</td>
+</tr>
+<tr>
+<td><code>grant_types</code></td>
+<td><code>text[]</code></td>
+<td>NOT NULL</td>
+<td>Allowed OAuth grant types: authorization_code, urn:ietf:params:oauth:grant-type:device_code, client_credentials, refresh_token</td>
+</tr>
+<tr>
+<td><code>redirect_uris</code></td>
+<td><code>text[]</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>scopes</code></td>
+<td><code>text[]</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>is_active</code></td>
+<td><code>boolean</code></td>
+<td>DEFAULT true</td>
+<td></td>
+</tr>
+<tr>
+<td><code>created_by</code></td>
+<td><code>integer</code></td>
+<td>FK → kg_auth.users(id)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>DEFAULT now()</td>
+<td></td>
+</tr>
+<tr>
+<td><code>metadata</code></td>
+<td><code>jsonb</code></td>
+<td>DEFAULT '{}'::jsonb</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Table constraints:</strong></p>
+<ul>
+<li><code>CONSTRAINT oauth_clients_client_type_check CHECK (((client_type)::text = ANY ((ARRAY['public'::character varying, 'confidential'::character varying])::text[])))</code></li>
+</ul>
+<h3 id="oauth_device_codes"><code>oauth_device_codes</code></h3>
+<p>Device authorization codes for OAuth Device Authorization Grant flow (CLI tools)</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>device_code</code></td>
+<td><code>character varying(255)</code></td>
+<td>PK; NOT NULL</td>
+<td>Long code used by device for polling</td>
+</tr>
+<tr>
+<td><code>user_code</code></td>
+<td><code>character varying(50)</code></td>
+<td>NOT NULL; UNIQUE</td>
+<td>Human-friendly code displayed to user (e.g., ABCD-1234)</td>
+</tr>
+<tr>
+<td><code>client_id</code></td>
+<td><code>character varying(255)</code></td>
+<td>NOT NULL; FK → kg_auth.oauth_clients(client_id)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>user_id</code></td>
+<td><code>integer</code></td>
+<td>FK → kg_auth.users(id)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>scopes</code></td>
+<td><code>text[]</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td><code>character varying(50)</code></td>
+<td>DEFAULT 'pending'::character varying</td>
+<td></td>
+</tr>
+<tr>
+<td><code>expires_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>NOT NULL</td>
+<td>Device codes expire in 10 minutes</td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>DEFAULT now()</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Table constraints:</strong></p>
+<ul>
+<li><code>CONSTRAINT oauth_device_codes_status_check CHECK (((status)::text = ANY ((ARRAY['pending'::character varying, 'authorized'::character varying, 'denied'::character varying, 'expired'::character varying])::text[])))</code></li>
+</ul>
+<h3 id="oauth_external_provider_tokens"><code>oauth_external_provider_tokens</code></h3>
+<p>OAuth tokens FROM external providers (Google, GitHub, etc.) - not tokens issued by our system</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>token_hash</code></td>
+<td><code>character varying(255)</code></td>
+<td>PK; NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>user_id</code></td>
+<td><code>integer</code></td>
+<td>FK → kg_auth.users(id)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>provider</code></td>
+<td><code>character varying(50)</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>scopes</code></td>
+<td><code>text[]</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>expires_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h3 id="oauth_refresh_tokens"><code>oauth_refresh_tokens</code></h3>
+<p>OAuth refresh tokens for long-lived sessions</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>token_hash</code></td>
+<td><code>character varying(255)</code></td>
+<td>PK; NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>client_id</code></td>
+<td><code>character varying(255)</code></td>
+<td>NOT NULL; FK → kg_auth.oauth_clients(client_id)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>user_id</code></td>
+<td><code>integer</code></td>
+<td>NOT NULL; FK → kg_auth.users(id)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>scopes</code></td>
+<td><code>text[]</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>access_token_hash</code></td>
+<td><code>character varying(255)</code></td>
+<td>FK → kg_auth.oauth_access_tokens(token_hash)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>expires_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>NOT NULL</td>
+<td>Refresh tokens expire in 7 days (CLI) or 30 days (web)</td>
+</tr>
+<tr>
+<td><code>revoked</code></td>
+<td><code>boolean</code></td>
+<td>DEFAULT false</td>
+<td></td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>DEFAULT now()</td>
+<td></td>
+</tr>
+<tr>
+<td><code>last_used</code></td>
+<td><code>timestamp with time zone</code></td>
+<td></td>
+<td>Updated when refresh token is used to obtain new access token</td>
+</tr>
+</tbody>
+</table>
+<h3 id="resource_grants"><code>resource_grants</code></h3>
+<p>Instance-level access grants for owned resources (ADR-082)</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td><code>integer</code></td>
+<td>PK; NOT NULL; DEFAULT nextval('kg_auth.resource_grants_id_seq'::regclass)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>resource_type</code></td>
+<td><code>character varying(50)</code></td>
+<td>NOT NULL</td>
+<td>Type: ontology, artifact, report, etc.</td>
+</tr>
+<tr>
+<td><code>resource_id</code></td>
+<td><code>character varying(200)</code></td>
+<td>NOT NULL</td>
+<td>Specific resource identifier</td>
+</tr>
+<tr>
+<td><code>principal_type</code></td>
+<td><code>character varying(20)</code></td>
+<td>NOT NULL</td>
+<td>Grant to user or group</td>
+</tr>
+<tr>
+<td><code>principal_id</code></td>
+<td><code>integer</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>permission</code></td>
+<td><code>character varying(20)</code></td>
+<td>NOT NULL</td>
+<td>read, write, or admin access</td>
+</tr>
+<tr>
+<td><code>granted_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>NOT NULL; DEFAULT now()</td>
+<td></td>
+</tr>
+<tr>
+<td><code>granted_by</code></td>
+<td><code>integer</code></td>
+<td>FK → kg_auth.users(id)</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Table constraints:</strong></p>
+<ul>
+<li><code>CONSTRAINT resource_grants_permission_check CHECK (((permission)::text = ANY ((ARRAY['read'::character varying, 'write'::character varying, 'admin'::character varying])::text[])))</code></li>
+<li><code>CONSTRAINT resource_grants_principal_type_check CHECK (((principal_type)::text = ANY ((ARRAY['user'::character varying, 'group'::character varying])::text[])))</code></li>
+<li><code>UNIQUE (resource_type, resource_id, principal_type, principal_id, permission)</code></li>
+</ul>
+<h3 id="resources"><code>resources</code></h3>
+<p>Dynamic resource type registry (ADR-028)</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>resource_type</code></td>
+<td><code>character varying(100)</code></td>
+<td>PK; NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>text</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>parent_type</code></td>
+<td><code>character varying(100)</code></td>
+<td>FK → kg_auth.resources(resource_type)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>available_actions</code></td>
+<td><code>character varying(50)[]</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>supports_scoping</code></td>
+<td><code>boolean</code></td>
+<td>DEFAULT false</td>
+<td></td>
+</tr>
+<tr>
+<td><code>metadata</code></td>
+<td><code>jsonb</code></td>
+<td>DEFAULT '{}'::jsonb</td>
+<td></td>
+</tr>
+<tr>
+<td><code>registered_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>NOT NULL; DEFAULT now()</td>
+<td></td>
+</tr>
+<tr>
+<td><code>registered_by</code></td>
+<td><code>character varying(100)</code></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h3 id="role_permissions"><code>role_permissions</code></h3>
+<p>Dynamic role permissions with scoping (ADR-028)</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td><code>integer</code></td>
+<td>PK; NOT NULL; DEFAULT nextval('kg_auth.role_permissions_id_seq'::regclass)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>role_name</code></td>
+<td><code>character varying(50)</code></td>
+<td>NOT NULL; FK → kg_auth.roles(role_name)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>resource_type</code></td>
+<td><code>character varying(100)</code></td>
+<td>NOT NULL; FK → kg_auth.resources(resource_type)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>action</code></td>
+<td><code>character varying(50)</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>scope_type</code></td>
+<td><code>character varying(50)</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>scope_id</code></td>
+<td><code>character varying(200)</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>scope_filter</code></td>
+<td><code>jsonb</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>granted</code></td>
+<td><code>boolean</code></td>
+<td>NOT NULL; DEFAULT true</td>
+<td></td>
+</tr>
+<tr>
+<td><code>inherited_from</code></td>
+<td><code>character varying(50)</code></td>
+<td>FK → kg_auth.roles(role_name)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>NOT NULL; DEFAULT now()</td>
+<td></td>
+</tr>
+<tr>
+<td><code>created_by</code></td>
+<td><code>integer</code></td>
+<td>FK → kg_auth.users(id)</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h3 id="roles"><code>roles</code></h3>
+<p>Dynamic role definitions with inheritance (ADR-028)</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>role_name</code></td>
+<td><code>character varying(50)</code></td>
+<td>PK; NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>display_name</code></td>
+<td><code>character varying(100)</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>text</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>is_builtin</code></td>
+<td><code>boolean</code></td>
+<td>DEFAULT false</td>
+<td></td>
+</tr>
+<tr>
+<td><code>is_active</code></td>
+<td><code>boolean</code></td>
+<td>DEFAULT true</td>
+<td></td>
+</tr>
+<tr>
+<td><code>parent_role</code></td>
+<td><code>character varying(50)</code></td>
+<td>FK → kg_auth.roles(role_name)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>NOT NULL; DEFAULT now()</td>
+<td></td>
+</tr>
+<tr>
+<td><code>created_by</code></td>
+<td><code>integer</code></td>
+<td>FK → kg_auth.users(id)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>metadata</code></td>
+<td><code>jsonb</code></td>
+<td>DEFAULT '{}'::jsonb</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h3 id="user_groups"><code>user_groups</code></h3>
+<p>Group membership assignments (ADR-082)</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>user_id</code></td>
+<td><code>integer</code></td>
+<td>PK; NOT NULL; FK → kg_auth.users(id)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>group_id</code></td>
+<td><code>integer</code></td>
+<td>PK; NOT NULL; FK → kg_auth.groups(id)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>added_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>NOT NULL; DEFAULT now()</td>
+<td></td>
+</tr>
+<tr>
+<td><code>added_by</code></td>
+<td><code>integer</code></td>
+<td>FK → kg_auth.users(id)</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h3 id="user_roles"><code>user_roles</code></h3>
+<p>User role assignments with optional scoping (ADR-028)</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td><code>integer</code></td>
+<td>PK; NOT NULL; DEFAULT nextval('kg_auth.user_roles_id_seq'::regclass)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>user_id</code></td>
+<td><code>integer</code></td>
+<td>NOT NULL; FK → kg_auth.users(id)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>role_name</code></td>
+<td><code>character varying(50)</code></td>
+<td>NOT NULL; FK → kg_auth.roles(role_name)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>scope_type</code></td>
+<td><code>character varying(50)</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>scope_id</code></td>
+<td><code>character varying(200)</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>assigned_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>NOT NULL; DEFAULT now()</td>
+<td></td>
+</tr>
+<tr>
+<td><code>assigned_by</code></td>
+<td><code>integer</code></td>
+<td>FK → kg_auth.users(id)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>expires_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Table constraints:</strong></p>
+<ul>
+<li><code>UNIQUE (user_id, role_name, scope_type, scope_id)</code></li>
+</ul>
+<h3 id="users"><code>users</code></h3>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td><code>integer</code></td>
+<td>PK; NOT NULL; DEFAULT nextval('kg_auth.users_id_seq'::regclass)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>username</code></td>
+<td><code>character varying(100)</code></td>
+<td>NOT NULL; UNIQUE</td>
+<td></td>
+</tr>
+<tr>
+<td><code>password_hash</code></td>
+<td><code>character varying(255)</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>primary_role</code></td>
+<td><code>character varying(50)</code></td>
+<td>NOT NULL; FK → kg_auth.roles(role_name)</td>
+<td>Primary role (backwards compatibility) - user can have additional roles in user_roles table</td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>NOT NULL; DEFAULT now()</td>
+<td></td>
+</tr>
+<tr>
+<td><code>last_login</code></td>
+<td><code>timestamp with time zone</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>disabled</code></td>
+<td><code>boolean</code></td>
+<td>DEFAULT false</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="kg_logs"><code>kg_logs</code></h2>
+<p>Observability: audit trails, metrics, health.</p>
+<h3 id="api_metrics"><code>api_metrics</code></h3>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td><code>integer</code></td>
+<td>PK; NOT NULL; DEFAULT nextval('kg_logs.api_metrics_id_seq'::regclass)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>timestamp</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>NOT NULL; DEFAULT now()</td>
+<td></td>
+</tr>
+<tr>
+<td><code>endpoint</code></td>
+<td><code>character varying(200)</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>method</code></td>
+<td><code>character varying(10)</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>status_code</code></td>
+<td><code>integer</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>duration_ms</code></td>
+<td><code>numeric(10,2)</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>client_id</code></td>
+<td><code>character varying(100)</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>error_message</code></td>
+<td><code>text</code></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h3 id="audit_trail"><code>audit_trail</code></h3>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td><code>integer</code></td>
+<td>PK; NOT NULL; DEFAULT nextval('kg_logs.audit_trail_id_seq'::regclass)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>timestamp</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>NOT NULL; DEFAULT now()</td>
+<td></td>
+</tr>
+<tr>
+<td><code>user_id</code></td>
+<td><code>integer</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>action</code></td>
+<td><code>character varying(100)</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>resource_type</code></td>
+<td><code>character varying(50)</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>resource_id</code></td>
+<td><code>character varying(200)</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>details</code></td>
+<td><code>jsonb</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>ip_address</code></td>
+<td><code>inet</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>user_agent</code></td>
+<td><code>text</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>outcome</code></td>
+<td><code>character varying(50)</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Table constraints:</strong></p>
+<ul>
+<li><code>CONSTRAINT audit_trail_outcome_check CHECK (((outcome)::text = ANY ((ARRAY['success'::character varying, 'denied'::character varying, 'error'::character varying])::text[])))</code></li>
+</ul>
+<h3 id="health_checks"><code>health_checks</code></h3>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td><code>integer</code></td>
+<td>PK; NOT NULL; DEFAULT nextval('kg_logs.health_checks_id_seq'::regclass)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>timestamp</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>NOT NULL; DEFAULT now()</td>
+<td></td>
+</tr>
+<tr>
+<td><code>service</code></td>
+<td><code>character varying(50)</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td><code>character varying(50)</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>metrics</code></td>
+<td><code>jsonb</code></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Table constraints:</strong></p>
+<ul>
+<li><code>CONSTRAINT health_checks_status_check CHECK (((status)::text = ANY ((ARRAY['healthy'::character varying, 'degraded'::character varying, 'down'::character varying])::text[])))</code></li>
+</ul>
+<h3 id="job_events"><code>job_events</code></h3>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td><code>integer</code></td>
+<td>PK; NOT NULL; DEFAULT nextval('kg_logs.job_events_id_seq'::regclass)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>job_id</code></td>
+<td><code>character varying(50)</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>timestamp</code></td>
+<td><code>timestamp with time zone</code></td>
+<td>NOT NULL; DEFAULT now()</td>
+<td></td>
+</tr>
+<tr>
+<td><code>event_type</code></td>
+<td><code>character varying(50)</code></td>
+<td>NOT NULL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>details</code></td>
+<td><code>jsonb</code></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="migration-history">Migration history</h2>
+<p>Schema evolves through numbered migrations under <code>schema/migrations/</code>. Each is recorded in <code>public.schema_migrations</code> when applied. The baseline (<code>00_baseline.sql</code>) is a generated checkpoint consolidating migrations 001–080 (see <code>schema/migrations/archived/</code>); migrations after it are applied in order.</p>
+<p>No post-checkpoint migrations yet — the baseline is the complete current schema.</p>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

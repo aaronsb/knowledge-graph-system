@@ -1,0 +1,270 @@
+#!/usr/bin/env python3
+"""
+doc — a librarian for the documentation catalog.
+
+Presents the catalog (frontmatter `id`/`domain`/`mode`) over the shared domain
+bands: a domain×mode coverage matrix, page listings, and a gap report that weighs
+doc coverage against ADR count per domain. See your project's
+documentation-catalog ADR for the model.
+
+This is the *diagnostic* front-end. The *test* is `doclint` (the CI linter);
+`doc lint` invokes it. Sibling of the `adr` tool — same `adr.yaml` config.
+Generalized from the knowledge-graph-system reference implementation.
+
+Usage:
+    doc                       # coverage matrix (default)
+    doc coverage
+    doc list [--domain D] [--mode M] [--sort {id,path,title}]
+    doc gaps                  # empty cells + doc/ADR imbalance
+    doc lint [--strict]       # run doclint (--strict adds --enforce-adrs)
+    doc domains               # the domain bands
+
+Configuration is loaded from docs/architecture/adr.yaml.
+"""
+
+import argparse
+import re
+import subprocess
+import sys
+from collections import Counter
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE))
+import doclint  # noqa: E402  — reuse catalog parsing (single source of truth)
+
+try:
+    import yaml
+except ImportError:
+    print("Error: PyYAML is required (pip install pyyaml).", file=sys.stderr)
+    sys.exit(1)
+
+
+# ============================================================================
+# Loading
+# ============================================================================
+
+def _cfg() -> dict:
+    return doclint.load_config()
+
+
+def _digits() -> dict:
+    return doclint.domain_digits(_cfg())
+
+
+def _title(path: Path) -> str:
+    """Return a page's first H1 (its display title), or '(untitled)'."""
+    try:
+        text = path.read_text()
+    except (OSError, UnicodeDecodeError):
+        return "(unreadable)"
+    for line in text.split("\n"):
+        m = re.match(r"^#\s+(.+)", line)
+        if m:
+            return m.group(1).strip()
+    return "(untitled)"
+
+
+def load_pages() -> list:
+    """Parse every catalog page into a doclint Node, annotated with its title.
+
+    Honors doclint's opt-in membership: non-catalog prose (no id/domain/mode)
+    yields None and is skipped.
+    """
+    digits = _digits()
+    pages = []
+    for p in doclint.iter_catalog_pages():
+        node = doclint.build_doc_node(p, digits)
+        if node is None:
+            continue
+        node.title = _title(p)
+        pages.append(node)
+    return pages
+
+
+def adr_counts() -> Counter:
+    """Count ADRs per domain (resolved by folder, like the adr tool)."""
+    cfg = _cfg()
+    folder_domain = {}
+    for key, d in cfg["domains"].items():
+        folders = d["folder"] if isinstance(d["folder"], list) else [d["folder"]]
+        for f in folders:
+            folder_domain[f] = key
+    counts = Counter()
+    for p in doclint.iter_adrs():
+        dom = folder_domain.get(p.parent.name)
+        if dom:
+            counts[dom] += 1
+    return counts
+
+
+# ============================================================================
+# Rendering
+# ============================================================================
+
+def render_table(headers, rows, aligns=None, rule_before_last=False) -> str:
+    """Render a box-drawn grid (Unicode borders)."""
+    cols = len(headers)
+    aligns = aligns or ["l"] * cols
+    widths = [
+        max([len(str(headers[i]))] + [len(str(r[i])) for r in rows])
+        for i in range(cols)
+    ]
+
+    def cell(value, i):
+        s = str(value)
+        return s.rjust(widths[i]) if aligns[i] == "r" else s.ljust(widths[i])
+
+    def rule(left, mid, right):
+        return left + mid.join("─" * (widths[i] + 2) for i in range(cols)) + right
+
+    def row(cells):
+        return "│ " + " │ ".join(cell(cells[i], i) for i in range(cols)) + " │"
+
+    out = [rule("┌", "┬", "┐"), row(headers), rule("├", "┼", "┤")]
+    body = rows[:-1] if rule_before_last else rows
+    out += [row(r) for r in body]
+    if rule_before_last:
+        out += [rule("├", "┼", "┤"), row(rows[-1])]
+    out.append(rule("└", "┴", "┘"))
+    return "\n".join(out)
+
+
+# ============================================================================
+# Commands
+# ============================================================================
+
+def cmd_coverage(args) -> int:
+    cfg = _cfg()
+    pages = load_pages()
+    adrs = adr_counts()
+    modes = list(doclint.MODE_LETTER)
+    letters = [doclint.MODE_LETTER[m] for m in modes]
+    grid = Counter((n.domain, n.mode) for n in pages if n.domain and n.mode)
+    domains = list(cfg["domains"])
+
+    headers = ["domain"] + letters + ["docs", "ADRs"]
+    rows = []
+    for dom in domains:
+        cells = [grid.get((dom, m), 0) for m in modes]
+        rows.append([dom] + [c if c else "·" for c in cells]
+                    + [sum(cells), adrs.get(dom, 0)])
+    totals = [sum(grid.get((d, m), 0) for d in domains) for m in modes]
+    rows.append(["total"] + totals + [len(pages), sum(adrs.values())])
+    aligns = ["l"] + ["r"] * (len(headers) - 1)
+
+    print(f"\nDocumentation catalog coverage  "
+          f"({len(pages)} pages · {len(domains)} domains × {len(modes)} modes)\n")
+    print(render_table(headers, rows, aligns, rule_before_last=True))
+    print("\n  Modes: " + " · ".join(f"{doclint.MODE_LETTER[m]} {m}" for m in modes))
+    return 0
+
+
+def cmd_list(args) -> int:
+    pages = load_pages()
+    if args.domain:
+        pages = [p for p in pages if p.domain == args.domain]
+    if args.mode:
+        pages = [p for p in pages if p.mode == args.mode]
+
+    keymap = {
+        "id": lambda p: (p.key,),
+        "path": lambda p: (p.rel,),
+        "title": lambda p: (getattr(p, "title", "").lower(),),
+    }
+    pages.sort(key=keymap[args.sort])
+
+    headers = ["id", "domain", "mode", "title"]
+    rows = [[p.key or "?", p.domain or "?", p.mode or "?",
+             getattr(p, "title", "") + ("  !!" if p.issues else "")] for p in pages]
+    if rows:
+        print()
+        print(render_table(headers, rows))
+    print(f"\n{len(pages)} page(s)" + ("  ('!!' = frontmatter issue)"
+          if any(p.issues for p in pages) else ""))
+    return 0
+
+
+def cmd_gaps(args) -> int:
+    cfg = _cfg()
+    pages = load_pages()
+    adrs = adr_counts()
+    modes = list(doclint.MODE_LETTER)
+    grid = Counter((n.domain, n.mode) for n in pages if n.domain and n.mode)
+    per_domain = Counter(n.domain for n in pages if n.domain)
+    domains = list(cfg["domains"])
+
+    print("\nEmpty (domain × mode) cells:")
+    for dom in domains:
+        missing = [doclint.MODE_LETTER[m] for m in modes if not grid.get((dom, m))]
+        if missing:
+            print(f"  {dom:12} no {', '.join(missing)}")
+
+    print("\nDoc/ADR imbalance (domains with many decisions, few docs):")
+    for dom in sorted(domains, key=lambda d: (per_domain.get(d, 0) - adrs.get(d, 0))):
+        nd, na = per_domain.get(dom, 0), adrs.get(dom, 0)
+        if na and nd <= max(2, na // 4):
+            print(f"  {dom:12} {na:>3} ADRs → {nd:>2} docs")
+
+    issues = [p for p in pages if p.issues]
+    if issues:
+        print(f"\nFrontmatter issues ({len(issues)}):")
+        for p in issues:
+            print(f"  {p.rel}: {'; '.join(m for _, m in p.issues)}")
+    return 0
+
+
+def cmd_domains(args) -> int:
+    cfg = _cfg()
+    print("\nCatalog domains (shared first octet with ADRs)\n")
+    for key, d in cfg["domains"].items():
+        lo, hi = d["range"]
+        print(f"  {lo // 100}  {key:12} {lo}-{hi}  {d['name']}")
+    return 0
+
+
+def cmd_lint(args) -> int:
+    """Delegate to the doclint linter (the catalog test)."""
+    cmd = [sys.executable, str(HERE / "doclint.py"), "--check"]
+    if args.strict:
+        cmd.append("--enforce-adrs")
+    return subprocess.run(cmd).returncode
+
+
+# ============================================================================
+# Main
+# ============================================================================
+
+def main() -> int:
+    parser = argparse.ArgumentParser(
+        description="Librarian for the documentation catalog.",
+        formatter_class=argparse.RawDescriptionHelpFormatter, epilog=__doc__)
+    sub = parser.add_subparsers(dest="command")
+
+    sub.add_parser("coverage", help="domain × mode coverage matrix (default)")
+
+    p_list = sub.add_parser("list", help="list catalog pages")
+    p_list.add_argument("--domain", "-d", help="filter by domain key")
+    p_list.add_argument("--mode", "-m", help="filter by Diátaxis mode")
+    p_list.add_argument("--sort", choices=["id", "path", "title"], default="id")
+
+    sub.add_parser("gaps", help="empty cells + doc/ADR imbalance")
+    sub.add_parser("domains", help="list the domain bands")
+
+    p_lint = sub.add_parser("lint", help="run the catalog linter (doclint)")
+    p_lint.add_argument("--strict", action="store_true",
+                        help="enforce ADR issues too (--enforce-adrs)")
+
+    args = parser.parse_args()
+    return {
+        None: cmd_coverage,
+        "coverage": cmd_coverage,
+        "list": cmd_list,
+        "gaps": cmd_gaps,
+        "domains": cmd_domains,
+        "lint": cmd_lint,
+    }[args.command](args)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -1,0 +1,2681 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Multi-dimensional knowledge extraction system using Apache AGE">
+      
+      
+        <meta name="author" content="Knowledge Graph System Contributors">
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>ADR-505: Parallel Graph Query Optimization - Knowledge Graph System</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#adr-505-parallel-graph-query-optimization" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="Knowledge Graph System" class="md-header__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Knowledge Graph System
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              ADR-505: Parallel Graph Query Optimization
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/aaronsb/knowledge-graph-system" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aaronsb/knowledge-graph-system
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="Knowledge Graph System" class="md-nav__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Knowledge Graph System
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/aaronsb/knowledge-graph-system" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aaronsb/knowledge-graph-system
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Get Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Get Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../get-started/what-and-why/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What and Why
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../get-started/first-graph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your First Graph
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../get-started/first-query/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your First Query
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../get-started/mcp-quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Connect via MCP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../get-started/github-history/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mining a Git Repo
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-To
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How-To
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/ingest/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ingest Documents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/query/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explore and Query
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/epistemic-status/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Filter by Epistemic Status
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/polarity-axis/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Analyze a Polarity Axis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/fuse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Use the FUSE Drive
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/ai-providers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configure AI Providers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/embeddings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configure Embeddings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/extraction-quality/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Compare Extraction Quality
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/vocabulary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Consolidate Vocabulary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Self-Host
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Self-Host
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/quick-start/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/production/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Production Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/macvlan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dedicated IP (macvlan)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/tls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    TLS and Certificates
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/appliance-libvirt/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Appliance on libvirt/KVM
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security and Access
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/backup-restore/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backup and Restore
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/scheduled-jobs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scheduled Jobs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/upgrading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Upgrading
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explanation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Explanation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/how-it-works/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How It Works
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/computed-evidence/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Computed Evidence over Asserted Truth
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/grounding/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Grounding and Epistemic Confidence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/recursive-upsert/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Recursive Upsert
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/vocabulary-lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vocabulary Lifecycle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/storage-and-freshness/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Storage and Freshness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/worker-lanes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Worker Lanes and Concurrency
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/embedding-landscape/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Embedding Landscape
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/graph-program/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram DSL
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    REST API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/mcp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/mcp-session-context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Session Context
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/fuse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FUSE Driver
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/schema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Database Schema
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/cypher/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cypher Patterns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/graph-program-spec/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram Specification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/graph-program-validation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram Validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/graph-program-security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/backup-object-spec/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backup Object Format
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Contributing
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/voice/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Prose & Voice Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/docstring-coverage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docstring Coverage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/test-suite/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Test Suite
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../INDEX/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Context">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-problem" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Problem
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Decision">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#architecture-2-phase-parallel-execution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architecture: 2-Phase Parallel Execution
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#key-insight" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Insight
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#graphparallelizer-class" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GraphParallelizer Class
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#integration-example-polarity-discovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Integration Example: Polarity Discovery
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Consequences">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#positive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Positive
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#negative" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Negative
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#neutral" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Neutral
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#safety-mitigations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Safety Mitigations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Safety Mitigations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-global-semaphore-prevents-multi-user-deadlock" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Global Semaphore (Prevents Multi-User Deadlock)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-per-worker-result-limits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Per-Worker Result Limits
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-wall-clock-timeout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Wall-Clock Timeout
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-graceful-degradation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Graceful Degradation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-connection-pool-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Connection Pool Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-parameter-binding-security" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Parameter Binding (Security)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#actual-performance-results-adr-071a" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Actual Performance Results (ADR-071a)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration Management
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration Management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#database-first-following-adr-805049-pattern" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Database-First (Following ADR-805/049 Pattern)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#loading-config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Loading Config
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#alternatives-considered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alternatives Considered
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Alternatives Considered">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#option-a-postgresql-parallel-workers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option A: PostgreSQL Parallel Workers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-b-asyncawait-asyncio" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option B: Async/Await (asyncio)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-c-distributed-queue-celery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option C: Distributed Queue (Celery)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-d-graphql-dataloader-pattern" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option D: GraphQL DataLoader Pattern
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related-adrs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Related ADRs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        References
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="adr-505-parallel-graph-query-optimization">ADR-505: Parallel Graph Query Optimization</h1>
+<h2 id="context">Context</h2>
+<p>Graph traversal queries with variable-length paths <code>[*1..N]</code> exhibit severe performance degradation as hop count increases. Polarity axis analysis (<code>api/lib/polarity_axis.py</code>) with <code>max_hops=2</code> takes over 3 minutes (180-261 seconds), making the feature unusable for interactive analysis.</p>
+<h3 id="the-problem">The Problem</h3>
+<p>When discovering candidates within 2 hops of two pole concepts:</p>
+<ol>
+<li>Find all 1-hop neighbors of poles → ~200 concepts (500ms ✓)</li>
+<li>Find neighbors of those 200 concepts → 200 × 100 = 20,000 potential paths (3+ min ✗)</li>
+</ol>
+<p><strong>Root Cause:</strong> PostgreSQL cannot parallelize Apache AGE Cypher queries because <code>ag_catalog.cypher()</code> appears as an opaque function call. PostgreSQL's parallel query machinery never activates.</p>
+<p><strong>Affected Patterns:</strong>
+- Polarity candidate discovery (<code>api/lib/polarity_axis.py:190</code>)
+- Neighborhood queries (<code>api/services/diversity_analyzer.py:174</code>)
+- Path enrichment (web UI subgraph expansion)</p>
+<p>All follow the same pattern: multi-hop traversal from seed concepts.</p>
+<h2 id="decision">Decision</h2>
+<p>Implement application-level parallelization using Python's <code>ThreadPoolExecutor</code> with connection pooling to execute multiple small Cypher queries concurrently instead of one large variable-length path query.</p>
+<h3 id="architecture-2-phase-parallel-execution">Architecture: 2-Phase Parallel Execution</h3>
+<p><strong>Phase 1: Direct Neighbors (1-hop) - Single Batched Query</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">seed</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span><span class="o">-[]-</span><span class="p">(</span><span class="n">neighbor</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">seed</span><span class="p">.</span><span class="n">concept_id</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="err">$</span><span class="n">seed_ids</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span><span class="n">AND</span><span class="w"> </span><span class="n">neighbor</span><span class="p">.</span><span class="n">embedding</span><span class="w"> </span><span class="n">IS</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="k">RETURN</span><span class="w"> </span><span class="k">DISTINCT</span><span class="w"> </span><span class="n">neighbor</span><span class="p">.</span><span class="n">concept_id</span>
+</code></pre></div>
+Returns ~100-500 concepts in ~500ms.</p>
+<p><strong>Phase 2: Extended Neighbors (2-hop) - Parallel Queries</strong></p>
+<p>Split 1-hop results into chunks, execute in parallel with ThreadPoolExecutor:
+- 8 workers (default)
+- Each worker processes a chunk of seed IDs in one batched query
+- Workers grab connections from existing psycopg2 connection pool
+- Results merged and deduplicated</p>
+<h3 id="key-insight">Key Insight</h3>
+<p><strong>The Optimization:</strong> Instead of 1 concept = 1 query (150 queries with network overhead), use chunking: 1 chunk = 1 batched query (8 queries total).</p>
+<p><strong>Network Overhead Savings:</strong>
+- Old: 150 concepts × 10ms = 1,500ms wasted
+- New: 8 chunks × 10ms = 80ms overhead
+- <strong>Savings:</strong> 1,420ms from batching alone</p>
+<h2 id="implementation">Implementation</h2>
+<h3 id="graphparallelizer-class">GraphParallelizer Class</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># api/lib/graph_parallelizer.py</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="nd">@dataclass</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="k">class</span><span class="w"> </span><span class="nc">ParallelQueryConfig</span><span class="p">:</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="n">max_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8</span>           <span class="c1"># ThreadPoolExecutor size</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="n">chunk_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span>           <span class="c1"># Concepts per worker chunk</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="n">timeout_seconds</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">120.0</span> <span class="c1"># Wall-clock timeout</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>    <span class="n">per_worker_limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">200</span>    <span class="c1"># Max results per worker</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>    <span class="n">discovery_slot_pct</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.2</span> <span class="c1"># Epsilon-greedy (ADR-071a)</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="k">class</span><span class="w"> </span><span class="nc">GraphParallelizer</span><span class="p">:</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="sd">    Reusable n-hop query parallelizer using connection pooling.</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="sd">    Breaks multi-hop graph queries into:</span>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="sd">    1. Phase 1: Fast single query for 1-hop neighbors</span>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="sd">    2. Phase 2: Parallel queries for 2-hop neighbors</span>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">get_nhop_neighbors</span><span class="p">(</span>
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>        <span class="bp">self</span><span class="p">,</span>
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>        <span class="n">seed_ids</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>        <span class="n">max_hops</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>        <span class="n">filter_clause</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;neighbor.embedding IS NOT NULL&quot;</span>
+<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>        <span class="c1"># Phase 1: Single batched query</span>
+<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a>        <span class="n">neighbors_1hop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_1hop_neighbors</span><span class="p">(</span><span class="n">seed_ids</span><span class="p">,</span> <span class="n">filter_clause</span><span class="p">)</span>
+<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a>
+<a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a>        <span class="k">if</span> <span class="n">max_hops</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+<a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a>            <span class="k">return</span> <span class="n">neighbors_1hop</span>
+<a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a>
+<a id="__codelineno-1-32" name="__codelineno-1-32" href="#__codelineno-1-32"></a>        <span class="c1"># Phase 2: Parallel execution with chunking</span>
+<a id="__codelineno-1-33" name="__codelineno-1-33" href="#__codelineno-1-33"></a>        <span class="n">neighbors_2hop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_2hop_neighbors_parallel</span><span class="p">(</span>
+<a id="__codelineno-1-34" name="__codelineno-1-34" href="#__codelineno-1-34"></a>            <span class="nb">list</span><span class="p">(</span><span class="n">neighbors_1hop</span><span class="p">),</span>
+<a id="__codelineno-1-35" name="__codelineno-1-35" href="#__codelineno-1-35"></a>            <span class="n">filter_clause</span>
+<a id="__codelineno-1-36" name="__codelineno-1-36" href="#__codelineno-1-36"></a>        <span class="p">)</span>
+<a id="__codelineno-1-37" name="__codelineno-1-37" href="#__codelineno-1-37"></a>
+<a id="__codelineno-1-38" name="__codelineno-1-38" href="#__codelineno-1-38"></a>        <span class="k">return</span> <span class="n">neighbors_1hop</span> <span class="o">|</span> <span class="n">neighbors_2hop</span>
+</code></pre></div>
+<h3 id="integration-example-polarity-discovery">Integration Example: Polarity Discovery</h3>
+<p><strong>Before (Sequential):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">discover_candidate_concepts</span><span class="p">(</span><span class="n">positive_pole_id</span><span class="p">,</span> <span class="n">negative_pole_id</span><span class="p">,</span> <span class="n">age_client</span><span class="p">,</span> <span class="n">max_hops</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>    <span class="c1"># Single query with variable-length path - takes 3+ minutes</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="n">results</span> <span class="o">=</span> <span class="n">age_client</span><span class="o">.</span><span class="n">facade</span><span class="o">.</span><span class="n">execute_raw</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="s2">        MATCH (pole)-[*1..</span><span class="si">{</span><span class="n">max_hops</span><span class="si">}</span><span class="s2">]-(candidate)</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="s2">        WHERE pole.concept_id IN [&#39;</span><span class="si">{</span><span class="n">positive_pole_id</span><span class="si">}</span><span class="s2">&#39;, &#39;</span><span class="si">{</span><span class="n">negative_pole_id</span><span class="si">}</span><span class="s2">&#39;]</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="s2">        RETURN DISTINCT candidate.concept_id</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="s2">    &quot;&quot;&quot;</span><span class="p">)</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>    <span class="k">return</span> <span class="p">[</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;concept_id&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">results</span><span class="p">]</span>
+</code></pre></div></p>
+<p><strong>After (Parallel):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">discover_candidate_concepts</span><span class="p">(</span><span class="n">positive_pole_id</span><span class="p">,</span> <span class="n">negative_pole_id</span><span class="p">,</span> <span class="n">age_client</span><span class="p">,</span> <span class="n">max_hops</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="n">parallelizer</span> <span class="o">=</span> <span class="n">GraphParallelizer</span><span class="p">(</span><span class="n">age_client</span><span class="p">)</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="n">neighbor_ids</span> <span class="o">=</span> <span class="n">parallelizer</span><span class="o">.</span><span class="n">get_nhop_neighbors</span><span class="p">(</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>        <span class="n">seed_ids</span><span class="o">=</span><span class="p">[</span><span class="n">positive_pole_id</span><span class="p">,</span> <span class="n">negative_pole_id</span><span class="p">],</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>        <span class="n">max_hops</span><span class="o">=</span><span class="n">max_hops</span><span class="p">,</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>        <span class="n">filter_clause</span><span class="o">=</span><span class="s2">&quot;candidate.embedding IS NOT NULL&quot;</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>    <span class="p">)</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>    <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">neighbor_ids</span><span class="p">)</span>
+</code></pre></div></p>
+<h2 id="consequences">Consequences</h2>
+<h3 id="positive">Positive</h3>
+<p>✅ <strong>Expected 8-30x speedup</strong> for 2-hop queries (3 minutes → 6-25 seconds)
+✅ <strong>Reusable pattern</strong> for all multi-hop traversals
+✅ <strong>No new infrastructure</strong> - uses existing connection pool + stdlib ThreadPoolExecutor
+✅ <strong>Graceful degradation</strong> - partial results acceptable, timeout handling
+✅ <strong>Production-safe</strong> - connection pool limits prevent resource exhaustion</p>
+<h3 id="negative">Negative</h3>
+<p>❌ <strong>Connection pool contention</strong> - requires monitoring and tuning
+❌ <strong>Result ordering undefined</strong> - parallel execution loses deterministic ordering
+❌ <strong>Memory overhead</strong> - holds more results in memory during merge phase
+❌ <strong>Complexity</strong> - introduces concurrency concerns (timeouts, deadlocks, race conditions)</p>
+<h3 id="neutral">Neutral</h3>
+<p>⚠️ <strong>Database load increases</strong> - more concurrent queries, but each smaller
+⚠️ <strong>Requires configuration</strong> - worker count, timeouts, per-worker limits need tuning</p>
+<h2 id="safety-mitigations">Safety Mitigations</h2>
+<h3 id="1-global-semaphore-prevents-multi-user-deadlock">1. Global Semaphore (Prevents Multi-User Deadlock)</h3>
+<p><div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Limit TOTAL concurrent graph workers across ALL requests</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">_GRAPH_WORKER_SEMAPHORE</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Semaphore</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+</code></pre></div>
+Without this: 2 users × 8 workers each = 16 connections → locks out other API endpoints.</p>
+<h3 id="2-per-worker-result-limits">2. Per-Worker Result Limits</h3>
+<p><div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">LIMIT</span><span class="w"> </span><span class="p">{</span><span class="n">per_worker_limit</span><span class="p">}</span><span class="w">  </span><span class="err">--</span><span class="w"> </span><span class="n">Hard</span><span class="w"> </span><span class="k">limit</span><span class="w"> </span><span class="n">per</span><span class="w"> </span><span class="n">worker</span>
+</code></pre></div>
+Prevents hub nodes with 10,000 neighbors from causing memory explosions.</p>
+<h3 id="3-wall-clock-timeout">3. Wall-Clock Timeout</h3>
+<p><div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">deadline</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">+</span> <span class="n">timeout_seconds</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="c1"># Strictly bounded execution regardless of worker count</span>
+</code></pre></div>
+Guarantees queries complete within timeout, not just individual workers.</p>
+<h3 id="4-graceful-degradation">4. Graceful Degradation</h3>
+<p><div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>    <span class="n">neighbors</span> <span class="o">=</span> <span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>    <span class="n">all_neighbors</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">neighbors</span><span class="p">)</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="k">except</span> <span class="ne">TimeoutError</span><span class="p">:</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Worker failed, continuing with partial results&quot;</span><span class="p">)</span>
+</code></pre></div>
+Partial results acceptable for graph exploration - one slow worker doesn't fail entire query.</p>
+<h3 id="5-connection-pool-configuration">5. Connection Pool Configuration</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Increased from 10 to support parallel workers</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="bp">self</span><span class="o">.</span><span class="n">pool</span> <span class="o">=</span> <span class="n">psycopg2</span><span class="o">.</span><span class="n">pool</span><span class="o">.</span><span class="n">SimpleConnectionPool</span><span class="p">(</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>    <span class="mi">1</span><span class="p">,</span>   <span class="c1"># minconn</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>    <span class="mi">20</span><span class="p">,</span>  <span class="c1"># maxconn (8 workers + 2 buffer + main queries)</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>    <span class="o">...</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="p">)</span>
+</code></pre></div>
+<p><strong>Rule of Thumb:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>max_workers ≤ (connection_pool_size - 2)
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>max_workers = 8  (default safe with pool_size=20)
+</code></pre></div></p>
+<h3 id="6-parameter-binding-security">6. Parameter Binding (Security)</h3>
+<p><div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">seed</span><span class="p">.</span><span class="n">concept_id</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="err">$</span><span class="n">seed_ids</span><span class="w">  </span><span class="err">--</span><span class="w"> </span><span class="n">Parameterized</span>
+</code></pre></div>
+All queries use parameter binding to prevent Cypher injection, not f-string interpolation.</p>
+<h2 id="actual-performance-results-adr-071a">Actual Performance Results (ADR-071a)</h2>
+<p>Implementation testing revealed:</p>
+<table>
+<thead>
+<tr>
+<th>Workers</th>
+<th>Chunk Size</th>
+<th>Total Time</th>
+<th>Speedup</th>
+<th>Success Rate</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Baseline</td>
+<td>N/A</td>
+<td>4:21 (261s)</td>
+<td>1.0x</td>
+<td>-</td>
+</tr>
+<tr>
+<td><strong>1 worker</strong></td>
+<td>100</td>
+<td><strong>1:23 (83s)</strong></td>
+<td><strong>3.15x</strong> ✅</td>
+<td>100%</td>
+</tr>
+<tr>
+<td>2 workers</td>
+<td>20</td>
+<td>1:25 (85s)</td>
+<td>3.07x</td>
+<td>100%</td>
+</tr>
+<tr>
+<td>4 workers</td>
+<td>10</td>
+<td>2:02 (122s)</td>
+<td>2.14x</td>
+<td>100%</td>
+</tr>
+<tr>
+<td>8 workers</td>
+<td>5</td>
+<td>3:24 (204s)</td>
+<td>1.28x</td>
+<td>50%</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Critical Discovery:</strong> The 3x speedup comes from <strong>batched queries with IN clauses</strong>, NOT from parallelization. Parallelization adds overhead beyond 1-2 workers.</p>
+<p>The detailed analysis is the section above — the planned standalone "ADR-071a: Parallel Implementation Findings" was never split out from this ADR and the findings live inline here under <a href="#actual-performance-results-adr-071a">Actual Performance Results</a>.</p>
+<h2 id="configuration-management">Configuration Management</h2>
+<h3 id="database-first-following-adr-805049-pattern">Database-First (Following ADR-805/049 Pattern)</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1">-- Migration: Add parallel query configuration</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="k">ALTER</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">ai_extraction_config</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="k">ADD</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">parallel_query_max_workers</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="mi">8</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">    </span><span class="k">CHECK</span><span class="w"> </span><span class="p">(</span><span class="n">parallel_query_max_workers</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="n">parallel_query_max_workers</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="mi">32</span><span class="p">);</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="k">ADD</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">parallel_query_timeout_seconds</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="mi">30</span>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="w">    </span><span class="k">CHECK</span><span class="w"> </span><span class="p">(</span><span class="n">parallel_query_timeout_seconds</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="mi">5</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="n">parallel_query_timeout_seconds</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="mi">120</span><span class="p">);</span>
+</code></pre></div>
+<h3 id="loading-config">Loading Config</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">load_parallel_config</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">ParallelQueryConfig</span><span class="p">:</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Load configuration from database (ADR-805/049 pattern)&quot;&quot;&quot;</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>    <span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>        <span class="n">config</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">&quot;SELECT parallel_query_max_workers, ...&quot;</span><span class="p">)</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>        <span class="k">return</span> <span class="n">ParallelQueryConfig</span><span class="p">(</span>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>            <span class="n">max_workers</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;parallel_query_max_workers&#39;</span><span class="p">],</span>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>            <span class="n">timeout_seconds</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;parallel_query_timeout_seconds&#39;</span><span class="p">]</span>
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>        <span class="p">)</span>
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a>    <span class="k">except</span><span class="p">:</span>
+<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a>        <span class="k">return</span> <span class="n">ParallelQueryConfig</span><span class="p">()</span>  <span class="c1"># Fallback to defaults</span>
+</code></pre></div>
+<h2 id="alternatives-considered">Alternatives Considered</h2>
+<h3 id="option-a-postgresql-parallel-workers">Option A: PostgreSQL Parallel Workers</h3>
+<p><strong>Pros:</strong> Native parallelism
+<strong>Cons:</strong> Doesn't work with AGE Cypher queries (opaque function calls)
+<strong>Decision:</strong> Rejected - PostgreSQL can't see inside <code>ag_catalog.cypher()</code></p>
+<h3 id="option-b-asyncawait-asyncio">Option B: Async/Await (asyncio)</h3>
+<p><strong>Pros:</strong> Python-native async
+<strong>Cons:</strong> psycopg2 is blocking (would require migration to psycopg3 or aiopg)
+<strong>Decision:</strong> Rejected - too much refactoring for uncertain benefit</p>
+<h3 id="option-c-distributed-queue-celery">Option C: Distributed Queue (Celery)</h3>
+<p><strong>Pros:</strong> Battle-tested, scales horizontally
+<strong>Cons:</strong> Massive complexity, external dependencies (Redis/RabbitMQ)
+<strong>Decision:</strong> Rejected - overkill for current scale</p>
+<h3 id="option-d-graphql-dataloader-pattern">Option D: GraphQL DataLoader Pattern</h3>
+<p><strong>Pros:</strong> Batch + cache
+<strong>Cons:</strong> Designed for request-scoped batching, not multi-hop traversal
+<strong>Decision:</strong> Rejected - different use case</p>
+<h2 id="related-adrs">Related ADRs</h2>
+<ul>
+<li><strong><a href="../../ai-embeddings/ADR-813-polarity-axis-analysis/">ADR-813: Polarity Axis Analysis</a></strong> - The feature that exposed this performance issue</li>
+<li><strong><a href="../../ai-embeddings/ADR-810-rate-limiting-and-concurrency/">ADR-810: Rate Limiting and Concurrency</a></strong> - Semaphore pattern for resource limiting</li>
+<li><strong><a href="../../vocabulary-relationships/ADR-606-vocabulary-metadata-as-graph/">ADR-606: GraphQueryFacade</a></strong> - Namespace-safe query interface</li>
+</ul>
+<h2 id="references">References</h2>
+<ul>
+<li><strong>Issue #155:</strong> Polarity Candidate Discovery Optimization</li>
+<li><strong>PostgreSQL Parallel Query:</strong> https://www.postgresql.org/docs/current/how-parallel-query-works.html</li>
+<li><strong>Python ThreadPoolExecutor:</strong> https://docs.python.org/3/library/concurrent.futures.html</li>
+<li><strong>psycopg2 Connection Pooling:</strong> https://www.psycopg.org/docs/pool.html</li>
+</ul>
+<hr />
+<p><strong>Last Updated:</strong> 2025-12-04
+<strong>Implementation Status:</strong> Completed in PR #157
+<strong>Files Changed:</strong>
+- <code>api/api/lib/graph_parallelizer.py</code> (NEW - 475 lines)
+- <code>api/api/lib/polarity_axis.py</code> (enhanced with parallel discovery)
+- <code>api/api/lib/age_client.py</code> (connection pool increased to 20)</p>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": [], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

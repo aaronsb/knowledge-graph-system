@@ -1,0 +1,2584 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Multi-dimensional knowledge extraction system using Apache AGE">
+      
+      
+        <meta name="author" content="Knowledge Graph System Contributors">
+      
+      
+      
+        <link rel="prev" href="../computed-evidence/">
+      
+      
+        <link rel="next" href="../recursive-upsert/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Grounding and Epistemic Confidence - Knowledge Graph System</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#grounding-and-epistemic-confidence" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Knowledge Graph System" class="md-header__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Knowledge Graph System
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Grounding and Epistemic Confidence
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/aaronsb/knowledge-graph-system" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aaronsb/knowledge-graph-system
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Knowledge Graph System" class="md-nav__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Knowledge Graph System
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/aaronsb/knowledge-graph-system" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aaronsb/knowledge-graph-system
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Get Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Get Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/what-and-why/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What and Why
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/first-graph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your First Graph
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/first-query/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your First Query
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/mcp-quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Connect via MCP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/github-history/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mining a Git Repo
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-To
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How-To
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/ingest/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ingest Documents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/query/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explore and Query
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/epistemic-status/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Filter by Epistemic Status
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/polarity-axis/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Analyze a Polarity Axis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/fuse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Use the FUSE Drive
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/ai-providers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configure AI Providers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/embeddings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configure Embeddings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/extraction-quality/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Compare Extraction Quality
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/vocabulary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Consolidate Vocabulary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Self-Host
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Self-Host
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/quick-start/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/production/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Production Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/macvlan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dedicated IP (macvlan)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/tls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    TLS and Certificates
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/appliance-libvirt/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Appliance on libvirt/KVM
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security and Access
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/backup-restore/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backup and Restore
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/scheduled-jobs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scheduled Jobs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/upgrading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Upgrading
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explanation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Explanation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-it-works/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How It Works
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../computed-evidence/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Computed Evidence over Asserted Truth
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Grounding and Epistemic Confidence
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Grounding and Epistemic Confidence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-grounding-score" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The grounding score
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The grounding score">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-the-score-is-calculated" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How the score is calculated
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-confidence-dimension" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The confidence dimension
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The confidence dimension">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#semantic-diversity-and-echo-chambers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Semantic diversity and echo chambers
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-33-display-matrix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The 3×3 display matrix
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#epistemic-status-labels" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Epistemic status labels
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#single-source-content" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Single-source content
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contradictions-as-information" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contradictions as information
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#improving-grounding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Improving grounding
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        References
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../recursive-upsert/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Recursive Upsert
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../vocabulary-lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vocabulary Lifecycle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../storage-and-freshness/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Storage and Freshness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../worker-lanes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Worker Lanes and Concurrency
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../embedding-landscape/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Embedding Landscape
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../graph-program/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram DSL
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    REST API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/mcp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/mcp-session-context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Session Context
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/fuse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FUSE Driver
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/schema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Database Schema
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cypher/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cypher Patterns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/graph-program-spec/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram Specification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/graph-program-validation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram Validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/graph-program-security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/backup-object-spec/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backup Object Format
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Contributing
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/voice/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Prose & Voice Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/docstring-coverage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docstring Coverage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/test-suite/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Test Suite
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/INDEX/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-grounding-score" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The grounding score
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The grounding score">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-the-score-is-calculated" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How the score is calculated
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-confidence-dimension" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The confidence dimension
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The confidence dimension">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#semantic-diversity-and-echo-chambers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Semantic diversity and echo chambers
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-33-display-matrix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The 3×3 display matrix
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#epistemic-status-labels" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Epistemic status labels
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#single-source-content" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Single-source content
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contradictions-as-information" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contradictions as information
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#improving-grounding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Improving grounding
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        References
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="grounding-and-epistemic-confidence">Grounding and Epistemic Confidence</h1>
+<p>Grounding measures how well-supported a concept is across your corpus — not whether the concept is universally true. A concept with high grounding means your sources agree on it. A concept with low or negative grounding means your sources disagree, or too few have weighed in. The quality of grounding depends entirely on the quality and diversity of the sources you ingest.</p>
+<hr />
+<h2 id="the-grounding-score">The grounding score</h2>
+<p>Each concept carries a grounding score on a <strong>−1.0 to +1.0</strong> scale:</p>
+<table>
+<thead>
+<tr>
+<th>Score range</th>
+<th>Label</th>
+<th>What it means</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0.8 to 1.0</td>
+<td>Strongly supported</td>
+<td>Multiple sources agree strongly</td>
+</tr>
+<tr>
+<td>0.5 to 0.8</td>
+<td>Well supported</td>
+<td>Good evidence, sources confirm</td>
+</tr>
+<tr>
+<td>0.2 to 0.5</td>
+<td>Moderately supported</td>
+<td>Some evidence, room for uncertainty</td>
+</tr>
+<tr>
+<td>−0.2 to 0.2</td>
+<td>Mixed or insufficient</td>
+<td>Sources disagree, or too few sources</td>
+</tr>
+<tr>
+<td>−0.5 to −0.2</td>
+<td>Contested</td>
+<td>More contradiction than support</td>
+</tr>
+<tr>
+<td>−1.0 to −0.5</td>
+<td>Contradicted</td>
+<td>Strong evidence against</td>
+</tr>
+</tbody>
+</table>
+<p>The score reflects the balance of confirming versus contradicting evidence across sources, weighted by relationship strength. It does not reflect the volume of ingested text alone — a concept mentioned 500 times in the same document does not accumulate grounding the way a concept mentioned 50 times across 10 independent sources does.</p>
+<h3 id="how-the-score-is-calculated">How the score is calculated</h3>
+<p>Each concept-to-source relationship contributes evidence in one direction. The system tracks:</p>
+<ul>
+<li><strong>Agreement</strong>: sources that confirm the concept (shifts score positive)</li>
+<li><strong>Contradiction</strong>: sources that challenge it (shifts score negative)</li>
+<li><strong>Relationship strength</strong>: direct claims carry more weight than passing mentions</li>
+</ul>
+<p>When sources disagree, both sides are recorded. Grounding reflects the balance:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Source A: &quot;X causes Y&quot;        → +evidence
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>Source B: &quot;X does not cause Y&quot; → −evidence
+</code></pre></div>
+<p>A concept supported more than contradicted carries positive grounding. A concept contradicted more than supported carries negative grounding. Equal tension lands near zero.</p>
+<hr />
+<h2 id="the-confidence-dimension">The confidence dimension</h2>
+<p>Grounding tells you the direction of evidence. Confidence tells you how much evidence exists to make that direction meaningful.</p>
+<p>A concept with grounding 0.8 from a single passing mention is not the same as one with grounding 0.8 from 15 independent sources. The confidence dimension captures this distinction.</p>
+<p>Confidence is computed from three signals gathered from the concept's graph neighborhood:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">composite</span> <span class="o">=</span> <span class="p">(</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    <span class="n">relationship_count</span> <span class="o">/</span> <span class="mf">10.0</span> <span class="o">+</span>    <span class="c1"># 10 relationships → 1.0 contribution</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="n">source_count</span> <span class="o">/</span> <span class="mf">5.0</span> <span class="o">+</span>           <span class="c1"># 5 sources → 1.0 contribution</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="n">evidence_count</span> <span class="o">/</span> <span class="mf">10.0</span> <span class="o">+</span>        <span class="c1"># 10 evidence instances → 1.0 contribution</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="n">relationship_type_diversity</span>    <span class="c1"># 0–1 (unique edge types / total edges)</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="p">)</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="n">confidence_score</span> <span class="o">=</span> <span class="n">composite</span> <span class="o">/</span> <span class="p">(</span><span class="n">composite</span> <span class="o">+</span> <span class="mf">2.0</span><span class="p">)</span>
+</code></pre></div>
+<p>The saturation function (<code>composite / (composite + k)</code>) reflects diminishing returns: the first source contributes more information than the fiftieth. A concept with two sources and a concept with two hundred are not proportionally different in reliability — the function flattens toward 1.0 as evidence accumulates.</p>
+<p>This prevents "truth inflation" where a concept's importance in one corpus makes it appear epistemically stronger than a lesser-cited concept that has better cross-domain corroboration.</p>
+<p>Three confidence levels map from these scores:</p>
+<table>
+<thead>
+<tr>
+<th>Level</th>
+<th>Thresholds</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Confident</strong></td>
+<td>≥5 relationships, ≥3 sources, ≥3 evidence instances</td>
+</tr>
+<tr>
+<td><strong>Tentative</strong></td>
+<td>≥2 relationships, or ≥1 source, or ≥1 evidence instance</td>
+</tr>
+<tr>
+<td><strong>Insufficient</strong></td>
+<td>Below tentative thresholds</td>
+</tr>
+</tbody>
+</table>
+<h3 id="semantic-diversity-and-echo-chambers">Semantic diversity and echo chambers</h3>
+<p>Relationship type diversity matters. A concept supported by five paragraphs from the same document, all connected by identical edge types, has lower diversity than a concept supported by sources from different domains, connected by varied relationship types (SUPPORTS, VALIDATES, IMPLIES, CONFIRMS).</p>
+<p>Authenticated diversity combines grounding direction with semantic diversity to distinguish "diverse support" from "diverse contradiction." To avoid false signals from near-zero grounding values, the system applies a saturation step before multiplying:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>saturated_grounding = grounding / (|grounding| + 0.3)
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>authenticated_diversity = saturated_grounding × diversity
+</code></pre></div>
+<p>A concept with grounding −0.017 (essentially unclear) and 46% diversity would naively appear as "diverse contradiction." The saturation step reduces the contribution to near zero, which is the honest answer: direction is unclear, so diversity cannot amplify a signal that doesn't exist.</p>
+<hr />
+<h2 id="the-33-display-matrix">The 3×3 display matrix</h2>
+<p>Grounding and confidence combine into a single display label that surfaces in the CLI, the web UI, and the MCP tool responses:</p>
+<table>
+<thead>
+<tr>
+<th>Grounding \ Confidence</th>
+<th>Confident</th>
+<th>Tentative</th>
+<th>Insufficient</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Positive</strong> (≥0.2)</td>
+<td>Well-supported</td>
+<td>Some support (limited data)</td>
+<td>Possibly supported (needs exploration)</td>
+</tr>
+<tr>
+<td><strong>Neutral</strong> (−0.2 to 0.2)</td>
+<td>Balanced perspectives</td>
+<td>Unclear</td>
+<td>Unexplored</td>
+</tr>
+<tr>
+<td><strong>Negative</strong> (≤−0.2)</td>
+<td>Contested</td>
+<td>Possibly contested</td>
+<td>Unknown (needs exploration)</td>
+</tr>
+</tbody>
+</table>
+<p>"Unexplored" does not mean the concept is wrong. It means the system cannot determine direction from the current corpus — a concept with one source is epistemically opaque. More sources may shift it in either direction.</p>
+<hr />
+<h2 id="epistemic-status-labels">Epistemic status labels</h2>
+<p>Beyond numeric grounding, concepts and vocabulary relationships carry a categorical epistemic status used for filtering queries:</p>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Grounding range</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>WELL_GROUNDED</td>
+<td>&gt; 0.8</td>
+<td>Multiple sources in strong agreement</td>
+</tr>
+<tr>
+<td>MIXED_GROUNDING</td>
+<td>0.15–0.8</td>
+<td>Variable evidence, contested</td>
+</tr>
+<tr>
+<td>WEAK_GROUNDING</td>
+<td>0.0–0.15</td>
+<td>Weak positive evidence, emerging</td>
+</tr>
+<tr>
+<td>POORLY_GROUNDED</td>
+<td>−0.5–0.0</td>
+<td>Weak negative evidence, uncertain</td>
+</tr>
+<tr>
+<td>CONTRADICTED</td>
+<td>&lt; −0.5</td>
+<td>Strong evidence against</td>
+</tr>
+<tr>
+<td>HISTORICAL</td>
+<td>—</td>
+<td>Temporal vocabulary (WAS, FORMER)</td>
+</tr>
+<tr>
+<td>INSUFFICIENT_DATA</td>
+<td>—</td>
+<td>Fewer than 3 measurements</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># List vocabulary types by epistemic status</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>kg<span class="w"> </span>vocab<span class="w"> </span>epistemic-status<span class="w"> </span>list<span class="w"> </span>--status<span class="w"> </span>MIXED_GROUNDING
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># Show detail for a specific type</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>kg<span class="w"> </span>vocab<span class="w"> </span>epistemic-status<span class="w"> </span>show<span class="w"> </span>SUPPORTS
+</code></pre></div>
+<p>See <a href="../../how-to/epistemic-status/">Filter by Epistemic Status</a> for query patterns.</p>
+<hr />
+<h2 id="single-source-content">Single-source content</h2>
+<p>When a concept appears in only one source, grounding returns near zero — and this is the correct answer.</p>
+<p>Triangulating a position requires at least two vantage points. With one source, there is no axis: no corroboration, no contradiction, just an assertion. The concept might be true, might be false — the graph cannot determine which. "Unclear [low confidence]" is the most honest thing the system can say.</p>
+<p>What single-source content does communicate:</p>
+<ol>
+<li>The concept has been articulated and extracted into the graph.</li>
+<li>It is a candidate for further research — more sources may corroborate or challenge it.</li>
+<li>Until corroborated, treat the concept as a hypothesis rather than a finding.</li>
+</ol>
+<p>"Boosting" single-source concepts by source type (treating an ADR as "authoritative" and awarding it extra grounding) would manufacture certainty where none exists. The graph treats all sources uniformly so that genuine corroboration — not declaration of authority — determines grounding.</p>
+<hr />
+<h2 id="contradictions-as-information">Contradictions as information</h2>
+<p>Contradictions are not errors. A concept with negative grounding, or with both supporting and contradicting edges, reveals:</p>
+<ul>
+<li>Areas where your sources disagree (domain disputes, evolving knowledge)</li>
+<li>Context dependence (the same claim may be true in one condition, false in another)</li>
+<li>Temporal shifts (older sources contradict newer ones)</li>
+</ul>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Search for a contested topic — note grounding sign in results</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>kg<span class="w"> </span>search<span class="w"> </span><span class="s2">&quot;contested claim&quot;</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="c1"># Inspect both sides</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>kg<span class="w"> </span>concept<span class="w"> </span>show<span class="w"> </span>&lt;concept-id&gt;
+</code></pre></div>
+<p>The evidence section on a concept shows which sources land on each side:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>Evidence:
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>  [+] &quot;Research by Smith confirms X...&quot;
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>  [+] &quot;Jones et al. demonstrated X under conditions Y...&quot;
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>  [-] &quot;Brown&#39;s study found X does not hold when Z...&quot;
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>  [-] &quot;Recent work contradicts earlier findings...&quot;
+</code></pre></div>
+<p>When evaluating contradictions: source count is not the only factor. Recency, study rigor, and whether different conditions explain the disagreement all matter. The graph surfaces the balance; the reader interprets the context.</p>
+<hr />
+<h2 id="improving-grounding">Improving grounding</h2>
+<p>Grounding improves as you ingest more evidence:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># Add additional sources to an ontology</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>kg<span class="w"> </span>ingest<span class="w"> </span>additional-sources/*.pdf<span class="w"> </span>--ontology<span class="w"> </span>research
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="c1"># Inspect what an ontology currently contains</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>kg<span class="w"> </span>ontology<span class="w"> </span>info<span class="w"> </span>research
+</code></pre></div>
+<p>If you maintain separate ontologies for different domains (medical, legal, news), grounding operates per-ontology. A concept may be well-grounded in one corpus and contradicted in another — which is the correct answer if your sources disagree across domains.</p>
+<hr />
+<h2 id="references">References</h2>
+<ul>
+<li>ADR-808: Probabilistic Truth Convergence (grounding direction)</li>
+<li>ADR-503: Semantic Diversity as Authenticity Signal</li>
+<li>Implementation: <code>api/app/services/confidence_analyzer.py</code></li>
+</ul>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,2926 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Multi-dimensional knowledge extraction system using Apache AGE">
+      
+      
+        <meta name="author" content="Knowledge Graph System Contributors">
+      
+      
+      
+        <link rel="prev" href="../security/">
+      
+      
+        <link rel="next" href="../scheduled-jobs/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Backup and Restore - Knowledge Graph System</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#backup-and-restore" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Knowledge Graph System" class="md-header__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Knowledge Graph System
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Backup and Restore
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/aaronsb/knowledge-graph-system" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aaronsb/knowledge-graph-system
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Knowledge Graph System" class="md-nav__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Knowledge Graph System
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/aaronsb/knowledge-graph-system" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aaronsb/knowledge-graph-system
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Get Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Get Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/what-and-why/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What and Why
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/first-graph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your First Graph
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/first-query/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your First Query
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/mcp-quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Connect via MCP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/github-history/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mining a Git Repo
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-To
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How-To
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/ingest/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ingest Documents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/query/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explore and Query
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/epistemic-status/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Filter by Epistemic Status
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/polarity-axis/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Analyze a Polarity Axis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/fuse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Use the FUSE Drive
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/ai-providers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configure AI Providers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/embeddings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configure Embeddings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/extraction-quality/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Compare Extraction Quality
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/vocabulary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Consolidate Vocabulary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Self-Host
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Self-Host
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../quick-start/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../production/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Production Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../macvlan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dedicated IP (macvlan)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    TLS and Certificates
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../appliance-libvirt/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Appliance on libvirt/KVM
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security and Access
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backup and Restore
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backup and Restore
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-gets-backed-up" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What gets backed up
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#back-up-the-database" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Back up the database
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Back up the database">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#via-the-operator-shell-recommended" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Via the operator shell (recommended)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#via-docker-exec-without-entering-the-shell" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Via docker exec without entering the shell
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#manual-pg_dump-advanced" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Manual pg_dump (advanced)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#via-the-cli-application-level" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Via the CLI (application-level)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#restore-the-database" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Restore the database
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Restore the database">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#via-the-operator-shell" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Via the operator shell
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#via-docker-exec" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Via docker exec
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#manual-pg_restore-advanced" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Manual pg_restore (advanced)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#via-the-cli" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Via the CLI
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cross-ontology-integrity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cross-ontology integrity
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#back-up-garage-document-storage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Back up Garage document storage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#automated-backups" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Automated backups
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#disaster-recovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Disaster recovery
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#test-your-backups" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test your backups
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#schema-migrations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Schema migrations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Schema migrations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-it-runs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How it runs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#check-current-migration-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Check current migration state
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fresh-database-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fresh database flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#writing-a-migration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Writing a migration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#version-conflicts-parallel-development" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Version conflicts (parallel development)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rollback" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rollback
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#backup-before-migrating" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backup before migrating
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Related
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../scheduled-jobs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scheduled Jobs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../upgrading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Upgrading
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explanation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Explanation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/how-it-works/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How It Works
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/computed-evidence/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Computed Evidence over Asserted Truth
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/grounding/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Grounding and Epistemic Confidence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/recursive-upsert/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Recursive Upsert
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/vocabulary-lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vocabulary Lifecycle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/storage-and-freshness/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Storage and Freshness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/worker-lanes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Worker Lanes and Concurrency
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/embedding-landscape/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Embedding Landscape
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/graph-program/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram DSL
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    REST API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/mcp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/mcp-session-context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Session Context
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/fuse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FUSE Driver
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/schema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Database Schema
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cypher/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cypher Patterns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/graph-program-spec/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram Specification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/graph-program-validation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram Validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/graph-program-security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/backup-object-spec/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backup Object Format
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Contributing
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/voice/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Prose & Voice Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/docstring-coverage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docstring Coverage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/test-suite/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Test Suite
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/INDEX/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-gets-backed-up" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What gets backed up
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#back-up-the-database" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Back up the database
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Back up the database">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#via-the-operator-shell-recommended" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Via the operator shell (recommended)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#via-docker-exec-without-entering-the-shell" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Via docker exec without entering the shell
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#manual-pg_dump-advanced" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Manual pg_dump (advanced)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#via-the-cli-application-level" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Via the CLI (application-level)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#restore-the-database" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Restore the database
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Restore the database">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#via-the-operator-shell" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Via the operator shell
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#via-docker-exec" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Via docker exec
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#manual-pg_restore-advanced" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Manual pg_restore (advanced)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#via-the-cli" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Via the CLI
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cross-ontology-integrity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cross-ontology integrity
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#back-up-garage-document-storage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Back up Garage document storage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#automated-backups" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Automated backups
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#disaster-recovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Disaster recovery
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#test-your-backups" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test your backups
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#schema-migrations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Schema migrations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Schema migrations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-it-runs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How it runs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#check-current-migration-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Check current migration state
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fresh-database-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fresh database flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#writing-a-migration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Writing a migration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#version-conflicts-parallel-development" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Version conflicts (parallel development)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rollback" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rollback
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#backup-before-migrating" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backup before migrating
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Related
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="backup-and-restore">Backup and Restore</h1>
+<p>This page covers backing up and restoring a Kappa Graph installation: the PostgreSQL database (graph, config, users) and the Garage document store. It also explains how schema migrations work and how to apply them manually when needed.</p>
+<hr />
+<h2 id="what-gets-backed-up">What gets backed up</h2>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Contains</th>
+<th>Method</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PostgreSQL 18 + Apache AGE 1.7.0</td>
+<td>Concepts, relationships, ontologies, users, config, migration state</td>
+<td><code>pg_dump --format=custom</code></td>
+</tr>
+<tr>
+<td>Garage S3</td>
+<td>Original source documents</td>
+<td>S3-compatible sync or filesystem copy</td>
+</tr>
+</tbody>
+</table>
+<p>PostgreSQL backups use the custom binary format because Apache AGE graph data is OID-coupled to the schema; <code>pg_dump</code>/<code>pg_restore</code> handles that correctly. A plain SQL dump is not safe for cross-version restores of AGE graphs — see the testing section below.</p>
+<hr />
+<h2 id="back-up-the-database">Back up the database</h2>
+<h3 id="via-the-operator-shell-recommended">Via the operator shell (recommended)</h3>
+<p>Backup and restore scripts run inside the operator container, which has the correct <code>pg_dump</code> version and credentials pre-configured.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>./operator.sh<span class="w"> </span>shell
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>/workspace/operator/database/backup-database.sh<span class="w"> </span>-y
+</code></pre></div>
+<p>The dump lands at <code>./backups/backup_knowledge_graph_&lt;timestamp&gt;.dump</code> on the host. The host <code>./backups/</code> directory is mounted into the operator at <code>/project/backups</code>.</p>
+<h3 id="via-docker-exec-without-entering-the-shell">Via <code>docker exec</code> without entering the shell</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-it<span class="w"> </span>kg-operator<span class="w"> </span>/workspace/operator/database/backup-database.sh<span class="w"> </span>-y
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="c1"># Custom output path</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-it<span class="w"> </span>kg-operator<span class="w"> </span>/workspace/operator/database/backup-database.sh<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">  </span>-y<span class="w"> </span>-o<span class="w"> </span>/project/backups/my-backup.dump
+</code></pre></div>
+<h3 id="manual-pg_dump-advanced">Manual pg_dump (advanced)</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Resolve the postgres container name</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nv">PG</span><span class="o">=</span><span class="k">$(</span>docker<span class="w"> </span>ps<span class="w"> </span>--format<span class="w"> </span><span class="s1">&#39;{{.Names}}&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>postgres<span class="w"> </span><span class="p">|</span><span class="w"> </span>head<span class="w"> </span>-1<span class="k">)</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$PG</span><span class="s2">&quot;</span><span class="w"> </span>pg_dump<span class="w"> </span>-U<span class="w"> </span>admin<span class="w"> </span>-d<span class="w"> </span>knowledge_graph<span class="w"> </span>--format<span class="o">=</span>custom<span class="w"> </span>&gt;<span class="w"> </span>backup.dump
+</code></pre></div>
+<h3 id="via-the-cli-application-level">Via the CLI (application-level)</h3>
+<p>The <code>kg admin</code> commands produce a JSON-format backup of graph data through the API (ADR-712). These are useful for sharing ontologies or protecting against expensive re-ingestion costs, but they are not a substitute for a full <code>pg_dump</code> for disaster recovery.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Full database backup (non-interactive)</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>backup<span class="w"> </span>--type<span class="w"> </span>full
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># Single-ontology backup</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>backup<span class="w"> </span>--type<span class="w"> </span>ontology<span class="w"> </span>--ontology<span class="w"> </span><span class="s2">&quot;My Ontology&quot;</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="c1"># List available backups</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>kg<span class="w"> </span>admin<span class="w"> </span>list-backups
+</code></pre></div>
+<hr />
+<h2 id="restore-the-database">Restore the database</h2>
+<h3 id="via-the-operator-shell">Via the operator shell</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>./operator.sh<span class="w"> </span>shell
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>/workspace/operator/database/restore-database.sh<span class="w"> </span>/project/backups/&lt;file&gt;.dump
+</code></pre></div>
+<h3 id="via-docker-exec">Via <code>docker exec</code></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-it<span class="w"> </span>kg-operator<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span>/workspace/operator/database/restore-database.sh<span class="w"> </span>/project/backups/&lt;file&gt;.dump
+</code></pre></div>
+<h3 id="manual-pg_restore-advanced">Manual pg_restore (advanced)</h3>
+<p>AGE graphs are OID-coupled. Restoring across PostgreSQL major versions requires care — see ADR-205 for details.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nv">PG</span><span class="o">=</span><span class="k">$(</span>docker<span class="w"> </span>ps<span class="w"> </span>--format<span class="w"> </span><span class="s1">&#39;{{.Names}}&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>postgres<span class="w"> </span><span class="p">|</span><span class="w"> </span>head<span class="w"> </span>-1<span class="k">)</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-i<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$PG</span><span class="s2">&quot;</span><span class="w"> </span>pg_restore<span class="w"> </span>-U<span class="w"> </span>admin<span class="w"> </span>-d<span class="w"> </span>knowledge_graph<span class="w"> </span>--clean<span class="w"> </span>&lt;<span class="w"> </span>backup.dump
+</code></pre></div>
+<h3 id="via-the-cli">Via the CLI</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># Restore from a JSON backup (requires admin auth; prompts for password)</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>restore<span class="w"> </span>--file<span class="w"> </span>&lt;backup-file&gt;
+</code></pre></div>
+<p>CLI restores validate integrity automatically after loading. If cross-ontology relationship targets are missing, the system offers repair options (prune dangling edges, stitch from instances, or defer).</p>
+<hr />
+<h2 id="cross-ontology-integrity">Cross-ontology integrity</h2>
+<p>Ontology-scoped backups can leave dangling relationship targets if the backup does not include every ontology the restored concepts reference. The CLI backup command reports this before writing the file:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>Relationship Integrity:
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>  Internal: 10/14
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>  External: 4/14 (28.6%)
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>⚠ Restoring this backup may create dangling references!
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>  Consider one of these strategies:
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>    1. Restore into a database that already has these dependencies
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>    2. Use --prune-external to skip external relationships
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>    3. Back up dependent ontologies together
+</code></pre></div>
+<p><strong>Full database backup</strong> (<code>--type full</code>) avoids this entirely. For partial restores, back up all mutually-dependent ontologies together and restore dependencies first.</p>
+<hr />
+<h2 id="back-up-garage-document-storage">Back up Garage document storage</h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># AWS CLI pointed at the local Garage endpoint</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>aws<span class="w"> </span>--endpoint-url<span class="w"> </span>http://localhost:3900<span class="w"> </span>s3<span class="w"> </span>sync<span class="w"> </span>s3://kg-storage<span class="w"> </span>./garage-backup/
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1"># rclone</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>rclone<span class="w"> </span>sync<span class="w"> </span>garage:kg-storage<span class="w"> </span>./garage-backup/
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="c1"># Filesystem copy (when Garage is stopped)</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>cp<span class="w"> </span>-r<span class="w"> </span>/srv/docker/data/knowledge-graph/garage<span class="w"> </span>./garage-backup/
+</code></pre></div>
+<hr />
+<h2 id="automated-backups">Automated backups</h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>crontab<span class="w"> </span>-e
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="c1"># Daily backup at 2 AM</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="m">0</span><span class="w"> </span><span class="m">2</span><span class="w"> </span>*<span class="w"> </span>*<span class="w"> </span>*<span class="w"> </span>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>kg-operator<span class="w"> </span>/workspace/operator/database/backup-database.sh<span class="w"> </span>-y
+</code></pre></div>
+<p>Clean up old dumps:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># Keep last 7 days</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>find<span class="w"> </span>./backups<span class="w"> </span>-name<span class="w"> </span><span class="s2">&quot;*.dump&quot;</span><span class="w"> </span>-mtime<span class="w"> </span>+7<span class="w"> </span>-delete
+</code></pre></div>
+<hr />
+<h2 id="disaster-recovery">Disaster recovery</h2>
+<p>Full recovery from bare metal:</p>
+<ol>
+<li>
+<p><strong>Install Kappa Graph:</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/aaronsb/knowledge-graph-system.git
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="nb">cd</span><span class="w"> </span>knowledge-graph-system
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>./operator.sh<span class="w"> </span>init<span class="w"> </span>--headless<span class="w"> </span>...
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Stop services:</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>./operator.sh<span class="w"> </span>stop
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Restore database:</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-it<span class="w"> </span>kg-operator<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="w">  </span>/workspace/operator/database/restore-database.sh<span class="w"> </span>/project/backups/&lt;file&gt;.dump
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Restore Garage data:</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>cp<span class="w"> </span>-r<span class="w"> </span>/path/to/garage-backup/*<span class="w"> </span>/srv/docker/data/knowledge-graph/garage/
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Start services:</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>./operator.sh<span class="w"> </span>start
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Verify:</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>./operator.sh<span class="w"> </span>status
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>kg<span class="w"> </span>health
+</code></pre></div></p>
+</li>
+</ol>
+<hr />
+<h2 id="test-your-backups">Test your backups</h2>
+<p>Test restores using an image that includes Apache AGE. The stock <code>postgres:18</code> image does not have the AGE extension; <code>apache/age</code> does.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="c1"># Spin up a test instance</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>docker<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span>--name<span class="w"> </span>backup-test<span class="w"> </span>-e<span class="w"> </span><span class="nv">POSTGRES_PASSWORD</span><span class="o">=</span><span class="nb">test</span><span class="w"> </span>apache/age:release_PG18_1.7.0
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="c1"># Restore the custom-format dump</span>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-i<span class="w"> </span>backup-test<span class="w"> </span>pg_restore<span class="w"> </span>-U<span class="w"> </span>postgres<span class="w"> </span>-d<span class="w"> </span>postgres<span class="w"> </span>--create<span class="w"> </span>&lt;<span class="w"> </span>backup.dump
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a>
+<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a><span class="c1"># Verify AGE graphs loaded</span>
+<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>backup-test<span class="w"> </span>psql<span class="w"> </span>-U<span class="w"> </span>postgres<span class="w"> </span>-d<span class="w"> </span>knowledge_graph<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a><span class="w">  </span>-c<span class="w"> </span><span class="s2">&quot;SELECT count(*) FROM ag_catalog.ag_graph;&quot;</span>
+<a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a>
+<a id="__codelineno-18-11" name="__codelineno-18-11" href="#__codelineno-18-11"></a><span class="c1"># Tear down</span>
+<a id="__codelineno-18-12" name="__codelineno-18-12" href="#__codelineno-18-12"></a>docker<span class="w"> </span>rm<span class="w"> </span>-f<span class="w"> </span>backup-test
+</code></pre></div>
+<hr />
+<h2 id="schema-migrations">Schema migrations</h2>
+<p>Kappa Graph manages schema evolution through numbered SQL migration files in <code>schema/migrations/</code>. The migration runner tracks applied versions in the <code>public.schema_migrations</code> table, applies pending files in order, and wraps each migration in a transaction so a failure rolls back automatically.</p>
+<h3 id="how-it-runs">How it runs</h3>
+<p><code>./operator.sh start</code> runs pending migrations automatically before the API starts. You can also run the migration script directly:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="c1"># Preview pending migrations (no changes)</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>./operator/database/migrate-db.sh<span class="w"> </span>--dry-run
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="c1"># Apply all pending migrations with confirmation</span>
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a>./operator/database/migrate-db.sh
+<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>
+<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a><span class="c1"># Apply without confirmation (CI/CD)</span>
+<a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a>./operator/database/migrate-db.sh<span class="w"> </span>-y
+<a id="__codelineno-19-9" name="__codelineno-19-9" href="#__codelineno-19-9"></a>
+<a id="__codelineno-19-10" name="__codelineno-19-10" href="#__codelineno-19-10"></a><span class="c1"># Verbose: show SQL as it executes</span>
+<a id="__codelineno-19-11" name="__codelineno-19-11" href="#__codelineno-19-11"></a>./operator/database/migrate-db.sh<span class="w"> </span>-y<span class="w"> </span>--verbose
+</code></pre></div>
+<h3 id="check-current-migration-state">Check current migration state</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>knowledge-graph-postgres<span class="w"> </span>psql<span class="w"> </span>-U<span class="w"> </span>admin<span class="w"> </span>-d<span class="w"> </span>knowledge_graph<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="w">  </span>-c<span class="w"> </span><span class="s2">&quot;SELECT version, name, applied_at FROM public.schema_migrations ORDER BY version;&quot;</span>
+</code></pre></div>
+<p>The baseline (<code>00_baseline.sql</code>) seeds the table at version 1. Migrations are numbered sequentially from 001. As of this writing, migrations run through 078; run <code>ls schema/migrations/ | sort</code> to see the current set.</p>
+<h3 id="fresh-database-flow">Fresh database flow</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>docker-compose up -d
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>  → PostgreSQL runs schema/00_baseline.sql
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>  → Creates all tables, indexes, functions
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a>  → Records version 1 (&#39;baseline&#39;) in schema_migrations
+<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a>  → migrate-db.sh applies any pending numbered migrations
+</code></pre></div>
+<h3 id="writing-a-migration">Writing a migration</h3>
+<p>Every migration file follows this structure:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="c1">-- Migration: 003_add_user_preferences</span>
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="c1">-- Description: Add user preference storage</span>
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a><span class="c1">-- Date: YYYY-MM-DD</span>
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a>
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a><span class="k">BEGIN</span><span class="p">;</span>
+<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a>
+<a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="k">IF</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">user_preferences</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a><span class="w">    </span><span class="n">user_id</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="w"> </span><span class="k">REFERENCES</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">users</span><span class="p">(</span><span class="n">id</span><span class="p">)</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">DELETE</span><span class="w"> </span><span class="k">CASCADE</span><span class="p">,</span>
+<a id="__codelineno-22-9" name="__codelineno-22-9" href="#__codelineno-22-9"></a><span class="w">    </span><span class="n">preferences</span><span class="w"> </span><span class="n">JSONB</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="s1">&#39;{}&#39;</span><span class="p">::</span><span class="n">jsonb</span><span class="p">,</span>
+<a id="__codelineno-22-10" name="__codelineno-22-10" href="#__codelineno-22-10"></a><span class="w">    </span><span class="n">updated_at</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="n">NOW</span><span class="p">()</span>
+<a id="__codelineno-22-11" name="__codelineno-22-11" href="#__codelineno-22-11"></a><span class="p">);</span>
+<a id="__codelineno-22-12" name="__codelineno-22-12" href="#__codelineno-22-12"></a>
+<a id="__codelineno-22-13" name="__codelineno-22-13" href="#__codelineno-22-13"></a><span class="c1">-- Required: record this migration or it will be re-applied on next run</span>
+<a id="__codelineno-22-14" name="__codelineno-22-14" href="#__codelineno-22-14"></a><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="k">public</span><span class="p">.</span><span class="n">schema_migrations</span><span class="w"> </span><span class="p">(</span><span class="k">version</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="p">)</span>
+<a id="__codelineno-22-15" name="__codelineno-22-15" href="#__codelineno-22-15"></a><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;add_user_preferences&#39;</span><span class="p">)</span>
+<a id="__codelineno-22-16" name="__codelineno-22-16" href="#__codelineno-22-16"></a><span class="k">ON</span><span class="w"> </span><span class="n">CONFLICT</span><span class="w"> </span><span class="p">(</span><span class="k">version</span><span class="p">)</span><span class="w"> </span><span class="k">DO</span><span class="w"> </span><span class="k">NOTHING</span><span class="p">;</span>
+<a id="__codelineno-22-17" name="__codelineno-22-17" href="#__codelineno-22-17"></a>
+<a id="__codelineno-22-18" name="__codelineno-22-18" href="#__codelineno-22-18"></a><span class="k">COMMIT</span><span class="p">;</span>
+</code></pre></div>
+<p>Key rules:</p>
+<ul>
+<li>Use <code>IF NOT EXISTS</code> / <code>IF EXISTS</code> in all DDL so migrations are safe to re-run.</li>
+<li>Always wrap in <code>BEGIN</code>/<code>COMMIT</code>. PostgreSQL's transactional DDL rolls back the entire migration on any error.</li>
+<li>Always insert into <code>schema_migrations</code> before <code>COMMIT</code>. Omitting this causes the migration to run again on the next invocation.</li>
+<li>One migration = one logical change. Do not combine unrelated features.</li>
+</ul>
+<h3 id="version-conflicts-parallel-development">Version conflicts (parallel development)</h3>
+<p>If two branches both create migration 003, the second developer to merge renames their file to 004 and updates the version in the <code>INSERT</code> statement. Coordinate via git merge/rebase.</p>
+<h3 id="rollback">Rollback</h3>
+<p>The system is forward-only. To reverse a migration, write a new migration that undoes the change. This avoids the data-loss risk of automatic rollback.</p>
+<h3 id="backup-before-migrating">Backup before migrating</h3>
+<p>Take a full <code>pg_dump</code> before applying migrations to production:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-it<span class="w"> </span>kg-operator<span class="w"> </span>/workspace/operator/database/backup-database.sh<span class="w"> </span>-y
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>./operator/database/migrate-db.sh<span class="w"> </span>-y
+</code></pre></div>
+<p>The <code>schema_migrations</code> table is included in every <code>pg_dump</code>, so a restored database knows exactly which migrations are applied and which are pending.</p>
+<hr />
+<h2 id="related">Related</h2>
+<ul>
+<li><a href="../../architecture/INDEX/">ADR-210: Database Schema Migration Management</a></li>
+<li><a href="../../architecture/INDEX/">ADR-205: AGE graph OID coupling across PostgreSQL major versions</a></li>
+<li><a href="../../reference/backup-object-spec/">Backup Object Format</a></li>
+<li><a href="../upgrading/">Upgrading</a></li>
+</ul>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

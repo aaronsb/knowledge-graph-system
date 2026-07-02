@@ -1,0 +1,2741 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Multi-dimensional knowledge extraction system using Apache AGE">
+      
+      
+        <meta name="author" content="Knowledge Graph System Contributors">
+      
+      
+      
+        <link rel="prev" href="../grounding/">
+      
+      
+        <link rel="next" href="../vocabulary-lifecycle/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Recursive Upsert - Knowledge Graph System</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#recursive-upsert" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Knowledge Graph System" class="md-header__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Knowledge Graph System
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Recursive Upsert
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/aaronsb/knowledge-graph-system" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aaronsb/knowledge-graph-system
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Knowledge Graph System" class="md-nav__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Knowledge Graph System
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/aaronsb/knowledge-graph-system" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aaronsb/knowledge-graph-system
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Get Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Get Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/what-and-why/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What and Why
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/first-graph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your First Graph
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/first-query/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your First Query
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/mcp-quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Connect via MCP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/github-history/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mining a Git Repo
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-To
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How-To
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/ingest/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ingest Documents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/query/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explore and Query
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/epistemic-status/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Filter by Epistemic Status
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/polarity-axis/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Analyze a Polarity Axis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/fuse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Use the FUSE Drive
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/ai-providers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configure AI Providers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/embeddings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configure Embeddings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/extraction-quality/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Compare Extraction Quality
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/vocabulary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Consolidate Vocabulary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Self-Host
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Self-Host
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/quick-start/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/production/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Production Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/macvlan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dedicated IP (macvlan)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/tls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    TLS and Certificates
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/appliance-libvirt/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Appliance on libvirt/KVM
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security and Access
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/backup-restore/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backup and Restore
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/scheduled-jobs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scheduled Jobs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/upgrading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Upgrading
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explanation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Explanation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-it-works/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How It Works
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../computed-evidence/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Computed Evidence over Asserted Truth
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../grounding/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Grounding and Epistemic Confidence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Recursive Upsert
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Recursive Upsert
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#why-merging-is-the-problem" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why merging is the problem
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#concept-matching-a-cascade-of-four-stages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Concept matching: a cascade of four stages
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Concept matching: a cascade of four stages">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#stage-1-exact-id-match" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stage 1: Exact ID match
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stage-2-two-tier-vector-similarity-search" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stage 2: Two-tier vector similarity search
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stage-3-create-new-concept" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stage 3: Create new concept
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stage-4-evidence-accumulation-always" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stage 4: Evidence accumulation (always)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-the-graph-learns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How the graph learns
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#relationship-type-categorization-the-edge-vocabulary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Relationship-type categorization: the edge vocabulary
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Relationship-type categorization: the edge vocabulary">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#discovery-during-ingestion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Discovery during ingestion
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#automatic-categorization-adr-605" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Automatic categorization (ADR-605)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#confidence-thresholds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Confidence thresholds
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-gets-written" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What gets written
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#feedback-loops" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Feedback loops
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trade-offs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trade-offs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#architectural-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architectural layer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#operational-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Operational commands
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related-adrs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Related ADRs
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../vocabulary-lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vocabulary Lifecycle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../storage-and-freshness/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Storage and Freshness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../worker-lanes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Worker Lanes and Concurrency
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../embedding-landscape/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Embedding Landscape
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../graph-program/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram DSL
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    REST API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/mcp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/mcp-session-context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Session Context
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/fuse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FUSE Driver
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/schema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Database Schema
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cypher/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cypher Patterns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/graph-program-spec/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram Specification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/graph-program-validation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram Validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/graph-program-security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/backup-object-spec/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backup Object Format
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Contributing
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/voice/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Prose & Voice Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/docstring-coverage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docstring Coverage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/test-suite/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Test Suite
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/INDEX/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#why-merging-is-the-problem" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why merging is the problem
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#concept-matching-a-cascade-of-four-stages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Concept matching: a cascade of four stages
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Concept matching: a cascade of four stages">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#stage-1-exact-id-match" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stage 1: Exact ID match
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stage-2-two-tier-vector-similarity-search" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stage 2: Two-tier vector similarity search
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stage-3-create-new-concept" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stage 3: Create new concept
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stage-4-evidence-accumulation-always" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stage 4: Evidence accumulation (always)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-the-graph-learns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How the graph learns
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#relationship-type-categorization-the-edge-vocabulary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Relationship-type categorization: the edge vocabulary
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Relationship-type categorization: the edge vocabulary">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#discovery-during-ingestion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Discovery during ingestion
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#automatic-categorization-adr-605" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Automatic categorization (ADR-605)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#confidence-thresholds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Confidence thresholds
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-gets-written" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What gets written
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#feedback-loops" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Feedback loops
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trade-offs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trade-offs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#architectural-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architectural layer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#operational-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Operational commands
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related-adrs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Related ADRs
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="recursive-upsert">Recursive Upsert</h1>
+<p>Recursive upsert is the mechanism by which Kappa Graph merges new knowledge into an existing graph rather than appending it as isolated fragments. It operates in two interlocked passes: concept deduplication during ingestion, and relationship-type categorization after the LLM discovers a new edge label.</p>
+<hr />
+<h2 id="why-merging-is-the-problem">Why merging is the problem</h2>
+<p>Documents about the same subject use different words. "Linear scanning system," "sequential attention mechanism," and "step-by-step reasoning" may all express the same concept. If each phrase creates a distinct graph node, the graph accumulates duplicates without accumulating understanding.</p>
+<p>Exact-string matching solves nothing here — phrases differ. Schema-fixed vocabularies help for structured data, but fail for open-ended concept extraction where the LLM surfaces terms the schema authors did not anticipate.</p>
+<p>Recursive upsert resolves this by using vector similarity as the merge criterion and letting the graph itself grow into the matching surface. Each document's concepts are matched against the accumulating state from all previous documents, not against a fixed dictionary.</p>
+<hr />
+<h2 id="concept-matching-a-cascade-of-four-stages">Concept matching: a cascade of four stages</h2>
+<p>When the ingestion pipeline extracts a concept from a document chunk, it runs four stages in order (<code>api/app/lib/ingestion.py</code>).</p>
+<pre class="mermaid"><code>sequenceDiagram
+    participant P as Pipeline
+    participant AGE as AGE Graph
+    participant VI as Vector Index
+    participant EV as Evidence Store
+
+    P-&gt;&gt;AGE: Stage 1: lookup concept_id (exact match)
+    alt concept_id exists
+        AGE--&gt;&gt;P: matched existing concept
+    else no exact match
+        P-&gt;&gt;VI: Stage 2: embed label+description+terms, cosine scan
+        alt similarity &gt;= 0.85 (strict tier)
+            VI--&gt;&gt;P: matched existing concept
+        else 0.75 &lt;= similarity &lt; 0.85 AND labels overlap (label-boosted tier)
+            VI--&gt;&gt;P: matched existing concept
+        else no match in either tier
+            VI--&gt;&gt;P: no match
+            P-&gt;&gt;AGE: Stage 3: create new concept node, store embedding
+            AGE--&gt;&gt;P: new concept created
+        end
+    end
+    P-&gt;&gt;EV: Stage 4: store evidence, source ref, provenance
+    EV--&gt;&gt;P: evidence recorded</code></pre>
+<h3 id="stage-1-exact-id-match">Stage 1: Exact ID match</h3>
+<p>If the LLM predicted a <code>concept_id</code> that already exists in the graph, the pipeline uses it directly. The LLM receives the top 30 existing concepts as context during extraction (configurable via <code>EXTRACTION_CANDIDATE_K</code>), so it can predict IDs it recognizes. When this match fires, no embedding computation is needed.</p>
+<h3 id="stage-2-two-tier-vector-similarity-search">Stage 2: Two-tier vector similarity search</h3>
+<p>If no exact ID match exists, the pipeline embeds the new concept (label + description + search terms) and runs a cosine similarity scan against all existing concept embeddings.</p>
+<p>The decision uses two tiers:</p>
+<table>
+<thead>
+<tr>
+<th>Condition</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>similarity ≥ 0.85</td>
+<td>Match (strict tier)</td>
+</tr>
+<tr>
+<td>0.75 ≤ similarity &lt; 0.85 AND labels are identical or one contains the other</td>
+<td>Match (label-boosted tier)</td>
+</tr>
+<tr>
+<td>otherwise</td>
+<td>No match</td>
+</tr>
+</tbody>
+</table>
+<p>The label-boosted tier catches paraphrased descriptions of an identically-named concept that would fall just below the strict threshold. Without it, "Machine learning safety" and "Machine learning safety: alignment concerns" would create two nodes when one would be correct.</p>
+<p>The current implementation uses a Python NumPy full scan over all stored embeddings. This is O(N) per concept — acceptable at the scales Kappa Graph currently runs (thousands of concepts), and replaceable with HNSW approximate-nearest-neighbor indexing when graphs grow larger (ADR-112).</p>
+<h3 id="stage-3-create-new-concept">Stage 3: Create new concept</h3>
+<p>If no match is found in either tier, the pipeline creates a new concept node and stores its embedding. That node is immediately available as a match target for subsequent chunks and documents.</p>
+<h3 id="stage-4-evidence-accumulation-always">Stage 4: Evidence accumulation (always)</h3>
+<p>Regardless of whether the concept was matched to an existing node or created as new, the pipeline stores the supporting evidence: the exact quote from the source, the source document reference, and provenance metadata. Merged concepts retain all evidence from all sources.</p>
+<hr />
+<h2 id="how-the-graph-learns">How the graph learns</h2>
+<p>The "recursive" quality of the pattern is that each new document's concepts are matched against a graph that has already absorbed previous documents. This creates a compounding effect:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Document 1 → 10 concepts extracted → 10 created (graph empty)
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>Document 2 → 8 concepts extracted → 3 merged, 5 created → 15 in graph
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>Document 3 → 9 concepts extracted → 7 merged, 2 created → 17 in graph
+</code></pre></div>
+<p>Concepts that appear across many documents accumulate more evidence and higher grounding strength. Rare or peripheral concepts remain as distinct, lightly evidenced nodes. No threshold or schema decides in advance what is central and what is peripheral — the structure emerges from the corpus.</p>
+<hr />
+<h2 id="relationship-type-categorization-the-edge-vocabulary">Relationship-type categorization: the edge vocabulary</h2>
+<p>When the LLM discovers a relationship type not already in the vocabulary — say, "ENHANCES" — the system must decide what kind of relationship it is. This is handled by probabilistic vocabulary categorization (ADR-605).</p>
+<h3 id="discovery-during-ingestion">Discovery during ingestion</h3>
+<p>The pipeline calls <code>normalize_relationship_type()</code> to fuzzy-match the new type against the existing vocabulary. If no match is found, the type is accepted as new (ADR-603) and written with the temporary category <code>llm_generated</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">age_client</span><span class="o">.</span><span class="n">add_edge_type</span><span class="p">(</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    <span class="n">relationship_type</span><span class="o">=</span><span class="n">canonical_type</span><span class="p">,</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="n">category</span><span class="o">=</span><span class="s2">&quot;llm_generated&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="n">added_by</span><span class="o">=</span><span class="s2">&quot;llm_extractor&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="n">is_builtin</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="n">auto_categorize</span><span class="o">=</span><span class="kc">True</span>   <span class="c1"># triggers ADR-605 categorization</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="p">)</span>
+</code></pre></div>
+<h3 id="automatic-categorization-adr-605">Automatic categorization (ADR-605)</h3>
+<p>The <code>VocabularyCategorizer</code> (<code>api/app/lib/vocabulary_categorizer.py</code>) assigns the new type to one of 11 semantic categories by computing cosine similarity between the new type's embedding and a set of hand-validated seed types.</p>
+<p>The 11 categories and their seeds:</p>
+<table>
+<thead>
+<tr>
+<th>Category</th>
+<th>Representative seeds</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>causation</td>
+<td>CAUSES, ENABLES, PREVENTS, INFLUENCES, RESULTS_FROM</td>
+</tr>
+<tr>
+<td>composition</td>
+<td>PART_OF, CONTAINS, COMPOSED_OF, SUBSET_OF, COMPLEMENTS</td>
+</tr>
+<tr>
+<td>logical</td>
+<td>IMPLIES, CONTRADICTS, PRESUPPOSES, EQUIVALENT_TO</td>
+</tr>
+<tr>
+<td>evidential</td>
+<td>SUPPORTS, REFUTES, EXEMPLIFIES, MEASURED_BY</td>
+</tr>
+<tr>
+<td>semantic</td>
+<td>SIMILAR_TO, ANALOGOUS_TO, CONTRASTS_WITH, OPPOSITE_OF</td>
+</tr>
+<tr>
+<td>temporal</td>
+<td>PRECEDES, CONCURRENT_WITH, EVOLVES_INTO</td>
+</tr>
+<tr>
+<td>dependency</td>
+<td>DEPENDS_ON, REQUIRES, CONSUMES, PRODUCES</td>
+</tr>
+<tr>
+<td>derivation</td>
+<td>DERIVED_FROM, GENERATED_BY, BASED_ON</td>
+</tr>
+<tr>
+<td>operation</td>
+<td>ANALYZES, CALCULATES, PROCESSES, TRANSFORMS, EVALUATES</td>
+</tr>
+<tr>
+<td>interaction</td>
+<td>INTEGRATES_WITH, COMMUNICATES_WITH, CONNECTS_TO</td>
+</tr>
+<tr>
+<td>modification</td>
+<td>CONFIGURES, UPDATES, ENHANCES, OPTIMIZES, IMPROVES</td>
+</tr>
+</tbody>
+</table>
+<p>For each category, the score is the <strong>maximum</strong> similarity to any seed in that category (satisficing, not mean). The category with the highest score wins.</p>
+<p>Using max rather than mean preserves signal: a type like PREVENTS is strongly similar to CAUSES (causal) and also similar to OPPOSITE_OF (semantic). Averaging would dilute both signals; taking the max correctly identifies causation as primary.</p>
+<p>Ambiguity is flagged when the runner-up score also exceeds 0.70 — indicating the type genuinely spans two categories. This is stored rather than collapsed, because a type that is both logical and causal carries richer information than a forced single assignment.</p>
+<h3 id="confidence-thresholds">Confidence thresholds</h3>
+<table>
+<thead>
+<tr>
+<th>Confidence</th>
+<th>Interpretation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>≥ 70%</td>
+<td>Auto-categorize; no review needed</td>
+</tr>
+<tr>
+<td>50–69%</td>
+<td>Auto-categorize; warning logged</td>
+</tr>
+<tr>
+<td>&lt; 50%</td>
+<td>Auto-categorize; flagged for curator review</td>
+</tr>
+</tbody>
+</table>
+<p>If categorization fails (embedding generation error, seed embeddings missing), the type remains <code>llm_generated</code> and ingestion continues. The category can be recomputed later.</p>
+<h3 id="what-gets-written">What gets written</h3>
+<p>After categorization, four writes occur in sequence:</p>
+<ol>
+<li>Insert into <code>kg_api.relationship_vocabulary</code> with category <code>llm_generated</code>.</li>
+<li>Generate and store the type's embedding vector.</li>
+<li>Compute category scores; update <code>category</code>, <code>category_confidence</code>, <code>category_scores</code>, <code>category_source='computed'</code> in the vocabulary table.</li>
+<li>Create or update a <code>:VocabType</code> node in the Apache AGE graph with the computed category.</li>
+</ol>
+<p>The graph metadata node (step 4) enables Cypher traversals to filter or group by relationship category without joining back to the relational table.</p>
+<hr />
+<h2 id="feedback-loops">Feedback loops</h2>
+<p>Three feedback loops improve match quality over time, without any explicit retraining step.</p>
+<p><strong>LLM context awareness.</strong> The LLM receives the top 30 existing concepts during extraction (configurable via <code>EXTRACTION_CANDIDATE_K</code>) and can predict their IDs directly. As the graph grows, this context becomes more useful: the LLM is less likely to invent a novel label for something the graph already tracks.</p>
+<p><strong>Vocabulary growth.</strong> Each new relationship type the LLM discovers — once categorized — becomes available for fuzzy matching in subsequent ingestion runs. The vocabulary grows with the corpus, reducing the rate of novel type discovery over time.</p>
+<p><strong>Grounding feedback (ADR-404, ADR-808, ADR-811).</strong> Concepts with high grounding strength (consistent evidence across sources, supported by connected concepts) are more semantically stable. Low grounding may indicate extraction noise. This signal can guide threshold tuning: if low-grounding concepts are proliferating, the merge threshold may be too permissive.</p>
+<hr />
+<h2 id="trade-offs">Trade-offs</h2>
+<p><strong>Conservative merge by default.</strong> The strict threshold (0.85) creates new concepts when similarity is ambiguous rather than merging. Duplicates can be merged later — via <code>kg vocab consolidate</code> or manually. False merges are harder to undo, so the system prefers the recoverable error.</p>
+<p><strong>O(N) full scan.</strong> At current graph sizes, the NumPy full scan adds 10–50ms per concept and is acceptable. ADR-112 documents the path to HNSW indexing when this becomes a bottleneck.</p>
+<p><strong>LLM context window.</strong> Showing 30 existing concepts to the LLM costs roughly 300 tokens per extraction chunk and does not scale past approximately 100 concepts in context. Future work (ADR-306) explores semantic retrieval to replace the fixed list with a targeted selection.</p>
+<hr />
+<h2 id="architectural-layer">Architectural layer</h2>
+<p>Recursive upsert sits at the intersection of three layers that Kappa Graph keeps distinct:</p>
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Property graph (Apache AGE)</td>
+<td>Stores concepts, relationships, and vocabulary nodes; provides Cypher traversal</td>
+</tr>
+<tr>
+<td>Vector operations</td>
+<td>Cosine similarity for concept matching and vocabulary categorization</td>
+</tr>
+<tr>
+<td>Query-time computation</td>
+<td>Cypher traversals assemble node sets dynamically; no pre-materialized structures</td>
+</tr>
+</tbody>
+</table>
+<p>The system stores binary edges (exactly two endpoint nodes each). It is a vector-augmented property graph, not a hypergraph.</p>
+<hr />
+<h2 id="operational-commands">Operational commands</h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># View vocabulary with computed categories</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>kg<span class="w"> </span>vocab<span class="w"> </span>list
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># Inspect category scores for a specific type</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>kg<span class="w"> </span>vocab<span class="w"> </span>category-scores<span class="w"> </span>RELATIONSHIP_TYPE
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="c1"># Retry categorization for all llm_generated types</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>kg<span class="w"> </span>vocab<span class="w"> </span>refresh-categories
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="c1"># Retry for a specific type</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>kg<span class="w"> </span>vocab<span class="w"> </span>refresh-categories<span class="w"> </span>--type<span class="w"> </span>RELATIONSHIP_TYPE
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="c1"># Manually override a category</span>
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>kg<span class="w"> </span>vocab<span class="w"> </span>update<span class="w"> </span>RELATIONSHIP_TYPE<span class="w"> </span>--category<span class="w"> </span>causation<span class="w"> </span>--manual
+</code></pre></div>
+<hr />
+<h2 id="related-adrs">Related ADRs</h2>
+<ul>
+<li><strong>ADR-404:</strong> Grounding Strength Calculation</li>
+<li><strong>ADR-603:</strong> Automatic Edge Vocabulary Expansion</li>
+<li><strong>ADR-808:</strong> Probabilistic Truth Convergence</li>
+<li><strong>ADR-605:</strong> Probabilistic Vocabulary Categorization</li>
+<li><strong>ADR-606:</strong> GraphQueryFacade (namespace safety — ensures <code>:Concept</code> labels in all upsert queries)</li>
+<li><strong>ADR-112:</strong> HNSW Vector Indexing (O(N) → O(log N) migration path)</li>
+<li><strong>ADR-811:</strong> Polarity Axis Triangulation</li>
+<li><strong>ADR-610:</strong> Epistemic Status Classification</li>
+<li><strong>ADR-306:</strong> Configuration-Driven Matching</li>
+</ul>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

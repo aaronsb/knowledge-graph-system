@@ -1,0 +1,2745 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Multi-dimensional knowledge extraction system using Apache AGE">
+      
+      
+        <meta name="author" content="Knowledge Graph System Contributors">
+      
+      
+      
+        <link rel="prev" href="../tls/">
+      
+      
+        <link rel="next" href="../security/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Appliance on libvirt/KVM - Knowledge Graph System</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#appliance-on-libvirtkvm" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Knowledge Graph System" class="md-header__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Knowledge Graph System
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Appliance on libvirt/KVM
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/aaronsb/knowledge-graph-system" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aaronsb/knowledge-graph-system
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Knowledge Graph System" class="md-nav__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Knowledge Graph System
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/aaronsb/knowledge-graph-system" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aaronsb/knowledge-graph-system
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Get Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Get Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/what-and-why/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What and Why
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/first-graph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your First Graph
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/first-query/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your First Query
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/mcp-quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Connect via MCP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/github-history/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mining a Git Repo
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-To
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How-To
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/ingest/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ingest Documents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/query/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explore and Query
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/epistemic-status/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Filter by Epistemic Status
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/polarity-axis/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Analyze a Polarity Axis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/fuse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Use the FUSE Drive
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/ai-providers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configure AI Providers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/embeddings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configure Embeddings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/extraction-quality/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Compare Extraction Quality
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/vocabulary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Consolidate Vocabulary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Self-Host
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Self-Host
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../quick-start/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../production/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Production Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../macvlan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dedicated IP (macvlan)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    TLS and Certificates
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Appliance on libvirt/KVM
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Appliance on libvirt/KVM
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-you-get" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What you get
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pick-your-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pick your path
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Pick your path">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#quick-start-qcow2-zero-config-no-seed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick start — qcow2, zero-config (no seed)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-the-nocloud-seed-attach-it-as-a-virtio-disk" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. The NoCloud seed — attach it as a VIRTIO disk
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-define-the-vm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Define the VM
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-managing-the-box-without-ssh" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Managing the box without SSH
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Managing the box without SSH">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#remote-graphical-console-virt-manager-virt-viewer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Remote graphical console (virt-manager / virt-viewer)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cockpit-behind-traefik-cockpit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cockpit behind Traefik (/cockpit)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-the-certificate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. The certificate
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#worked-example-cube" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Worked example: cube
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        See also
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security and Access
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../backup-restore/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backup and Restore
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../scheduled-jobs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scheduled Jobs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../upgrading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Upgrading
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explanation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Explanation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/how-it-works/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How It Works
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/computed-evidence/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Computed Evidence over Asserted Truth
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/grounding/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Grounding and Epistemic Confidence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/recursive-upsert/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Recursive Upsert
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/vocabulary-lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vocabulary Lifecycle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/storage-and-freshness/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Storage and Freshness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/worker-lanes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Worker Lanes and Concurrency
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/embedding-landscape/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Embedding Landscape
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/graph-program/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram DSL
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    REST API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/mcp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/mcp-session-context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Session Context
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/fuse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FUSE Driver
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/schema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Database Schema
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cypher/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cypher Patterns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/graph-program-spec/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram Specification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/graph-program-validation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram Validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/graph-program-security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/backup-object-spec/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backup Object Format
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Contributing
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/voice/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Prose & Voice Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/docstring-coverage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docstring Coverage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/test-suite/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Test Suite
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/INDEX/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-you-get" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What you get
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pick-your-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pick your path
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Pick your path">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#quick-start-qcow2-zero-config-no-seed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick start — qcow2, zero-config (no seed)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-the-nocloud-seed-attach-it-as-a-virtio-disk" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. The NoCloud seed — attach it as a VIRTIO disk
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-define-the-vm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Define the VM
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-managing-the-box-without-ssh" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Managing the box without SSH
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Managing the box without SSH">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#remote-graphical-console-virt-manager-virt-viewer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Remote graphical console (virt-manager / virt-viewer)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cockpit-behind-traefik-cockpit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cockpit behind Traefik (/cockpit)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-the-certificate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. The certificate
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#worked-example-cube" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Worked example: cube
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        See also
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="appliance-on-libvirtkvm">Appliance on libvirt/KVM</h1>
+<p>How to deploy and manage the <a href="../../appliance/README.md">x86 thin appliance</a>
+(<a href="../../architecture/infrastructure/ADR-103-distribution-strategy-nomic-first-thin-appliance-with-app-store-tenancy/">ADR-103</a>)
+as a libvirt/KVM guest, with a self-renewing TLS certificate and no inbound
+ports. The worked example is the <code>cube</code> deployment (<code>kg.broccoli.house</code>), but the
+procedure is generic.</p>
+<p>The appliance is <strong>thin</strong>: container images pull on first boot, secrets are
+minted per-instance, and the box carries no baked <code>.env</code>. The image is built by
+<code>appliance/build-appliance.sh</code>; this page covers everything <em>after</em> you have a
+<code>kg-appliance-*.qcow2</code>.</p>
+<h2 id="what-you-get">What you get</h2>
+<ul>
+<li>A single VM that boots, mints its own secrets, pulls images, and starts the
+  full stack (traefik / web / api / postgres / garage / operator).</li>
+<li><strong>Self-renewing TLS</strong> via in-container ACME DNS-01 (lego + a DNS provider such
+  as porkbun) — the <a href="../tls/">TLS guide</a> and
+  <a href="../../architecture/infrastructure/ADR-105-scenario-driven-tls-via-in-vm-traefik-router/">ADR-105</a>
+  cover the cert design. DNS-01 is the only ACME challenge that works for a
+  private box (RFC-1918, no inbound <code>:80</code>/<code>:443</code>) that owns a public DNS name.</li>
+<li>Management without SSH — the appliance ships <strong>no sshd</strong>. You drive it through
+  the qemu-guest-agent, the Cockpit host console (<code>:9090</code>), or the tty1 console
+  TUI over VNC.</li>
+</ul>
+<h2 id="pick-your-path">Pick your path</h2>
+<p>The worked example below (§1–§2) is the <strong>declarative seed</strong> path — pinned
+hostname, self-renewing TLS, zero-touch. Most people don't need that. Three paths,
+by what you're running and which release artifact fits:</p>
+<table>
+<thead>
+<tr>
+<th>You run…</th>
+<th>Use</th>
+<th>How</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>VirtualBox / VMware / Hyper-V</strong></td>
+<td><code>kg-appliance-&lt;ver&gt;-generic.ova</code></td>
+<td>the hypervisor's <strong>Import Appliance</strong> wizard reads the OVF and builds the VM. Use the <strong>generic</strong> OVA — its console is legible in the VM window; the cloud OVA is 80×25 (see <a href="../../appliance/README.md#build">kernel variants</a>).</td>
+</tr>
+<tr>
+<td><strong>libvirt / Proxmox / QEMU</strong></td>
+<td><code>kg-appliance-&lt;ver&gt;.qcow2.xz</code></td>
+<td>the <strong>native</strong> path — no OVA. <code>unxz</code> and <code>virt-install --import</code> (below).</td>
+</tr>
+<tr>
+<td>an <code>.ova</code> you already have, on libvirt</td>
+<td>the <code>.ova</code></td>
+<td>libvirt has <strong>no OVA importer</strong>. Prefer the qcow2; or <code>tar -xf</code> the OVA and <code>qemu-img convert</code> its <code>*.vmdk</code> → qcow2. (<code>virt-v2v</code> <em>can</em> import an OVA, but it's a heavyweight guest-<em>conversion</em> tool — overkill for an image that's already KVM-native.)</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>On libvirt/qemu the OVA buys nothing — the qcow2 is native and the OVA is pure
+friction. Reach for <code>*.qcow2.xz</code>. The OVA earns its keep only where there's an
+import wizard.</p>
+</blockquote>
+<h3 id="quick-start-qcow2-zero-config-no-seed">Quick start — qcow2, zero-config (no seed)</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># download + decompress into a libvirt pool (e.g. /srv/storage/libvirt/images)</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>gh<span class="w"> </span>release<span class="w"> </span>download<span class="w"> </span>v&lt;ver&gt;<span class="w"> </span>-p<span class="w"> </span><span class="s1">&#39;kg-appliance-&lt;ver&gt;.qcow2.xz&#39;</span><span class="w"> </span>-D<span class="w"> </span>&lt;pool-dir&gt;
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>unxz<span class="w"> </span>&lt;pool-dir&gt;/kg-appliance-&lt;ver&gt;.qcow2.xz
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>sudo<span class="w"> </span>virt-install<span class="w"> </span>--name<span class="w"> </span>kg-appliance<span class="w"> </span>--memory<span class="w"> </span><span class="m">4096</span><span class="w"> </span>--vcpus<span class="w"> </span><span class="m">2</span><span class="w"> </span>--os-variant<span class="w"> </span>debian12<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">  </span>--import<span class="w"> </span>--disk<span class="w"> </span><span class="nv">path</span><span class="o">=</span>&lt;pool-dir&gt;/kg-appliance-&lt;ver&gt;.qcow2,bus<span class="o">=</span>virtio<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">  </span>--network<span class="w"> </span><span class="nv">bridge</span><span class="o">=</span>br0,model<span class="o">=</span>virtio<span class="w"> </span>--graphics<span class="w"> </span>vnc,listen<span class="o">=</span><span class="m">127</span>.0.0.1<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">  </span>--channel<span class="w"> </span>unix,target_type<span class="o">=</span>virtio,name<span class="o">=</span>org.qemu.guest_agent.0<span class="w"> </span>--noautoconsole
+</code></pre></div>
+<blockquote>
+<p><strong><code>--import</code> still needs the full VM definition.</strong> It only means "boot the disk,
+no installer" — you must pass <code>--name/--memory/--vcpus/--disk path=…/--network</code>.
+A bare <code>virt-install --import file.qcow2</code> fails with <em>"unrecognized arguments"</em>.
+In the GUI, use <strong>"Import existing disk image"</strong> and pick OS <strong>Debian 12</strong>.</p>
+</blockquote>
+<p>First boot is <strong>zero-config</strong>: the box takes a DHCP IP, pulls the GHCR images,
+mints per-instance secrets, and comes up on <strong><code>http://&lt;ip&gt;:3000</code></strong> (HTTP, no TLS).
+The generated admin password is on the console <strong>info</strong> menu and in
+<code>/root/kg-credentials.txt</code>; a sudo host login (<code>kgadmin</code>) lands there too. Sign in,
+set your own admin password, paste a reasoning key — done. Watch it provision on
+the console (tty1) or <code>journalctl -u kg-firstboot -f</code>.</p>
+<p>Thereafter the box stays current via <code>operator.sh upgrade</code> (pulls fresh GHCR
+images) — the OVA/qcow2 is a one-time <strong>bootstrap seed</strong>, not re-downloaded per
+release (<a href="../../architecture/infrastructure/ADR-103-distribution-strategy-nomic-first-thin-appliance-with-app-store-tenancy/">ADR-103</a> /
+<a href="../../architecture/infrastructure/ADR-119-appliance-configuration-delivery-and-first-boot-orchestration/">ADR-119</a>).
+Want TLS + a pinned hostname instead of zero-config? That's the declarative seed —
+read on.</p>
+<h2 id="1-the-nocloud-seed-attach-it-as-a-virtio-disk">1. The NoCloud seed — attach it as a VIRTIO disk</h2>
+<p>Provisioning config (<code>provision.env</code>) reaches the VM through a cloud-init
+NoCloud seed: a small ISO with the <code>cidata</code> volume label holding <code>user-data</code> +
+<code>meta-data</code>.</p>
+<blockquote>
+<p><strong>Critical:</strong> attach the seed as a <strong>virtio</strong> disk, not a SATA/IDE cdrom. The
+Debian <em>cloud</em> kernel has no AHCI/SATA driver, so a <code>sr0</code>/<code>sda</code> seed is
+invisible → <code>ds-identify</code> finds no datasource → cloud-init is disabled → the
+box boots with defaults and your <code>provision.env</code> is silently ignored.</p>
+</blockquote>
+<p>Build the seed (run where you can write, then copy into the libvirt pool):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>mkdir<span class="w"> </span>-p<span class="w"> </span>~/kg-seed<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">cd</span><span class="w"> </span>~/kg-seed
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>cat<span class="w"> </span>&gt;<span class="w"> </span>meta-data<span class="w"> </span><span class="s">&lt;&lt;EOF</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="s">instance-id: kg-appliance-01</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="s">local-hostname: kg-appliance</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="s">EOF</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>cat<span class="w"> </span>&gt;<span class="w"> </span>user-data<span class="w"> </span><span class="s">&lt;&lt;&#39;EOF&#39;</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="s">#cloud-config</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="s">write_files:</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="s">  - path: /etc/kg/provision.env</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="s">    permissions: &#39;0600&#39;</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="s">    content: |</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="s">      KG_EXTERNAL_URL=https://kg.example.com</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="s">      KG_TLS_MODE=letsencrypt</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="s">      KG_ACME_CHALLENGE=dns-01</span>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="s">      KG_DNS_PROVIDER=porkbun</span>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="s">      KG_LE_EMAIL=you@example.com</span>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="s">      KG_PORKBUN_API_KEY=pk1_...</span>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="s">      KG_PORKBUN_SECRET_API_KEY=sk1_...</span>
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a><span class="s">EOF</span>
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a><span class="c1"># label MUST be cidata for NoCloud</span>
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>xorriso<span class="w"> </span>-as<span class="w"> </span>mkisofs<span class="w"> </span>-V<span class="w"> </span>cidata<span class="w"> </span>-J<span class="w"> </span>-r<span class="w"> </span>-o<span class="w"> </span>kg-seed.iso<span class="w"> </span>user-data<span class="w"> </span>meta-data
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>sudo<span class="w"> </span>cp<span class="w"> </span>kg-seed.iso<span class="w"> </span>/srv/storage/libvirt/images/<span class="w">   </span><span class="c1"># xorriso can&#39;t write a root-owned pool dir directly</span>
+</code></pre></div>
+<p><code>provision.env</code> is the appliance's single declarative control surface; unknown
+keys are ignored. See <a href="../../appliance/files/provision.env.example"><code>appliance/files/provision.env.example</code></a>.</p>
+<h2 id="2-define-the-vm">2. Define the VM</h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>sudo<span class="w"> </span>virt-install<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span>--name<span class="w"> </span>kg-appliance<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span>--memory<span class="w"> </span><span class="m">4096</span><span class="w"> </span>--vcpus<span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span>--os-variant<span class="w"> </span>debian12<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">  </span>--import<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">  </span>--disk<span class="w"> </span><span class="nv">path</span><span class="o">=</span>/srv/storage/libvirt/images/kg-appliance.qcow2,bus<span class="o">=</span>virtio<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">  </span>--disk<span class="w"> </span><span class="nv">path</span><span class="o">=</span>/srv/storage/libvirt/images/kg-seed.iso,format<span class="o">=</span>raw,bus<span class="o">=</span>virtio,readonly<span class="o">=</span>on<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="w">  </span>--network<span class="w"> </span><span class="nv">bridge</span><span class="o">=</span>br0,model<span class="o">=</span>virtio,mac<span class="o">=</span><span class="m">52</span>:54:00:6e:4a:82<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="w">  </span>--graphics<span class="w"> </span>vnc<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="w">  </span>--channel<span class="w"> </span>unix,target_type<span class="o">=</span>virtio,name<span class="o">=</span>org.qemu.guest_agent.0<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="w">  </span>--noautoconsole
+</code></pre></div>
+<ul>
+<li><strong>Bridge, not NAT</strong> — put the VM on a real Linux bridge (<code>br0 ← &lt;nic&gt;</code>) so it
+  gets a routable address and multiple guests can share the NIC.</li>
+<li><strong>Pin the MAC</strong> to claim a DHCP reservation (and your public DNS A record).
+  Changing the MAC later is safe — the image matches its NIC by <em>name</em>, not MAC
+  (see Troubleshooting). To repoint an existing VM:
+  <code>virsh shutdown kg-appliance &amp;&amp; virt-xml kg-appliance --edit --network mac=&lt;reserved&gt; &amp;&amp; virsh start kg-appliance</code>.</li>
+<li>The <code>org.qemu.guest_agent.0</code> channel is what lets you manage the box without
+  SSH.</li>
+</ul>
+<p>First boot pulls images and provisions — watch with <code>journalctl -u kg-firstboot -f</code>
+(via the console). The admin password is written to <code>/root/kg-credentials.txt</code>
+inside the VM. Then sign in to the web UI at the external URL:</p>
+<p><img alt="Web UI sign-in at the external URL — app admin via OAuth" src="../../media/appliance/web-login.png" /></p>
+<!-- TODO(screenshot): replace placeholder — the web UI sign-in page at
+     https://<host>/ with the trusted cert. -->
+
+<h2 id="3-managing-the-box-without-ssh">3. Managing the box without SSH</h2>
+<p>The appliance has no sshd. Run commands inside the guest through the
+qemu-guest-agent from the libvirt host. This helper executes a command in the VM
+and prints its output:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>vmx<span class="o">()</span><span class="w"> </span><span class="o">{</span><span class="w">  </span><span class="c1"># usage: vmx &quot;shell command&quot; [wait_seconds]</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="nb">local</span><span class="w"> </span>pid
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span><span class="nv">pid</span><span class="o">=</span><span class="k">$(</span>sudo<span class="w"> </span>virsh<span class="w"> </span>qemu-agent-command<span class="w"> </span>kg-appliance<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">    </span><span class="s2">&quot;{\&quot;execute\&quot;:\&quot;guest-exec\&quot;,\&quot;arguments\&quot;:{\&quot;path\&quot;:\&quot;/bin/sh\&quot;,\&quot;arg\&quot;:[\&quot;-c\&quot;,\&quot;</span><span class="nv">$1</span><span class="s2">\&quot;],\&quot;capture-output\&quot;:true}}&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">    </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-oE<span class="w"> </span><span class="s1">&#39;&quot;pid&quot;:[0-9]+&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>cut<span class="w"> </span>-d:<span class="w"> </span>-f2<span class="k">)</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">  </span><span class="o">[</span><span class="w"> </span>-z<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$pid</span><span class="s2">&quot;</span><span class="w"> </span><span class="o">]</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="o">{</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;(agent busy / not ready)&quot;</span><span class="p">;</span><span class="w"> </span><span class="k">return</span><span class="p">;</span><span class="w"> </span><span class="o">}</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">  </span>sleep<span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">2</span><span class="k">:-</span><span class="nv">3</span><span class="si">}</span><span class="s2">&quot;</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">  </span>sudo<span class="w"> </span>virsh<span class="w"> </span>qemu-agent-command<span class="w"> </span>kg-appliance<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="w">    </span><span class="s2">&quot;{\&quot;execute\&quot;:\&quot;guest-exec-status\&quot;,\&quot;arguments\&quot;:{\&quot;pid\&quot;:</span><span class="nv">$pid</span><span class="s2">}}&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">    </span><span class="p">|</span><span class="w"> </span>python3<span class="w"> </span>-c<span class="w"> </span><span class="s1">&#39;import sys,json,base64</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="s1">d=json.load(sys.stdin)[&quot;return&quot;]</span>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="s1">for k in (&quot;out-data&quot;,&quot;err-data&quot;):</span>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="s1">    if d.get(k): sys.stdout.write(base64.b64decode(d[k]).decode(&quot;utf-8&quot;,&quot;replace&quot;))&#39;</span>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="o">}</span>
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>vmx<span class="w"> </span><span class="s2">&quot;docker ps --format &#39;{{.Names}}: {{.Status}}&#39;&quot;</span>
+<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>vmx<span class="w"> </span><span class="s2">&quot;cd /opt/kg &amp;&amp; ./operator.sh status&quot;</span>
+</code></pre></div>
+<p>For commands with awkward quoting (heredocs, JSON), base64-encode them:
+<code>vmx "echo &lt;base64&gt; | base64 -d | sh"</code>. Decode <code>out-data</code> and <code>err-data</code>
+<em>separately</em> — they are padded independently, so concatenating before decoding
+corrupts the base64.</p>
+<p>Other management surfaces:</p>
+<ul>
+<li><strong>Cockpit</strong> — <code>https://&lt;vm-ip&gt;:9090</code> (host console: services, storage, logs,
+  updates). Cockpit authenticates against <strong>OS accounts</strong>, not the app's OAuth
+  admin. First boot provisions a sudo-enabled login (<code>kgadmin</code> by default) — set
+  it declaratively with <code>KG_HOST_LOGIN_USER</code> / <code>KG_HOST_LOGIN_PASSWORD</code> in
+  <code>provision.env</code>, or let it mint a random password recorded in
+  <code>/root/kg-credentials.txt</code>. Reset it later with
+  <code>sudo /opt/kg/appliance/files/kg-host-login.sh</code>.</li>
+<li><strong>virt-manager</strong> — connect to <code>qemu+ssh://&lt;user&gt;@&lt;host&gt;/system</code> for lifecycle +
+  the VNC console. The remote graphical console has three wiring requirements
+  (see below) that each fail with an unhelpful message.</li>
+<li><strong>Console TUI</strong> — tty1 over VNC offers status / logs / restart / credentials /
+  operator shell. Its <strong>"Login shell (host)"</strong> option drops to a <strong>root shell with
+  no password</strong> — that's the intended way to a host shell (the serial/SSH root
+  login stays locked).</li>
+</ul>
+<p><img alt="Console TUI — the Kappa Graph status menu on tty1 over the VNC framebuffer" src="../../media/appliance/console-tui-menu.png" /></p>
+<!-- TODO(screenshot): replace placeholder — VNC console showing the kg-console
+     status menu (Platform status / logs / restart / credentials / etc.). -->
+
+<h3 id="remote-graphical-console-virt-manager-virt-viewer">Remote graphical console (virt-manager / virt-viewer)</h3>
+<p>Getting the VNC console to open from <em>another</em> machine needs three things lined
+up. Each failure mode looks different, so they're easy to chase one at a time:</p>
+<ol>
+<li><strong>Key auth the GUI session can use.</strong> virt-manager spawns <code>ssh</code> inside your
+   <em>desktop</em> session, which often lacks the <code>SSH_AUTH_SOCK</code> your terminal has —
+   so it can't see your agent and falls back to a <strong>password prompt</strong>. Pin the
+   key in <code>~/.ssh/config</code> so no agent is needed (use a passphrase-less key, or
+   ensure the agent is exported to the GUI session):
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>Host &lt;libvirt-host&gt;
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>    HostName &lt;libvirt-host&gt;
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    User &lt;user&gt;
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    IdentityFile ~/.ssh/&lt;key&gt;
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>    IdentitiesOnly yes
+</code></pre></div></li>
+<li><strong>VNC must listen on <code>127.0.0.1</code>, not <code>0.0.0.0</code>.</strong> With a routable listen
+   address virt-manager tries a <strong>direct</strong> connection to <code>host:5900</code> (usually
+   firewalled → <em>"Viewer was disconnected"</em>). Binding to localhost forces it to
+   tunnel over SSH instead — and closes the passwordless-VNC exposure. Set it
+   (takes effect after a full power-off, not a reboot):
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>virsh<span class="w"> </span>shutdown<span class="w"> </span>&lt;dom&gt;<span class="p">;</span><span class="w"> </span>virt-xml<span class="w"> </span>&lt;dom&gt;<span class="w"> </span>--edit<span class="w"> </span>--graphics<span class="w"> </span><span class="nv">listen</span><span class="o">=</span><span class="m">127</span>.0.0.1<span class="p">;</span><span class="w"> </span>virsh<span class="w"> </span>start<span class="w"> </span>&lt;dom&gt;
+</code></pre></div></li>
+<li><strong><code>netcat</code> on the libvirt host.</strong> virt-manager's SSH tunnel pipes the VNC
+   socket through <code>nc</code> on the remote host; without it the tunnel dies with
+   <em>"Viewer was disconnected"</em> and <code>sh: line 1: nc: command not found</code>. Install
+   it: <code>pacman -S openbsd-netcat</code> (Arch) / <code>apt install netcat-openbsd</code> (Debian).</li>
+</ol>
+<p>Fallback that needs none of virt-manager's auto-tunnel: forward the port yourself
+and point any VNC viewer at localhost:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>ssh<span class="w"> </span>-L<span class="w"> </span><span class="m">5901</span>:localhost:5900<span class="w"> </span>&lt;user&gt;@&lt;libvirt-host&gt;<span class="w">   </span><span class="c1"># keep open</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>remote-viewer<span class="w"> </span>vnc://localhost:5901<span class="w">                  </span><span class="c1"># or gvncviewer localhost:5901</span>
+</code></pre></div></p>
+<p><img alt="virt-manager graphical console connected to the appliance VM over qemu+ssh" src="../../media/appliance/virt-manager-console.png" /></p>
+<!-- TODO(screenshot): replace placeholder — virt-manager (or remote-viewer) VNC
+     console showing the appliance VM. -->
+
+<h3 id="cockpit-behind-traefik-cockpit">Cockpit behind Traefik (<code>/cockpit</code>)</h3>
+<p>Cockpit's own cert on <code>:9090</code> is self-signed, and HSTS on the main hostname stops
+a browser from clicking through it. So the appliance fronts Cockpit through the
+same Traefik door at <strong><code>https://&lt;host&gt;/cockpit/</code></strong>, sharing the trusted cert. It's
+on by default (<code>KG_COCKPIT_PROXY</code>, when <code>KG_EXTERNAL_URL</code> + <code>KG_TLS_MODE=letsencrypt</code>
+are set); <code>=false</code> opts out and leaves Cockpit only on <code>:9090</code>.</p>
+<p>How it fits together (Cockpit runs on the <em>host</em>, which Traefik's docker provider
+can't see directly):
+- <code>kg-cockpit-proxy.sh</code> writes <code>/etc/cockpit/cockpit.conf</code> (<code>UrlRoot=/cockpit</code>,
+  <code>Origins</code> from <code>KG_EXTERNAL_URL</code>, <code>AllowUnencrypted</code>) so Cockpit serves the
+  sub-path and accepts the proxied origin's login WebSocket.
+- <code>docker-compose.traefik-cockpit.yml</code> adds a tiny <code>socat</code> sidecar that Traefik
+  routes <code>/cockpit</code> to; it TCP-forwards to the host's <code>:9090</code> via the Docker
+  host-gateway. A <code>redirectregex</code> middleware 301s the bare <code>/cockpit</code> → <code>/cockpit/</code>
+  (Cockpit drops the slashless prefix, which would otherwise surface as a 502).</p>
+<p>Log in with the OS account (<code>kgadmin</code> by default — see the host-login section
+above). Reset the Cockpit config later with
+<code>sudo KG_EXTERNAL_URL=https://&lt;host&gt; /opt/kg/appliance/files/kg-cockpit-proxy.sh</code>.</p>
+<p><strong>Gating who can reach it.</strong> Cockpit is root-capable, so a source-IP allowlist
+sits in front of its PAM login (defense in depth). It defaults to <strong>open</strong> (works
+as-is); lock it to a LAN/VPN/admin range from the <strong>console TUI</strong> ("Cockpit
+<code>/cockpit</code> access control") or:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>./operator.sh<span class="w"> </span>cockpit-access<span class="w">            </span><span class="c1"># show current</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>./operator.sh<span class="w"> </span>cockpit-access<span class="w"> </span>private<span class="w">    </span><span class="c1"># RFC-1918 only (refuses public IPs)</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>./operator.sh<span class="w"> </span>cockpit-access<span class="w"> </span><span class="m">192</span>.168.1.0/24,100.64.0.0/10<span class="w">   </span><span class="c1"># custom (subnet + VPN)</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>./operator.sh<span class="w"> </span>cockpit-access<span class="w"> </span>open<span class="w">       </span><span class="c1"># back to no restriction</span>
+</code></pre></div>
+<p>Or declaratively at first boot via <code>KG_COCKPIT_ALLOW_CIDRS</code> in <code>provision.env</code>.
+A future option is mTLS (a client cert) for a cryptographic gate.</p>
+<blockquote>
+<p><strong>Rotate the host login.</strong> <code>kgadmin</code>'s generated password is stored in cleartext
+at <code>/root/kg-credentials.txt</code> and now also gates <code>/cockpit</code>. After first login,
+change it (<code>passwd kgadmin</code>) and shred the file.</p>
+</blockquote>
+<p><img alt="Cockpit login at /cockpit — OS account (kgadmin)" src="../../media/appliance/cockpit-login.png" /></p>
+<!-- TODO(screenshot): replace placeholder — Cockpit login page at
+     https://<host>/cockpit/ (note the trusted-cert padlock). -->
+
+<p><img alt="Cockpit dashboard — host services, storage, logs, updates" src="../../media/appliance/cockpit-dashboard.png" /></p>
+<!-- TODO(screenshot): replace placeholder — Cockpit overview/dashboard after login. -->
+
+<h2 id="4-the-certificate">4. The certificate</h2>
+<p>With <code>KG_TLS_MODE=letsencrypt</code> + <code>KG_ACME_CHALLENGE=dns-01</code>, Traefik obtains and
+<strong>auto-renews</strong> a real Let's Encrypt cert; <code>operator.sh recert</code> is a no-op. The
+cert and ACME account live in a persisted bind-mount (<code>/opt/kg/docker/acme/acme.json</code>)
+so renewals survive restarts. Verify from the libvirt host:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nb">echo</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>openssl<span class="w"> </span>s_client<span class="w"> </span>-connect<span class="w"> </span>&lt;vm-ip&gt;:443<span class="w"> </span>-servername<span class="w"> </span>kg.example.com<span class="w"> </span><span class="m">2</span>&gt;/dev/null<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span><span class="p">|</span><span class="w"> </span>openssl<span class="w"> </span>x509<span class="w"> </span>-noout<span class="w"> </span>-subject<span class="w"> </span>-issuer<span class="w"> </span>-dates
+</code></pre></div>
+<h2 id="worked-example-cube">Worked example: <code>cube</code></h2>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Host</td>
+<td><code>cube</code> (libvirt <code>qemu:///system</code>), bridge <code>br0 ← enp2s0</code></td>
+</tr>
+<tr>
+<td>VM</td>
+<td><code>kg-appliance</code> — 2 vCPU / 4 GiB, virtio qcow2 + virtio seed</td>
+</tr>
+<tr>
+<td>NIC MAC</td>
+<td><code>52:54:00:6e:4a:82</code> → DHCP reservation <code>192.168.1.82</code></td>
+</tr>
+<tr>
+<td>DNS</td>
+<td><code>kg.broccoli.house</code> → <code>192.168.1.82</code> (UniFi)</td>
+</tr>
+<tr>
+<td>TLS</td>
+<td>in-container DNS-01 via porkbun; self-renewing Let's Encrypt cert</td>
+</tr>
+<tr>
+<td>Manage</td>
+<td>qemu-guest-agent (<code>vmx</code>), Cockpit <code>:9090</code>, VNC console</td>
+</tr>
+</tbody>
+</table>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<ul>
+<li><strong>virt-manager has no "Import OVA" / the OVA won't open</strong> — libvirt has no OVA
+  importer (that's a VirtualBox/VMware/Hyper-V feature). Use the <code>*.qcow2.xz</code>
+  artifact instead (<a href="#pick-your-path">"Pick your path"</a>), or unwrap the OVA by hand:
+  <code>tar -xf kg-appliance-*.ova &amp;&amp; qemu-img convert -O qcow2 *-disk1.vmdk kg.qcow2</code>,
+  then <code>virt-install --import</code> that qcow2.</li>
+<li><strong><code>virt-install --import file.qcow2</code> → "unrecognized arguments"</strong> — <code>--import</code>
+  skips the <em>installer</em>, not the VM definition; pass <code>--name/--memory/--vcpus/--disk
+  path=…/--network</code> (see the Quick start). The disk must be <code>--disk path=…</code>, not a
+  bare positional argument.</li>
+<li><strong><code>provision.env</code> ignored / box came up with defaults</strong> — the seed was almost
+  certainly attached as a SATA cdrom. The cloud kernel can't see it; reattach as
+  a virtio disk (§1). Confirm cloud-init found it: <code>vmx "cloud-init status --long"</code>
+  should name a <code>config-disk</code> datasource.</li>
+<li><strong>NIC has no address after a MAC change</strong> — only affects images predating the
+  MAC-agnostic networking fix. Current images disable cloud-init's network
+  rendering and ship a DHCP netplan matched by interface name (<code>e*</code>), so MAC
+  changes are safe. If stranded, rewrite <code>/etc/netplan/50-cloud-init.yaml</code> to
+  match by name and <code>netplan apply</code>.</li>
+<li><strong>Traefik can't reach Docker (<code>client version 1.24 is too old</code>)</strong> — Traefik v3
+  hard-codes Docker API 1.24 while Engine ≥25 serves a minimum of 1.40. Current
+  images bake <code>DOCKER_MIN_API_VERSION=1.24</code> as a <code>docker.service</code> drop-in. To fix
+  a running box: write that drop-in and <code>systemctl restart docker</code>.</li>
+<li><strong>TLS stuck on the self-signed default / <code>acme.json</code> empty</strong> — Traefik only
+  requests a cert for a declared domain; it does not mint on-demand from SNI.
+  Ensure <code>EXTERNAL_URL</code>/<code>TLS_DOMAIN</code> is a public FQDN (not <code>localhost</code>) so the
+  letsencrypt overlay's <code>tls.domains</code> is populated. <code>operator.sh start</code> warns when
+  it isn't.</li>
+<li><strong>virt-manager console "Viewer was disconnected" / asks for a password</strong> — the
+  remote graphical console needs key auth the GUI session can use, VNC bound to
+  <code>127.0.0.1</code>, and <code>netcat</code> on the libvirt host. See
+  <a href="#remote-graphical-console-virt-manager--virt-viewer">Remote graphical console</a>.</li>
+</ul>
+<h2 id="see-also">See also</h2>
+<ul>
+<li><a href="../../appliance/README.md">Appliance build</a> — building the image</li>
+<li><a href="../tls/">TLS and Certificates</a> — cert modes and scenarios</li>
+<li><a href="../troubleshooting/">Troubleshooting</a> — general platform issues</li>
+<li><a href="../../architecture/infrastructure/ADR-103-distribution-strategy-nomic-first-thin-appliance-with-app-store-tenancy/">ADR-103</a>,
+  <a href="../../architecture/infrastructure/ADR-105-scenario-driven-tls-via-in-vm-traefik-router/">ADR-105</a></li>
+</ul>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

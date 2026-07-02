@@ -1,0 +1,2970 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Multi-dimensional knowledge extraction system using Apache AGE">
+      
+      
+        <meta name="author" content="Knowledge Graph System Contributors">
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>ADR-307: Source Document Lifecycle - Knowledge Graph System</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#adr-307-source-document-lifecycle" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="Knowledge Graph System" class="md-header__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Knowledge Graph System
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              ADR-307: Source Document Lifecycle
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/aaronsb/knowledge-graph-system" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aaronsb/knowledge-graph-system
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="Knowledge Graph System" class="md-nav__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Knowledge Graph System
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/aaronsb/knowledge-graph-system" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aaronsb/knowledge-graph-system
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Get Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Get Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../get-started/what-and-why/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What and Why
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../get-started/first-graph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your First Graph
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../get-started/first-query/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your First Query
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../get-started/mcp-quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Connect via MCP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../get-started/github-history/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mining a Git Repo
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-To
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How-To
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/ingest/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ingest Documents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/query/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explore and Query
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/epistemic-status/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Filter by Epistemic Status
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/polarity-axis/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Analyze a Polarity Axis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/fuse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Use the FUSE Drive
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/ai-providers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configure AI Providers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/embeddings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configure Embeddings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/extraction-quality/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Compare Extraction Quality
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/vocabulary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Consolidate Vocabulary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Self-Host
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Self-Host
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/quick-start/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/production/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Production Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/macvlan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dedicated IP (macvlan)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/tls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    TLS and Certificates
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/appliance-libvirt/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Appliance on libvirt/KVM
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security and Access
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/backup-restore/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backup and Restore
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/scheduled-jobs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scheduled Jobs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/upgrading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Upgrading
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explanation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Explanation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/how-it-works/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How It Works
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/computed-evidence/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Computed Evidence over Asserted Truth
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/grounding/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Grounding and Epistemic Confidence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/recursive-upsert/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Recursive Upsert
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/vocabulary-lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vocabulary Lifecycle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/storage-and-freshness/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Storage and Freshness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/worker-lanes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Worker Lanes and Concurrency
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/embedding-landscape/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Embedding Landscape
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/graph-program/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram DSL
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    REST API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/mcp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/mcp-session-context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Session Context
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/fuse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FUSE Driver
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/schema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Database Schema
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/cypher/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cypher Patterns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/graph-program-spec/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram Specification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/graph-program-validation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram Validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/graph-program-security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/backup-object-spec/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backup Object Format
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Contributing
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/voice/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Prose & Voice Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/docstring-coverage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docstring Coverage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/test-suite/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Test Suite
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../INDEX/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Context">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-knowledge-keeper-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Knowledge Keeper Model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-redundancy-question" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Redundancy Question
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#model-evolution-insurance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Model Evolution Insurance
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Decision">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-pre-ingestion-storage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Pre-Ingestion Storage
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-content-based-identity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Content-Based Identity
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-deduplication-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Deduplication Strategy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-schema-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Schema Changes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Schema Changes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#source-node-enhancement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Source Node Enhancement
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#document-node-new" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Document Node (New)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-graph-regeneration-new-keeper-scenario" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Graph Regeneration (New Keeper Scenario)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-deletion-cascade-forgetting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Deletion Cascade (Forgetting)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-version-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Version Management
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Consequences">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#positive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Positive
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#negative" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Negative
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#neutral" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Neutral
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation Plan
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation Plan">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-1-pre-ingestion-storage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 1: Pre-Ingestion Storage ✓
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-2-deduplication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 2: Deduplication
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-3-regeneration-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 3: Regeneration (Optional)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-4-deletion-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 4: Deletion (Optional)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#migration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Migration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#enables-semantic-fuse-filesystem-adr-715" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enables: Semantic FUSE Filesystem (ADR-715)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#future-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Future Considerations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Future Considerations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#graph-garage-reconstruction-yagni" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Graph → Garage Reconstruction (YAGNI)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        References
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="adr-307-source-document-lifecycle">ADR-307: Source Document Lifecycle</h1>
+<h2 id="context">Context</h2>
+<p>When documents are ingested into the knowledge graph, the original source material is currently discarded after extraction. We retain:
+- Chunked text in Source nodes (<code>full_text</code> property)
+- Evidence quotes in Instance nodes
+- Extracted concepts and relationships</p>
+<p>But we lose:
+- The original document as a cohesive unit
+- Precise position information (line/character offsets)
+- The ability to re-process with improved extraction
+- Version history when documents are updated</p>
+<h3 id="the-knowledge-keeper-model">The Knowledge Keeper Model</h3>
+<p>Think of the system as a knowledge keeper with a warehouse:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>┌─────────────────────────────────────────────────────────────────────┐
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>│                        THE KNOWLEDGE KEEPER                         │
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>├─────────────────────────────────────────────────────────────────────┤
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>│                                                                     │
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>│  WAREHOUSE (Garage)              MIND (Graph)                       │
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>│  ═══════════════════             ══════════════                     │
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>│                                                                     │
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>│    Books                           WHY I kept them                  │
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>│    Documents                       HOW they connect                 │
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>│    Pictures                        WHAT they mean together          │
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>│    Artifacts                       The project context              │
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>│                                    The relationships I see          │
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>│    (storage)                       (understanding)                  │
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>│                                                                     │
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>│         │            FILING SYSTEM              │                   │
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>│         │            ══════════════             │                   │
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>│         └───────►    Document nodes    ◄────────┘                   │
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>│                      Source nodes                                   │
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>│                      (where things are)                             │
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>│                                                                     │
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>└─────────────────────────────────────────────────────────────────────┘
+</code></pre></div>
+<ul>
+<li><strong>Garage</strong> = The warehouse (physical artifacts, content storage)</li>
+<li><strong>Document/Source nodes</strong> = The filing system (organization, location, offsets)</li>
+<li><strong>Concepts + Relationships</strong> = The mind (meaning, context, the "why")</li>
+</ul>
+<p>The graph isn't just an index - it's the <strong>understanding layer</strong>. Concepts and relationships capture what a filing system never could: <em>"I collected these systems architecture docs because of that project, which connects to these project management behaviors..."</em></p>
+<h3 id="the-redundancy-question">The Redundancy Question</h3>
+<p>Storing source documents in Garage while also keeping chunked evidence in the graph creates apparent duplication. However, this <strong>intentional redundancy</strong> enables resilience:</p>
+<table>
+<thead>
+<tr>
+<th>Scenario</th>
+<th>What Happens</th>
+<th>Recovery</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Warehouse disaster</strong></td>
+<td>Garage storage lost</td>
+<td>Mind rebuilds warehouse from last backup</td>
+</tr>
+<tr>
+<td><strong>New keeper</strong></td>
+<td>Graph cleared or strategy change</td>
+<td>New keeper re-reads all documents, builds fresh understanding</td>
+</tr>
+<tr>
+<td><strong>Routine backup</strong></td>
+<td>Either layer backed up</td>
+<td>Database backup OR Garage backup sufficient</td>
+</tr>
+</tbody>
+</table>
+<p>The "new keeper" scenario is particularly valuable: re-ingesting the same documents with a different extraction strategy (random sampling → popularity-weighted → hybrid) produces different interpretations of the same source material.</p>
+<h3 id="model-evolution-insurance">Model Evolution Insurance</h3>
+<p>In traditional software, storing both source documents and parsed data might be overbuilding. However, in LLM-based knowledge graphs, the "parser" (the LLM + prompts) is <strong>non-deterministic and rapidly evolving</strong>.</p>
+<p>Consider: today we extract concepts using a 2024-era model. When next-generation models arrive with superior reasoning, documents ingested today would be locked to 2024 extraction quality - unless we kept the sources.</p>
+<table>
+<thead>
+<tr>
+<th>Without Source Storage</th>
+<th>With Source Storage</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Locked to extraction model at ingestion time</td>
+<td>Re-extract with future models</td>
+</tr>
+<tr>
+<td>Graph quality is frozen</td>
+<td>Graph intelligence grows with model improvements</td>
+</tr>
+<tr>
+<td>No way to benefit from prompt improvements</td>
+<td>Re-run with better prompts</td>
+</tr>
+</tbody>
+</table>
+<p><strong>ADR-307 is an insurance policy against model obsolescence.</strong> It allows replaying history with smarter agents later.</p>
+<h2 id="decision">Decision</h2>
+<h3 id="1-pre-ingestion-storage">1. Pre-Ingestion Storage</h3>
+<p>Store documents in Garage <strong>before</strong> ingestion begins:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>┌─────────────────────────────────────────────────────────────────┐
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>│  Document Ingestion Flow                                        │
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>├─────────────────────────────────────────────────────────────────┤
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>│                                                                 │
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>│  Document ──► [Compute Hash] ──► [Dedup Check] ──► Decision     │
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>│                     │                  │              │         │
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>│                     ▼                  ▼              ▼         │
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>│              content_hash        Exact match?    Similarity?    │
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>│                                       │              │          │
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>│                     ┌─────────────────┴──────────────┘          │
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>│                     ▼                                           │
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>│              [Store in Garage] ◄─── garage_key assigned         │
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>│                     │                                           │
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>│                     ▼                                           │
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>│              [Chunk Document] ──► AST with offsets              │
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>│                     │                                           │
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>│                     ▼                                           │
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>│              [Extract Concepts] ──► Graph with positions        │
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>│                                                                 │
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>└─────────────────────────────────────────────────────────────────┘
+</code></pre></div>
+<p><strong>Why pre-ingestion:</strong>
+- <code>garage_key</code> is known before Source nodes are created
+- Deduplication check can reference stored content
+- Even refused documents are archived (audit trail)
+- Failure at any later step doesn't lose the original</p>
+<h3 id="2-content-based-identity">2. Content-Based Identity</h3>
+<p>Documents are identified by content hash, not filename:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">compute_document_identity</span><span class="p">(</span><span class="n">content</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">ontology</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DocumentIdentity</span><span class="p">:</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="sd">    Compute content-based identity for a document.</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="sd">        DocumentIdentity with hash, garage_key, and metadata</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>    <span class="n">content_hash</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">content</span><span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>    <span class="c1"># Garage key uses hash prefix (32 chars = 128 bits = UUID-equivalent)</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>    <span class="c1"># This provides collision resistance for a future sharded universe</span>
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>    <span class="c1"># where billions of documents may exist across many shards.</span>
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>    <span class="c1"># Extension preserved for content-type inference.</span>
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>    <span class="n">garage_key</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;sources/</span><span class="si">{</span><span class="n">sanitize</span><span class="p">(</span><span class="n">ontology</span><span class="p">)</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">content_hash</span><span class="p">[:</span><span class="mi">32</span><span class="p">]</span><span class="si">}</span><span class="s2">.txt&quot;</span>
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>    <span class="k">return</span> <span class="n">DocumentIdentity</span><span class="p">(</span>
+<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>        <span class="n">content_hash</span><span class="o">=</span><span class="n">content_hash</span><span class="p">,</span>
+<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>        <span class="n">garage_key</span><span class="o">=</span><span class="n">garage_key</span><span class="p">,</span>
+<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a>        <span class="n">size_bytes</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
+<a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a>    <span class="p">)</span>
+</code></pre></div>
+<p><strong>Benefits:</strong>
+- Same content always gets same key (idempotent)
+- Different content never collides
+- Filename changes don't create duplicates
+- Natural deduplication</p>
+<p><strong>Why 32 characters (128 bits)?</strong></p>
+<table>
+<thead>
+<tr>
+<th>Hash Length</th>
+<th>Bits</th>
+<th>50% Collision At</th>
+<th>Suitability</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>12 chars</td>
+<td>48</td>
+<td>~17 million</td>
+<td>Single instance only</td>
+</tr>
+<tr>
+<td>16 chars</td>
+<td>64</td>
+<td>~4 billion</td>
+<td>Tight for universe</td>
+</tr>
+<tr>
+<td>32 chars</td>
+<td>128</td>
+<td>~18 quintillion</td>
+<td>UUID-equivalent ✓</td>
+</tr>
+</tbody>
+</table>
+<p>The 128-bit namespace provides collision resistance for a future sharded universe where billions of documents may exist across many shards. This follows the well-understood UUID pattern with extensive library support.</p>
+<h3 id="3-deduplication-strategy">3. Deduplication Strategy</h3>
+<p><strong>Implemented: Hash-Based Exact Match</strong></p>
+<table>
+<thead>
+<tr>
+<th>Match Level</th>
+<th>Detection</th>
+<th>Behavior</th>
+<th>Rationale</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Exact</strong> (100%)</td>
+<td>SHA-256 hash match</td>
+<td>Refuse (unless <code>force=true</code>)</td>
+<td>Already ingested, no new information</td>
+</tr>
+<tr>
+<td><strong>In progress</strong></td>
+<td>Job status check</td>
+<td>Refuse</td>
+<td>Already processing or queued</td>
+</tr>
+<tr>
+<td><strong>Recent</strong> (&lt;30 days)</td>
+<td>Timestamp check</td>
+<td>Refuse (unless <code>force=true</code>)</td>
+<td>Recently ingested</td>
+</tr>
+<tr>
+<td><strong>Novel</strong></td>
+<td>No match</td>
+<td>Normal ingest</td>
+<td>New content</td>
+</tr>
+</tbody>
+</table>
+<p>This is implemented via <code>ContentHasher</code> → <code>DocumentMeta</code> lookup (ADR-304).</p>
+<p><strong>Deferred: Similarity-Based Detection</strong></p>
+<p>Document-level embedding similarity was considered but <strong>intentionally not implemented</strong>:</p>
+<ol>
+<li>
+<p><strong>Concept-level dedup is the unique strength</strong> — The graph already deduplicates
+   semantically at the concept level during ingestion. Each concept is matched against
+   existing concepts via embedding similarity. This is where semantic understanding happens.</p>
+</li>
+<li>
+<p><strong>Wrong layer for intelligence</strong> — Document-level similarity tries to be smart at
+   the file level instead of the knowledge level. We're not building a document
+   similarity engine.</p>
+</li>
+<li>
+<p><strong>Hash exact-match is sufficient</strong> — True duplicates (same bytes) are caught by hash.
+   Near-duplicates (formatting changes, typo fixes) are rare edge cases. If they occur,
+   concept-level matching handles semantic overlap anyway.</p>
+</li>
+<li>
+<p><strong>Latency concern</strong> — Similarity check requires embedding the document before
+   making the dedup decision, adding ~100-500ms latency per document.</p>
+</li>
+</ol>
+<p>If similarity-based detection becomes necessary in the future, the infrastructure
+exists (embeddings, similarity functions) but should be an optional admin tool
+rather than a blocking gate.</p>
+<h3 id="4-schema-changes">4. Schema Changes</h3>
+<h4 id="source-node-enhancement">Source Node Enhancement</h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="p">(:</span><span class="n">Source</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">    </span><span class="n">source_id</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;src-abc123&quot;</span><span class="p">,</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">    </span><span class="n">document</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Philosophy&quot;</span><span class="p">,</span><span class="w">                    </span><span class="c1">// Ontology name</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">    </span><span class="c1">// Existing fields</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">    </span><span class="n">full_text</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;The chunk text content...&quot;</span><span class="p">,</span><span class="w">   </span><span class="c1">// Still needed for graph queries</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">    </span><span class="n">paragraph</span><span class="p">:</span><span class="w"> </span><span class="m">3</span><span class="p">,</span><span class="w">                              </span><span class="c1">// Legacy paragraph number</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="w">    </span><span class="c1">// NEW: Garage reference (32-char hash = 128 bits)</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">    </span><span class="n">garage_key</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;sources/Philosophy/a1b2c3d4e5f6789012345678abcdef01.txt&quot;</span><span class="p">,</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="w">    </span><span class="n">content_hash</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;a1b2c3d4e5f6789012345678abcdef01...&quot;</span><span class="p">,</span><span class="w">  </span><span class="c1">// Full SHA-256</span>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="w">    </span><span class="c1">// NEW: Position in original document</span>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="w">    </span><span class="n">char_offset_start</span><span class="p">:</span><span class="w"> </span><span class="m">4521</span><span class="p">,</span><span class="w">                  </span><span class="c1">// Character position</span>
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="w">    </span><span class="n">char_offset_end</span><span class="p">:</span><span class="w"> </span><span class="m">5847</span><span class="p">,</span>
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="w">    </span><span class="n">line_start</span><span class="p">:</span><span class="w"> </span><span class="m">142</span><span class="p">,</span><span class="w">                          </span><span class="c1">// Line numbers</span>
+<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a><span class="w">    </span><span class="n">line_end</span><span class="p">:</span><span class="w"> </span><span class="m">189</span><span class="p">,</span>
+<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a><span class="w">    </span><span class="n">chunk_index</span><span class="p">:</span><span class="w"> </span><span class="m">3</span><span class="p">,</span><span class="w">                           </span><span class="c1">// Sequential chunk number</span>
+<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a>
+<a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a><span class="w">    </span><span class="c1">// NEW: Chunking metadata</span>
+<a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a><span class="w">    </span><span class="n">chunk_method</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;ast_semantic&quot;</span><span class="p">,</span><span class="w">             </span><span class="c1">// How it was chunked</span>
+<a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a><span class="w">    </span><span class="n">overlap_chars</span><span class="p">:</span><span class="w"> </span><span class="m">200</span><span class="w">                        </span><span class="c1">// Overlap with adjacent chunks</span>
+<a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a><span class="p">})</span>
+</code></pre></div>
+<h4 id="document-node-new">Document Node (New)</h4>
+<p>Track document-level metadata separately from chunks:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="p">(:</span><span class="n">Document</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">    </span><span class="n">garage_key</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;sources/Philosophy/a1b2c3d4e5f6789012345678abcdef01.txt&quot;</span><span class="p">,</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="n">content_hash</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;a1b2c3d4e5f6789012345678abcdef01...&quot;</span><span class="p">,</span><span class="w">  </span><span class="c1">// Full SHA-256</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">    </span><span class="n">ontology</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Philosophy&quot;</span><span class="p">,</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">    </span><span class="c1">// Metadata</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">    </span><span class="n">original_filename</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;watts_zen.txt&quot;</span><span class="p">,</span><span class="w">       </span><span class="c1">// For display only</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">    </span><span class="n">size_bytes</span><span class="p">:</span><span class="w"> </span><span class="m">45230</span><span class="p">,</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="w">    </span><span class="n">chunk_count</span><span class="p">:</span><span class="w"> </span><span class="m">12</span><span class="p">,</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="w">    </span><span class="n">ingested_at</span><span class="p">:</span><span class="w"> </span><span class="n">datetime</span><span class="p">(),</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="w">    </span><span class="c1">// Versioning</span>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="w">    </span><span class="n">version</span><span class="p">:</span><span class="w"> </span><span class="m">1</span><span class="p">,</span>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="w">    </span><span class="n">supersedes</span><span class="p">:</span><span class="w"> </span><span class="k">null</span><span class="p">,</span><span class="w">                         </span><span class="c1">// Previous version&#39;s garage_key</span>
+<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a><span class="w">    </span><span class="n">superseded_by</span><span class="p">:</span><span class="w"> </span><span class="k">null</span><span class="p">,</span><span class="w">                      </span><span class="c1">// Newer version&#39;s garage_key</span>
+<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>
+<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a><span class="w">    </span><span class="c1">// Shard provenance (for future universe of shards)</span>
+<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a><span class="w">    </span><span class="n">shard_origin</span><span class="p">:</span><span class="w"> </span><span class="k">null</span><span class="w">                        </span><span class="c1">// Shard ID if received via trade</span>
+<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a><span class="p">})</span>
+<a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a>
+<a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a><span class="c1">// Relationship to chunks</span>
+<a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a><span class="p">(:</span><span class="n">Document</span><span class="p">)</span><span class="o">-[</span><span class="p">:</span><span class="n">HAS_CHUNK</span><span class="w"> </span><span class="p">{</span><span class="n">index</span><span class="p">:</span><span class="w"> </span><span class="m">0</span><span class="p">}</span><span class="o">]-&gt;</span><span class="p">(:</span><span class="n">Source</span><span class="p">)</span>
+<a id="__codelineno-4-23" name="__codelineno-4-23" href="#__codelineno-4-23"></a><span class="p">(:</span><span class="n">Document</span><span class="p">)</span><span class="o">-[</span><span class="p">:</span><span class="n">HAS_CHUNK</span><span class="w"> </span><span class="p">{</span><span class="n">index</span><span class="p">:</span><span class="w"> </span><span class="m">1</span><span class="p">}</span><span class="o">]-&gt;</span><span class="p">(:</span><span class="n">Source</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="5-graph-regeneration-new-keeper-scenario">5. Graph Regeneration (New Keeper Scenario)</h3>
+<p>When the graph is corrupted or needs re-processing:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">regenerate_graph_from_garage</span><span class="p">(</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    <span class="n">ontology</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="n">strategy</span><span class="p">:</span> <span class="n">ConceptMatchingStrategy</span> <span class="o">=</span> <span class="s2">&quot;hybrid&quot;</span><span class="p">,</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    <span class="n">dry_run</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RegenerationPlan</span><span class="p">:</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="sd">    Re-ingest all documents for an ontology from Garage.</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="sd">    Use cases:</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="sd">    - Graph corruption recovery</span>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="sd">    - Strategy experimentation (random vs popularity vs hybrid)</span>
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="sd">    - Schema migration requiring full re-extraction</span>
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="sd">    - Testing extraction improvements</span>
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>
+<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="sd">    Args:</span>
+<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a><span class="sd">        ontology: Which ontology to regenerate</span>
+<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a><span class="sd">        strategy: Concept matching strategy to use</span>
+<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a><span class="sd">            - &quot;random&quot;: Full random sampling for matches</span>
+<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a><span class="sd">            - &quot;popularity&quot;: Max popularity by edge count</span>
+<a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a><span class="sd">            - &quot;hybrid&quot;: Popularity with random tail</span>
+<a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a><span class="sd">        dry_run: If True, return plan without executing</span>
+<a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a>
+<a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-5-24" name="__codelineno-5-24" href="#__codelineno-5-24"></a><span class="sd">        RegenerationPlan with estimated cost and changes</span>
+<a id="__codelineno-5-25" name="__codelineno-5-25" href="#__codelineno-5-25"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-5-26" name="__codelineno-5-26" href="#__codelineno-5-26"></a>    <span class="c1"># List all source documents for ontology</span>
+<a id="__codelineno-5-27" name="__codelineno-5-27" href="#__codelineno-5-27"></a>    <span class="n">documents</span> <span class="o">=</span> <span class="k">await</span> <span class="n">garage</span><span class="o">.</span><span class="n">list</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;sources/</span><span class="si">{</span><span class="n">ontology</span><span class="si">}</span><span class="s2">/&quot;</span><span class="p">)</span>
+<a id="__codelineno-5-28" name="__codelineno-5-28" href="#__codelineno-5-28"></a>
+<a id="__codelineno-5-29" name="__codelineno-5-29" href="#__codelineno-5-29"></a>    <span class="k">if</span> <span class="n">dry_run</span><span class="p">:</span>
+<a id="__codelineno-5-30" name="__codelineno-5-30" href="#__codelineno-5-30"></a>        <span class="k">return</span> <span class="n">RegenerationPlan</span><span class="p">(</span>
+<a id="__codelineno-5-31" name="__codelineno-5-31" href="#__codelineno-5-31"></a>            <span class="n">document_count</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">documents</span><span class="p">),</span>
+<a id="__codelineno-5-32" name="__codelineno-5-32" href="#__codelineno-5-32"></a>            <span class="n">estimated_chunks</span><span class="o">=</span><span class="n">estimate_chunks</span><span class="p">(</span><span class="n">documents</span><span class="p">),</span>
+<a id="__codelineno-5-33" name="__codelineno-5-33" href="#__codelineno-5-33"></a>            <span class="n">estimated_cost</span><span class="o">=</span><span class="n">estimate_llm_cost</span><span class="p">(</span><span class="n">documents</span><span class="p">),</span>
+<a id="__codelineno-5-34" name="__codelineno-5-34" href="#__codelineno-5-34"></a>            <span class="n">strategy</span><span class="o">=</span><span class="n">strategy</span>
+<a id="__codelineno-5-35" name="__codelineno-5-35" href="#__codelineno-5-35"></a>        <span class="p">)</span>
+<a id="__codelineno-5-36" name="__codelineno-5-36" href="#__codelineno-5-36"></a>
+<a id="__codelineno-5-37" name="__codelineno-5-37" href="#__codelineno-5-37"></a>    <span class="c1"># Clear existing graph data for ontology</span>
+<a id="__codelineno-5-38" name="__codelineno-5-38" href="#__codelineno-5-38"></a>    <span class="k">await</span> <span class="n">graph</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-5-39" name="__codelineno-5-39" href="#__codelineno-5-39"></a><span class="s2">        MATCH (s:Source {document: $ontology})</span>
+<a id="__codelineno-5-40" name="__codelineno-5-40" href="#__codelineno-5-40"></a><span class="s2">        DETACH DELETE s</span>
+<a id="__codelineno-5-41" name="__codelineno-5-41" href="#__codelineno-5-41"></a><span class="s2">    &quot;&quot;&quot;</span><span class="p">,</span> <span class="n">ontology</span><span class="o">=</span><span class="n">ontology</span><span class="p">)</span>
+<a id="__codelineno-5-42" name="__codelineno-5-42" href="#__codelineno-5-42"></a>
+<a id="__codelineno-5-43" name="__codelineno-5-43" href="#__codelineno-5-43"></a>    <span class="k">await</span> <span class="n">graph</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-5-44" name="__codelineno-5-44" href="#__codelineno-5-44"></a><span class="s2">        MATCH (c:Concept)-[:APPEARS_IN]-&gt;(:Source {document: $ontology})</span>
+<a id="__codelineno-5-45" name="__codelineno-5-45" href="#__codelineno-5-45"></a><span class="s2">        WHERE NOT EXISTS((c)-[:APPEARS_IN]-&gt;(:Source))</span>
+<a id="__codelineno-5-46" name="__codelineno-5-46" href="#__codelineno-5-46"></a><span class="s2">        DETACH DELETE c</span>
+<a id="__codelineno-5-47" name="__codelineno-5-47" href="#__codelineno-5-47"></a><span class="s2">    &quot;&quot;&quot;</span><span class="p">,</span> <span class="n">ontology</span><span class="o">=</span><span class="n">ontology</span><span class="p">)</span>
+<a id="__codelineno-5-48" name="__codelineno-5-48" href="#__codelineno-5-48"></a>
+<a id="__codelineno-5-49" name="__codelineno-5-49" href="#__codelineno-5-49"></a>    <span class="c1"># Re-ingest each document</span>
+<a id="__codelineno-5-50" name="__codelineno-5-50" href="#__codelineno-5-50"></a>    <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">documents</span><span class="p">:</span>
+<a id="__codelineno-5-51" name="__codelineno-5-51" href="#__codelineno-5-51"></a>        <span class="n">content</span> <span class="o">=</span> <span class="k">await</span> <span class="n">garage</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">doc</span><span class="o">.</span><span class="n">key</span><span class="p">)</span>
+<a id="__codelineno-5-52" name="__codelineno-5-52" href="#__codelineno-5-52"></a>        <span class="k">await</span> <span class="n">ingest_document</span><span class="p">(</span>
+<a id="__codelineno-5-53" name="__codelineno-5-53" href="#__codelineno-5-53"></a>            <span class="n">content</span><span class="o">=</span><span class="n">content</span><span class="p">,</span>
+<a id="__codelineno-5-54" name="__codelineno-5-54" href="#__codelineno-5-54"></a>            <span class="n">ontology</span><span class="o">=</span><span class="n">ontology</span><span class="p">,</span>
+<a id="__codelineno-5-55" name="__codelineno-5-55" href="#__codelineno-5-55"></a>            <span class="n">strategy</span><span class="o">=</span><span class="n">strategy</span><span class="p">,</span>
+<a id="__codelineno-5-56" name="__codelineno-5-56" href="#__codelineno-5-56"></a>            <span class="n">skip_dedup</span><span class="o">=</span><span class="kc">True</span>  <span class="c1"># We know these are unique</span>
+<a id="__codelineno-5-57" name="__codelineno-5-57" href="#__codelineno-5-57"></a>        <span class="p">)</span>
+<a id="__codelineno-5-58" name="__codelineno-5-58" href="#__codelineno-5-58"></a>
+<a id="__codelineno-5-59" name="__codelineno-5-59" href="#__codelineno-5-59"></a>    <span class="k">return</span> <span class="n">RegenerationResult</span><span class="p">(</span>
+<a id="__codelineno-5-60" name="__codelineno-5-60" href="#__codelineno-5-60"></a>        <span class="n">documents_processed</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">documents</span><span class="p">),</span>
+<a id="__codelineno-5-61" name="__codelineno-5-61" href="#__codelineno-5-61"></a>        <span class="n">concepts_created</span><span class="o">=...</span><span class="p">,</span>
+<a id="__codelineno-5-62" name="__codelineno-5-62" href="#__codelineno-5-62"></a>        <span class="n">strategy</span><span class="o">=</span><span class="n">strategy</span>
+<a id="__codelineno-5-63" name="__codelineno-5-63" href="#__codelineno-5-63"></a>    <span class="p">)</span>
+</code></pre></div>
+<h3 id="6-deletion-cascade-forgetting">6. Deletion Cascade (Forgetting)</h3>
+<p>Remove a document and its associated knowledge:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">delete_document</span><span class="p">(</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>    <span class="n">garage_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>    <span class="n">cascade</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;orphans&quot;</span><span class="p">,</span> <span class="s2">&quot;all&quot;</span><span class="p">,</span> <span class="s2">&quot;none&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;orphans&quot;</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DeletionResult</span><span class="p">:</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="sd">    Delete a document and optionally its derived knowledge.</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="sd">    Args:</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="sd">        garage_key: Document to delete</span>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="sd">        cascade: What to delete beyond the document</span>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="sd">            - &quot;none&quot;: Only delete from Garage, leave graph intact</span>
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="sd">            - &quot;orphans&quot;: Delete Sources, delete Concepts with no other evidence</span>
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="sd">            - &quot;all&quot;: Delete Sources and ALL connected Concepts</span>
+<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a>
+<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a><span class="sd">    Use cases:</span>
+<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a><span class="sd">    - Removing incorrect/outdated information</span>
+<a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a><span class="sd">    - GDPR/privacy compliance (right to be forgotten)</span>
+<a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a><span class="sd">    - &quot;Compressing memories&quot; - removing low-value evidence</span>
+<a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-6-20" name="__codelineno-6-20" href="#__codelineno-6-20"></a>    <span class="n">result</span> <span class="o">=</span> <span class="n">DeletionResult</span><span class="p">(</span><span class="n">garage_key</span><span class="o">=</span><span class="n">garage_key</span><span class="p">)</span>
+<a id="__codelineno-6-21" name="__codelineno-6-21" href="#__codelineno-6-21"></a>
+<a id="__codelineno-6-22" name="__codelineno-6-22" href="#__codelineno-6-22"></a>    <span class="k">if</span> <span class="n">cascade</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;orphans&quot;</span><span class="p">,</span> <span class="s2">&quot;all&quot;</span><span class="p">):</span>
+<a id="__codelineno-6-23" name="__codelineno-6-23" href="#__codelineno-6-23"></a>        <span class="c1"># Delete Source nodes for this document</span>
+<a id="__codelineno-6-24" name="__codelineno-6-24" href="#__codelineno-6-24"></a>        <span class="n">sources</span> <span class="o">=</span> <span class="k">await</span> <span class="n">graph</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-6-25" name="__codelineno-6-25" href="#__codelineno-6-25"></a><span class="s2">            MATCH (s:Source {garage_key: $key})</span>
+<a id="__codelineno-6-26" name="__codelineno-6-26" href="#__codelineno-6-26"></a><span class="s2">            DETACH DELETE s</span>
+<a id="__codelineno-6-27" name="__codelineno-6-27" href="#__codelineno-6-27"></a><span class="s2">            RETURN count(s) as deleted</span>
+<a id="__codelineno-6-28" name="__codelineno-6-28" href="#__codelineno-6-28"></a><span class="s2">        &quot;&quot;&quot;</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">garage_key</span><span class="p">)</span>
+<a id="__codelineno-6-29" name="__codelineno-6-29" href="#__codelineno-6-29"></a>        <span class="n">result</span><span class="o">.</span><span class="n">sources_deleted</span> <span class="o">=</span> <span class="n">sources</span><span class="o">.</span><span class="n">deleted</span>
+<a id="__codelineno-6-30" name="__codelineno-6-30" href="#__codelineno-6-30"></a>
+<a id="__codelineno-6-31" name="__codelineno-6-31" href="#__codelineno-6-31"></a>        <span class="k">if</span> <span class="n">cascade</span> <span class="o">==</span> <span class="s2">&quot;orphans&quot;</span><span class="p">:</span>
+<a id="__codelineno-6-32" name="__codelineno-6-32" href="#__codelineno-6-32"></a>            <span class="c1"># Delete concepts with no remaining evidence</span>
+<a id="__codelineno-6-33" name="__codelineno-6-33" href="#__codelineno-6-33"></a>            <span class="n">concepts</span> <span class="o">=</span> <span class="k">await</span> <span class="n">graph</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-6-34" name="__codelineno-6-34" href="#__codelineno-6-34"></a><span class="s2">                MATCH (c:Concept)</span>
+<a id="__codelineno-6-35" name="__codelineno-6-35" href="#__codelineno-6-35"></a><span class="s2">                WHERE NOT EXISTS((c)-[:APPEARS_IN]-&gt;(:Source))</span>
+<a id="__codelineno-6-36" name="__codelineno-6-36" href="#__codelineno-6-36"></a><span class="s2">                  AND NOT EXISTS((c)-[:EVIDENCED_BY]-&gt;(:Instance))</span>
+<a id="__codelineno-6-37" name="__codelineno-6-37" href="#__codelineno-6-37"></a><span class="s2">                DETACH DELETE c</span>
+<a id="__codelineno-6-38" name="__codelineno-6-38" href="#__codelineno-6-38"></a><span class="s2">                RETURN count(c) as deleted</span>
+<a id="__codelineno-6-39" name="__codelineno-6-39" href="#__codelineno-6-39"></a><span class="s2">            &quot;&quot;&quot;</span><span class="p">)</span>
+<a id="__codelineno-6-40" name="__codelineno-6-40" href="#__codelineno-6-40"></a>            <span class="n">result</span><span class="o">.</span><span class="n">concepts_deleted</span> <span class="o">=</span> <span class="n">concepts</span><span class="o">.</span><span class="n">deleted</span>
+<a id="__codelineno-6-41" name="__codelineno-6-41" href="#__codelineno-6-41"></a>
+<a id="__codelineno-6-42" name="__codelineno-6-42" href="#__codelineno-6-42"></a>        <span class="k">elif</span> <span class="n">cascade</span> <span class="o">==</span> <span class="s2">&quot;all&quot;</span><span class="p">:</span>
+<a id="__codelineno-6-43" name="__codelineno-6-43" href="#__codelineno-6-43"></a>            <span class="c1"># More aggressive - would need concept tracking</span>
+<a id="__codelineno-6-44" name="__codelineno-6-44" href="#__codelineno-6-44"></a>            <span class="c1"># Not implemented in v1</span>
+<a id="__codelineno-6-45" name="__codelineno-6-45" href="#__codelineno-6-45"></a>            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Full cascade not yet supported&quot;</span><span class="p">)</span>
+<a id="__codelineno-6-46" name="__codelineno-6-46" href="#__codelineno-6-46"></a>
+<a id="__codelineno-6-47" name="__codelineno-6-47" href="#__codelineno-6-47"></a>    <span class="c1"># Delete from Garage</span>
+<a id="__codelineno-6-48" name="__codelineno-6-48" href="#__codelineno-6-48"></a>    <span class="k">await</span> <span class="n">garage</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">garage_key</span><span class="p">)</span>
+<a id="__codelineno-6-49" name="__codelineno-6-49" href="#__codelineno-6-49"></a>    <span class="n">result</span><span class="o">.</span><span class="n">garage_deleted</span> <span class="o">=</span> <span class="kc">True</span>
+<a id="__codelineno-6-50" name="__codelineno-6-50" href="#__codelineno-6-50"></a>
+<a id="__codelineno-6-51" name="__codelineno-6-51" href="#__codelineno-6-51"></a>    <span class="c1"># Delete Document node</span>
+<a id="__codelineno-6-52" name="__codelineno-6-52" href="#__codelineno-6-52"></a>    <span class="k">await</span> <span class="n">graph</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-6-53" name="__codelineno-6-53" href="#__codelineno-6-53"></a><span class="s2">        MATCH (d:Document {garage_key: $key})</span>
+<a id="__codelineno-6-54" name="__codelineno-6-54" href="#__codelineno-6-54"></a><span class="s2">        DELETE d</span>
+<a id="__codelineno-6-55" name="__codelineno-6-55" href="#__codelineno-6-55"></a><span class="s2">    &quot;&quot;&quot;</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">garage_key</span><span class="p">)</span>
+<a id="__codelineno-6-56" name="__codelineno-6-56" href="#__codelineno-6-56"></a>
+<a id="__codelineno-6-57" name="__codelineno-6-57" href="#__codelineno-6-57"></a>    <span class="k">return</span> <span class="n">result</span>
+</code></pre></div>
+<h3 id="7-version-management">7. Version Management</h3>
+<p>When a similar document is force-ingested:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">ingest_as_version</span><span class="p">(</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>    <span class="n">content</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>    <span class="n">ontology</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>    <span class="n">supersedes</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># garage_key of previous version</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">IngestResult</span><span class="p">:</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="sd">    Ingest document as a new version of an existing document.</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="sd">    The new version:</span>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="sd">    - Gets its own garage_key (based on new content hash)</span>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="sd">    - Links to previous version via supersedes relationship</span>
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="sd">    - Creates new Source nodes (may deduplicate to same Concepts)</span>
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="sd">    - Novel concepts from the 5-20% difference become new nodes</span>
+<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a>    <span class="c1"># Compute identity for new content</span>
+<a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a>    <span class="n">identity</span> <span class="o">=</span> <span class="n">compute_document_identity</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="n">ontology</span><span class="p">)</span>
+<a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a>
+<a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a>    <span class="c1"># Store in Garage</span>
+<a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a>    <span class="k">await</span> <span class="n">garage</span><span class="o">.</span><span class="n">store</span><span class="p">(</span><span class="n">identity</span><span class="o">.</span><span class="n">garage_key</span><span class="p">,</span> <span class="n">content</span><span class="p">)</span>
+<a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a>
+<a id="__codelineno-7-21" name="__codelineno-7-21" href="#__codelineno-7-21"></a>    <span class="c1"># Create Document node with version link</span>
+<a id="__codelineno-7-22" name="__codelineno-7-22" href="#__codelineno-7-22"></a>    <span class="k">await</span> <span class="n">graph</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-7-23" name="__codelineno-7-23" href="#__codelineno-7-23"></a><span class="s2">        MATCH (old:Document {garage_key: $supersedes})</span>
+<a id="__codelineno-7-24" name="__codelineno-7-24" href="#__codelineno-7-24"></a><span class="s2">        CREATE (new:Document {</span>
+<a id="__codelineno-7-25" name="__codelineno-7-25" href="#__codelineno-7-25"></a><span class="s2">            garage_key: $new_key,</span>
+<a id="__codelineno-7-26" name="__codelineno-7-26" href="#__codelineno-7-26"></a><span class="s2">            content_hash: $hash,</span>
+<a id="__codelineno-7-27" name="__codelineno-7-27" href="#__codelineno-7-27"></a><span class="s2">            ontology: $ontology,</span>
+<a id="__codelineno-7-28" name="__codelineno-7-28" href="#__codelineno-7-28"></a><span class="s2">            version: old.version + 1,</span>
+<a id="__codelineno-7-29" name="__codelineno-7-29" href="#__codelineno-7-29"></a><span class="s2">            supersedes: $supersedes,</span>
+<a id="__codelineno-7-30" name="__codelineno-7-30" href="#__codelineno-7-30"></a><span class="s2">            ingested_at: datetime()</span>
+<a id="__codelineno-7-31" name="__codelineno-7-31" href="#__codelineno-7-31"></a><span class="s2">        })</span>
+<a id="__codelineno-7-32" name="__codelineno-7-32" href="#__codelineno-7-32"></a><span class="s2">        SET old.superseded_by = $new_key</span>
+<a id="__codelineno-7-33" name="__codelineno-7-33" href="#__codelineno-7-33"></a><span class="s2">    &quot;&quot;&quot;</span><span class="p">,</span>
+<a id="__codelineno-7-34" name="__codelineno-7-34" href="#__codelineno-7-34"></a>        <span class="n">supersedes</span><span class="o">=</span><span class="n">supersedes</span><span class="p">,</span>
+<a id="__codelineno-7-35" name="__codelineno-7-35" href="#__codelineno-7-35"></a>        <span class="n">new_key</span><span class="o">=</span><span class="n">identity</span><span class="o">.</span><span class="n">garage_key</span><span class="p">,</span>
+<a id="__codelineno-7-36" name="__codelineno-7-36" href="#__codelineno-7-36"></a>        <span class="nb">hash</span><span class="o">=</span><span class="n">identity</span><span class="o">.</span><span class="n">content_hash</span><span class="p">,</span>
+<a id="__codelineno-7-37" name="__codelineno-7-37" href="#__codelineno-7-37"></a>        <span class="n">ontology</span><span class="o">=</span><span class="n">ontology</span>
+<a id="__codelineno-7-38" name="__codelineno-7-38" href="#__codelineno-7-38"></a>    <span class="p">)</span>
+<a id="__codelineno-7-39" name="__codelineno-7-39" href="#__codelineno-7-39"></a>
+<a id="__codelineno-7-40" name="__codelineno-7-40" href="#__codelineno-7-40"></a>    <span class="c1"># Normal ingestion - dedup will attach to existing concepts</span>
+<a id="__codelineno-7-41" name="__codelineno-7-41" href="#__codelineno-7-41"></a>    <span class="c1"># where appropriate, create new for novel content</span>
+<a id="__codelineno-7-42" name="__codelineno-7-42" href="#__codelineno-7-42"></a>    <span class="k">return</span> <span class="k">await</span> <span class="n">ingest_document</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="n">ontology</span><span class="p">,</span> <span class="n">garage_key</span><span class="o">=</span><span class="n">identity</span><span class="o">.</span><span class="n">garage_key</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="consequences">Consequences</h2>
+<h3 id="positive">Positive</h3>
+<ol>
+<li><strong>Model Evolution Insurance</strong>: Re-extract with future LLMs as they improve</li>
+<li><strong>New Keeper Recovery</strong>: Re-ingest from Garage with different extraction strategy</li>
+<li><strong>Strategy Experimentation</strong>: Re-generate graph with different matching modes</li>
+<li><strong>Audit Trail</strong>: Original documents preserved for compliance/debugging</li>
+<li><strong>Version History</strong>: Track document evolution over time</li>
+<li><strong>Precise Provenance</strong>: Line/character offsets enable source highlighting</li>
+<li><strong>Backup Flexibility</strong>: Garage backup preserves source truth; graph is rebuildable</li>
+</ol>
+<h3 id="negative">Negative</h3>
+<ol>
+<li><strong>Storage Duplication</strong>: Same content in Garage and graph (intentional)</li>
+<li><strong>Schema Changes</strong>: Requires migration for new Source/Document properties</li>
+<li><strong>Complexity</strong>: More moving parts in ingestion pipeline</li>
+<li><strong>Regeneration Cost</strong>: Re-ingesting is expensive (LLM calls)</li>
+</ol>
+<h3 id="neutral">Neutral</h3>
+<ol>
+<li><strong>Eventual Consistency</strong>: Graph and Garage may briefly diverge during operations</li>
+<li><strong>Deletion is Rare</strong>: Most use cases are additive, not subtractive</li>
+<li><strong>Versioning Optional</strong>: Can ignore version management if not needed</li>
+</ol>
+<h2 id="implementation-plan">Implementation Plan</h2>
+<h3 id="phase-1-pre-ingestion-storage">Phase 1: Pre-Ingestion Storage ✓</h3>
+<ol>
+<li>✓ Update ingestion to compute hash first</li>
+<li>✓ Store document in Garage before chunking</li>
+<li>✓ Add <code>garage_key</code> and <code>content_hash</code> to Source nodes</li>
+<li>✓ Add offset tracking during chunking (<code>char_offset_start</code>, <code>char_offset_end</code>, <code>chunk_index</code>)</li>
+<li>✓ Add <code>garage_key</code> to DocumentMeta node</li>
+</ol>
+<h3 id="phase-2-deduplication">Phase 2: Deduplication</h3>
+<ol>
+<li>✓ Exact-match deduplication (hash) — Already implemented via ContentHasher + DocumentMeta</li>
+<li>✗ Similarity-based deduplication — <strong>Deferred</strong> (see "Deduplication Strategy" section)</li>
+<li>Force override with versioning — Optional future enhancement</li>
+<li>Update API to return dedup warnings — Optional future enhancement</li>
+</ol>
+<h3 id="phase-3-regeneration-optional">Phase 3: Regeneration (Optional)</h3>
+<ol>
+<li>Implement Garage → graph regeneration ("new keeper" scenario)</li>
+<li>Add admin endpoints for recovery operations</li>
+</ol>
+<h3 id="phase-4-deletion-optional">Phase 4: Deletion (Optional)</h3>
+<ol>
+<li>Implement cascade deletion</li>
+<li>Add orphan cleanup</li>
+<li>Document the "forgetting" workflow</li>
+</ol>
+<p>Note: DocumentMeta (ADR-304) serves as the Document node type. No separate :Document label needed.</p>
+<h2 id="migration">Migration</h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1">-- Migration 034: Source document lifecycle</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="c1">-- Add new columns to track document position</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1">-- (Applied via AGE property updates, not ALTER TABLE)</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="c1">-- New Document label</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="c1">-- (Created automatically when first Document node is created)</span>
+</code></pre></div>
+<p>Graph properties are schemaless, so new fields can be added incrementally during ingestion. Existing Source nodes without the new properties continue to work.</p>
+<h2 id="enables-semantic-fuse-filesystem-adr-715">Enables: Semantic FUSE Filesystem (ADR-715)</h2>
+<p>This ADR provides the final foundational piece for the Semantic FUSE Filesystem (ADR-715):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>ADR-305 (Images in Garage)
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>    ↓
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>ADR-114 (Projections in Garage)
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>    ↓
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>ADR-307 (Source Documents in Garage) ← THIS ADR
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>    ↓
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>ADR-715 (Semantic FUSE Filesystem)
+</code></pre></div>
+<p><strong>Why source document storage enables FUSE:</strong></p>
+<ol>
+<li><strong>Document Retrieval</strong>: FUSE can serve original documents via <code>cat /mnt/knowledge/ontology/source.txt</code></li>
+<li><strong>Position Highlighting</strong>: Offset information (<code>char_offset_start/end</code>, <code>line_start/end</code>) enables displaying exact evidence locations within source documents</li>
+<li><strong>Bidirectional Navigation</strong>: From concept → evidence → source chunk → original document (all resolvable)</li>
+<li><strong>Backup/Restore Symmetry</strong>: FUSE can operate on either graph or Garage as authoritative source</li>
+</ol>
+<p><strong>Future FUSE operations enabled:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># Navigate to source document from concept</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>cat<span class="w"> </span>/mnt/knowledge/embedding-models/unified-regeneration.concept/evidence/1/source.txt
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="c1"># The source.txt is fetched from Garage using garage_key</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="c1"># Offset metadata enables highlighting the exact quote</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="c1"># Regenerate graph from FUSE-mounted Garage sources</span>
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>find<span class="w"> </span>/mnt/garage/sources/Philosophy/*.txt<span class="w"> </span><span class="p">|</span><span class="w"> </span>xargs<span class="w"> </span>kg<span class="w"> </span>ingest<span class="w"> </span>--strategy<span class="w"> </span>hybrid
+</code></pre></div>
+<p>Without source documents in Garage (this ADR), FUSE would only expose graph-derived content. With this ADR, FUSE can expose the complete document lifecycle - original sources, extracted concepts, and their relationships.</p>
+<h2 id="future-considerations">Future Considerations</h2>
+<h3 id="graph-garage-reconstruction-yagni">Graph → Garage Reconstruction (YAGNI)</h3>
+<p>The offset information stored in Source nodes (<code>char_offset_start</code>, <code>char_offset_end</code>, <code>chunk_index</code>) theoretically enables reconstructing original documents from graph chunks. This would allow recovery if Garage is lost but the graph is intact.</p>
+<p><strong>Not implemented because:</strong>
+- Rare scenario (Garage lost, graph intact, no Garage backup)
+- Garage backups are simpler and more reliable
+- Adds complexity without clear near-term value</p>
+<p><strong>If needed later</strong>, the implementation would:
+1. Query all Source nodes for a <code>garage_key</code>, ordered by <code>chunk_index</code>
+2. Handle chunk overlaps using <code>char_offset_start</code> to deduplicate
+3. Concatenate to reconstruct original document</p>
+<p>A TODO comment in the code will document this possibility without implementing it.</p>
+<h2 id="references">References</h2>
+<ul>
+<li>Issue #172: Expand Garage storage for projections and source documents</li>
+<li>ADR-715: Semantic FUSE Filesystem (enabled by this ADR)</li>
+<li>ADR-115: Garage Service Architecture</li>
+<li>ADR-305: Multimodal Image Ingestion</li>
+<li>Concept matching modes: random sampling, popularity-weighted, hybrid</li>
+</ul>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": [], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

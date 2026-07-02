@@ -1,0 +1,2819 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Multi-dimensional knowledge extraction system using Apache AGE">
+      
+      
+        <meta name="author" content="Knowledge Graph System Contributors">
+      
+      
+      
+        <link rel="prev" href="../embeddings/">
+      
+      
+        <link rel="next" href="../vocabulary/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Compare Extraction Quality - Knowledge Graph System</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#compare-extraction-quality" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Knowledge Graph System" class="md-header__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Knowledge Graph System
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Compare Extraction Quality
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/aaronsb/knowledge-graph-system" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aaronsb/knowledge-graph-system
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Knowledge Graph System" class="md-nav__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Knowledge Graph System
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/aaronsb/knowledge-graph-system" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aaronsb/knowledge-graph-system
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Get Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Get Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/what-and-why/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What and Why
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/first-graph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your First Graph
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/first-query/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your First Query
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/mcp-quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Connect via MCP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/github-history/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mining a Git Repo
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-To
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How-To
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ingest/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ingest Documents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../query/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explore and Query
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../epistemic-status/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Filter by Epistemic Status
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../polarity-axis/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Analyze a Polarity Axis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../fuse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Use the FUSE Drive
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ai-providers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configure AI Providers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../embeddings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configure Embeddings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Compare Extraction Quality
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Compare Extraction Quality
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#quick-decision-table" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick decision table
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#measured-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Measured results
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Measured results">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#summary-statistics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Summary statistics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-canonical-adherence-means-for-your-graph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What "canonical adherence" means for your graph
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#provider-profiles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Provider profiles
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Provider profiles">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#openai-gpt-4o" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OpenAI GPT-4o
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ollama-qwen3-14b" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ollama Qwen3 14B
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ollama-qwen-25-14b" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ollama Qwen 2.5 14B
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gpt-oss-20b-ollama" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GPT-OSS 20B (Ollama)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ollama-mistral-7b" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ollama Mistral 7B
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cost-and-time-at-scale" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cost and time at scale
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Cost and time at scale">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-000-document-corpus-6-000-chunks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1 000-document corpus (~6 000 chunks)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#break-even-by-corpus-size" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Break-even by corpus size
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#switch-and-test-providers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Switch and test providers
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Switch and test providers">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#run-a-comparison-yourself" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Run a comparison yourself
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Related
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../vocabulary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Consolidate Vocabulary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Self-Host
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Self-Host
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/quick-start/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/production/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Production Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/macvlan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dedicated IP (macvlan)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/tls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    TLS and Certificates
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/appliance-libvirt/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Appliance on libvirt/KVM
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security and Access
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/backup-restore/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backup and Restore
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/scheduled-jobs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scheduled Jobs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/upgrading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Upgrading
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explanation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Explanation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/how-it-works/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How It Works
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/computed-evidence/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Computed Evidence over Asserted Truth
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/grounding/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Grounding and Epistemic Confidence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/recursive-upsert/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Recursive Upsert
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/vocabulary-lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vocabulary Lifecycle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/storage-and-freshness/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Storage and Freshness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/worker-lanes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Worker Lanes and Concurrency
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/embedding-landscape/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Embedding Landscape
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/graph-program/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram DSL
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    REST API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/mcp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/mcp-session-context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Session Context
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/fuse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FUSE Driver
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/schema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Database Schema
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cypher/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cypher Patterns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/graph-program-spec/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram Specification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/graph-program-validation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram Validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/graph-program-security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/backup-object-spec/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backup Object Format
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Contributing
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/voice/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Prose & Voice Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/docstring-coverage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docstring Coverage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/test-suite/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Test Suite
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/INDEX/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#quick-decision-table" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick decision table
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#measured-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Measured results
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Measured results">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#summary-statistics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Summary statistics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-canonical-adherence-means-for-your-graph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What "canonical adherence" means for your graph
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#provider-profiles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Provider profiles
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Provider profiles">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#openai-gpt-4o" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OpenAI GPT-4o
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ollama-qwen3-14b" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ollama Qwen3 14B
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ollama-qwen-25-14b" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ollama Qwen 2.5 14B
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gpt-oss-20b-ollama" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GPT-OSS 20B (Ollama)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ollama-mistral-7b" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ollama Mistral 7B
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cost-and-time-at-scale" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cost and time at scale
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Cost and time at scale">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-000-document-corpus-6-000-chunks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1 000-document corpus (~6 000 chunks)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#break-even-by-corpus-size" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Break-even by corpus size
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#switch-and-test-providers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Switch and test providers
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Switch and test providers">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#run-a-comparison-yourself" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Run a comparison yourself
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Related
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="compare-extraction-quality">Compare Extraction Quality</h1>
+<p>Different AI providers produce different graph characteristics from the same document. This page helps you choose a provider based on measured trade-offs between concept volume, schema compliance, speed, and cost.</p>
+<p>All providers flow through the same Kappa Graph ingestion pipeline — the same chunker, relationship normalizer, and embeddings. Quality differences are model-dependent, not architectural (ADR-806).</p>
+<hr />
+<h2 id="quick-decision-table">Quick decision table</h2>
+<table>
+<thead>
+<tr>
+<th>Goal</th>
+<th>Provider</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Production knowledge base</td>
+<td>OpenAI GPT-4o</td>
+<td>46 concepts, 88% canonical, 2 s/chunk</td>
+</tr>
+<tr>
+<td>Maximum concept extraction</td>
+<td>Ollama Qwen3 14B</td>
+<td>57 concepts, 74% canonical, 16 GB VRAM</td>
+</tr>
+<tr>
+<td>Strictest schema compliance</td>
+<td>Ollama Qwen 2.5 14B</td>
+<td>92% canonical, zero cost</td>
+</tr>
+<tr>
+<td>Large private corpus (1 000+ docs)</td>
+<td>Ollama Qwen 2.5 14B</td>
+<td>92% canonical, privacy-preserving, zero cost</td>
+</tr>
+<tr>
+<td>Quick prototyping</td>
+<td>OpenAI GPT-4o</td>
+<td>30× faster than local models, no setup</td>
+</tr>
+<tr>
+<td>Avoid</td>
+<td>Ollama Mistral 7B</td>
+<td>38% canonical — vocabulary pollution</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="measured-results">Measured results</h2>
+<p>The figures below come from a single test document (a 6-chunk philosophical lecture transcript) run through each provider with identical settings. The test establishes relative rankings; absolute numbers will vary with document type.</p>
+<h3 id="summary-statistics">Summary statistics</h3>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Mistral 7B</th>
+<th>Qwen 2.5 14B</th>
+<th>Qwen3 14B</th>
+<th>GPT-OSS 20B</th>
+<th>GPT-4o</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Concepts extracted</td>
+<td>32</td>
+<td>24</td>
+<td><strong>57</strong></td>
+<td>48</td>
+<td>46</td>
+</tr>
+<tr>
+<td>Evidence instances</td>
+<td>36</td>
+<td>27</td>
+<td><strong>70</strong></td>
+<td>49</td>
+<td>48</td>
+</tr>
+<tr>
+<td>Total relationships</td>
+<td>134</td>
+<td>98</td>
+<td>61</td>
+<td><strong>190</strong></td>
+<td>172</td>
+</tr>
+<tr>
+<td>Unique relationship types</td>
+<td>16</td>
+<td>13</td>
+<td><strong>22</strong></td>
+<td>17</td>
+<td>17</td>
+</tr>
+<tr>
+<td>Canonical adherence</td>
+<td>38%</td>
+<td><strong>92%</strong></td>
+<td>74%</td>
+<td>65%</td>
+<td>88%</td>
+</tr>
+<tr>
+<td>Non-canonical types created</td>
+<td>10</td>
+<td><strong>1</strong></td>
+<td>5</td>
+<td>6</td>
+<td>2</td>
+</tr>
+<tr>
+<td>Inference speed</td>
+<td>~10 s/chunk</td>
+<td>~15 s/chunk</td>
+<td>~60 s/chunk</td>
+<td>~20 s/chunk</td>
+<td><strong>~2 s/chunk</strong></td>
+</tr>
+<tr>
+<td>Cost per document</td>
+<td>$0.00</td>
+<td>$0.00</td>
+<td>$0.00</td>
+<td>$0.00</td>
+<td>~$0.10</td>
+</tr>
+</tbody>
+</table>
+<h3 id="what-canonical-adherence-means-for-your-graph">What "canonical adherence" means for your graph</h3>
+<p>Each time a model emits a relationship type that is not in the canonical 30-type taxonomy, the fuzzy matcher tries to correct it. When no good match exists, the system accepts the new type and adds it to the vocabulary (ADR-603). After 100 documents:</p>
+<table>
+<thead>
+<tr>
+<th>Provider</th>
+<th>Estimated relationship types</th>
+<th>Canonical</th>
+<th>Non-canonical</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GPT-4o</td>
+<td>~35</td>
+<td>30</td>
+<td>~5</td>
+</tr>
+<tr>
+<td>Qwen 2.5 14B</td>
+<td>~32</td>
+<td>30</td>
+<td>~2</td>
+</tr>
+<tr>
+<td>Qwen3 14B</td>
+<td>~40</td>
+<td>30</td>
+<td>~10</td>
+</tr>
+<tr>
+<td>GPT-OSS 20B</td>
+<td>~50</td>
+<td>30</td>
+<td>~20</td>
+</tr>
+<tr>
+<td>Mistral 7B</td>
+<td>~80</td>
+<td>30</td>
+<td>~50</td>
+</tr>
+</tbody>
+</table>
+<p>Vocabulary that grows unboundedly makes queries less predictable and vocabulary consolidation more expensive.</p>
+<hr />
+<h2 id="provider-profiles">Provider profiles</h2>
+<h3 id="openai-gpt-4o">OpenAI GPT-4o</h3>
+<p><strong>Extraction philosophy:</strong> balanced coverage with high schema compliance.</p>
+<ul>
+<li>46 concepts, 172-edge graph, 88% canonical adherence</li>
+<li>2 s/chunk — 30× faster than Qwen3 at 60 s/chunk</li>
+<li>Cost: ~$0.10 per 6-chunk document ($10 per 100 documents)</li>
+<li>Only 2 non-canonical relationship types in the test run</li>
+</ul>
+<p>Best for production deployments, shared knowledge bases, and any workload where speed or schema quality cannot be compromised.</p>
+<h3 id="ollama-qwen3-14b">Ollama Qwen3 14B</h3>
+<p><strong>Extraction philosophy:</strong> high concept volume with moderate schema compliance.</p>
+<ul>
+<li>57 concepts — highest of all models tested</li>
+<li>74% canonical adherence; 5 non-canonical types</li>
+<li>60 s/chunk; fits in 16 GB VRAM (consumer GPU)</li>
+<li>Zero inference cost after hardware is provisioned</li>
+</ul>
+<p>Qwen3 (released January 2025) extracts 2.4× more concepts than Qwen 2.5 from identical hardware. The 60-second wait per chunk is the main trade-off.</p>
+<h3 id="ollama-qwen-25-14b">Ollama Qwen 2.5 14B</h3>
+<p><strong>Extraction philosophy:</strong> conservative, precise, canonical.</p>
+<ul>
+<li>24 concepts, 98-edge graph, 92% canonical adherence — highest of all models tested</li>
+<li>Only 1 non-canonical relationship type in the test run</li>
+<li>15 s/chunk; fits in 16 GB VRAM</li>
+<li>Zero inference cost</li>
+</ul>
+<p>Best for large private corpora, sensitive documents, or any context where long-term schema cleanliness matters more than concept volume.</p>
+<h3 id="gpt-oss-20b-ollama">GPT-OSS 20B (Ollama)</h3>
+<p><strong>Extraction philosophy:</strong> maximum relationship density.</p>
+<ul>
+<li>48 concepts, 190-edge graph — densest relationship count of all models tested</li>
+<li>65% canonical adherence; 6 non-canonical types</li>
+<li>~20 s/chunk; requires 20 GB+ VRAM or CPU+GPU split</li>
+<li>Zero inference cost</li>
+</ul>
+<p>GPT-OSS is a reasoning model. Reasoning models generate extended internal analysis before producing output, which increases token usage and reduces output consistency for structured extraction tasks. An instruction model of equivalent or smaller size will usually produce better JSON output. Use GPT-OSS when relationship density is the priority and schema compliance can be traded away.</p>
+<h3 id="ollama-mistral-7b">Ollama Mistral 7B</h3>
+<ul>
+<li>38% canonical adherence; 10 non-canonical types</li>
+<li>Creates vocabulary pollution that compounds across documents</li>
+<li>Sparse graph — many isolated concepts with zero relationships</li>
+</ul>
+<p>Do not use Mistral 7B for production ingestion. If you need a local model with a small VRAM footprint, Qwen 2.5 14B on 16 GB is the better choice.</p>
+<hr />
+<h2 id="cost-and-time-at-scale">Cost and time at scale</h2>
+<h3 id="1-000-document-corpus-6-000-chunks">1 000-document corpus (~6 000 chunks)</h3>
+<table>
+<thead>
+<tr>
+<th>Provider</th>
+<th>Time</th>
+<th>Cost</th>
+<th>Concepts</th>
+<th>Canonical</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GPT-4o</td>
+<td>~3.3 hours</td>
+<td>~$100</td>
+<td>~46 000</td>
+<td>88%</td>
+</tr>
+<tr>
+<td>Qwen3 14B</td>
+<td>~100 hours</td>
+<td>$0</td>
+<td>~57 000</td>
+<td>74%</td>
+</tr>
+<tr>
+<td>Qwen 2.5 14B</td>
+<td>~25 hours</td>
+<td>$0</td>
+<td>~24 000</td>
+<td>92%</td>
+</tr>
+<tr>
+<td>GPT-OSS 20B</td>
+<td>~33 hours</td>
+<td>$0</td>
+<td>~48 000</td>
+<td>65%</td>
+</tr>
+<tr>
+<td>Mistral 7B</td>
+<td>~17 hours</td>
+<td>$0</td>
+<td>~32 000</td>
+<td>38%</td>
+</tr>
+</tbody>
+</table>
+<h3 id="break-even-by-corpus-size">Break-even by corpus size</h3>
+<ul>
+<li><strong>Under 50 documents</strong> — GPT-4o costs under $5 and saves significant time. Start here.</li>
+<li><strong>50–500 documents</strong> — Local models become competitive. Choose Qwen 2.5 14B for canonical quality or Qwen3 14B for concept volume.</li>
+<li><strong>500+ documents</strong> — Local models are strongly recommended. GPT-4o at 500 documents costs ~$50.</li>
+</ul>
+<hr />
+<h2 id="switch-and-test-providers">Switch and test providers</h2>
+<p>Extraction configuration is hot-reloadable. No API restart is required when you change provider or model.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Switch to GPT-4o</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span>openai<span class="w"> </span>--model<span class="w"> </span>gpt-4o
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># Switch to Qwen3 14B (Ollama)</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span>ollama<span class="w"> </span>--model<span class="w"> </span>qwen3:14b
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="c1"># Switch to Qwen 2.5 14B (Ollama)</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span>ollama<span class="w"> </span>--model<span class="w"> </span>qwen2.5:14b-instruct
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="c1"># Verify active config</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span>config
+</code></pre></div>
+<h3 id="run-a-comparison-yourself">Run a comparison yourself</h3>
+<p>Pick a document you know well — a few pages of dense text works well.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Pull local models (one-time)</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>kg-ollama<span class="w"> </span>ollama<span class="w"> </span>pull<span class="w"> </span>qwen3:14b
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>kg-ollama<span class="w"> </span>ollama<span class="w"> </span>pull<span class="w"> </span>qwen2.5:14b-instruct
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="c1"># Test GPT-4o</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span>openai<span class="w"> </span>--model<span class="w"> </span>gpt-4o
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>kg<span class="w"> </span>ontology<span class="w"> </span>delete<span class="w"> </span><span class="s2">&quot;quality_test&quot;</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;quality_test&quot;</span><span class="w"> </span>-y<span class="w"> </span>your-document.txt
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>kg<span class="w"> </span>database<span class="w"> </span>stats
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="c1"># Test Qwen3 14B</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span>ollama<span class="w"> </span>--model<span class="w"> </span>qwen3:14b
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>kg<span class="w"> </span>ontology<span class="w"> </span>delete<span class="w"> </span><span class="s2">&quot;quality_test&quot;</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;quality_test&quot;</span><span class="w"> </span>-y<span class="w"> </span>your-document.txt
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>kg<span class="w"> </span>database<span class="w"> </span>stats<span class="w">   </span><span class="c1"># expect ~60 s/chunk</span>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="c1"># Test Qwen 2.5 14B</span>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>kg<span class="w"> </span>admin<span class="w"> </span>extraction<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span>ollama<span class="w"> </span>--model<span class="w"> </span>qwen2.5:14b-instruct
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>kg<span class="w"> </span>ontology<span class="w"> </span>delete<span class="w"> </span><span class="s2">&quot;quality_test&quot;</span>
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;quality_test&quot;</span><span class="w"> </span>-y<span class="w"> </span>your-document.txt
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>kg<span class="w"> </span>database<span class="w"> </span>stats
+</code></pre></div>
+<p>Compare: concept count, relationship count, unique relationship types, and canonical adherence in the stats output.</p>
+<hr />
+<h2 id="related">Related</h2>
+<ul>
+<li><a href="../ai-providers/">Configure AI Providers</a> — set API keys, switch providers, configure Ollama</li>
+<li><a href="../vocabulary/">Consolidate Vocabulary</a> — repair schema drift from non-canonical types</li>
+<li>ADR-806 — local LLM inference architecture</li>
+<li>ADR-603 — relationship type acceptance and vocabulary growth policy</li>
+</ul>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

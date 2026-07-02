@@ -1,0 +1,3660 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Multi-dimensional knowledge extraction system using Apache AGE">
+      
+      
+        <meta name="author" content="Knowledge Graph System Contributors">
+      
+      
+      
+        <link rel="prev" href="../polarity-axis/">
+      
+      
+        <link rel="next" href="../ai-providers/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Use the FUSE Drive - Knowledge Graph System</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#use-the-fuse-drive" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Knowledge Graph System" class="md-header__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Knowledge Graph System
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Use the FUSE Drive
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/aaronsb/knowledge-graph-system" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aaronsb/knowledge-graph-system
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Knowledge Graph System" class="md-nav__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Knowledge Graph System
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/aaronsb/knowledge-graph-system" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aaronsb/knowledge-graph-system
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Get Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Get Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/what-and-why/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What and Why
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/first-graph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your First Graph
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/first-query/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your First Query
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/mcp-quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Connect via MCP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/github-history/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mining a Git Repo
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-To
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How-To
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ingest/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ingest Documents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../query/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explore and Query
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../epistemic-status/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Filter by Epistemic Status
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../polarity-axis/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Analyze a Polarity Axis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Use the FUSE Drive
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Use the FUSE Drive
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#install" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Install
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Install">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-install-fuse3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Install FUSE3
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-install-kg-cli-if-not-already-installed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Install kg CLI (if not already installed)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-install-kg-fuse" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Install kg-fuse
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#set-up-a-mount" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Set up a mount
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Set up a mount">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-create-oauth-credentials" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Create OAuth credentials
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-initialise-a-mount-point" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Initialise a mount point
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-mount-and-unmount" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Mount and unmount
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#filesystem-layout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Filesystem layout
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Filesystem layout">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#unix-operations-mapped-to-graph-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Unix operations mapped to graph operations
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#browse-ontologies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Browse ontologies
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#query-with-directories" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Query with directories
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Query with directories">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#scoped-query-single-ontology" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scoped query (single ontology)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#global-query-all-ontologies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Global query (all ontologies)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nested-query-and-logic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Nested query (AND logic)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#remove-a-query" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Remove a query
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#read-a-concept-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Read a concept file
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tune-query-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tune query results
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tune query results">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#control-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Control files
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Examples
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#restrict-a-global-query-to-specific-ontologies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Restrict a global query to specific ontologies
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ingest-documents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ingest documents
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Ingest documents">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#batch-ingestion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Batch ingestion
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#file-manager-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File manager integration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#manage-ontologies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Manage ontologies
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Manage ontologies">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#create-an-ontology" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Create an ontology
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#delete-an-ontology" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Delete an ontology
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#delete-documents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Delete documents
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#write-protection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Write protection
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#full-configuration-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Full configuration reference
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example-workflows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example workflows
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Example workflows">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#research-session" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Research session
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#build-a-new-knowledge-domain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build a new knowledge domain
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#unix-tool-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Unix tool integration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#obsidian-as-a-graph-viewer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Obsidian as a graph viewer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#automated-ingestion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Automated ingestion
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#remote-access" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Remote access
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mount-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mount issues
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#query-returns-no-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Query returns no results
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ingestion-appears-stuck" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ingestion appears stuck
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#architecture-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architecture notes
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ai-providers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configure AI Providers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../embeddings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configure Embeddings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../extraction-quality/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Compare Extraction Quality
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../vocabulary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Consolidate Vocabulary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Self-Host
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Self-Host
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/quick-start/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/production/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Production Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/macvlan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dedicated IP (macvlan)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/tls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    TLS and Certificates
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/appliance-libvirt/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Appliance on libvirt/KVM
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security and Access
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/backup-restore/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backup and Restore
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/scheduled-jobs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scheduled Jobs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/upgrading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Upgrading
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explanation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Explanation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/how-it-works/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How It Works
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/computed-evidence/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Computed Evidence over Asserted Truth
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/grounding/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Grounding and Epistemic Confidence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/recursive-upsert/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Recursive Upsert
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/vocabulary-lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vocabulary Lifecycle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/storage-and-freshness/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Storage and Freshness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/worker-lanes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Worker Lanes and Concurrency
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/embedding-landscape/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Embedding Landscape
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/graph-program/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram DSL
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    REST API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/mcp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/mcp-session-context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Session Context
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/fuse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FUSE Driver
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/schema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Database Schema
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cypher/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cypher Patterns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/graph-program-spec/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram Specification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/graph-program-validation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram Validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/graph-program-security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/backup-object-spec/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backup Object Format
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Contributing
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/voice/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Prose & Voice Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/docstring-coverage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docstring Coverage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/test-suite/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Test Suite
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/INDEX/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#install" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Install
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Install">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-install-fuse3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Install FUSE3
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-install-kg-cli-if-not-already-installed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Install kg CLI (if not already installed)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-install-kg-fuse" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Install kg-fuse
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#set-up-a-mount" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Set up a mount
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Set up a mount">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-create-oauth-credentials" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Create OAuth credentials
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-initialise-a-mount-point" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Initialise a mount point
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-mount-and-unmount" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Mount and unmount
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#filesystem-layout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Filesystem layout
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Filesystem layout">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#unix-operations-mapped-to-graph-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Unix operations mapped to graph operations
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#browse-ontologies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Browse ontologies
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#query-with-directories" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Query with directories
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Query with directories">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#scoped-query-single-ontology" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scoped query (single ontology)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#global-query-all-ontologies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Global query (all ontologies)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nested-query-and-logic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Nested query (AND logic)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#remove-a-query" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Remove a query
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#read-a-concept-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Read a concept file
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tune-query-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tune query results
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tune query results">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#control-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Control files
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Examples
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#restrict-a-global-query-to-specific-ontologies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Restrict a global query to specific ontologies
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ingest-documents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ingest documents
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Ingest documents">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#batch-ingestion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Batch ingestion
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#file-manager-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File manager integration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#manage-ontologies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Manage ontologies
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Manage ontologies">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#create-an-ontology" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Create an ontology
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#delete-an-ontology" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Delete an ontology
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#delete-documents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Delete documents
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#write-protection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Write protection
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#full-configuration-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Full configuration reference
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example-workflows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example workflows
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Example workflows">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#research-session" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Research session
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#build-a-new-knowledge-domain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build a new knowledge domain
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#unix-tool-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Unix tool integration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#obsidian-as-a-graph-viewer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Obsidian as a graph viewer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#automated-ingestion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Automated ingestion
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#remote-access" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Remote access
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mount-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mount issues
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#query-returns-no-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Query returns no results
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ingestion-appears-stuck" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ingestion appears stuck
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#architecture-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architecture notes
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="use-the-fuse-drive">Use the FUSE Drive</h1>
+<p><code>kg-fuse</code> mounts your Kappa Graph as a virtual filesystem. Browse ontologies as directories, create semantic queries with <code>mkdir</code>, ingest documents by copying files, and tune search results through virtual files — all from your terminal or file manager.</p>
+<p>The Python API reference for kg-fuse is at <a href="../../reference/fuse/">reference/fuse.md</a>. Design rationale is in <a href="../../architecture/user-interfaces/ADR-715-semantic-fuse-filesystem/">ADR-715</a> and <a href="../../architecture/user-interfaces/ADR-715.1-fuse-implementation-specifics/">ADR-715.1</a>.</p>
+<hr />
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li>Linux with FUSE3</li>
+<li>Python 3.11+</li>
+<li>A running Kappa Graph API</li>
+<li><code>kg</code> CLI installed and authenticated (Node 20.12.0+)</li>
+</ul>
+<hr />
+<h2 id="install">Install</h2>
+<h3 id="1-install-fuse3">1. Install FUSE3</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Arch Linux</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>sudo<span class="w"> </span>pacman<span class="w"> </span>-S<span class="w"> </span>fuse3
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># Debian/Ubuntu</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>fuse3
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="c1"># Fedora</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>sudo<span class="w"> </span>dnf<span class="w"> </span>install<span class="w"> </span>fuse3
+</code></pre></div>
+<h3 id="2-install-kg-cli-if-not-already-installed">2. Install kg CLI (if not already installed)</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>npm<span class="w"> </span>install<span class="w"> </span>-g<span class="w"> </span>@aaronsb/kg-cli
+</code></pre></div>
+<h3 id="3-install-kg-fuse">3. Install kg-fuse</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>pipx<span class="w"> </span>install<span class="w"> </span>kg-fuse
+</code></pre></div>
+<p>To upgrade later:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>pipx<span class="w"> </span>upgrade<span class="w"> </span>kg-fuse
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="c1"># or</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>kg-fuse<span class="w"> </span>update
+</code></pre></div>
+<hr />
+<h2 id="set-up-a-mount">Set up a mount</h2>
+<h3 id="1-create-oauth-credentials">1. Create OAuth credentials</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kg<span class="w"> </span>oauth<span class="w"> </span>create<span class="w"> </span>--for<span class="w"> </span>fuse
+</code></pre></div>
+<p>This writes credentials to <code>~/.config/kg/config.json</code>, which kg-fuse reads automatically.</p>
+<h3 id="2-initialise-a-mount-point">2. Initialise a mount point</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>kg-fuse<span class="w"> </span>init<span class="w"> </span>~/Knowledge
+</code></pre></div>
+<p>This validates the path, detects credentials from <code>~/.config/kg/config.json</code>, and optionally configures autostart. Mount configuration is written to <code>~/.config/kg/fuse.json</code>.</p>
+<h3 id="3-mount-and-unmount">3. Mount and unmount</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>kg-fuse<span class="w"> </span>mount<span class="w">     </span><span class="c1"># start all configured mounts</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>kg-fuse<span class="w"> </span>unmount<span class="w">   </span><span class="c1"># stop all mounts</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>kg-fuse<span class="w"> </span>status<span class="w">    </span><span class="c1"># show what is running</span>
+</code></pre></div>
+<hr />
+<h2 id="filesystem-layout">Filesystem layout</h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>~/Knowledge/
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>├── ontology/                              # all knowledge domains
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>│   ├── Machine Intelligence/              # one ontology
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>│   │   ├── .ontology                      # stats: concepts, docs, relationships
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>│   │   ├── documents/                     # source documents (read-only)
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>│   │   │   ├── .documents                 # document listing with count
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>│   │   │   ├── research-paper.md
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>│   │   │   └── diagram.png
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>│   │   ├── ingest/                        # drop box for new documents
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>│   │   │   ├── .ingest                    # usage instructions
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>│   │   │   └── paper.md.ingesting         # job tracker (appears during processing)
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>│   │   └── neural networks/               # query you created with mkdir
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>│   │       ├── .meta/                     # query controls
+<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a>│   │       │   ├── limit                  # max results (default: 50)
+<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a>│   │       │   ├── threshold              # min similarity (default: 0.7)
+<a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a>│   │       │   ├── exclude                # NOT filter terms (one per line)
+<a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a>│   │       │   ├── union                  # OR expansion terms (one per line)
+<a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a>│   │       │   └── query.toml             # full query state (read-only)
+<a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a>│   │       ├── images/                    # image evidence from matching concepts
+<a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a>│   │       └── Neural-Networks.concept.md
+<a id="__codelineno-7-21" name="__codelineno-7-21" href="#__codelineno-7-21"></a>│   └── Economics/
+<a id="__codelineno-7-22" name="__codelineno-7-22" href="#__codelineno-7-22"></a>│       └── ...
+<a id="__codelineno-7-23" name="__codelineno-7-23" href="#__codelineno-7-23"></a>│
+<a id="__codelineno-7-24" name="__codelineno-7-24" href="#__codelineno-7-24"></a>└── my-research/                           # global query (searches all ontologies)
+<a id="__codelineno-7-25" name="__codelineno-7-25" href="#__codelineno-7-25"></a>    ├── .meta/
+<a id="__codelineno-7-26" name="__codelineno-7-26" href="#__codelineno-7-26"></a>    └── Results.concept.md
+</code></pre></div>
+<h3 id="unix-operations-mapped-to-graph-operations">Unix operations mapped to graph operations</h3>
+<table>
+<thead>
+<tr>
+<th>Unix operation</th>
+<th>Graph operation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ls ontology/</code></td>
+<td>List all ontologies</td>
+</tr>
+<tr>
+<td><code>cat ontology/Economics/.ontology</code></td>
+<td>View ontology stats</td>
+</tr>
+<tr>
+<td><code>ls ontology/Economics/documents/</code></td>
+<td>List source documents</td>
+</tr>
+<tr>
+<td><code>mkdir ontology/Economics/inflation</code></td>
+<td>Create semantic query for "inflation"</td>
+</tr>
+<tr>
+<td><code>ls ontology/Economics/inflation/</code></td>
+<td>Execute query, show matching concepts</td>
+</tr>
+<tr>
+<td><code>cat Monetary-Policy.concept.md</code></td>
+<td>Read concept with evidence and relationships</td>
+</tr>
+<tr>
+<td><code>echo 0.8 &gt; .meta/threshold</code></td>
+<td>Set query precision</td>
+</tr>
+<tr>
+<td><code>echo "noise" &gt;&gt; .meta/exclude</code></td>
+<td>Add NOT filter</td>
+</tr>
+<tr>
+<td><code>cp paper.pdf ontology/Economics/ingest/</code></td>
+<td>Ingest document</td>
+</tr>
+<tr>
+<td><code>mkdir ontology/New-Domain</code></td>
+<td>Create a new ontology</td>
+</tr>
+<tr>
+<td><code>rmdir ontology/Economics/inflation</code></td>
+<td>Remove query (does not affect the graph)</td>
+</tr>
+<tr>
+<td><code>rmdir ontology/New-Domain</code></td>
+<td>Delete ontology (requires write-protect override)</td>
+</tr>
+<tr>
+<td><code>rm ontology/Economics/documents/old.md</code></td>
+<td>Delete document (requires write-protect override)</td>
+</tr>
+<tr>
+<td><code>ln -s ../ontology/Econ query/Econ</code></td>
+<td>Restrict global query to specific ontologies</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="browse-ontologies">Browse ontologies</h2>
+<p>Each ontology directory contains contextual dotfiles that describe its contents without requiring API calls:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>ls<span class="w"> </span>~/Knowledge/ontology/
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="c1"># Machine Intelligence  Economics  Architecture</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>cat<span class="w"> </span>~/Knowledge/ontology/Machine<span class="se">\ </span>Intelligence/.ontology
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="c1"># # Machine Intelligence</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="c1"># - Source Count: 16</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="c1"># - Concept Count: 101</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="c1"># - Relationship Count: 101</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>cat<span class="w"> </span>~/Knowledge/ontology/Machine<span class="se">\ </span>Intelligence/documents/.documents
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="c1"># # Machine Intelligence — Documents (7)</span>
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="c1"># - the_hallway.md</span>
+<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a><span class="c1"># - neural_architecture.pdf</span>
+<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a><span class="c1"># ...</span>
+</code></pre></div>
+<p>To read a source document:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>cat<span class="w"> </span>~/Knowledge/ontology/Machine<span class="se">\ </span>Intelligence/documents/the_hallway.md
+</code></pre></div>
+<p>Documents are rendered as markdown with YAML frontmatter that includes extracted-concept metadata (when tag generation is enabled).</p>
+<hr />
+<h2 id="query-with-directories">Query with directories</h2>
+<p>Directory names become semantic search terms. Creating a directory executes the query; listing it shows results.</p>
+<h3 id="scoped-query-single-ontology">Scoped query (single ontology)</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>mkdir<span class="w"> </span>~/Knowledge/ontology/Machine<span class="se">\ </span>Intelligence/neural<span class="se">\ </span>networks
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>ls<span class="w"> </span>~/Knowledge/ontology/Machine<span class="se">\ </span>Intelligence/neural<span class="se">\ </span>networks/
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="c1"># Neural-Networks.concept.md  Plasticity-Problem.concept.md  images/  .meta/</span>
+</code></pre></div>
+<h3 id="global-query-all-ontologies">Global query (all ontologies)</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>mkdir<span class="w"> </span>~/Knowledge/distributed<span class="se">\ </span>systems
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>ls<span class="w"> </span>~/Knowledge/distributed<span class="se">\ </span>systems/
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="c1"># concepts from every ontology that matches</span>
+</code></pre></div>
+<h3 id="nested-query-and-logic">Nested query (AND logic)</h3>
+<p>Each additional directory level adds an AND constraint:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>mkdir<span class="w"> </span>~/Knowledge/ontology/Economics/inflation
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>mkdir<span class="w"> </span>~/Knowledge/ontology/Economics/inflation/monetary<span class="se">\ </span>policy
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>ls<span class="w"> </span>~/Knowledge/ontology/Economics/inflation/
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="c1"># concepts matching &quot;inflation&quot;</span>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>ls<span class="w"> </span>~/Knowledge/ontology/Economics/inflation/monetary<span class="se">\ </span>policy/
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a><span class="c1"># concepts matching &quot;inflation&quot; AND &quot;monetary policy&quot;</span>
+</code></pre></div>
+<h3 id="remove-a-query">Remove a query</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>rmdir<span class="w"> </span>~/Knowledge/ontology/Economics/inflation
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="c1"># also removes nested queries; does not affect graph data</span>
+</code></pre></div>
+<h3 id="read-a-concept-file">Read a concept file</h3>
+<p>Each result is a markdown file with YAML frontmatter:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>cat<span class="w"> </span>~/Knowledge/ontology/Economics/inflation/Monetary-Policy.concept.md
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="nn">---</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sha256:abc123...</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="nt">label</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Monetary Policy</span>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="nt">aliases</span><span class="p">:</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">central bank policy</span>
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">money supply management</span>
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="nt">documents</span><span class="p">:</span>
+<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Economics</span>
+<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a><span class="nt">sources</span><span class="p">:</span>
+<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">research-paper.pdf</span>
+<a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a><span class="nt">relationships</span><span class="p">:</span>
+<a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">INFLUENCES</span>
+<a id="__codelineno-15-13" name="__codelineno-15-13" href="#__codelineno-15-13"></a><span class="w">    </span><span class="nt">target</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;[[Inflation.concept]]&quot;</span>
+<a id="__codelineno-15-14" name="__codelineno-15-14" href="#__codelineno-15-14"></a><span class="nt">tags</span><span class="p">:</span>
+<a id="__codelineno-15-15" name="__codelineno-15-15" href="#__codelineno-15-15"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">concept/Inflation</span>
+<a id="__codelineno-15-16" name="__codelineno-15-16" href="#__codelineno-15-16"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ontology/Economics</span>
+<a id="__codelineno-15-17" name="__codelineno-15-17" href="#__codelineno-15-17"></a><span class="nn">---</span>
+<a id="__codelineno-15-18" name="__codelineno-15-18" href="#__codelineno-15-18"></a>
+<a id="__codelineno-15-19" name="__codelineno-15-19" href="#__codelineno-15-19"></a><span class="c1"># Monetary Policy</span>
+<a id="__codelineno-15-20" name="__codelineno-15-20" href="#__codelineno-15-20"></a>
+<a id="__codelineno-15-21" name="__codelineno-15-21" href="#__codelineno-15-21"></a><span class="c1">## Evidence</span>
+<a id="__codelineno-15-22" name="__codelineno-15-22" href="#__codelineno-15-22"></a>
+<a id="__codelineno-15-23" name="__codelineno-15-23" href="#__codelineno-15-23"></a><span class="c1">### Instance 1 from research-paper.pdf (para 3)</span>
+<a id="__codelineno-15-24" name="__codelineno-15-24" href="#__codelineno-15-24"></a><span class="p p-Indicator">&gt;</span><span class="err"> The Federal Reserve uses open market operations to influence...</span>
+</code></pre></div>
+<hr />
+<h2 id="tune-query-results">Tune query results</h2>
+<p>Every query directory has a <code>.meta/</code> subdirectory. Write to these files and the next <code>ls</code> shows updated results.</p>
+<h3 id="control-files">Control files</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Type</th>
+<th>Default</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>limit</code></td>
+<td>integer</td>
+<td><code>50</code></td>
+<td>Max results returned</td>
+</tr>
+<tr>
+<td><code>threshold</code></td>
+<td>float 0.0–1.0</td>
+<td><code>0.7</code></td>
+<td>Min similarity score</td>
+</tr>
+<tr>
+<td><code>exclude</code></td>
+<td>lines of text</td>
+<td>empty</td>
+<td>Semantic NOT filter</td>
+</tr>
+<tr>
+<td><code>union</code></td>
+<td>lines of text</td>
+<td>empty</td>
+<td>Semantic OR expansion</td>
+</tr>
+<tr>
+<td><code>query.toml</code></td>
+<td>TOML</td>
+<td>—</td>
+<td>Debug view (read-only)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="examples">Examples</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="c1"># Fewer, more precise results</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="nb">echo</span><span class="w"> </span><span class="m">0</span>.85<span class="w"> </span>&gt;<span class="w"> </span>.meta/threshold
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="nb">echo</span><span class="w"> </span><span class="m">10</span><span class="w"> </span>&gt;<span class="w"> </span>.meta/limit
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="c1"># Broader, exploratory results</span>
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a><span class="nb">echo</span><span class="w"> </span><span class="m">0</span>.3<span class="w"> </span>&gt;<span class="w"> </span>.meta/threshold
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="nb">echo</span><span class="w"> </span><span class="m">100</span><span class="w"> </span>&gt;<span class="w"> </span>.meta/limit
+<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a>
+<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a><span class="c1"># Exclude irrelevant concepts</span>
+<a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;deprecated&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>.meta/exclude
+<a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;legacy&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>.meta/exclude
+<a id="__codelineno-16-12" name="__codelineno-16-12" href="#__codelineno-16-12"></a>
+<a id="__codelineno-16-13" name="__codelineno-16-13" href="#__codelineno-16-13"></a><span class="c1"># Broaden with related terms</span>
+<a id="__codelineno-16-14" name="__codelineno-16-14" href="#__codelineno-16-14"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;governance&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>.meta/union
+<a id="__codelineno-16-15" name="__codelineno-16-15" href="#__codelineno-16-15"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;compliance&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>.meta/union
+<a id="__codelineno-16-16" name="__codelineno-16-16" href="#__codelineno-16-16"></a>
+<a id="__codelineno-16-17" name="__codelineno-16-17" href="#__codelineno-16-17"></a><span class="c1"># Clear a filter</span>
+<a id="__codelineno-16-18" name="__codelineno-16-18" href="#__codelineno-16-18"></a>:<span class="w"> </span>&gt;<span class="w"> </span>.meta/exclude
+<a id="__codelineno-16-19" name="__codelineno-16-19" href="#__codelineno-16-19"></a>
+<a id="__codelineno-16-20" name="__codelineno-16-20" href="#__codelineno-16-20"></a><span class="c1"># Inspect current state</span>
+<a id="__codelineno-16-21" name="__codelineno-16-21" href="#__codelineno-16-21"></a>cat<span class="w"> </span>.meta/query.toml
+</code></pre></div>
+<hr />
+<h2 id="restrict-a-global-query-to-specific-ontologies">Restrict a global query to specific ontologies</h2>
+<p>Global queries (created at the mount root) search all ontologies. Link specific ontologies into the query directory to restrict scope:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>mkdir<span class="w"> </span>~/Knowledge/my-research
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>ln<span class="w"> </span>-s<span class="w"> </span>../ontology/Economics<span class="w"> </span>~/Knowledge/my-research/Economics
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>ln<span class="w"> </span>-s<span class="w"> </span>../ontology/Architecture<span class="w"> </span>~/Knowledge/my-research/Architecture
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>ls<span class="w"> </span>~/Knowledge/my-research/
+<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a><span class="c1"># concepts from Economics and Architecture only</span>
+</code></pre></div>
+<hr />
+<h2 id="ingest-documents">Ingest documents</h2>
+<p>Each ontology has an <code>ingest/</code> directory. Copying a file into it submits it to the API.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>cp<span class="w"> </span>research-paper.pdf<span class="w"> </span>~/Knowledge/ontology/Economics/ingest/
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="c1"># A .ingesting file appears while processing</span>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>ls<span class="w"> </span>~/Knowledge/ontology/Economics/ingest/
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="c1"># .ingest  research-paper.pdf.ingesting</span>
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a>
+<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a>cat<span class="w"> </span>~/Knowledge/ontology/Economics/ingest/research-paper.pdf.ingesting
+<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a><span class="c1"># # Ingestion Job: job_abc123</span>
+<a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a><span class="c1"># # Status: running</span>
+<a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a><span class="c1"># [progress]</span>
+<a id="__codelineno-18-11" name="__codelineno-18-11" href="#__codelineno-18-11"></a><span class="c1"># stage = &quot;extracting_concepts&quot;</span>
+<a id="__codelineno-18-12" name="__codelineno-18-12" href="#__codelineno-18-12"></a><span class="c1"># percent = 45</span>
+<a id="__codelineno-18-13" name="__codelineno-18-13" href="#__codelineno-18-13"></a>
+<a id="__codelineno-18-14" name="__codelineno-18-14" href="#__codelineno-18-14"></a><span class="c1"># After processing, the document appears in documents/</span>
+<a id="__codelineno-18-15" name="__codelineno-18-15" href="#__codelineno-18-15"></a>ls<span class="w"> </span>~/Knowledge/ontology/Economics/documents/
+<a id="__codelineno-18-16" name="__codelineno-18-16" href="#__codelineno-18-16"></a><span class="c1"># .documents  research-paper.pdf</span>
+</code></pre></div>
+<p>Supported formats: text, markdown, PDF, and images (.png, .jpg, .gif, .webp, .bmp).</p>
+<p>Ingestion via FUSE is auto-approved — no manual approval step.</p>
+<h3 id="batch-ingestion">Batch ingestion</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="k">for</span><span class="w"> </span>f<span class="w"> </span><span class="k">in</span><span class="w"> </span>~/papers/*.md<span class="p">;</span><span class="w"> </span><span class="k">do</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="w">    </span>cp<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$f</span><span class="s2">&quot;</span><span class="w"> </span>~/Knowledge/ontology/Research/ingest/
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="k">done</span>
+</code></pre></div>
+<h3 id="file-manager-integration">File manager integration</h3>
+<p>The <code>ingest/</code> directory works with Dolphin and GNOME Files. Drag files from your desktop or paste from the clipboard.</p>
+<hr />
+<h2 id="manage-ontologies">Manage ontologies</h2>
+<h3 id="create-an-ontology">Create an ontology</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>mkdir<span class="w"> </span>~/Knowledge/ontology/My-Research
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>ls<span class="w"> </span>~/Knowledge/ontology/My-Research/
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="c1"># .ontology  documents/  ingest/</span>
+</code></pre></div>
+<p>This creates the ontology on the platform via the API.</p>
+<h3 id="delete-an-ontology">Delete an ontology</h3>
+<p>Ontology deletion requires an explicit write-protect override (see <a href="#write-protection">Write protection</a> below):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>rmdir<span class="w"> </span>~/Knowledge/ontology/My-Research
+</code></pre></div>
+<p>Deletion removes the ontology and all its documents from the graph. This is irreversible.</p>
+<hr />
+<h2 id="delete-documents">Delete documents</h2>
+<p>Document deletion also requires an explicit override:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>rm<span class="w"> </span>~/Knowledge/ontology/Economics/documents/old-paper.md
+</code></pre></div>
+<p>The concepts extracted from the document remain in the graph; they may have evidence from other sources.</p>
+<hr />
+<h2 id="write-protection">Write protection</h2>
+<p>Destructive operations are disabled by default. Enable them per-mount in <code>~/.config/kg/fuse.json</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="p">{</span>
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="w">  </span><span class="nt">&quot;mounts&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a><span class="w">    </span><span class="nt">&quot;/home/user/Knowledge&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a><span class="w">      </span><span class="nt">&quot;write_protect&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a><span class="w">        </span><span class="nt">&quot;allow_ontology_delete&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a><span class="w">        </span><span class="nt">&quot;allow_document_delete&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span>
+<a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a><span class="w">      </span><span class="p">}</span>
+<a id="__codelineno-23-8" name="__codelineno-23-8" href="#__codelineno-23-8"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-23-9" name="__codelineno-23-9" href="#__codelineno-23-9"></a><span class="w">  </span><span class="p">}</span>
+<a id="__codelineno-23-10" name="__codelineno-23-10" href="#__codelineno-23-10"></a><span class="p">}</span>
+</code></pre></div>
+<p>Changes are hot-reloaded — no remount required.</p>
+<hr />
+<h2 id="full-configuration-reference">Full configuration reference</h2>
+<p>kg-fuse uses two files, both in <code>~/.config/kg/</code>:</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Owner</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>config.json</code></td>
+<td><code>kg</code> CLI</td>
+<td>Auth credentials and <code>api_url</code> — read-only for kg-fuse</td>
+</tr>
+<tr>
+<td><code>fuse.json</code></td>
+<td>kg-fuse</td>
+<td>Mount definitions, cache, tags, write-protect</td>
+</tr>
+</tbody>
+</table>
+<p>A complete <code>fuse.json</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="p">{</span>
+<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a><span class="w">  </span><span class="nt">&quot;auth_client_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;kg-cli-admin-ba93368c&quot;</span><span class="p">,</span>
+<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a><span class="w">  </span><span class="nt">&quot;mounts&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a><span class="w">    </span><span class="nt">&quot;/home/user/Knowledge&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a><span class="w">      </span><span class="nt">&quot;tags&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;enabled&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;threshold&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.5</span><span class="w"> </span><span class="p">},</span>
+<a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a><span class="w">      </span><span class="nt">&quot;cache&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;epoch_check_interval&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">5.0</span><span class="w"> </span><span class="p">},</span>
+<a id="__codelineno-24-7" name="__codelineno-24-7" href="#__codelineno-24-7"></a><span class="w">      </span><span class="nt">&quot;jobs&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;hide_jobs&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">},</span>
+<a id="__codelineno-24-8" name="__codelineno-24-8" href="#__codelineno-24-8"></a><span class="w">      </span><span class="nt">&quot;write_protect&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-24-9" name="__codelineno-24-9" href="#__codelineno-24-9"></a><span class="w">        </span><span class="nt">&quot;allow_ontology_delete&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<a id="__codelineno-24-10" name="__codelineno-24-10" href="#__codelineno-24-10"></a><span class="w">        </span><span class="nt">&quot;allow_document_delete&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span>
+<a id="__codelineno-24-11" name="__codelineno-24-11" href="#__codelineno-24-11"></a><span class="w">      </span><span class="p">}</span>
+<a id="__codelineno-24-12" name="__codelineno-24-12" href="#__codelineno-24-12"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-24-13" name="__codelineno-24-13" href="#__codelineno-24-13"></a><span class="w">  </span><span class="p">}</span>
+<a id="__codelineno-24-14" name="__codelineno-24-14" href="#__codelineno-24-14"></a><span class="p">}</span>
+</code></pre></div>
+<p><code>fuse.json</code> is hot-reloaded; most changes take effect within seconds without remounting.</p>
+<hr />
+<h2 id="example-workflows">Example workflows</h2>
+<h3 id="research-session">Research session</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="nb">cd</span><span class="w"> </span>~/Knowledge/ontology/Machine<span class="se">\ </span>Intelligence
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>
+<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a>cat<span class="w"> </span>.ontology<span class="w">   </span><span class="c1"># check what&#39;s here</span>
+<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a>
+<a id="__codelineno-25-5" name="__codelineno-25-5" href="#__codelineno-25-5"></a>mkdir<span class="w"> </span><span class="s2">&quot;agent architecture&quot;</span>
+<a id="__codelineno-25-6" name="__codelineno-25-6" href="#__codelineno-25-6"></a><span class="nb">cd</span><span class="w"> </span><span class="s2">&quot;agent architecture&quot;</span>
+<a id="__codelineno-25-7" name="__codelineno-25-7" href="#__codelineno-25-7"></a>
+<a id="__codelineno-25-8" name="__codelineno-25-8" href="#__codelineno-25-8"></a><span class="nb">echo</span><span class="w"> </span><span class="m">0</span>.8<span class="w"> </span>&gt;<span class="w"> </span>.meta/threshold<span class="w">     </span><span class="c1"># raise precision</span>
+<a id="__codelineno-25-9" name="__codelineno-25-9" href="#__codelineno-25-9"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;deprecated&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>.meta/exclude
+<a id="__codelineno-25-10" name="__codelineno-25-10" href="#__codelineno-25-10"></a>
+<a id="__codelineno-25-11" name="__codelineno-25-11" href="#__codelineno-25-11"></a>ls<span class="w"> </span>*.concept.md
+<a id="__codelineno-25-12" name="__codelineno-25-12" href="#__codelineno-25-12"></a>cat<span class="w"> </span><span class="s2">&quot;Agent-Model.concept.md&quot;</span>
+<a id="__codelineno-25-13" name="__codelineno-25-13" href="#__codelineno-25-13"></a>
+<a id="__codelineno-25-14" name="__codelineno-25-14" href="#__codelineno-25-14"></a>mkdir<span class="w"> </span>reasoning<span class="w">   </span><span class="c1"># drill deeper with AND logic</span>
+<a id="__codelineno-25-15" name="__codelineno-25-15" href="#__codelineno-25-15"></a>ls<span class="w"> </span>reasoning/
+</code></pre></div>
+<h3 id="build-a-new-knowledge-domain">Build a new knowledge domain</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>mkdir<span class="w"> </span>~/Knowledge/ontology/Project-Notes
+<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>
+<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a>cp<span class="w"> </span>~/docs/design-doc.md<span class="w"> </span>~/Knowledge/ontology/Project-Notes/ingest/
+<a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a>cp<span class="w"> </span>~/docs/meeting-notes.md<span class="w"> </span>~/Knowledge/ontology/Project-Notes/ingest/
+<a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a>
+<a id="__codelineno-26-6" name="__codelineno-26-6" href="#__codelineno-26-6"></a><span class="c1"># Wait for processing to finish</span>
+<a id="__codelineno-26-7" name="__codelineno-26-7" href="#__codelineno-26-7"></a>cat<span class="w"> </span>~/Knowledge/ontology/Project-Notes/.ontology
+<a id="__codelineno-26-8" name="__codelineno-26-8" href="#__codelineno-26-8"></a>
+<a id="__codelineno-26-9" name="__codelineno-26-9" href="#__codelineno-26-9"></a>mkdir<span class="w"> </span>~/Knowledge/ontology/Project-Notes/architecture<span class="se">\ </span>decisions
+<a id="__codelineno-26-10" name="__codelineno-26-10" href="#__codelineno-26-10"></a>ls<span class="w"> </span>~/Knowledge/ontology/Project-Notes/architecture<span class="se">\ </span>decisions/
+</code></pre></div>
+<h3 id="unix-tool-integration">Unix tool integration</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a><span class="c1"># Grep across all concepts in an ontology</span>
+<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>grep<span class="w"> </span>-r<span class="w"> </span><span class="s2">&quot;consensus&quot;</span><span class="w"> </span>~/Knowledge/ontology/Architecture/
+<a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a>
+<a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a><span class="c1"># Count concepts matching a query</span>
+<a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a>ls<span class="w"> </span>~/Knowledge/ontology/Economics/inflation/*.concept.md<span class="w"> </span><span class="p">|</span><span class="w"> </span>wc<span class="w"> </span>-l
+<a id="__codelineno-27-6" name="__codelineno-27-6" href="#__codelineno-27-6"></a>
+<a id="__codelineno-27-7" name="__codelineno-27-7" href="#__codelineno-27-7"></a><span class="c1"># Copy results for offline reference</span>
+<a id="__codelineno-27-8" name="__codelineno-27-8" href="#__codelineno-27-8"></a>cp<span class="w"> </span>-r<span class="w"> </span>~/Knowledge/ontology/Economics/inflation/<span class="w"> </span>~/notes/
+<a id="__codelineno-27-9" name="__codelineno-27-9" href="#__codelineno-27-9"></a>
+<a id="__codelineno-27-10" name="__codelineno-27-10" href="#__codelineno-27-10"></a><span class="c1"># Diff two concept files</span>
+<a id="__codelineno-27-11" name="__codelineno-27-11" href="#__codelineno-27-11"></a>diff<span class="w"> </span>~/Knowledge/ontology/Economics/inflation/CPI.concept.md<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-27-12" name="__codelineno-27-12" href="#__codelineno-27-12"></a><span class="w">     </span>~/Knowledge/ontology/Economics/inflation/PPI.concept.md
+<a id="__codelineno-27-13" name="__codelineno-27-13" href="#__codelineno-27-13"></a>
+<a id="__codelineno-27-14" name="__codelineno-27-14" href="#__codelineno-27-14"></a><span class="c1"># Tree view</span>
+<a id="__codelineno-27-15" name="__codelineno-27-15" href="#__codelineno-27-15"></a>tree<span class="w"> </span>~/Knowledge/ontology/Machine<span class="se">\ </span>Intelligence/<span class="w"> </span>-L<span class="w"> </span><span class="m">2</span>
+</code></pre></div>
+<h3 id="obsidian-as-a-graph-viewer">Obsidian as a graph viewer</h3>
+<p>Concept files use wikilink-style relationships (<code>[[Concept.concept]]</code>). Point Obsidian at the mount point and its graph view renders concept relationships natively — no plugin required. Frontmatter includes tags, relationships, and source attribution.</p>
+<h3 id="automated-ingestion">Automated ingestion</h3>
+<p>Any program that writes files can feed the graph:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a><span class="c1"># Speech-to-text → graph</span>
+<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>whisper-cli<span class="w"> </span>record<span class="w"> </span>--output<span class="w"> </span>~/Knowledge/ontology/Meetings/ingest/standup.md
+<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a>
+<a id="__codelineno-28-4" name="__codelineno-28-4" href="#__codelineno-28-4"></a><span class="c1"># File watcher for continuous ingestion</span>
+<a id="__codelineno-28-5" name="__codelineno-28-5" href="#__codelineno-28-5"></a>inotifywait<span class="w"> </span>-m<span class="w"> </span>~/incoming/<span class="w"> </span>-e<span class="w"> </span>close_write<span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="k">while</span><span class="w"> </span><span class="nb">read</span><span class="w"> </span>dir<span class="w"> </span>event<span class="w"> </span>file<span class="p">;</span><span class="w"> </span><span class="k">do</span>
+<a id="__codelineno-28-6" name="__codelineno-28-6" href="#__codelineno-28-6"></a><span class="w">    </span>cp<span class="w"> </span>~/incoming/<span class="s2">&quot;</span><span class="nv">$file</span><span class="s2">&quot;</span><span class="w"> </span>~/Knowledge/ontology/Auto-Ingest/ingest/
+<a id="__codelineno-28-7" name="__codelineno-28-7" href="#__codelineno-28-7"></a><span class="k">done</span>
+</code></pre></div>
+<h3 id="remote-access">Remote access</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>ssh<span class="w"> </span>server<span class="w"> </span><span class="s2">&quot;cat ~/Knowledge/ontology/Economics/.ontology&quot;</span>
+<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a>sshfs<span class="w"> </span>server:~/Knowledge<span class="w"> </span>~/remote-knowledge
+</code></pre></div>
+<hr />
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="mount-issues">Mount issues</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>kg-fuse<span class="w"> </span>status
+<a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a>
+<a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a><span class="c1"># Repair orphaned mounts or stale PIDs</span>
+<a id="__codelineno-30-4" name="__codelineno-30-4" href="#__codelineno-30-4"></a>kg-fuse<span class="w"> </span>repair
+<a id="__codelineno-30-5" name="__codelineno-30-5" href="#__codelineno-30-5"></a>
+<a id="__codelineno-30-6" name="__codelineno-30-6" href="#__codelineno-30-6"></a><span class="c1"># Force unmount if repair does not help</span>
+<a id="__codelineno-30-7" name="__codelineno-30-7" href="#__codelineno-30-7"></a>fusermount<span class="w"> </span>-uz<span class="w"> </span>~/Knowledge
+<a id="__codelineno-30-8" name="__codelineno-30-8" href="#__codelineno-30-8"></a>kg-fuse<span class="w"> </span>mount
+</code></pre></div>
+<h3 id="query-returns-no-results">Query returns no results</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a><span class="c1"># Check query state</span>
+<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a>cat<span class="w"> </span>.meta/query.toml
+<a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a>
+<a id="__codelineno-31-4" name="__codelineno-31-4" href="#__codelineno-31-4"></a><span class="c1"># Lower the threshold</span>
+<a id="__codelineno-31-5" name="__codelineno-31-5" href="#__codelineno-31-5"></a><span class="nb">echo</span><span class="w"> </span><span class="m">0</span>.3<span class="w"> </span>&gt;<span class="w"> </span>.meta/threshold
+<a id="__codelineno-31-6" name="__codelineno-31-6" href="#__codelineno-31-6"></a>
+<a id="__codelineno-31-7" name="__codelineno-31-7" href="#__codelineno-31-7"></a><span class="c1"># Verify the ontology has documents</span>
+<a id="__codelineno-31-8" name="__codelineno-31-8" href="#__codelineno-31-8"></a>cat<span class="w"> </span>../.ontology
+<a id="__codelineno-31-9" name="__codelineno-31-9" href="#__codelineno-31-9"></a>ls<span class="w"> </span>../documents/
+</code></pre></div>
+<h3 id="ingestion-appears-stuck">Ingestion appears stuck</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a><span class="c1"># Check job status</span>
+<a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a>cat<span class="w"> </span>~/Knowledge/ontology/My-Ont/ingest/*.ingesting
+<a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a>
+<a id="__codelineno-32-4" name="__codelineno-32-4" href="#__codelineno-32-4"></a><span class="c1"># Re-list to trigger cleanup if the .ingesting file persists after completion</span>
+<a id="__codelineno-32-5" name="__codelineno-32-5" href="#__codelineno-32-5"></a>ls<span class="w"> </span>~/Knowledge/ontology/My-Ont/ingest/
+</code></pre></div>
+<hr />
+<h2 id="architecture-notes">Architecture notes</h2>
+<ul>
+<li><strong>Hologram model</strong>: documents and concepts are read-only projections from the graph; the filesystem is a view, not a copy.</li>
+<li><strong>Epoch-gated caching</strong>: tracks the graph change counter; serves cached data instantly while refreshing in the background.</li>
+<li><strong>Client-side queries</strong>: query definitions stored in <code>~/.local/share/kg-fuse/mounts/&lt;id&gt;/queries.toml</code>.</li>
+<li><strong>Write-back ingestion</strong>: files are buffered locally then submitted to the API on close.</li>
+<li><strong>Non-POSIX by design</strong>: concepts can appear in multiple places; results change as the graph evolves.</li>
+</ul>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

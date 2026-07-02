@@ -1,0 +1,2846 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Multi-dimensional knowledge extraction system using Apache AGE">
+      
+      
+        <meta name="author" content="Knowledge Graph System Contributors">
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>ADR-506: Pathfinding Optimization for Apache AGE - Knowledge Graph System</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#adr-506-pathfinding-optimization-for-apache-age" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="Knowledge Graph System" class="md-header__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Knowledge Graph System
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              ADR-506: Pathfinding Optimization for Apache AGE
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/aaronsb/knowledge-graph-system" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aaronsb/knowledge-graph-system
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="Knowledge Graph System" class="md-nav__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Knowledge Graph System
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/aaronsb/knowledge-graph-system" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aaronsb/knowledge-graph-system
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Get Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Get Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../get-started/what-and-why/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What and Why
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../get-started/first-graph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your First Graph
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../get-started/first-query/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your First Query
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../get-started/mcp-quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Connect via MCP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../get-started/github-history/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mining a Git Repo
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-To
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How-To
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/ingest/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ingest Documents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/query/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explore and Query
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/epistemic-status/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Filter by Epistemic Status
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/polarity-axis/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Analyze a Polarity Axis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/fuse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Use the FUSE Drive
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/ai-providers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configure AI Providers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/embeddings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configure Embeddings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/extraction-quality/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Compare Extraction Quality
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/vocabulary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Consolidate Vocabulary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Self-Host
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Self-Host
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/quick-start/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/production/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Production Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/macvlan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dedicated IP (macvlan)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/tls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    TLS and Certificates
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/appliance-libvirt/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Appliance on libvirt/KVM
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security and Access
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/backup-restore/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backup and Restore
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/scheduled-jobs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scheduled Jobs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/upgrading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Upgrading
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explanation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Explanation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/how-it-works/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How It Works
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/computed-evidence/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Computed Evidence over Asserted Truth
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/grounding/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Grounding and Epistemic Confidence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/recursive-upsert/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Recursive Upsert
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/vocabulary-lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vocabulary Lifecycle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/storage-and-freshness/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Storage and Freshness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/worker-lanes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Worker Lanes and Concurrency
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/embedding-landscape/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Embedding Landscape
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/graph-program/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram DSL
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    REST API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/mcp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/mcp-session-context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Session Context
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/fuse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FUSE Driver
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/schema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Database Schema
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/cypher/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cypher Patterns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/graph-program-spec/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram Specification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/graph-program-validation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram Validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/graph-program-security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/backup-object-spec/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backup Object Format
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Contributing
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/voice/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Prose & Voice Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/docstring-coverage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docstring Coverage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/test-suite/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Test Suite
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../INDEX/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Context">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#current-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Current Implementation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-this-times-out" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why This Times Out
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#documentation-contradiction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation Contradiction
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#apache-age-limitations-verified" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Apache AGE Limitations (Verified)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Decision">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#strategy-1-bidirectional-bfs-recommended-for-shortest-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Strategy 1: Bidirectional BFS (Recommended for Shortest Path)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reference-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reference Implementation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#strategy-2-depth-limited-search-with-early-termination" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Strategy 2: Depth-Limited Search with Early Termination
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#strategy-3-pre-computed-path-hints-future-optimization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Strategy 3: Pre-computed Path Hints (Future Optimization)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#strategy-4-external-graph-library-if-needed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Strategy 4: External Graph Library (If Needed)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation Plan
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation Plan">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-1-fix-documentation-immediate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 1: Fix Documentation (Immediate)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-2-implement-bidirectional-bfs-week-1-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 2: Implement Bidirectional BFS (Week 1-2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-3-optimize-related-concepts-week-2-3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 3: Optimize Related Concepts (Week 2-3)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-4-add-caching-layer-week-3-4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 4: Add Caching Layer (Week 3-4)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-5-monitoring-ongoing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 5: Monitoring (Ongoing)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Consequences">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#positive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Positive
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#negative" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Negative
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#neutral" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Neutral
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#alternatives-considered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alternatives Considered
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Alternatives Considered">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-limit-max-hops-to-3-4-rejected" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Limit Max Hops to 3-4 (Rejected)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-switch-to-neo4j-enterprise-rejected" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Switch to Neo4j Enterprise (Rejected)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-use-postgresql-recursive-ctes-considered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Use PostgreSQL Recursive CTEs (Considered)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-pre-compute-all-shortest-paths-rejected" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Pre-compute All Shortest Paths (Rejected)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        References
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Notes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Notes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#query-optimization-quick-wins" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Query Optimization Quick Wins
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mcp-tool-impact" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MCP Tool Impact
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="adr-506-pathfinding-optimization-for-apache-age">ADR-506: Pathfinding Optimization for Apache AGE</h1>
+<h2 id="context">Context</h2>
+<p>Our pathfinding queries experience severe performance degradation at scale. A user querying path connections between concepts on a graph with ~100,000 nodes observes timeout behavior for paths longer than 4-5 hops. Investigation revealed the root cause is <strong>exhaustive path enumeration</strong> rather than optimized graph algorithms.</p>
+<h3 id="current-implementation">Current Implementation</h3>
+<p>The <code>build_shortest_path_query</code> function in <code>api/api/services/query_service.py</code> generates:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">MATCH</span><span class="w"> </span><span class="n">path</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">(</span><span class="n">from</span><span class="p">:</span><span class="n">Concept</span><span class="w"> </span><span class="p">{</span><span class="n">concept_id</span><span class="p">:</span><span class="w"> </span><span class="err">$</span><span class="n">from_id</span><span class="p">})</span><span class="o">-[</span><span class="p">*</span><span class="m">1</span><span class="p">..{</span><span class="n">max_hops</span><span class="p">}</span><span class="o">]-</span><span class="p">(</span><span class="n">to</span><span class="p">:</span><span class="n">Concept</span><span class="w"> </span><span class="p">{</span><span class="n">concept_id</span><span class="p">:</span><span class="w"> </span><span class="err">$</span><span class="n">to_id</span><span class="p">})</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="k">WITH</span><span class="w"> </span><span class="n">path</span><span class="p">,</span><span class="w"> </span><span class="n">length</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">hops</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="k">RETURN</span><span class="w"> </span><span class="n">nodes</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">path_nodes</span><span class="p">,</span><span class="w"> </span><span class="n">relationships</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">path_rels</span><span class="p">,</span><span class="w"> </span><span class="n">hops</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">hops</span><span class="w"> </span><span class="k">ASC</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="k">LIMIT</span><span class="w"> </span><span class="m">10</span>
+</code></pre></div>
+<h3 id="why-this-times-out">Why This Times Out</h3>
+<ol>
+<li>
+<p><strong>Exhaustive Search:</strong> The pattern <code>-[*1..N]-</code> tells Apache AGE to find <strong>every possible path</strong> of length 1 to N between two nodes.</p>
+</li>
+<li>
+<p><strong>Order of Operations:</strong> The query:</p>
+</li>
+<li>Enumerates ALL valid paths (potentially millions)</li>
+<li>Holds them in memory</li>
+<li>Sorts by length</li>
+<li>
+<p>Returns top 10</p>
+</li>
+<li>
+<p><strong>Exponential Complexity:</strong> With average branching factor <code>b</code>:</p>
+</li>
+<li>3-hop search: O(b³) paths</li>
+<li>5-hop search: O(b⁵) paths</li>
+<li>10-hop search: O(b¹⁰) paths</li>
+</ol>
+<p>If branching factor is 20 (modest for our graph):
+   - 5 hops = 3,200,000 paths to enumerate
+   - 10 hops = 10,240,000,000,000 paths</p>
+<h3 id="documentation-contradiction">Documentation Contradiction</h3>
+<p>Our documentation at <code>docs/manual/06-reference/09-CYPHER_PATTERNS.md</code> shows <code>shortestPath()</code> usage:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">MATCH</span><span class="w"> </span><span class="n">path</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="n">shortestPath</span><span class="p">((</span><span class="k">start</span><span class="p">)</span><span class="o">-[</span><span class="p">*</span><span class="o">]-</span><span class="p">(</span><span class="k">end</span><span class="p">))</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="k">RETURN</span><span class="w"> </span><span class="n">path</span>
+</code></pre></div>
+<p>However, the code comments in <code>query_service.py</code> correctly note:</p>
+<blockquote>
+<p>"Note: AGE doesn't support Neo4j's shortestPath(), all() predicate..."</p>
+</blockquote>
+<h3 id="apache-age-limitations-verified">Apache AGE Limitations (Verified)</h3>
+<p>Investigation confirms Apache AGE <strong>does NOT support <code>shortestPath()</code></strong>:</p>
+<ul>
+<li><a href="https://github.com/apache/age/issues/2162">GitHub Issue #2162</a> - <code>SHORTEST</code> keyword throws syntax error</li>
+<li><a href="https://github.com/apache/age/issues/195">GitHub Issue #195</a> - Variable-length paths exhibit exponential degradation</li>
+<li>AGE version 1.5.0 lacks native pathfinding algorithms</li>
+<li>openCypher standard doesn't mandate <code>shortestPath()</code> (Neo4j-specific extension)</li>
+</ul>
+<p><strong>Observed Performance (from Issue #195):</strong>
+| Max Hops | Time (1.5M nodes, 1.2M edges) |
+|----------|-------------------------------|
+| 4        | 7 seconds                     |
+| 5        | 3 minutes 30 seconds          |
+| 6        | ~7 minutes                    |
+| 10       | Indefinite hang               |</p>
+<h2 id="decision">Decision</h2>
+<p>Implement <strong>Bidirectional Breadth-First Search (BFS)</strong> in application code instead of relying on Cypher variable-length patterns for pathfinding.</p>
+<h3 id="strategy-1-bidirectional-bfs-recommended-for-shortest-path">Strategy 1: Bidirectional BFS (Recommended for Shortest Path)</h3>
+<p>Instead of one query that enumerates all paths, use iterative neighbor expansion from both ends:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">find_shortest_path</span><span class="p">(</span><span class="n">from_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">to_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">max_hops</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="sd">    Bidirectional BFS - meets in the middle.</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="sd">    Time complexity: O(b^(d/2)) instead of O(b^d)</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="sd">    For b=20, d=6: 8000 vs 64,000,000 node lookups</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>    <span class="k">if</span> <span class="n">from_id</span> <span class="o">==</span> <span class="n">to_id</span><span class="p">:</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>        <span class="k">return</span> <span class="p">[</span><span class="n">from_id</span><span class="p">]</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>    <span class="c1"># Track visited nodes and their parents from each direction</span>
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>    <span class="n">forward_visited</span> <span class="o">=</span> <span class="p">{</span><span class="n">from_id</span><span class="p">:</span> <span class="kc">None</span><span class="p">}</span>
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>    <span class="n">backward_visited</span> <span class="o">=</span> <span class="p">{</span><span class="n">to_id</span><span class="p">:</span> <span class="kc">None</span><span class="p">}</span>
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>    <span class="c1"># Current frontier sets</span>
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>    <span class="n">forward_frontier</span> <span class="o">=</span> <span class="p">{</span><span class="n">from_id</span><span class="p">}</span>
+<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>    <span class="n">backward_frontier</span> <span class="o">=</span> <span class="p">{</span><span class="n">to_id</span><span class="p">}</span>
+<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>
+<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a>    <span class="k">for</span> <span class="n">depth</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_hops</span> <span class="o">//</span> <span class="mi">2</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+<a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a>        <span class="c1"># Expand the smaller frontier (optimization)</span>
+<a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a>        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">forward_frontier</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">backward_frontier</span><span class="p">):</span>
+<a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a>            <span class="c1"># Expand forward</span>
+<a id="__codelineno-2-23" name="__codelineno-2-23" href="#__codelineno-2-23"></a>            <span class="n">next_frontier</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+<a id="__codelineno-2-24" name="__codelineno-2-24" href="#__codelineno-2-24"></a>            <span class="k">for</span> <span class="n">node_id</span> <span class="ow">in</span> <span class="n">forward_frontier</span><span class="p">:</span>
+<a id="__codelineno-2-25" name="__codelineno-2-25" href="#__codelineno-2-25"></a>                <span class="n">neighbors</span> <span class="o">=</span> <span class="n">get_neighbors</span><span class="p">(</span><span class="n">node_id</span><span class="p">)</span>  <span class="c1"># Single-hop query</span>
+<a id="__codelineno-2-26" name="__codelineno-2-26" href="#__codelineno-2-26"></a>                <span class="k">for</span> <span class="n">neighbor</span> <span class="ow">in</span> <span class="n">neighbors</span><span class="p">:</span>
+<a id="__codelineno-2-27" name="__codelineno-2-27" href="#__codelineno-2-27"></a>                    <span class="k">if</span> <span class="n">neighbor</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">forward_visited</span><span class="p">:</span>
+<a id="__codelineno-2-28" name="__codelineno-2-28" href="#__codelineno-2-28"></a>                        <span class="n">forward_visited</span><span class="p">[</span><span class="n">neighbor</span><span class="p">]</span> <span class="o">=</span> <span class="n">node_id</span>
+<a id="__codelineno-2-29" name="__codelineno-2-29" href="#__codelineno-2-29"></a>                        <span class="n">next_frontier</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">neighbor</span><span class="p">)</span>
+<a id="__codelineno-2-30" name="__codelineno-2-30" href="#__codelineno-2-30"></a>
+<a id="__codelineno-2-31" name="__codelineno-2-31" href="#__codelineno-2-31"></a>                    <span class="c1"># Check for intersection</span>
+<a id="__codelineno-2-32" name="__codelineno-2-32" href="#__codelineno-2-32"></a>                    <span class="k">if</span> <span class="n">neighbor</span> <span class="ow">in</span> <span class="n">backward_visited</span><span class="p">:</span>
+<a id="__codelineno-2-33" name="__codelineno-2-33" href="#__codelineno-2-33"></a>                        <span class="k">return</span> <span class="n">reconstruct_path</span><span class="p">(</span>
+<a id="__codelineno-2-34" name="__codelineno-2-34" href="#__codelineno-2-34"></a>                            <span class="n">neighbor</span><span class="p">,</span> <span class="n">forward_visited</span><span class="p">,</span> <span class="n">backward_visited</span>
+<a id="__codelineno-2-35" name="__codelineno-2-35" href="#__codelineno-2-35"></a>                        <span class="p">)</span>
+<a id="__codelineno-2-36" name="__codelineno-2-36" href="#__codelineno-2-36"></a>            <span class="n">forward_frontier</span> <span class="o">=</span> <span class="n">next_frontier</span>
+<a id="__codelineno-2-37" name="__codelineno-2-37" href="#__codelineno-2-37"></a>        <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-2-38" name="__codelineno-2-38" href="#__codelineno-2-38"></a>            <span class="c1"># Expand backward (symmetric)</span>
+<a id="__codelineno-2-39" name="__codelineno-2-39" href="#__codelineno-2-39"></a>            <span class="o">...</span>
+<a id="__codelineno-2-40" name="__codelineno-2-40" href="#__codelineno-2-40"></a>
+<a id="__codelineno-2-41" name="__codelineno-2-41" href="#__codelineno-2-41"></a>    <span class="k">return</span> <span class="kc">None</span>  <span class="c1"># No path found within max_hops</span>
+</code></pre></div>
+<p><strong>Complexity Comparison:</strong>
+- Current (exhaustive): O(b^d) where b=branching factor, d=depth
+- Bidirectional BFS: O(b^(d/2))
+- For b=20, d=6: <strong>8,000</strong> vs <strong>64,000,000</strong> node lookups</p>
+<h3 id="reference-implementation">Reference Implementation</h3>
+<p>Drop-in implementation for <code>QueryService</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Set</span><span class="p">,</span> <span class="n">Optional</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="k">def</span><span class="w"> </span><span class="nf">bidirectional_shortest_path</span><span class="p">(</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="n">client</span><span class="p">,</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>    <span class="n">start_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    <span class="n">end_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>    <span class="n">max_hops</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">6</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="sd">    Finds the shortest path between two concepts using Bidirectional BFS.</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="sd">    Why this is fast:</span>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="sd">    - Instead of one massive exponential query, it runs ~2*depth small linear queries.</span>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="sd">    - It expands from both sides simultaneously, meeting in the middle.</span>
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="sd">    - It stops strictly when the frontiers intersect.</span>
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>
+<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a><span class="sd">    Args:</span>
+<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a><span class="sd">        client: Your AGEClient instance</span>
+<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a><span class="sd">        start_id: The starting Concept ID</span>
+<a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a><span class="sd">        end_id: The target Concept ID</span>
+<a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a><span class="sd">        max_hops: Safety limit to prevent infinite loops (default 6 is usually plenty)</span>
+<a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a>
+<a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-3-24" name="__codelineno-3-24" href="#__codelineno-3-24"></a><span class="sd">        List of concept_ids forming the path [start, ..., end], or None if no path found.</span>
+<a id="__codelineno-3-25" name="__codelineno-3-25" href="#__codelineno-3-25"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-3-26" name="__codelineno-3-26" href="#__codelineno-3-26"></a>
+<a id="__codelineno-3-27" name="__codelineno-3-27" href="#__codelineno-3-27"></a>    <span class="c1"># 0. Edge case: Start equals End</span>
+<a id="__codelineno-3-28" name="__codelineno-3-28" href="#__codelineno-3-28"></a>    <span class="k">if</span> <span class="n">start_id</span> <span class="o">==</span> <span class="n">end_id</span><span class="p">:</span>
+<a id="__codelineno-3-29" name="__codelineno-3-29" href="#__codelineno-3-29"></a>        <span class="k">return</span> <span class="p">[</span><span class="n">start_id</span><span class="p">]</span>
+<a id="__codelineno-3-30" name="__codelineno-3-30" href="#__codelineno-3-30"></a>
+<a id="__codelineno-3-31" name="__codelineno-3-31" href="#__codelineno-3-31"></a>    <span class="c1"># 1. Initialize Frontiers</span>
+<a id="__codelineno-3-32" name="__codelineno-3-32" href="#__codelineno-3-32"></a>    <span class="c1"># Maps define the path: {child_id: parent_id}</span>
+<a id="__codelineno-3-33" name="__codelineno-3-33" href="#__codelineno-3-33"></a>    <span class="c1"># This allows us to trace the path back to the source/target once we meet.</span>
+<a id="__codelineno-3-34" name="__codelineno-3-34" href="#__codelineno-3-34"></a>    <span class="n">parents_start</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span><span class="n">start_id</span><span class="p">:</span> <span class="kc">None</span><span class="p">}</span>
+<a id="__codelineno-3-35" name="__codelineno-3-35" href="#__codelineno-3-35"></a>    <span class="n">parents_end</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span><span class="n">end_id</span><span class="p">:</span> <span class="kc">None</span><span class="p">}</span>
+<a id="__codelineno-3-36" name="__codelineno-3-36" href="#__codelineno-3-36"></a>
+<a id="__codelineno-3-37" name="__codelineno-3-37" href="#__codelineno-3-37"></a>    <span class="c1"># Frontiers are the sets of nodes we are currently expanding</span>
+<a id="__codelineno-3-38" name="__codelineno-3-38" href="#__codelineno-3-38"></a>    <span class="n">front_start</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">start_id</span><span class="p">}</span>
+<a id="__codelineno-3-39" name="__codelineno-3-39" href="#__codelineno-3-39"></a>    <span class="n">front_end</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">end_id</span><span class="p">}</span>
+<a id="__codelineno-3-40" name="__codelineno-3-40" href="#__codelineno-3-40"></a>
+<a id="__codelineno-3-41" name="__codelineno-3-41" href="#__codelineno-3-41"></a>    <span class="c1"># 2. Main Loop</span>
+<a id="__codelineno-3-42" name="__codelineno-3-42" href="#__codelineno-3-42"></a>    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_hops</span><span class="p">):</span>
+<a id="__codelineno-3-43" name="__codelineno-3-43" href="#__codelineno-3-43"></a>        <span class="c1"># Optimization: Always expand the smaller frontier to minimize database load</span>
+<a id="__codelineno-3-44" name="__codelineno-3-44" href="#__codelineno-3-44"></a>        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">front_start</span><span class="p">)</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">front_end</span><span class="p">):</span>
+<a id="__codelineno-3-45" name="__codelineno-3-45" href="#__codelineno-3-45"></a>            <span class="c1"># Swap the references so we always process the smaller set</span>
+<a id="__codelineno-3-46" name="__codelineno-3-46" href="#__codelineno-3-46"></a>            <span class="n">front_start</span><span class="p">,</span> <span class="n">front_end</span> <span class="o">=</span> <span class="n">front_end</span><span class="p">,</span> <span class="n">front_start</span>
+<a id="__codelineno-3-47" name="__codelineno-3-47" href="#__codelineno-3-47"></a>            <span class="n">parents_start</span><span class="p">,</span> <span class="n">parents_end</span> <span class="o">=</span> <span class="n">parents_end</span><span class="p">,</span> <span class="n">parents_start</span>
+<a id="__codelineno-3-48" name="__codelineno-3-48" href="#__codelineno-3-48"></a>
+<a id="__codelineno-3-49" name="__codelineno-3-49" href="#__codelineno-3-49"></a>        <span class="k">if</span> <span class="ow">not</span> <span class="n">front_start</span><span class="p">:</span>
+<a id="__codelineno-3-50" name="__codelineno-3-50" href="#__codelineno-3-50"></a>            <span class="c1"># If a frontier is empty, the path is blocked</span>
+<a id="__codelineno-3-51" name="__codelineno-3-51" href="#__codelineno-3-51"></a>            <span class="k">return</span> <span class="kc">None</span>
+<a id="__codelineno-3-52" name="__codelineno-3-52" href="#__codelineno-3-52"></a>
+<a id="__codelineno-3-53" name="__codelineno-3-53" href="#__codelineno-3-53"></a>        <span class="c1"># 3. Batch Query Neighbors</span>
+<a id="__codelineno-3-54" name="__codelineno-3-54" href="#__codelineno-3-54"></a>        <span class="c1"># We fetch ALL neighbors for the entire frontier in one SQL query.</span>
+<a id="__codelineno-3-55" name="__codelineno-3-55" href="#__codelineno-3-55"></a>        <span class="c1"># Note: We enforce :Concept labels to ignore metadata nodes (Sources/Instances)</span>
+<a id="__codelineno-3-56" name="__codelineno-3-56" href="#__codelineno-3-56"></a>        <span class="n">next_front</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+<a id="__codelineno-3-57" name="__codelineno-3-57" href="#__codelineno-3-57"></a>
+<a id="__codelineno-3-58" name="__codelineno-3-58" href="#__codelineno-3-58"></a>        <span class="c1"># Convert set to list for JSON serialization in query</span>
+<a id="__codelineno-3-59" name="__codelineno-3-59" href="#__codelineno-3-59"></a>        <span class="n">current_ids</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">front_start</span><span class="p">)</span>
+<a id="__codelineno-3-60" name="__codelineno-3-60" href="#__codelineno-3-60"></a>
+<a id="__codelineno-3-61" name="__codelineno-3-61" href="#__codelineno-3-61"></a>        <span class="n">query</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-3-62" name="__codelineno-3-62" href="#__codelineno-3-62"></a><span class="s2">        MATCH (current:Concept)-[]-(next:Concept)</span>
+<a id="__codelineno-3-63" name="__codelineno-3-63" href="#__codelineno-3-63"></a><span class="s2">        WHERE current.concept_id IN $ids</span>
+<a id="__codelineno-3-64" name="__codelineno-3-64" href="#__codelineno-3-64"></a><span class="s2">        RETURN current.concept_id as parent, next.concept_id as child</span>
+<a id="__codelineno-3-65" name="__codelineno-3-65" href="#__codelineno-3-65"></a><span class="s2">        &quot;&quot;&quot;</span>
+<a id="__codelineno-3-66" name="__codelineno-3-66" href="#__codelineno-3-66"></a>
+<a id="__codelineno-3-67" name="__codelineno-3-67" href="#__codelineno-3-67"></a>        <span class="c1"># Execute via your AGEClient</span>
+<a id="__codelineno-3-68" name="__codelineno-3-68" href="#__codelineno-3-68"></a>        <span class="n">results</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">_execute_cypher</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;ids&#39;</span><span class="p">:</span> <span class="n">current_ids</span><span class="p">})</span>
+<a id="__codelineno-3-69" name="__codelineno-3-69" href="#__codelineno-3-69"></a>
+<a id="__codelineno-3-70" name="__codelineno-3-70" href="#__codelineno-3-70"></a>        <span class="c1"># 4. Process Neighbors</span>
+<a id="__codelineno-3-71" name="__codelineno-3-71" href="#__codelineno-3-71"></a>        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
+<a id="__codelineno-3-72" name="__codelineno-3-72" href="#__codelineno-3-72"></a>            <span class="n">parent</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;parent&#39;</span><span class="p">]</span>
+<a id="__codelineno-3-73" name="__codelineno-3-73" href="#__codelineno-3-73"></a>            <span class="n">child</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;child&#39;</span><span class="p">]</span>
+<a id="__codelineno-3-74" name="__codelineno-3-74" href="#__codelineno-3-74"></a>
+<a id="__codelineno-3-75" name="__codelineno-3-75" href="#__codelineno-3-75"></a>            <span class="c1"># Check for Intersection: Have we seen this child in the OTHER frontier?</span>
+<a id="__codelineno-3-76" name="__codelineno-3-76" href="#__codelineno-3-76"></a>            <span class="k">if</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">parents_end</span><span class="p">:</span>
+<a id="__codelineno-3-77" name="__codelineno-3-77" href="#__codelineno-3-77"></a>                <span class="c1"># FOUND IT! The paths have met at &#39;child&#39;.</span>
+<a id="__codelineno-3-78" name="__codelineno-3-78" href="#__codelineno-3-78"></a>                <span class="k">return</span> <span class="n">_reconstruct_path</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">parents_start</span><span class="p">,</span> <span class="n">parents_end</span><span class="p">)</span>
+<a id="__codelineno-3-79" name="__codelineno-3-79" href="#__codelineno-3-79"></a>
+<a id="__codelineno-3-80" name="__codelineno-3-80" href="#__codelineno-3-80"></a>            <span class="c1"># If not visited yet on this side, record it</span>
+<a id="__codelineno-3-81" name="__codelineno-3-81" href="#__codelineno-3-81"></a>            <span class="k">if</span> <span class="n">child</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">parents_start</span><span class="p">:</span>
+<a id="__codelineno-3-82" name="__codelineno-3-82" href="#__codelineno-3-82"></a>                <span class="n">parents_start</span><span class="p">[</span><span class="n">child</span><span class="p">]</span> <span class="o">=</span> <span class="n">parent</span>
+<a id="__codelineno-3-83" name="__codelineno-3-83" href="#__codelineno-3-83"></a>                <span class="n">next_front</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">child</span><span class="p">)</span>
+<a id="__codelineno-3-84" name="__codelineno-3-84" href="#__codelineno-3-84"></a>
+<a id="__codelineno-3-85" name="__codelineno-3-85" href="#__codelineno-3-85"></a>        <span class="c1"># Advance the frontier</span>
+<a id="__codelineno-3-86" name="__codelineno-3-86" href="#__codelineno-3-86"></a>        <span class="n">front_start</span> <span class="o">=</span> <span class="n">next_front</span>
+<a id="__codelineno-3-87" name="__codelineno-3-87" href="#__codelineno-3-87"></a>
+<a id="__codelineno-3-88" name="__codelineno-3-88" href="#__codelineno-3-88"></a>    <span class="k">return</span> <span class="kc">None</span>
+<a id="__codelineno-3-89" name="__codelineno-3-89" href="#__codelineno-3-89"></a>
+<a id="__codelineno-3-90" name="__codelineno-3-90" href="#__codelineno-3-90"></a>
+<a id="__codelineno-3-91" name="__codelineno-3-91" href="#__codelineno-3-91"></a><span class="k">def</span><span class="w"> </span><span class="nf">_reconstruct_path</span><span class="p">(</span>
+<a id="__codelineno-3-92" name="__codelineno-3-92" href="#__codelineno-3-92"></a>    <span class="n">meeting_node</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<a id="__codelineno-3-93" name="__codelineno-3-93" href="#__codelineno-3-93"></a>    <span class="n">meeting_parent_from_active_side</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<a id="__codelineno-3-94" name="__codelineno-3-94" href="#__codelineno-3-94"></a>    <span class="n">active_parents</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span>
+<a id="__codelineno-3-95" name="__codelineno-3-95" href="#__codelineno-3-95"></a>    <span class="n">passive_parents</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
+<a id="__codelineno-3-96" name="__codelineno-3-96" href="#__codelineno-3-96"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<a id="__codelineno-3-97" name="__codelineno-3-97" href="#__codelineno-3-97"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-3-98" name="__codelineno-3-98" href="#__codelineno-3-98"></a><span class="sd">    Stitches the two half-paths together.</span>
+<a id="__codelineno-3-99" name="__codelineno-3-99" href="#__codelineno-3-99"></a>
+<a id="__codelineno-3-100" name="__codelineno-3-100" href="#__codelineno-3-100"></a><span class="sd">    Because we swap frontiers for optimization, we need to figure out which</span>
+<a id="__codelineno-3-101" name="__codelineno-3-101" href="#__codelineno-3-101"></a><span class="sd">    parent map belongs to the &#39;start&#39; side and which to the &#39;end&#39; side.</span>
+<a id="__codelineno-3-102" name="__codelineno-3-102" href="#__codelineno-3-102"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-3-103" name="__codelineno-3-103" href="#__codelineno-3-103"></a>
+<a id="__codelineno-3-104" name="__codelineno-3-104" href="#__codelineno-3-104"></a>    <span class="c1"># 1. Record the connection across the meeting point</span>
+<a id="__codelineno-3-105" name="__codelineno-3-105" href="#__codelineno-3-105"></a>    <span class="n">active_parents</span><span class="p">[</span><span class="n">meeting_node</span><span class="p">]</span> <span class="o">=</span> <span class="n">meeting_parent_from_active_side</span>
+<a id="__codelineno-3-106" name="__codelineno-3-106" href="#__codelineno-3-106"></a>
+<a id="__codelineno-3-107" name="__codelineno-3-107" href="#__codelineno-3-107"></a>    <span class="c1"># 2. Trace path A (from intersection to one root)</span>
+<a id="__codelineno-3-108" name="__codelineno-3-108" href="#__codelineno-3-108"></a>    <span class="n">path_a</span> <span class="o">=</span> <span class="p">[]</span>
+<a id="__codelineno-3-109" name="__codelineno-3-109" href="#__codelineno-3-109"></a>    <span class="n">curr</span> <span class="o">=</span> <span class="n">meeting_node</span>
+<a id="__codelineno-3-110" name="__codelineno-3-110" href="#__codelineno-3-110"></a>    <span class="k">while</span> <span class="n">curr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-3-111" name="__codelineno-3-111" href="#__codelineno-3-111"></a>        <span class="n">path_a</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">curr</span><span class="p">)</span>
+<a id="__codelineno-3-112" name="__codelineno-3-112" href="#__codelineno-3-112"></a>        <span class="n">curr</span> <span class="o">=</span> <span class="n">active_parents</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">curr</span><span class="p">)</span>
+<a id="__codelineno-3-113" name="__codelineno-3-113" href="#__codelineno-3-113"></a>
+<a id="__codelineno-3-114" name="__codelineno-3-114" href="#__codelineno-3-114"></a>    <span class="c1"># 3. Trace path B (from intersection to the other root)</span>
+<a id="__codelineno-3-115" name="__codelineno-3-115" href="#__codelineno-3-115"></a>    <span class="n">path_b</span> <span class="o">=</span> <span class="p">[]</span>
+<a id="__codelineno-3-116" name="__codelineno-3-116" href="#__codelineno-3-116"></a>    <span class="n">curr</span> <span class="o">=</span> <span class="n">meeting_node</span>
+<a id="__codelineno-3-117" name="__codelineno-3-117" href="#__codelineno-3-117"></a>    <span class="k">while</span> <span class="n">curr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-3-118" name="__codelineno-3-118" href="#__codelineno-3-118"></a>        <span class="n">path_b</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">curr</span><span class="p">)</span>
+<a id="__codelineno-3-119" name="__codelineno-3-119" href="#__codelineno-3-119"></a>        <span class="n">curr</span> <span class="o">=</span> <span class="n">passive_parents</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">curr</span><span class="p">)</span>
+<a id="__codelineno-3-120" name="__codelineno-3-120" href="#__codelineno-3-120"></a>
+<a id="__codelineno-3-121" name="__codelineno-3-121" href="#__codelineno-3-121"></a>    <span class="c1"># 4. Determine orientation and merge</span>
+<a id="__codelineno-3-122" name="__codelineno-3-122" href="#__codelineno-3-122"></a>    <span class="c1"># Path A and Path B both start at meeting_node.</span>
+<a id="__codelineno-3-123" name="__codelineno-3-123" href="#__codelineno-3-123"></a>    <span class="c1"># One goes to Start, one goes to End.</span>
+<a id="__codelineno-3-124" name="__codelineno-3-124" href="#__codelineno-3-124"></a>
+<a id="__codelineno-3-125" name="__codelineno-3-125" href="#__codelineno-3-125"></a>    <span class="c1"># Reverse A to put root at the start: [RootA ... MeetingNode]</span>
+<a id="__codelineno-3-126" name="__codelineno-3-126" href="#__codelineno-3-126"></a>    <span class="n">path_a</span><span class="o">.</span><span class="n">reverse</span><span class="p">()</span>
+<a id="__codelineno-3-127" name="__codelineno-3-127" href="#__codelineno-3-127"></a>
+<a id="__codelineno-3-128" name="__codelineno-3-128" href="#__codelineno-3-128"></a>    <span class="c1"># Path B is [MeetingNode ... RootB].</span>
+<a id="__codelineno-3-129" name="__codelineno-3-129" href="#__codelineno-3-129"></a>    <span class="c1"># We slice path_b[1:] to avoid duplicating the meeting node.</span>
+<a id="__codelineno-3-130" name="__codelineno-3-130" href="#__codelineno-3-130"></a>    <span class="n">full_path</span> <span class="o">=</span> <span class="n">path_a</span> <span class="o">+</span> <span class="n">path_b</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+<a id="__codelineno-3-131" name="__codelineno-3-131" href="#__codelineno-3-131"></a>
+<a id="__codelineno-3-132" name="__codelineno-3-132" href="#__codelineno-3-132"></a>    <span class="k">return</span> <span class="n">full_path</span>
+</code></pre></div>
+<p><strong>Why This Wins:</strong>
+- <strong>Database Load:</strong> Instead of asking Postgres to "find all paths of length 5" (billions of ops), you ask it "get neighbors for these 50 nodes" (50 index lookups)
+- <strong>Memory:</strong> Only the visited map in Python memory, which is O(N) compared to combinatorial explosion of paths
+- <strong>Concept Filtering:</strong> The Cypher query <code>MATCH (current:Concept)-[]-(next:Concept)</code> inherently filters out Source and Instance nodes, solving the post-processing issue</p>
+<h3 id="strategy-2-depth-limited-search-with-early-termination">Strategy 2: Depth-Limited Search with Early Termination</h3>
+<p>For related concepts traversal (not point-to-point), use incremental depth queries:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">find_related_concepts</span><span class="p">(</span><span class="n">start_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">max_depth</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">]:</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="sd">    Incremental depth search - stops when we have enough results.</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="sd">    Each depth level is a separate, bounded query.</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>    <span class="n">all_related</span> <span class="o">=</span> <span class="p">{}</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>    <span class="k">for</span> <span class="n">depth</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_depth</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>        <span class="c1"># Query ONLY this exact depth</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>        <span class="n">query</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="s2">            MATCH (start:Concept </span><span class="se">{{</span><span class="s2">concept_id: $start_id</span><span class="se">}}</span><span class="s2">)-[r*</span><span class="si">{</span><span class="n">depth</span><span class="si">}</span><span class="s2">]-(related:Concept)</span>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="s2">            WHERE related.concept_id &lt;&gt; $start_id</span>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="s2">              AND NOT related.concept_id IN $already_seen</span>
+<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a><span class="s2">            RETURN DISTINCT related.concept_id, related.label</span>
+<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a><span class="s2">            LIMIT 100</span>
+<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a><span class="s2">        &quot;&quot;&quot;</span>
+<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a>
+<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a>        <span class="n">results</span> <span class="o">=</span> <span class="n">execute_query</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="p">{</span>
+<a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a>            <span class="s1">&#39;start_id&#39;</span><span class="p">:</span> <span class="n">start_id</span><span class="p">,</span>
+<a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a>            <span class="s1">&#39;already_seen&#39;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">all_related</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+<a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a>        <span class="p">})</span>
+<a id="__codelineno-4-23" name="__codelineno-4-23" href="#__codelineno-4-23"></a>
+<a id="__codelineno-4-24" name="__codelineno-4-24" href="#__codelineno-4-24"></a>        <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
+<a id="__codelineno-4-25" name="__codelineno-4-25" href="#__codelineno-4-25"></a>            <span class="k">if</span> <span class="n">r</span><span class="p">[</span><span class="s1">&#39;concept_id&#39;</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">all_related</span><span class="p">:</span>
+<a id="__codelineno-4-26" name="__codelineno-4-26" href="#__codelineno-4-26"></a>                <span class="n">all_related</span><span class="p">[</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;concept_id&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+<a id="__codelineno-4-27" name="__codelineno-4-27" href="#__codelineno-4-27"></a>                    <span class="s1">&#39;label&#39;</span><span class="p">:</span> <span class="n">r</span><span class="p">[</span><span class="s1">&#39;label&#39;</span><span class="p">],</span>
+<a id="__codelineno-4-28" name="__codelineno-4-28" href="#__codelineno-4-28"></a>                    <span class="s1">&#39;distance&#39;</span><span class="p">:</span> <span class="n">depth</span>
+<a id="__codelineno-4-29" name="__codelineno-4-29" href="#__codelineno-4-29"></a>                <span class="p">}</span>
+<a id="__codelineno-4-30" name="__codelineno-4-30" href="#__codelineno-4-30"></a>
+<a id="__codelineno-4-31" name="__codelineno-4-31" href="#__codelineno-4-31"></a>        <span class="c1"># Early termination if we have enough</span>
+<a id="__codelineno-4-32" name="__codelineno-4-32" href="#__codelineno-4-32"></a>        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">all_related</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">50</span><span class="p">:</span>
+<a id="__codelineno-4-33" name="__codelineno-4-33" href="#__codelineno-4-33"></a>            <span class="k">break</span>
+<a id="__codelineno-4-34" name="__codelineno-4-34" href="#__codelineno-4-34"></a>
+<a id="__codelineno-4-35" name="__codelineno-4-35" href="#__codelineno-4-35"></a>    <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">all_related</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+</code></pre></div>
+<h3 id="strategy-3-pre-computed-path-hints-future-optimization">Strategy 3: Pre-computed Path Hints (Future Optimization)</h3>
+<p>For frequently-accessed concept pairs, maintain a shortest-path cache:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">path_cache</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">    </span><span class="n">from_id</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">255</span><span class="p">),</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">    </span><span class="n">to_id</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">255</span><span class="p">),</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">    </span><span class="n">distance</span><span class="w"> </span><span class="nb">INTEGER</span><span class="p">,</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">    </span><span class="n">path_ids</span><span class="w"> </span><span class="nb">TEXT</span><span class="p">[],</span><span class="w">  </span><span class="c1">-- Array of intermediate concept IDs</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">    </span><span class="n">computed_at</span><span class="w"> </span><span class="k">TIMESTAMP</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="n">NOW</span><span class="p">(),</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="w">    </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="w"> </span><span class="p">(</span><span class="n">from_id</span><span class="p">,</span><span class="w"> </span><span class="n">to_id</span><span class="p">)</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="p">);</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="c1">-- Index for fast lookups</span>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="n">path_cache_endpoints</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">path_cache</span><span class="w"> </span><span class="p">(</span><span class="n">from_id</span><span class="p">,</span><span class="w"> </span><span class="n">to_id</span><span class="p">);</span>
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="n">path_cache_distance</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">path_cache</span><span class="w"> </span><span class="p">(</span><span class="n">distance</span><span class="p">);</span>
+</code></pre></div>
+<p>Cache invalidation strategy:
+- Invalidate on concept deletion
+- Lazy refresh on new relationship creation
+- TTL-based expiration for freshness</p>
+<h3 id="strategy-4-external-graph-library-if-needed">Strategy 4: External Graph Library (If Needed)</h3>
+<p>For advanced algorithms (Dijkstra with weights, A*), use <a href="https://pypi.org/project/apache-age-dijkstra/">apache-age-dijkstra</a> or similar:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">age_dijkstra</span><span class="w"> </span><span class="kn">import</span> <span class="n">AGEDijkstra</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="n">dijkstra</span> <span class="o">=</span> <span class="n">AGEDijkstra</span><span class="p">(</span><span class="n">connection</span><span class="p">)</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="n">path</span> <span class="o">=</span> <span class="n">dijkstra</span><span class="o">.</span><span class="n">shortest_path</span><span class="p">(</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>    <span class="n">start_vertex</span><span class="o">=</span><span class="s1">&#39;concept_123&#39;</span><span class="p">,</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>    <span class="n">end_vertex</span><span class="o">=</span><span class="s1">&#39;concept_456&#39;</span><span class="p">,</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>    <span class="n">weight_property</span><span class="o">=</span><span class="s1">&#39;confidence&#39;</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="p">)</span>
+</code></pre></div>
+<h2 id="implementation-plan">Implementation Plan</h2>
+<h3 id="phase-1-fix-documentation-immediate">Phase 1: Fix Documentation (Immediate)</h3>
+<p>Update <code>docs/manual/06-reference/09-CYPHER_PATTERNS.md</code>:
+- Remove incorrect <code>shortestPath()</code> examples
+- Document actual AGE limitations
+- Add performance warnings for variable-length patterns</p>
+<h3 id="phase-2-implement-bidirectional-bfs-week-1-2">Phase 2: Implement Bidirectional BFS (Week 1-2)</h3>
+<ol>
+<li>Add <code>PathfindingService</code> class with bidirectional BFS</li>
+<li>Replace <code>build_shortest_path_query</code> usage in <code>concept</code> MCP tool</li>
+<li>Add query for single-hop neighbor retrieval</li>
+<li>Add depth limit warnings/enforcement</li>
+</ol>
+<h3 id="phase-3-optimize-related-concepts-week-2-3">Phase 3: Optimize Related Concepts (Week 2-3)</h3>
+<ol>
+<li>Convert <code>build_related_concepts_query</code> to incremental depth</li>
+<li>Add early termination when sufficient results found</li>
+<li>Cap maximum depth at 4 hops with clear documentation</li>
+</ol>
+<h3 id="phase-4-add-caching-layer-week-3-4">Phase 4: Add Caching Layer (Week 3-4)</h3>
+<ol>
+<li>Implement path cache table</li>
+<li>Add cache lookup before BFS</li>
+<li>Populate cache on successful pathfinding</li>
+<li>Add cache invalidation triggers</li>
+</ol>
+<h3 id="phase-5-monitoring-ongoing">Phase 5: Monitoring (Ongoing)</h3>
+<ol>
+<li>Add query timing metrics</li>
+<li>Log slow pathfinding operations</li>
+<li>Track cache hit rates</li>
+<li>Alert on pathfinding timeouts</li>
+</ol>
+<h2 id="consequences">Consequences</h2>
+<h3 id="positive">Positive</h3>
+<ol>
+<li><strong>Dramatic Performance Improvement:</strong> O(b^(d/2)) vs O(b^d) - exponential reduction</li>
+<li><strong>Predictable Latency:</strong> Bounded per-step queries instead of unbounded enumeration</li>
+<li><strong>Scalability:</strong> Works with graphs of any size</li>
+<li><strong>Flexibility:</strong> Application-level logic enables optimization impossible in Cypher</li>
+<li><strong>Caching Opportunities:</strong> Can store and reuse path computations</li>
+</ol>
+<h3 id="negative">Negative</h3>
+<ol>
+<li><strong>Code Complexity:</strong> More application logic vs single Cypher query</li>
+<li><strong>Multiple Round Trips:</strong> N queries for N-hop path vs 1 query (but each query is fast)</li>
+<li><strong>Cache Maintenance:</strong> Need invalidation logic for path cache</li>
+<li><strong>Testing Burden:</strong> More code paths to test</li>
+</ol>
+<h3 id="neutral">Neutral</h3>
+<ol>
+<li><strong>API Unchanged:</strong> Same MCP/REST interface, different implementation</li>
+<li><strong>Results Equivalent:</strong> Same paths found, just faster</li>
+<li><strong>Database Unchanged:</strong> No schema changes required</li>
+</ol>
+<h2 id="alternatives-considered">Alternatives Considered</h2>
+<h3 id="1-limit-max-hops-to-3-4-rejected">1. Limit Max Hops to 3-4 (Rejected)</h3>
+<p>Artificially limiting path length doesn't solve the problem - it just hides it. Users would still experience slow queries at 4 hops.</p>
+<h3 id="2-switch-to-neo4j-enterprise-rejected">2. Switch to Neo4j Enterprise (Rejected)</h3>
+<p>$180,000/year licensing cost. Also doesn't address root cause - would just get faster exhaustive search.</p>
+<h3 id="3-use-postgresql-recursive-ctes-considered">3. Use PostgreSQL Recursive CTEs (Considered)</h3>
+<p>Could implement BFS in SQL:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="k">WITH</span><span class="w"> </span><span class="k">RECURSIVE</span><span class="w"> </span><span class="n">path_search</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">    </span><span class="k">SELECT</span><span class="w"> </span><span class="n">concept_id</span><span class="p">,</span><span class="w"> </span><span class="nb">ARRAY</span><span class="p">[</span><span class="n">concept_id</span><span class="p">]</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">path</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">depth</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">    </span><span class="k">FROM</span><span class="w"> </span><span class="n">concepts</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">concept_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="err">$</span><span class="k">start</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">    </span><span class="k">UNION</span><span class="w"> </span><span class="k">ALL</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="w">    </span><span class="k">SELECT</span><span class="w"> </span><span class="n">r</span><span class="p">.</span><span class="n">to_concept_id</span><span class="p">,</span><span class="w"> </span><span class="n">ps</span><span class="p">.</span><span class="n">path</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">r</span><span class="p">.</span><span class="n">to_concept_id</span><span class="p">,</span><span class="w"> </span><span class="n">ps</span><span class="p">.</span><span class="n">depth</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="w">    </span><span class="k">FROM</span><span class="w"> </span><span class="n">path_search</span><span class="w"> </span><span class="n">ps</span>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="w">    </span><span class="k">JOIN</span><span class="w"> </span><span class="n">relationships</span><span class="w"> </span><span class="n">r</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">ps</span><span class="p">.</span><span class="n">concept_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">r</span><span class="p">.</span><span class="n">from_concept_id</span>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="w">    </span><span class="k">WHERE</span><span class="w"> </span><span class="n">ps</span><span class="p">.</span><span class="n">depth</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="err">$</span><span class="n">max_depth</span>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="w">      </span><span class="k">AND</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="n">r</span><span class="p">.</span><span class="n">to_concept_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">ANY</span><span class="p">(</span><span class="n">ps</span><span class="p">.</span><span class="n">path</span><span class="p">)</span>
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="p">)</span>
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">path_search</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">concept_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="err">$</span><span class="k">end</span><span class="w"> </span><span class="k">LIMIT</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+</code></pre></div>
+<p>This is viable but harder to optimize (bidirectional search, caching) than application code.</p>
+<h3 id="4-pre-compute-all-shortest-paths-rejected">4. Pre-compute All Shortest Paths (Rejected)</h3>
+<p>Floyd-Warshall or similar O(n³) pre-computation is infeasible for 100K+ nodes (10^15 operations).</p>
+<h2 id="references">References</h2>
+<ul>
+<li><a href="https://github.com/apache/age/issues/2162">Apache AGE GitHub Issue #2162 - shortestPath not supported</a></li>
+<li><a href="https://github.com/apache/age/issues/195">Apache AGE GitHub Issue #195 - Variable-length path performance</a></li>
+<li><a href="https://pypi.org/project/apache-age-dijkstra/">apache-age-dijkstra PyPI package</a></li>
+<li><a href="https://en.wikipedia.org/wiki/Bidirectional_search">Bidirectional Search Algorithm</a></li>
+<li><a href="../../database-schema/ADR-208-apache-age-migration/">ADR-208: Apache AGE Migration</a></li>
+</ul>
+<h2 id="notes">Notes</h2>
+<h3 id="query-optimization-quick-wins">Query Optimization Quick Wins</h3>
+<p>Even before implementing BFS, some immediate improvements:</p>
+<ol>
+<li><strong>Direction matters:</strong> Query from the node with fewer connections first</li>
+<li>
+<p>Issue #195 shows 661ms vs 79 seconds difference just by reversing direction</p>
+</li>
+<li>
+<p><strong>Reduce branching factor:</strong> Filter relationship types when possible</p>
+</li>
+<li>
+<p><code>[r:SUPPORTS|IMPLIES*1..5]</code> vs <code>[*1..5]</code></p>
+</li>
+<li>
+<p><strong>Early LIMIT in subqueries:</strong></p>
+</li>
+<li>Current: Find all paths, sort, limit</li>
+<li>
+<p>Better: Limit intermediate results</p>
+</li>
+<li>
+<p><strong>Index on concept_id:</strong> Ensure fast vertex lookup at path endpoints</p>
+</li>
+</ol>
+<h3 id="mcp-tool-impact">MCP Tool Impact</h3>
+<p>The <code>concept</code> tool's <code>connect</code> action is the primary consumer of pathfinding:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Current (slow)</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="n">paths</span> <span class="o">=</span> <span class="k">await</span> <span class="n">kg</span><span class="o">.</span><span class="n">find_paths</span><span class="p">(</span><span class="n">from_id</span><span class="p">,</span> <span class="n">to_id</span><span class="p">,</span> <span class="n">max_hops</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1"># After optimization (fast)</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="n">path</span> <span class="o">=</span> <span class="k">await</span> <span class="n">kg</span><span class="o">.</span><span class="n">find_shortest_path</span><span class="p">(</span><span class="n">from_id</span><span class="p">,</span> <span class="n">to_id</span><span class="p">,</span> <span class="n">max_hops</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+</code></pre></div>
+<p>The API contract remains the same - implementation changes internally.</p>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": [], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

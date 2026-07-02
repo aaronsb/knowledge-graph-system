@@ -1,0 +1,2452 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Multi-dimensional knowledge extraction system using Apache AGE">
+      
+      
+        <meta name="author" content="Knowledge Graph System Contributors">
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>ADR-119: appliance configuration delivery and first-boot orchestration - Knowledge Graph System</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#adr-119-appliance-configuration-delivery-and-first-boot-orchestration" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="Knowledge Graph System" class="md-header__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Knowledge Graph System
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              ADR-119: appliance configuration delivery and first-boot orchestration
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/aaronsb/knowledge-graph-system" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aaronsb/knowledge-graph-system
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="Knowledge Graph System" class="md-nav__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Knowledge Graph System
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/aaronsb/knowledge-graph-system" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aaronsb/knowledge-graph-system
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Get Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Get Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../get-started/what-and-why/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What and Why
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../get-started/first-graph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your First Graph
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../get-started/first-query/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your First Query
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../get-started/mcp-quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Connect via MCP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../get-started/github-history/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mining a Git Repo
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-To
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How-To
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/ingest/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ingest Documents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/query/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explore and Query
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/epistemic-status/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Filter by Epistemic Status
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/polarity-axis/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Analyze a Polarity Axis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/fuse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Use the FUSE Drive
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/ai-providers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configure AI Providers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/embeddings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configure Embeddings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/extraction-quality/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Compare Extraction Quality
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/vocabulary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Consolidate Vocabulary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Self-Host
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Self-Host
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/quick-start/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/production/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Production Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/macvlan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dedicated IP (macvlan)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/tls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    TLS and Certificates
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/appliance-libvirt/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Appliance on libvirt/KVM
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security and Access
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/backup-restore/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backup and Restore
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/scheduled-jobs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scheduled Jobs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/upgrading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Upgrading
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explanation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Explanation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/how-it-works/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How It Works
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/computed-evidence/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Computed Evidence over Asserted Truth
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/grounding/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Grounding and Epistemic Confidence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/recursive-upsert/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Recursive Upsert
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/vocabulary-lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vocabulary Lifecycle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/storage-and-freshness/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Storage and Freshness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/worker-lanes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Worker Lanes and Concurrency
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/embedding-landscape/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Embedding Landscape
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/graph-program/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram DSL
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    REST API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/mcp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/mcp-session-context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Session Context
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/fuse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FUSE Driver
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/schema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Database Schema
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/cypher/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cypher Patterns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/graph-program-spec/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram Specification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/graph-program-validation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram Validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/graph-program-security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/backup-object-spec/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backup Object Format
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Contributing
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/voice/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Prose & Voice Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/docstring-coverage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docstring Coverage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/test-suite/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Test Suite
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../INDEX/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Decision">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a-provisionenv-is-the-rendezvous-the-carrier-is-a-standard-nocloud-seed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A — provision.env is the rendezvous; the carrier is a standard NoCloud seed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#b-first-boot-is-presence-driven-not-interactive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        B — First boot is presence-driven, not interactive
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c-all-richer-configuration-is-post-boot-via-the-dcui-operator" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        C — All richer configuration is post-boot, via the DCUI + operator
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#d-one-builder-three-contexts-the-operator-container" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        D — One builder, three contexts (the operator container)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#e-kernel-variants-cloud-default-and-generic-homelab" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        E — Kernel variants: cloud (default) and generic (homelab)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Consequences">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#positive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Positive
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#negative" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Negative
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#neutral" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Neutral
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#alternatives-considered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alternatives Considered
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Alternatives Considered">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#prior-art" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prior art
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="adr-119-appliance-configuration-delivery-and-first-boot-orchestration">ADR-119: appliance configuration delivery and first-boot orchestration</h1>
+<h2 id="context">Context</h2>
+<p>ADR-103 ships the platform as a thin appliance (OVA/qcow2). ADR-104 defines what
+happens <em>once configuration is present</em> — the shared provisioning contract and the
+console-token-gated first-run claim. This ADR fills the gap <strong>before</strong> that: how
+configuration arrives, and how first boot behaves when it is — or isn't — there.</p>
+<p>Dogfooding the OVA path surfaced the problem. ADR-104 line 32 recorded the
+appliance's interactivity as <em>"declarative (cloud-init) / none"</em> — either you
+hand-craft a cloud-init seed, or you get defaults. That splits the audience badly:</p>
+<ul>
+<li><strong>The seed, as we documented it, is a cloud/IaC idiom mis-applied to the
+  desktop.</strong> Our own runbook told a VirtualBox/qemu user to hand-build a <code>cidata</code>
+  ISO with <code>xorriso</code> and attach it as a virtio disk — friction a "download the OVA
+  and import it" user will not push through.</li>
+<li><strong>"none" is a dead-end, not a first-run.</strong> Without a seed the box comes up on a
+  DHCP IP with HTTP and no guided way to set the hostname, TLS, or a reasoning key
+  — the operator has to discover the rest.</li>
+</ul>
+<p><strong>Design value driving this ADR: minimize novelty.</strong> Appliance provisioning is a
+well-trodden, well-engineered space; our platform is not special, and the closer
+its shape is to other appliance VMs the more <em>familiar</em> — and the less we have to
+invent, document, and debug. So the decision below deliberately reaches for
+established idioms (autoinstall/preseed, OVF properties, the pfSense/TrueNAS
+console wizard) and rejects clever-but-novel machinery, even where the novel
+version looked elegant.</p>
+<h2 id="decision">Decision</h2>
+<p>Adopt the conventional appliance shape: <strong>a config artifact's <em>presence</em> decides
+the path</strong> (the autoinstall/kickstart convention), and <strong>all richer configuration
+happens after boot</strong> through the console (DCUI) and operator — the always-reachable
+out-of-band surface every appliance already uses.</p>
+<h3 id="a-provisionenv-is-the-rendezvous-the-carrier-is-a-standard-nocloud-seed">A — <code>provision.env</code> is the rendezvous; the carrier is a standard NoCloud seed</h3>
+<p><code>/etc/kg/provision.env</code> (ADR-103's declarative control surface) stays the single
+meeting point; one consumer — <code>operator.sh init</code> (ADR-104's contract) — reads it.
+Configuration is delivered by <strong>the standard cloud-init datasources</strong>, no bespoke
+reader:</p>
+<table>
+<thead>
+<tr>
+<th>Producer</th>
+<th>Context</th>
+<th>Mechanism</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>cloud-init NoCloud</strong></td>
+<td>desktop / offline / orchestrator-attached volume</td>
+<td>a vfat volume labeled <code>cidata</code>; cloud-init's <code>write_files</code> drops <code>provision.env</code> (today's mechanism)</td>
+</tr>
+<tr>
+<td><strong>cloud-init network datasources</strong></td>
+<td>EC2 / OpenStack / Proxmox cloud-drive</td>
+<td>platform metadata, same <code>write_files</code></td>
+</tr>
+<tr>
+<td><strong>interactive console + operator</strong></td>
+<td>human, <strong>post-boot</strong></td>
+<td>DCUI / <code>operator.sh set-*</code> write <code>provision.env</code> and apply</td>
+</tr>
+</tbody>
+</table>
+<p>The external carrier is a <strong>vfat</strong> volume, FS-label <strong><code>cidata</code></strong>, holding the
+standard <code>user-data</code> + <code>meta-data</code> (cloud-init NoCloud recognizes <code>vfat</code> or
+<code>iso9660</code> by that label — not ext4). vfat because it is <strong>writable</strong> (the box can
+export/refresh the config on it) and <strong>builds without root or ISO tooling</strong>
+(<code>mcopy</code>), which drops cleanly into Terraform/Packer. This is precisely the carrier
+<strong>Ubuntu autoinstall</strong> uses — maximally familiar, zero custom discovery code.</p>
+<p>Forward-compat needs only a <code>KG_PROVISION_SCHEMA=N</code> key inside <code>provision.env</code>
+(unknown keys are already ignored) — <strong>no separate volume signature file</strong>. The
+carrier holds <strong>declarative inputs only</strong> (hostname, TLS mode, DNS-01 creds,
+optionally admin password / reasoning key); the per-instance infra secrets
+(<code>ENCRYPTION_KEY</code>, <code>POSTGRES_PASSWORD</code>, signing keys) are <strong>always minted fresh</strong>
+per install (ADR-104 Part A) and never ride the carrier. Reload = same inputs, new
+secrets. The carrier is sensitive when it holds creds and is documented "treat like
+a private key"; the builder (§D) offers an omit-secrets variant.</p>
+<p>Because we build the OVA, the OVF <strong>will pre-declare an empty virtio slot</strong> at a
+predictable address (<code>/dev/vdb</code>) so the user points an existing slot at their
+<code>.img</code> rather than adding a controller. <em>(Follow-on, not yet shipped: the current
+<code>ovf/kg-appliance.ovf.template</code> declares only the primary disk; until the empty
+slot lands, the carrier is attached as an added virtio disk — the same friction
+this is meant to remove. Tracked with the first-boot orchestration work below.)</em></p>
+<p>The bus the carrier hangs off is governed by the <strong>kernel flavor</strong>, which is now a
+shipped distribution variant (see "Kernel variants" below). The default <strong>cloud</strong>
+kernel has no AHCI, so its carrier is a virtio disk ("attach this <code>.img</code> as a
+disk"). The <strong>generic</strong> variant brings AHCI/SATA, unlocking the one-click
+"attach the config ISO to a CD drive" UX for the hypervisors that expect it.</p>
+<h3 id="b-first-boot-is-presence-driven-not-interactive">B — First boot is presence-driven, not interactive</h3>
+<p><code>kg-firstboot</code> does <strong>not</strong> pause, prompt, or run a countdown. It branches on
+whether configuration is present — the kickstart/autoinstall convention:</p>
+<pre class="mermaid"><code>flowchart TD
+    S[first boot · sentinel-guarded] --&gt; R{cloud-init produced&lt;br/&gt;/etc/kg/provision.env?}
+    R -- yes --&gt; APPLY[operator.sh init reads provision.env · start stack]
+    R -- no --&gt; ZC[zero-config: mint secrets · start stack&lt;br/&gt;DHCP · HTTP · box usable]
+    APPLY --&gt; CLAIM[hand to ADR-104 claim:&lt;br/&gt;UNCLAIMED + token, or pre-CLAIMED if creds supplied]
+    ZC --&gt; CLAIM
+    CLAIM --&gt; DONE[write sentinel → getty/console-TUI takes tty1]</code></pre>
+<p>This keeps first boot a headless oneshot (no tty ownership, no race with the
+console getty), exactly as today — the <em>only</em> change is that the no-config branch
+now lands the operator in a <strong>real first-run experience</strong>, not a dead-end (§C).
+cloud-init keeps its standard <code>datasource_list</code> (NoCloud <strong>and</strong> the network
+sources); attached labeled volumes are NoCloud-format — the same format
+Proxmox/OpenStack config-drives use — so one path covers hand-rolled vfat <em>and</em>
+platform config-drives.</p>
+<h3 id="c-all-richer-configuration-is-post-boot-via-the-dcui-operator">C — All richer configuration is post-boot, via the DCUI + operator</h3>
+<p>The no-config box boots usable, then the operator configures it through the
+<strong>always-reachable console (DCUI)</strong> and the operator container — the
+pfSense/TrueNAS shape, and the surface ADR-104's claim flow already uses:</p>
+<ul>
+<li><strong>Web first-run / claim</strong> (ADR-104): set admin password, paste a reasoning key.</li>
+<li><strong>Console DCUI + <code>operator.sh set-*</code></strong> (warm-reconfig, follow-on work): public
+  hostname, TLS mode, DNS-01 credentials, Cockpit access — the knobs that today
+  force a pre-boot seed. These are <em>idempotent</em> <code>operator.sh</code> commands (the
+  <code>cockpit-access</code> verb is the template) and each encapsulates the full ripple of
+  changing the external URL (Traefik router, the registered OAuth <code>redirect_uri</code>,
+  web runtime config, Cockpit <code>Origins</code>, the ACME cert) so a hostname change can't
+  silently half-apply.</li>
+</ul>
+<p>Cold (carrier) and warm (DCUI/operator) paths share the <strong>same <code>provision.env</code>
+schema and the same apply logic</strong>, so they cannot drift. The carrier is
+<strong>cold-provisioning/reload only</strong>; editing it does not re-apply to a running box —
+that is the warm path's job.</p>
+<h3 id="d-one-builder-three-contexts-the-operator-container">D — One builder, three contexts (the operator container)</h3>
+<p>Generating a standard NoCloud seed from inputs is pure (inputs → vfat image; no DB,
+no running platform), so it is a verb on the <strong>operator container</strong> — the config
+authority that already lives baked in the appliance <em>and</em> pullable from GHCR:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>docker run kg-operator config-volume --hostname kg.x --tls letsencrypt \
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    --dns-provider porkbun ... &gt; config.img   # standard cidata/NoCloud vfat
+</code></pre></div>
+<p>The same code runs in someone's Terraform, in the console's interactive flow, and
+in the console's <em>export</em> flow ("pack and download the config out for re-use"). It
+emits a stock NoCloud seed any cloud-init consumes — it is "a tool to generate
+cloud-init user-data easily," not a custom format.</p>
+<h3 id="e-kernel-variants-cloud-default-and-generic-homelab">E — Kernel variants: cloud (default) and generic (homelab)</h3>
+<p>The Debian <em>cloud</em> kernel ships no DRM/framebuffer or AHCI drivers — fine for a
+headless cloud instance, but it locks the console to 80×25 VGA. That matters
+because of <em>who looks at the console</em>: the homelab/desktop user runs the appliance
+in a VirtualBox/VMware/Hyper-V window and reads the console <strong>there</strong> — it never
+occurs to them to switch to tty1 or SSH. For them the cramped 80×25 <em>is</em> the
+product. So the image ships as <strong>two variants</strong>, selected at build time
+(<code>build-appliance.sh --kernel</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Variant</th>
+<th>Kernel</th>
+<th>Console</th>
+<th>For</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>cloud</strong> (default)</td>
+<td><code>linux-image-cloud-amd64</code></td>
+<td>80×25 VGA (nobody looks)</td>
+<td>headless / real-cloud; least overhead. The "expected shape."</td>
+</tr>
+<tr>
+<td><strong>generic</strong> (<code>-generic</code> suffix)</td>
+<td><code>linux-image-amd64</code> + <code>GRUB_GFXMODE</code>/<code>gfxpayload=keep</code></td>
+<td>real hi-res framebuffer (legible in a hypervisor window)</td>
+<td>homelab/desktop: the person who needs a hand and reads the console window. Also gains AHCI/SATA → the CD-drive carrier UX (§A).</td>
+</tr>
+</tbody>
+</table>
+<p>cloud stays the default because the appliance's headless/edge path is the common
+one and cloud users have other access; generic is the opt-in for the
+console-window user. <code>publish.sh appliance</code> ships <strong>both</strong> OVAs/qcow2s on the
+release, and the install docs point VirtualBox/VMware users (the console-window
+crowd) at the <strong>generic</strong> artifact.</p>
+<h2 id="consequences">Consequences</h2>
+<h3 id="positive">Positive</h3>
+<ul>
+<li><strong>One artifact, both audiences, the familiar way.</strong> A single OVA boots zero-touch
+  when a NoCloud seed is attached and into a first-run wizard when it isn't —
+  presence-driven, exactly like autoinstall/kickstart and vendor OVF appliances.</li>
+<li><strong>Almost nothing new is built.</strong> cloud-init NoCloud is the reader; first boot
+  stays the current headless oneshot; the DCUI already exists. The net additions
+  are small: make "no config" a real first-run, add post-boot <code>set-*</code> knobs, and a
+  seed-builder verb.</li>
+<li><strong>Removes the seed-ISO friction</strong> for the download-and-import user (carrier is
+  <code>mcopy</code>-buildable; the console path needs no carrier at all).</li>
+<li><strong>Cattle/pet separation.</strong> The OVA is stateless and secret-free; the config seed
+  is the portable, owner-held identity → deterministic wipe-and-reload and a clean
+  Terraform/Packer seam.</li>
+</ul>
+<h3 id="negative">Negative</h3>
+<ul>
+<li><strong>Richer first-time config moves to a second step</strong> (post-boot DCUI/operator)
+  rather than being injectable pre-boot for the desktop user — but that <em>is</em> the
+  appliance convention, and the seed still serves the zero-touch case.</li>
+<li><strong>The config seed is a secrets-bearing artifact</strong> when it carries DNS/provider
+  creds; it cannot be encrypted-at-rest for cold boot (no key exists yet —
+  chicken/egg), so it relies on operator handling + the omit-secrets variant.</li>
+<li><strong>The warm <code>set-*</code> commands must encapsulate the external-URL ripple</strong> correctly
+  (Traefik + OAuth redirect + web config + Cockpit + cert) or a hostname change
+  half-applies — security-relevant, needs care.</li>
+</ul>
+<h3 id="neutral">Neutral</h3>
+<ul>
+<li>cloud-init is used as-is (standard datasources), neither demoted nor extended.</li>
+<li>The bus/kernel trade is resolved by shipping <strong>two kernel variants</strong> (§E): cloud
+  (default, virtio-only) and generic (AHCI + hi-res console). Neither changes this
+  config-delivery model; they differ only in drivers and console.</li>
+<li>The builder lands as an operator verb (ADR-211 sink), not a new tool.</li>
+<li><strong>Convergence contract (ADR-103).</strong> The OVA is a thin <em>bootstrap seed</em>:
+  downloaded once, run, then kept current by <code>operator.sh upgrade</code> pulling fresh
+  GHCR images. The per-release artifacts are the <em>container images</em>, not the OVA —
+  so the OVA is republished only occasionally to move the baseline (<code>publish.sh
+  appliance</code>, decoupled from <code>release</code>). This ADR governs the <em>bootstrap</em>; ADR-103
+  governs ongoing <em>currency</em>; the seam is the first boot that pulls images.</li>
+</ul>
+<h2 id="alternatives-considered">Alternatives Considered</h2>
+<ul>
+<li><strong>A countdown that flips between automated and interactive at boot.</strong> Considered
+  and rejected as <strong>novel</strong> — real appliances decide by config <em>presence</em>
+  (kickstart <code>inst.ks=</code>, OVF property presence), not a timer. The clever version
+  also dragged in a bespoke volume reader, a signature file, and first-boot tty1
+  ownership; presence-driven removes all of it. Familiarity and a smaller surface
+  beat the elegance.</li>
+<li><strong>A bespoke appliance-native config-volume reader + <code>/.kg-appliance</code> signature.</strong>
+  Rejected: cloud-init's NoCloud datasource already reads a labeled vfat volume —
+  reimplementing it is novelty for its own sake. A <code>KG_PROVISION_SCHEMA</code> key covers
+  forward-compat.</li>
+<li><strong>Keep ADR-104's "declarative (cloud-init) / none".</strong> Rejected: "none" as a
+  half-configured dead-end is the gap; a proper first-run (DCUI/web) closes it
+  without inventing anything.</li>
+<li><strong>Two OVA flavors (cloud vs interactive).</strong> Rejected: doubles the release surface
+  for a difference that is purely whether a seed is attached.</li>
+<li><strong>iso9660 / ext4 carrier.</strong> ext4 is not in cloud-init's NoCloud probe set;
+  iso9660 is recognized but read-only (no export/refresh) and needs ISO tooling.
+  vfat is the writable, tool-light intersection — and what Ubuntu autoinstall uses.</li>
+</ul>
+<h3 id="prior-art">Prior art</h3>
+<p>The result is an assembly of established, shipping idioms, not an invention — which
+is the point:</p>
+<ul>
+<li><strong>Autoinstall / preseed / kickstart.</strong> One image runs interactive by default and
+  unattended when a config artifact is present — Ubuntu <em>autoinstall</em> uses the very
+  same NoCloud <code>cidata</code> carrier; RHEL/Fedora <em>kickstart</em> (<code>inst.ks=</code>), Debian
+  <em>preseed</em>, SUSE <em>AutoYaST</em> share the shape.</li>
+<li><strong>OVF vApp properties / ISO transport.</strong> Vendor virtual appliances (F5, Palo
+  Alto, Cisco, NetScaler) ship a single OVA that reads hypervisor-injected
+  properties for zero-touch deploy, else drops to a console wizard — a polymorphic
+  OVA, shipping for 15+ years.</li>
+<li><strong>First-run appliances.</strong> pfSense/OPNsense/TrueNAS/Home Assistant OS boot to a
+  usable default and configure via console (DCUI) / web afterward — the no-config
+  branch and the post-boot warm path.</li>
+</ul>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": [], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

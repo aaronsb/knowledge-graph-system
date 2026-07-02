@@ -1,0 +1,3174 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Multi-dimensional knowledge extraction system using Apache AGE">
+      
+      
+        <meta name="author" content="Knowledge Graph System Contributors">
+      
+      
+      
+        <link rel="prev" href="../ingest/">
+      
+      
+        <link rel="next" href="../epistemic-status/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Explore and Query - Knowledge Graph System</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#explore-and-query" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Knowledge Graph System" class="md-header__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Knowledge Graph System
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Explore and Query
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/aaronsb/knowledge-graph-system" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aaronsb/knowledge-graph-system
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Knowledge Graph System" class="md-nav__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Knowledge Graph System
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/aaronsb/knowledge-graph-system" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aaronsb/knowledge-graph-system
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Get Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Get Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/what-and-why/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What and Why
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/first-graph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your First Graph
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/first-query/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your First Query
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/mcp-quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Connect via MCP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/github-history/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mining a Git Repo
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-To
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How-To
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ingest/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ingest Documents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explore and Query
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explore and Query
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#authenticate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Authenticate
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#search-by-meaning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Search by Meaning
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Search by Meaning">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#search-source-text" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Search Source Text
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#get-concept-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Get Concept Details
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#traverse-relationships" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Traverse Relationships
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Traverse Relationships">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#find-related-concepts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Find Related Concepts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#find-paths-between-concepts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Find Paths Between Concepts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#explore-contradictions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Explore Contradictions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ontology-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ontology Operations
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#saved-queries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Saved Queries
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Saved Queries">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#create-a-saved-query" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Create a Saved Query
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#manage-saved-queries-from-the-cli" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Manage Saved Queries from the CLI
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#load-in-the-web-interface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Load in the Web Interface
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-operator-algebra" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The +/- Operator Algebra
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#web-interface-explorers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Web Interface Explorers
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Web Interface Explorers">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#2d-force-graph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2D Force Graph
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3d-force-graph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3D Force Graph
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#embedding-landscape" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Embedding Landscape
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#document-explorer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Document Explorer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polarity-explorer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Polarity Explorer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#vocabulary-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Vocabulary Analysis
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#edge-explorer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Edge Explorer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#flow-editor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Flow Editor
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rest-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        REST API
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="REST API">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#search-concepts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Search Concepts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-concept-details_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Get Concept Details
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#find-related-concepts_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Find Related Concepts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#find-paths" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Find Paths
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mcp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MCP
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cross-ontology-queries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cross-Ontology Queries
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#query-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Query Patterns
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../epistemic-status/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Filter by Epistemic Status
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../polarity-axis/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Analyze a Polarity Axis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../fuse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Use the FUSE Drive
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ai-providers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configure AI Providers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../embeddings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configure Embeddings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../extraction-quality/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Compare Extraction Quality
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../vocabulary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Consolidate Vocabulary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Self-Host
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Self-Host
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/quick-start/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/production/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Production Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/macvlan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dedicated IP (macvlan)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/tls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    TLS and Certificates
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/appliance-libvirt/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Appliance on libvirt/KVM
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security and Access
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/backup-restore/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backup and Restore
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/scheduled-jobs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scheduled Jobs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/upgrading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Upgrading
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../self-host/troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explanation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Explanation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/how-it-works/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How It Works
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/computed-evidence/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Computed Evidence over Asserted Truth
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/grounding/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Grounding and Epistemic Confidence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/recursive-upsert/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Recursive Upsert
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/vocabulary-lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vocabulary Lifecycle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/storage-and-freshness/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Storage and Freshness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/worker-lanes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Worker Lanes and Concurrency
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/embedding-landscape/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Embedding Landscape
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/graph-program/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram DSL
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    REST API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/mcp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/mcp-session-context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Session Context
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/fuse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FUSE Driver
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/schema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Database Schema
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cypher/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cypher Patterns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/graph-program-spec/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram Specification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/graph-program-validation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram Validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/graph-program-security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/backup-object-spec/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backup Object Format
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Contributing
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/voice/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Prose & Voice Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/docstring-coverage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docstring Coverage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/test-suite/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Test Suite
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/INDEX/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#authenticate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Authenticate
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#search-by-meaning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Search by Meaning
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Search by Meaning">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#search-source-text" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Search Source Text
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#get-concept-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Get Concept Details
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#traverse-relationships" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Traverse Relationships
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Traverse Relationships">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#find-related-concepts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Find Related Concepts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#find-paths-between-concepts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Find Paths Between Concepts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#explore-contradictions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Explore Contradictions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ontology-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ontology Operations
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#saved-queries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Saved Queries
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Saved Queries">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#create-a-saved-query" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Create a Saved Query
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#manage-saved-queries-from-the-cli" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Manage Saved Queries from the CLI
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#load-in-the-web-interface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Load in the Web Interface
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-operator-algebra" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The +/- Operator Algebra
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#web-interface-explorers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Web Interface Explorers
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Web Interface Explorers">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#2d-force-graph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2D Force Graph
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3d-force-graph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3D Force Graph
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#embedding-landscape" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Embedding Landscape
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#document-explorer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Document Explorer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polarity-explorer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Polarity Explorer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#vocabulary-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Vocabulary Analysis
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#edge-explorer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Edge Explorer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#flow-editor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Flow Editor
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rest-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        REST API
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="REST API">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#search-concepts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Search Concepts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-concept-details_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Get Concept Details
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#find-related-concepts_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Find Related Concepts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#find-paths" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Find Paths
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mcp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MCP
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cross-ontology-queries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cross-Ontology Queries
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#query-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Query Patterns
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="explore-and-query">Explore and Query</h1>
+<p>Search concepts by meaning, traverse relationships, find paths between ideas, and replay saved explorations — from the CLI, the REST API, MCP, or the web interface.</p>
+<hr />
+<h2 id="authenticate">Authenticate</h2>
+<p>All query methods require an authenticated session. Run this once; the CLI stores tokens in <code>~/.config/kg/config.json</code>.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kg<span class="w"> </span>login<span class="w">        </span><span class="c1"># Opens browser for OAuth</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>kg<span class="w"> </span>config<span class="w"> </span>list<span class="w">  </span><span class="c1"># Verify connection and auth status</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>kg<span class="w"> </span><span class="nb">logout</span><span class="w">       </span><span class="c1"># Clear stored tokens</span>
+</code></pre></div>
+<hr />
+<h2 id="search-by-meaning">Search by Meaning</h2>
+<p><code>kg search</code> matches concepts by semantic similarity, not keyword overlap. Specific phrases return more relevant results than single words.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Direct shortcut</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>kg<span class="w"> </span>search<span class="w"> </span><span class="s2">&quot;climate change effects on agriculture&quot;</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># Explicit subcommand — same result, more options</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>kg<span class="w"> </span>search<span class="w"> </span>query<span class="w"> </span><span class="s2">&quot;climate change effects on agriculture&quot;</span><span class="w"> </span>--limit<span class="w"> </span><span class="m">20</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="c1"># Lower the similarity threshold to broaden matches (default 0.7)</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>kg<span class="w"> </span>search<span class="w"> </span>query<span class="w"> </span><span class="s2">&quot;machine learning&quot;</span><span class="w"> </span>--min-similarity<span class="w"> </span><span class="m">0</span>.5
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="c1"># JSON output for scripting</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>kg<span class="w"> </span>search<span class="w"> </span><span class="s2">&quot;economic policy&quot;</span><span class="w"> </span>--json
+</code></pre></div>
+<p>Each result reports:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Similarity</td>
+<td>Match score 0–1 against your query</td>
+</tr>
+<tr>
+<td>Grounding</td>
+<td>Evidence signal: positive = supported, negative = contested</td>
+</tr>
+<tr>
+<td>Diversity</td>
+<td>Breadth of support across related concepts (ADR-503)</td>
+</tr>
+<tr>
+<td>Evidence</td>
+<td>Quoted source passages that produced the concept</td>
+</tr>
+</tbody>
+</table>
+<p>If results look thin, the CLI suggests a lower threshold:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>💡 3 additional concepts available at 60% threshold
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>   Try: kg search &quot;climate change&quot; --min-similarity 0.6
+</code></pre></div>
+<h3 id="search-source-text">Search Source Text</h3>
+<p><code>kg search sources</code> searches the raw source passages rather than the extracted concepts. Use it to find where in your documents a topic appears.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kg<span class="w"> </span>search<span class="w"> </span>sources<span class="w"> </span><span class="s2">&quot;unified embedding regeneration&quot;</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>kg<span class="w"> </span>search<span class="w"> </span>sources<span class="w"> </span><span class="s2">&quot;governance framework&quot;</span><span class="w"> </span>--ontology<span class="w"> </span><span class="s2">&quot;policy-docs&quot;</span><span class="w"> </span>--limit<span class="w"> </span><span class="m">5</span>
+</code></pre></div>
+<hr />
+<h2 id="get-concept-details">Get Concept Details</h2>
+<p>Retrieve all evidence, relationships, and grounding for a specific concept by its ID.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kg<span class="w"> </span>search<span class="w"> </span>show<span class="w"> </span>&lt;concept-id&gt;<span class="w">        </span><span class="c1"># preferred</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>kg<span class="w"> </span>search<span class="w"> </span>details<span class="w"> </span>&lt;concept-id&gt;<span class="w">     </span><span class="c1"># alias</span>
+</code></pre></div>
+<p>Output includes every source passage that produced the concept and every outgoing relationship.</p>
+<hr />
+<h2 id="traverse-relationships">Traverse Relationships</h2>
+<h3 id="find-related-concepts">Find Related Concepts</h3>
+<p>Graph traversal from a starting concept, grouped by hop distance.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>kg<span class="w"> </span>search<span class="w"> </span>related<span class="w"> </span>&lt;concept-id&gt;
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="c1"># Go deeper</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>kg<span class="w"> </span>search<span class="w"> </span>related<span class="w"> </span>&lt;concept-id&gt;<span class="w"> </span>--depth<span class="w"> </span><span class="m">3</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="c1"># Filter by relationship type</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>kg<span class="w"> </span>search<span class="w"> </span>related<span class="w"> </span>&lt;concept-id&gt;<span class="w"> </span>--types<span class="w"> </span>SUPPORTS
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>kg<span class="w"> </span>search<span class="w"> </span>related<span class="w"> </span>&lt;concept-id&gt;<span class="w"> </span>--types<span class="w"> </span>CONTRADICTS<span class="w"> </span>IMPLIES
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="c1"># Filter by epistemic status (ADR-610)</span>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>kg<span class="w"> </span>search<span class="w"> </span>related<span class="w"> </span>&lt;concept-id&gt;<span class="w"> </span>--include-epistemic<span class="w"> </span>AFFIRMATIVE
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>kg<span class="w"> </span>search<span class="w"> </span>related<span class="w"> </span>&lt;concept-id&gt;<span class="w"> </span>--exclude-epistemic<span class="w"> </span>HISTORICAL
+</code></pre></div>
+<p>Depth 1–2 is fast. Depth 3–4 is moderate. Depth 5 is slow on large graphs.</p>
+<p>Relationship types available in your graph appear under <code>kg vocab list</code>.</p>
+<h3 id="find-paths-between-concepts">Find Paths Between Concepts</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># By natural language phrase (auto-detected)</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>kg<span class="w"> </span>search<span class="w"> </span>connect<span class="w"> </span><span class="s2">&quot;inflation&quot;</span><span class="w"> </span><span class="s2">&quot;unemployment&quot;</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="c1"># By exact concept ID</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>kg<span class="w"> </span>search<span class="w"> </span>connect<span class="w"> </span>&lt;id1&gt;<span class="w"> </span>&lt;id2&gt;
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="c1"># Limit path length</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>kg<span class="w"> </span>search<span class="w"> </span>connect<span class="w"> </span><span class="s2">&quot;AI models&quot;</span><span class="w"> </span><span class="s2">&quot;production systems&quot;</span><span class="w"> </span>--max-hops<span class="w"> </span><span class="m">4</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="c1"># Lower match threshold for phrase matching (default 0.5)</span>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>kg<span class="w"> </span>search<span class="w"> </span>connect<span class="w"> </span><span class="s2">&quot;embedding&quot;</span><span class="w"> </span><span class="s2">&quot;migration&quot;</span><span class="w"> </span>--min-similarity<span class="w"> </span><span class="m">0</span>.3
+</code></pre></div>
+<p>The CLI auto-detects whether arguments are IDs (containing hyphens or underscores) or phrases. Specific 2–3 word phrases match more reliably than single generic words.</p>
+<p>A path result looks like:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>Path 1 (3 hops):
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>  Embedding Models
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>     ↓ REQUIRES
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>  Model Migration
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>     ↓ ADDRESSES
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>  Unified Embedding Regeneration
+</code></pre></div>
+<h3 id="explore-contradictions">Explore Contradictions</h3>
+<p>Concepts with grounding near zero or negative have mixed or opposing evidence.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Search for a contested topic, then inspect low-grounding results</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>kg<span class="w"> </span>search<span class="w"> </span><span class="s2">&quot;vaccination policy&quot;</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1"># Get details to see both sides</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>kg<span class="w"> </span>search<span class="w"> </span>show<span class="w"> </span>&lt;concept-id&gt;
+</code></pre></div>
+<p>The evidence section on a contested concept shows which sources support and which contradict.</p>
+<hr />
+<h2 id="ontology-operations">Ontology Operations</h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>kg<span class="w"> </span>ontology<span class="w"> </span>list<span class="w">            </span><span class="c1"># List all ontologies</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>kg<span class="w"> </span>ontology<span class="w"> </span>info<span class="w"> </span>&lt;name&gt;<span class="w">     </span><span class="c1"># Details and statistics</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>kg<span class="w"> </span>ontology<span class="w"> </span>files<span class="w"> </span>&lt;name&gt;<span class="w">    </span><span class="c1"># Source documents in an ontology</span>
+</code></pre></div>
+<p>Concepts are global across ontologies — a concept mentioned in two ontologies is the same graph node with evidence from both. Relationship paths cross ontology boundaries automatically.</p>
+<hr />
+<h2 id="saved-queries">Saved Queries</h2>
+<p>A saved query is an ordered list of graph operations. Each operation is tagged <code>+</code> (add results to graph) or <code>-</code> (remove matching nodes). This lets you sculpt a subgraph by building up and trimming down.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>+ MATCH (c:Concept)-[r*1..2]-(n:Concept) WHERE c.label CONTAINS &#39;governance&#39; RETURN c, r, n;
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>+ MATCH (c:Concept)-[r*1..1]-(n:Concept) WHERE c.label CONTAINS &#39;compliance&#39; RETURN c, r, n;
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>- MATCH (c:Concept) WHERE c.label CONTAINS &#39;legacy&#39; RETURN c;
+</code></pre></div>
+<h3 id="create-a-saved-query">Create a Saved Query</h3>
+<p><strong>From the web interface:</strong> Every search, "Add Adjacent," "Remove," and double-click follow you perform in the 2D/3D graph explorer is recorded as a step. When the graph looks right, open the Saved Queries panel (folder icon in the left rail), click <strong>Save Exploration</strong>, and name it. The full step sequence is stored.</p>
+<p><strong>From the Cypher editor:</strong> Write <code>+</code>/<code>-</code> prefixed statements directly in the editor, then save via the panel.</p>
+<p><strong>From the Flow Editor:</strong> Build the query visually. Block diagrams compile to Cypher and save as <code>block_diagram</code> type.</p>
+<h3 id="manage-saved-queries-from-the-cli">Manage Saved Queries from the CLI</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># List all saved queries</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>kg<span class="w"> </span>query-def<span class="w"> </span>list
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>kg<span class="w"> </span>qd<span class="w"> </span>list<span class="w">                          </span><span class="c1"># alias</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="c1"># Filter by type</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>kg<span class="w"> </span>qd<span class="w"> </span>list<span class="w"> </span>--type<span class="w"> </span>exploration
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>kg<span class="w"> </span>qd<span class="w"> </span>list<span class="w"> </span>--type<span class="w"> </span>polarity
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a><span class="c1"># Show a specific definition</span>
+<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>kg<span class="w"> </span>qd<span class="w"> </span>show<span class="w"> </span>&lt;id&gt;
+<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>
+<a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a><span class="c1"># Delete</span>
+<a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a>kg<span class="w"> </span>qd<span class="w"> </span>delete<span class="w"> </span>&lt;id&gt;
+</code></pre></div>
+<p>Definition types: <code>exploration</code>, <code>cypher</code>, <code>search</code>, <code>polarity</code>, <code>connection</code>, <code>block_diagram</code>, <code>program</code>.</p>
+<h3 id="load-in-the-web-interface">Load in the Web Interface</h3>
+<p>Open any explorer view, open the Saved Queries panel, and click a saved query. The system replays each <code>+</code>/<code>-</code> step in order to reconstruct the graph state. The same saved query loads consistently across views:</p>
+<table>
+<thead>
+<tr>
+<th>Explorer view</th>
+<th>What you see</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2D Graph</td>
+<td>Force-directed node/edge layout</td>
+</tr>
+<tr>
+<td>3D Graph</td>
+<td>Spatial perspective of the same graph</td>
+</tr>
+<tr>
+<td>Cypher Editor</td>
+<td>The <code>+/-</code> statements as editable text</td>
+</tr>
+<tr>
+<td>Vocabulary Analysis</td>
+<td>Relationship type breakdown of the result</td>
+</tr>
+<tr>
+<td>Document Explorer</td>
+<td>Source documents for the query's concepts</td>
+</tr>
+<tr>
+<td>Polarity Explorer</td>
+<td>Semantic axis analysis of the concepts</td>
+</tr>
+<tr>
+<td>Embedding Landscape</td>
+<td>Embedding space projection of the concepts</td>
+</tr>
+</tbody>
+</table>
+<h3 id="the-operator-algebra">The +/- Operator Algebra</h3>
+<p><code>+</code> executes a Cypher statement and merges matching nodes/edges into the current graph; duplicate nodes are deduplicated by ID. <code>-</code> executes a Cypher statement and removes matching nodes and their connected edges.</p>
+<p>Start broad, then subtract noise — it is easier to remove than to find everything piecemeal:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a># Start with all governance-adjacent concepts (2 hops)
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>+ MATCH (c:Concept)-[r*1..2]-(n) WHERE c.label CONTAINS &#39;governance&#39; RETURN c, r, n;
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a># Add compliance concepts
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>+ MATCH (c:Concept)-[r*1..1]-(n) WHERE c.label CONTAINS &#39;compliance&#39; RETURN c, r, n;
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a># Remove legacy-system noise
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>- MATCH (c:Concept) WHERE c.label CONTAINS &#39;legacy&#39; RETURN c;
+</code></pre></div>
+<hr />
+<h2 id="web-interface-explorers">Web Interface Explorers</h2>
+<p>Access the web interface at <code>http://localhost:3000</code> (or your deployment URL).</p>
+<h3 id="2d-force-graph">2D Force Graph</h3>
+<p>Force-directed layout. Concepts are nodes, relationships are edges. Click a concept to focus its neighborhood; double-click to expand it. Filter by ontology, relationship type, or grounding threshold. Color encodes grounding strength.</p>
+<p>Best for: initial exploration, spotting hubs with many connections.</p>
+<h3 id="3d-force-graph">3D Force Graph</h3>
+<p>Same data as the 2D graph with spatial depth. Rotate, pan, and zoom.</p>
+<p>Best for: large graphs (1000+ concepts) where 2D clusters overlap.</p>
+<h3 id="embedding-landscape">Embedding Landscape</h3>
+<p>t-SNE or UMAP projection of all concept embeddings with automatic DBSCAN cluster detection. Toggle cluster visibility, switch color palettes, right-click any concept to inspect it or open it in the force graph.</p>
+<p>Best for: global overview of your semantic space before drilling in.</p>
+<h3 id="document-explorer">Document Explorer</h3>
+<p>Radial tree centered on a source document. Shows exactly which concepts were extracted and how they connect to the wider graph.</p>
+<p>Best for: validating extraction quality, tracing claims to sources.</p>
+<h3 id="polarity-explorer">Polarity Explorer</h3>
+<p>Projects concepts onto a semantic spectrum between two poles you define (e.g., "centralized" ↔ "distributed"). Shows where each concept falls and which concepts balance opposing viewpoints.</p>
+<p>Best for: understanding conceptual dimensions without predefined categories.</p>
+<h3 id="vocabulary-analysis">Vocabulary Analysis</h3>
+<p>Relationship type breakdown for the current query or neighborhood. Compare subgraph vocabulary to system-wide distribution to understand why concepts cluster.</p>
+<h3 id="edge-explorer">Edge Explorer</h3>
+<p>System-wide view of relationship type usage. Identifies dormant vocabulary — types defined but rarely used — and consolidation opportunities.</p>
+<p>Best for: vocabulary health monitoring.</p>
+<h3 id="flow-editor">Flow Editor</h3>
+<p>Visual query builder. Drag and connect blocks; see compiled Cypher alongside the visual design. Save query templates for reuse.</p>
+<p>Best for: building complex queries without writing Cypher by hand.</p>
+<hr />
+<h2 id="rest-api">REST API</h2>
+<p>Authenticate first. The OAuth flow is documented at <a href="../../self-host/security/">Self-Host &gt; Security and Access</a>. The CLI stores tokens in <code>~/.config/kg/config.json</code> after <code>kg login</code>; for direct API access, use the device-code or client-credentials grant:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="s2">&quot;http://localhost:8000/auth/oauth/token&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">  </span>-d<span class="w"> </span><span class="s2">&quot;grant_type=client_credentials&amp;client_id=...&amp;client_secret=...&quot;</span>
+</code></pre></div>
+<h3 id="search-concepts">Search Concepts</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="s2">&quot;http://localhost:8000/query/search&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: Bearer </span><span class="nv">$TOKEN</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;query&quot;: &quot;climate change&quot;, &quot;limit&quot;: 10, &quot;min_similarity&quot;: 0.7}&#39;</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="p">{</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="w">  </span><span class="nt">&quot;results&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="w">    </span><span class="p">{</span>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="w">      </span><span class="nt">&quot;concept_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;abc123&quot;</span><span class="p">,</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="w">      </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Climate change increases extreme weather&quot;</span><span class="p">,</span>
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="w">      </span><span class="nt">&quot;similarity&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.89</span><span class="p">,</span>
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="w">      </span><span class="nt">&quot;grounding_strength&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.72</span><span class="p">,</span>
+<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a><span class="w">      </span><span class="nt">&quot;source_count&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">5</span>
+<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a><span class="w">  </span><span class="p">]</span>
+<a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a><span class="p">}</span>
+</code></pre></div>
+<h3 id="get-concept-details_1">Get Concept Details</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>curl<span class="w"> </span><span class="s2">&quot;http://localhost:8000/query/concept/abc123&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: Bearer </span><span class="nv">$TOKEN</span><span class="s2">&quot;</span>
+</code></pre></div>
+<h3 id="find-related-concepts_1">Find Related Concepts</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="s2">&quot;http://localhost:8000/query/related&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: Bearer </span><span class="nv">$TOKEN</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;concept_id&quot;: &quot;abc123&quot;, &quot;max_depth&quot;: 2}&#39;</span>
+</code></pre></div>
+<h3 id="find-paths">Find Paths</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="c1"># By concept ID</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="s2">&quot;http://localhost:8000/query/connect&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: Bearer </span><span class="nv">$TOKEN</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;from_id&quot;: &quot;abc123&quot;, &quot;to_id&quot;: &quot;def456&quot;, &quot;max_hops&quot;: 5}&#39;</span>
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a>
+<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a><span class="c1"># By phrase</span>
+<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="s2">&quot;http://localhost:8000/query/connect-by-search&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: Bearer </span><span class="nv">$TOKEN</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-18-11" name="__codelineno-18-11" href="#__codelineno-18-11"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;from_query&quot;: &quot;inflation&quot;, &quot;to_query&quot;: &quot;unemployment&quot;, &quot;max_hops&quot;: 5}&#39;</span>
+</code></pre></div>
+<p>Full endpoint reference: <a href="../../reference/api/">Reference &gt; REST API</a>.</p>
+<hr />
+<h2 id="mcp">MCP</h2>
+<p>For AI assistants configured via MCP. See <a href="../../get-started/mcp-quickstart/">Get Started &gt; Connect via MCP</a> for setup. Once configured, the following tools are available:</p>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>search</code></td>
+<td>Find concepts by semantic similarity</td>
+</tr>
+<tr>
+<td><code>concept</code></td>
+<td>Get details, find related, find paths</td>
+</tr>
+<tr>
+<td><code>source</code></td>
+<td>Retrieve original source text</td>
+</tr>
+<tr>
+<td><code>ontology</code></td>
+<td>List and inspect ontologies</td>
+</tr>
+<tr>
+<td><code>ingest</code></td>
+<td>Add content during a session</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>Use search tool with query &quot;sleep deprivation effects on memory&quot;
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>Use concept tool with action &quot;connect&quot;, from_query &quot;inflation&quot;, to_query &quot;unemployment&quot;
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>Use concept tool with action &quot;related&quot;, concept_id &quot;abc123&quot;
+</code></pre></div>
+<p>Full tool reference: <a href="../../reference/mcp/">Reference &gt; MCP Tools</a>.</p>
+<hr />
+<h2 id="cross-ontology-queries">Cross-Ontology Queries</h2>
+<p>Concepts merge across ontologies automatically when similarity exceeds the matching threshold (~70%). A concept mentioned in both a technical spec and an AI research document becomes one graph node with evidence from both sources. Path traversal crosses ontology boundaries without additional configuration.</p>
+<p>Search across all ontologies by default, or narrow to one:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>kg<span class="w"> </span>search<span class="w"> </span><span class="s2">&quot;embedding regeneration&quot;</span><span class="w">                         </span><span class="c1"># all ontologies</span>
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>kg<span class="w"> </span>search<span class="w"> </span>sources<span class="w"> </span><span class="s2">&quot;governance&quot;</span><span class="w"> </span>--ontology<span class="w"> </span><span class="s2">&quot;policy-docs&quot;</span><span class="w">   </span><span class="c1"># one ontology</span>
+</code></pre></div>
+<p><strong>Ontology organization that supports good linking:</strong></p>
+<ul>
+<li>Group by domain or project, not by file or date.</li>
+<li>Expect concepts to merge — do not try to keep them separate.</li>
+<li>Write with context. More context in the source text produces better concept extraction and more accurate relationships.</li>
+<li>When bridging two domains in one document, explain the connection in prose; the LLM extracts relationship type from that explanation.</li>
+</ul>
+<hr />
+<h2 id="query-patterns">Query Patterns</h2>
+<p><strong>Verify a claim:</strong> Search for it, check the grounding score, read the source evidence with <code>kg search show &lt;id&gt;</code>.</p>
+<p><strong>Map a topic:</strong> Search for the central concept, run <code>kg search related &lt;id&gt; --depth 2</code>, look for clusters and bridges.</p>
+<p><strong>Find disagreements:</strong> Search for a contested topic, look for concepts with grounding near or below zero, inspect both sides with <code>kg search show</code>.</p>
+<p><strong>Script a pipeline:</strong> Add <code>--json</code> to any <code>kg search</code> command for machine-readable output.</p>
+<p><strong>Build a focused subgraph:</strong> Use the <code>+/-</code> operator algebra to start broad and subtract noise, then save and share via <code>kg query-def</code>.</p>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

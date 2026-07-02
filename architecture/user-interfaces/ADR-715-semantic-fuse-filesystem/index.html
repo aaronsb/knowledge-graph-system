@@ -1,0 +1,3119 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Multi-dimensional knowledge extraction system using Apache AGE">
+      
+      
+        <meta name="author" content="Knowledge Graph System Contributors">
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>ADR-715: Semantic FUSE Filesystem - Knowledge Graph System</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#adr-715-semantic-fuse-filesystem" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="Knowledge Graph System" class="md-header__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Knowledge Graph System
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              ADR-715: Semantic FUSE Filesystem
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/aaronsb/knowledge-graph-system" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aaronsb/knowledge-graph-system
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="Knowledge Graph System" class="md-nav__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Knowledge Graph System
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/aaronsb/knowledge-graph-system" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aaronsb/knowledge-graph-system
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Get Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Get Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../get-started/what-and-why/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What and Why
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../get-started/first-graph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your First Graph
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../get-started/first-query/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your First Query
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../get-started/mcp-quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Connect via MCP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../get-started/github-history/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mining a Git Repo
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-To
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How-To
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/ingest/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ingest Documents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/query/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explore and Query
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/epistemic-status/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Filter by Epistemic Status
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/polarity-axis/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Analyze a Polarity Axis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/fuse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Use the FUSE Drive
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/ai-providers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configure AI Providers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/embeddings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configure Embeddings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/extraction-quality/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Compare Extraction Quality
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/vocabulary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Consolidate Vocabulary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Self-Host
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Self-Host
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/quick-start/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/production/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Production Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/macvlan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dedicated IP (macvlan)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/tls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    TLS and Certificates
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/appliance-libvirt/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Appliance on libvirt/KVM
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security and Access
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/backup-restore/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backup and Restore
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/scheduled-jobs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scheduled Jobs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/upgrading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Upgrading
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explanation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Explanation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/how-it-works/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How It Works
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/computed-evidence/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Computed Evidence over Asserted Truth
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/grounding/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Grounding and Epistemic Confidence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/recursive-upsert/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Recursive Upsert
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/vocabulary-lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vocabulary Lifecycle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/storage-and-freshness/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Storage and Freshness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/worker-lanes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Worker Lanes and Concurrency
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/embedding-landscape/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Embedding Landscape
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/graph-program/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram DSL
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    REST API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/mcp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/mcp-session-context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Session Context
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/fuse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FUSE Driver
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/schema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Database Schema
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/cypher/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cypher Patterns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/graph-program-spec/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram Specification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/graph-program-validation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram Validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/graph-program-security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/backup-object-spec/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backup Object Format
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Contributing
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/voice/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Prose & Voice Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/docstring-coverage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docstring Coverage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/test-suite/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Test Suite
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../INDEX/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation Status
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Context">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-problem-hierarchies-dont-fit-knowledge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Problem: Hierarchies Don't Fit Knowledge
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-opportunity-fuse-as-semantic-interface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Opportunity: FUSE as Semantic Interface
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#architectural-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architectural Validation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#performance-and-consistency-engineering" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance and Consistency Engineering
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Design
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The Design">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mount-point" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mount Point
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#directory-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Directory Structure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#file-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File Format
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#query-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Query System
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#posix-violations-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        POSIX Violations (Features!)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="POSIX Violations (Features!)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-non-deterministic-directory-listings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Non-Deterministic Directory Listings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-multiple-canonical-paths" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Multiple Canonical Paths
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-temporal-inconsistency" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Temporal Inconsistency
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#important-this-is-not-a-full-filesystem" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Important: This Is NOT a Full Filesystem
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#use-cases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Use Cases
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Use Cases">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#unix-tool-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Unix Tool Integration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#obsidian-as-a-graph-viewer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Obsidian as a Graph Viewer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#remote-access" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Remote Access
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#semantic-grep" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Semantic Grep
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Consequences">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#benefits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Benefits
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#drawbacks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Drawbacks
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#future-vision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Future Vision
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Future Vision">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#meta-control-plane" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        .meta Control Plane
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nested-query-resolution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Nested Query Resolution
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multi-ontology-queries-via-symlinks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Multi-Ontology Queries via Symlinks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#write-to-ingest" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Write-to-Ingest
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multi-tenant-hierarchy-shards-and-facets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Multi-Tenant Hierarchy (Shards and Facets)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#relationship-navigation-as-filesystem" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Relationship Navigation as Filesystem
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rclone-backend-alternative-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        rclone Backend (Alternative Implementation)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#distributed-queries-across-mount-boundaries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Distributed Queries Across Mount Boundaries
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#event-driven-workflows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Event-Driven Workflows
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#build-system-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build System Integration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#diff-based-knowledge-evolution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Diff-Based Knowledge Evolution
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#appendix-related-work" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Appendix: Related Work
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#appendix-why-this-will-make-unix-admins-angry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Appendix: Why This Will Make Unix Admins Angry
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Appendix: Why This Will Make Unix Admins Angry">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-angry-tweets-we-expect" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Angry Tweets We Expect
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-rclone-defense" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The rclone Defense
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#appendix-alternatives-considered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Appendix: Alternatives Considered
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Appendix: Alternatives Considered">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#webdavhttp-filesystem" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        WebDAV/HTTP Filesystem
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#git-like-interface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Git-Like Interface
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#custom-cli-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Custom CLI Only
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#database-as-filesystem-direct-postgresql-mount" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Database-as-Filesystem (Direct PostgreSQL Mount)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        References
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="adr-715-semantic-fuse-filesystem">ADR-715: Semantic FUSE Filesystem</h1>
+<blockquote>
+<p>"Everything is a file" - Traditional Unix Philosophy
+"Everything is a file, but which file depends on what you're thinking about" - Semantic Unix Philosophy</p>
+</blockquote>
+<h2 id="overview">Overview</h2>
+<p>Traditional filesystems force you to organize knowledge in rigid hierarchies — one directory, one path, one canonical location. But knowledge doesn't work that way. A document about embedding models is simultaneously about AI architecture, operational procedures, and bug fixes. Why should it live in only one folder?</p>
+<p>The knowledge graph already solves this by letting concepts exist in multiple semantic contexts. But accessing it requires custom tools: CLI commands, web interfaces, MCP integration. Unix users already have powerful tools — grep, find, diff, tar — that they know intimately, but these tools can't touch the graph.</p>
+<p>This ADR describes exposing the knowledge graph as a FUSE (Filesystem in Userspace) mount point, turning standard Unix tools into knowledge graph explorers. Type <code>cd /mnt/knowledge/embedding-models/</code> and you're executing a semantic query. Run <code>ls</code> and you see concepts with similarity scores. The filesystem adapts to your exploration patterns, making knowledge navigation feel like browsing files — except the files organize themselves based on what they mean.</p>
+<h2 id="implementation-status">Implementation Status</h2>
+<p><strong>Published:</strong> <code>pipx install kg-fuse</code> (<a href="https://pypi.org/project/kg-fuse/">PyPI</a>)</p>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FUSE mount/unmount (pyfuse3)</td>
+<td>Shipped</td>
+</tr>
+<tr>
+<td>OAuth authentication</td>
+<td>Shipped</td>
+</tr>
+<tr>
+<td>Ontology listing at <code>/ontology/</code></td>
+<td>Shipped</td>
+</tr>
+<tr>
+<td><code>mkdir</code> creates semantic query</td>
+<td>Shipped</td>
+</tr>
+<tr>
+<td>Query results as <code>.concept.md</code> files</td>
+<td>Shipped</td>
+</tr>
+<tr>
+<td>Document content reading</td>
+<td>Shipped</td>
+</tr>
+<tr>
+<td>Concept rendering with evidence</td>
+<td>Shipped</td>
+</tr>
+<tr>
+<td><code>kg oauth create --for fuse</code> setup</td>
+<td>Shipped</td>
+</tr>
+<tr>
+<td>Desktop integration (Dolphin, GNOME)</td>
+<td>Shipped</td>
+</tr>
+<tr>
+<td>Obsidian graph view compatibility</td>
+<td>Shipped</td>
+</tr>
+<tr>
+<td><code>.meta/</code> control plane</td>
+<td>Planned</td>
+</tr>
+<tr>
+<td>Nested query resolution (AND)</td>
+<td>Planned</td>
+</tr>
+<tr>
+<td>Multi-ontology symlinks</td>
+<td>Planned</td>
+</tr>
+<tr>
+<td>Write-to-ingest</td>
+<td>Planned</td>
+</tr>
+<tr>
+<td>Userspace LRU caching</td>
+<td>Planned</td>
+</tr>
+</tbody>
+</table>
+<p>See ADR-715.1 for detailed implementation specifics (phases, caching, query store).</p>
+<hr />
+<h2 id="context">Context</h2>
+<h3 id="the-problem-hierarchies-dont-fit-knowledge">The Problem: Hierarchies Don't Fit Knowledge</h3>
+<p>Traditional filesystems organize knowledge through rigid hierarchies:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>/docs/
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>  /architecture/
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    /decisions/
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>      adr-068.md
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>  /guides/
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    embedding-guide.md
+</code></pre></div></p>
+<p>But knowledge doesn't fit in trees. ADR-812 is simultaneously:
+- An architecture decision
+- A guide for operators
+- An embedding system reference
+- A bug fix chronicle
+- A compatibility management strategy</p>
+<p>Why force it into one directory when it semantically belongs in multiple conceptual spaces?</p>
+<h3 id="the-opportunity-fuse-as-semantic-interface">The Opportunity: FUSE as Semantic Interface</h3>
+<p>The knowledge graph already provides:
+- Semantic search (vector similarity)
+- Relationship traversal (graph navigation)
+- Multi-ontology organization
+- Cross-domain linking (automatic concept merging)</p>
+<p>FUSE exposes these capabilities through filesystem metaphors that users already understand.</p>
+<h3 id="architectural-validation">Architectural Validation</h3>
+<p>This proposal underwent external peer review to validate feasibility against the existing codebase. Key findings:</p>
+<ul>
+<li><strong>Architectural Fit:</strong> The FUSE operations map directly to existing services without requiring new core logic</li>
+<li><code>ls</code> (semantic query) -&gt; <code>QueryService.build_search_query</code></li>
+<li><code>cd relationships/</code> (graph traversal) -&gt; <code>QueryService.build_concept_details_query</code></li>
+<li>
+<p>Write operations -&gt; existing async ingestion pipeline</p>
+</li>
+<li>
+<p><strong>Implementation Feasibility:</strong> High - essentially re-skinning existing services into FUSE protocol</p>
+</li>
+<li>
+<p><strong>Discovery Value:</strong> Solves the "I don't know what to search for" problem by allowing users to browse valid semantic pathways</p>
+</li>
+<li>
+<p><strong>Standard Tool Integration:</strong> Turns every Unix utility (<code>grep</code>, <code>diff</code>, <code>tar</code>) into a knowledge graph tool for free</p>
+</li>
+</ul>
+<p>The review validated this is a "rigorous application of the 'everything is a file' philosophy to high-dimensional data," not a cursed hack.</p>
+<h3 id="performance-and-consistency-engineering">Performance and Consistency Engineering</h3>
+<p>External research on high-dimensional semantic file systems identified critical engineering considerations that our architecture already addresses:</p>
+<p><strong>1. The Write Latency Trap (Mitigated)</strong>
+- <strong>Risk:</strong> Synchronous embedding generation (15-50ms+) and graph linking (seconds) would block write() syscalls, hanging applications
+- <strong>Our Solution:</strong> Asynchronous worker pattern (ADR-300) with job queue</p>
+<p><strong>2. The Read (ls) Bottleneck (Mitigated)</strong>
+- <strong>Risk:</strong> Fresh vector searches on every readdir would cause sluggish directory listings
+- <strong>Our Solution:</strong> Query-time retrieval with caching, 100-200ms retrieval target, PostgreSQL connection pooling</p>
+<p><strong>3. POSIX Stability via Deterministic Structure (Addressed)</strong>
+- <strong>Risk:</strong> Purely emergent clustering causes "cluster jitter" - files randomly moving between folders
+- <strong>Our Solution:</strong> Stable hierarchy based on ontology assignment. Concepts appear in multiple semantic query directories (intentional), but underlying storage location is stable.</p>
+<p><strong>4. Eventual Consistency Gap (Acknowledged)</strong>
+- <strong>Risk:</strong> Async processing creates delay between write and appearance in semantic directories
+- <strong>Mitigation:</strong> Virtual README.md in empty query results explaining why (future)</p>
+<p><strong>Verdict:</strong> The architecture decouples high-latency "thinking" (AI processing) from low-latency "acting" (filesystem I/O), which research validates as the primary requirement for functional semantic filesystems.</p>
+<hr />
+<h2 id="the-design">The Design</h2>
+<h3 id="mount-point">Mount Point</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Create OAuth credentials</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>kg<span class="w"> </span>oauth<span class="w"> </span>create<span class="w"> </span>--for<span class="w"> </span>fuse
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># Mount the filesystem</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>kg-fuse<span class="w"> </span>/mnt/knowledge
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="c1"># Explore</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>ls<span class="w"> </span>/mnt/knowledge/ontology/
+</code></pre></div>
+<h3 id="directory-structure">Directory Structure</h3>
+<p>Directories are <strong>semantic queries</strong>, not static folders:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>/mnt/knowledge/
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>├──<span class="w"> </span>ontology/<span class="w">                           </span><span class="c1"># All knowledge domains</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>│<span class="w">   </span>├──<span class="w"> </span>economics/<span class="w">                      </span><span class="c1"># An ontology</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>│<span class="w">   </span>│<span class="w">   </span>├──<span class="w"> </span>documents/<span class="w">                  </span><span class="c1"># Source files (read-only)</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>│<span class="w">   </span>│<span class="w">   </span>│<span class="w">   </span>└──<span class="w"> </span>research-paper.pdf
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>│<span class="w">   </span>│<span class="w">   </span>├──<span class="w"> </span>inflation/<span class="w">                  </span><span class="c1"># Your query (mkdir)</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>│<span class="w">   </span>│<span class="w">   </span>│<span class="w">   </span>├──<span class="w"> </span>Monetary-Policy.concept.md
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>│<span class="w">   </span>│<span class="w">   </span>│<span class="w">   </span>└──<span class="w"> </span>Supply-Chain.concept.md
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>│<span class="w">   </span>│<span class="w">   </span>└──<span class="w"> </span>market-dynamics/<span class="w">            </span><span class="c1"># Another query</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>│<span class="w">   </span>└──<span class="w"> </span>architecture/<span class="w">                   </span><span class="c1"># Another ontology</span>
+</code></pre></div>
+<h3 id="file-format">File Format</h3>
+<p>Concept files are dynamically generated markdown:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>$<span class="w"> </span>cat<span class="w"> </span>/mnt/knowledge/ontology/economics/inflation/Monetary-Policy.concept.md
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="gh"># Monetary Policy</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>Central bank actions to control money supply and interest rates.
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="gu">## Evidence</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="k">&gt; </span><span class="ge">&quot;The Federal Reserve uses open market operations...&quot;</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="k">&gt; </span><span class="ge">-- research-paper.pdf (chunk 3)</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="k">&gt; </span><span class="ge">&quot;Interest rate adjustments affect borrowing costs...&quot;</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="k">&gt; </span><span class="ge">-- economics-textbook.pdf (chunk 12)</span>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="gu">## Relationships</span>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>
+<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a><span class="k">-</span><span class="w"> </span>INFLUENCES -&gt; Inflation (0.92)
+<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a><span class="k">-</span><span class="w"> </span>CONTROLLED_BY -&gt; Central Bank (0.88)
+<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a><span class="k">-</span><span class="w"> </span>AFFECTS -&gt; Employment (0.75)
+<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a>
+<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a><span class="gu">## Grounding</span>
+<a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a>
+<a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a>Strength: 0.85 (well-supported)
+<a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a>Sources: 3 documents
+</code></pre></div>
+<h3 id="query-system">Query System</h3>
+<p>Creating a directory defines a semantic query. Listing it executes the query:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Create a query</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>mkdir<span class="w"> </span>/mnt/knowledge/ontology/economics/inflation
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="c1"># List results (executes semantic search)</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>ls<span class="w"> </span>/mnt/knowledge/ontology/economics/inflation/
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="c1"># Monetary-Policy.concept.md</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="c1"># Supply-Chain.concept.md</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="c1"># Consumer-Price-Index.concept.md</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="c1"># Remove the query (not the concepts)</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>rmdir<span class="w"> </span>/mnt/knowledge/ontology/economics/inflation/
+</code></pre></div>
+<hr />
+<h2 id="posix-violations-features">POSIX Violations (Features!)</h2>
+<h3 id="1-non-deterministic-directory-listings">1. Non-Deterministic Directory Listings</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>$<span class="w"> </span>ls<span class="w"> </span>/mnt/knowledge/ontology/ai-research/embedding-models/
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>unified-regeneration.concept.md
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>compatibility-checking.concept.md
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="c1"># New concept ingested elsewhere...</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>$<span class="w"> </span>ls<span class="w"> </span>/mnt/knowledge/ontology/ai-research/embedding-models/
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>unified-regeneration.concept.md
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>compatibility-checking.concept.md
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>embedding-architecture.concept.md<span class="w">  </span><span class="c1"># New! Without touching this directory!</span>
+</code></pre></div>
+<p><strong>Why it's beautiful:</strong> Your filesystem stays current with your knowledge, automatically.</p>
+<h3 id="2-multiple-canonical-paths">2. Multiple Canonical Paths</h3>
+<p>The same concept can appear in multiple query directories. It "exists" everywhere it's semantically relevant.</p>
+<p><strong>Why it's beautiful:</strong> Concepts belong to multiple contexts simultaneously.</p>
+<h3 id="3-temporal-inconsistency">3. Temporal Inconsistency</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>$<span class="w"> </span>stat<span class="w"> </span>unified-regeneration.concept.md
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>Modified:<span class="w"> </span><span class="m">2025</span>-11-29<span class="w"> </span><span class="m">03</span>:59:57<span class="w">  </span><span class="c1"># When concept was created</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>$<span class="w"> </span>cat<span class="w"> </span>unified-regeneration.concept.md<span class="w">  </span><span class="c1"># Read it</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>$<span class="w"> </span>stat<span class="w"> </span>unified-regeneration.concept.md
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>Modified:<span class="w"> </span><span class="m">2025</span>-11-29<span class="w"> </span><span class="m">04</span>:15:32<span class="w">  </span><span class="c1"># NOW! Because grounding updated!</span>
+</code></pre></div>
+<p><strong>Why it's beautiful:</strong> Living knowledge, not static files.</p>
+<h3 id="important-this-is-not-a-full-filesystem">Important: This Is NOT a Full Filesystem</h3>
+<p>Like <code>/sys/</code> or <code>/proc/</code>, this is a <strong>partial filesystem</strong> that exposes a specific interface through filesystem semantics. It only implements operations that make semantic sense.</p>
+<p><strong>What works:</strong>
+- <code>ls</code> (semantic query)
+- <code>cd</code> (navigate semantic space)
+- <code>cat</code> (read concept)
+- <code>find</code> / <code>grep</code> (search)
+- <code>tar</code> (snapshot)
+- <code>stat</code> (metadata)
+- <code>mkdir</code> / <code>rmdir</code> (create/remove queries)</p>
+<p><strong>What doesn't work (and won't):</strong>
+- <code>mv</code> (concepts don't "move" in semantic space)
+- <code>chmod</code> / <code>chown</code> (use OAuth scoping instead)
+- <code>touch</code> (timestamps are semantic, not file-based)
+- <code>dd</code> (nonsensical for semantic content)</p>
+<p><strong>This is a feature, not a limitation.</strong> Don't pretend to be a full filesystem. Be an excellent semantic interface.</p>
+<hr />
+<h2 id="use-cases">Use Cases</h2>
+<h3 id="unix-tool-integration">Unix Tool Integration</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Find all concepts mentioning &quot;distributed&quot;</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>grep<span class="w"> </span>-r<span class="w"> </span><span class="s2">&quot;distributed&quot;</span><span class="w"> </span>/mnt/knowledge/ontology/architecture/
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1"># Open concept in your editor</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>vim<span class="w"> </span>/mnt/knowledge/ontology/economics/inflation/Monetary-Policy.concept.md
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="c1"># Snapshot your research</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>tar<span class="w"> </span>czf<span class="w"> </span>research-<span class="k">$(</span>date<span class="w"> </span>+%s<span class="k">)</span>.tar.gz<span class="w"> </span>/mnt/knowledge/ontology/my-research/
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="c1"># Same path, different contents over time -- temporal knowledge snapshots</span>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="c1"># Copy a snapshot of query results</span>
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a>cp<span class="w"> </span>-r<span class="w"> </span>/mnt/knowledge/ontology/economics/inflation/<span class="w"> </span>./local-backup/
+</code></pre></div>
+<h3 id="obsidian-as-a-graph-viewer">Obsidian as a Graph Viewer</h3>
+<p>The FUSE filesystem presents concepts as markdown files with relationship references. Point Obsidian at the mount point and its built-in graph view renders your knowledge graph natively -- no plugin required. Obsidian is essentially fooled into being a graph introspection interface and document viewer.</p>
+<h3 id="remote-access">Remote Access</h3>
+<p>Since it's a real filesystem, remote access is free:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># SSH into your server and browse the graph</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>ssh<span class="w"> </span>server<span class="w"> </span><span class="s2">&quot;ls /mnt/knowledge/ontology/&quot;</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1"># Mount remotely via SSHFS</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>sshfs<span class="w"> </span>server:/mnt/knowledge<span class="w"> </span>/mnt/remote-knowledge
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="c1"># Copy a snapshot of query results</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>scp<span class="w"> </span>-r<span class="w"> </span>server:/mnt/knowledge/ontology/economics/inflation/<span class="w"> </span>./local-copy/
+</code></pre></div>
+<h3 id="semantic-grep">Semantic Grep</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># Traditional grep</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>grep<span class="w"> </span>-r<span class="w"> </span><span class="s2">&quot;embedding&quot;</span><span class="w"> </span>/docs/
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="c1"># Returns every file mentioning &quot;embedding&quot; (thousands of false positives)</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="c1"># Semantic filesystem</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>ls<span class="w"> </span>/mnt/knowledge/ontology/ai-research/embedding/
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="c1"># Returns only concepts semantically related to embedding</span>
+</code></pre></div>
+<hr />
+<h2 id="decision">Decision</h2>
+<p><strong>Implement knowledge graph access as a FUSE filesystem</strong> with the following design choices:</p>
+<ol>
+<li><strong>Partial Filesystem Model</strong> - Like <code>/sys/</code> or <code>/proc/</code>, implement only semantically meaningful operations</li>
+<li><strong>Ontology-Based Hierarchy</strong> - Ontologies are directories, queries are subdirectories created by the user</li>
+<li><strong>Directory Creation = Semantic Query</strong> - <code>mkdir "embedding models"</code> defines a query, <code>ls</code> executes it</li>
+<li><strong>Python FUSE (pyfuse3)</strong> - Direct integration with the API backend, shared auth model</li>
+<li><strong>OAuth Client Authentication</strong> - Same auth as CLI and MCP (ADR-406)</li>
+</ol>
+<h2 id="consequences">Consequences</h2>
+<h3 id="benefits">Benefits</h3>
+<ol>
+<li><strong>Familiar Interface</strong> - Users already understand <code>cd</code>, <code>ls</code>, <code>cat</code>, <code>grep</code>. No new query language needed.</li>
+<li><strong>Standard Tool Integration</strong> - Every Unix utility becomes a knowledge graph tool for free.</li>
+<li><strong>Desktop Integration</strong> - File managers (Dolphin, GNOME Files) browse the graph natively.</li>
+<li><strong>Editor Compatibility</strong> - Obsidian, VS Code, vim all read concept files without plugins.</li>
+<li><strong>Remote Access</strong> - SSH and SSHFS provide remote graph browsing with zero extra infrastructure.</li>
+</ol>
+<h3 id="drawbacks">Drawbacks</h3>
+<ol>
+<li><strong>Non-Determinism Can Be Confusing</strong> - <code>ls</code> results change as graph evolves. Mitigation: document as feature, provide caching.</li>
+<li><strong>POSIX Violations Require Education</strong> - Many standard file operations won't work. Mitigation: follow rclone precedent, document limitations.</li>
+<li><strong>Performance Considerations</strong> - Semantic queries slower than filesystem metadata operations. Mitigation: caching layer, configurable similarity thresholds.</li>
+</ol>
+<hr />
+<h2 id="future-vision">Future Vision</h2>
+<p>The following ideas informed the design but are not yet implemented. They represent the natural evolution of a semantic filesystem.</p>
+<h3 id="meta-control-plane"><code>.meta</code> Control Plane</h3>
+<p>Every query directory would contain a hidden <code>.meta/</code> folder with virtual files for tuning:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="nb">echo</span><span class="w"> </span><span class="m">0</span>.85<span class="w"> </span>&gt;<span class="w"> </span>.meta/threshold<span class="w">     </span><span class="c1"># High precision</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="nb">echo</span><span class="w"> </span><span class="m">20</span><span class="w"> </span>&gt;<span class="w"> </span>.meta/limit<span class="w">           </span><span class="c1"># Fewer results</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;deprecated&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>.meta/exclude<span class="w">  </span><span class="c1"># Filter out</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>cat<span class="w"> </span>.meta/query.toml<span class="w">            </span><span class="c1"># Debug view</span>
+</code></pre></div>
+<h3 id="nested-query-resolution">Nested Query Resolution</h3>
+<p>Each directory level narrows results (implicit AND):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>ls<span class="w"> </span>/ontology/economics/leadership/<span class="w">                  </span><span class="c1"># &quot;leadership&quot; in economics</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>ls<span class="w"> </span>/ontology/economics/leadership/communication/<span class="w">     </span><span class="c1"># &quot;leadership&quot; AND &quot;communication&quot;</span>
+</code></pre></div>
+<h3 id="multi-ontology-queries-via-symlinks">Multi-Ontology Queries via Symlinks</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>mkdir<span class="w"> </span>my-research
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>ln<span class="w"> </span>-s<span class="w"> </span>../ontology/economics<span class="w"> </span>my-research/
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>ln<span class="w"> </span>-s<span class="w"> </span>../ontology/sociology<span class="w"> </span>my-research/
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>ls<span class="w"> </span>my-research/inequality/<span class="w">   </span><span class="c1"># Searches across both ontologies</span>
+</code></pre></div>
+<h3 id="write-to-ingest">Write-to-Ingest</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>cp<span class="w"> </span>report.pdf<span class="w"> </span>/mnt/knowledge/ontology/economics/
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="c1"># File &quot;disappears&quot; into the ingestion pipeline</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="c1"># After extraction, concepts appear in query results</span>
+</code></pre></div>
+<h3 id="multi-tenant-hierarchy-shards-and-facets">Multi-Tenant Hierarchy (Shards and Facets)</h3>
+<p>The ADR originally proposed a four-level hierarchy:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>Shard (infrastructure: database + API)
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>  -&gt; Facet (logical grouping: RBAC + resource isolation)
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>    -&gt; Ontology (knowledge domain)
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>      -&gt; Concepts (semantic content)
+</code></pre></div>
+<p>This would enable per-team access control, resource isolation, and organizational clarity. The current implementation uses the flat ontology model. Shards and facets remain a future consideration for multi-tenant deployments.</p>
+<h3 id="relationship-navigation-as-filesystem">Relationship Navigation as Filesystem</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="nb">cd</span><span class="w"> </span>/mnt/knowledge/ontology/ai/embedding-models/unified-regeneration/
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>ls<span class="w"> </span>relationships/
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="c1"># includes/  requires/  validates/  supported-by/</span>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="nb">cd</span><span class="w"> </span>relationships/includes/
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>ls
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a><span class="c1"># compatibility-checking.concept.md</span>
+</code></pre></div>
+<h3 id="rclone-backend-alternative-implementation">rclone Backend (Alternative Implementation)</h3>
+<p>Instead of a custom FUSE driver, the knowledge graph could be exposed as an rclone backend. This would provide instant interoperability with cloud storage:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>rclone<span class="w"> </span>sync<span class="w"> </span>kg:research<span class="w"> </span>s3:backup/
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>rclone<span class="w"> </span>copy<span class="w"> </span>gdrive:Papers/<span class="w"> </span>kg:research/papers/
+</code></pre></div>
+<p>The Python FUSE approach was chosen for tighter integration, but rclone remains viable for remote access and cross-backend sync scenarios.</p>
+<h3 id="distributed-queries-across-mount-boundaries">Distributed Queries Across Mount Boundaries</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="c1"># Mount local and remote shards</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>mount<span class="w"> </span>-t<span class="w"> </span>fuse.knowledge-graph<span class="w"> </span>-o<span class="w"> </span><span class="nv">shard</span><span class="o">=</span>research<span class="w"> </span>/dev/knowledge<span class="w"> </span>/mnt/local
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>sshfs<span class="w"> </span>partner@remote:/mnt/knowledge/shared<span class="w"> </span>/mnt/remote
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="c1"># grep across ALL of them</span>
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a>grep<span class="w"> </span>-r<span class="w"> </span><span class="s2">&quot;API compatibility&quot;</span><span class="w"> </span>/mnt/<span class="o">{</span>local,remote<span class="o">}</span>/
+<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a><span class="c1"># Standard Unix tools become distributed knowledge graph query engines</span>
+</code></pre></div>
+<h3 id="event-driven-workflows">Event-Driven Workflows</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="c1"># Watch for knowledge graph changes</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>inotifywait<span class="w"> </span>-m<span class="w"> </span>/mnt/knowledge/ontology/security/<span class="w"> </span>-e<span class="w"> </span>create<span class="w"> </span><span class="p">|</span>
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="k">while</span><span class="w"> </span><span class="nb">read</span><span class="w"> </span>dir<span class="w"> </span>action<span class="w"> </span>file<span class="p">;</span><span class="w"> </span><span class="k">do</span>
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="w">    </span>notify-send<span class="w"> </span><span class="s2">&quot;New vulnerability concept: </span><span class="nv">$file</span><span class="s2">&quot;</span>
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="k">done</span>
+</code></pre></div>
+<h3 id="build-system-integration">Build System Integration</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="c1"># Makefile that depends on semantic queries</span>
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>API_DOCS<span class="w"> </span>:<span class="o">=</span><span class="w"> </span><span class="k">$(</span>shell<span class="w"> </span>ls<span class="w"> </span>/mnt/knowledge/ontology/api-endpoints/*.concept.md<span class="k">)</span>
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a>docs/api.html:<span class="w"> </span><span class="k">$(</span>API_DOCS<span class="k">)</span>
+<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a><span class="w">    </span>kg<span class="w"> </span><span class="nb">export</span><span class="w"> </span>--format<span class="w"> </span>html<span class="w"> </span>/mnt/knowledge/ontology/api-endpoints/<span class="w"> </span>&gt;<span class="w"> </span><span class="nv">$@</span>
+</code></pre></div>
+<h3 id="diff-based-knowledge-evolution">Diff-Based Knowledge Evolution</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="c1"># Capture semantic state at two points</span>
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>tar<span class="w"> </span>czf<span class="w"> </span>snapshot-before.tar.gz<span class="w"> </span>/mnt/knowledge/ontology/my-research/
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="c1"># ... months of work ...</span>
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a>tar<span class="w"> </span>czf<span class="w"> </span>snapshot-after.tar.gz<span class="w"> </span>/mnt/knowledge/ontology/my-research/
+<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a>
+<a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a>diff<span class="w"> </span>-r<span class="w"> </span>/tmp/before/<span class="w"> </span>/tmp/after/
+<a id="__codelineno-21-7" name="__codelineno-21-7" href="#__codelineno-21-7"></a><span class="c1"># New concepts (+), strengthened concepts (modified), abandoned concepts (-)</span>
+</code></pre></div>
+<hr />
+<h2 id="appendix-related-work">Appendix: Related Work</h2>
+<p>This proposal builds on a rich history of semantic filesystems, though none have applied the "Directory = Query" metaphor to vector embeddings and probabilistic similarity.</p>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Tagsistant</th>
+<th>TMSU</th>
+<th>MIT SFS (1991)</th>
+<th><strong>This System</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Organization</strong></td>
+<td>Boolean Logic</td>
+<td>Explicit Tags</td>
+<td>Key-Value Attributes</td>
+<td><strong>Vector Embeddings</strong></td>
+</tr>
+<tr>
+<td><strong>Determinism</strong></td>
+<td>Deterministic</td>
+<td>Deterministic</td>
+<td>Deterministic</td>
+<td><strong>Probabilistic</strong></td>
+</tr>
+<tr>
+<td><strong>Backend</strong></td>
+<td>SQL/Dedup</td>
+<td>SQLite</td>
+<td>Transducers</td>
+<td><strong>Vector DB + LLM</strong></td>
+</tr>
+<tr>
+<td><strong>Membership Model</strong></td>
+<td>Binary (tagged/not)</td>
+<td>Binary</td>
+<td>Binary</td>
+<td><strong>Continuous (similarity score)</strong></td>
+</tr>
+</tbody>
+</table>
+<p><strong>The key innovation:</strong> Existing systems map <strong>discrete values</strong> (tags, attributes) to directories. This system maps <strong>continuous values</strong> (similarity scores) to directories. That's the specific innovation that justifies the POSIX violations -- we're navigating high-dimensional semantic space through a filesystem interface.</p>
+<h2 id="appendix-why-this-will-make-unix-admins-angry">Appendix: Why This Will Make Unix Admins Angry</h2>
+<h3 id="the-angry-tweets-we-expect">The Angry Tweets We Expect</h3>
+<blockquote>
+<p>"This violates everything POSIX stands for. Files shouldn't magically appear and disappear."</p>
+</blockquote>
+<p>Yes. That's the point. Knowledge isn't static.</p>
+<blockquote>
+<p>"How am I supposed to backup a filesystem where <code>tar</code> gives different results each time?"</p>
+</blockquote>
+<p>You backup the knowledge graph, not the filesystem. The filesystem is a <em>view</em> of knowledge.</p>
+<blockquote>
+<p>"My scripts depend on deterministic <code>ls</code> output!"</p>
+</blockquote>
+<p>Your scripts are thinking in hierarchies. Think in semantics instead.</p>
+<blockquote>
+<p>"<code>find . -name '*.concept' | wc -l</code> returns different numbers!"</p>
+</blockquote>
+<p>Correct! The number of concepts matching your context changes as you explore.</p>
+<blockquote>
+<p>"This breaks <code>rsync</code>!"</p>
+</blockquote>
+<p>Have you considered that maybe <code>rsync</code> should understand semantic similarity?</p>
+<h3 id="the-rclone-defense">The rclone Defense</h3>
+<p>Google Cloud Storage FUSE and rclone for Google Drive exhibit the same violations:
+- Non-deterministic listings (files appear/disappear as others edit)
+- Multiple canonical paths (same file via <code>/MyDrive/</code> and <code>/SharedDrives/</code>)
+- Eventually consistent (write then read might return old content)
+- Partial POSIX (no symlinks, fake permissions)</p>
+<p><strong>People accept this because the abstraction is useful.</strong></p>
+<p>rclone documentation literally says:</p>
+<blockquote>
+<p>"Note that many operations are not fully POSIX compliant. This is an inherent limitation of cloud storage systems."</p>
+</blockquote>
+<p>If you accept rclone's weirdness for the convenience of <code>grep</code>-ing Google Drive, you'll accept semantic FUSE's weirdness for the convenience of <code>grep</code>-ing knowledge graphs.</p>
+<h2 id="appendix-alternatives-considered">Appendix: Alternatives Considered</h2>
+<h3 id="webdavhttp-filesystem">WebDAV/HTTP Filesystem</h3>
+<p><strong>Pros:</strong> Cross-platform, no FUSE required. <strong>Cons:</strong> Poorer Unix integration.
+<strong>Decision:</strong> FUSE provides better Unix integration, can add WebDAV later.</p>
+<h3 id="git-like-interface">Git-Like Interface</h3>
+<p><strong>Pros:</strong> Familiar to developers. <strong>Cons:</strong> Concepts aren't commits, poor semantic fit.
+<strong>Decision:</strong> Git is for version control, not semantic navigation.</p>
+<h3 id="custom-cli-only">Custom CLI Only</h3>
+<p><strong>Pros:</strong> Full control. <strong>Cons:</strong> Can't use standard Unix tools.
+<strong>Decision:</strong> CLI exists (<code>kg</code> command), FUSE adds complementary interface.</p>
+<h3 id="database-as-filesystem-direct-postgresql-mount">Database-as-Filesystem (Direct PostgreSQL Mount)</h3>
+<p><strong>Pros:</strong> Tools exist (pgfuse). <strong>Cons:</strong> Exposes tables/rows, wrong abstraction level.
+<strong>Decision:</strong> Need semantic layer, not raw database access.</p>
+<h2 id="references">References</h2>
+<ul>
+<li><a href="https://github.com/libfuse/libfuse">FUSE Documentation</a></li>
+<li><a href="https://pyfuse3.readthedocs.io/">pyfuse3 Documentation</a></li>
+<li><a href="https://dl.acm.org/doi/10.1145/121132.121138">Semantic File System (SFS)</a> - Gifford et al., MIT, 1991</li>
+<li><a href="http://www.tagsistant.net/">Tagsistant</a> - Linux FUSE semantic filesystem</li>
+<li><a href="https://tmsu.org/">TMSU</a> - Tag My Sh*t Up - Modern SQLite-backed tagging filesystem</li>
+<li><a href="https://cloud.google.com/storage/docs/gcs-fuse">Google Cloud Storage FUSE</a> - Partial POSIX compliance precedent</li>
+<li>ADR-715.1: FUSE Implementation Specifics</li>
+<li>ADR-406: OAuth 2.0 Authentication</li>
+<li>ADR-112: Sharding and facet architecture</li>
+</ul>
+<hr />
+<p><em>Knowledge doesn't fit in trees. It forms graphs. Your filesystem should too.</em></p>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": [], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

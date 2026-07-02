@@ -1,0 +1,2586 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Multi-dimensional knowledge extraction system using Apache AGE">
+      
+      
+        <meta name="author" content="Knowledge Graph System Contributors">
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>ADR-410: User Scoping and Artifact Ownership Model - Knowledge Graph System</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#adr-410-user-scoping-and-artifact-ownership-model" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="Knowledge Graph System" class="md-header__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Knowledge Graph System
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              ADR-410: User Scoping and Artifact Ownership Model
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/aaronsb/knowledge-graph-system" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aaronsb/knowledge-graph-system
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="Knowledge Graph System" class="md-nav__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Knowledge Graph System
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/aaronsb/knowledge-graph-system" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aaronsb/knowledge-graph-system
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Get Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Get Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../get-started/what-and-why/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What and Why
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../get-started/first-graph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your First Graph
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../get-started/first-query/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your First Query
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../get-started/mcp-quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Connect via MCP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../get-started/github-history/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mining a Git Repo
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-To
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How-To
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/ingest/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ingest Documents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/query/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explore and Query
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/epistemic-status/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Filter by Epistemic Status
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/polarity-axis/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Analyze a Polarity Axis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/fuse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Use the FUSE Drive
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/ai-providers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configure AI Providers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/embeddings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configure Embeddings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/extraction-quality/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Compare Extraction Quality
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/vocabulary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Consolidate Vocabulary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Self-Host
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Self-Host
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/quick-start/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/production/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Production Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/macvlan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dedicated IP (macvlan)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/tls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    TLS and Certificates
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/appliance-libvirt/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Appliance on libvirt/KVM
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security and Access
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/backup-restore/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backup and Restore
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/scheduled-jobs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scheduled Jobs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/upgrading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Upgrading
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explanation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Explanation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/how-it-works/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How It Works
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/computed-evidence/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Computed Evidence over Asserted Truth
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/grounding/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Grounding and Epistemic Confidence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/recursive-upsert/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Recursive Upsert
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/vocabulary-lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vocabulary Lifecycle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/storage-and-freshness/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Storage and Freshness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/worker-lanes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Worker Lanes and Concurrency
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/embedding-landscape/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Embedding Landscape
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/graph-program/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram DSL
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    REST API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/mcp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/mcp-session-context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Session Context
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/fuse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FUSE Driver
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/schema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Database Schema
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/cypher/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cypher Patterns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/graph-program-spec/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram Specification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/graph-program-validation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram Validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/graph-program-security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/backup-object-spec/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backup Object Format
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Contributing
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/voice/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Prose & Voice Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/docstring-coverage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docstring Coverage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/test-suite/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Test Suite
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../INDEX/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Context">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-satisficing-specialist-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Satisficing Specialist Model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#authentication-as-accountability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Authentication as Accountability
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#artifact-freshness-via-graph-epoch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Artifact Freshness via Graph Epoch
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Decision">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-groups-as-first-class-citizens" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Groups as First-Class Citizens
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-id-ranges-unix-style" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. ID Ranges (Unix-style)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-resource-ownership" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Resource Ownership
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-grant-based-access-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Grant-Based Access Model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-artifact-metadata" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Artifact Metadata
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-schema-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Schema Changes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Consequences">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#positive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Positive
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#negative" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Negative
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#neutral" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Neutral
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-this-adr-does-not-cover" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What This ADR Does NOT Cover
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation Plan
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation Plan">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-1-schema-foundation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 1: Schema Foundation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-2-ontology-ownership" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 2: Ontology Ownership
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-3-artifact-ownership" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 3: Artifact Ownership
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-4-ui-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 4: UI Integration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#migration-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Migration Notes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        References
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="adr-410-user-scoping-and-artifact-ownership-model">ADR-410: User Scoping and Artifact Ownership Model</h1>
+<h2 id="context">Context</h2>
+<p>The knowledge graph system currently has user authentication (ADR-404) but lacks:
+1. <strong>Ownership semantics</strong> - Who is responsible for an ontology or artifact?
+2. <strong>Group membership</strong> - Users can have roles, but not collaborative groups
+3. <strong>Resource-level permissions</strong> - RBAC is role-based, not resource-specific
+4. <strong>Artifact tracking</strong> - Computed reports (projections, polarity analyses) have no ownership</p>
+<h3 id="the-satisficing-specialist-model">The Satisficing Specialist Model</h3>
+<p>Consider a research group with multiple specialists:
+- Specialists have <strong>responsibility</strong> for domains, not exclusive ownership
+- Information flows freely between specialists (no strict isolation)
+- Outside parties can interact with all specialists to form their own views
+- Only in unusual scenarios (cognitohazard) would strict isolation apply</p>
+<p>This system follows the same philosophy:
+- <strong>Sufficient controls</strong> for coordination and accountability
+- <strong>Not security boundaries</strong> - authenticated users are trusted collaborators
+- <strong>Responsibility over ownership</strong> - "I maintain ontology X" not "I exclusively control X"</p>
+<h3 id="authentication-as-accountability">Authentication as Accountability</h3>
+<p>Authentication serves:
+1. <strong>Accountability</strong> - Who requested expensive operations?
+2. <strong>Resource allocation</strong> - Per-user quotas, rate limiting
+3. <strong>Quality control</strong> - Traceable modifications
+4. <strong>Coordination</strong> - Knowing who maintains what</p>
+<p>Anonymous access (if enabled) becomes a deployment decision at account creation, not a permission model concern.</p>
+<h3 id="artifact-freshness-via-graph-epoch">Artifact Freshness via Graph Epoch</h3>
+<p>The system tracks graph changes via <code>graph_change_counter</code> (Migration 033). This enables:
+- Reports from a month ago are still valid if graph unchanged
+- No redundant regeneration when data hasn't changed
+- AI agents can recall stored artifacts without recomputation
+- Temporal comparison: "What changed since this report?"</p>
+<h2 id="decision">Decision</h2>
+<h3 id="1-groups-as-first-class-citizens">1. Groups as First-Class Citizens</h3>
+<p>Create a groups system parallel to roles:</p>
+<p><strong>Groups vs Roles:</strong>
+| Aspect | Roles | Groups |
+|--------|-------|--------|
+| Purpose | Permission bundles | Collaboration membership |
+| Grants | Actions on resource types | Access to specific resources |
+| Example | "curator can write vocabulary" | "research-team can access Ontology-X" |</p>
+<p><strong>Special Groups:</strong>
+- <code>public</code> (ID 1) - All authenticated users are implicit members
+- <code>admins</code> (ID 2) - Platform administrators</p>
+<h3 id="2-id-ranges-unix-style">2. ID Ranges (Unix-style)</h3>
+<p>Reserve low IDs for system entities:</p>
+<table>
+<thead>
+<tr>
+<th>Range</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1-999</td>
+<td>System users and groups</td>
+</tr>
+<tr>
+<td>1000+</td>
+<td>Regular users and groups</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Reserved Entities:</strong></p>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>User</th>
+<th>Group</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>system</code></td>
+<td><code>public</code></td>
+</tr>
+<tr>
+<td>2</td>
+<td>-</td>
+<td><code>admins</code></td>
+</tr>
+<tr>
+<td>1000</td>
+<td>First admin user</td>
+<td>First user group</td>
+</tr>
+</tbody>
+</table>
+<h3 id="3-resource-ownership">3. Resource Ownership</h3>
+<p>Resources have an owner and optional grants:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Resource:
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>  owner_id: INTEGER      # User responsible (can transfer)
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>  grants: [              # Explicit access beyond owner
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    {principal_type, principal_id, permission}
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>  ]
+</code></pre></div>
+<p><strong>Owned Resources:</strong>
+- Ontologies
+- Reports (polarity, projections, etc.)
+- Future: Saved queries, workspaces</p>
+<h3 id="4-grant-based-access-model">4. Grant-Based Access Model</h3>
+<p>All access resolved through grants:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">can_access</span><span class="p">(</span><span class="n">user_id</span><span class="p">,</span> <span class="n">resource</span><span class="p">,</span> <span class="n">permission</span><span class="p">):</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    <span class="c1"># Owner has full access</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="k">if</span> <span class="n">resource</span><span class="o">.</span><span class="n">owner_id</span> <span class="o">==</span> <span class="n">user_id</span><span class="p">:</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>        <span class="k">return</span> <span class="kc">True</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="c1"># Check explicit user grant</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="k">if</span> <span class="n">has_grant</span><span class="p">(</span><span class="n">resource</span><span class="p">,</span> <span class="s1">&#39;user&#39;</span><span class="p">,</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">permission</span><span class="p">):</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>        <span class="k">return</span> <span class="kc">True</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>    <span class="c1"># Check group grants (including &#39;public&#39;)</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>    <span class="k">for</span> <span class="n">group_id</span> <span class="ow">in</span> <span class="n">get_user_groups</span><span class="p">(</span><span class="n">user_id</span><span class="p">):</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>        <span class="k">if</span> <span class="n">has_grant</span><span class="p">(</span><span class="n">resource</span><span class="p">,</span> <span class="s1">&#39;group&#39;</span><span class="p">,</span> <span class="n">group_id</span><span class="p">,</span> <span class="n">permission</span><span class="p">):</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>            <span class="k">return</span> <span class="kc">True</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>    <span class="c1"># Public group - all authenticated users are members</span>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>    <span class="k">if</span> <span class="n">has_grant</span><span class="p">(</span><span class="n">resource</span><span class="p">,</span> <span class="s1">&#39;group&#39;</span><span class="p">,</span> <span class="n">PUBLIC_GROUP_ID</span><span class="p">,</span> <span class="n">permission</span><span class="p">):</span>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>        <span class="k">return</span> <span class="kc">True</span>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>    <span class="k">return</span> <span class="kc">False</span>
+</code></pre></div>
+<p><strong>Permission Levels:</strong>
+- <code>read</code> - View resource
+- <code>write</code> - Modify resource (add to ontology, regenerate report)
+- <code>admin</code> - Transfer ownership, manage grants</p>
+<h3 id="5-artifact-metadata">5. Artifact Metadata</h3>
+<p>All computed artifacts include:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="p">{</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="nt">&quot;owner_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1000</span><span class="p">,</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span><span class="nt">&quot;created_at&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2025-12-17T10:30:00Z&quot;</span><span class="p">,</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span><span class="nt">&quot;graph_epoch&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">15847</span><span class="p">,</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">  </span><span class="nt">&quot;parameters&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="err">...</span><span class="w"> </span><span class="p">},</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">  </span><span class="nt">&quot;visibility&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;grants&quot;</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="p">}</span>
+</code></pre></div>
+<p><strong>Freshness Check:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">is_fresh</span><span class="p">(</span><span class="n">artifact</span><span class="p">):</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="n">current_epoch</span> <span class="o">=</span> <span class="n">get_graph_change_counter</span><span class="p">()</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="k">return</span> <span class="n">artifact</span><span class="o">.</span><span class="n">graph_epoch</span> <span class="o">==</span> <span class="n">current_epoch</span>
+</code></pre></div></p>
+<h3 id="6-schema-changes">6. Schema Changes</h3>
+<p><strong>New Tables:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1">-- Groups</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">groups</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="n">id</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="p">,</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">    </span><span class="n">group_name</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span><span class="w"> </span><span class="k">UNIQUE</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">    </span><span class="n">display_name</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">200</span><span class="p">),</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">    </span><span class="n">description</span><span class="w"> </span><span class="nb">TEXT</span><span class="p">,</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">    </span><span class="n">is_system</span><span class="w"> </span><span class="nb">BOOLEAN</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="k">FALSE</span><span class="p">,</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">    </span><span class="n">created_at</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="n">NOW</span><span class="p">(),</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="w">    </span><span class="n">created_by</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">REFERENCES</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">users</span><span class="p">(</span><span class="n">id</span><span class="p">)</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="p">);</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="c1">-- Group Membership</span>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">user_groups</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="w">    </span><span class="n">user_id</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">REFERENCES</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">users</span><span class="p">(</span><span class="n">id</span><span class="p">)</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">DELETE</span><span class="w"> </span><span class="k">CASCADE</span><span class="p">,</span>
+<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a><span class="w">    </span><span class="n">group_id</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">REFERENCES</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">groups</span><span class="p">(</span><span class="n">id</span><span class="p">)</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">DELETE</span><span class="w"> </span><span class="k">CASCADE</span><span class="p">,</span>
+<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a><span class="w">    </span><span class="n">added_at</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="n">NOW</span><span class="p">(),</span>
+<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a><span class="w">    </span><span class="n">added_by</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">REFERENCES</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">users</span><span class="p">(</span><span class="n">id</span><span class="p">),</span>
+<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a><span class="w">    </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="w"> </span><span class="p">(</span><span class="n">user_id</span><span class="p">,</span><span class="w"> </span><span class="n">group_id</span><span class="p">)</span>
+<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a><span class="p">);</span>
+<a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a>
+<a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a><span class="c1">-- Resource Grants (for owned resources)</span>
+<a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">resource_grants</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-4-23" name="__codelineno-4-23" href="#__codelineno-4-23"></a><span class="w">    </span><span class="n">id</span><span class="w"> </span><span class="nb">SERIAL</span><span class="w"> </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="p">,</span>
+<a id="__codelineno-4-24" name="__codelineno-4-24" href="#__codelineno-4-24"></a><span class="w">    </span><span class="n">resource_type</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">50</span><span class="p">)</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span><span class="w">  </span><span class="c1">-- &#39;ontology&#39;, &#39;report&#39;, &#39;projection&#39;</span>
+<a id="__codelineno-4-25" name="__codelineno-4-25" href="#__codelineno-4-25"></a><span class="w">    </span><span class="n">resource_id</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">200</span><span class="p">)</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span>
+<a id="__codelineno-4-26" name="__codelineno-4-26" href="#__codelineno-4-26"></a><span class="w">    </span><span class="n">principal_type</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">20</span><span class="p">)</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">CHECK</span><span class="w"> </span><span class="p">(</span><span class="n">principal_type</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="p">(</span><span class="s1">&#39;user&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;group&#39;</span><span class="p">)),</span>
+<a id="__codelineno-4-27" name="__codelineno-4-27" href="#__codelineno-4-27"></a><span class="w">    </span><span class="n">principal_id</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span>
+<a id="__codelineno-4-28" name="__codelineno-4-28" href="#__codelineno-4-28"></a><span class="w">    </span><span class="n">permission</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">20</span><span class="p">)</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">CHECK</span><span class="w"> </span><span class="p">(</span><span class="n">permission</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="p">(</span><span class="s1">&#39;read&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;write&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;admin&#39;</span><span class="p">)),</span>
+<a id="__codelineno-4-29" name="__codelineno-4-29" href="#__codelineno-4-29"></a><span class="w">    </span><span class="n">granted_at</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="n">NOW</span><span class="p">(),</span>
+<a id="__codelineno-4-30" name="__codelineno-4-30" href="#__codelineno-4-30"></a><span class="w">    </span><span class="n">granted_by</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">REFERENCES</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">users</span><span class="p">(</span><span class="n">id</span><span class="p">),</span>
+<a id="__codelineno-4-31" name="__codelineno-4-31" href="#__codelineno-4-31"></a><span class="w">    </span><span class="k">UNIQUE</span><span class="p">(</span><span class="n">resource_type</span><span class="p">,</span><span class="w"> </span><span class="n">resource_id</span><span class="p">,</span><span class="w"> </span><span class="n">principal_type</span><span class="p">,</span><span class="w"> </span><span class="n">principal_id</span><span class="p">,</span><span class="w"> </span><span class="n">permission</span><span class="p">)</span>
+<a id="__codelineno-4-32" name="__codelineno-4-32" href="#__codelineno-4-32"></a><span class="p">);</span>
+<a id="__codelineno-4-33" name="__codelineno-4-33" href="#__codelineno-4-33"></a>
+<a id="__codelineno-4-34" name="__codelineno-4-34" href="#__codelineno-4-34"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="n">idx_resource_grants_resource</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">resource_grants</span><span class="p">(</span><span class="n">resource_type</span><span class="p">,</span><span class="w"> </span><span class="n">resource_id</span><span class="p">);</span>
+<a id="__codelineno-4-35" name="__codelineno-4-35" href="#__codelineno-4-35"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="n">idx_resource_grants_principal</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">resource_grants</span><span class="p">(</span><span class="n">principal_type</span><span class="p">,</span><span class="w"> </span><span class="n">principal_id</span><span class="p">);</span>
+</code></pre></div>
+<p><strong>Modifications:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1">-- Add owner_id to ontologies (new table or graph property)</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="c1">-- Add system user</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">users</span><span class="w"> </span><span class="p">(</span><span class="n">id</span><span class="p">,</span><span class="w"> </span><span class="n">username</span><span class="p">,</span><span class="w"> </span><span class="n">password_hash</span><span class="p">,</span><span class="w"> </span><span class="n">primary_role</span><span class="p">,</span><span class="w"> </span><span class="n">disabled</span><span class="p">)</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;system&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;SYSTEM_NO_LOGIN&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;admin&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">true</span><span class="p">);</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="c1">-- Add system groups</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">groups</span><span class="w"> </span><span class="p">(</span><span class="n">id</span><span class="p">,</span><span class="w"> </span><span class="n">group_name</span><span class="p">,</span><span class="w"> </span><span class="n">display_name</span><span class="p">,</span><span class="w"> </span><span class="n">is_system</span><span class="p">)</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="k">VALUES</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="w">    </span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;public&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;All Users&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">true</span><span class="p">),</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="w">    </span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;admins&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;Administrators&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">true</span><span class="p">);</span>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="c1">-- Reset sequences to start at 1000</span>
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="k">ALTER</span><span class="w"> </span><span class="n">SEQUENCE</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">users_id_seq</span><span class="w"> </span><span class="k">RESTART</span><span class="w"> </span><span class="k">WITH</span><span class="w"> </span><span class="mi">1000</span><span class="p">;</span>
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="k">ALTER</span><span class="w"> </span><span class="n">SEQUENCE</span><span class="w"> </span><span class="n">kg_auth</span><span class="p">.</span><span class="n">groups_id_seq</span><span class="w"> </span><span class="k">RESTART</span><span class="w"> </span><span class="k">WITH</span><span class="w"> </span><span class="mi">1000</span><span class="p">;</span>
+</code></pre></div>
+<h2 id="consequences">Consequences</h2>
+<h3 id="positive">Positive</h3>
+<ol>
+<li><strong>Clear ownership</strong> - Know who maintains what</li>
+<li><strong>Flexible sharing</strong> - Private, team, or public resources</li>
+<li><strong>Artifact reuse</strong> - Stored reports available for recall</li>
+<li><strong>AI agent support</strong> - Agents can retrieve cached analyses</li>
+<li><strong>Freshness awareness</strong> - Know if reports are current via graph epoch</li>
+<li><strong>Consistent model</strong> - Same grant mechanism for all resource types</li>
+<li><strong>Unix-familiar</strong> - ID ranges follow established conventions</li>
+</ol>
+<h3 id="negative">Negative</h3>
+<ol>
+<li><strong>Schema migration</strong> - Existing systems need migration</li>
+<li><strong>Query complexity</strong> - Access checks add overhead</li>
+<li><strong>Admin burden</strong> - Someone must manage grants (mitigated by sensible defaults)</li>
+</ol>
+<h3 id="neutral">Neutral</h3>
+<ol>
+<li><strong>No strict security</strong> - This is coordination, not isolation</li>
+<li><strong>Public = authenticated</strong> - No anonymous access at permission level</li>
+<li><strong>Ownership transferable</strong> - Resources can change hands</li>
+</ol>
+<h2 id="what-this-adr-does-not-cover">What This ADR Does NOT Cover</h2>
+<ol>
+<li><strong>Anonymous access</strong> - Deployment concern, not permission model</li>
+<li><strong>Fine-grained permissions</strong> - Read/write/admin is sufficient</li>
+<li><strong>Specific artifact storage</strong> - See ADR-116 for polarity reports</li>
+<li><strong>Group hierarchies</strong> - Flat groups for now, can extend later</li>
+</ol>
+<h2 id="implementation-plan">Implementation Plan</h2>
+<h3 id="phase-1-schema-foundation">Phase 1: Schema Foundation</h3>
+<ol>
+<li>Create migration for groups, user_groups, resource_grants tables</li>
+<li>Add system user (ID 1) and system groups (ID 1, 2)</li>
+<li>Alter sequences for 1000+ IDs</li>
+<li>Update admin creation to use new sequence</li>
+</ol>
+<h3 id="phase-2-ontology-ownership">Phase 2: Ontology Ownership</h3>
+<ol>
+<li>Add owner_id tracking for ontologies (metadata in kg_api or graph property)</li>
+<li>Default owner = user who created first ingestion</li>
+<li>Add grant checking to ontology operations</li>
+</ol>
+<h3 id="phase-3-artifact-ownership">Phase 3: Artifact Ownership</h3>
+<ol>
+<li>Add ownership metadata to Garage storage schema</li>
+<li>Update projection storage (ADR-114) to include owner</li>
+<li>API endpoints for listing "my artifacts" vs "public artifacts"</li>
+</ol>
+<h3 id="phase-4-ui-integration">Phase 4: UI Integration</h3>
+<ol>
+<li>Show ownership in web UI</li>
+<li>Grant management interface</li>
+<li>"My ontologies" vs "Public ontologies" views</li>
+</ol>
+<h2 id="migration-notes">Migration Notes</h2>
+<p><strong>Existing Ontologies:</strong>
+- Assign to <code>system</code> user (ID 1) by default
+- Grant <code>public</code> group read access
+- Admin can reassign ownership</p>
+<p><strong>Sequence Reset:</strong>
+- Migration must handle existing users (if any with ID &lt; 1000)
+- Safe approach: only reset if max(id) &lt; 1000</p>
+<h2 id="references">References</h2>
+<ul>
+<li>ADR-404: Dynamic RBAC (existing role system)</li>
+<li>ADR-114: Projection Artifact Storage (Garage pattern)</li>
+<li>Migration 033: Graph Change Triggers (epoch counter)</li>
+</ul>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": [], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

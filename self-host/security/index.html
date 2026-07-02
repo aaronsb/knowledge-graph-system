@@ -1,0 +1,3277 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Multi-dimensional knowledge extraction system using Apache AGE">
+      
+      
+        <meta name="author" content="Knowledge Graph System Contributors">
+      
+      
+      
+        <link rel="prev" href="../appliance-libvirt/">
+      
+      
+        <link rel="next" href="../backup-restore/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Security and Access - Knowledge Graph System</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#security-and-access" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Knowledge Graph System" class="md-header__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Knowledge Graph System
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Security and Access
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/aaronsb/knowledge-graph-system" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aaronsb/knowledge-graph-system
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Knowledge Graph System" class="md-nav__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Knowledge Graph System
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/aaronsb/knowledge-graph-system" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aaronsb/knowledge-graph-system
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Get Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Get Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/what-and-why/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What and Why
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/first-graph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your First Graph
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/first-query/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your First Query
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/mcp-quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Connect via MCP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/github-history/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mining a Git Repo
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-To
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How-To
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/ingest/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ingest Documents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/query/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explore and Query
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/epistemic-status/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Filter by Epistemic Status
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/polarity-axis/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Analyze a Polarity Axis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/fuse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Use the FUSE Drive
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/ai-providers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configure AI Providers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/embeddings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configure Embeddings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/extraction-quality/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Compare Extraction Quality
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/vocabulary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Consolidate Vocabulary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Self-Host
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Self-Host
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../quick-start/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../production/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Production Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../macvlan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dedicated IP (macvlan)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    TLS and Certificates
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../appliance-libvirt/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Appliance on libvirt/KVM
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security and Access
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security and Access
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#authentication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Authentication
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Authentication">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-the-oauth-client-credentials-grant-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How the OAuth client credentials grant works
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#first-time-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        First-time setup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cli-login" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLI login
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#obtaining-an-access-token-manually" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Obtaining an access token manually
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#oauth-client-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OAuth client management
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#oauth-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OAuth endpoints
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#user-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        User management
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="User management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#create-a-user" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Create a user
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#list-and-inspect-users" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        List and inspect users
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#update-a-user" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Update a user
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#delete-a-user" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Delete a user
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#user-api-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        User API endpoints
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#role-based-access-control" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Role-based access control
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Role-based access control">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#built-in-roles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Built-in roles
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#job-permission-scopes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Job permission scopes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#custom-roles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Custom roles
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#scoped-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scoped permissions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#time-limited-access" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Time-limited access
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#audit-a-users-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Audit a user's permissions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rbac-api-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RBAC API endpoints
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#llm-api-key-storage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LLM API key storage
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="LLM API key storage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#store-or-rotate-a-key" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Store or rotate a key
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configure-the-master-encryption-key-production" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configure the master encryption key (production)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#internal-service-token" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Internal service token
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#key-rotation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key rotation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#key-management-api-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key management API endpoints
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#password-recovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Password recovery
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Password recovery">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#recover-lost-admin-access" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recover lost admin access
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#threat-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Threat model
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adr-references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR references
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../backup-restore/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backup and Restore
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../scheduled-jobs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scheduled Jobs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../upgrading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Upgrading
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explanation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Explanation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/how-it-works/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How It Works
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/computed-evidence/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Computed Evidence over Asserted Truth
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/grounding/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Grounding and Epistemic Confidence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/recursive-upsert/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Recursive Upsert
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/vocabulary-lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vocabulary Lifecycle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/storage-and-freshness/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Storage and Freshness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/worker-lanes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Worker Lanes and Concurrency
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/embedding-landscape/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Embedding Landscape
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/graph-program/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram DSL
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    REST API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/mcp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/mcp-session-context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Session Context
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/fuse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FUSE Driver
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/schema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Database Schema
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cypher/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cypher Patterns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/graph-program-spec/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram Specification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/graph-program-validation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram Validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/graph-program-security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/backup-object-spec/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backup Object Format
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Contributing
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/voice/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Prose & Voice Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/docstring-coverage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docstring Coverage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/test-suite/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Test Suite
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/INDEX/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#authentication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Authentication
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Authentication">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-the-oauth-client-credentials-grant-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How the OAuth client credentials grant works
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#first-time-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        First-time setup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cli-login" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLI login
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#obtaining-an-access-token-manually" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Obtaining an access token manually
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#oauth-client-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OAuth client management
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#oauth-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OAuth endpoints
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#user-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        User management
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="User management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#create-a-user" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Create a user
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#list-and-inspect-users" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        List and inspect users
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#update-a-user" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Update a user
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#delete-a-user" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Delete a user
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#user-api-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        User API endpoints
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#role-based-access-control" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Role-based access control
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Role-based access control">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#built-in-roles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Built-in roles
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#job-permission-scopes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Job permission scopes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#custom-roles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Custom roles
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#scoped-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scoped permissions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#time-limited-access" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Time-limited access
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#audit-a-users-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Audit a user's permissions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rbac-api-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RBAC API endpoints
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#llm-api-key-storage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LLM API key storage
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="LLM API key storage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#store-or-rotate-a-key" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Store or rotate a key
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configure-the-master-encryption-key-production" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configure the master encryption key (production)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#internal-service-token" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Internal service token
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#key-rotation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key rotation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#key-management-api-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key management API endpoints
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#password-recovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Password recovery
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Password recovery">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#recover-lost-admin-access" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recover lost admin access
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#threat-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Threat model
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adr-references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR references
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="security-and-access">Security and Access</h1>
+<p>Kappa Graph uses OAuth 2.0 client credentials for API authentication, role-based access control (RBAC) for authorization, and Fernet-encrypted storage for LLM API keys.</p>
+<hr />
+<h2 id="authentication">Authentication</h2>
+<h3 id="how-the-oauth-client-credentials-grant-works">How the OAuth client credentials grant works</h3>
+<p>Kappa Graph uses OAuth 2.0 client credentials grant (ADR-406). There is no session login endpoint — <code>POST /auth/login</code> was removed. All clients obtain a short-lived access token by exchanging long-lived client credentials.</p>
+<table>
+<thead>
+<tr>
+<th>Credential type</th>
+<th>Created by</th>
+<th>Stored in</th>
+<th>Lifetime</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>OAuth client (client_id + client_secret)</td>
+<td><code>kg login</code> or <code>kg oauth create-mcp</code></td>
+<td><code>~/.config/kg/config.json</code> (CLI) or MCP env</td>
+<td>Never expires until revoked</td>
+</tr>
+<tr>
+<td>Access token</td>
+<td>OAuth token grant</td>
+<td>Memory only, never persisted</td>
+<td>1 hour, auto-refreshed</td>
+</tr>
+<tr>
+<td>User password</td>
+<td><code>kg admin user create</code></td>
+<td>PostgreSQL (bcrypt)</td>
+<td>Until changed</td>
+</tr>
+</tbody>
+</table>
+<p>Passwords are used only once — to create an OAuth client. Subsequent API requests use the client credentials grant, not the password.</p>
+<h3 id="first-time-setup">First-time setup</h3>
+<p>Run <code>./operator.sh init</code> before starting the API. This creates the admin user, generates a JWT signing key, and writes infrastructure secrets to <code>.env</code>.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>./operator.sh init
+</code></pre></div>
+<p>The initializer prompts for an admin password (minimum 8 characters; at least one uppercase, one lowercase, one digit, one special character), generates <code>JWT_SECRET_KEY</code>, and saves it to <code>.env</code>. Restart the API after init:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>./operator.sh restart api
+</code></pre></div>
+<h3 id="cli-login">CLI login</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kg<span class="w"> </span>login
+</code></pre></div>
+<p>The CLI prompts for username and password, calls <code>POST /auth/oauth/clients/personal</code>, and stores the returned <code>client_id</code> and <code>client_secret</code> in <code>~/.config/kg/config.json</code>. The password is not saved.</p>
+<p>To check the current login state:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kg<span class="w"> </span>config<span class="w"> </span>list
+</code></pre></div>
+<h3 id="obtaining-an-access-token-manually">Obtaining an access token manually</h3>
+<p>For direct API access without the CLI:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:8000/auth/oauth/token<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/x-www-form-urlencoded&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span>-d<span class="w"> </span><span class="s2">&quot;grant_type=client_credentials&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span>-d<span class="w"> </span><span class="s2">&quot;client_id=kg-cli-admin-20251102&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">  </span>-d<span class="w"> </span><span class="s2">&quot;client_secret=your-client-secret&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">  </span>-d<span class="w"> </span><span class="s2">&quot;scope=read:* write:*&quot;</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="p">{</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span><span class="nt">&quot;access_token&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;eyJhbGci...&quot;</span><span class="p">,</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span><span class="nt">&quot;token_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;bearer&quot;</span><span class="p">,</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span><span class="nt">&quot;expires_in&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">3600</span><span class="p">,</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">  </span><span class="nt">&quot;scope&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;read:* write:*&quot;</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="p">}</span>
+</code></pre></div>
+<p>Include the token in subsequent requests:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>curl<span class="w"> </span>http://localhost:8000/users<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: Bearer eyJhbGci...&quot;</span>
+</code></pre></div>
+<h3 id="oauth-client-management">OAuth client management</h3>
+<p><strong>Create a client for the MCP server:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>kg<span class="w"> </span>oauth<span class="w"> </span>create-mcp
+</code></pre></div>
+<p>The command prints the client credentials and the exact JSON block to add to your MCP config. The secret is shown only once.</p>
+<p><strong>List clients:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>kg<span class="w"> </span>oauth<span class="w"> </span>clients
+</code></pre></div>
+<p><strong>Revoke a client:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>kg<span class="w"> </span>oauth<span class="w"> </span>revoke<span class="w"> </span>kg-cli-admin-20251102
+</code></pre></div>
+<p>Revoking your current CLI client logs you out. The CLI will warn before proceeding; pass <code>--force</code> or use <code>kg logout</code>.</p>
+<h3 id="oauth-endpoints">OAuth endpoints</h3>
+<table>
+<thead>
+<tr>
+<th>Endpoint</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>POST /auth/oauth/token</code></td>
+<td>Get access token (client credentials grant)</td>
+</tr>
+<tr>
+<td><code>GET /auth/oauth/clients/personal</code></td>
+<td>List personal OAuth clients</td>
+</tr>
+<tr>
+<td><code>POST /auth/oauth/clients/personal/new</code></td>
+<td>Create additional OAuth client</td>
+</tr>
+<tr>
+<td><code>DELETE /auth/oauth/clients/personal/{client_id}</code></td>
+<td>Revoke OAuth client</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="user-management">User management</h2>
+<p>User management requires admin authentication. All user endpoints are under <code>/users</code>.</p>
+<h3 id="create-a-user">Create a user</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># Interactive password prompt</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>create<span class="w"> </span>alice<span class="w"> </span>--role<span class="w"> </span>contributor
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="c1"># Non-interactive</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>create<span class="w"> </span>bob<span class="w"> </span>--role<span class="w"> </span>curator<span class="w"> </span>--password<span class="w"> </span><span class="s2">&quot;SecurePass123!&quot;</span>
+</code></pre></div>
+<h3 id="list-and-inspect-users">List and inspect users</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>list
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>list<span class="w"> </span>--role<span class="w"> </span>admin
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>get<span class="w"> </span><span class="m">3</span>
+</code></pre></div>
+<h3 id="update-a-user">Update a user</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># Change role</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>update<span class="w"> </span><span class="m">3</span><span class="w"> </span>--role<span class="w"> </span>curator
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="c1"># Change password (interactive)</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>update<span class="w"> </span><span class="m">3</span><span class="w"> </span>--password
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="c1"># Disable / enable</span>
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>update<span class="w"> </span><span class="m">3</span><span class="w"> </span>--disable
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>update<span class="w"> </span><span class="m">3</span><span class="w"> </span>--enable
+</code></pre></div>
+<p>Disabling a user preserves the audit trail. Prefer disable over delete for inactive accounts.</p>
+<h3 id="delete-a-user">Delete a user</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>delete<span class="w"> </span><span class="m">3</span>
+</code></pre></div>
+<p>The CLI requires a re-authentication challenge before deletion. You cannot delete your own account.</p>
+<h3 id="user-api-endpoints">User API endpoints</h3>
+<table>
+<thead>
+<tr>
+<th>Endpoint</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET /users</code></td>
+<td>List all users (admin)</td>
+</tr>
+<tr>
+<td><code>POST /users</code></td>
+<td>Create user (admin)</td>
+</tr>
+<tr>
+<td><code>GET /users/{user_id}</code></td>
+<td>Get user details</td>
+</tr>
+<tr>
+<td><code>PUT /users/{user_id}</code></td>
+<td>Update user</td>
+</tr>
+<tr>
+<td><code>DELETE /users/{user_id}</code></td>
+<td>Delete user</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="role-based-access-control">Role-based access control</h2>
+<p>Kappa Graph implements dynamic RBAC (ADR-404). Roles can inherit from parent roles, and permissions can be scoped globally, to a specific resource instance, or filtered.</p>
+<p>Permission precedence: <strong>DENY → Instance → Filter → Global → Inherited</strong></p>
+<h3 id="built-in-roles">Built-in roles</h3>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Capabilities</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>read_only</code></td>
+<td>Read concepts, search, view own jobs</td>
+</tr>
+<tr>
+<td><code>contributor</code></td>
+<td>All read_only + create/update content, cancel own jobs</td>
+</tr>
+<tr>
+<td><code>curator</code></td>
+<td>All contributor + approve jobs, view all user jobs</td>
+</tr>
+<tr>
+<td><code>admin</code></td>
+<td>All curator + manage users/roles/permissions, cancel any job, bulk delete user jobs</td>
+</tr>
+<tr>
+<td><code>platform_admin</code></td>
+<td>All admin + manage system jobs and scheduled tasks</td>
+</tr>
+</tbody>
+</table>
+<p>Built-in roles cannot be deleted. They can be modified, but do so with care.</p>
+<h3 id="job-permission-scopes">Job permission scopes</h3>
+<table>
+<thead>
+<tr>
+<th>Scope</th>
+<th>Who can use</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>own</code></td>
+<td>contributor and up</td>
+<td>Cancel your own ingestion job</td>
+</tr>
+<tr>
+<td><code>global</code></td>
+<td>curator and up</td>
+<td>View all user jobs</td>
+</tr>
+<tr>
+<td><code>system</code></td>
+<td>platform_admin only</td>
+<td>Manage scheduler jobs</td>
+</tr>
+</tbody>
+</table>
+<h3 id="custom-roles">Custom roles</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># Create a role inheriting from contributor</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>roles<span class="w"> </span>create<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">  </span>-n<span class="w"> </span><span class="s2">&quot;ml_researcher&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">  </span>-d<span class="w"> </span><span class="s2">&quot;ML Researcher&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="w">  </span>--description<span class="w"> </span><span class="s2">&quot;Machine learning research team&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a><span class="w">  </span>-p<span class="w"> </span>contributor
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>
+<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a><span class="c1"># Grant specific permissions</span>
+<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>grant<span class="w"> </span>-r<span class="w"> </span>ml_researcher<span class="w"> </span>-t<span class="w"> </span>concepts<span class="w"> </span>-a<span class="w"> </span><span class="nb">read</span>
+<a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>grant<span class="w"> </span>-r<span class="w"> </span>ml_researcher<span class="w"> </span>-t<span class="w"> </span>concepts<span class="w"> </span>-a<span class="w"> </span>write
+<a id="__codelineno-14-11" name="__codelineno-14-11" href="#__codelineno-14-11"></a>
+<a id="__codelineno-14-12" name="__codelineno-14-12" href="#__codelineno-14-12"></a><span class="c1"># Assign to a user</span>
+<a id="__codelineno-14-13" name="__codelineno-14-13" href="#__codelineno-14-13"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>assign<span class="w"> </span>add<span class="w"> </span>-u<span class="w"> </span><span class="m">10</span><span class="w"> </span>-r<span class="w"> </span>ml_researcher
+</code></pre></div>
+<h3 id="scoped-permissions">Scoped permissions</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="c1"># Global permission</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>grant<span class="w"> </span>-r<span class="w"> </span>data_scientist<span class="w"> </span>-t<span class="w"> </span>concepts<span class="w"> </span>-a<span class="w"> </span><span class="nb">read</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="c1"># Instance-scoped permission (one ontology)</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>grant<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="w">  </span>-r<span class="w"> </span>data_scientist<span class="w"> </span>-t<span class="w"> </span>ontology<span class="w"> </span>-a<span class="w"> </span>write<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="w">  </span>-s<span class="w"> </span>instance<span class="w"> </span>--scope-id<span class="w"> </span><span class="s2">&quot;research-2024&quot;</span>
+<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a>
+<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a><span class="c1"># Explicit deny (overrides inherited grant)</span>
+<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>grant<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a><span class="w">  </span>-r<span class="w"> </span>contributor<span class="w"> </span>-t<span class="w"> </span>users<span class="w"> </span>-a<span class="w"> </span>delete<span class="w"> </span>--deny
+</code></pre></div>
+<h3 id="time-limited-access">Time-limited access</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>assign<span class="w"> </span>add<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="w">  </span>-u<span class="w"> </span><span class="m">7</span><span class="w"> </span>-r<span class="w"> </span>curator<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="w">  </span>--expires<span class="w"> </span><span class="s2">&quot;2026-10-15T23:59:59Z&quot;</span>
+</code></pre></div>
+<p>Expired assignments are revoked automatically.</p>
+<h3 id="audit-a-users-permissions">Audit a user's permissions</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>user<span class="w"> </span>get<span class="w"> </span><span class="m">5</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>assign<span class="w"> </span>list<span class="w"> </span><span class="m">5</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>kg<span class="w"> </span>admin<span class="w"> </span>rbac<span class="w"> </span>permissions<span class="w"> </span>list<span class="w"> </span>--role<span class="w"> </span>data_scientist
+</code></pre></div>
+<h3 id="rbac-api-endpoints">RBAC API endpoints</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>GET    /api/rbac/roles
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>POST   /api/rbac/roles
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>GET    /api/rbac/roles/{name}
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>DELETE /api/rbac/roles/{name}
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a>GET    /api/rbac/permissions
+<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a>POST   /api/rbac/permissions
+<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a>DELETE /api/rbac/permissions/{id}
+<a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a>
+<a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a>GET    /api/rbac/user-roles/{user_id}
+<a id="__codelineno-18-11" name="__codelineno-18-11" href="#__codelineno-18-11"></a>POST   /api/rbac/user-roles
+<a id="__codelineno-18-12" name="__codelineno-18-12" href="#__codelineno-18-12"></a>DELETE /api/rbac/user-roles/{id}
+<a id="__codelineno-18-13" name="__codelineno-18-13" href="#__codelineno-18-13"></a>
+<a id="__codelineno-18-14" name="__codelineno-18-14" href="#__codelineno-18-14"></a>POST   /api/rbac/check-permission
+</code></pre></div>
+<hr />
+<h2 id="llm-api-key-storage">LLM API key storage</h2>
+<p>LLM API keys (OpenAI, Anthropic) are encrypted at rest using Fernet (AES-128-CBC + HMAC-SHA256) and stored as binary blobs in PostgreSQL (ADR-405). Plaintext keys are never returned via API.</p>
+<p>The master encryption key is separate from the database. The fallback chain is:</p>
+<ol>
+<li>Encrypted storage (tried first)</li>
+<li>Environment variable (<code>OPENAI_API_KEY</code>, <code>ANTHROPIC_API_KEY</code>)</li>
+<li><code>.env</code> file</li>
+</ol>
+<p>Existing <code>.env</code> configurations continue to work without migration.</p>
+<h3 id="store-or-rotate-a-key">Store or rotate a key</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:8000/admin/keys/openai<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="w">  </span>-F<span class="w"> </span><span class="s2">&quot;api_key=sk-proj-...&quot;</span>
+</code></pre></div>
+<p>The API validates the key format, tests it against the provider, encrypts it, and stores it. It rejects invalid or expired keys before writing.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="c1"># List configured providers (no plaintext keys returned)</span>
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>curl<span class="w"> </span>http://localhost:8000/admin/keys
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="c1"># Remove a key</span>
+<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a>curl<span class="w"> </span>-X<span class="w"> </span>DELETE<span class="w"> </span>http://localhost:8000/admin/keys/openai
+</code></pre></div>
+<p><strong>Supported providers:</strong> <code>openai</code>, <code>anthropic</code></p>
+<h3 id="configure-the-master-encryption-key-production">Configure the master encryption key (production)</h3>
+<p>In development, the system auto-generates a temporary encryption key on each restart. Keys stored with that key become unreadable after a restart — you must re-store them.</p>
+<p>In production, set a persistent key before storing any LLM API keys.</p>
+<p><strong>Option 1 — Docker/Podman secrets (recommended):</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="c1"># Generate a Fernet key</span>
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>python3<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())&quot;</span>
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span class="c1"># Create the secret</span>
+<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;gAAAAABe...&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>docker<span class="w"> </span>secret<span class="w"> </span>create<span class="w"> </span>encryption_master_key<span class="w"> </span>-
+</code></pre></div>
+<p>Mount it in <code>docker-compose.yml</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="nt">services</span><span class="p">:</span>
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="w">  </span><span class="nt">api</span><span class="p">:</span>
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a><span class="w">    </span><span class="nt">secrets</span><span class="p">:</span>
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">encryption_master_key</span>
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>
+<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a><span class="nt">secrets</span><span class="p">:</span>
+<a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a><span class="w">  </span><span class="nt">encryption_master_key</span><span class="p">:</span>
+<a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a><span class="w">    </span><span class="nt">external</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</code></pre></div>
+<p>The API loads from <code>/run/secrets/encryption_master_key</code> automatically.</p>
+<p><strong>Option 2 — Environment variable:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="nv">ENCRYPTION_KEY</span><span class="o">=</span><span class="k">$(</span>python3<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())&quot;</span><span class="k">)</span>
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;ENCRYPTION_KEY=</span><span class="nv">$ENCRYPTION_KEY</span><span class="s2">&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>.env
+</code></pre></div>
+<p>Do not commit <code>.env</code> to version control.</p>
+<p><strong>Option 3 — File path (external secrets managers):</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;gAAAAABe...&quot;</span><span class="w"> </span>&gt;<span class="w"> </span>/secure/path/encryption.key
+<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>chmod<span class="w"> </span><span class="m">600</span><span class="w"> </span>/secure/path/encryption.key
+<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ENCRYPTION_KEY_FILE</span><span class="o">=</span>/secure/path/encryption.key
+</code></pre></div>
+<h3 id="internal-service-token">Internal service token</h3>
+<p>Worker threads must present a capability token to decrypt LLM API keys. Configure this in production to prevent arbitrary code from accessing keys:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;INTERNAL_KEY_SERVICE_SECRET=</span><span class="k">$(</span>openssl<span class="w"> </span>rand<span class="w"> </span>-hex<span class="w"> </span><span class="m">32</span><span class="k">)</span><span class="s2">&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>.env
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>./operator.sh<span class="w"> </span>restart<span class="w"> </span>api
+</code></pre></div>
+<h3 id="key-rotation">Key rotation</h3>
+<p>Rotate LLM API keys by storing the new key via <code>POST /admin/keys/{provider}</code>. The new key replaces the old one immediately. Revoke the old key at the provider after confirming ingestion works.</p>
+<p>Rotating the master encryption key requires re-encrypting all stored LLM keys with the new master. Until an automated re-encryption script exists, use blue-green deployment: spin up a new instance with the new master, re-enter LLM API keys, then migrate traffic.</p>
+<p>Recommended schedule:</p>
+<table>
+<thead>
+<tr>
+<th>Secret</th>
+<th>Rotation interval</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LLM API keys</td>
+<td>Every 90 days</td>
+</tr>
+<tr>
+<td>Master encryption key</td>
+<td>Every 6–12 months</td>
+</tr>
+<tr>
+<td>Internal service token</td>
+<td>Every 6 months</td>
+</tr>
+</tbody>
+</table>
+<h3 id="key-management-api-endpoints">Key management API endpoints</h3>
+<table>
+<thead>
+<tr>
+<th>Endpoint</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET /admin/keys</code></td>
+<td>List configured providers</td>
+</tr>
+<tr>
+<td><code>POST /admin/keys/{provider}</code></td>
+<td>Store or rotate a key</td>
+</tr>
+<tr>
+<td><code>DELETE /admin/keys/{provider}</code></td>
+<td>Remove a key</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="password-recovery">Password recovery</h2>
+<p>When the API is unreachable or the admin password is lost, reset passwords directly through PostgreSQL using the reset script. The API does not need to be running.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>./operator/admin/reset-password.sh
+</code></pre></div>
+<p>The script lists existing users, prompts for the new password (same strength requirements as <code>kg admin user create</code>), hashes it with bcrypt (cost factor 12), and writes it to <code>kg_auth.users</code> directly.</p>
+<p>After reset, log in:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>kg<span class="w"> </span>login
+</code></pre></div>
+<p><strong>When to use <code>reset-password.sh</code> vs <code>./operator.sh init</code>:</strong></p>
+<ul>
+<li><code>reset-password.sh</code> — reset the password for any existing user; no secrets are regenerated</li>
+<li><code>./operator.sh init</code> — first-time setup; generates <code>.env</code> secrets and creates the admin user; re-running it regenerates the JWT signing key, which invalidates all existing OAuth tokens</li>
+</ul>
+<h3 id="recover-lost-admin-access">Recover lost admin access</h3>
+<p>If no users have the admin role, use the operator shell:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>./operator.sh<span class="w"> </span>shell
+<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>configure.py<span class="w"> </span>users
+</code></pre></div>
+<p>Then log back in:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>kg<span class="w"> </span>login<span class="w"> </span>--username<span class="w"> </span>admin
+</code></pre></div>
+<hr />
+<h2 id="threat-model">Threat model</h2>
+<p>To read a stored LLM API key, an attacker must compromise all of:</p>
+<ol>
+<li>HTTP API authentication (bypass OAuth + RBAC)</li>
+<li>Job queue (inject a malicious job into PostgreSQL)</li>
+<li>Worker thread (execute code in the worker context)</li>
+<li>Capability token (present a valid internal secret)</li>
+<li>Master encryption key (decrypt the stored ciphertext)</li>
+</ol>
+<p>The system does not protect against code execution within a worker thread, memory inspection during active LLM calls, or compromise of the master encryption key itself. Use system hardening, process isolation, and monitoring as complementary controls.</p>
+<hr />
+<h2 id="adr-references">ADR references</h2>
+<ul>
+<li>ADR-403 — User management API</li>
+<li>ADR-404 — Dynamic RBAC system</li>
+<li>ADR-405 — Encrypted API key storage</li>
+<li>ADR-406 — Unified OAuth authentication (removed <code>POST /auth/login</code>)</li>
+<li>ADR-409 — Platform admin role</li>
+</ul>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
