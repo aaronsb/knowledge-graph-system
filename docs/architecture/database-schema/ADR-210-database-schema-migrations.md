@@ -275,6 +275,19 @@ COMMIT;
 - Merge all migrations into new baseline: `schema/migrations/stable_v2_baseline.sql`
 - Archive old migrations in `schema/migrations/archived/`
 
+> **Executed 2026-07-01 (checkpoint v080):** migrations 001–080 were
+> consolidated into `schema/00_baseline.sql` and moved to
+> `schema/migrations/archived/`. The consolidation is generated, not
+> hand-merged: `schema/scripts/checkpoint.sh` replays the old baseline plus
+> every migration into a throwaway Apache AGE container via raw psql, dumps
+> the resting state (relational DDL + seed data via pg_dump; graph-seeding
+> cypher migrations carried verbatim, since AGE graphs cannot round-trip
+> through pg_dump), and verifies the candidate by building a second container
+> from it alone and diffing schema, AGE labels, row counts, and normalized
+> data against the replayed original. The baseline records versions 1–80 in
+> `schema_migrations`; the runner scans `archived/` before `migrations/`, so
+> pre-checkpoint databases keep their incremental upgrade path.
+
 ---
 
 ## Consequences

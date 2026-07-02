@@ -6,6 +6,32 @@ This directory contains numbered migration files that evolve the database schema
 
 ---
 
+## Checkpoint Baseline (2026-07-01)
+
+Migrations **001–080 are consolidated** into the checkpoint baseline
+(`schema/00_baseline.sql`) and moved to `archived/`. This is the periodic
+consolidation ADR-210 prescribes:
+
+- **Fresh installs** get the entire resting state from `00_baseline.sql` at
+  initdb; the baseline records versions 1–80 in `schema_migrations`, so
+  nothing in `archived/` re-runs.
+- **Existing databases** created before the checkpoint still find their
+  pending versions: the migration runner scans `archived/` before this
+  directory, so a database at e.g. version 60 applies 61–80 from the archive,
+  then continues with 081+.
+- **Never edit archived migrations** — they are history, kept only as the
+  upgrade path for pre-checkpoint databases.
+
+**The next migration is `081_*.sql`.**
+
+To generate a future checkpoint (e.g. after another long run of migrations),
+use `schema/scripts/checkpoint.sh all` — it replays the current baseline plus
+all migrations into a throwaway Apache AGE container, dumps the resting state,
+and verifies the result against a second container built from the candidate
+alone. See the script header for details.
+
+---
+
 ## Quick Start
 
 ### Apply All Pending Migrations
@@ -330,9 +356,9 @@ COMMIT;
 **1. Determine next version number**
 
 ```bash
-ls schema/migrations/ | sort | tail -1
-# Output: 001_baseline.sql
-# Next version: 002
+ls schema/migrations/ schema/migrations/archived/ | sort | tail -1
+# Output: 080_search_config_permission.sql
+# Next version: 081
 ```
 
 **2. Create migration file**
@@ -536,5 +562,5 @@ See **ADR-210** for future migration system evolution.
 
 ---
 
-**Last Updated:** 2025-10-20
-**Current Schema Version:** 001 (baseline)
+**Last Updated:** 2026-07-01
+**Current Schema Version:** 080 (checkpoint baseline — migrations 001–080 consolidated into `schema/00_baseline.sql`)
