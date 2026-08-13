@@ -1,5 +1,5 @@
 ---
-status: Proposed
+status: Rejected
 date: 2025-10-08
 deciders:
   - System Architecture
@@ -9,6 +9,13 @@ related:
 ---
 
 # ADR-902: Node Fitness Scoring System
+
+> **ARCHIVED — 2026-08-12.** No longer part of the active architecture set. Kept for history
+> and so existing references still resolve.
+>
+> **Why:** Pre-domain proposal from 2025-10-08; never implemented and no code references it
+>
+> Nothing below this line has been edited.
 
 ## Overview
 

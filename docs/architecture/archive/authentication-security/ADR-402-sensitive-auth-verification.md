@@ -9,6 +9,13 @@ related:
 
 # ADR-402: Client-Initiated Token Revocation for Elevated Operations
 
+> **ARCHIVED — 2026-08-12.** No longer part of the active architecture set. Kept for history
+> and so existing references still resolve.
+>
+> **Why:** Superseded auth design; no remaining code or doc references
+>
+> Nothing below this line has been edited.
+
 > **Superseded by [ADR-400](ADR-400-operative-rbac-and-endpoint-security-baseline.md).**
 > Retained for historical context; the operative auth model is defined in ADR-400.
 

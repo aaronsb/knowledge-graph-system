@@ -1,5 +1,5 @@
 ---
-status: Proposed
+status: Rejected
 date: 2025-10-17
 deciders:
   - Development Team
@@ -9,6 +9,13 @@ related:
 ---
 
 # ADR-711: Explorer Methods, Uses, and Capabilities
+
+> **ARCHIVED — 2026-08-12.** No longer part of the active architecture set. Kept for history
+> and so existing references still resolve.
+>
+> **Why:** Explorer/visualization proposal never implemented; no code references it
+>
+> Nothing below this line has been edited.
 
 ## Overview
 

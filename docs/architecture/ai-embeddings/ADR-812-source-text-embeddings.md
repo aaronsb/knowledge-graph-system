@@ -4,6 +4,8 @@ date: 2025-11-27
 deciders:
   - System Architect
 related: []
+supersedes:
+  - "ADR-905"
 ---
 
 # ADR-812: Source Text Embeddings for Grounding Truth Retrieval

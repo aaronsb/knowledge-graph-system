@@ -1,5 +1,5 @@
 ---
-status: Proposed
+status: Rejected
 date: 2025-10-17
 deciders:
   - Solo developer with questionable fashion sense
@@ -7,6 +7,13 @@ related: []
 ---
 
 # ADR-907: Official Project Apparel Design Specifications
+
+> **ARCHIVED — 2026-08-12.** No longer part of the active architecture set. Kept for history
+> and so existing references still resolve.
+>
+> **Why:** Apparel design specifications, not an architecture decision
+>
+> Nothing below this line has been edited.
 
 ## Context
 

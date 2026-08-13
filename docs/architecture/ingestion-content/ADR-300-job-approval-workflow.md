@@ -1,5 +1,5 @@
 ---
-status: Draft
+status: Accepted
 date: 2025-10-07
 deciders:
   - aaronsb
