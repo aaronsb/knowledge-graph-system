@@ -2,6 +2,8 @@
 # This file defines the domain numbering system and validation rules.
 # Used by: docs/scripts/adr
 
+project_name: Knowledge Graph System
+
 # Domain Number Series
 # Each domain reserves a range of 100 numbers for ADRs.
 # New ADRs are assigned the next available number in their domain.
@@ -67,6 +69,7 @@ statuses:
   - Accepted    # Approved and ready for implementation
   - Superseded  # Replaced by another ADR
   - Deprecated  # No longer relevant
+  - Rejected    # Considered and declined, or proposed and never adopted
 
 # Default values for new ADRs
 defaults:
