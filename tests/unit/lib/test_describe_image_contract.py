@@ -126,7 +126,10 @@ class TestAnthropicDescribeImageContract:
                          model="claude-sonnet-4-6", temperature=0.1)
         kwargs = p.client.messages.create.call_args.kwargs
         assert kwargs["model"] == "claude-sonnet-4-6"
-        assert kwargs["temperature"] == 0.1
+        # anthropic-sdk v1.0 removed temperature from the create() signature;
+        # models that still honour it take it through extra_body.
+        assert "temperature" not in kwargs
+        assert kwargs["extra_body"] == {"temperature": 0.1}
 
     def test_unified_return_shape(self):
         p = _make_anthropic()

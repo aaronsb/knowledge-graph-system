@@ -257,6 +257,27 @@ def _anthropic_drops_sampling_params(model_id: str) -> bool:
     return model_id.startswith("claude-opus-4-7")
 
 
+def _anthropic_sampling_kwargs(model_id: str, **params: Any) -> Dict[str, Any]:
+    """Build the `messages.create()` kwargs that carry Anthropic sampling params.
+
+    anthropic-sdk-python v1.0 removed `temperature`/`top_p`/`top_k` from the
+    signatures of `messages.create()`, `messages.stream()` and `messages.parse()`
+    (and their beta counterparts). Models that still honour them take them
+    through `extra_body`. `extra_body` is also accepted by 0.x, so routing
+    through it is correct on both majors — which is why every Anthropic call
+    site goes through this helper instead of setting a top-level kwarg.
+
+    Models in the `_anthropic_drops_sampling_params` family get nothing at all;
+    `None` values are dropped so callers can pass optional params unguarded.
+
+    Returns `{"extra_body": {...}}`, or `{}` when nothing should be sent.
+    """
+    if _anthropic_drops_sampling_params(model_id):
+        return {}
+    body = {k: v for k, v in params.items() if v is not None}
+    return {"extra_body": body} if body else {}
+
+
 # Module-level cached AGEClient for catalog lookups. Pre-PR, each catalog read
 # constructed a fresh AGEClient → ThreadedConnectionPool that never closed
 # (psycopg2 pools don't auto-close on __del__). With model resolution now on
@@ -1255,7 +1276,9 @@ class AnthropicProvider(AIProvider):
         Note: system_prompt is already formatted by llm_extractor.py.
         """
 
-        # Opus 4.7 removes sampling params (temperature/top_p/top_k → 400).
+        # Opus 4.7 removes sampling params (temperature/top_p/top_k → 400), and
+        # anthropic-sdk v1.0 removed them from the create() signature entirely —
+        # both handled by _anthropic_sampling_kwargs (drop, or send via extra_body).
         # The configured extraction_model may be Opus 4.7 per the user's
         # provider/model selection, so the request shape has to adapt.
         request_kwargs: Dict[str, Any] = {
@@ -1268,8 +1291,9 @@ class AnthropicProvider(AIProvider):
                 {"role": "user", "content": f"Text to analyze:\n\n{text}"}
             ],
         }
-        if not _anthropic_drops_sampling_params(self.extraction_model):
-            request_kwargs["temperature"] = 0.3
+        request_kwargs.update(
+            _anthropic_sampling_kwargs(self.extraction_model, temperature=0.3)
+        )
 
         try:
             message = self.client.messages.create(**request_kwargs)
@@ -1351,8 +1375,9 @@ class AnthropicProvider(AIProvider):
             "tool_choice": native_choice,
             "messages": [{"role": "user", "content": user_prompt}],
         }
-        if temperature is not None and not _anthropic_drops_sampling_params(target_model):
-            request_kwargs["temperature"] = temperature
+        request_kwargs.update(
+            _anthropic_sampling_kwargs(target_model, temperature=temperature)
+        )
 
         try:
             message = self.client.messages.create(**request_kwargs)
@@ -1431,8 +1456,9 @@ class AnthropicProvider(AIProvider):
                     {"role": "user", "content": f"{prompt}\n\n{code}"}
                 ],
             }
-            if not _anthropic_drops_sampling_params(translation_model):
-                request_kwargs["temperature"] = 0.5
+            request_kwargs.update(
+                _anthropic_sampling_kwargs(translation_model, temperature=0.5)
+            )
 
             message = self.client.messages.create(**request_kwargs)
 
@@ -1496,7 +1522,8 @@ class AnthropicProvider(AIProvider):
                 "anthropic", "vision", env_var="VISION_MODEL"
             )
 
-            # Opus 4.7 removes sampling params (temperature/top_p/top_k → 400).
+            # Opus 4.7 removes sampling params (temperature/top_p/top_k → 400);
+            # anthropic-sdk v1.0 takes the rest via extra_body. Both via helper.
             request_kwargs: Dict[str, Any] = {
                 "model": vision_model,
                 "max_tokens": 8192,
@@ -1515,8 +1542,9 @@ class AnthropicProvider(AIProvider):
                     ],
                 }],
             }
-            if not _anthropic_drops_sampling_params(vision_model):
-                request_kwargs["temperature"] = temperature
+            request_kwargs.update(
+                _anthropic_sampling_kwargs(vision_model, temperature=temperature)
+            )
 
             message = self.client.messages.create(**request_kwargs)
 
