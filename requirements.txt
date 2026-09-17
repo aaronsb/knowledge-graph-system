@@ -1,7 +1,7 @@
 psycopg2-binary>=2.9.9  # PostgreSQL adapter
-openai>=1.10.0
+openai>=3.0.0  # v3.0.0 made httpx2 the default HTTP client and stopped installing httpx; no custom httpx client/transport is passed to OpenAI() here, so the floor just pins the verified-against major (3.14.1).
 python-dotenv>=1.0.0
-anthropic>=0.18.0  # Optional: only needed if using AI_PROVIDER=anthropic
+anthropic>=1.0.0  # Optional: only needed if using AI_PROVIDER=anthropic. v1.0.0 removed temperature/top_p/top_k from messages.create()/stream()/parse() (now sent via extra_body — see _anthropic_sampling_kwargs), removed completions.create()/HUMAN_PROMPT/AI_PROMPT/Transport/ProxiesTypes, and switched to httpx2. Verified against 1.6.0.
 numpy>=1.24.0  # Required for learned knowledge similarity calculations & vector search
 sentence-transformers>=2.3.0  # Local embedding models for ADR-804 (nomic-embed-text, BGE)
 transformers>=4.56.0,<5.0  # Lower bound: AutoModel.from_pretrained `dtype` kwarg (replaces deprecated `torch_dtype`) added in 4.56.0 — older versions silently ignore it via **kwargs and load fp32 on GPU, defeating PR #429's VRAM fix. Upper bound: Nomic Vision requires trust_remote_code, broken on transformers 5.x (#313).
