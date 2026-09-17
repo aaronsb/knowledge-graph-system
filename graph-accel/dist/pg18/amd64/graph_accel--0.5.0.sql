@@ -25,13 +25,13 @@ COMMENT ON TABLE graph_accel.generation IS
 
 /* <begin connected objects> */
 -- ext/src/degree.rs:5
--- graph_accel_ext::degree::graph_accel_degree
+-- graph_accel::degree::graph_accel_degree
 CREATE  FUNCTION "graph_accel_degree"(
 	"top_n" INT DEFAULT 100 /* i32 */
 ) RETURNS TABLE (
 	"node_id" bigint,  /* i64 */
-	"label" TEXT,  /* alloc::string::String */
-	"app_id" TEXT,  /* core::option::Option<alloc::string::String> */
+	"label" TEXT,  /* String */
+	"app_id" TEXT,  /* Option < String > */
 	"out_degree" INT,  /* i32 */
 	"in_degree" INT,  /* i32 */
 	"total_degree" INT  /* i32 */
@@ -43,9 +43,9 @@ AS 'MODULE_PATHNAME', 'graph_accel_degree_wrapper';
 
 /* <begin connected objects> */
 -- ext/src/generation.rs:95
--- graph_accel_ext::generation::graph_accel_invalidate
+-- graph_accel::generation::graph_accel_invalidate
 CREATE  FUNCTION "graph_accel_invalidate"(
-	"graph_name" TEXT /* alloc::string::String */
+	"graph_name" TEXT /* String */
 ) RETURNS bigint /* i64 */
 STRICT
 LANGUAGE c /* Rust */
@@ -54,9 +54,9 @@ AS 'MODULE_PATHNAME', 'graph_accel_invalidate_wrapper';
 
 /* <begin connected objects> */
 -- ext/src/load.rs:109
--- graph_accel_ext::load::graph_accel_load
+-- graph_accel::load::graph_accel_load
 CREATE  FUNCTION "graph_accel_load"(
-	"graph_name" TEXT DEFAULT NULL /* core::option::Option<alloc::string::String> */
+	"graph_name" TEXT DEFAULT NULL /* Option < String > */
 ) RETURNS TABLE (
 	"node_count" bigint,  /* i64 */
 	"edge_count" bigint,  /* i64 */
@@ -68,19 +68,19 @@ AS 'MODULE_PATHNAME', 'graph_accel_load_wrapper';
 
 /* <begin connected objects> */
 -- ext/src/neighborhood.rs:6
--- graph_accel_ext::neighborhood::graph_accel_neighborhood
+-- graph_accel::neighborhood::graph_accel_neighborhood
 CREATE  FUNCTION "graph_accel_neighborhood"(
-	"start_id" TEXT, /* alloc::string::String */
+	"start_id" TEXT, /* String */
 	"max_depth" INT DEFAULT 3, /* i32 */
-	"direction_filter" TEXT DEFAULT 'both', /* alloc::string::String */
-	"min_confidence" double precision DEFAULT NULL /* core::option::Option<f64> */
+	"direction_filter" TEXT DEFAULT 'both', /* String */
+	"min_confidence" double precision DEFAULT NULL /* Option < f64 > */
 ) RETURNS TABLE (
 	"node_id" bigint,  /* i64 */
-	"label" TEXT,  /* alloc::string::String */
-	"app_id" TEXT,  /* core::option::Option<alloc::string::String> */
+	"label" TEXT,  /* String */
+	"app_id" TEXT,  /* Option < String > */
 	"distance" INT,  /* i32 */
-	"path_types" TEXT[],  /* alloc::vec::Vec<alloc::string::String> */
-	"path_directions" TEXT[]  /* alloc::vec::Vec<alloc::string::String> */
+	"path_types" TEXT[],  /* Vec < String > */
+	"path_directions" TEXT[]  /* Vec < String > */
 )
 LANGUAGE c /* Rust */
 AS 'MODULE_PATHNAME', 'graph_accel_neighborhood_wrapper';
@@ -88,20 +88,20 @@ AS 'MODULE_PATHNAME', 'graph_accel_neighborhood_wrapper';
 
 /* <begin connected objects> */
 -- ext/src/path.rs:6
--- graph_accel_ext::path::graph_accel_path
+-- graph_accel::path::graph_accel_path
 CREATE  FUNCTION "graph_accel_path"(
-	"from_id" TEXT, /* alloc::string::String */
-	"to_id" TEXT, /* alloc::string::String */
+	"from_id" TEXT, /* String */
+	"to_id" TEXT, /* String */
 	"max_hops" INT DEFAULT 10, /* i32 */
-	"direction_filter" TEXT DEFAULT 'both', /* alloc::string::String */
-	"min_confidence" double precision DEFAULT NULL /* core::option::Option<f64> */
+	"direction_filter" TEXT DEFAULT 'both', /* String */
+	"min_confidence" double precision DEFAULT NULL /* Option < f64 > */
 ) RETURNS TABLE (
 	"step" INT,  /* i32 */
 	"node_id" bigint,  /* i64 */
-	"label" TEXT,  /* alloc::string::String */
-	"app_id" TEXT,  /* core::option::Option<alloc::string::String> */
-	"rel_type" TEXT,  /* core::option::Option<alloc::string::String> */
-	"direction" TEXT  /* core::option::Option<alloc::string::String> */
+	"label" TEXT,  /* String */
+	"app_id" TEXT,  /* Option < String > */
+	"rel_type" TEXT,  /* Option < String > */
+	"direction" TEXT  /* Option < String > */
 )
 LANGUAGE c /* Rust */
 AS 'MODULE_PATHNAME', 'graph_accel_path_wrapper';
@@ -109,22 +109,22 @@ AS 'MODULE_PATHNAME', 'graph_accel_path_wrapper';
 
 /* <begin connected objects> */
 -- ext/src/path.rs:59
--- graph_accel_ext::path::graph_accel_paths
+-- graph_accel::path::graph_accel_paths
 CREATE  FUNCTION "graph_accel_paths"(
-	"from_id" TEXT, /* alloc::string::String */
-	"to_id" TEXT, /* alloc::string::String */
+	"from_id" TEXT, /* String */
+	"to_id" TEXT, /* String */
 	"max_hops" INT DEFAULT 10, /* i32 */
 	"max_paths" INT DEFAULT 5, /* i32 */
-	"direction_filter" TEXT DEFAULT 'both', /* alloc::string::String */
-	"min_confidence" double precision DEFAULT NULL /* core::option::Option<f64> */
+	"direction_filter" TEXT DEFAULT 'both', /* String */
+	"min_confidence" double precision DEFAULT NULL /* Option < f64 > */
 ) RETURNS TABLE (
 	"path_index" INT,  /* i32 */
 	"step" INT,  /* i32 */
 	"node_id" bigint,  /* i64 */
-	"label" TEXT,  /* alloc::string::String */
-	"app_id" TEXT,  /* core::option::Option<alloc::string::String> */
-	"rel_type" TEXT,  /* core::option::Option<alloc::string::String> */
-	"direction" TEXT  /* core::option::Option<alloc::string::String> */
+	"label" TEXT,  /* String */
+	"app_id" TEXT,  /* Option < String > */
+	"rel_type" TEXT,  /* Option < String > */
+	"direction" TEXT  /* Option < String > */
 )
 LANGUAGE c /* Rust */
 AS 'MODULE_PATHNAME', 'graph_accel_paths_wrapper';
@@ -132,10 +132,10 @@ AS 'MODULE_PATHNAME', 'graph_accel_paths_wrapper';
 
 /* <begin connected objects> */
 -- ext/src/status.rs:7
--- graph_accel_ext::status::graph_accel_status
+-- graph_accel::status::graph_accel_status
 CREATE  FUNCTION "graph_accel_status"() RETURNS TABLE (
-	"source_graph" TEXT,  /* core::option::Option<alloc::string::String> */
-	"status" TEXT,  /* alloc::string::String */
+	"source_graph" TEXT,  /* Option < String > */
+	"status" TEXT,  /* String */
 	"node_count" bigint,  /* i64 */
 	"edge_count" bigint,  /* i64 */
 	"memory_bytes" bigint,  /* i64 */
@@ -151,20 +151,20 @@ AS 'MODULE_PATHNAME', 'graph_accel_status_wrapper';
 
 /* <begin connected objects> */
 -- ext/src/subgraph.rs:5
--- graph_accel_ext::subgraph::graph_accel_subgraph
+-- graph_accel::subgraph::graph_accel_subgraph
 CREATE  FUNCTION "graph_accel_subgraph"(
-	"start_id" TEXT, /* alloc::string::String */
+	"start_id" TEXT, /* String */
 	"max_depth" INT DEFAULT 3, /* i32 */
-	"direction_filter" TEXT DEFAULT 'both', /* alloc::string::String */
-	"min_confidence" double precision DEFAULT NULL /* core::option::Option<f64> */
+	"direction_filter" TEXT DEFAULT 'both', /* String */
+	"min_confidence" double precision DEFAULT NULL /* Option < f64 > */
 ) RETURNS TABLE (
 	"from_id" bigint,  /* i64 */
-	"from_label" TEXT,  /* alloc::string::String */
-	"from_app_id" TEXT,  /* core::option::Option<alloc::string::String> */
+	"from_label" TEXT,  /* String */
+	"from_app_id" TEXT,  /* Option < String > */
 	"to_id" bigint,  /* i64 */
-	"to_label" TEXT,  /* alloc::string::String */
-	"to_app_id" TEXT,  /* core::option::Option<alloc::string::String> */
-	"rel_type" TEXT  /* alloc::string::String */
+	"to_label" TEXT,  /* String */
+	"to_app_id" TEXT,  /* Option < String > */
+	"rel_type" TEXT  /* String */
 )
 LANGUAGE c /* Rust */
 AS 'MODULE_PATHNAME', 'graph_accel_subgraph_wrapper';
