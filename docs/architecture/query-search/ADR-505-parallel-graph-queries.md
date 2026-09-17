@@ -74,7 +74,7 @@ class ParallelQueryConfig:
     chunk_size: int = 20           # Concepts per worker chunk
     timeout_seconds: float = 120.0 # Wall-clock timeout
     per_worker_limit: int = 200    # Max results per worker
-    discovery_slot_pct: float = 0.2 # Epsilon-greedy (ADR-071a)
+    discovery_slot_pct: float = 0.2 # Epsilon-greedy (see Actual Performance Results)
 
 class GraphParallelizer:
     """
@@ -210,7 +210,7 @@ WHERE seed.concept_id IN $seed_ids  -- Parameterized
 ```
 All queries use parameter binding to prevent Cypher injection, not f-string interpolation.
 
-## Actual Performance Results (ADR-071a)
+## Actual Performance Results
 
 Implementation testing revealed:
 
@@ -224,7 +224,7 @@ Implementation testing revealed:
 
 **Critical Discovery:** The 3x speedup comes from **batched queries with IN clauses**, NOT from parallelization. Parallelization adds overhead beyond 1-2 workers.
 
-The detailed analysis is the section above — the planned standalone "ADR-071a: Parallel Implementation Findings" was never split out from this ADR and the findings live inline here under [Actual Performance Results](#actual-performance-results-adr-071a).
+The detailed analysis is the section above — the planned standalone findings document under the legacy numbering was never split out from this ADR and the findings live inline here under [Actual Performance Results](#actual-performance-results).
 
 ## Configuration Management
 
