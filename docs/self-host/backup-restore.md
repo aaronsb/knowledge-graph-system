@@ -14,7 +14,7 @@ This page covers backing up and restoring a Kappa Graph installation: the Postgr
 
 | Component | Contains | Method |
 |---|---|---|
-| PostgreSQL 18 + Apache AGE 1.7.0 | Concepts, relationships, ontologies, users, config, migration state | `pg_dump --format=custom` |
+| PostgreSQL 18 + Apache AGE 1.8.0 | Concepts, relationships, ontologies, users, config, migration state | `pg_dump --format=custom` |
 | Garage S3 | Original source documents | S3-compatible sync or filesystem copy |
 
 PostgreSQL backups use the custom binary format because Apache AGE graph data is OID-coupled to the schema; `pg_dump`/`pg_restore` handles that correctly. A plain SQL dump is not safe for cross-version restores of AGE graphs — see the testing section below.
@@ -205,7 +205,7 @@ Test restores using an image that includes Apache AGE. The stock `postgres:18` i
 
 ```bash
 # Spin up a test instance
-docker run -d --name backup-test -e POSTGRES_PASSWORD=test apache/age:release_PG18_1.7.0
+docker run -d --name backup-test -e POSTGRES_PASSWORD=test apache/age:release_PG18_1.8.0
 
 # Restore the custom-format dump
 docker exec -i backup-test pg_restore -U postgres -d postgres --create < backup.dump

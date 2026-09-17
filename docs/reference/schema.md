@@ -8,7 +8,7 @@ mode: reference
 
 Relational schema for the Kappa Graph control plane. The knowledge graph itself (concepts, sources, instances, and their typed edges) lives in the Apache AGE `knowledge_graph` graph; the tables below hold operational state, authorization, and observability around it.
 
-Backed by PostgreSQL 18 with Apache AGE 1.7.0. This page is generated from `schema/00_baseline.sql` and `schema/migrations/*.sql`; do not edit it by hand.
+Backed by PostgreSQL 18 with Apache AGE 1.8.0. This page is generated from `schema/00_baseline.sql` and `schema/migrations/*.sql`; do not edit it by hand.
 
 <!-- GENERATED FILE — edit the SQL DDL, then run `make docs-schema`. -->
 <!-- Generated: 2026-07-02 -->

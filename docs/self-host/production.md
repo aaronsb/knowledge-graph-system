@@ -32,7 +32,7 @@ Kappa Graph publishes four pre-built images to GitHub Container Registry:
 
 | Image | Purpose |
 |---|---|
-| `ghcr.io/aaronsb/knowledge-graph-system/kg-postgres:latest` | PostgreSQL 18 + Apache AGE 1.7.0 + graph acceleration extension |
+| `ghcr.io/aaronsb/knowledge-graph-system/kg-postgres:latest` | PostgreSQL 18 + Apache AGE 1.8.0 + graph acceleration extension |
 | `ghcr.io/aaronsb/knowledge-graph-system/kg-api:latest` | FastAPI REST server (ingestion, queries, OAuth) |
 | `ghcr.io/aaronsb/knowledge-graph-system/kg-web:latest` | React visualization web app |
 | `ghcr.io/aaronsb/knowledge-graph-system/kg-operator:latest` | Configuration and management container |
