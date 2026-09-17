@@ -51,38 +51,37 @@
     "access": "public"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.20.0",
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "@types/asciichart": "^1.5.8",
-    "@types/minimatch": "^5.1.2",
     "@types/prompts": "^2.4.9",
-    "ansis": "^4.2.0",
+    "ansis": "^4.4.0",
     "asciichart": "^1.5.25",
-    "axios": "^1.6.0",
+    "axios": "^1.20.0",
     "cfonts": "^3.3.1",
     "chalk": "^4.1.2",
-    "commander": "^12.0.0",
-    "eventsource": "^4.0.0",
-    "form-data": "^4.0.0",
+    "commander": "^14.0.3",
+    "eventsource": "^5.1.1",
+    "form-data": "^4.0.6",
     "log-update": "^6.1.0",
-    "minimatch": "^10.1.1",
+    "minimatch": "^10.2.6",
     "ora": "^5.4.1",
     "prompts": "^2.4.2",
     "slice-ansi": "^7.1.2",
-    "string-width": "^8.1.0",
-    "table": "^6.8.1"
+    "string-width": "^8.2.2",
+    "table": "^6.9.0"
   },
   "devDependencies": {
     "@types/babel__generator": "^7.27.0",
     "@types/babel__template": "^7.4.4",
     "@types/istanbul-lib-report": "^3.0.3",
-    "@types/jest": "^29.5.0",
-    "@types/node": "^20.10.0",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^22.20.3",
     "@types/yargs-parser": "^21.0.3",
-    "jest": "^29.7.0",
-    "ts-jest": "^29.1.0",
-    "typescript": "^5.3.0"
+    "jest": "^30.5.1",
+    "ts-jest": "^29.4.12",
+    "typescript": "^5.9.3"
   },
   "engines": {
-    "node": ">=20.12.0"
+    "node": ">=22.12.0"
   }
 }
