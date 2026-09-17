@@ -2,7 +2,7 @@
 
 In-memory graph traversal acceleration for [Apache AGE](https://age.apache.org/).
 
-**License:** Apache-2.0 | **pgrx:** 0.16.1 | **PostgreSQL:** 13-18
+**License:** Apache-2.0 | **pgrx:** 0.19.2 | **PostgreSQL:** 13-18
 
 ## The Problem
 
@@ -208,7 +208,7 @@ All parameters are set via PostgreSQL GUCs (`SET`, `ALTER SYSTEM SET`, or `postg
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
 # Install pgrx
-cargo install cargo-pgrx --version 0.16.1 --locked
+cargo install cargo-pgrx --version 0.19.2 --locked
 
 # Initialize pgrx for your PostgreSQL version
 cargo pgrx init --pg18=download    # or point to your pg_config
