@@ -614,7 +614,7 @@ async def get_status():
 - [ADR-404: Dynamic RBAC System](./ADR-404-dynamic-rbac-system.md) - Role/permission system
 - [ADR-406: OAuth Client Management](./ADR-406-oauth-client-management.md) - OAuth 2.0 flow
 - [ADR-403: User Management API](./ADR-403-user-management-api.md) - User operations
-- [ADR-402: Sensitive Auth Verification](./ADR-402-sensitive-auth-verification.md) - Password verification
+- [ADR-402: Sensitive Auth Verification](../archive/authentication-security/ADR-402-sensitive-auth-verification.md) - Password verification
 
 ---
 

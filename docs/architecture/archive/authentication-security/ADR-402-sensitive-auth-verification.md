@@ -16,7 +16,7 @@ related:
 >
 > Nothing below this line has been edited.
 
-> **Superseded by [ADR-400](ADR-400-operative-rbac-and-endpoint-security-baseline.md).**
+> **Superseded by [ADR-400](../../authentication-security/ADR-400-operative-rbac-and-endpoint-security-baseline.md).**
 > Retained for historical context; the operative auth model is defined in ADR-400.
 
 **Technical Story:** Implement a secure authentication flow for destructive administrative operations (database wipe, restore, configuration changes) that balances security with operational robustness.
