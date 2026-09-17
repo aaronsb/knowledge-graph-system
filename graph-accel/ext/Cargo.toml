@@ -6,6 +6,9 @@ license = "Apache-2.0"
 description = "PostgreSQL extension for in-memory graph traversal acceleration (ADR-201)"
 
 [lib]
+# Must match the extension name in graph_accel.control: pgrx-tests derives
+# its CREATE EXTENSION statement from the lib name (default: package name).
+name = "graph_accel"
 crate-type = ["cdylib"]
 
 [features]
