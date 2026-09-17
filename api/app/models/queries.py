@@ -412,7 +412,7 @@ class PolarityAxisRequest(BaseModel):
     max_candidates: int = Field(20, description="Maximum candidates for auto-discovery", ge=1, le=100)
     max_hops: int = Field(2, description="Maximum graph hops for auto-discovery (1-3)", ge=1, le=3)
     use_parallel: bool = Field(True, description="Use parallel discovery for 100x+ speedup (ADR-505)")
-    # ADR-071a: Discovery strategy options (epsilon-greedy)
+    # ADR-505: Discovery strategy options (epsilon-greedy)
     discovery_slot_pct: Optional[float] = Field(0.2, description="Discovery slot percentage (0.0=conservative/pure degree, 0.2=balanced/default, 1.0=novelty/pure random)", ge=0.0, le=1.0)
     # ADR-505: Worker configuration options
     max_workers: Optional[int] = Field(8, description="Maximum parallel workers for 2-hop queries", ge=1, le=32)

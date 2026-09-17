@@ -1,5 +1,7 @@
 ---
-status: Proposed
+status: Superseded
+superseded_by:
+  - "ADR-812"
 date: 2025-10-08
 deciders:
   - System Architecture
@@ -8,6 +10,14 @@ related:
 ---
 
 # ADR-905: Source Text Tracking and Retrieval
+
+> **ARCHIVED — 2026-08-12.** No longer part of the active architecture set. Kept for history
+> and so existing references still resolve.
+>
+> **Why:** Source text tracking was delivered by the grounding-truth retrieval design instead
+> **Superseded by:** ADR-812
+>
+> Nothing below this line has been edited.
 
 ## Overview
 

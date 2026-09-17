@@ -1,5 +1,7 @@
 ---
-status: Accepted
+status: Superseded
+superseded_by:
+  - "ADR-208"
 date: 2025-10-06
 deciders:
   - Development Team
@@ -7,6 +9,14 @@ related: []
 ---
 
 # ADR-106: API Server Architecture for Scalable Neo4j Access
+
+> **ARCHIVED — 2026-08-12.** No longer part of the active architecture set. Kept for history
+> and so existing references still resolve.
+>
+> **Why:** API architecture for Neo4j, a datastore the project no longer uses
+> **Superseded by:** ADR-208
+>
+> Nothing below this line has been edited.
 
 ## Overview
 

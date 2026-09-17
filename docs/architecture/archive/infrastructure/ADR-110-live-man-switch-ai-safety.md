@@ -15,6 +15,13 @@ deprecation_note: >
 
 # ADR-110: Live Man Switch - AI Safety for Critical Operations
 
+> **ARCHIVED — 2026-08-12.** No longer part of the active architecture set. Kept for history
+> and so existing references still resolve.
+>
+> **Why:** Superseded safety mechanism; no remaining code or doc references
+>
+> Nothing below this line has been edited.
+
 ## Overview
 
 We're entering an era where AI agents can execute terminal commands on our behalf. Ask an agent to "clean up the database" and it might helpfully run a reset command that deletes everything. The agent isn't malicious - it's trying to be helpful - but the consequences are the same. Traditional security measures like passwords don't help because the agent already has access to those credentials. It's a new kind of problem: not adversarial attacks, but well-intentioned automation gone wrong.

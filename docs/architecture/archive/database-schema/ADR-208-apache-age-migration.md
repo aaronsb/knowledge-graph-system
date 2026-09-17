@@ -1,5 +1,5 @@
 ---
-status: Proposed
+status: Deprecated
 date: 2025-10-08
 deciders:
   - System Architecture
@@ -7,9 +7,18 @@ related:
   - ADR-106
   - ADR-707
   - ADR-107
+supersedes:
+  - "ADR-106"
 ---
 
 # ADR-208: Apache AGE Migration (Neo4j Replacement)
+
+> **ARCHIVED — 2026-08-12.** No longer part of the active architecture set. Kept for history
+> and so existing references still resolve.
+>
+> **Why:** Migration completed; Apache AGE is the shipped datastore and no Neo4j remains in the codebase
+>
+> Nothing below this line has been edited.
 
 - ✅ Tasks 01-04 Complete: Infrastructure, Schema, Python Client, API Routes
 - 🔄 Next: Task 05 (MCP Server), Task 07 (CLI), Task 08 (Ingestion) for functional parity

@@ -340,7 +340,7 @@ def discover_candidate_concepts_parallel(
     # Import here to avoid circular dependency
     from api.app.lib.graph_parallelizer import GraphParallelizer, ParallelQueryConfig
 
-    # Configure parallelizer (ADR-071a)
+    # Configure parallelizer (ADR-505)
     # Config should be provided by caller; create default if missing
     if parallel_config is None:
         config = ParallelQueryConfig(
@@ -479,7 +479,7 @@ def analyze_polarity_axis(
         max_hops: Max hops for auto-discovery
         use_parallel: Use parallel discovery (ADR-505, default: True)
         parallel_config: Optional ParallelQueryConfig for testing/tuning (legacy)
-        discovery_slot_pct: Discovery slot percentage (0.0-1.0, ADR-071a)
+        discovery_slot_pct: Discovery slot percentage (0.0-1.0, ADR-505)
         max_workers: Maximum parallel workers for 2-hop queries
         chunk_size: Concepts per worker chunk
         timeout_seconds: Wall-clock timeout in seconds
@@ -534,7 +534,7 @@ def analyze_polarity_axis(
 
         logger.info(f"Using {discovery_method} candidate discovery")
 
-        # Create parallel config if using parallel discovery (ADR-071a)
+        # Create parallel config if using parallel discovery (ADR-505)
         if use_parallel and parallel_config is None:
             from api.app.lib.graph_parallelizer import ParallelQueryConfig
             parallel_config = ParallelQueryConfig(

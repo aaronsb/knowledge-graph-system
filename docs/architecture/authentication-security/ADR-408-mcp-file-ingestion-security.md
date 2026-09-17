@@ -241,7 +241,7 @@ Ingest a single file from local filesystem.
 Images (`.png`, `.jpg`, `.jpeg`) are **fully automatic** - agent does NOTHING except submit path:
 
 1. Detect image file by extension
-2. Vision AI generates description automatically (ADR-057a)
+2. Vision AI generates description automatically (ADR-305.1)
 3. Extract concepts from AI description
 4. Store image in object storage with metadata
 
@@ -658,30 +658,30 @@ ingest-directory({
 
 ## Implementation Plan
 
-### Phase 1: Configuration & Validation (ADR-062a)
+### Phase 1: Configuration & Validation
 - [ ] Allowlist configuration schema
 - [ ] CLI commands for allowlist management
 - [ ] Path validation logic with security tests
 - [ ] MCP resource for allowed-paths visibility
 
-### Phase 2: File Inspection & Ingestion (ADR-062b)
+### Phase 2: File Inspection & Ingestion
 - [ ] `inspect-file` MCP tool (preview before commit)
   - Head/tail/range/search/metadata modes
   - Image metadata extraction (dimensions, EXIF)
 - [ ] `ingest-file` MCP tool
   - Text file ingestion
   - Automatic image detection (by extension)
-  - Vision AI auto-description for images (ADR-057a)
+  - Vision AI auto-description for images (ADR-305.1)
   - Object storage integration for images
 - [ ] Access logging (INSPECT, INGEST, DENIED)
 
-### Phase 3: Directory Ingestion (ADR-062c)
+### Phase 3: Directory Ingestion
 - [ ] `ingest-directory` MCP tool
 - [ ] Recursive traversal logic
 - [ ] Auto-naming strategies
 - [ ] Bulk operation limits
 
-### Phase 4: Security Hardening (ADR-062d)
+### Phase 4: Security Hardening
 - [ ] Symlink resolution and validation
 - [ ] TOCTOU mitigation
 - [ ] Security test suite
@@ -709,7 +709,7 @@ ingest-directory({
 
 ## Notes
 
-This ADR establishes the security foundation for MCP file ingestion. Implementation will be split into phases (ADR-062a-d) to allow iterative development and testing.
+This ADR establishes the security foundation for MCP file ingestion. Implementation will be split into the four phases above to allow iterative development and testing.
 
 The allowlist approach provides strong security guarantees while maintaining utility. It assumes users are trustworthy (they control the allowlist) but agents are not (they can only read configuration).
 
