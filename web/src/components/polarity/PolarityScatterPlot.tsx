@@ -739,11 +739,13 @@ export const PolarityScatterPlot: React.FC<PolarityScatterPlotProps> = ({
             />
           )}
 
-          {/* Data points (bubbles with direction indicators) */}
+          {/* Data points (bubbles with direction indicators).
+              recharts 3.10 hands onMouseEnter a ScatterPointItem; the original
+              datum lives on .payload rather than being spread onto the item. */}
           <Scatter
             name="Concepts"
             data={chartData}
-            onMouseEnter={(data) => setHoveredConcept(data)}
+            onMouseEnter={(data) => setHoveredConcept(data.payload as ProjectedConcept)}
             onMouseLeave={() => setHoveredConcept(null)}
             cursor="pointer"
             shape={(props: any) => {
