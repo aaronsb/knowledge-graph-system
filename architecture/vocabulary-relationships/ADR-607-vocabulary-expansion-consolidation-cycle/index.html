@@ -19,7 +19,7 @@
       
       
       <link rel="icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -27,7 +27,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.ec1eaa64.min.css">
       
       
 
@@ -2594,13 +2594,13 @@
 <p><strong>Location</strong>: <code>api/app/lib/ingestion.py:398-424</code></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># LLM suggests new relationship type</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">canonical_type</span> <span class="o">=</span> <span class="n">llm_rel_type</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">category</span> <span class="o">=</span> <span class="s2">&quot;llm_generated&quot;</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">category</span> <span class="o">=</span> <span class="s2">"llm_generated"</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="c1"># Add to vocabulary OPTIMISTICALLY (before relationship creation)</span>
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="n">age_client</span><span class="o">.</span><span class="n">add_edge_type</span><span class="p">(</span>
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">relationship_type</span><span class="o">=</span><span class="n">canonical_type</span><span class="p">,</span>
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="n">category</span><span class="o">=</span><span class="n">category</span><span class="p">,</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="n">description</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;LLM-generated relationship type from ingestion&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="n">description</span><span class="o">=</span><span class="sa">f</span><span class="s2">"LLM-generated relationship type from ingestion"</span><span class="p">,</span>
 <a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="o">...</span>
 <a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="p">)</span>
 <a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>
@@ -2621,15 +2621,15 @@
 <h3 id="phase-2-consolidation-sleepdreaming-state">Phase 2: Consolidation (Sleep/Dreaming State)</h3>
 <p><strong>Location</strong>: <code>api/app/services/vocabulary_manager.py:871-964</code> (ADR-111, implemented 2025-10-31)</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">prune_unused_concepts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dry_run</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span><span class="sd">"""</span>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="sd">    Prune vocabulary types with 0 uses (excludes protected builtin types).</span>
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="sd">    This is the consolidation phase: review what was learned,</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="sd">    keep what&#39;s connected/used, prune what never found a home.</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="sd">    keep what's connected/used, prune what never found a home.</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="sd">    """</span>
 <a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>    <span class="k">for</span> <span class="n">edge_type</span> <span class="ow">in</span> <span class="n">edge_types</span><span class="p">:</span>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>        <span class="n">edge_count</span> <span class="o">=</span> <span class="n">info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;edge_count&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>        <span class="n">is_builtin</span> <span class="o">=</span> <span class="n">info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;is_builtin&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>        <span class="n">edge_count</span> <span class="o">=</span> <span class="n">info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'edge_count'</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>        <span class="n">is_builtin</span> <span class="o">=</span> <span class="n">info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'is_builtin'</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
 <a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>
 <a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>        <span class="c1"># Skip protected vocabulary</span>
 <a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>        <span class="k">if</span> <span class="n">is_builtin</span><span class="p">:</span>
@@ -2691,10 +2691,10 @@
 <h3 id="hand-coded-approach-fights-the-lesson">Hand-Coded Approach (Fights the Lesson)</h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># BAD: Try to predict upfront if vocabulary will be useful</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="k">if</span> <span class="n">predict_relationship_will_succeed</span><span class="p">(</span><span class="n">rel_type</span><span class="p">):</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="n">add_edge_type</span><span class="p">(</span><span class="n">rel_type</span><span class="p">)</span>  <span class="c1"># Only add if &quot;sure&quot;</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="n">add_edge_type</span><span class="p">(</span><span class="n">rel_type</span><span class="p">)</span>  <span class="c1"># Only add if "sure"</span>
 <a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="n">create_relationship</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
 <a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    <span class="n">skip</span><span class="p">()</span>  <span class="c1"># Don&#39;t explore uncertain vocabulary</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    <span class="n">skip</span><span class="p">()</span>  <span class="c1"># Don't explore uncertain vocabulary</span>
 </code></pre></div>
 <p><strong>Problems</strong>:
 - Requires hand-coded prediction logic
@@ -2841,24 +2841,24 @@
   - Enables counterfactual reasoning ("what if?")
   - Preserves the error signal for learning</p>
 <p><strong>Example:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># Vocabulary type: &quot;CONTRADICTS&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># Vocabulary type: "CONTRADICTS"</span>
 <a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="n">edges_using_CONTRADICTS</span> <span class="o">=</span> <span class="p">[</span>
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>    <span class="p">(</span><span class="s2">&quot;System uses Neo4j&quot;</span> <span class="err">→</span> <span class="s2">&quot;System uses Apache AGE&quot;</span><span class="p">,</span> <span class="n">grounding_target</span><span class="p">:</span> <span class="mf">0.23</span><span class="p">),</span>
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>    <span class="p">(</span><span class="s2">&quot;Similarity threshold 0.75&quot;</span> <span class="err">→</span> <span class="s2">&quot;Similarity threshold 0.85&quot;</span><span class="p">,</span> <span class="n">grounding_target</span><span class="p">:</span> <span class="mf">0.28</span><span class="p">),</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>    <span class="p">(</span><span class="s2">"System uses Neo4j"</span> <span class="err">→</span> <span class="s2">"System uses Apache AGE"</span><span class="p">,</span> <span class="n">grounding_target</span><span class="p">:</span> <span class="mf">0.23</span><span class="p">),</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>    <span class="p">(</span><span class="s2">"Similarity threshold 0.75"</span> <span class="err">→</span> <span class="s2">"Similarity threshold 0.85"</span><span class="p">,</span> <span class="n">grounding_target</span><span class="p">:</span> <span class="mf">0.28</span><span class="p">),</span>
 <a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>    <span class="o">...</span>
 <a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="p">]</span>
 <a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>
 <a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="n">avg_grounding</span> <span class="o">=</span> <span class="mf">0.25</span>  <span class="c1"># Low grounding!</span>
 <a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>
-<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a><span class="c1"># WRONG: Prune &quot;CONTRADICTS&quot; because it only connects refuted concepts</span>
-<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a><span class="c1"># RIGHT: &quot;CONTRADICTS&quot; is ESSENTIAL for expressing contradiction itself!</span>
+<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a><span class="c1"># WRONG: Prune "CONTRADICTS" because it only connects refuted concepts</span>
+<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a><span class="c1"># RIGHT: "CONTRADICTS" is ESSENTIAL for expressing contradiction itself!</span>
 </code></pre></div></p>
 <p><strong>Pruning low-grounding vocabulary destroys the capacity to reason about alternatives.</strong></p>
 <h4 id="hegelian-dialectic-synthesis-requires-thesis-antithesis">Hegelian Dialectic: Synthesis Requires Thesis + Antithesis</h4>
 <p><strong>Dialectical reasoning</strong> (Hegel, 1807) requires vocabulary for expressing opposition:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>Thesis:     &quot;System uses Neo4j&quot; (SUPPORTS edges)
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>Antithesis: &quot;System uses Apache AGE&quot; (CONTRADICTS edges)
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>Synthesis:  &quot;System migrated from Neo4j to AGE in October 2025&quot;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>Thesis:     "System uses Neo4j" (SUPPORTS edges)
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>Antithesis: "System uses Apache AGE" (CONTRADICTS edges)
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>Synthesis:  "System migrated from Neo4j to AGE in October 2025"
 </code></pre></div>
 <p><strong>To construct synthesis, you NEED vocabulary describing both:</strong>
 - <code>SUPPORTS</code> - affirms current truth (high grounding)
@@ -2873,7 +2873,7 @@
 </code></pre></div></p>
 <p><strong>WRONG approach</strong> (what we almost did):
 <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="k">if</span> <span class="n">avg_grounding</span> <span class="o">&lt;</span> <span class="mf">0.20</span><span class="p">:</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>    <span class="n">prune</span><span class="p">()</span>  <span class="c1"># &quot;Toxic&quot; vocabulary ❌ DESTROYS REASONING CAPABILITY</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>    <span class="n">prune</span><span class="p">()</span>  <span class="c1"># "Toxic" vocabulary ❌ DESTROYS REASONING CAPABILITY</span>
 </code></pre></div></p>
 <p><strong>CORRECT approach</strong> (grounding-aware classification):
 <div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># Calculate epistemic status based on average grounding of connected concepts</span>
@@ -2881,7 +2881,7 @@
 <a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>    <span class="n">edges</span> <span class="o">=</span> <span class="n">get_edges_using_vocabulary_type</span><span class="p">(</span><span class="n">vocab_type</span><span class="p">)</span>
 <a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>
 <a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">edges</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>        <span class="n">prune</span><span class="p">(</span><span class="s2">&quot;unused&quot;</span><span class="p">)</span>  <span class="c1"># Only criterion for pruning</span>
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>        <span class="n">prune</span><span class="p">(</span><span class="s2">"unused"</span><span class="p">)</span>  <span class="c1"># Only criterion for pruning</span>
 <a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>        <span class="k">continue</span>
 <a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>
 <a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a>    <span class="c1"># Calculate grounding profile (ADR-808)</span>
@@ -2893,37 +2893,37 @@
 <a id="__codelineno-14-15" name="__codelineno-14-15" href="#__codelineno-14-15"></a>    <span class="n">avg_grounding</span> <span class="o">=</span> <span class="n">mean</span><span class="p">(</span><span class="n">groundings</span><span class="p">)</span>
 <a id="__codelineno-14-16" name="__codelineno-14-16" href="#__codelineno-14-16"></a>    <span class="n">max_grounding</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">groundings</span><span class="p">)</span>
 <a id="__codelineno-14-17" name="__codelineno-14-17" href="#__codelineno-14-17"></a>
-<a id="__codelineno-14-18" name="__codelineno-14-18" href="#__codelineno-14-18"></a>    <span class="c1"># CLASSIFY epistemic status, don&#39;t prune</span>
+<a id="__codelineno-14-18" name="__codelineno-14-18" href="#__codelineno-14-18"></a>    <span class="c1"># CLASSIFY epistemic status, don't prune</span>
 <a id="__codelineno-14-19" name="__codelineno-14-19" href="#__codelineno-14-19"></a>    <span class="n">vocab_type</span><span class="o">.</span><span class="n">epistemic_status</span> <span class="o">=</span> <span class="n">classify_epistemic_status</span><span class="p">(</span><span class="n">avg_grounding</span><span class="p">)</span>
 <a id="__codelineno-14-20" name="__codelineno-14-20" href="#__codelineno-14-20"></a>    <span class="n">vocab_type</span><span class="o">.</span><span class="n">grounding_stats</span> <span class="o">=</span> <span class="p">{</span>
-<a id="__codelineno-14-21" name="__codelineno-14-21" href="#__codelineno-14-21"></a>        <span class="s1">&#39;avg&#39;</span><span class="p">:</span> <span class="n">avg_grounding</span><span class="p">,</span>
-<a id="__codelineno-14-22" name="__codelineno-14-22" href="#__codelineno-14-22"></a>        <span class="s1">&#39;max&#39;</span><span class="p">:</span> <span class="n">max_grounding</span><span class="p">,</span>
-<a id="__codelineno-14-23" name="__codelineno-14-23" href="#__codelineno-14-23"></a>        <span class="s1">&#39;distribution&#39;</span><span class="p">:</span> <span class="n">histogram</span><span class="p">(</span><span class="n">groundings</span><span class="p">)</span>
+<a id="__codelineno-14-21" name="__codelineno-14-21" href="#__codelineno-14-21"></a>        <span class="s1">'avg'</span><span class="p">:</span> <span class="n">avg_grounding</span><span class="p">,</span>
+<a id="__codelineno-14-22" name="__codelineno-14-22" href="#__codelineno-14-22"></a>        <span class="s1">'max'</span><span class="p">:</span> <span class="n">max_grounding</span><span class="p">,</span>
+<a id="__codelineno-14-23" name="__codelineno-14-23" href="#__codelineno-14-23"></a>        <span class="s1">'distribution'</span><span class="p">:</span> <span class="n">histogram</span><span class="p">(</span><span class="n">groundings</span><span class="p">)</span>
 <a id="__codelineno-14-24" name="__codelineno-14-24" href="#__codelineno-14-24"></a>    <span class="p">}</span>
 <a id="__codelineno-14-25" name="__codelineno-14-25" href="#__codelineno-14-25"></a>
 <a id="__codelineno-14-26" name="__codelineno-14-26" href="#__codelineno-14-26"></a><span class="k">def</span><span class="w"> </span><span class="nf">classify_epistemic_status</span><span class="p">(</span><span class="n">avg_grounding</span><span class="p">):</span>
-<a id="__codelineno-14-27" name="__codelineno-14-27" href="#__codelineno-14-27"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-14-27" name="__codelineno-14-27" href="#__codelineno-14-27"></a><span class="w">    </span><span class="sd">"""</span>
 <a id="__codelineno-14-28" name="__codelineno-14-28" href="#__codelineno-14-28"></a><span class="sd">    Classify vocabulary by the typical grounding of concepts it connects.</span>
 <a id="__codelineno-14-29" name="__codelineno-14-29" href="#__codelineno-14-29"></a>
 <a id="__codelineno-14-30" name="__codelineno-14-30" href="#__codelineno-14-30"></a><span class="sd">    All roles are VALUABLE - none should be pruned based on grounding.</span>
-<a id="__codelineno-14-31" name="__codelineno-14-31" href="#__codelineno-14-31"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-14-31" name="__codelineno-14-31" href="#__codelineno-14-31"></a><span class="sd">    """</span>
 <a id="__codelineno-14-32" name="__codelineno-14-32" href="#__codelineno-14-32"></a>    <span class="k">if</span> <span class="n">avg_grounding</span> <span class="o">&gt;</span> <span class="mf">0.80</span><span class="p">:</span>
-<a id="__codelineno-14-33" name="__codelineno-14-33" href="#__codelineno-14-33"></a>        <span class="k">return</span> <span class="s2">&quot;AFFIRMATIVE&quot;</span>
+<a id="__codelineno-14-33" name="__codelineno-14-33" href="#__codelineno-14-33"></a>        <span class="k">return</span> <span class="s2">"AFFIRMATIVE"</span>
 <a id="__codelineno-14-34" name="__codelineno-14-34" href="#__codelineno-14-34"></a>        <span class="c1"># Describes well-supported concepts</span>
 <a id="__codelineno-14-35" name="__codelineno-14-35" href="#__codelineno-14-35"></a>        <span class="c1"># Examples: ENABLES, SUPPORTS, COMPOSED_OF</span>
 <a id="__codelineno-14-36" name="__codelineno-14-36" href="#__codelineno-14-36"></a>
 <a id="__codelineno-14-37" name="__codelineno-14-37" href="#__codelineno-14-37"></a>    <span class="k">elif</span> <span class="n">avg_grounding</span> <span class="o">&gt;</span> <span class="mf">0.40</span><span class="p">:</span>
-<a id="__codelineno-14-38" name="__codelineno-14-38" href="#__codelineno-14-38"></a>        <span class="k">return</span> <span class="s2">&quot;CONTESTED&quot;</span>
+<a id="__codelineno-14-38" name="__codelineno-14-38" href="#__codelineno-14-38"></a>        <span class="k">return</span> <span class="s2">"CONTESTED"</span>
 <a id="__codelineno-14-39" name="__codelineno-14-39" href="#__codelineno-14-39"></a>        <span class="c1"># Describes evolving understanding</span>
 <a id="__codelineno-14-40" name="__codelineno-14-40" href="#__codelineno-14-40"></a>        <span class="c1"># Examples: ALTERNATIVE_TO, COMPETES_WITH</span>
 <a id="__codelineno-14-41" name="__codelineno-14-41" href="#__codelineno-14-41"></a>
 <a id="__codelineno-14-42" name="__codelineno-14-42" href="#__codelineno-14-42"></a>    <span class="k">elif</span> <span class="n">avg_grounding</span> <span class="o">&gt;</span> <span class="mf">0.20</span><span class="p">:</span>
-<a id="__codelineno-14-43" name="__codelineno-14-43" href="#__codelineno-14-43"></a>        <span class="k">return</span> <span class="s2">&quot;HISTORICAL&quot;</span>
+<a id="__codelineno-14-43" name="__codelineno-14-43" href="#__codelineno-14-43"></a>        <span class="k">return</span> <span class="s2">"HISTORICAL"</span>
 <a id="__codelineno-14-44" name="__codelineno-14-44" href="#__codelineno-14-44"></a>        <span class="c1"># Describes past states or outdated concepts</span>
 <a id="__codelineno-14-45" name="__codelineno-14-45" href="#__codelineno-14-45"></a>        <span class="c1"># Examples: REPLACED_BY, HISTORICALLY_USED, DEPRECATED_BY</span>
 <a id="__codelineno-14-46" name="__codelineno-14-46" href="#__codelineno-14-46"></a>
 <a id="__codelineno-14-47" name="__codelineno-14-47" href="#__codelineno-14-47"></a>    <span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-14-48" name="__codelineno-14-48" href="#__codelineno-14-48"></a>        <span class="k">return</span> <span class="s2">&quot;CONTRADICTORY&quot;</span>
+<a id="__codelineno-14-48" name="__codelineno-14-48" href="#__codelineno-14-48"></a>        <span class="k">return</span> <span class="s2">"CONTRADICTORY"</span>
 <a id="__codelineno-14-49" name="__codelineno-14-49" href="#__codelineno-14-49"></a>        <span class="c1"># Describes refuted concepts or conflicts</span>
 <a id="__codelineno-14-50" name="__codelineno-14-50" href="#__codelineno-14-50"></a>        <span class="c1"># Examples: CONTRADICTS, DISPROVEN_BY, REFUTED_BY</span>
 <a id="__codelineno-14-51" name="__codelineno-14-51" href="#__codelineno-14-51"></a>
@@ -2933,28 +2933,28 @@
 <p><strong>1. Contextual Query Filtering:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="c1">// Show me contradictory relationships (explore alternatives)</span>
 <a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">c1</span><span class="p">)</span><span class="o">-[</span><span class="n">r</span><span class="o">]-</span><span class="p">(</span><span class="n">c2</span><span class="p">)</span>
-<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">r</span><span class="p">.</span><span class="n">epistemic_status</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">&#39;CONTRADICTORY&#39;</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">r</span><span class="p">.</span><span class="n">epistemic_status</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">'CONTRADICTORY'</span>
 <a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="k">RETURN</span><span class="w"> </span><span class="n">c1</span><span class="p">,</span><span class="w"> </span><span class="n">r</span><span class="p">,</span><span class="w"> </span><span class="n">c2</span>
 <a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>
 <a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="c1">// Show me historical evolution (how did we get here?)</span>
 <a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">c1</span><span class="p">)</span><span class="o">-[</span><span class="n">r</span><span class="o">]-</span><span class="p">(</span><span class="n">c2</span><span class="p">)</span>
-<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">r</span><span class="p">.</span><span class="n">epistemic_status</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">&#39;HISTORICAL&#39;</span>
+<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">r</span><span class="p">.</span><span class="n">epistemic_status</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">'HISTORICAL'</span>
 <a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a><span class="k">RETURN</span><span class="w"> </span><span class="n">c1</span><span class="p">,</span><span class="w"> </span><span class="n">r</span><span class="p">,</span><span class="w"> </span><span class="n">c2</span>
 </code></pre></div></p>
 <p><strong>2. Dialectical Analysis:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="c1"># Synthesize understanding from thesis + antithesis</span>
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="n">thesis</span> <span class="o">=</span> <span class="n">concepts_with_role</span><span class="p">(</span><span class="s2">&quot;AFFIRMATIVE&quot;</span><span class="p">)</span>
-<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="n">antithesis</span> <span class="o">=</span> <span class="n">concepts_with_role</span><span class="p">(</span><span class="s2">&quot;CONTRADICTORY&quot;</span><span class="p">)</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="n">thesis</span> <span class="o">=</span> <span class="n">concepts_with_role</span><span class="p">(</span><span class="s2">"AFFIRMATIVE"</span><span class="p">)</span>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="n">antithesis</span> <span class="o">=</span> <span class="n">concepts_with_role</span><span class="p">(</span><span class="s2">"CONTRADICTORY"</span><span class="p">)</span>
 <a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="n">synthesis</span> <span class="o">=</span> <span class="n">generate_synthesis</span><span class="p">(</span><span class="n">thesis</span><span class="p">,</span> <span class="n">antithesis</span><span class="p">)</span>
 </code></pre></div></p>
 <p><strong>3. Error Tracking:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="c1"># What was tried and why did it fail?</span>
 <a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="n">refuted_concepts</span> <span class="o">=</span> <span class="n">get_concepts</span><span class="p">(</span><span class="n">grounding</span> <span class="o">&lt;</span> <span class="mf">0.20</span><span class="p">)</span>
-<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="n">reasons</span> <span class="o">=</span> <span class="n">get_edges_to</span><span class="p">(</span><span class="n">refuted_concepts</span><span class="p">,</span> <span class="n">role</span><span class="o">=</span><span class="s2">&quot;CONTRADICTORY&quot;</span><span class="p">)</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="n">reasons</span> <span class="o">=</span> <span class="n">get_edges_to</span><span class="p">(</span><span class="n">refuted_concepts</span><span class="p">,</span> <span class="n">role</span><span class="o">=</span><span class="s2">"CONTRADICTORY"</span><span class="p">)</span>
 </code></pre></div></p>
 <p><strong>4. Counterfactual Reasoning:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="c1"># What if we had chosen alternative X?</span>
-<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="n">alternatives</span> <span class="o">=</span> <span class="n">get_edges</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s2">&quot;ALTERNATIVE_TO&quot;</span><span class="p">)</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="n">alternatives</span> <span class="o">=</span> <span class="n">get_edges</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s2">"ALTERNATIVE_TO"</span><span class="p">)</span>
 <a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="n">explore_counterfactual</span><span class="p">(</span><span class="n">alternative</span><span class="p">)</span>
 </code></pre></div></p>
 <h4 id="pruning-remains-binary-used-vs-unused">Pruning Remains Binary: Used vs. Unused</h4>
@@ -3002,12 +3002,12 @@
 <a id="__codelineno-21-11" name="__codelineno-21-11" href="#__codelineno-21-11"></a>    <span class="p">]</span>
 <a id="__codelineno-21-12" name="__codelineno-21-12" href="#__codelineno-21-12"></a>
 <a id="__codelineno-21-13" name="__codelineno-21-13" href="#__codelineno-21-13"></a>    <span class="n">stats</span> <span class="o">=</span> <span class="p">{</span>
-<a id="__codelineno-21-14" name="__codelineno-21-14" href="#__codelineno-21-14"></a>        <span class="s1">&#39;count&#39;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">edges</span><span class="p">),</span>
-<a id="__codelineno-21-15" name="__codelineno-21-15" href="#__codelineno-21-15"></a>        <span class="s1">&#39;avg_grounding&#39;</span><span class="p">:</span> <span class="n">mean</span><span class="p">(</span><span class="n">groundings</span><span class="p">),</span>
-<a id="__codelineno-21-16" name="__codelineno-21-16" href="#__codelineno-21-16"></a>        <span class="s1">&#39;median_grounding&#39;</span><span class="p">:</span> <span class="n">median</span><span class="p">(</span><span class="n">groundings</span><span class="p">),</span>
-<a id="__codelineno-21-17" name="__codelineno-21-17" href="#__codelineno-21-17"></a>        <span class="s1">&#39;max_grounding&#39;</span><span class="p">:</span> <span class="nb">max</span><span class="p">(</span><span class="n">groundings</span><span class="p">),</span>
-<a id="__codelineno-21-18" name="__codelineno-21-18" href="#__codelineno-21-18"></a>        <span class="s1">&#39;min_grounding&#39;</span><span class="p">:</span> <span class="nb">min</span><span class="p">(</span><span class="n">groundings</span><span class="p">),</span>
-<a id="__codelineno-21-19" name="__codelineno-21-19" href="#__codelineno-21-19"></a>        <span class="s1">&#39;std_grounding&#39;</span><span class="p">:</span> <span class="n">std</span><span class="p">(</span><span class="n">groundings</span><span class="p">)</span>
+<a id="__codelineno-21-14" name="__codelineno-21-14" href="#__codelineno-21-14"></a>        <span class="s1">'count'</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">edges</span><span class="p">),</span>
+<a id="__codelineno-21-15" name="__codelineno-21-15" href="#__codelineno-21-15"></a>        <span class="s1">'avg_grounding'</span><span class="p">:</span> <span class="n">mean</span><span class="p">(</span><span class="n">groundings</span><span class="p">),</span>
+<a id="__codelineno-21-16" name="__codelineno-21-16" href="#__codelineno-21-16"></a>        <span class="s1">'median_grounding'</span><span class="p">:</span> <span class="n">median</span><span class="p">(</span><span class="n">groundings</span><span class="p">),</span>
+<a id="__codelineno-21-17" name="__codelineno-21-17" href="#__codelineno-21-17"></a>        <span class="s1">'max_grounding'</span><span class="p">:</span> <span class="nb">max</span><span class="p">(</span><span class="n">groundings</span><span class="p">),</span>
+<a id="__codelineno-21-18" name="__codelineno-21-18" href="#__codelineno-21-18"></a>        <span class="s1">'min_grounding'</span><span class="p">:</span> <span class="nb">min</span><span class="p">(</span><span class="n">groundings</span><span class="p">),</span>
+<a id="__codelineno-21-19" name="__codelineno-21-19" href="#__codelineno-21-19"></a>        <span class="s1">'std_grounding'</span><span class="p">:</span> <span class="n">std</span><span class="p">(</span><span class="n">groundings</span><span class="p">)</span>
 <a id="__codelineno-21-20" name="__codelineno-21-20" href="#__codelineno-21-20"></a>    <span class="p">}</span>
 <a id="__codelineno-21-21" name="__codelineno-21-21" href="#__codelineno-21-21"></a>
 <a id="__codelineno-21-22" name="__codelineno-21-22" href="#__codelineno-21-22"></a>    <span class="c1"># Store as vocabulary metadata (ADR-606)</span>
@@ -3016,18 +3016,18 @@
 <p><strong>Phase 2</strong>: Classify epistemic statuses
 <div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="c1"># Assign role based on average grounding</span>
 <a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="n">vocab_type</span><span class="o">.</span><span class="n">epistemic_status</span> <span class="o">=</span> <span class="n">classify_epistemic_status</span><span class="p">(</span>
-<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>    <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;avg_grounding&#39;</span><span class="p">]</span>
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>    <span class="n">stats</span><span class="p">[</span><span class="s1">'avg_grounding'</span><span class="p">]</span>
 <a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="p">)</span>
 </code></pre></div></p>
 <p><strong>Phase 3</strong>: Enable role-based querying
 <div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="c1">// Find all vocabulary describing contradictions</span>
 <a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">v</span><span class="p">:</span><span class="n">VocabType</span><span class="p">)</span>
-<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">v</span><span class="p">.</span><span class="n">epistemic_status</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">&#39;CONTRADICTORY&#39;</span>
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">v</span><span class="p">.</span><span class="n">epistemic_status</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">'CONTRADICTORY'</span>
 <a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a><span class="k">RETURN</span><span class="w"> </span><span class="n">v</span><span class="p">.</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">v</span><span class="p">.</span><span class="n">grounding_stats</span>
 <a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a>
 <a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a><span class="c1">// Find all vocabulary describing current truth</span>
 <a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">v</span><span class="p">:</span><span class="n">VocabType</span><span class="p">)</span>
-<a id="__codelineno-23-8" name="__codelineno-23-8" href="#__codelineno-23-8"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">v</span><span class="p">.</span><span class="n">epistemic_status</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">&#39;AFFIRMATIVE&#39;</span>
+<a id="__codelineno-23-8" name="__codelineno-23-8" href="#__codelineno-23-8"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">v</span><span class="p">.</span><span class="n">epistemic_status</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">'AFFIRMATIVE'</span>
 <a id="__codelineno-23-9" name="__codelineno-23-9" href="#__codelineno-23-9"></a><span class="k">RETURN</span><span class="w"> </span><span class="n">v</span><span class="p">.</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">v</span><span class="p">.</span><span class="n">grounding_stats</span>
 </code></pre></div></p>
 <p><strong>Phase 4</strong>: Dialectical query patterns
@@ -3133,7 +3133,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": [], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

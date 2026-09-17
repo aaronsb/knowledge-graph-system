@@ -19,7 +19,7 @@
       
       
       <link rel="icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -27,7 +27,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.ec1eaa64.min.css">
       
       
 
@@ -2696,7 +2696,7 @@
 <h3 id="the-shift-from-boolean-to-probabilistic">The Shift from Boolean to Probabilistic</h3>
 <p><strong>Before (boolean):</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Binary membership</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">relationship</span> <span class="o">=</span> <span class="s2">&quot;APPEARS&quot;</span> <span class="ow">or</span> <span class="s2">&quot;SUPPORTS&quot;</span> <span class="ow">or</span> <span class="s2">&quot;CONTRADICTS&quot;</span>  <span class="c1"># Discrete choice</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">relationship</span> <span class="o">=</span> <span class="s2">"APPEARS"</span> <span class="ow">or</span> <span class="s2">"SUPPORTS"</span> <span class="ow">or</span> <span class="s2">"CONTRADICTS"</span>  <span class="c1"># Discrete choice</span>
 <a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
 <a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="c1"># Binary queries</span>
 <a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="n">has_relationship</span> <span class="o">=</span> <span class="p">(</span><span class="n">c</span><span class="p">)</span><span class="o">-</span><span class="p">[:</span><span class="n">APPEARS</span><span class="p">]</span><span class="o">-&gt;</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>  <span class="c1"># True or False</span>
@@ -2798,7 +2798,7 @@
 </code></pre></div></p>
 <p><strong>Example 2: Appearance clustering</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># Similarity-based filtering</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="n">cluster</span> <span class="o">=</span> <span class="p">{</span><span class="n">r</span> <span class="o">|</span> <span class="n">dot</span><span class="p">(</span><span class="n">embed</span><span class="p">(</span><span class="n">r</span><span class="p">),</span> <span class="n">embed</span><span class="p">(</span><span class="s2">&quot;APPEARS&quot;</span><span class="p">))</span> <span class="o">&gt;=</span> <span class="mf">0.75</span><span class="p">}</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="n">cluster</span> <span class="o">=</span> <span class="p">{</span><span class="n">r</span> <span class="o">|</span> <span class="n">dot</span><span class="p">(</span><span class="n">embed</span><span class="p">(</span><span class="n">r</span><span class="p">),</span> <span class="n">embed</span><span class="p">(</span><span class="s2">"APPEARS"</span><span class="p">))</span> <span class="o">&gt;=</span> <span class="mf">0.75</span><span class="p">}</span>
 <a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>               <span class="err">└──────────────┬─────────────┘</span>
 <a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>                    <span class="n">Cosine</span> <span class="n">similarity</span> <span class="n">threshold</span>
 </code></pre></div></p>
@@ -2834,16 +2834,16 @@
 <p><strong>No hardcoded relationship types.</strong> All relationships—both Concept→Concept and Concept→Source—use the emergent vocabulary system with threshold-based semantic clustering.</p>
 <h3 id="pattern-appears-as-vocabulary-cluster">Pattern: APPEARS as Vocabulary Cluster</h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># APPEARS becomes a semantic prototype (not hardcoded type)</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="n">appearance_prototype</span> <span class="o">=</span> <span class="s2">&quot;APPEARS&quot;</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="n">appearance_prototype</span> <span class="o">=</span> <span class="s2">"APPEARS"</span>
 <a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
 <a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1"># LLM generates emergent appearance vocabulary during extraction</span>
 <a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="n">emergent_types</span> <span class="o">=</span> <span class="p">[</span>
-<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>    <span class="s2">&quot;discussed in&quot;</span><span class="p">,</span>
-<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>    <span class="s2">&quot;mentioned in&quot;</span><span class="p">,</span>
-<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>    <span class="s2">&quot;central to&quot;</span><span class="p">,</span>
-<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>    <span class="s2">&quot;prophesied in&quot;</span><span class="p">,</span>
-<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>    <span class="s2">&quot;tangentially referenced in&quot;</span><span class="p">,</span>
-<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>    <span class="s2">&quot;foundational to&quot;</span><span class="p">,</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>    <span class="s2">"discussed in"</span><span class="p">,</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>    <span class="s2">"mentioned in"</span><span class="p">,</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>    <span class="s2">"central to"</span><span class="p">,</span>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>    <span class="s2">"prophesied in"</span><span class="p">,</span>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>    <span class="s2">"tangentially referenced in"</span><span class="p">,</span>
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>    <span class="s2">"foundational to"</span><span class="p">,</span>
 <a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a>    <span class="o">...</span>
 <a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a><span class="p">]</span>
 <a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a>
@@ -2858,10 +2858,10 @@
 <a id="__codelineno-9-23" name="__codelineno-9-23" href="#__codelineno-9-23"></a>
 <a id="__codelineno-9-24" name="__codelineno-9-24" href="#__codelineno-9-24"></a><span class="c1"># Query by semantic similarity to APPEARS prototype (threshold-based)</span>
 <a id="__codelineno-9-25" name="__codelineno-9-25" href="#__codelineno-9-25"></a><span class="k">def</span><span class="w"> </span><span class="nf">match_concept_sources</span><span class="p">(</span><span class="n">concept_id</span><span class="p">,</span> <span class="n">appears_threshold</span><span class="o">=</span><span class="mf">0.75</span><span class="p">):</span>
-<a id="__codelineno-9-26" name="__codelineno-9-26" href="#__codelineno-9-26"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Find sources via relationships semantically similar to APPEARS&quot;&quot;&quot;</span>
+<a id="__codelineno-9-26" name="__codelineno-9-26" href="#__codelineno-9-26"></a><span class="w">    </span><span class="sd">"""Find sources via relationships semantically similar to APPEARS"""</span>
 <a id="__codelineno-9-27" name="__codelineno-9-27" href="#__codelineno-9-27"></a>
 <a id="__codelineno-9-28" name="__codelineno-9-28" href="#__codelineno-9-28"></a>    <span class="c1"># Get APPEARS cluster from vocabulary (not hardcoded)</span>
-<a id="__codelineno-9-29" name="__codelineno-9-29" href="#__codelineno-9-29"></a>    <span class="n">appears_embedding</span> <span class="o">=</span> <span class="n">get_vocabulary_embedding</span><span class="p">(</span><span class="s2">&quot;APPEARS&quot;</span><span class="p">)</span>
+<a id="__codelineno-9-29" name="__codelineno-9-29" href="#__codelineno-9-29"></a>    <span class="n">appears_embedding</span> <span class="o">=</span> <span class="n">get_vocabulary_embedding</span><span class="p">(</span><span class="s2">"APPEARS"</span><span class="p">)</span>
 <a id="__codelineno-9-30" name="__codelineno-9-30" href="#__codelineno-9-30"></a>
 <a id="__codelineno-9-31" name="__codelineno-9-31" href="#__codelineno-9-31"></a>    <span class="c1"># Find all types within threshold</span>
 <a id="__codelineno-9-32" name="__codelineno-9-32" href="#__codelineno-9-32"></a>    <span class="n">appearance_types</span> <span class="o">=</span> <span class="p">[]</span>
@@ -2871,19 +2871,19 @@
 <a id="__codelineno-9-36" name="__codelineno-9-36" href="#__codelineno-9-36"></a>            <span class="n">appearance_types</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">vocab_type</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
 <a id="__codelineno-9-37" name="__codelineno-9-37" href="#__codelineno-9-37"></a>
 <a id="__codelineno-9-38" name="__codelineno-9-38" href="#__codelineno-9-38"></a>    <span class="c1"># Query using emergent vocabulary</span>
-<a id="__codelineno-9-39" name="__codelineno-9-39" href="#__codelineno-9-39"></a>    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-9-39" name="__codelineno-9-39" href="#__codelineno-9-39"></a>    <span class="k">return</span> <span class="sa">f</span><span class="s2">"""</span>
 <a id="__codelineno-9-40" name="__codelineno-9-40" href="#__codelineno-9-40"></a><span class="s2">        MATCH (c:Concept </span><span class="se">{{</span><span class="s2">concept_id: $concept_id</span><span class="se">}}</span><span class="s2">)-[r]-&gt;(s:Source)</span>
 <a id="__codelineno-9-41" name="__codelineno-9-41" href="#__codelineno-9-41"></a><span class="s2">        WHERE type(r) IN </span><span class="si">{</span><span class="n">appearance_types</span><span class="si">}</span>
 <a id="__codelineno-9-42" name="__codelineno-9-42" href="#__codelineno-9-42"></a><span class="s2">        RETURN s, type(r), r.confidence</span>
-<a id="__codelineno-9-43" name="__codelineno-9-43" href="#__codelineno-9-43"></a><span class="s2">    &quot;&quot;&quot;</span>
+<a id="__codelineno-9-43" name="__codelineno-9-43" href="#__codelineno-9-43"></a><span class="s2">    """</span>
 </code></pre></div>
 <h3 id="polarity-axis-for-appearance-strength">Polarity Axis for Appearance Strength</h3>
 <p>Apply ADR-811's polarity axis triangulation to appearance relationships:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># Define polarity pairs (emergent from vocabulary, not hardcoded)</span>
 <a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="n">appearance_polarity_pairs</span> <span class="o">=</span> <span class="p">[</span>
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>    <span class="p">(</span><span class="s2">&quot;CENTRAL_TO&quot;</span><span class="p">,</span> <span class="s2">&quot;TANGENTIAL_TO&quot;</span><span class="p">),</span>
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>    <span class="p">(</span><span class="s2">&quot;THOROUGHLY_DISCUSSED_IN&quot;</span><span class="p">,</span> <span class="s2">&quot;BRIEFLY_MENTIONED_IN&quot;</span><span class="p">),</span>
-<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>    <span class="p">(</span><span class="s2">&quot;FOUNDATIONAL_TO&quot;</span><span class="p">,</span> <span class="s2">&quot;PERIPHERAL_TO&quot;</span><span class="p">),</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>    <span class="p">(</span><span class="s2">"CENTRAL_TO"</span><span class="p">,</span> <span class="s2">"TANGENTIAL_TO"</span><span class="p">),</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>    <span class="p">(</span><span class="s2">"THOROUGHLY_DISCUSSED_IN"</span><span class="p">,</span> <span class="s2">"BRIEFLY_MENTIONED_IN"</span><span class="p">),</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>    <span class="p">(</span><span class="s2">"FOUNDATIONAL_TO"</span><span class="p">,</span> <span class="s2">"PERIPHERAL_TO"</span><span class="p">),</span>
 <a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="p">]</span>
 <a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>
 <a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="c1"># Calculate polarity axis (same algorithm as grounding)</span>
@@ -2896,19 +2896,19 @@
 <a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a>
 <a id="__codelineno-10-16" name="__codelineno-10-16" href="#__codelineno-10-16"></a><span class="c1"># Project edge onto axis for strength score</span>
 <a id="__codelineno-10-17" name="__codelineno-10-17" href="#__codelineno-10-17"></a><span class="k">def</span><span class="w"> </span><span class="nf">calculate_appearance_strength</span><span class="p">(</span><span class="n">edge_type</span><span class="p">):</span>
-<a id="__codelineno-10-18" name="__codelineno-10-18" href="#__codelineno-10-18"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-10-18" name="__codelineno-10-18" href="#__codelineno-10-18"></a><span class="w">    </span><span class="sd">"""</span>
 <a id="__codelineno-10-19" name="__codelineno-10-19" href="#__codelineno-10-19"></a><span class="sd">    Returns: -1.0 (tangential) to +1.0 (central)</span>
 <a id="__codelineno-10-20" name="__codelineno-10-20" href="#__codelineno-10-20"></a>
 <a id="__codelineno-10-21" name="__codelineno-10-21" href="#__codelineno-10-21"></a><span class="sd">    Same dot product projection as grounding calculation.</span>
-<a id="__codelineno-10-22" name="__codelineno-10-22" href="#__codelineno-10-22"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-10-22" name="__codelineno-10-22" href="#__codelineno-10-22"></a><span class="sd">    """</span>
 <a id="__codelineno-10-23" name="__codelineno-10-23" href="#__codelineno-10-23"></a>    <span class="n">edge_emb</span> <span class="o">=</span> <span class="n">get_vocabulary_embedding</span><span class="p">(</span><span class="n">edge_type</span><span class="p">)</span>
 <a id="__codelineno-10-24" name="__codelineno-10-24" href="#__codelineno-10-24"></a>    <span class="k">return</span> <span class="n">dot_product</span><span class="p">(</span><span class="n">edge_emb</span><span class="p">,</span> <span class="n">appearance_axis</span><span class="p">)</span>
 </code></pre></div>
 <h3 id="storage-emergent-types-not-hardcoded">Storage: Emergent Types, Not Hardcoded</h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1">// LLM extraction generates whatever types emerge from corpus</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="k">MERGE</span><span class="w"> </span><span class="p">(</span><span class="n">c</span><span class="p">:</span><span class="n">Concept</span><span class="w"> </span><span class="p">{</span><span class="n">concept_id</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;covenant_name&quot;</span><span class="p">})</span><span class="o">-[</span><span class="p">:</span><span class="n">PROPHESIED_IN</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">s</span><span class="p">:</span><span class="n">Source</span><span class="w"> </span><span class="p">{...})</span>
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="k">MERGE</span><span class="w"> </span><span class="p">(</span><span class="n">c</span><span class="p">:</span><span class="n">Concept</span><span class="w"> </span><span class="p">{</span><span class="n">concept_id</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;abraham&quot;</span><span class="p">})</span><span class="o">-[</span><span class="p">:</span><span class="n">CENTRAL_TO</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">s</span><span class="p">:</span><span class="n">Source</span><span class="w"> </span><span class="p">{...})</span>
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="k">MERGE</span><span class="w"> </span><span class="p">(</span><span class="n">c</span><span class="p">:</span><span class="n">Concept</span><span class="w"> </span><span class="p">{</span><span class="n">concept_id</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;livestock&quot;</span><span class="p">})</span><span class="o">-[</span><span class="p">:</span><span class="n">MENTIONED_IN</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">s</span><span class="p">:</span><span class="n">Source</span><span class="w"> </span><span class="p">{...})</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="k">MERGE</span><span class="w"> </span><span class="p">(</span><span class="n">c</span><span class="p">:</span><span class="n">Concept</span><span class="w"> </span><span class="p">{</span><span class="n">concept_id</span><span class="p">:</span><span class="w"> </span><span class="s">"covenant_name"</span><span class="p">})</span><span class="o">-[</span><span class="p">:</span><span class="n">PROPHESIED_IN</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">s</span><span class="p">:</span><span class="n">Source</span><span class="w"> </span><span class="p">{...})</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="k">MERGE</span><span class="w"> </span><span class="p">(</span><span class="n">c</span><span class="p">:</span><span class="n">Concept</span><span class="w"> </span><span class="p">{</span><span class="n">concept_id</span><span class="p">:</span><span class="w"> </span><span class="s">"abraham"</span><span class="p">})</span><span class="o">-[</span><span class="p">:</span><span class="n">CENTRAL_TO</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">s</span><span class="p">:</span><span class="n">Source</span><span class="w"> </span><span class="p">{...})</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="k">MERGE</span><span class="w"> </span><span class="p">(</span><span class="n">c</span><span class="p">:</span><span class="n">Concept</span><span class="w"> </span><span class="p">{</span><span class="n">concept_id</span><span class="p">:</span><span class="w"> </span><span class="s">"livestock"</span><span class="p">})</span><span class="o">-[</span><span class="p">:</span><span class="n">MENTIONED_IN</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">s</span><span class="p">:</span><span class="n">Source</span><span class="w"> </span><span class="p">{...})</span>
 <a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>
 <a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="c1">// Vocabulary table auto-populated by extraction</span>
 <a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="c1">// No hardcoded type list - vocabulary emerges from usage</span>
@@ -2919,29 +2919,29 @@
 <p><strong>Automatic appearance type inference</strong> during ingestion:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># api/lib/serialization.py</span>
 <a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="k">def</span><span class="w"> </span><span class="nf">infer_appearance_type</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">source</span><span class="p">,</span> <span class="n">all_instances</span><span class="p">):</span>
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">    </span><span class="sd">"""</span>
 <a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="sd">    Infer how concept appears based on structural signals.</span>
 <a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>
 <a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="sd">    Transparent to LLM - no prompt changes needed.</span>
-<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="sd">    """</span>
 <a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>    <span class="n">signals</span> <span class="o">=</span> <span class="p">{</span>
-<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a>        <span class="s1">&#39;centrality&#39;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">instance</span><span class="p">[</span><span class="s1">&#39;quote&#39;</span><span class="p">])</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">source</span><span class="p">[</span><span class="s1">&#39;full_text&#39;</span><span class="p">]),</span>
-<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a>        <span class="s1">&#39;frequency&#39;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">all_instances</span><span class="p">),</span>  <span class="c1"># How many times in this source</span>
-<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a>        <span class="s1">&#39;position&#39;</span><span class="p">:</span> <span class="n">instance</span><span class="p">[</span><span class="s1">&#39;paragraph&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="n">source</span><span class="p">[</span><span class="s1">&#39;total_paragraphs&#39;</span><span class="p">],</span>
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a>        <span class="s1">'centrality'</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">instance</span><span class="p">[</span><span class="s1">'quote'</span><span class="p">])</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">source</span><span class="p">[</span><span class="s1">'full_text'</span><span class="p">]),</span>
+<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a>        <span class="s1">'frequency'</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">all_instances</span><span class="p">),</span>  <span class="c1"># How many times in this source</span>
+<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a>        <span class="s1">'position'</span><span class="p">:</span> <span class="n">instance</span><span class="p">[</span><span class="s1">'paragraph'</span><span class="p">]</span> <span class="o">/</span> <span class="n">source</span><span class="p">[</span><span class="s1">'total_paragraphs'</span><span class="p">],</span>
 <a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a>    <span class="p">}</span>
 <a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a>
 <a id="__codelineno-12-14" name="__codelineno-12-14" href="#__codelineno-12-14"></a>    <span class="c1"># Simple heuristics → vocabulary type</span>
-<a id="__codelineno-12-15" name="__codelineno-12-15" href="#__codelineno-12-15"></a>    <span class="k">if</span> <span class="n">signals</span><span class="p">[</span><span class="s1">&#39;centrality&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">0.3</span><span class="p">:</span>
-<a id="__codelineno-12-16" name="__codelineno-12-16" href="#__codelineno-12-16"></a>        <span class="k">return</span> <span class="s2">&quot;CENTRAL_TO&quot;</span>
-<a id="__codelineno-12-17" name="__codelineno-12-17" href="#__codelineno-12-17"></a>    <span class="k">elif</span> <span class="n">signals</span><span class="p">[</span><span class="s1">&#39;frequency&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">5</span><span class="p">:</span>
-<a id="__codelineno-12-18" name="__codelineno-12-18" href="#__codelineno-12-18"></a>        <span class="k">return</span> <span class="s2">&quot;THOROUGHLY_DISCUSSED_IN&quot;</span>
-<a id="__codelineno-12-19" name="__codelineno-12-19" href="#__codelineno-12-19"></a>    <span class="k">elif</span> <span class="n">signals</span><span class="p">[</span><span class="s1">&#39;position&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mf">0.1</span><span class="p">:</span>
-<a id="__codelineno-12-20" name="__codelineno-12-20" href="#__codelineno-12-20"></a>        <span class="k">return</span> <span class="s2">&quot;INTRODUCED_IN&quot;</span>
+<a id="__codelineno-12-15" name="__codelineno-12-15" href="#__codelineno-12-15"></a>    <span class="k">if</span> <span class="n">signals</span><span class="p">[</span><span class="s1">'centrality'</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">0.3</span><span class="p">:</span>
+<a id="__codelineno-12-16" name="__codelineno-12-16" href="#__codelineno-12-16"></a>        <span class="k">return</span> <span class="s2">"CENTRAL_TO"</span>
+<a id="__codelineno-12-17" name="__codelineno-12-17" href="#__codelineno-12-17"></a>    <span class="k">elif</span> <span class="n">signals</span><span class="p">[</span><span class="s1">'frequency'</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">5</span><span class="p">:</span>
+<a id="__codelineno-12-18" name="__codelineno-12-18" href="#__codelineno-12-18"></a>        <span class="k">return</span> <span class="s2">"THOROUGHLY_DISCUSSED_IN"</span>
+<a id="__codelineno-12-19" name="__codelineno-12-19" href="#__codelineno-12-19"></a>    <span class="k">elif</span> <span class="n">signals</span><span class="p">[</span><span class="s1">'position'</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mf">0.1</span><span class="p">:</span>
+<a id="__codelineno-12-20" name="__codelineno-12-20" href="#__codelineno-12-20"></a>        <span class="k">return</span> <span class="s2">"INTRODUCED_IN"</span>
 <a id="__codelineno-12-21" name="__codelineno-12-21" href="#__codelineno-12-21"></a>    <span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-12-22" name="__codelineno-12-22" href="#__codelineno-12-22"></a>        <span class="k">return</span> <span class="s2">&quot;APPEARS&quot;</span>  <span class="c1"># Default fallback</span>
+<a id="__codelineno-12-22" name="__codelineno-12-22" href="#__codelineno-12-22"></a>        <span class="k">return</span> <span class="s2">"APPEARS"</span>  <span class="c1"># Default fallback</span>
 <a id="__codelineno-12-23" name="__codelineno-12-23" href="#__codelineno-12-23"></a>
 <a id="__codelineno-12-24" name="__codelineno-12-24" href="#__codelineno-12-24"></a><span class="k">def</span><span class="w"> </span><span class="nf">create_appearance_relationship</span><span class="p">(</span><span class="n">concept</span><span class="p">,</span> <span class="n">source</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">all_instances</span><span class="p">):</span>
-<a id="__codelineno-12-25" name="__codelineno-12-25" href="#__codelineno-12-25"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Create appearance relationship with inferred type&quot;&quot;&quot;</span>
+<a id="__codelineno-12-25" name="__codelineno-12-25" href="#__codelineno-12-25"></a><span class="w">    </span><span class="sd">"""Create appearance relationship with inferred type"""</span>
 <a id="__codelineno-12-26" name="__codelineno-12-26" href="#__codelineno-12-26"></a>    <span class="c1"># Infer type from structural signals</span>
 <a id="__codelineno-12-27" name="__codelineno-12-27" href="#__codelineno-12-27"></a>    <span class="n">type_hint</span> <span class="o">=</span> <span class="n">infer_appearance_type</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">source</span><span class="p">,</span> <span class="n">all_instances</span><span class="p">)</span>
 <a id="__codelineno-12-28" name="__codelineno-12-28" href="#__codelineno-12-28"></a>
@@ -2950,13 +2950,13 @@
 <a id="__codelineno-12-31" name="__codelineno-12-31" href="#__codelineno-12-31"></a>    <span class="n">confidence</span> <span class="o">=</span> <span class="n">calculate_confidence</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">source</span><span class="p">)</span>
 <a id="__codelineno-12-32" name="__codelineno-12-32" href="#__codelineno-12-32"></a>
 <a id="__codelineno-12-33" name="__codelineno-12-33" href="#__codelineno-12-33"></a>    <span class="c1"># Create relationship (same structure, enriched type)</span>
-<a id="__codelineno-12-34" name="__codelineno-12-34" href="#__codelineno-12-34"></a>    <span class="n">query</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-12-34" name="__codelineno-12-34" href="#__codelineno-12-34"></a>    <span class="n">query</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"""</span>
 <a id="__codelineno-12-35" name="__codelineno-12-35" href="#__codelineno-12-35"></a><span class="s2">        MATCH (c:Concept </span><span class="se">{{</span><span class="s2">concept_id: $concept_id</span><span class="se">}}</span><span class="s2">)</span>
 <a id="__codelineno-12-36" name="__codelineno-12-36" href="#__codelineno-12-36"></a><span class="s2">        MATCH (s:Source </span><span class="se">{{</span><span class="s2">source_id: $source_id</span><span class="se">}}</span><span class="s2">)</span>
 <a id="__codelineno-12-37" name="__codelineno-12-37" href="#__codelineno-12-37"></a><span class="s2">        MERGE (c)-[r:</span><span class="si">{</span><span class="n">canonical</span><span class="si">}</span><span class="s2">]-&gt;(s)</span>
 <a id="__codelineno-12-38" name="__codelineno-12-38" href="#__codelineno-12-38"></a><span class="s2">        SET r.confidence = $confidence,</span>
 <a id="__codelineno-12-39" name="__codelineno-12-39" href="#__codelineno-12-39"></a><span class="s2">            r.appearance_strength = $strength</span>
-<a id="__codelineno-12-40" name="__codelineno-12-40" href="#__codelineno-12-40"></a><span class="s2">    &quot;&quot;&quot;</span>
+<a id="__codelineno-12-40" name="__codelineno-12-40" href="#__codelineno-12-40"></a><span class="s2">    """</span>
 </code></pre></div>
 <h3 id="phase-2-graphqueryfacade-enhancement">Phase 2: GraphQueryFacade Enhancement</h3>
 <p><strong>Vocabulary-aware source matching</strong> (ADR-606 pattern):</p>
@@ -2969,7 +2969,7 @@
 <a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>        <span class="n">appearance_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.75</span><span class="p">,</span>  <span class="c1"># Similarity to APPEARS prototype</span>
 <a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>        <span class="n">strength_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span>      <span class="c1"># Projection on centrality axis</span>
 <a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>    <span class="p">):</span>
-<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a><span class="w">        </span><span class="sd">"""</span>
 <a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a><span class="sd">        Match sources using semantic similarity to APPEARS cluster.</span>
 <a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a>
 <a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a><span class="sd">        Args:</span>
@@ -2978,29 +2978,29 @@
 <a id="__codelineno-13-16" name="__codelineno-13-16" href="#__codelineno-13-16"></a>
 <a id="__codelineno-13-17" name="__codelineno-13-17" href="#__codelineno-13-17"></a><span class="sd">        Returns:</span>
 <a id="__codelineno-13-18" name="__codelineno-13-18" href="#__codelineno-13-18"></a><span class="sd">            Sources with appearance metadata</span>
-<a id="__codelineno-13-19" name="__codelineno-13-19" href="#__codelineno-13-19"></a><span class="sd">        &quot;&quot;&quot;</span>
+<a id="__codelineno-13-19" name="__codelineno-13-19" href="#__codelineno-13-19"></a><span class="sd">        """</span>
 <a id="__codelineno-13-20" name="__codelineno-13-20" href="#__codelineno-13-20"></a>        <span class="c1"># Get appearance cluster from vocabulary (not hardcoded)</span>
 <a id="__codelineno-13-21" name="__codelineno-13-21" href="#__codelineno-13-21"></a>        <span class="n">appearance_types</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">get_vocabulary_cluster</span><span class="p">(</span>
-<a id="__codelineno-13-22" name="__codelineno-13-22" href="#__codelineno-13-22"></a>            <span class="n">prototype</span><span class="o">=</span><span class="s2">&quot;APPEARS&quot;</span><span class="p">,</span>
+<a id="__codelineno-13-22" name="__codelineno-13-22" href="#__codelineno-13-22"></a>            <span class="n">prototype</span><span class="o">=</span><span class="s2">"APPEARS"</span><span class="p">,</span>
 <a id="__codelineno-13-23" name="__codelineno-13-23" href="#__codelineno-13-23"></a>            <span class="n">threshold</span><span class="o">=</span><span class="n">appearance_threshold</span><span class="p">,</span>
-<a id="__codelineno-13-24" name="__codelineno-13-24" href="#__codelineno-13-24"></a>            <span class="n">category</span><span class="o">=</span><span class="s2">&quot;provenance&quot;</span>  <span class="c1"># Optional filter</span>
+<a id="__codelineno-13-24" name="__codelineno-13-24" href="#__codelineno-13-24"></a>            <span class="n">category</span><span class="o">=</span><span class="s2">"provenance"</span>  <span class="c1"># Optional filter</span>
 <a id="__codelineno-13-25" name="__codelineno-13-25" href="#__codelineno-13-25"></a>        <span class="p">)</span>
 <a id="__codelineno-13-26" name="__codelineno-13-26" href="#__codelineno-13-26"></a>
 <a id="__codelineno-13-27" name="__codelineno-13-27" href="#__codelineno-13-27"></a>        <span class="c1"># Build query with emergent types</span>
-<a id="__codelineno-13-28" name="__codelineno-13-28" href="#__codelineno-13-28"></a>        <span class="n">filters</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;type(r) IN </span><span class="si">{</span><span class="n">appearance_types</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span>
+<a id="__codelineno-13-28" name="__codelineno-13-28" href="#__codelineno-13-28"></a>        <span class="n">filters</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">"type(r) IN </span><span class="si">{</span><span class="n">appearance_types</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span>
 <a id="__codelineno-13-29" name="__codelineno-13-29" href="#__codelineno-13-29"></a>
 <a id="__codelineno-13-30" name="__codelineno-13-30" href="#__codelineno-13-30"></a>        <span class="k">if</span> <span class="n">strength_threshold</span><span class="p">:</span>
 <a id="__codelineno-13-31" name="__codelineno-13-31" href="#__codelineno-13-31"></a>            <span class="c1"># Filter by projection on appearance_axis (ADR-811 style)</span>
-<a id="__codelineno-13-32" name="__codelineno-13-32" href="#__codelineno-13-32"></a>            <span class="n">filters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;r.appearance_strength &gt;= </span><span class="si">{</span><span class="n">strength_threshold</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-13-32" name="__codelineno-13-32" href="#__codelineno-13-32"></a>            <span class="n">filters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"r.appearance_strength &gt;= </span><span class="si">{</span><span class="n">strength_threshold</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 <a id="__codelineno-13-33" name="__codelineno-13-33" href="#__codelineno-13-33"></a>
-<a id="__codelineno-13-34" name="__codelineno-13-34" href="#__codelineno-13-34"></a>        <span class="n">where</span> <span class="o">=</span> <span class="s2">&quot; AND &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">filters</span><span class="p">)</span>
+<a id="__codelineno-13-34" name="__codelineno-13-34" href="#__codelineno-13-34"></a>        <span class="n">where</span> <span class="o">=</span> <span class="s2">" AND "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">filters</span><span class="p">)</span>
 <a id="__codelineno-13-35" name="__codelineno-13-35" href="#__codelineno-13-35"></a>
-<a id="__codelineno-13-36" name="__codelineno-13-36" href="#__codelineno-13-36"></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">_execute_cypher</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-13-36" name="__codelineno-13-36" href="#__codelineno-13-36"></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">_execute_cypher</span><span class="p">(</span><span class="sa">f</span><span class="s2">"""</span>
 <a id="__codelineno-13-37" name="__codelineno-13-37" href="#__codelineno-13-37"></a><span class="s2">            MATCH (c:Concept </span><span class="se">{{</span><span class="s2">concept_id: $concept_id</span><span class="se">}}</span><span class="s2">)-[r]-&gt;(s:Source)</span>
 <a id="__codelineno-13-38" name="__codelineno-13-38" href="#__codelineno-13-38"></a><span class="s2">            WHERE </span><span class="si">{</span><span class="n">where</span><span class="si">}</span>
 <a id="__codelineno-13-39" name="__codelineno-13-39" href="#__codelineno-13-39"></a><span class="s2">            RETURN s, type(r), r.appearance_strength</span>
 <a id="__codelineno-13-40" name="__codelineno-13-40" href="#__codelineno-13-40"></a><span class="s2">            ORDER BY r.appearance_strength DESC</span>
-<a id="__codelineno-13-41" name="__codelineno-13-41" href="#__codelineno-13-41"></a><span class="s2">        &quot;&quot;&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;concept_id&quot;</span><span class="p">:</span> <span class="n">concept_id</span><span class="p">})</span>
+<a id="__codelineno-13-41" name="__codelineno-13-41" href="#__codelineno-13-41"></a><span class="s2">        """</span><span class="p">,</span> <span class="p">{</span><span class="s2">"concept_id"</span><span class="p">:</span> <span class="n">concept_id</span><span class="p">})</span>
 </code></pre></div>
 <h3 id="phase-3-vocabulary-cluster-management">Phase 3: Vocabulary Cluster Management</h3>
 <p><strong>AGEClient methods</strong> for cluster operations:</p>
@@ -3013,39 +3013,39 @@
 <a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>        <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.75</span><span class="p">,</span>
 <a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>        <span class="n">category</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 <a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a><span class="w">        </span><span class="sd">"""</span>
 <a id="__codelineno-14-11" name="__codelineno-14-11" href="#__codelineno-14-11"></a><span class="sd">        Get vocabulary types semantically similar to prototype.</span>
 <a id="__codelineno-14-12" name="__codelineno-14-12" href="#__codelineno-14-12"></a>
 <a id="__codelineno-14-13" name="__codelineno-14-13" href="#__codelineno-14-13"></a><span class="sd">        Uses embeddings, not hardcoded lists.</span>
 <a id="__codelineno-14-14" name="__codelineno-14-14" href="#__codelineno-14-14"></a>
 <a id="__codelineno-14-15" name="__codelineno-14-15" href="#__codelineno-14-15"></a><span class="sd">        Examples:</span>
-<a id="__codelineno-14-16" name="__codelineno-14-16" href="#__codelineno-14-16"></a><span class="sd">            get_vocabulary_cluster(&quot;APPEARS&quot;, 0.75)</span>
-<a id="__codelineno-14-17" name="__codelineno-14-17" href="#__codelineno-14-17"></a><span class="sd">            → [&quot;APPEARS&quot;, &quot;DISCUSSED_IN&quot;, &quot;MENTIONED_IN&quot;, &quot;CENTRAL_TO&quot;, ...]</span>
+<a id="__codelineno-14-16" name="__codelineno-14-16" href="#__codelineno-14-16"></a><span class="sd">            get_vocabulary_cluster("APPEARS", 0.75)</span>
+<a id="__codelineno-14-17" name="__codelineno-14-17" href="#__codelineno-14-17"></a><span class="sd">            → ["APPEARS", "DISCUSSED_IN", "MENTIONED_IN", "CENTRAL_TO", ...]</span>
 <a id="__codelineno-14-18" name="__codelineno-14-18" href="#__codelineno-14-18"></a>
-<a id="__codelineno-14-19" name="__codelineno-14-19" href="#__codelineno-14-19"></a><span class="sd">            get_vocabulary_cluster(&quot;SUPPORTS&quot;, 0.80)</span>
-<a id="__codelineno-14-20" name="__codelineno-14-20" href="#__codelineno-14-20"></a><span class="sd">            → [&quot;SUPPORTS&quot;, &quot;VALIDATES&quot;, &quot;CONFIRMS&quot;, &quot;REINFORCES&quot;, ...]</span>
-<a id="__codelineno-14-21" name="__codelineno-14-21" href="#__codelineno-14-21"></a><span class="sd">        &quot;&quot;&quot;</span>
+<a id="__codelineno-14-19" name="__codelineno-14-19" href="#__codelineno-14-19"></a><span class="sd">            get_vocabulary_cluster("SUPPORTS", 0.80)</span>
+<a id="__codelineno-14-20" name="__codelineno-14-20" href="#__codelineno-14-20"></a><span class="sd">            → ["SUPPORTS", "VALIDATES", "CONFIRMS", "REINFORCES", ...]</span>
+<a id="__codelineno-14-21" name="__codelineno-14-21" href="#__codelineno-14-21"></a><span class="sd">        """</span>
 <a id="__codelineno-14-22" name="__codelineno-14-22" href="#__codelineno-14-22"></a>        <span class="n">prototype_emb</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_vocabulary_embedding</span><span class="p">(</span><span class="n">prototype</span><span class="p">)</span>
 <a id="__codelineno-14-23" name="__codelineno-14-23" href="#__codelineno-14-23"></a>
-<a id="__codelineno-14-24" name="__codelineno-14-24" href="#__codelineno-14-24"></a>        <span class="n">query</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-14-24" name="__codelineno-14-24" href="#__codelineno-14-24"></a>        <span class="n">query</span> <span class="o">=</span> <span class="s2">"""</span>
 <a id="__codelineno-14-25" name="__codelineno-14-25" href="#__codelineno-14-25"></a><span class="s2">            SELECT relationship_type, embedding</span>
 <a id="__codelineno-14-26" name="__codelineno-14-26" href="#__codelineno-14-26"></a><span class="s2">            FROM kg_api.relationship_vocabulary</span>
 <a id="__codelineno-14-27" name="__codelineno-14-27" href="#__codelineno-14-27"></a><span class="s2">            WHERE embedding IS NOT NULL</span>
 <a id="__codelineno-14-28" name="__codelineno-14-28" href="#__codelineno-14-28"></a><span class="s2">              AND is_active = TRUE</span>
-<a id="__codelineno-14-29" name="__codelineno-14-29" href="#__codelineno-14-29"></a><span class="s2">        &quot;&quot;&quot;</span>
+<a id="__codelineno-14-29" name="__codelineno-14-29" href="#__codelineno-14-29"></a><span class="s2">        """</span>
 <a id="__codelineno-14-30" name="__codelineno-14-30" href="#__codelineno-14-30"></a>        <span class="k">if</span> <span class="n">category</span><span class="p">:</span>
-<a id="__codelineno-14-31" name="__codelineno-14-31" href="#__codelineno-14-31"></a>            <span class="n">query</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot; AND category = &#39;</span><span class="si">{</span><span class="n">category</span><span class="si">}</span><span class="s2">&#39;&quot;</span>
+<a id="__codelineno-14-31" name="__codelineno-14-31" href="#__codelineno-14-31"></a>            <span class="n">query</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">" AND category = '</span><span class="si">{</span><span class="n">category</span><span class="si">}</span><span class="s2">'"</span>
 <a id="__codelineno-14-32" name="__codelineno-14-32" href="#__codelineno-14-32"></a>
 <a id="__codelineno-14-33" name="__codelineno-14-33" href="#__codelineno-14-33"></a>        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_execute_sql</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
 <a id="__codelineno-14-34" name="__codelineno-14-34" href="#__codelineno-14-34"></a>
 <a id="__codelineno-14-35" name="__codelineno-14-35" href="#__codelineno-14-35"></a>        <span class="c1"># Calculate similarities</span>
 <a id="__codelineno-14-36" name="__codelineno-14-36" href="#__codelineno-14-36"></a>        <span class="n">cluster</span> <span class="o">=</span> <span class="p">[]</span>
 <a id="__codelineno-14-37" name="__codelineno-14-37" href="#__codelineno-14-37"></a>        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">result</span><span class="p">:</span>
-<a id="__codelineno-14-38" name="__codelineno-14-38" href="#__codelineno-14-38"></a>            <span class="n">type_emb</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;embedding&#39;</span><span class="p">]))</span>
+<a id="__codelineno-14-38" name="__codelineno-14-38" href="#__codelineno-14-38"></a>            <span class="n">type_emb</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">'embedding'</span><span class="p">]))</span>
 <a id="__codelineno-14-39" name="__codelineno-14-39" href="#__codelineno-14-39"></a>            <span class="n">similarity</span> <span class="o">=</span> <span class="n">cosine_similarity</span><span class="p">(</span><span class="n">prototype_emb</span><span class="p">,</span> <span class="n">type_emb</span><span class="p">)</span>
 <a id="__codelineno-14-40" name="__codelineno-14-40" href="#__codelineno-14-40"></a>
 <a id="__codelineno-14-41" name="__codelineno-14-41" href="#__codelineno-14-41"></a>            <span class="k">if</span> <span class="n">similarity</span> <span class="o">&gt;=</span> <span class="n">threshold</span><span class="p">:</span>
-<a id="__codelineno-14-42" name="__codelineno-14-42" href="#__codelineno-14-42"></a>                <span class="n">cluster</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;relationship_type&#39;</span><span class="p">])</span>
+<a id="__codelineno-14-42" name="__codelineno-14-42" href="#__codelineno-14-42"></a>                <span class="n">cluster</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">'relationship_type'</span><span class="p">])</span>
 <a id="__codelineno-14-43" name="__codelineno-14-43" href="#__codelineno-14-43"></a>
 <a id="__codelineno-14-44" name="__codelineno-14-44" href="#__codelineno-14-44"></a>        <span class="k">return</span> <span class="n">cluster</span>
 <a id="__codelineno-14-45" name="__codelineno-14-45" href="#__codelineno-14-45"></a>
@@ -3054,16 +3054,16 @@
 <a id="__codelineno-14-48" name="__codelineno-14-48" href="#__codelineno-14-48"></a>        <span class="n">edge_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 <a id="__codelineno-14-49" name="__codelineno-14-49" href="#__codelineno-14-49"></a>        <span class="n">polarity_pairs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span>
 <a id="__codelineno-14-50" name="__codelineno-14-50" href="#__codelineno-14-50"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<a id="__codelineno-14-51" name="__codelineno-14-51" href="#__codelineno-14-51"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-14-51" name="__codelineno-14-51" href="#__codelineno-14-51"></a><span class="w">        </span><span class="sd">"""</span>
 <a id="__codelineno-14-52" name="__codelineno-14-52" href="#__codelineno-14-52"></a><span class="sd">        Calculate edge position on appearance strength axis (ADR-811).</span>
 <a id="__codelineno-14-53" name="__codelineno-14-53" href="#__codelineno-14-53"></a>
 <a id="__codelineno-14-54" name="__codelineno-14-54" href="#__codelineno-14-54"></a><span class="sd">        Returns: -1.0 (tangential) to +1.0 (central)</span>
-<a id="__codelineno-14-55" name="__codelineno-14-55" href="#__codelineno-14-55"></a><span class="sd">        &quot;&quot;&quot;</span>
+<a id="__codelineno-14-55" name="__codelineno-14-55" href="#__codelineno-14-55"></a><span class="sd">        """</span>
 <a id="__codelineno-14-56" name="__codelineno-14-56" href="#__codelineno-14-56"></a>        <span class="k">if</span> <span class="ow">not</span> <span class="n">polarity_pairs</span><span class="p">:</span>
 <a id="__codelineno-14-57" name="__codelineno-14-57" href="#__codelineno-14-57"></a>            <span class="c1"># Default appearance polarity (emergent from vocabulary)</span>
 <a id="__codelineno-14-58" name="__codelineno-14-58" href="#__codelineno-14-58"></a>            <span class="n">polarity_pairs</span> <span class="o">=</span> <span class="p">[</span>
-<a id="__codelineno-14-59" name="__codelineno-14-59" href="#__codelineno-14-59"></a>                <span class="p">(</span><span class="s2">&quot;CENTRAL_TO&quot;</span><span class="p">,</span> <span class="s2">&quot;TANGENTIAL_TO&quot;</span><span class="p">),</span>
-<a id="__codelineno-14-60" name="__codelineno-14-60" href="#__codelineno-14-60"></a>                <span class="p">(</span><span class="s2">&quot;THOROUGHLY_DISCUSSED_IN&quot;</span><span class="p">,</span> <span class="s2">&quot;BRIEFLY_MENTIONED_IN&quot;</span><span class="p">),</span>
+<a id="__codelineno-14-59" name="__codelineno-14-59" href="#__codelineno-14-59"></a>                <span class="p">(</span><span class="s2">"CENTRAL_TO"</span><span class="p">,</span> <span class="s2">"TANGENTIAL_TO"</span><span class="p">),</span>
+<a id="__codelineno-14-60" name="__codelineno-14-60" href="#__codelineno-14-60"></a>                <span class="p">(</span><span class="s2">"THOROUGHLY_DISCUSSED_IN"</span><span class="p">,</span> <span class="s2">"BRIEFLY_MENTIONED_IN"</span><span class="p">),</span>
 <a id="__codelineno-14-61" name="__codelineno-14-61" href="#__codelineno-14-61"></a>            <span class="p">]</span>
 <a id="__codelineno-14-62" name="__codelineno-14-62" href="#__codelineno-14-62"></a>
 <a id="__codelineno-14-63" name="__codelineno-14-63" href="#__codelineno-14-63"></a>        <span class="c1"># Same algorithm as grounding calculation (ADR-811)</span>
@@ -3103,9 +3103,9 @@
 <a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>kg<span class="w"> </span>vocab<span class="w"> </span>consolidate<span class="w"> </span>--auto
 <a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>
 <a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="c1"># Might merge:</span>
-<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="c1"># - &quot;discussed in&quot; + &quot;discussed thoroughly in&quot; → &quot;DISCUSSED_IN&quot;</span>
-<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a><span class="c1"># - &quot;mentioned&quot; + &quot;mentioned in&quot; → &quot;MENTIONED_IN&quot;</span>
-<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="c1"># - &quot;appears in&quot; + &quot;appears within&quot; → &quot;APPEARS&quot;</span>
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="c1"># - "discussed in" + "discussed thoroughly in" → "DISCUSSED_IN"</span>
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a><span class="c1"># - "mentioned" + "mentioned in" → "MENTIONED_IN"</span>
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="c1"># - "appears in" + "appears within" → "APPEARS"</span>
 </code></pre></div></p>
 <p><strong>5. Transparent to interfaces</strong>
 - Raw Cypher queries unchanged (pattern <code>[r]</code> matches any type)
@@ -3131,7 +3131,7 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="c1"># If inference fails or vocabulary unavailable, use generic APPEARS</span>
 <a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="n">canonical</span> <span class="o">=</span> <span class="n">normalize_appearance_type</span><span class="p">(</span><span class="n">type_hint</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.80</span><span class="p">)</span>
 <a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="k">if</span> <span class="ow">not</span> <span class="n">canonical</span><span class="p">:</span>
-<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>    <span class="n">canonical</span> <span class="o">=</span> <span class="s2">&quot;APPEARS&quot;</span>  <span class="c1"># Safe fallback</span>
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>    <span class="n">canonical</span> <span class="o">=</span> <span class="s2">"APPEARS"</span>  <span class="c1"># Safe fallback</span>
 </code></pre></div></p>
 <p><strong>Progressive enhancement:</strong>
 - Old data: Generic APPEARS relationships (still works)
@@ -3166,22 +3166,22 @@
 <p><strong>LLM does:</strong> Extracts concepts with quotes (exactly as today)</p>
 <p><strong>Backend does:</strong> Infers appearance type from structural signals</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">infer_appearance_type</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">source</span><span class="p">,</span> <span class="n">all_instances</span><span class="p">):</span>
-<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Pure structural inference - no LLM involvement&quot;&quot;&quot;</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="w">    </span><span class="sd">"""Pure structural inference - no LLM involvement"""</span>
 <a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>
 <a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>    <span class="c1"># Structural signals</span>
-<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a>    <span class="n">centrality</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">instance</span><span class="p">[</span><span class="s1">&#39;quote&#39;</span><span class="p">])</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">source</span><span class="p">[</span><span class="s1">&#39;full_text&#39;</span><span class="p">])</span>
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a>    <span class="n">centrality</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">instance</span><span class="p">[</span><span class="s1">'quote'</span><span class="p">])</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">source</span><span class="p">[</span><span class="s1">'full_text'</span><span class="p">])</span>
 <a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>    <span class="n">frequency</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">all_instances</span><span class="p">)</span>  <span class="c1"># How many times in source</span>
-<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a>    <span class="n">position</span> <span class="o">=</span> <span class="n">instance</span><span class="p">[</span><span class="s1">&#39;paragraph&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="n">source</span><span class="p">[</span><span class="s1">&#39;total_paragraphs&#39;</span><span class="p">]</span>
+<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a>    <span class="n">position</span> <span class="o">=</span> <span class="n">instance</span><span class="p">[</span><span class="s1">'paragraph'</span><span class="p">]</span> <span class="o">/</span> <span class="n">source</span><span class="p">[</span><span class="s1">'total_paragraphs'</span><span class="p">]</span>
 <a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a>
 <a id="__codelineno-19-9" name="__codelineno-19-9" href="#__codelineno-19-9"></a>    <span class="c1"># Domain-agnostic heuristics</span>
 <a id="__codelineno-19-10" name="__codelineno-19-10" href="#__codelineno-19-10"></a>    <span class="k">if</span> <span class="n">centrality</span> <span class="o">&gt;</span> <span class="mf">0.3</span><span class="p">:</span>
-<a id="__codelineno-19-11" name="__codelineno-19-11" href="#__codelineno-19-11"></a>        <span class="k">return</span> <span class="s2">&quot;CENTRAL_TO&quot;</span>
+<a id="__codelineno-19-11" name="__codelineno-19-11" href="#__codelineno-19-11"></a>        <span class="k">return</span> <span class="s2">"CENTRAL_TO"</span>
 <a id="__codelineno-19-12" name="__codelineno-19-12" href="#__codelineno-19-12"></a>    <span class="k">elif</span> <span class="n">frequency</span> <span class="o">&gt;</span> <span class="mi">5</span><span class="p">:</span>
-<a id="__codelineno-19-13" name="__codelineno-19-13" href="#__codelineno-19-13"></a>        <span class="k">return</span> <span class="s2">&quot;FREQUENTLY_MENTIONED_IN&quot;</span>
+<a id="__codelineno-19-13" name="__codelineno-19-13" href="#__codelineno-19-13"></a>        <span class="k">return</span> <span class="s2">"FREQUENTLY_MENTIONED_IN"</span>
 <a id="__codelineno-19-14" name="__codelineno-19-14" href="#__codelineno-19-14"></a>    <span class="k">elif</span> <span class="n">position</span> <span class="o">&lt;</span> <span class="mf">0.1</span><span class="p">:</span>
-<a id="__codelineno-19-15" name="__codelineno-19-15" href="#__codelineno-19-15"></a>        <span class="k">return</span> <span class="s2">&quot;INTRODUCED_IN&quot;</span>
+<a id="__codelineno-19-15" name="__codelineno-19-15" href="#__codelineno-19-15"></a>        <span class="k">return</span> <span class="s2">"INTRODUCED_IN"</span>
 <a id="__codelineno-19-16" name="__codelineno-19-16" href="#__codelineno-19-16"></a>    <span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-19-17" name="__codelineno-19-17" href="#__codelineno-19-17"></a>        <span class="k">return</span> <span class="s2">&quot;APPEARS&quot;</span>
+<a id="__codelineno-19-17" name="__codelineno-19-17" href="#__codelineno-19-17"></a>        <span class="k">return</span> <span class="s2">"APPEARS"</span>
 </code></pre></div>
 <p><strong>Pros:</strong>
 - Zero LLM cognitive load (truly transparent)
@@ -3203,32 +3203,32 @@
 <a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>- Description
 <a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a>- Quote (evidence)
 <a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a>- [OPTIONAL] Prominence: how prominent is this concept?
-<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a>  - &quot;central&quot; (primary theme/subject)
-<a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a>  - &quot;discussed&quot; (explained in detail)
-<a id="__codelineno-20-8" name="__codelineno-20-8" href="#__codelineno-20-8"></a>  - &quot;mentioned&quot; (brief reference)
-<a id="__codelineno-20-9" name="__codelineno-20-9" href="#__codelineno-20-9"></a>  - &quot;peripheral&quot; (tangential or implied)
+<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a>  - "central" (primary theme/subject)
+<a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a>  - "discussed" (explained in detail)
+<a id="__codelineno-20-8" name="__codelineno-20-8" href="#__codelineno-20-8"></a>  - "mentioned" (brief reference)
+<a id="__codelineno-20-9" name="__codelineno-20-9" href="#__codelineno-20-9"></a>  - "peripheral" (tangential or implied)
 </code></pre></div>
 <p><strong>LLM does:</strong> Picks from 4 simple, semantic categories</p>
 <p><strong>Backend does:</strong> Maps category to vocabulary cluster</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="c1"># LLM output (simple):</span>
 <a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="p">{</span>
-<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>    <span class="s2">&quot;concept&quot;</span><span class="p">:</span> <span class="s2">&quot;microservices architecture&quot;</span><span class="p">,</span>
-<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a>    <span class="s2">&quot;prominence&quot;</span><span class="p">:</span> <span class="s2">&quot;discussed&quot;</span><span class="p">,</span>  <span class="c1"># Simple semantic judgment</span>
-<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a>    <span class="s2">&quot;quote&quot;</span><span class="p">:</span> <span class="s2">&quot;...&quot;</span><span class="p">,</span>
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>    <span class="s2">"concept"</span><span class="p">:</span> <span class="s2">"microservices architecture"</span><span class="p">,</span>
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a>    <span class="s2">"prominence"</span><span class="p">:</span> <span class="s2">"discussed"</span><span class="p">,</span>  <span class="c1"># Simple semantic judgment</span>
+<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a>    <span class="s2">"quote"</span><span class="p">:</span> <span class="s2">"..."</span><span class="p">,</span>
 <a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a><span class="p">}</span>
 <a id="__codelineno-21-7" name="__codelineno-21-7" href="#__codelineno-21-7"></a>
 <a id="__codelineno-21-8" name="__codelineno-21-8" href="#__codelineno-21-8"></a><span class="c1"># Backend mapping (complex, invisible):</span>
 <a id="__codelineno-21-9" name="__codelineno-21-9" href="#__codelineno-21-9"></a><span class="n">PROMINENCE_MAPPING</span> <span class="o">=</span> <span class="p">{</span>
-<a id="__codelineno-21-10" name="__codelineno-21-10" href="#__codelineno-21-10"></a>    <span class="s2">&quot;central&quot;</span><span class="p">:</span> <span class="s2">&quot;CENTRAL_TO&quot;</span><span class="p">,</span>
-<a id="__codelineno-21-11" name="__codelineno-21-11" href="#__codelineno-21-11"></a>    <span class="s2">&quot;discussed&quot;</span><span class="p">:</span> <span class="s2">&quot;THOROUGHLY_DISCUSSED_IN&quot;</span><span class="p">,</span>
-<a id="__codelineno-21-12" name="__codelineno-21-12" href="#__codelineno-21-12"></a>    <span class="s2">&quot;mentioned&quot;</span><span class="p">:</span> <span class="s2">&quot;MENTIONED_IN&quot;</span><span class="p">,</span>
-<a id="__codelineno-21-13" name="__codelineno-21-13" href="#__codelineno-21-13"></a>    <span class="s2">&quot;peripheral&quot;</span><span class="p">:</span> <span class="s2">&quot;TANGENTIALLY_REFERENCED_IN&quot;</span>
+<a id="__codelineno-21-10" name="__codelineno-21-10" href="#__codelineno-21-10"></a>    <span class="s2">"central"</span><span class="p">:</span> <span class="s2">"CENTRAL_TO"</span><span class="p">,</span>
+<a id="__codelineno-21-11" name="__codelineno-21-11" href="#__codelineno-21-11"></a>    <span class="s2">"discussed"</span><span class="p">:</span> <span class="s2">"THOROUGHLY_DISCUSSED_IN"</span><span class="p">,</span>
+<a id="__codelineno-21-12" name="__codelineno-21-12" href="#__codelineno-21-12"></a>    <span class="s2">"mentioned"</span><span class="p">:</span> <span class="s2">"MENTIONED_IN"</span><span class="p">,</span>
+<a id="__codelineno-21-13" name="__codelineno-21-13" href="#__codelineno-21-13"></a>    <span class="s2">"peripheral"</span><span class="p">:</span> <span class="s2">"TANGENTIALLY_REFERENCED_IN"</span>
 <a id="__codelineno-21-14" name="__codelineno-21-14" href="#__codelineno-21-14"></a><span class="p">}</span>
 <a id="__codelineno-21-15" name="__codelineno-21-15" href="#__codelineno-21-15"></a>
 <a id="__codelineno-21-16" name="__codelineno-21-16" href="#__codelineno-21-16"></a><span class="n">hint</span> <span class="o">=</span> <span class="n">PROMINENCE_MAPPING</span><span class="p">[</span><span class="n">prominence</span><span class="p">]</span>
 <a id="__codelineno-21-17" name="__codelineno-21-17" href="#__codelineno-21-17"></a>
 <a id="__codelineno-21-18" name="__codelineno-21-18" href="#__codelineno-21-18"></a><span class="c1"># Normalize to cluster (vocabulary infrastructure)</span>
-<a id="__codelineno-21-19" name="__codelineno-21-19" href="#__codelineno-21-19"></a><span class="n">canonical</span> <span class="o">=</span> <span class="n">normalize_to_cluster</span><span class="p">(</span><span class="n">hint</span><span class="p">,</span> <span class="s2">&quot;APPEARS&quot;</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.80</span><span class="p">)</span>
+<a id="__codelineno-21-19" name="__codelineno-21-19" href="#__codelineno-21-19"></a><span class="n">canonical</span> <span class="o">=</span> <span class="n">normalize_to_cluster</span><span class="p">(</span><span class="n">hint</span><span class="p">,</span> <span class="s2">"APPEARS"</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.80</span><span class="p">)</span>
 </code></pre></div>
 <p><strong>Pros:</strong>
 - LLM provides semantic understanding (better than structure alone)
@@ -3289,24 +3289,24 @@
 <p><strong>LLM sees:</strong> Domain-specific characterization prompt</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a># For technical documentation:
 <a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>Indicate relationship to this concept:
-<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>- &quot;introduces&quot; (defines or explains for first time)
-<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a>- &quot;uses&quot; (applies or implements)
-<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>- &quot;deprecates&quot; (marks as obsolete)
-<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a>- &quot;references&quot; (cites or mentions)
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>- "introduces" (defines or explains for first time)
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a>- "uses" (applies or implements)
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>- "deprecates" (marks as obsolete)
+<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a>- "references" (cites or mentions)
 <a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a>
 <a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a># For research papers:
 <a id="__codelineno-22-9" name="__codelineno-22-9" href="#__codelineno-22-9"></a>Indicate relationship to this concept:
-<a id="__codelineno-22-10" name="__codelineno-22-10" href="#__codelineno-22-10"></a>- &quot;proposes&quot; (introduces new idea)
-<a id="__codelineno-22-11" name="__codelineno-22-11" href="#__codelineno-22-11"></a>- &quot;validates&quot; (provides evidence for)
-<a id="__codelineno-22-12" name="__codelineno-22-12" href="#__codelineno-22-12"></a>- &quot;critiques&quot; (challenges or questions)
-<a id="__codelineno-22-13" name="__codelineno-22-13" href="#__codelineno-22-13"></a>- &quot;extends&quot; (builds upon)
+<a id="__codelineno-22-10" name="__codelineno-22-10" href="#__codelineno-22-10"></a>- "proposes" (introduces new idea)
+<a id="__codelineno-22-11" name="__codelineno-22-11" href="#__codelineno-22-11"></a>- "validates" (provides evidence for)
+<a id="__codelineno-22-12" name="__codelineno-22-12" href="#__codelineno-22-12"></a>- "critiques" (challenges or questions)
+<a id="__codelineno-22-13" name="__codelineno-22-13" href="#__codelineno-22-13"></a>- "extends" (builds upon)
 <a id="__codelineno-22-14" name="__codelineno-22-14" href="#__codelineno-22-14"></a>
 <a id="__codelineno-22-15" name="__codelineno-22-15" href="#__codelineno-22-15"></a># For narrative text:
 <a id="__codelineno-22-16" name="__codelineno-22-16" href="#__codelineno-22-16"></a>Indicate relationship to this concept:
-<a id="__codelineno-22-17" name="__codelineno-22-17" href="#__codelineno-22-17"></a>- &quot;develops&quot; (central theme)
-<a id="__codelineno-22-18" name="__codelineno-22-18" href="#__codelineno-22-18"></a>- &quot;foreshadows&quot; (hints at future)
-<a id="__codelineno-22-19" name="__codelineno-22-19" href="#__codelineno-22-19"></a>- &quot;recalls&quot; (references earlier)
-<a id="__codelineno-22-20" name="__codelineno-22-20" href="#__codelineno-22-20"></a>- &quot;mentions&quot; (brief appearance)
+<a id="__codelineno-22-17" name="__codelineno-22-17" href="#__codelineno-22-17"></a>- "develops" (central theme)
+<a id="__codelineno-22-18" name="__codelineno-22-18" href="#__codelineno-22-18"></a>- "foreshadows" (hints at future)
+<a id="__codelineno-22-19" name="__codelineno-22-19" href="#__codelineno-22-19"></a>- "recalls" (references earlier)
+<a id="__codelineno-22-20" name="__codelineno-22-20" href="#__codelineno-22-20"></a>- "mentions" (brief appearance)
 </code></pre></div>
 <p><strong>LLM does:</strong> Picks from domain-specific semantic categories</p>
 <p><strong>Backend does:</strong> Maps domain category to vocabulary</p>
@@ -3327,32 +3327,32 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>Extract concepts. For each, briefly describe how it appears in this text.
 <a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>
 <a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a>Examples:
-<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a>- &quot;discussed extensively as central argument&quot;
-<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a>- &quot;referenced briefly in passing&quot;
-<a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a>- &quot;introduced early then developed throughout&quot;
-<a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a>- &quot;implied but not explicitly stated&quot;
+<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a>- "discussed extensively as central argument"
+<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a>- "referenced briefly in passing"
+<a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a>- "introduced early then developed throughout"
+<a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a>- "implied but not explicitly stated"
 </code></pre></div>
 <p><strong>LLM does:</strong> Writes 1-2 sentence natural language description</p>
 <p><strong>Backend does:</strong> NLP extraction + vocabulary normalization</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="c1"># LLM output (natural):</span>
 <a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a><span class="p">{</span>
-<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a>    <span class="s2">&quot;concept&quot;</span><span class="p">:</span> <span class="s2">&quot;observer pattern&quot;</span><span class="p">,</span>
-<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a>    <span class="s2">&quot;appearance_description&quot;</span><span class="p">:</span> <span class="s2">&quot;introduced early in the document and used throughout as the primary design example&quot;</span><span class="p">,</span>
-<a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a>    <span class="s2">&quot;quote&quot;</span><span class="p">:</span> <span class="s2">&quot;...&quot;</span>
+<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a>    <span class="s2">"concept"</span><span class="p">:</span> <span class="s2">"observer pattern"</span><span class="p">,</span>
+<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a>    <span class="s2">"appearance_description"</span><span class="p">:</span> <span class="s2">"introduced early in the document and used throughout as the primary design example"</span><span class="p">,</span>
+<a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a>    <span class="s2">"quote"</span><span class="p">:</span> <span class="s2">"..."</span>
 <a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a><span class="p">}</span>
 <a id="__codelineno-24-7" name="__codelineno-24-7" href="#__codelineno-24-7"></a>
 <a id="__codelineno-24-8" name="__codelineno-24-8" href="#__codelineno-24-8"></a><span class="c1"># Backend NLP (complex):</span>
 <a id="__codelineno-24-9" name="__codelineno-24-9" href="#__codelineno-24-9"></a><span class="n">keywords</span> <span class="o">=</span> <span class="n">extract_keywords</span><span class="p">(</span><span class="n">appearance_description</span><span class="p">)</span>
-<a id="__codelineno-24-10" name="__codelineno-24-10" href="#__codelineno-24-10"></a><span class="c1"># → [&quot;introduced&quot;, &quot;primary&quot;, &quot;design&quot;, &quot;example&quot;, &quot;throughout&quot;]</span>
+<a id="__codelineno-24-10" name="__codelineno-24-10" href="#__codelineno-24-10"></a><span class="c1"># → ["introduced", "primary", "design", "example", "throughout"]</span>
 <a id="__codelineno-24-11" name="__codelineno-24-11" href="#__codelineno-24-11"></a>
-<a id="__codelineno-24-12" name="__codelineno-24-12" href="#__codelineno-24-12"></a><span class="k">if</span> <span class="s2">&quot;primary&quot;</span> <span class="ow">in</span> <span class="n">keywords</span> <span class="ow">or</span> <span class="s2">&quot;central&quot;</span> <span class="ow">in</span> <span class="n">keywords</span><span class="p">:</span>
-<a id="__codelineno-24-13" name="__codelineno-24-13" href="#__codelineno-24-13"></a>    <span class="n">hint</span> <span class="o">=</span> <span class="s2">&quot;CENTRAL_TO&quot;</span>
-<a id="__codelineno-24-14" name="__codelineno-24-14" href="#__codelineno-24-14"></a><span class="k">elif</span> <span class="s2">&quot;introduced&quot;</span> <span class="ow">in</span> <span class="n">keywords</span><span class="p">:</span>
-<a id="__codelineno-24-15" name="__codelineno-24-15" href="#__codelineno-24-15"></a>    <span class="n">hint</span> <span class="o">=</span> <span class="s2">&quot;INTRODUCED_IN&quot;</span>
-<a id="__codelineno-24-16" name="__codelineno-24-16" href="#__codelineno-24-16"></a><span class="k">elif</span> <span class="s2">&quot;throughout&quot;</span> <span class="ow">in</span> <span class="n">keywords</span><span class="p">:</span>
-<a id="__codelineno-24-17" name="__codelineno-24-17" href="#__codelineno-24-17"></a>    <span class="n">hint</span> <span class="o">=</span> <span class="s2">&quot;THOROUGHLY_DISCUSSED_IN&quot;</span>
+<a id="__codelineno-24-12" name="__codelineno-24-12" href="#__codelineno-24-12"></a><span class="k">if</span> <span class="s2">"primary"</span> <span class="ow">in</span> <span class="n">keywords</span> <span class="ow">or</span> <span class="s2">"central"</span> <span class="ow">in</span> <span class="n">keywords</span><span class="p">:</span>
+<a id="__codelineno-24-13" name="__codelineno-24-13" href="#__codelineno-24-13"></a>    <span class="n">hint</span> <span class="o">=</span> <span class="s2">"CENTRAL_TO"</span>
+<a id="__codelineno-24-14" name="__codelineno-24-14" href="#__codelineno-24-14"></a><span class="k">elif</span> <span class="s2">"introduced"</span> <span class="ow">in</span> <span class="n">keywords</span><span class="p">:</span>
+<a id="__codelineno-24-15" name="__codelineno-24-15" href="#__codelineno-24-15"></a>    <span class="n">hint</span> <span class="o">=</span> <span class="s2">"INTRODUCED_IN"</span>
+<a id="__codelineno-24-16" name="__codelineno-24-16" href="#__codelineno-24-16"></a><span class="k">elif</span> <span class="s2">"throughout"</span> <span class="ow">in</span> <span class="n">keywords</span><span class="p">:</span>
+<a id="__codelineno-24-17" name="__codelineno-24-17" href="#__codelineno-24-17"></a>    <span class="n">hint</span> <span class="o">=</span> <span class="s2">"THOROUGHLY_DISCUSSED_IN"</span>
 <a id="__codelineno-24-18" name="__codelineno-24-18" href="#__codelineno-24-18"></a>
-<a id="__codelineno-24-19" name="__codelineno-24-19" href="#__codelineno-24-19"></a><span class="n">canonical</span> <span class="o">=</span> <span class="n">normalize_to_cluster</span><span class="p">(</span><span class="n">hint</span><span class="p">,</span> <span class="s2">&quot;APPEARS&quot;</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.80</span><span class="p">)</span>
+<a id="__codelineno-24-19" name="__codelineno-24-19" href="#__codelineno-24-19"></a><span class="n">canonical</span> <span class="o">=</span> <span class="n">normalize_to_cluster</span><span class="p">(</span><span class="n">hint</span><span class="p">,</span> <span class="s2">"APPEARS"</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.80</span><span class="p">)</span>
 </code></pre></div>
 <p><strong>Pros:</strong>
 - Most natural for LLM (no categorization)
@@ -3446,28 +3446,28 @@
 <a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a>    <span class="n">source</span><span class="p">:</span> <span class="n">Dict</span><span class="p">,</span>
 <a id="__codelineno-25-5" name="__codelineno-25-5" href="#__codelineno-25-5"></a>    <span class="n">all_instances</span><span class="p">:</span> <span class="n">List</span>
 <a id="__codelineno-25-6" name="__codelineno-25-6" href="#__codelineno-25-6"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<a id="__codelineno-25-7" name="__codelineno-25-7" href="#__codelineno-25-7"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-25-7" name="__codelineno-25-7" href="#__codelineno-25-7"></a><span class="w">    </span><span class="sd">"""</span>
 <a id="__codelineno-25-8" name="__codelineno-25-8" href="#__codelineno-25-8"></a><span class="sd">    Determine appearance type using LLM hint OR structural fallback.</span>
 <a id="__codelineno-25-9" name="__codelineno-25-9" href="#__codelineno-25-9"></a>
-<a id="__codelineno-25-10" name="__codelineno-25-10" href="#__codelineno-25-10"></a><span class="sd">    LLM never sees vocabulary cluster - that&#39;s all backend.</span>
-<a id="__codelineno-25-11" name="__codelineno-25-11" href="#__codelineno-25-11"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-25-10" name="__codelineno-25-10" href="#__codelineno-25-10"></a><span class="sd">    LLM never sees vocabulary cluster - that's all backend.</span>
+<a id="__codelineno-25-11" name="__codelineno-25-11" href="#__codelineno-25-11"></a><span class="sd">    """</span>
 <a id="__codelineno-25-12" name="__codelineno-25-12" href="#__codelineno-25-12"></a>
-<a id="__codelineno-25-13" name="__codelineno-25-13" href="#__codelineno-25-13"></a>    <span class="c1"># Priority 1: Use LLM&#39;s semantic hint if provided</span>
+<a id="__codelineno-25-13" name="__codelineno-25-13" href="#__codelineno-25-13"></a>    <span class="c1"># Priority 1: Use LLM's semantic hint if provided</span>
 <a id="__codelineno-25-14" name="__codelineno-25-14" href="#__codelineno-25-14"></a>    <span class="k">if</span> <span class="n">prominence_hint</span><span class="p">:</span>
 <a id="__codelineno-25-15" name="__codelineno-25-15" href="#__codelineno-25-15"></a>        <span class="n">mapping</span> <span class="o">=</span> <span class="p">{</span>
-<a id="__codelineno-25-16" name="__codelineno-25-16" href="#__codelineno-25-16"></a>            <span class="s2">&quot;central&quot;</span><span class="p">:</span> <span class="s2">&quot;CENTRAL_TO&quot;</span><span class="p">,</span>
-<a id="__codelineno-25-17" name="__codelineno-25-17" href="#__codelineno-25-17"></a>            <span class="s2">&quot;discussed&quot;</span><span class="p">:</span> <span class="s2">&quot;THOROUGHLY_DISCUSSED_IN&quot;</span><span class="p">,</span>
-<a id="__codelineno-25-18" name="__codelineno-25-18" href="#__codelineno-25-18"></a>            <span class="s2">&quot;mentioned&quot;</span><span class="p">:</span> <span class="s2">&quot;MENTIONED_IN&quot;</span><span class="p">,</span>
-<a id="__codelineno-25-19" name="__codelineno-25-19" href="#__codelineno-25-19"></a>            <span class="s2">&quot;peripheral&quot;</span><span class="p">:</span> <span class="s2">&quot;TANGENTIALLY_REFERENCED_IN&quot;</span>
+<a id="__codelineno-25-16" name="__codelineno-25-16" href="#__codelineno-25-16"></a>            <span class="s2">"central"</span><span class="p">:</span> <span class="s2">"CENTRAL_TO"</span><span class="p">,</span>
+<a id="__codelineno-25-17" name="__codelineno-25-17" href="#__codelineno-25-17"></a>            <span class="s2">"discussed"</span><span class="p">:</span> <span class="s2">"THOROUGHLY_DISCUSSED_IN"</span><span class="p">,</span>
+<a id="__codelineno-25-18" name="__codelineno-25-18" href="#__codelineno-25-18"></a>            <span class="s2">"mentioned"</span><span class="p">:</span> <span class="s2">"MENTIONED_IN"</span><span class="p">,</span>
+<a id="__codelineno-25-19" name="__codelineno-25-19" href="#__codelineno-25-19"></a>            <span class="s2">"peripheral"</span><span class="p">:</span> <span class="s2">"TANGENTIALLY_REFERENCED_IN"</span>
 <a id="__codelineno-25-20" name="__codelineno-25-20" href="#__codelineno-25-20"></a>        <span class="p">}</span>
-<a id="__codelineno-25-21" name="__codelineno-25-21" href="#__codelineno-25-21"></a>        <span class="n">hint</span> <span class="o">=</span> <span class="n">mapping</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">prominence_hint</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="s2">&quot;APPEARS&quot;</span><span class="p">)</span>
+<a id="__codelineno-25-21" name="__codelineno-25-21" href="#__codelineno-25-21"></a>        <span class="n">hint</span> <span class="o">=</span> <span class="n">mapping</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">prominence_hint</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="s2">"APPEARS"</span><span class="p">)</span>
 <a id="__codelineno-25-22" name="__codelineno-25-22" href="#__codelineno-25-22"></a>
 <a id="__codelineno-25-23" name="__codelineno-25-23" href="#__codelineno-25-23"></a>    <span class="c1"># Priority 2: Infer from structure (always available)</span>
 <a id="__codelineno-25-24" name="__codelineno-25-24" href="#__codelineno-25-24"></a>    <span class="k">else</span><span class="p">:</span>
 <a id="__codelineno-25-25" name="__codelineno-25-25" href="#__codelineno-25-25"></a>        <span class="n">hint</span> <span class="o">=</span> <span class="n">infer_from_structure</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">source</span><span class="p">,</span> <span class="n">all_instances</span><span class="p">)</span>
 <a id="__codelineno-25-26" name="__codelineno-25-26" href="#__codelineno-25-26"></a>
 <a id="__codelineno-25-27" name="__codelineno-25-27" href="#__codelineno-25-27"></a>    <span class="c1"># Normalize to vocabulary cluster (always backend)</span>
-<a id="__codelineno-25-28" name="__codelineno-25-28" href="#__codelineno-25-28"></a>    <span class="k">return</span> <span class="n">normalize_to_cluster</span><span class="p">(</span><span class="n">hint</span><span class="p">,</span> <span class="s2">&quot;APPEARS&quot;</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.80</span><span class="p">)</span>
+<a id="__codelineno-25-28" name="__codelineno-25-28" href="#__codelineno-25-28"></a>    <span class="k">return</span> <span class="n">normalize_to_cluster</span><span class="p">(</span><span class="n">hint</span><span class="p">,</span> <span class="s2">"APPEARS"</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.80</span><span class="p">)</span>
 </code></pre></div>
 <p><strong>Benefits of hybrid:</strong>
 - Works with current extraction (no changes required)
@@ -3477,27 +3477,27 @@
 - Graceful degradation (structural fallback)</p>
 <h3 id="domain-agnostic-examples">Domain-Agnostic Examples</h3>
 <p><strong>Technical documentation:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>Concept: &quot;dependency injection&quot;
-<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>Structural signals: 15 mentions, 25% of text → &quot;THOROUGHLY_DISCUSSED_IN&quot;
-<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a>LLM hint: &quot;discussed&quot; → &quot;THOROUGHLY_DISCUSSED_IN&quot;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>Concept: "dependency injection"
+<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>Structural signals: 15 mentions, 25% of text → "THOROUGHLY_DISCUSSED_IN"
+<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a>LLM hint: "discussed" → "THOROUGHLY_DISCUSSED_IN"
 <a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a>Vocabulary cluster: Normalized, same result
 </code></pre></div></p>
 <p><strong>Research paper:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>Concept: &quot;Nash equilibrium&quot;
-<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>Structural signals: 2 mentions, 5% of text → &quot;MENTIONED_IN&quot;
-<a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a>LLM hint: &quot;central&quot; (it&#39;s the core theorem) → &quot;CENTRAL_TO&quot;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>Concept: "Nash equilibrium"
+<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>Structural signals: 2 mentions, 5% of text → "MENTIONED_IN"
+<a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a>LLM hint: "central" (it's the core theorem) → "CENTRAL_TO"
 <a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a>Vocabulary cluster: LLM hint more accurate than structure
 </code></pre></div></p>
 <p><strong>Code documentation:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>Concept: &quot;Logger interface&quot;
-<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>Structural signals: 1 mention, early in file → &quot;INTRODUCED_IN&quot;
-<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a>LLM hint: &quot;mentioned&quot; (just referenced, not explained) → &quot;MENTIONED_IN&quot;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>Concept: "Logger interface"
+<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>Structural signals: 1 mention, early in file → "INTRODUCED_IN"
+<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a>LLM hint: "mentioned" (just referenced, not explained) → "MENTIONED_IN"
 <a id="__codelineno-28-4" name="__codelineno-28-4" href="#__codelineno-28-4"></a>Vocabulary cluster: LLM provides nuance
 </code></pre></div></p>
 <p><strong>Legal document:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>Concept: &quot;reasonable doubt&quot;
-<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a>Structural signals: 8 mentions, 18% of text → &quot;FREQUENTLY_MENTIONED_IN&quot;
-<a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a>LLM hint: &quot;central&quot; (foundational principle) → &quot;CENTRAL_TO&quot;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>Concept: "reasonable doubt"
+<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a>Structural signals: 8 mentions, 18% of text → "FREQUENTLY_MENTIONED_IN"
+<a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a>LLM hint: "central" (foundational principle) → "CENTRAL_TO"
 <a id="__codelineno-29-4" name="__codelineno-29-4" href="#__codelineno-29-4"></a>Vocabulary cluster: LLM understands legal importance
 </code></pre></div></p>
 <h3 id="open-questions-for-further-discussion">Open Questions for Further Discussion</h3>
@@ -3556,9 +3556,9 @@
 <h3 id="alternative-1-keep-appears-hardcoded-add-properties">Alternative 1: Keep APPEARS Hardcoded, Add Properties</h3>
 <p><strong>Approach:</strong> Single APPEARS type, enrich with properties instead of using multiple types.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a><span class="k">MERGE</span><span class="w"> </span><span class="p">(</span><span class="n">c</span><span class="p">)</span><span class="err">-</span><span class="o">[</span><span class="p">:</span><span class="n">APPEARS</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a><span class="w">    </span><span class="n">variant</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;CENTRAL_TO&quot;</span><span class="p">,</span>
+<a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a><span class="w">    </span><span class="n">variant</span><span class="p">:</span><span class="w"> </span><span class="s">"CENTRAL_TO"</span><span class="p">,</span>
 <a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a><span class="w">    </span><span class="n">confidence</span><span class="p">:</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">92</span><span class="p">,</span>
-<a id="__codelineno-30-4" name="__codelineno-30-4" href="#__codelineno-30-4"></a><span class="w">    </span><span class="n">category</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;thematic&quot;</span>
+<a id="__codelineno-30-4" name="__codelineno-30-4" href="#__codelineno-30-4"></a><span class="w">    </span><span class="n">category</span><span class="p">:</span><span class="w"> </span><span class="s">"thematic"</span>
 <a id="__codelineno-30-5" name="__codelineno-30-5" href="#__codelineno-30-5"></a><span class="p">}</span><span class="o">]</span><span class="err">-</span><span class="p">&gt;(</span><span class="n">s</span><span class="p">)</span>
 </code></pre></div>
 <p><strong>Pros:</strong>
@@ -3661,47 +3661,47 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a><span class="c1"># NEW: api/api/services/epistemic_status_service.py (replaces operator script)</span>
 <a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a><span class="c1"># CLI: kg vocab epistemic-status measure</span>
 <a id="__codelineno-33-3" name="__codelineno-33-3" href="#__codelineno-33-3"></a><span class="k">def</span><span class="w"> </span><span class="nf">calculate_epistemic_status</span><span class="p">(</span><span class="n">age_client</span><span class="p">):</span>
-<a id="__codelineno-33-4" name="__codelineno-33-4" href="#__codelineno-33-4"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-33-4" name="__codelineno-33-4" href="#__codelineno-33-4"></a><span class="w">    </span><span class="sd">"""</span>
 <a id="__codelineno-33-5" name="__codelineno-33-5" href="#__codelineno-33-5"></a><span class="sd">    Calculate epistemic status for each vocabulary type based on grounding impact.</span>
 <a id="__codelineno-33-6" name="__codelineno-33-6" href="#__codelineno-33-6"></a>
 <a id="__codelineno-33-7" name="__codelineno-33-7" href="#__codelineno-33-7"></a><span class="sd">    Purely additive - does not change ingestion, grounding, or queries.</span>
-<a id="__codelineno-33-8" name="__codelineno-33-8" href="#__codelineno-33-8"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-33-8" name="__codelineno-33-8" href="#__codelineno-33-8"></a><span class="sd">    """</span>
 <a id="__codelineno-33-9" name="__codelineno-33-9" href="#__codelineno-33-9"></a>    <span class="n">vocab_types</span> <span class="o">=</span> <span class="n">age_client</span><span class="o">.</span><span class="n">get_all_vocabulary_types</span><span class="p">()</span>
 <a id="__codelineno-33-10" name="__codelineno-33-10" href="#__codelineno-33-10"></a>
 <a id="__codelineno-33-11" name="__codelineno-33-11" href="#__codelineno-33-11"></a>    <span class="k">for</span> <span class="n">vocab_type</span> <span class="ow">in</span> <span class="n">vocab_types</span><span class="p">:</span>
 <a id="__codelineno-33-12" name="__codelineno-33-12" href="#__codelineno-33-12"></a>        <span class="c1"># Get all edges using this type</span>
-<a id="__codelineno-33-13" name="__codelineno-33-13" href="#__codelineno-33-13"></a>        <span class="n">edges</span> <span class="o">=</span> <span class="n">age_client</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-33-13" name="__codelineno-33-13" href="#__codelineno-33-13"></a>        <span class="n">edges</span> <span class="o">=</span> <span class="n">age_client</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="sa">f</span><span class="s2">"""</span>
 <a id="__codelineno-33-14" name="__codelineno-33-14" href="#__codelineno-33-14"></a><span class="s2">            MATCH (c1)-[r:</span><span class="si">{</span><span class="n">vocab_type</span><span class="si">}</span><span class="s2">]-&gt;(c2)</span>
 <a id="__codelineno-33-15" name="__codelineno-33-15" href="#__codelineno-33-15"></a><span class="s2">            RETURN c1.grounding_strength as from_grounding,</span>
 <a id="__codelineno-33-16" name="__codelineno-33-16" href="#__codelineno-33-16"></a><span class="s2">                   c2.grounding_strength as to_grounding</span>
-<a id="__codelineno-33-17" name="__codelineno-33-17" href="#__codelineno-33-17"></a><span class="s2">        &quot;&quot;&quot;</span><span class="p">)</span>
+<a id="__codelineno-33-17" name="__codelineno-33-17" href="#__codelineno-33-17"></a><span class="s2">        """</span><span class="p">)</span>
 <a id="__codelineno-33-18" name="__codelineno-33-18" href="#__codelineno-33-18"></a>
 <a id="__codelineno-33-19" name="__codelineno-33-19" href="#__codelineno-33-19"></a>        <span class="c1"># Calculate grounding statistics</span>
 <a id="__codelineno-33-20" name="__codelineno-33-20" href="#__codelineno-33-20"></a>        <span class="n">stats</span> <span class="o">=</span> <span class="p">{</span>
-<a id="__codelineno-33-21" name="__codelineno-33-21" href="#__codelineno-33-21"></a>            <span class="s1">&#39;avg_grounding&#39;</span><span class="p">:</span> <span class="n">mean</span><span class="p">([</span><span class="n">e</span><span class="p">[</span><span class="s1">&#39;to_grounding&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">edges</span><span class="p">]),</span>
-<a id="__codelineno-33-22" name="__codelineno-33-22" href="#__codelineno-33-22"></a>            <span class="s1">&#39;max_grounding&#39;</span><span class="p">:</span> <span class="nb">max</span><span class="p">([</span><span class="n">e</span><span class="p">[</span><span class="s1">&#39;to_grounding&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">edges</span><span class="p">]),</span>
-<a id="__codelineno-33-23" name="__codelineno-33-23" href="#__codelineno-33-23"></a>            <span class="s1">&#39;min_grounding&#39;</span><span class="p">:</span> <span class="nb">min</span><span class="p">([</span><span class="n">e</span><span class="p">[</span><span class="s1">&#39;to_grounding&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">edges</span><span class="p">]),</span>
-<a id="__codelineno-33-24" name="__codelineno-33-24" href="#__codelineno-33-24"></a>            <span class="s1">&#39;count&#39;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">edges</span><span class="p">)</span>
+<a id="__codelineno-33-21" name="__codelineno-33-21" href="#__codelineno-33-21"></a>            <span class="s1">'avg_grounding'</span><span class="p">:</span> <span class="n">mean</span><span class="p">([</span><span class="n">e</span><span class="p">[</span><span class="s1">'to_grounding'</span><span class="p">]</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">edges</span><span class="p">]),</span>
+<a id="__codelineno-33-22" name="__codelineno-33-22" href="#__codelineno-33-22"></a>            <span class="s1">'max_grounding'</span><span class="p">:</span> <span class="nb">max</span><span class="p">([</span><span class="n">e</span><span class="p">[</span><span class="s1">'to_grounding'</span><span class="p">]</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">edges</span><span class="p">]),</span>
+<a id="__codelineno-33-23" name="__codelineno-33-23" href="#__codelineno-33-23"></a>            <span class="s1">'min_grounding'</span><span class="p">:</span> <span class="nb">min</span><span class="p">([</span><span class="n">e</span><span class="p">[</span><span class="s1">'to_grounding'</span><span class="p">]</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">edges</span><span class="p">]),</span>
+<a id="__codelineno-33-24" name="__codelineno-33-24" href="#__codelineno-33-24"></a>            <span class="s1">'count'</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">edges</span><span class="p">)</span>
 <a id="__codelineno-33-25" name="__codelineno-33-25" href="#__codelineno-33-25"></a>        <span class="p">}</span>
 <a id="__codelineno-33-26" name="__codelineno-33-26" href="#__codelineno-33-26"></a>
 <a id="__codelineno-33-27" name="__codelineno-33-27" href="#__codelineno-33-27"></a>        <span class="c1"># Classify epistemic status</span>
-<a id="__codelineno-33-28" name="__codelineno-33-28" href="#__codelineno-33-28"></a>        <span class="k">if</span> <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;avg_grounding&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">0.8</span><span class="p">:</span>
-<a id="__codelineno-33-29" name="__codelineno-33-29" href="#__codelineno-33-29"></a>            <span class="n">role</span> <span class="o">=</span> <span class="s2">&quot;AFFIRMATIVE&quot;</span>
-<a id="__codelineno-33-30" name="__codelineno-33-30" href="#__codelineno-33-30"></a>        <span class="k">elif</span> <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;avg_grounding&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mf">0.5</span><span class="p">:</span>
-<a id="__codelineno-33-31" name="__codelineno-33-31" href="#__codelineno-33-31"></a>            <span class="n">role</span> <span class="o">=</span> <span class="s2">&quot;CONTRADICTORY&quot;</span>
-<a id="__codelineno-33-32" name="__codelineno-33-32" href="#__codelineno-33-32"></a>        <span class="k">elif</span> <span class="mf">0.2</span> <span class="o">&lt;=</span> <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;avg_grounding&#39;</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mf">0.8</span><span class="p">:</span>
-<a id="__codelineno-33-33" name="__codelineno-33-33" href="#__codelineno-33-33"></a>            <span class="n">role</span> <span class="o">=</span> <span class="s2">&quot;CONTESTED&quot;</span>
-<a id="__codelineno-33-34" name="__codelineno-33-34" href="#__codelineno-33-34"></a>        <span class="k">elif</span> <span class="n">vocab_type</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;REPLACED_BY&#39;</span><span class="p">,</span> <span class="s1">&#39;SUPERSEDED_BY&#39;</span><span class="p">,</span> <span class="s1">&#39;DEPRECATED&#39;</span><span class="p">]:</span>
-<a id="__codelineno-33-35" name="__codelineno-33-35" href="#__codelineno-33-35"></a>            <span class="n">role</span> <span class="o">=</span> <span class="s2">&quot;HISTORICAL&quot;</span>
+<a id="__codelineno-33-28" name="__codelineno-33-28" href="#__codelineno-33-28"></a>        <span class="k">if</span> <span class="n">stats</span><span class="p">[</span><span class="s1">'avg_grounding'</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">0.8</span><span class="p">:</span>
+<a id="__codelineno-33-29" name="__codelineno-33-29" href="#__codelineno-33-29"></a>            <span class="n">role</span> <span class="o">=</span> <span class="s2">"AFFIRMATIVE"</span>
+<a id="__codelineno-33-30" name="__codelineno-33-30" href="#__codelineno-33-30"></a>        <span class="k">elif</span> <span class="n">stats</span><span class="p">[</span><span class="s1">'avg_grounding'</span><span class="p">]</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mf">0.5</span><span class="p">:</span>
+<a id="__codelineno-33-31" name="__codelineno-33-31" href="#__codelineno-33-31"></a>            <span class="n">role</span> <span class="o">=</span> <span class="s2">"CONTRADICTORY"</span>
+<a id="__codelineno-33-32" name="__codelineno-33-32" href="#__codelineno-33-32"></a>        <span class="k">elif</span> <span class="mf">0.2</span> <span class="o">&lt;=</span> <span class="n">stats</span><span class="p">[</span><span class="s1">'avg_grounding'</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mf">0.8</span><span class="p">:</span>
+<a id="__codelineno-33-33" name="__codelineno-33-33" href="#__codelineno-33-33"></a>            <span class="n">role</span> <span class="o">=</span> <span class="s2">"CONTESTED"</span>
+<a id="__codelineno-33-34" name="__codelineno-33-34" href="#__codelineno-33-34"></a>        <span class="k">elif</span> <span class="n">vocab_type</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">'REPLACED_BY'</span><span class="p">,</span> <span class="s1">'SUPERSEDED_BY'</span><span class="p">,</span> <span class="s1">'DEPRECATED'</span><span class="p">]:</span>
+<a id="__codelineno-33-35" name="__codelineno-33-35" href="#__codelineno-33-35"></a>            <span class="n">role</span> <span class="o">=</span> <span class="s2">"HISTORICAL"</span>
 <a id="__codelineno-33-36" name="__codelineno-33-36" href="#__codelineno-33-36"></a>        <span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-33-37" name="__codelineno-33-37" href="#__codelineno-33-37"></a>            <span class="n">role</span> <span class="o">=</span> <span class="s2">&quot;NEUTRAL&quot;</span>
+<a id="__codelineno-33-37" name="__codelineno-33-37" href="#__codelineno-33-37"></a>            <span class="n">role</span> <span class="o">=</span> <span class="s2">"NEUTRAL"</span>
 <a id="__codelineno-33-38" name="__codelineno-33-38" href="#__codelineno-33-38"></a>
 <a id="__codelineno-33-39" name="__codelineno-33-39" href="#__codelineno-33-39"></a>        <span class="c1"># ADD new properties (non-destructive)</span>
-<a id="__codelineno-33-40" name="__codelineno-33-40" href="#__codelineno-33-40"></a>        <span class="n">age_client</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-33-40" name="__codelineno-33-40" href="#__codelineno-33-40"></a>        <span class="n">age_client</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"""</span>
 <a id="__codelineno-33-41" name="__codelineno-33-41" href="#__codelineno-33-41"></a><span class="s2">            MATCH (v:VocabType {name: $type})</span>
 <a id="__codelineno-33-42" name="__codelineno-33-42" href="#__codelineno-33-42"></a><span class="s2">            SET v.epistemic_status = $role,</span>
 <a id="__codelineno-33-43" name="__codelineno-33-43" href="#__codelineno-33-43"></a><span class="s2">                v.epistemic_stats = $stats</span>
-<a id="__codelineno-33-44" name="__codelineno-33-44" href="#__codelineno-33-44"></a><span class="s2">        &quot;&quot;&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="n">vocab_type</span><span class="p">,</span> <span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="n">role</span><span class="p">,</span> <span class="s2">&quot;stats&quot;</span><span class="p">:</span> <span class="n">stats</span><span class="p">})</span>
+<a id="__codelineno-33-44" name="__codelineno-33-44" href="#__codelineno-33-44"></a><span class="s2">        """</span><span class="p">,</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="n">vocab_type</span><span class="p">,</span> <span class="s2">"role"</span><span class="p">:</span> <span class="n">role</span><span class="p">,</span> <span class="s2">"stats"</span><span class="p">:</span> <span class="n">stats</span><span class="p">})</span>
 </code></pre></div>
 <p><strong>Result:</strong> Core system unchanged, new metadata available for exploration.</p>
 <p><strong>Phase 2: Enhance Querying (Additive Logic)</strong></p>
@@ -3715,63 +3715,63 @@
 <a id="__codelineno-34-7" name="__codelineno-34-7" href="#__codelineno-34-7"></a>        <span class="n">include_roles</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># NEW</span>
 <a id="__codelineno-34-8" name="__codelineno-34-8" href="#__codelineno-34-8"></a>        <span class="n">exclude_roles</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>   <span class="c1"># NEW</span>
 <a id="__codelineno-34-9" name="__codelineno-34-9" href="#__codelineno-34-9"></a>    <span class="p">):</span>
-<a id="__codelineno-34-10" name="__codelineno-34-10" href="#__codelineno-34-10"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-34-10" name="__codelineno-34-10" href="#__codelineno-34-10"></a><span class="w">        </span><span class="sd">"""</span>
 <a id="__codelineno-34-11" name="__codelineno-34-11" href="#__codelineno-34-11"></a><span class="sd">        Match relationships with optional epistemic status filtering.</span>
 <a id="__codelineno-34-12" name="__codelineno-34-12" href="#__codelineno-34-12"></a>
 <a id="__codelineno-34-13" name="__codelineno-34-13" href="#__codelineno-34-13"></a><span class="sd">        Args:</span>
-<a id="__codelineno-34-14" name="__codelineno-34-14" href="#__codelineno-34-14"></a><span class="sd">            include_roles: Only include these roles (e.g., [&quot;AFFIRMATIVE&quot;])</span>
-<a id="__codelineno-34-15" name="__codelineno-34-15" href="#__codelineno-34-15"></a><span class="sd">            exclude_roles: Exclude these roles (e.g., [&quot;HISTORICAL&quot;])</span>
+<a id="__codelineno-34-14" name="__codelineno-34-14" href="#__codelineno-34-14"></a><span class="sd">            include_roles: Only include these roles (e.g., ["AFFIRMATIVE"])</span>
+<a id="__codelineno-34-15" name="__codelineno-34-15" href="#__codelineno-34-15"></a><span class="sd">            exclude_roles: Exclude these roles (e.g., ["HISTORICAL"])</span>
 <a id="__codelineno-34-16" name="__codelineno-34-16" href="#__codelineno-34-16"></a>
 <a id="__codelineno-34-17" name="__codelineno-34-17" href="#__codelineno-34-17"></a><span class="sd">        Backward compatible: If both None, behaves exactly as before.</span>
-<a id="__codelineno-34-18" name="__codelineno-34-18" href="#__codelineno-34-18"></a><span class="sd">        &quot;&quot;&quot;</span>
+<a id="__codelineno-34-18" name="__codelineno-34-18" href="#__codelineno-34-18"></a><span class="sd">        """</span>
 <a id="__codelineno-34-19" name="__codelineno-34-19" href="#__codelineno-34-19"></a>        <span class="c1"># Get vocabulary types matching role filters</span>
 <a id="__codelineno-34-20" name="__codelineno-34-20" href="#__codelineno-34-20"></a>        <span class="k">if</span> <span class="n">include_roles</span> <span class="ow">or</span> <span class="n">exclude_roles</span><span class="p">:</span>
 <a id="__codelineno-34-21" name="__codelineno-34-21" href="#__codelineno-34-21"></a>            <span class="n">role_filter</span> <span class="o">=</span> <span class="p">[]</span>
 <a id="__codelineno-34-22" name="__codelineno-34-22" href="#__codelineno-34-22"></a>            <span class="k">if</span> <span class="n">include_roles</span><span class="p">:</span>
-<a id="__codelineno-34-23" name="__codelineno-34-23" href="#__codelineno-34-23"></a>                <span class="n">role_filter</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;v.epistemic_status IN </span><span class="si">{</span><span class="n">include_roles</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-34-23" name="__codelineno-34-23" href="#__codelineno-34-23"></a>                <span class="n">role_filter</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"v.epistemic_status IN </span><span class="si">{</span><span class="n">include_roles</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 <a id="__codelineno-34-24" name="__codelineno-34-24" href="#__codelineno-34-24"></a>            <span class="k">if</span> <span class="n">exclude_roles</span><span class="p">:</span>
-<a id="__codelineno-34-25" name="__codelineno-34-25" href="#__codelineno-34-25"></a>                <span class="n">role_filter</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;v.epistemic_status NOT IN </span><span class="si">{</span><span class="n">exclude_roles</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-34-25" name="__codelineno-34-25" href="#__codelineno-34-25"></a>                <span class="n">role_filter</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"v.epistemic_status NOT IN </span><span class="si">{</span><span class="n">exclude_roles</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 <a id="__codelineno-34-26" name="__codelineno-34-26" href="#__codelineno-34-26"></a>
-<a id="__codelineno-34-27" name="__codelineno-34-27" href="#__codelineno-34-27"></a>            <span class="n">vocab_query</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-34-27" name="__codelineno-34-27" href="#__codelineno-34-27"></a>            <span class="n">vocab_query</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"""</span>
 <a id="__codelineno-34-28" name="__codelineno-34-28" href="#__codelineno-34-28"></a><span class="s2">                MATCH (v:VocabType)</span>
-<a id="__codelineno-34-29" name="__codelineno-34-29" href="#__codelineno-34-29"></a><span class="s2">                WHERE </span><span class="si">{</span><span class="s1">&#39; AND &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">role_filter</span><span class="p">)</span><span class="si">}</span>
+<a id="__codelineno-34-29" name="__codelineno-34-29" href="#__codelineno-34-29"></a><span class="s2">                WHERE </span><span class="si">{</span><span class="s1">' AND '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">role_filter</span><span class="p">)</span><span class="si">}</span>
 <a id="__codelineno-34-30" name="__codelineno-34-30" href="#__codelineno-34-30"></a><span class="s2">                RETURN v.name as type_name</span>
-<a id="__codelineno-34-31" name="__codelineno-34-31" href="#__codelineno-34-31"></a><span class="s2">            &quot;&quot;&quot;</span>
-<a id="__codelineno-34-32" name="__codelineno-34-32" href="#__codelineno-34-32"></a>            <span class="n">allowed_types</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;type_name&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">vocab_query</span><span class="p">)]</span>
+<a id="__codelineno-34-31" name="__codelineno-34-31" href="#__codelineno-34-31"></a><span class="s2">            """</span>
+<a id="__codelineno-34-32" name="__codelineno-34-32" href="#__codelineno-34-32"></a>            <span class="n">allowed_types</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="p">[</span><span class="s1">'type_name'</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">vocab_query</span><span class="p">)]</span>
 <a id="__codelineno-34-33" name="__codelineno-34-33" href="#__codelineno-34-33"></a>        <span class="k">else</span><span class="p">:</span>
 <a id="__codelineno-34-34" name="__codelineno-34-34" href="#__codelineno-34-34"></a>            <span class="n">allowed_types</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># No filtering, use all types</span>
 <a id="__codelineno-34-35" name="__codelineno-34-35" href="#__codelineno-34-35"></a>
 <a id="__codelineno-34-36" name="__codelineno-34-36" href="#__codelineno-34-36"></a>        <span class="c1"># Build main query (existing logic + optional type filter)</span>
-<a id="__codelineno-34-37" name="__codelineno-34-37" href="#__codelineno-34-37"></a>        <span class="n">type_pattern</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;:</span><span class="si">{</span><span class="p">(</span><span class="s1">&#39;|&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">allowed_types</span><span class="p">))</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">allowed_types</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+<a id="__codelineno-34-37" name="__codelineno-34-37" href="#__codelineno-34-37"></a>        <span class="n">type_pattern</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">":</span><span class="si">{</span><span class="p">(</span><span class="s1">'|'</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">allowed_types</span><span class="p">))</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="n">allowed_types</span> <span class="k">else</span> <span class="s2">""</span>
 <a id="__codelineno-34-38" name="__codelineno-34-38" href="#__codelineno-34-38"></a>
-<a id="__codelineno-34-39" name="__codelineno-34-39" href="#__codelineno-34-39"></a>        <span class="n">query</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-34-39" name="__codelineno-34-39" href="#__codelineno-34-39"></a>        <span class="n">query</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"""</span>
 <a id="__codelineno-34-40" name="__codelineno-34-40" href="#__codelineno-34-40"></a><span class="s2">            MATCH (c:Concept </span><span class="se">{{</span><span class="s2">concept_id: $concept_id</span><span class="se">}}</span><span class="s2">)-[r</span><span class="si">{</span><span class="n">type_pattern</span><span class="si">}</span><span class="s2">]-&gt;(c2)</span>
 <a id="__codelineno-34-41" name="__codelineno-34-41" href="#__codelineno-34-41"></a><span class="s2">            RETURN c2, type(r), r.confidence</span>
-<a id="__codelineno-34-42" name="__codelineno-34-42" href="#__codelineno-34-42"></a><span class="s2">        &quot;&quot;&quot;</span>
+<a id="__codelineno-34-42" name="__codelineno-34-42" href="#__codelineno-34-42"></a><span class="s2">        """</span>
 <a id="__codelineno-34-43" name="__codelineno-34-43" href="#__codelineno-34-43"></a>
-<a id="__codelineno-34-44" name="__codelineno-34-44" href="#__codelineno-34-44"></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;concept_id&quot;</span><span class="p">:</span> <span class="n">concept_id</span><span class="p">})</span>
+<a id="__codelineno-34-44" name="__codelineno-34-44" href="#__codelineno-34-44"></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="p">{</span><span class="s2">"concept_id"</span><span class="p">:</span> <span class="n">concept_id</span><span class="p">})</span>
 </code></pre></div>
 <p><strong>New capabilities enabled:</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a><span class="c1"># Explore only high-confidence relationships (thesis)</span>
 <a id="__codelineno-35-2" name="__codelineno-35-2" href="#__codelineno-35-2"></a><span class="n">facade</span><span class="o">.</span><span class="n">match_concept_relationships</span><span class="p">(</span>
-<a id="__codelineno-35-3" name="__codelineno-35-3" href="#__codelineno-35-3"></a>    <span class="n">concept_id</span><span class="o">=</span><span class="s2">&quot;covenant_name&quot;</span><span class="p">,</span>
-<a id="__codelineno-35-4" name="__codelineno-35-4" href="#__codelineno-35-4"></a>    <span class="n">include_roles</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;AFFIRMATIVE&quot;</span><span class="p">]</span>
+<a id="__codelineno-35-3" name="__codelineno-35-3" href="#__codelineno-35-3"></a>    <span class="n">concept_id</span><span class="o">=</span><span class="s2">"covenant_name"</span><span class="p">,</span>
+<a id="__codelineno-35-4" name="__codelineno-35-4" href="#__codelineno-35-4"></a>    <span class="n">include_roles</span><span class="o">=</span><span class="p">[</span><span class="s2">"AFFIRMATIVE"</span><span class="p">]</span>
 <a id="__codelineno-35-5" name="__codelineno-35-5" href="#__codelineno-35-5"></a><span class="p">)</span>
 <a id="__codelineno-35-6" name="__codelineno-35-6" href="#__codelineno-35-6"></a>
 <a id="__codelineno-35-7" name="__codelineno-35-7" href="#__codelineno-35-7"></a><span class="c1"># Explore contradictions (antithesis)</span>
 <a id="__codelineno-35-8" name="__codelineno-35-8" href="#__codelineno-35-8"></a><span class="n">facade</span><span class="o">.</span><span class="n">match_concept_relationships</span><span class="p">(</span>
-<a id="__codelineno-35-9" name="__codelineno-35-9" href="#__codelineno-35-9"></a>    <span class="n">concept_id</span><span class="o">=</span><span class="s2">&quot;covenant_name&quot;</span><span class="p">,</span>
-<a id="__codelineno-35-10" name="__codelineno-35-10" href="#__codelineno-35-10"></a>    <span class="n">include_roles</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;CONTRADICTORY&quot;</span><span class="p">,</span> <span class="s2">&quot;CONTESTED&quot;</span><span class="p">]</span>
+<a id="__codelineno-35-9" name="__codelineno-35-9" href="#__codelineno-35-9"></a>    <span class="n">concept_id</span><span class="o">=</span><span class="s2">"covenant_name"</span><span class="p">,</span>
+<a id="__codelineno-35-10" name="__codelineno-35-10" href="#__codelineno-35-10"></a>    <span class="n">include_roles</span><span class="o">=</span><span class="p">[</span><span class="s2">"CONTRADICTORY"</span><span class="p">,</span> <span class="s2">"CONTESTED"</span><span class="p">]</span>
 <a id="__codelineno-35-11" name="__codelineno-35-11" href="#__codelineno-35-11"></a><span class="p">)</span>
 <a id="__codelineno-35-12" name="__codelineno-35-12" href="#__codelineno-35-12"></a>
 <a id="__codelineno-35-13" name="__codelineno-35-13" href="#__codelineno-35-13"></a><span class="c1"># Exclude historical relationships (current state only)</span>
 <a id="__codelineno-35-14" name="__codelineno-35-14" href="#__codelineno-35-14"></a><span class="n">facade</span><span class="o">.</span><span class="n">match_concept_relationships</span><span class="p">(</span>
-<a id="__codelineno-35-15" name="__codelineno-35-15" href="#__codelineno-35-15"></a>    <span class="n">concept_id</span><span class="o">=</span><span class="s2">&quot;covenant_name&quot;</span><span class="p">,</span>
-<a id="__codelineno-35-16" name="__codelineno-35-16" href="#__codelineno-35-16"></a>    <span class="n">exclude_roles</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;HISTORICAL&quot;</span><span class="p">]</span>
+<a id="__codelineno-35-15" name="__codelineno-35-15" href="#__codelineno-35-15"></a>    <span class="n">concept_id</span><span class="o">=</span><span class="s2">"covenant_name"</span><span class="p">,</span>
+<a id="__codelineno-35-16" name="__codelineno-35-16" href="#__codelineno-35-16"></a>    <span class="n">exclude_roles</span><span class="o">=</span><span class="p">[</span><span class="s2">"HISTORICAL"</span><span class="p">]</span>
 <a id="__codelineno-35-17" name="__codelineno-35-17" href="#__codelineno-35-17"></a><span class="p">)</span>
 <a id="__codelineno-35-18" name="__codelineno-35-18" href="#__codelineno-35-18"></a>
 <a id="__codelineno-35-19" name="__codelineno-35-19" href="#__codelineno-35-19"></a><span class="c1"># Default behavior unchanged (backward compatible)</span>
-<a id="__codelineno-35-20" name="__codelineno-35-20" href="#__codelineno-35-20"></a><span class="n">facade</span><span class="o">.</span><span class="n">match_concept_relationships</span><span class="p">(</span><span class="n">concept_id</span><span class="o">=</span><span class="s2">&quot;covenant_name&quot;</span><span class="p">)</span>
+<a id="__codelineno-35-20" name="__codelineno-35-20" href="#__codelineno-35-20"></a><span class="n">facade</span><span class="o">.</span><span class="n">match_concept_relationships</span><span class="p">(</span><span class="n">concept_id</span><span class="o">=</span><span class="s2">"covenant_name"</span><span class="p">)</span>
 </code></pre></div>
 <p><strong>Phase 3: Integration (Only After Validation)</strong></p>
 <p>Only if Phase 1-2 prove valuable:
@@ -3876,7 +3876,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": [], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

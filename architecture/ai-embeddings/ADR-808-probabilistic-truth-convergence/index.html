@@ -19,7 +19,7 @@
       
       
       <link rel="icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -27,7 +27,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.ec1eaa64.min.css">
       
       
 
@@ -2914,16 +2914,16 @@
 <a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>  - Source documents and dates
 <a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>
 <a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>Agent provides context:
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>  &quot;Given evidence that:
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>  "Given evidence that:
 <a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>   - Neo4j mentioned in 12 documents (2025-10-01 to 2025-10-08)
 <a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>   - Apache AGE mentioned in 47 documents (2025-10-10 to 2025-10-24)
 <a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>   - ADR-208 states migration occurred 2025-10-09
 <a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>   - Current codebase uses age_client.py, not neo4j_client.py
 <a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>
-<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>   Context: &#39;System uses Neo4j&#39; has grounding_strength of 0.232 (23% support)
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>   Context: 'System uses Neo4j' has grounding_strength of 0.232 (23% support)
 <a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>   Interpretation: Temporal evidence + codebase verification suggests this
 <a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>   represents historical state, not current architecture.
-<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a>   Confidence: 0.95&quot;
+<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a>   Confidence: 0.95"
 </code></pre></div>
 <p><strong>Agent's new role:</strong>
 - ❌ Does NOT mark concepts as irrelevant
@@ -2934,16 +2934,16 @@
 <p><strong>LLM query pattern with agent context:</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>Presupposition: The following concepts have weak grounding in evidence:
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>Concept: &quot;System uses Neo4j&quot;
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>Concept: "System uses Neo4j"
 <a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>- Grounding strength: 0.232 (23% support, 77% contradiction)
 <a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>- Context: Represents historical state (pre-2025-10-09 migration)
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>- Current alternative: &quot;System uses Apache AGE + PostgreSQL&quot; (grounding: 0.901)
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>- Current alternative: "System uses Apache AGE + PostgreSQL" (grounding: 0.901)
 <a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>
 <a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>Given this context, synthesize the best possible true statement about:
-<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>&quot;What database does the system use?&quot;
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>"What database does the system use?"
 <a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>
-<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>Expected response: &quot;The system currently uses Apache AGE + PostgreSQL.
-<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>It previously used Neo4j but migrated in October 2025 per ADR-208.&quot;
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>Expected response: "The system currently uses Apache AGE + PostgreSQL.
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>It previously used Neo4j but migrated in October 2025 per ADR-208."
 </code></pre></div>
 <p><strong>Key insight:</strong> Agent provides interpretive context, but the <strong>grounding_strength calculation is pure mathematics</strong> - no agent needed for the core filtering mechanism.</p>
 <h3 id="bounded-rationality-query-depth-constraints">Bounded Rationality: Query Depth Constraints</h3>
@@ -2966,7 +2966,7 @@
 <a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>Decision: Pragmatic - bounded computation, sufficient signal
 </code></pre></div></p>
 <p><strong>Depth 2 (Recursive):</strong> Weight edges by grounding_strength of source concepts
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a># Edge weight influenced by source concept&#39;s grounding
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a># Edge weight influenced by source concept's grounding
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>weighted_support = sum(
 <a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>    edge.confidence * source_concept.grounding_strength
 <a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>    for edge in SUPPORTS edges
@@ -3077,7 +3077,7 @@
 <p><strong>Alternative:</strong> If recursive grounding is truly needed (rare), implement iteratively:
 <div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># Python application layer: iterative depth-limited grounding</span>
 <a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="k">def</span><span class="w"> </span><span class="nf">calculate_recursive_grounding</span><span class="p">(</span><span class="n">concept_id</span><span class="p">,</span> <span class="n">max_depth</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculate grounding with limited recursion.&quot;&quot;&quot;</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">    </span><span class="sd">"""Calculate grounding with limited recursion."""</span>
 <a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>    <span class="n">visited</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
 <a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>
 <a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">recurse</span><span class="p">(</span><span class="n">cid</span><span class="p">,</span> <span class="n">depth</span><span class="p">):</span>
@@ -3375,7 +3375,7 @@
 <a id="__codelineno-21-23" name="__codelineno-21-23" href="#__codelineno-21-23"></a>Provide:
 <a id="__codelineno-21-24" name="__codelineno-21-24" href="#__codelineno-21-24"></a>- Interpretation: 2-3 sentence explanation grounded in evidence
 <a id="__codelineno-21-25" name="__codelineno-21-25" href="#__codelineno-21-25"></a>- Alternative concept: {concept_label} (grounding: {grounding_strength})
-<a id="__codelineno-21-26" name="__codelineno-21-26" href="#__codelineno-21-26"></a>- Temporal context: &quot;Historical&quot; | &quot;Current&quot; | &quot;Future&quot; | &quot;Context-dependent&quot;
+<a id="__codelineno-21-26" name="__codelineno-21-26" href="#__codelineno-21-26"></a>- Temporal context: "Historical" | "Current" | "Future" | "Context-dependent"
 <a id="__codelineno-21-27" name="__codelineno-21-27" href="#__codelineno-21-27"></a>- Confidence: 0.0-1.0
 <a id="__codelineno-21-28" name="__codelineno-21-28" href="#__codelineno-21-28"></a>
 <a id="__codelineno-21-29" name="__codelineno-21-29" href="#__codelineno-21-29"></a>Format response as JSON.
@@ -3450,7 +3450,7 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="c1">// Materialized view pattern (recalculated periodically)</span>
 <a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a><span class="p">(:</span><span class="n">Concept</span><span class="w"> </span><span class="p">{</span>
 <a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a><span class="w">  </span><span class="n">grounding_strength_cached</span><span class="p">:</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">768</span><span class="p">,</span>
-<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a><span class="w">  </span><span class="n">grounding_cache_date</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2025-10-24T10:30:00Z&quot;</span><span class="p">,</span>
+<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a><span class="w">  </span><span class="n">grounding_cache_date</span><span class="p">:</span><span class="w"> </span><span class="s">"2025-10-24T10:30:00Z"</span><span class="p">,</span>
 <a id="__codelineno-25-5" name="__codelineno-25-5" href="#__codelineno-25-5"></a><span class="w">  </span><span class="n">grounding_cache_ttl</span><span class="p">:</span><span class="w"> </span><span class="m">3600</span><span class="w">  </span><span class="c1">// seconds</span>
 <a id="__codelineno-25-6" name="__codelineno-25-6" href="#__codelineno-25-6"></a><span class="p">})</span>
 </code></pre></div>
@@ -3466,7 +3466,7 @@
 <h2 id="examples">Examples</h2>
 <h3 id="example-1-neo4j-apache-age-actual">Example 1: Neo4j → Apache AGE (Actual)</h3>
 <p><strong>Initial state (2025-10-08):</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>(:Concept {label: &quot;System uses Neo4j&quot;})
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>(:Concept {label: "System uses Neo4j"})
 <a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>  ← SUPPORTS ← (12 evidence instances from docs, avg confidence 0.85)
 <a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a>
 <a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a>Grounding calculation:
@@ -3475,7 +3475,7 @@
 <a id="__codelineno-26-7" name="__codelineno-26-7" href="#__codelineno-26-7"></a>  grounding_strength: 10.2 / 10.2 = 1.00 (fully supported)
 </code></pre></div></p>
 <p><strong>After ingestion (2025-10-24):</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>(:Concept {label: &quot;System uses Neo4j&quot;})
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>(:Concept {label: "System uses Neo4j"})
 <a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>  ← SUPPORTS ← (12 evidence instances from old docs, avg confidence 0.85)
 <a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a>  ← CONTRADICTS ← (47 evidence instances from new docs, avg confidence 0.72)
 <a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a>
@@ -3487,11 +3487,11 @@
 </code></pre></div></p>
 <p><strong>Optional agent context:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a><span class="p">{</span>
-<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a><span class="w">  </span><span class="nt">&quot;interpretation&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Temporal analysis shows Neo4j references end 2025-10-08. ADR-208 explicitly documents migration to Apache AGE on 2025-10-09. Current codebase (age_client.py) and all recent documentation reference Apache AGE. Neo4j represents historical state, not current architecture.&quot;</span><span class="p">,</span>
-<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a><span class="w">  </span><span class="nt">&quot;alternative_concept&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;System uses Apache AGE + PostgreSQL&quot;</span><span class="p">,</span>
-<a id="__codelineno-28-4" name="__codelineno-28-4" href="#__codelineno-28-4"></a><span class="w">  </span><span class="nt">&quot;alternative_grounding&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.901</span><span class="p">,</span>
-<a id="__codelineno-28-5" name="__codelineno-28-5" href="#__codelineno-28-5"></a><span class="w">  </span><span class="nt">&quot;temporal_context&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Historical&quot;</span><span class="p">,</span>
-<a id="__codelineno-28-6" name="__codelineno-28-6" href="#__codelineno-28-6"></a><span class="w">  </span><span class="nt">&quot;confidence&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.95</span>
+<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a><span class="w">  </span><span class="nt">"interpretation"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Temporal analysis shows Neo4j references end 2025-10-08. ADR-208 explicitly documents migration to Apache AGE on 2025-10-09. Current codebase (age_client.py) and all recent documentation reference Apache AGE. Neo4j represents historical state, not current architecture."</span><span class="p">,</span>
+<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a><span class="w">  </span><span class="nt">"alternative_concept"</span><span class="p">:</span><span class="w"> </span><span class="s2">"System uses Apache AGE + PostgreSQL"</span><span class="p">,</span>
+<a id="__codelineno-28-4" name="__codelineno-28-4" href="#__codelineno-28-4"></a><span class="w">  </span><span class="nt">"alternative_grounding"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.901</span><span class="p">,</span>
+<a id="__codelineno-28-5" name="__codelineno-28-5" href="#__codelineno-28-5"></a><span class="w">  </span><span class="nt">"temporal_context"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Historical"</span><span class="p">,</span>
+<a id="__codelineno-28-6" name="__codelineno-28-6" href="#__codelineno-28-6"></a><span class="w">  </span><span class="nt">"confidence"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.95</span>
 <a id="__codelineno-28-7" name="__codelineno-28-7" href="#__codelineno-28-7"></a><span class="p">}</span>
 </code></pre></div></p>
 <p><strong>Query behavior (automatic):</strong>
@@ -3500,35 +3500,35 @@
 <a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a><span class="c1">// ... calculate grounding_strength ...</span>
 <a id="__codelineno-29-4" name="__codelineno-29-4" href="#__codelineno-29-4"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">grounding_strength</span><span class="w"> </span><span class="p">&gt;=</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">20</span>
 <a id="__codelineno-29-5" name="__codelineno-29-5" href="#__codelineno-29-5"></a><span class="k">RETURN</span><span class="w"> </span><span class="n">c</span>
-<a id="__codelineno-29-6" name="__codelineno-29-6" href="#__codelineno-29-6"></a><span class="c1">// &quot;System uses Neo4j&quot; has grounding 0.232 → INCLUDED (just above threshold)</span>
+<a id="__codelineno-29-6" name="__codelineno-29-6" href="#__codelineno-29-6"></a><span class="c1">// "System uses Neo4j" has grounding 0.232 → INCLUDED (just above threshold)</span>
 <a id="__codelineno-29-7" name="__codelineno-29-7" href="#__codelineno-29-7"></a>
 <a id="__codelineno-29-8" name="__codelineno-29-8" href="#__codelineno-29-8"></a><span class="c1">// Stricter query (grounding &gt;= 0.50)</span>
 <a id="__codelineno-29-9" name="__codelineno-29-9" href="#__codelineno-29-9"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">c</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span>
 <a id="__codelineno-29-10" name="__codelineno-29-10" href="#__codelineno-29-10"></a><span class="c1">// ... calculate grounding_strength ...</span>
 <a id="__codelineno-29-11" name="__codelineno-29-11" href="#__codelineno-29-11"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">grounding_strength</span><span class="w"> </span><span class="p">&gt;=</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">50</span>
 <a id="__codelineno-29-12" name="__codelineno-29-12" href="#__codelineno-29-12"></a><span class="k">RETURN</span><span class="w"> </span><span class="n">c</span>
-<a id="__codelineno-29-13" name="__codelineno-29-13" href="#__codelineno-29-13"></a><span class="c1">// &quot;System uses Neo4j&quot; has grounding 0.232 → EXCLUDED</span>
+<a id="__codelineno-29-13" name="__codelineno-29-13" href="#__codelineno-29-13"></a><span class="c1">// "System uses Neo4j" has grounding 0.232 → EXCLUDED</span>
 <a id="__codelineno-29-14" name="__codelineno-29-14" href="#__codelineno-29-14"></a>
 <a id="__codelineno-29-15" name="__codelineno-29-15" href="#__codelineno-29-15"></a><span class="c1">// Find weakly-grounded concepts</span>
 <a id="__codelineno-29-16" name="__codelineno-29-16" href="#__codelineno-29-16"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">grounding_strength</span><span class="w"> </span><span class="p">&lt;</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">30</span>
-<a id="__codelineno-29-17" name="__codelineno-29-17" href="#__codelineno-29-17"></a><span class="c1">// &quot;System uses Neo4j&quot; appears here for investigation</span>
+<a id="__codelineno-29-17" name="__codelineno-29-17" href="#__codelineno-29-17"></a><span class="c1">// "System uses Neo4j" appears here for investigation</span>
 </code></pre></div></p>
 <p><strong>No concept modification needed</strong> - grounding_strength calculated dynamically at query time.</p>
 <h3 id="example-2-multiple-thresholds-for-different-use-cases">Example 2: Multiple Thresholds for Different Use Cases</h3>
 <p><strong>Scenario:</strong> Query with different grounding thresholds</p>
 <p><strong>Concept states:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>&quot;Similarity threshold is 0.85&quot; → grounding: 0.90 (code + docs)
-<a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a>&quot;Similarity threshold is 0.75&quot; → grounding: 0.35 (old docs)
-<a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a>&quot;Similarity threshold is 0.80&quot; → grounding: 0.28 (mixed references)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>"Similarity threshold is 0.85" → grounding: 0.90 (code + docs)
+<a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a>"Similarity threshold is 0.75" → grounding: 0.35 (old docs)
+<a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a>"Similarity threshold is 0.80" → grounding: 0.28 (mixed references)
 </code></pre></div></p>
 <p><strong>Query behaviors:</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a><span class="c1">// High-confidence query (production use)</span>
 <a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">grounding_strength</span><span class="w"> </span><span class="p">&gt;=</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">80</span>
-<a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a><span class="err">→</span><span class="w"> </span><span class="n">Returns</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Similarity threshold is 0.85&quot;</span><span class="w"> </span><span class="n">only</span>
+<a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a><span class="err">→</span><span class="w"> </span><span class="n">Returns</span><span class="p">:</span><span class="w"> </span><span class="s">"Similarity threshold is 0.85"</span><span class="w"> </span><span class="n">only</span>
 <a id="__codelineno-31-4" name="__codelineno-31-4" href="#__codelineno-31-4"></a>
 <a id="__codelineno-31-5" name="__codelineno-31-5" href="#__codelineno-31-5"></a><span class="c1">// Medium-confidence query (general use)</span>
 <a id="__codelineno-31-6" name="__codelineno-31-6" href="#__codelineno-31-6"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">grounding_strength</span><span class="w"> </span><span class="p">&gt;=</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">50</span>
-<a id="__codelineno-31-7" name="__codelineno-31-7" href="#__codelineno-31-7"></a><span class="err">→</span><span class="w"> </span><span class="n">Returns</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Similarity threshold is 0.85&quot;</span><span class="w"> </span><span class="n">only</span>
+<a id="__codelineno-31-7" name="__codelineno-31-7" href="#__codelineno-31-7"></a><span class="err">→</span><span class="w"> </span><span class="n">Returns</span><span class="p">:</span><span class="w"> </span><span class="s">"Similarity threshold is 0.85"</span><span class="w"> </span><span class="n">only</span>
 <a id="__codelineno-31-8" name="__codelineno-31-8" href="#__codelineno-31-8"></a>
 <a id="__codelineno-31-9" name="__codelineno-31-9" href="#__codelineno-31-9"></a><span class="c1">// Low-confidence query (include uncertain)</span>
 <a id="__codelineno-31-10" name="__codelineno-31-10" href="#__codelineno-31-10"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">grounding_strength</span><span class="w"> </span><span class="p">&gt;=</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">20</span>
@@ -3536,26 +3536,26 @@
 <a id="__codelineno-31-12" name="__codelineno-31-12" href="#__codelineno-31-12"></a>
 <a id="__codelineno-31-13" name="__codelineno-31-13" href="#__codelineno-31-13"></a><span class="c1">// Find contradictory concepts (analysis)</span>
 <a id="__codelineno-31-14" name="__codelineno-31-14" href="#__codelineno-31-14"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">grounding_strength</span><span class="w"> </span><span class="p">&lt;</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">40</span>
-<a id="__codelineno-31-15" name="__codelineno-31-15" href="#__codelineno-31-15"></a><span class="err">→</span><span class="w"> </span><span class="n">Returns</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;0.75&quot;</span><span class="w"> </span><span class="n">and</span><span class="w"> </span><span class="s">&quot;0.80&quot;</span><span class="w"> </span><span class="n">concepts</span><span class="w"> </span><span class="p">(</span><span class="n">needs</span><span class="w"> </span><span class="n">investigation</span><span class="p">)</span>
+<a id="__codelineno-31-15" name="__codelineno-31-15" href="#__codelineno-31-15"></a><span class="err">→</span><span class="w"> </span><span class="n">Returns</span><span class="p">:</span><span class="w"> </span><span class="s">"0.75"</span><span class="w"> </span><span class="n">and</span><span class="w"> </span><span class="s">"0.80"</span><span class="w"> </span><span class="n">concepts</span><span class="w"> </span><span class="p">(</span><span class="n">needs</span><span class="w"> </span><span class="n">investigation</span><span class="p">)</span>
 </code></pre></div>
 <p><strong>LLM receives context:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a>High-grounding concept: &quot;Similarity threshold is 0.85&quot; (grounding: 0.90)
-<a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a>Weakly-grounded alternatives: &quot;0.75&quot; (grounding: 0.35), &quot;0.80&quot; (grounding: 0.28)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a>High-grounding concept: "Similarity threshold is 0.85" (grounding: 0.90)
+<a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a>Weakly-grounded alternatives: "0.75" (grounding: 0.35), "0.80" (grounding: 0.28)
 <a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a>
-<a id="__codelineno-32-4" name="__codelineno-32-4" href="#__codelineno-32-4"></a>Synthesize response: &quot;What is the similarity threshold?&quot;
-<a id="__codelineno-32-5" name="__codelineno-32-5" href="#__codelineno-32-5"></a>Expected: &quot;The system uses 0.85 as the similarity threshold (verified in code).&quot;
+<a id="__codelineno-32-4" name="__codelineno-32-4" href="#__codelineno-32-4"></a>Synthesize response: "What is the similarity threshold?"
+<a id="__codelineno-32-5" name="__codelineno-32-5" href="#__codelineno-32-5"></a>Expected: "The system uses 0.85 as the similarity threshold (verified in code)."
 </code></pre></div></p>
 <h3 id="example-3-automatic-reversibility-future-architecture-change">Example 3: Automatic Reversibility - Future Architecture Change</h3>
 <p><strong>Current state (2025-10-24):</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a>&quot;System uses Neo4j&quot; → grounding: 0.232 (weakly grounded)
-<a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a>&quot;System uses Apache AGE&quot; → grounding: 0.901 (well grounded)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a>"System uses Neo4j" → grounding: 0.232 (weakly grounded)
+<a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a>"System uses Apache AGE" → grounding: 0.901 (well grounded)
 </code></pre></div></p>
 <p><strong>Future ingestion (2026-06-01):</strong>
 - New ADR: "ADR-308: Neo4j Enterprise for Multi-Region HA"
 - Architecture docs: "PostgreSQL + AGE for single-region, Neo4j for geo-distributed"
 - Deployment guides: "Neo4j cluster configuration"</p>
 <p><strong>Automatic recalculation:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a>&quot;System uses Neo4j&quot;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a>"System uses Neo4j"
 <a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a>  support_weight: 10.2 (old) + 29.75 (new) = 39.95
 <a id="__codelineno-34-3" name="__codelineno-34-3" href="#__codelineno-34-3"></a>  contradict_weight: 33.84 (unchanged)
 <a id="__codelineno-34-4" name="__codelineno-34-4" href="#__codelineno-34-4"></a>  grounding_strength: 39.95 / 73.79 = 0.541 (54% support - improved!)
@@ -3644,13 +3644,13 @@
 <p><strong>Approach:</strong> Mark concepts as IRRELEVANT when contradiction ratio ≥ 0.80, exclude from default queries</p>
 <p><strong>Implementation:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a><span class="p">(:</span><span class="n">Concept</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-36-2" name="__codelineno-36-2" href="#__codelineno-36-2"></a><span class="w">  </span><span class="n">status</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;IRRELEVANT&quot;</span><span class="p">,</span>
+<a id="__codelineno-36-2" name="__codelineno-36-2" href="#__codelineno-36-2"></a><span class="w">  </span><span class="n">status</span><span class="p">:</span><span class="w"> </span><span class="s">"IRRELEVANT"</span><span class="p">,</span>
 <a id="__codelineno-36-3" name="__codelineno-36-3" href="#__codelineno-36-3"></a><span class="w">  </span><span class="n">marked_date</span><span class="p">:</span><span class="w"> </span><span class="n">timestamp</span><span class="p">,</span>
 <a id="__codelineno-36-4" name="__codelineno-36-4" href="#__codelineno-36-4"></a><span class="w">  </span><span class="n">marked_reason</span><span class="p">:</span><span class="w"> </span><span class="n">text</span>
 <a id="__codelineno-36-5" name="__codelineno-36-5" href="#__codelineno-36-5"></a><span class="p">})</span>
 <a id="__codelineno-36-6" name="__codelineno-36-6" href="#__codelineno-36-6"></a>
 <a id="__codelineno-36-7" name="__codelineno-36-7" href="#__codelineno-36-7"></a><span class="c1">// Queries</span>
-<a id="__codelineno-36-8" name="__codelineno-36-8" href="#__codelineno-36-8"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">c</span><span class="p">.</span><span class="n">status</span><span class="w"> </span><span class="p">&lt;&gt;</span><span class="w"> </span><span class="s">&#39;IRRELEVANT&#39;</span><span class="w"> </span><span class="n">OR</span><span class="w"> </span><span class="n">c</span><span class="p">.</span><span class="n">status</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="k">NULL</span>
+<a id="__codelineno-36-8" name="__codelineno-36-8" href="#__codelineno-36-8"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">c</span><span class="p">.</span><span class="n">status</span><span class="w"> </span><span class="p">&lt;&gt;</span><span class="w"> </span><span class="s">'IRRELEVANT'</span><span class="w"> </span><span class="n">OR</span><span class="w"> </span><span class="n">c</span><span class="p">.</span><span class="n">status</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="k">NULL</span>
 </code></pre></div></p>
 <p><strong>Why rejected:</strong></p>
 <p>❌ <strong>Query paradox:</strong> If we exclude IRRELEVANT concepts from queries, how do we find them to re-evaluate when new evidence arrives?</p>
@@ -3853,7 +3853,7 @@ Future: detect contradictions across ontologies
       <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": [], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

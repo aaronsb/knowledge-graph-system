@@ -19,7 +19,7 @@
       
       
       <link rel="icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -27,7 +27,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.ec1eaa64.min.css">
       
       
 
@@ -2469,7 +2469,7 @@
 - <strong>Mock:</strong> 100 concurrent requests (testing - no real limits)</p>
 <p><strong>Implementation:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Thread-safe singleton semaphore per provider</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">semaphore</span> <span class="o">=</span> <span class="n">get_provider_semaphore</span><span class="p">(</span><span class="s2">&quot;openai&quot;</span><span class="p">)</span>  <span class="c1"># limit=8</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">semaphore</span> <span class="o">=</span> <span class="n">get_provider_semaphore</span><span class="p">(</span><span class="s2">"openai"</span><span class="p">)</span>  <span class="c1"># limit=8</span>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
 <a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># Acquire before API call</span>
 <a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="k">with</span> <span class="n">semaphore</span><span class="p">:</span>
@@ -2556,7 +2556,7 @@
 - <code>_is_rate_limit_error()</code> - Detect 429/rate limit exceptions</p>
 <h3 id="provider-integration">Provider Integration</h3>
 <p><strong>OpenAI (<code>api/app/lib/ai_providers.py</code>):</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">max_retries</span> <span class="o">=</span> <span class="n">get_provider_max_retries</span><span class="p">(</span><span class="s2">&quot;openai&quot;</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">max_retries</span> <span class="o">=</span> <span class="n">get_provider_max_retries</span><span class="p">(</span><span class="s2">"openai"</span><span class="p">)</span>
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="bp">self</span><span class="o">.</span><span class="n">client</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">(</span>
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="n">api_key</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">api_key</span><span class="p">,</span>
 <a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    <span class="n">max_retries</span><span class="o">=</span><span class="n">max_retries</span><span class="p">,</span>
@@ -2564,7 +2564,7 @@
 <a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="p">)</span>
 </code></pre></div></p>
 <p><strong>Anthropic (<code>api/app/lib/ai_providers.py</code>):</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">max_retries</span> <span class="o">=</span> <span class="n">get_provider_max_retries</span><span class="p">(</span><span class="s2">&quot;anthropic&quot;</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">max_retries</span> <span class="o">=</span> <span class="n">get_provider_max_retries</span><span class="p">(</span><span class="s2">"anthropic"</span><span class="p">)</span>
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="bp">self</span><span class="o">.</span><span class="n">client</span> <span class="o">=</span> <span class="n">Anthropic</span><span class="p">(</span>
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>    <span class="n">api_key</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">api_key</span><span class="p">,</span>
 <a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>    <span class="n">max_retries</span><span class="o">=</span><span class="n">max_retries</span><span class="p">,</span>
@@ -2657,10 +2657,10 @@ Unlike ADR-805 (provider/model selection), rate limiting loads database-first re
 </ul>
 <h3 id="integration-tests">Integration Tests</h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># 1. Test with multiple workers</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>kg<span class="w"> </span>ingest<span class="w"> </span>directory<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;Test&quot;</span><span class="w"> </span>-r<span class="w"> </span>--depth<span class="w"> </span><span class="m">2</span><span class="w"> </span>ingest_source/
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>kg<span class="w"> </span>ingest<span class="w"> </span>directory<span class="w"> </span>-o<span class="w"> </span><span class="s2">"Test"</span><span class="w"> </span>-r<span class="w"> </span>--depth<span class="w"> </span><span class="m">2</span><span class="w"> </span>ingest_source/
 <a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
 <a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1"># 2. Monitor logs for retry behavior</span>
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>tail<span class="w"> </span>-f<span class="w"> </span>logs/api_*.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-i<span class="w"> </span><span class="s2">&quot;rate limit\|retry&quot;</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>tail<span class="w"> </span>-f<span class="w"> </span>logs/api_*.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-i<span class="w"> </span><span class="s2">"rate limit\|retry"</span>
 <a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>
 <a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="c1"># 3. Verify configuration loading</span>
 <a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>curl<span class="w"> </span>http://localhost:8000/admin/extraction/config
@@ -2680,15 +2680,15 @@ Unlike ADR-805 (provider/model selection), rate limiting loads database-first re
 <p><strong>Log Examples:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a># Success
 <a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>INFO: OpenAI client configured with max_retries=8
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>INFO: Created concurrency semaphore for provider &#39;openai&#39; with limit=8
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>INFO: Created concurrency semaphore for provider 'openai' with limit=8
 <a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>INFO: Rate limit recovered after 2 retries (function: extract_concepts)
 <a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>
 <a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a># Rate limit hit
 <a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>WARNING: Rate limit hit (attempt 2/9), backing off for 1.2s (function: extract_concepts): 429 Too Many Requests
 <a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>
 <a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a># Safety warnings
-<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a>WARNING: Provider &#39;ollama&#39; concurrency limit not configured. Defaulting to 1 for safety.
-<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a>WARNING: Provider &#39;openai&#39; concurrency limit (100) exceeds maximum (32). Capping at 32.
+<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a>WARNING: Provider 'ollama' concurrency limit not configured. Defaulting to 1 for safety.
+<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a>WARNING: Provider 'openai' concurrency limit (100) exceeds maximum (32). Capping at 32.
 </code></pre></div></p>
 <h2 id="future-enhancements">Future Enhancements</h2>
 <h3 id="phase-2-token-bucket-pre-emption">Phase 2: Token Bucket Pre-emption</h3>
@@ -2939,7 +2939,7 @@ Unlike ADR-805 (provider/model selection), rate limiting loads database-first re
 <h3 id="retry-logic-implementation">Retry Logic Implementation</h3>
 <p>Our rate limiter (<code>api/app/lib/rate_limiter.py</code>) detects retryable errors:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">_is_rate_limit_error</span><span class="p">(</span><span class="n">e</span><span class="p">:</span> <span class="ne">Exception</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">    </span><span class="sd">"""</span>
 <a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="sd">    Detect rate limit and retryable errors.</span>
 <a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>
 <a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="sd">    Returns True for:</span>
@@ -2947,14 +2947,14 @@ Unlike ADR-805 (provider/model selection), rate limiting loads database-first re
 <a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="sd">    - Anthropic: 429, 500, 529</span>
 <a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a><span class="sd">    - Ollama: 429, 500, 502</span>
 <a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a><span class="sd">    - All: Connection errors, timeouts</span>
-<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a><span class="sd">    """</span>
 <a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a>    <span class="c1"># Check HTTP status codes</span>
-<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a>    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="s1">&#39;status_code&#39;</span><span class="p">):</span>
+<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a>    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="s1">'status_code'</span><span class="p">):</span>
 <a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a>        <span class="k">return</span> <span class="n">e</span><span class="o">.</span><span class="n">status_code</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">429</span><span class="p">,</span> <span class="mi">500</span><span class="p">,</span> <span class="mi">502</span><span class="p">,</span> <span class="mi">503</span><span class="p">,</span> <span class="mi">529</span><span class="p">]</span>
 <a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a>
 <a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a>    <span class="c1"># Check exception type names</span>
 <a id="__codelineno-13-16" name="__codelineno-13-16" href="#__codelineno-13-16"></a>    <span class="n">error_type</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span>
-<a id="__codelineno-13-17" name="__codelineno-13-17" href="#__codelineno-13-17"></a>    <span class="k">return</span> <span class="s1">&#39;RateLimit&#39;</span> <span class="ow">in</span> <span class="n">error_type</span> <span class="ow">or</span> <span class="s1">&#39;Overload&#39;</span> <span class="ow">in</span> <span class="n">error_type</span> <span class="ow">or</span> <span class="s1">&#39;Gateway&#39;</span> <span class="ow">in</span> <span class="n">error_type</span>
+<a id="__codelineno-13-17" name="__codelineno-13-17" href="#__codelineno-13-17"></a>    <span class="k">return</span> <span class="s1">'RateLimit'</span> <span class="ow">in</span> <span class="n">error_type</span> <span class="ow">or</span> <span class="s1">'Overload'</span> <span class="ow">in</span> <span class="n">error_type</span> <span class="ow">or</span> <span class="s1">'Gateway'</span> <span class="ow">in</span> <span class="n">error_type</span>
 </code></pre></div>
 <p><strong>Retryable Errors (Exponential Backoff):</strong>
 - <strong>429</strong> - Rate limit exceeded (all providers)
@@ -3032,7 +3032,7 @@ Unlike ADR-805 (provider/model selection), rate limiting loads database-first re
       <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": [], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

@@ -19,7 +19,7 @@
       
       
       <link rel="icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -27,7 +27,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.ec1eaa64.min.css">
       
       
 
@@ -2423,39 +2423,39 @@
 <h3 id="1-connection-creation-flow">1. Connection Creation Flow</h3>
 <p><strong>UI Workflow:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>1. User multi-selects concepts across disconnected graphs
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>2. Right-click → &quot;Connect These Concepts&quot;
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>3. Modal appears: &quot;Why are these concepts connected?&quot;
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>2. Right-click → "Connect These Concepts"
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>3. Modal appears: "Why are these concepts connected?"
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>   - Shows selected concept labels
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>   - Shows existing concept hints/search_terms from graph
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>   - Text area for human justification
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>   - Ontology selector (smart default)
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>4. User writes justification: &quot;Enterprise strategy is implemented through
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>   NorthWind&#39;s integration systems because [reasoning]&quot;
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>4. User writes justification: "Enterprise strategy is implemented through
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>   NorthWind's integration systems because [reasoning]"
 <a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>5. Submit → Feeds into ingestion pipeline
 </code></pre></div></p>
 <p><strong>Backend Processing:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nx">POST</span><span class="w"> </span><span class="o">/</span><span class="nx">api</span><span class="o">/</span><span class="nx">human</span><span class="o">-</span><span class="nx">edit</span><span class="o">/</span><span class="nx">connect</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="p">{</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span><span class="nx">concept_ids</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="s1">&#39;concept_a_id&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;concept_b_id&#39;</span><span class="p">],</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span><span class="nx">justification</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;Human explanation here...&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">  </span><span class="nx">ontology</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;human-teaching&quot;</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s2">&quot;best-fit-auto&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span><span class="nx">concept_ids</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="s1">'concept_a_id'</span><span class="p">,</span><span class="w"> </span><span class="s1">'concept_b_id'</span><span class="p">],</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span><span class="nx">justification</span><span class="o">:</span><span class="w"> </span><span class="s2">"Human explanation here..."</span><span class="p">,</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">  </span><span class="nx">ontology</span><span class="o">:</span><span class="w"> </span><span class="s2">"human-teaching"</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s2">"best-fit-auto"</span><span class="p">,</span>
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">  </span><span class="nx">editor_metadata</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">    </span><span class="nx">timestamp</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;2025-10-17T12:00:00Z&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">    </span><span class="nx">session_id</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;uuid&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">    </span><span class="nx">confidence</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;human-asserted&quot;</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">    </span><span class="nx">timestamp</span><span class="o">:</span><span class="w"> </span><span class="s2">"2025-10-17T12:00:00Z"</span><span class="p">,</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">    </span><span class="nx">session_id</span><span class="o">:</span><span class="w"> </span><span class="s2">"uuid"</span><span class="p">,</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">    </span><span class="nx">confidence</span><span class="o">:</span><span class="w"> </span><span class="s2">"human-asserted"</span>
 <a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">  </span><span class="p">}</span>
 <a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="p">}</span>
 </code></pre></div></p>
 <p><strong>Ingestion Pipeline:</strong>
 1. Create synthetic document from justification:
    <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="p">{</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="nt">&quot;source&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;human-edit:uuid&quot;</span><span class="p">,</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span><span class="nt">&quot;document&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;human-teaching/connection-2025-10-17-uuid.txt&quot;</span><span class="p">,</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span><span class="nt">&quot;content&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;The concept [Concept A] relates to [Concept B] because: [justification]&quot;</span><span class="p">,</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">  </span><span class="nt">&quot;metadata&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">    </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;human-contribution&quot;</span><span class="p">,</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">    </span><span class="nt">&quot;editor&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;session-id&quot;</span><span class="p">,</span>
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="w">    </span><span class="nt">&quot;concepts&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;concept_a_id&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;concept_b_id&quot;</span><span class="p">]</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="nt">"source"</span><span class="p">:</span><span class="w"> </span><span class="s2">"human-edit:uuid"</span><span class="p">,</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span><span class="nt">"document"</span><span class="p">:</span><span class="w"> </span><span class="s2">"human-teaching/connection-2025-10-17-uuid.txt"</span><span class="p">,</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span><span class="nt">"content"</span><span class="p">:</span><span class="w"> </span><span class="s2">"The concept [Concept A] relates to [Concept B] because: [justification]"</span><span class="p">,</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">  </span><span class="nt">"metadata"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">    </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"human-contribution"</span><span class="p">,</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">    </span><span class="nt">"editor"</span><span class="p">:</span><span class="w"> </span><span class="s2">"session-id"</span><span class="p">,</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="w">    </span><span class="nt">"concepts"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"concept_a_id"</span><span class="p">,</span><span class="w"> </span><span class="s2">"concept_b_id"</span><span class="p">]</span>
 <a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="w">  </span><span class="p">}</span>
 <a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="p">}</span>
 </code></pre></div></p>
@@ -2484,29 +2484,29 @@
 <h3 id="3-relationship-deletion-flow">3. Relationship Deletion Flow</h3>
 <p><strong>UI Workflow:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>1. User clicks edge between two concepts
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>2. Right-click → &quot;Flag Relationship as Invalid&quot;
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>3. Modal: &quot;Why is this relationship incorrect?&quot;
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>2. Right-click → "Flag Relationship as Invalid"
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>3. Modal: "Why is this relationship incorrect?"
 <a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>   - Shows: Source → Type → Target
 <a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>   - Shows: Existing evidence instances
 <a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>   - Text area for invalidation reason
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>4. User writes: &quot;This connection is misleading because [reasoning]&quot;
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>4. User writes: "This connection is misleading because [reasoning]"
 <a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>5. Submit → Creates invalidation record
 </code></pre></div></p>
 <p><strong>Backend Processing:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nx">POST</span><span class="w"> </span><span class="o">/</span><span class="nx">api</span><span class="o">/</span><span class="nx">human</span><span class="o">-</span><span class="nx">edit</span><span class="o">/</span><span class="nx">invalidate</span>
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="p">{</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span><span class="nx">from_id</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;concept_a_id&quot;</span><span class="p">,</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span><span class="nx">to_id</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;concept_b_id&quot;</span><span class="p">,</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">  </span><span class="nx">relationship_type</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;IMPLIES&quot;</span><span class="p">,</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">  </span><span class="nx">reason</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;Human invalidation reason...&quot;</span><span class="p">,</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span><span class="nx">from_id</span><span class="o">:</span><span class="w"> </span><span class="s2">"concept_a_id"</span><span class="p">,</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span><span class="nx">to_id</span><span class="o">:</span><span class="w"> </span><span class="s2">"concept_b_id"</span><span class="p">,</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">  </span><span class="nx">relationship_type</span><span class="o">:</span><span class="w"> </span><span class="s2">"IMPLIES"</span><span class="p">,</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">  </span><span class="nx">reason</span><span class="o">:</span><span class="w"> </span><span class="s2">"Human invalidation reason..."</span><span class="p">,</span>
 <a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">  </span><span class="nx">invalidation_metadata</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">    </span><span class="nx">timestamp</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;2025-10-17T12:00:00Z&quot;</span><span class="p">,</span>
-<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="w">    </span><span class="nx">session_id</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;uuid&quot;</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">    </span><span class="nx">timestamp</span><span class="o">:</span><span class="w"> </span><span class="s2">"2025-10-17T12:00:00Z"</span><span class="p">,</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="w">    </span><span class="nx">session_id</span><span class="o">:</span><span class="w"> </span><span class="s2">"uuid"</span>
 <a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="w">  </span><span class="p">}</span>
 <a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="p">}</span>
 </code></pre></div></p>
 <p><strong>Deletion Strategy - Soft Delete with Flag:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1">// Don&#39;t DELETE the relationship</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1">// Don't DELETE the relationship</span>
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="c1">// Instead, add metadata property</span>
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">a</span><span class="p">:</span><span class="n">Concept</span><span class="w"> </span><span class="p">{</span><span class="n">concept_id</span><span class="p">:</span><span class="w"> </span><span class="err">$</span><span class="n">from_id</span><span class="p">})</span><span class="o">-[</span><span class="n">r</span><span class="p">:</span><span class="n">IMPLIES</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">b</span><span class="p">:</span><span class="n">Concept</span><span class="w"> </span><span class="p">{</span><span class="n">concept_id</span><span class="p">:</span><span class="w"> </span><span class="err">$</span><span class="n">to_id</span><span class="p">})</span>
 <a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="k">SET</span><span class="w"> </span><span class="n">r</span><span class="p">.</span><span class="n">invalidated</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="k">true</span><span class="p">,</span>
@@ -2521,9 +2521,9 @@
 - Evidence instances remain (for auditability)</p>
 <p><strong>Alternative: Create Counter-Relationship</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="k">CREATE</span><span class="w"> </span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="err">-</span><span class="o">[</span><span class="p">:</span><span class="n">INVALIDATES</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="n">target_relationship</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;IMPLIES&quot;</span><span class="p">,</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="n">target_relationship</span><span class="p">:</span><span class="w"> </span><span class="s">"IMPLIES"</span><span class="p">,</span>
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span><span class="n">reason</span><span class="p">:</span><span class="w"> </span><span class="err">$</span><span class="n">reason</span><span class="p">,</span>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">  </span><span class="n">source</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;human-edit:uuid&quot;</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">  </span><span class="n">source</span><span class="p">:</span><span class="w"> </span><span class="s">"human-edit:uuid"</span>
 <a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="p">}</span><span class="o">]</span><span class="err">-</span><span class="p">&gt;(</span><span class="n">b</span><span class="p">)</span>
 </code></pre></div>
 This preserves original relationship but marks it as disputed.</p>
@@ -2531,49 +2531,49 @@ This preserves original relationship but marks it as disputed.</p>
 <p><strong>New MCP Tools:</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1">// 1. Connect concepts with justification</span>
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="p">{</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span><span class="s2">&quot;name&quot;</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;connect_concepts&quot;</span><span class="p">,</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">  </span><span class="s2">&quot;description&quot;</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;Create relationship between concepts with human justification&quot;</span><span class="p">,</span>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">  </span><span class="s2">&quot;parameters&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="w">    </span><span class="s2">&quot;from_concept&quot;</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;Concept label or ID&quot;</span><span class="p">,</span>
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="w">    </span><span class="s2">&quot;to_concept&quot;</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;Concept label or ID&quot;</span><span class="p">,</span>
-<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="w">    </span><span class="s2">&quot;justification&quot;</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;Why these concepts relate&quot;</span><span class="p">,</span>
-<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="w">    </span><span class="s2">&quot;relationship_type&quot;</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;RELATES_TO (default) | custom&quot;</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span><span class="s2">"name"</span><span class="o">:</span><span class="w"> </span><span class="s2">"connect_concepts"</span><span class="p">,</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">  </span><span class="s2">"description"</span><span class="o">:</span><span class="w"> </span><span class="s2">"Create relationship between concepts with human justification"</span><span class="p">,</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">  </span><span class="s2">"parameters"</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="w">    </span><span class="s2">"from_concept"</span><span class="o">:</span><span class="w"> </span><span class="s2">"Concept label or ID"</span><span class="p">,</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="w">    </span><span class="s2">"to_concept"</span><span class="o">:</span><span class="w"> </span><span class="s2">"Concept label or ID"</span><span class="p">,</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="w">    </span><span class="s2">"justification"</span><span class="o">:</span><span class="w"> </span><span class="s2">"Why these concepts relate"</span><span class="p">,</span>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="w">    </span><span class="s2">"relationship_type"</span><span class="o">:</span><span class="w"> </span><span class="s2">"RELATES_TO (default) | custom"</span>
 <a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="w">  </span><span class="p">}</span>
 <a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="p">}</span>
 <a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>
 <a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="c1">// 2. Search for connection opportunities</span>
 <a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a><span class="p">{</span>
-<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a><span class="w">  </span><span class="s2">&quot;name&quot;</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;suggest_connections&quot;</span><span class="p">,</span>
-<a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a><span class="w">  </span><span class="s2">&quot;description&quot;</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;Find potentially related concepts across disconnected graphs&quot;</span><span class="p">,</span>
-<a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a><span class="w">  </span><span class="s2">&quot;parameters&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a><span class="w">    </span><span class="s2">&quot;concept_id&quot;</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;Starting concept&quot;</span><span class="p">,</span>
-<a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a><span class="w">    </span><span class="s2">&quot;semantic_similarity_threshold&quot;</span><span class="o">:</span><span class="w"> </span><span class="mf">0.7</span>
+<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a><span class="w">  </span><span class="s2">"name"</span><span class="o">:</span><span class="w"> </span><span class="s2">"suggest_connections"</span><span class="p">,</span>
+<a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a><span class="w">  </span><span class="s2">"description"</span><span class="o">:</span><span class="w"> </span><span class="s2">"Find potentially related concepts across disconnected graphs"</span><span class="p">,</span>
+<a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a><span class="w">  </span><span class="s2">"parameters"</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a><span class="w">    </span><span class="s2">"concept_id"</span><span class="o">:</span><span class="w"> </span><span class="s2">"Starting concept"</span><span class="p">,</span>
+<a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a><span class="w">    </span><span class="s2">"semantic_similarity_threshold"</span><span class="o">:</span><span class="w"> </span><span class="mf">0.7</span>
 <a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a><span class="w">  </span><span class="p">}</span>
 <a id="__codelineno-7-21" name="__codelineno-7-21" href="#__codelineno-7-21"></a><span class="p">}</span>
 <a id="__codelineno-7-22" name="__codelineno-7-22" href="#__codelineno-7-22"></a>
 <a id="__codelineno-7-23" name="__codelineno-7-23" href="#__codelineno-7-23"></a><span class="c1">// 3. Invalidate relationship</span>
 <a id="__codelineno-7-24" name="__codelineno-7-24" href="#__codelineno-7-24"></a><span class="p">{</span>
-<a id="__codelineno-7-25" name="__codelineno-7-25" href="#__codelineno-7-25"></a><span class="w">  </span><span class="s2">&quot;name&quot;</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;invalidate_relationship&quot;</span><span class="p">,</span>
-<a id="__codelineno-7-26" name="__codelineno-7-26" href="#__codelineno-7-26"></a><span class="w">  </span><span class="s2">&quot;description&quot;</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;Flag relationship as incorrect with reason&quot;</span><span class="p">,</span>
-<a id="__codelineno-7-27" name="__codelineno-7-27" href="#__codelineno-7-27"></a><span class="w">  </span><span class="s2">&quot;parameters&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-7-28" name="__codelineno-7-28" href="#__codelineno-7-28"></a><span class="w">    </span><span class="s2">&quot;from_concept&quot;</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;Source concept&quot;</span><span class="p">,</span>
-<a id="__codelineno-7-29" name="__codelineno-7-29" href="#__codelineno-7-29"></a><span class="w">    </span><span class="s2">&quot;to_concept&quot;</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;Target concept&quot;</span><span class="p">,</span>
-<a id="__codelineno-7-30" name="__codelineno-7-30" href="#__codelineno-7-30"></a><span class="w">    </span><span class="s2">&quot;relationship_type&quot;</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;Type to invalidate&quot;</span><span class="p">,</span>
-<a id="__codelineno-7-31" name="__codelineno-7-31" href="#__codelineno-7-31"></a><span class="w">    </span><span class="s2">&quot;reason&quot;</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;Why this is incorrect&quot;</span>
+<a id="__codelineno-7-25" name="__codelineno-7-25" href="#__codelineno-7-25"></a><span class="w">  </span><span class="s2">"name"</span><span class="o">:</span><span class="w"> </span><span class="s2">"invalidate_relationship"</span><span class="p">,</span>
+<a id="__codelineno-7-26" name="__codelineno-7-26" href="#__codelineno-7-26"></a><span class="w">  </span><span class="s2">"description"</span><span class="o">:</span><span class="w"> </span><span class="s2">"Flag relationship as incorrect with reason"</span><span class="p">,</span>
+<a id="__codelineno-7-27" name="__codelineno-7-27" href="#__codelineno-7-27"></a><span class="w">  </span><span class="s2">"parameters"</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-7-28" name="__codelineno-7-28" href="#__codelineno-7-28"></a><span class="w">    </span><span class="s2">"from_concept"</span><span class="o">:</span><span class="w"> </span><span class="s2">"Source concept"</span><span class="p">,</span>
+<a id="__codelineno-7-29" name="__codelineno-7-29" href="#__codelineno-7-29"></a><span class="w">    </span><span class="s2">"to_concept"</span><span class="o">:</span><span class="w"> </span><span class="s2">"Target concept"</span><span class="p">,</span>
+<a id="__codelineno-7-30" name="__codelineno-7-30" href="#__codelineno-7-30"></a><span class="w">    </span><span class="s2">"relationship_type"</span><span class="o">:</span><span class="w"> </span><span class="s2">"Type to invalidate"</span><span class="p">,</span>
+<a id="__codelineno-7-31" name="__codelineno-7-31" href="#__codelineno-7-31"></a><span class="w">    </span><span class="s2">"reason"</span><span class="o">:</span><span class="w"> </span><span class="s2">"Why this is incorrect"</span>
 <a id="__codelineno-7-32" name="__codelineno-7-32" href="#__codelineno-7-32"></a><span class="w">  </span><span class="p">}</span>
 <a id="__codelineno-7-33" name="__codelineno-7-33" href="#__codelineno-7-33"></a><span class="p">}</span>
 </code></pre></div>
 <p><strong>Claude-Assisted Workflow:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>User: &quot;Connect enterprise strategy to NorthWind&#39;s systems&quot;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>User: "Connect enterprise strategy to NorthWind's systems"
 <a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>Claude: [Uses search to find concepts]
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>Claude: &quot;I found:
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>  - &#39;Enterprise Strategy&#39; (12 instances)
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>  - &#39;NorthWind&#39;s Role&#39; (8 instances)
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>Claude: "I found:
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>  - 'Enterprise Strategy' (12 instances)
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>  - 'NorthWind's Role' (8 instances)
 <a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>
-<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>  Why do you think these relate?&quot;
-<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>User: &quot;We&#39;re implementing the strategy through their integration platform&quot;
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>  Why do you think these relate?"
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>User: "We're implementing the strategy through their integration platform"
 <a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>Claude: [Calls connect_concepts with justification]
-<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>Claude: &quot;Connected! Created RELATES_TO relationship in human-teaching ontology&quot;
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>Claude: "Connected! Created RELATES_TO relationship in human-teaching ontology"
 </code></pre></div></p>
 <h2 id="technical-implementation">Technical Implementation</h2>
 <h3 id="phase-1-ui-components-viz-app">Phase 1: UI Components (viz-app)</h3>
@@ -2583,13 +2583,13 @@ This preserves original relationship but marks it as disputed.</p>
 <a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
 <a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1">// Shift+Click to multi-select</span>
 <a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="c1">// Ctrl+Click to add to selection</span>
-<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="c1">// Visual: Selected nodes get blue ring (vs gold &quot;You Are Here&quot;)</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="c1">// Visual: Selected nodes get blue ring (vs gold "You Are Here")</span>
 </code></pre></div></p>
 <p><strong>2. Context Menu Extension</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1">// If multiple nodes selected</span>
 <a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="nx">contextMenuItems</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span>
 <a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">  </span><span class="p">{</span>
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">    </span><span class="nx">label</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;Connect These Concepts&quot;</span><span class="p">,</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">    </span><span class="nx">label</span><span class="o">:</span><span class="w"> </span><span class="s2">"Connect These Concepts"</span><span class="p">,</span>
 <a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="w">    </span><span class="nx">icon</span><span class="o">:</span><span class="w"> </span><span class="kt">Link</span><span class="p">,</span>
 <a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="w">    </span><span class="nx">onClick</span><span class="o">:</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">openConnectModal</span><span class="p">(</span><span class="nx">selectedNodes</span><span class="p">),</span>
 <a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="w">    </span><span class="nx">disabled</span><span class="o">:</span><span class="w"> </span><span class="kt">selectedNodes.size</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mf">2</span>
@@ -2599,7 +2599,7 @@ This preserves original relationship but marks it as disputed.</p>
 <a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a><span class="c1">// If edge clicked</span>
 <a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a><span class="nx">contextMenuItems</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span>
 <a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a><span class="w">  </span><span class="p">{</span>
-<a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a><span class="w">    </span><span class="nx">label</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;Flag as Invalid&quot;</span><span class="p">,</span>
+<a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a><span class="w">    </span><span class="nx">label</span><span class="o">:</span><span class="w"> </span><span class="s2">"Flag as Invalid"</span><span class="p">,</span>
 <a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a><span class="w">    </span><span class="nx">icon</span><span class="o">:</span><span class="w"> </span><span class="kt">AlertTriangle</span><span class="p">,</span>
 <a id="__codelineno-10-16" name="__codelineno-10-16" href="#__codelineno-10-16"></a><span class="w">    </span><span class="nx">onClick</span><span class="o">:</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">openInvalidateModal</span><span class="p">(</span><span class="nx">edge</span><span class="p">)</span>
 <a id="__codelineno-10-17" name="__codelineno-10-17" href="#__codelineno-10-17"></a><span class="w">  </span><span class="p">}</span>
@@ -2615,14 +2615,14 @@ This preserves original relationship but marks it as disputed.</p>
 <a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="w">  </span><span class="p">&lt;</span><span class="nt">ConceptList</span><span class="w"> </span><span class="na">concepts</span><span class="o">=</span><span class="p">{</span><span class="nx">selectedConcepts</span><span class="p">}</span><span class="w"> </span><span class="p">/&gt;</span>
 <a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a><span class="w">  </span><span class="p">&lt;</span><span class="nt">HintDisplay</span><span class="w"> </span><span class="na">hints</span><span class="o">=</span><span class="p">{</span><span class="nx">aggregatedSearchTerms</span><span class="p">}</span><span class="w"> </span><span class="p">/&gt;</span>
 <a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a><span class="w">  </span><span class="p">&lt;</span><span class="nt">TextArea</span>
-<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a><span class="w">    </span><span class="na">label</span><span class="o">=</span><span class="s">&quot;Why are these connected?&quot;</span>
-<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a><span class="w">    </span><span class="na">placeholder</span><span class="o">=</span><span class="s">&quot;Explain the relationship...&quot;</span>
+<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a><span class="w">    </span><span class="na">label</span><span class="o">=</span><span class="s">"Why are these connected?"</span>
+<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a><span class="w">    </span><span class="na">placeholder</span><span class="o">=</span><span class="s">"Explain the relationship..."</span>
 <a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a><span class="w">    </span><span class="na">required</span>
 <a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a><span class="w">  </span><span class="p">/&gt;</span>
-<a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a><span class="w">  </span><span class="p">&lt;</span><span class="nt">OntologySelector</span><span class="w"> </span><span class="na">default</span><span class="o">=</span><span class="s">&quot;human-teaching&quot;</span><span class="w"> </span><span class="p">/&gt;</span>
+<a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a><span class="w">  </span><span class="p">&lt;</span><span class="nt">OntologySelector</span><span class="w"> </span><span class="na">default</span><span class="o">=</span><span class="s">"human-teaching"</span><span class="w"> </span><span class="p">/&gt;</span>
 <a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a><span class="w">  </span><span class="p">&lt;</span><span class="nt">Actions</span><span class="p">&gt;</span>
-<a id="__codelineno-11-16" name="__codelineno-11-16" href="#__codelineno-11-16"></a><span class="w">    </span><span class="p">&lt;</span><span class="nt">Button</span><span class="w"> </span><span class="na">variant</span><span class="o">=</span><span class="s">&quot;primary&quot;</span><span class="p">&gt;</span><span class="nx">Connect</span><span class="p">&lt;/</span><span class="nt">Button</span><span class="p">&gt;</span>
-<a id="__codelineno-11-17" name="__codelineno-11-17" href="#__codelineno-11-17"></a><span class="w">    </span><span class="p">&lt;</span><span class="nt">Button</span><span class="w"> </span><span class="na">variant</span><span class="o">=</span><span class="s">&quot;secondary&quot;</span><span class="p">&gt;</span><span class="nx">Cancel</span><span class="p">&lt;/</span><span class="nt">Button</span><span class="p">&gt;</span>
+<a id="__codelineno-11-16" name="__codelineno-11-16" href="#__codelineno-11-16"></a><span class="w">    </span><span class="p">&lt;</span><span class="nt">Button</span><span class="w"> </span><span class="na">variant</span><span class="o">=</span><span class="s">"primary"</span><span class="p">&gt;</span><span class="nx">Connect</span><span class="p">&lt;/</span><span class="nt">Button</span><span class="p">&gt;</span>
+<a id="__codelineno-11-17" name="__codelineno-11-17" href="#__codelineno-11-17"></a><span class="w">    </span><span class="p">&lt;</span><span class="nt">Button</span><span class="w"> </span><span class="na">variant</span><span class="o">=</span><span class="s">"secondary"</span><span class="p">&gt;</span><span class="nx">Cancel</span><span class="p">&lt;/</span><span class="nt">Button</span><span class="p">&gt;</span>
 <a id="__codelineno-11-18" name="__codelineno-11-18" href="#__codelineno-11-18"></a><span class="w">  </span><span class="p">&lt;/</span><span class="nt">Actions</span><span class="p">&gt;</span>
 <a id="__codelineno-11-19" name="__codelineno-11-19" href="#__codelineno-11-19"></a><span class="p">&lt;/</span><span class="nt">ConnectConceptsModal</span><span class="p">&gt;</span>
 </code></pre></div></p>
@@ -2634,13 +2634,13 @@ This preserves original relationship but marks it as disputed.</p>
 <a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="kn">import</span><span class="w"> </span><span class="nn">uuid</span>
 <a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
 <a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>
-<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="n">router</span> <span class="o">=</span> <span class="n">APIRouter</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;/api/human-edit&quot;</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;human-editing&quot;</span><span class="p">])</span>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="n">router</span> <span class="o">=</span> <span class="n">APIRouter</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="s2">"/api/human-edit"</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">"human-editing"</span><span class="p">])</span>
 <a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>
 <a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a><span class="k">class</span><span class="w"> </span><span class="nc">ConnectRequest</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
 <a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a>    <span class="n">concept_ids</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
 <a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a>    <span class="n">justification</span><span class="p">:</span> <span class="nb">str</span>
-<a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a>    <span class="n">ontology</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;human-teaching&quot;</span>
-<a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a>    <span class="n">relationship_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;RELATES_TO&quot;</span>
+<a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a>    <span class="n">ontology</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"human-teaching"</span>
+<a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a>    <span class="n">relationship_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"RELATES_TO"</span>
 <a id="__codelineno-12-14" name="__codelineno-12-14" href="#__codelineno-12-14"></a>
 <a id="__codelineno-12-15" name="__codelineno-12-15" href="#__codelineno-12-15"></a><span class="k">class</span><span class="w"> </span><span class="nc">InvalidateRequest</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
 <a id="__codelineno-12-16" name="__codelineno-12-16" href="#__codelineno-12-16"></a>    <span class="n">from_id</span><span class="p">:</span> <span class="nb">str</span>
@@ -2648,9 +2648,9 @@ This preserves original relationship but marks it as disputed.</p>
 <a id="__codelineno-12-18" name="__codelineno-12-18" href="#__codelineno-12-18"></a>    <span class="n">relationship_type</span><span class="p">:</span> <span class="nb">str</span>
 <a id="__codelineno-12-19" name="__codelineno-12-19" href="#__codelineno-12-19"></a>    <span class="n">reason</span><span class="p">:</span> <span class="nb">str</span>
 <a id="__codelineno-12-20" name="__codelineno-12-20" href="#__codelineno-12-20"></a>
-<a id="__codelineno-12-21" name="__codelineno-12-21" href="#__codelineno-12-21"></a><span class="nd">@router</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/connect&quot;</span><span class="p">)</span>
+<a id="__codelineno-12-21" name="__codelineno-12-21" href="#__codelineno-12-21"></a><span class="nd">@router</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">"/connect"</span><span class="p">)</span>
 <a id="__codelineno-12-22" name="__codelineno-12-22" href="#__codelineno-12-22"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">connect_concepts</span><span class="p">(</span><span class="n">req</span><span class="p">:</span> <span class="n">ConnectRequest</span><span class="p">):</span>
-<a id="__codelineno-12-23" name="__codelineno-12-23" href="#__codelineno-12-23"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-12-23" name="__codelineno-12-23" href="#__codelineno-12-23"></a><span class="w">    </span><span class="sd">"""</span>
 <a id="__codelineno-12-24" name="__codelineno-12-24" href="#__codelineno-12-24"></a><span class="sd">    Create connection between concepts via human justification.</span>
 <a id="__codelineno-12-25" name="__codelineno-12-25" href="#__codelineno-12-25"></a>
 <a id="__codelineno-12-26" name="__codelineno-12-26" href="#__codelineno-12-26"></a><span class="sd">    Workflow:</span>
@@ -2658,36 +2658,36 @@ This preserves original relationship but marks it as disputed.</p>
 <a id="__codelineno-12-28" name="__codelineno-12-28" href="#__codelineno-12-28"></a><span class="sd">    2. Create synthetic document from justification</span>
 <a id="__codelineno-12-29" name="__codelineno-12-29" href="#__codelineno-12-29"></a><span class="sd">    3. Feed through ingestion pipeline</span>
 <a id="__codelineno-12-30" name="__codelineno-12-30" href="#__codelineno-12-30"></a><span class="sd">    4. Return job_id for status tracking</span>
-<a id="__codelineno-12-31" name="__codelineno-12-31" href="#__codelineno-12-31"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-12-31" name="__codelineno-12-31" href="#__codelineno-12-31"></a><span class="sd">    """</span>
 <a id="__codelineno-12-32" name="__codelineno-12-32" href="#__codelineno-12-32"></a>    <span class="c1"># Validate concepts exist</span>
 <a id="__codelineno-12-33" name="__codelineno-12-33" href="#__codelineno-12-33"></a>    <span class="k">for</span> <span class="n">concept_id</span> <span class="ow">in</span> <span class="n">req</span><span class="o">.</span><span class="n">concept_ids</span><span class="p">:</span>
 <a id="__codelineno-12-34" name="__codelineno-12-34" href="#__codelineno-12-34"></a>        <span class="n">concept</span> <span class="o">=</span> <span class="n">age_client</span><span class="o">.</span><span class="n">get_concept</span><span class="p">(</span><span class="n">concept_id</span><span class="p">)</span>
 <a id="__codelineno-12-35" name="__codelineno-12-35" href="#__codelineno-12-35"></a>        <span class="k">if</span> <span class="ow">not</span> <span class="n">concept</span><span class="p">:</span>
-<a id="__codelineno-12-36" name="__codelineno-12-36" href="#__codelineno-12-36"></a>            <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="mi">404</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Concept </span><span class="si">{</span><span class="n">concept_id</span><span class="si">}</span><span class="s2"> not found&quot;</span><span class="p">)</span>
+<a id="__codelineno-12-36" name="__codelineno-12-36" href="#__codelineno-12-36"></a>            <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="mi">404</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"Concept </span><span class="si">{</span><span class="n">concept_id</span><span class="si">}</span><span class="s2"> not found"</span><span class="p">)</span>
 <a id="__codelineno-12-37" name="__codelineno-12-37" href="#__codelineno-12-37"></a>
 <a id="__codelineno-12-38" name="__codelineno-12-38" href="#__codelineno-12-38"></a>    <span class="c1"># Build synthetic document</span>
 <a id="__codelineno-12-39" name="__codelineno-12-39" href="#__codelineno-12-39"></a>    <span class="n">concept_labels</span> <span class="o">=</span> <span class="p">[</span>
-<a id="__codelineno-12-40" name="__codelineno-12-40" href="#__codelineno-12-40"></a>        <span class="n">age_client</span><span class="o">.</span><span class="n">get_concept</span><span class="p">(</span><span class="n">cid</span><span class="p">)[</span><span class="s1">&#39;label&#39;</span><span class="p">]</span>
+<a id="__codelineno-12-40" name="__codelineno-12-40" href="#__codelineno-12-40"></a>        <span class="n">age_client</span><span class="o">.</span><span class="n">get_concept</span><span class="p">(</span><span class="n">cid</span><span class="p">)[</span><span class="s1">'label'</span><span class="p">]</span>
 <a id="__codelineno-12-41" name="__codelineno-12-41" href="#__codelineno-12-41"></a>        <span class="k">for</span> <span class="n">cid</span> <span class="ow">in</span> <span class="n">req</span><span class="o">.</span><span class="n">concept_ids</span>
 <a id="__codelineno-12-42" name="__codelineno-12-42" href="#__codelineno-12-42"></a>    <span class="p">]</span>
 <a id="__codelineno-12-43" name="__codelineno-12-43" href="#__codelineno-12-43"></a>
-<a id="__codelineno-12-44" name="__codelineno-12-44" href="#__codelineno-12-44"></a>    <span class="n">synthetic_doc</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-12-44" name="__codelineno-12-44" href="#__codelineno-12-44"></a>    <span class="n">synthetic_doc</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"""</span>
 <a id="__codelineno-12-45" name="__codelineno-12-45" href="#__codelineno-12-45"></a><span class="s2">    Human-Contributed Connection (</span><span class="si">{</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span><span class="si">}</span><span class="s2">)</span>
 <a id="__codelineno-12-46" name="__codelineno-12-46" href="#__codelineno-12-46"></a>
-<a id="__codelineno-12-47" name="__codelineno-12-47" href="#__codelineno-12-47"></a><span class="s2">    Connected Concepts: </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">concept_labels</span><span class="p">)</span><span class="si">}</span>
+<a id="__codelineno-12-47" name="__codelineno-12-47" href="#__codelineno-12-47"></a><span class="s2">    Connected Concepts: </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">concept_labels</span><span class="p">)</span><span class="si">}</span>
 <a id="__codelineno-12-48" name="__codelineno-12-48" href="#__codelineno-12-48"></a>
 <a id="__codelineno-12-49" name="__codelineno-12-49" href="#__codelineno-12-49"></a><span class="s2">    Justification:</span>
 <a id="__codelineno-12-50" name="__codelineno-12-50" href="#__codelineno-12-50"></a><span class="s2">    </span><span class="si">{</span><span class="n">req</span><span class="o">.</span><span class="n">justification</span><span class="si">}</span>
 <a id="__codelineno-12-51" name="__codelineno-12-51" href="#__codelineno-12-51"></a>
 <a id="__codelineno-12-52" name="__codelineno-12-52" href="#__codelineno-12-52"></a><span class="s2">    Metadata:</span>
 <a id="__codelineno-12-53" name="__codelineno-12-53" href="#__codelineno-12-53"></a><span class="s2">    - Type: Human-Guided Connection</span>
-<a id="__codelineno-12-54" name="__codelineno-12-54" href="#__codelineno-12-54"></a><span class="s2">    - Concept IDs: </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">req</span><span class="o">.</span><span class="n">concept_ids</span><span class="p">)</span><span class="si">}</span>
+<a id="__codelineno-12-54" name="__codelineno-12-54" href="#__codelineno-12-54"></a><span class="s2">    - Concept IDs: </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">req</span><span class="o">.</span><span class="n">concept_ids</span><span class="p">)</span><span class="si">}</span>
 <a id="__codelineno-12-55" name="__codelineno-12-55" href="#__codelineno-12-55"></a><span class="s2">    - Relationship Type: </span><span class="si">{</span><span class="n">req</span><span class="o">.</span><span class="n">relationship_type</span><span class="si">}</span>
-<a id="__codelineno-12-56" name="__codelineno-12-56" href="#__codelineno-12-56"></a><span class="s2">    &quot;&quot;&quot;</span>
+<a id="__codelineno-12-56" name="__codelineno-12-56" href="#__codelineno-12-56"></a><span class="s2">    """</span>
 <a id="__codelineno-12-57" name="__codelineno-12-57" href="#__codelineno-12-57"></a>
 <a id="__codelineno-12-58" name="__codelineno-12-58" href="#__codelineno-12-58"></a>    <span class="c1"># Create unique filename</span>
 <a id="__codelineno-12-59" name="__codelineno-12-59" href="#__codelineno-12-59"></a>    <span class="n">edit_id</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">())</span>
-<a id="__codelineno-12-60" name="__codelineno-12-60" href="#__codelineno-12-60"></a>    <span class="n">filename</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;human-edit-</span><span class="si">{</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y%m</span><span class="si">%d</span><span class="s1">&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">edit_id</span><span class="si">}</span><span class="s2">.txt&quot;</span>
+<a id="__codelineno-12-60" name="__codelineno-12-60" href="#__codelineno-12-60"></a>    <span class="n">filename</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"human-edit-</span><span class="si">{</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">'%Y%m</span><span class="si">%d</span><span class="s1">'</span><span class="p">)</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">edit_id</span><span class="si">}</span><span class="s2">.txt"</span>
 <a id="__codelineno-12-61" name="__codelineno-12-61" href="#__codelineno-12-61"></a>
 <a id="__codelineno-12-62" name="__codelineno-12-62" href="#__codelineno-12-62"></a>    <span class="c1"># Submit to ingestion pipeline</span>
 <a id="__codelineno-12-63" name="__codelineno-12-63" href="#__codelineno-12-63"></a>    <span class="n">job</span> <span class="o">=</span> <span class="k">await</span> <span class="n">ingest_text</span><span class="p">(</span>
@@ -2699,42 +2699,42 @@ This preserves original relationship but marks it as disputed.</p>
 <a id="__codelineno-12-69" name="__codelineno-12-69" href="#__codelineno-12-69"></a>    <span class="p">)</span>
 <a id="__codelineno-12-70" name="__codelineno-12-70" href="#__codelineno-12-70"></a>
 <a id="__codelineno-12-71" name="__codelineno-12-71" href="#__codelineno-12-71"></a>    <span class="k">return</span> <span class="p">{</span>
-<a id="__codelineno-12-72" name="__codelineno-12-72" href="#__codelineno-12-72"></a>        <span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;submitted&quot;</span><span class="p">,</span>
-<a id="__codelineno-12-73" name="__codelineno-12-73" href="#__codelineno-12-73"></a>        <span class="s2">&quot;job_id&quot;</span><span class="p">:</span> <span class="n">job</span><span class="o">.</span><span class="n">job_id</span><span class="p">,</span>
-<a id="__codelineno-12-74" name="__codelineno-12-74" href="#__codelineno-12-74"></a>        <span class="s2">&quot;edit_id&quot;</span><span class="p">:</span> <span class="n">edit_id</span><span class="p">,</span>
-<a id="__codelineno-12-75" name="__codelineno-12-75" href="#__codelineno-12-75"></a>        <span class="s2">&quot;message&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Connection queued for processing. </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">req</span><span class="o">.</span><span class="n">concept_ids</span><span class="p">)</span><span class="si">}</span><span class="s2"> concepts.&quot;</span>
+<a id="__codelineno-12-72" name="__codelineno-12-72" href="#__codelineno-12-72"></a>        <span class="s2">"status"</span><span class="p">:</span> <span class="s2">"submitted"</span><span class="p">,</span>
+<a id="__codelineno-12-73" name="__codelineno-12-73" href="#__codelineno-12-73"></a>        <span class="s2">"job_id"</span><span class="p">:</span> <span class="n">job</span><span class="o">.</span><span class="n">job_id</span><span class="p">,</span>
+<a id="__codelineno-12-74" name="__codelineno-12-74" href="#__codelineno-12-74"></a>        <span class="s2">"edit_id"</span><span class="p">:</span> <span class="n">edit_id</span><span class="p">,</span>
+<a id="__codelineno-12-75" name="__codelineno-12-75" href="#__codelineno-12-75"></a>        <span class="s2">"message"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"Connection queued for processing. </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">req</span><span class="o">.</span><span class="n">concept_ids</span><span class="p">)</span><span class="si">}</span><span class="s2"> concepts."</span>
 <a id="__codelineno-12-76" name="__codelineno-12-76" href="#__codelineno-12-76"></a>    <span class="p">}</span>
 <a id="__codelineno-12-77" name="__codelineno-12-77" href="#__codelineno-12-77"></a>
-<a id="__codelineno-12-78" name="__codelineno-12-78" href="#__codelineno-12-78"></a><span class="nd">@router</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/invalidate&quot;</span><span class="p">)</span>
+<a id="__codelineno-12-78" name="__codelineno-12-78" href="#__codelineno-12-78"></a><span class="nd">@router</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">"/invalidate"</span><span class="p">)</span>
 <a id="__codelineno-12-79" name="__codelineno-12-79" href="#__codelineno-12-79"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">invalidate_relationship</span><span class="p">(</span><span class="n">req</span><span class="p">:</span> <span class="n">InvalidateRequest</span><span class="p">):</span>
-<a id="__codelineno-12-80" name="__codelineno-12-80" href="#__codelineno-12-80"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-12-80" name="__codelineno-12-80" href="#__codelineno-12-80"></a><span class="w">    </span><span class="sd">"""</span>
 <a id="__codelineno-12-81" name="__codelineno-12-81" href="#__codelineno-12-81"></a><span class="sd">    Flag relationship as invalid with human reason.</span>
 <a id="__codelineno-12-82" name="__codelineno-12-82" href="#__codelineno-12-82"></a>
 <a id="__codelineno-12-83" name="__codelineno-12-83" href="#__codelineno-12-83"></a><span class="sd">    Uses soft-delete: adds invalidation metadata rather than removing.</span>
-<a id="__codelineno-12-84" name="__codelineno-12-84" href="#__codelineno-12-84"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-12-84" name="__codelineno-12-84" href="#__codelineno-12-84"></a><span class="sd">    """</span>
 <a id="__codelineno-12-85" name="__codelineno-12-85" href="#__codelineno-12-85"></a>    <span class="c1"># Validate relationship exists</span>
-<a id="__codelineno-12-86" name="__codelineno-12-86" href="#__codelineno-12-86"></a>    <span class="n">query</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-12-86" name="__codelineno-12-86" href="#__codelineno-12-86"></a>    <span class="n">query</span> <span class="o">=</span> <span class="s2">"""</span>
 <a id="__codelineno-12-87" name="__codelineno-12-87" href="#__codelineno-12-87"></a><span class="s2">    MATCH (a:Concept {concept_id: $from_id})</span>
 <a id="__codelineno-12-88" name="__codelineno-12-88" href="#__codelineno-12-88"></a><span class="s2">          -[r:RELATIONSHIP {type: $rel_type}]-&gt;</span>
 <a id="__codelineno-12-89" name="__codelineno-12-89" href="#__codelineno-12-89"></a><span class="s2">          (b:Concept {concept_id: $to_id})</span>
 <a id="__codelineno-12-90" name="__codelineno-12-90" href="#__codelineno-12-90"></a><span class="s2">    RETURN r</span>
-<a id="__codelineno-12-91" name="__codelineno-12-91" href="#__codelineno-12-91"></a><span class="s2">    &quot;&quot;&quot;</span>
+<a id="__codelineno-12-91" name="__codelineno-12-91" href="#__codelineno-12-91"></a><span class="s2">    """</span>
 <a id="__codelineno-12-92" name="__codelineno-12-92" href="#__codelineno-12-92"></a>
 <a id="__codelineno-12-93" name="__codelineno-12-93" href="#__codelineno-12-93"></a>    <span class="n">result</span> <span class="o">=</span> <span class="n">age_client</span><span class="o">.</span><span class="n">_execute_cypher</span><span class="p">(</span>
 <a id="__codelineno-12-94" name="__codelineno-12-94" href="#__codelineno-12-94"></a>        <span class="n">query</span><span class="p">,</span>
 <a id="__codelineno-12-95" name="__codelineno-12-95" href="#__codelineno-12-95"></a>        <span class="n">params</span><span class="o">=</span><span class="p">{</span>
-<a id="__codelineno-12-96" name="__codelineno-12-96" href="#__codelineno-12-96"></a>            <span class="s1">&#39;from_id&#39;</span><span class="p">:</span> <span class="n">req</span><span class="o">.</span><span class="n">from_id</span><span class="p">,</span>
-<a id="__codelineno-12-97" name="__codelineno-12-97" href="#__codelineno-12-97"></a>            <span class="s1">&#39;to_id&#39;</span><span class="p">:</span> <span class="n">req</span><span class="o">.</span><span class="n">to_id</span><span class="p">,</span>
-<a id="__codelineno-12-98" name="__codelineno-12-98" href="#__codelineno-12-98"></a>            <span class="s1">&#39;rel_type&#39;</span><span class="p">:</span> <span class="n">req</span><span class="o">.</span><span class="n">relationship_type</span>
+<a id="__codelineno-12-96" name="__codelineno-12-96" href="#__codelineno-12-96"></a>            <span class="s1">'from_id'</span><span class="p">:</span> <span class="n">req</span><span class="o">.</span><span class="n">from_id</span><span class="p">,</span>
+<a id="__codelineno-12-97" name="__codelineno-12-97" href="#__codelineno-12-97"></a>            <span class="s1">'to_id'</span><span class="p">:</span> <span class="n">req</span><span class="o">.</span><span class="n">to_id</span><span class="p">,</span>
+<a id="__codelineno-12-98" name="__codelineno-12-98" href="#__codelineno-12-98"></a>            <span class="s1">'rel_type'</span><span class="p">:</span> <span class="n">req</span><span class="o">.</span><span class="n">relationship_type</span>
 <a id="__codelineno-12-99" name="__codelineno-12-99" href="#__codelineno-12-99"></a>        <span class="p">},</span>
 <a id="__codelineno-12-100" name="__codelineno-12-100" href="#__codelineno-12-100"></a>        <span class="n">fetch_one</span><span class="o">=</span><span class="kc">True</span>
 <a id="__codelineno-12-101" name="__codelineno-12-101" href="#__codelineno-12-101"></a>    <span class="p">)</span>
 <a id="__codelineno-12-102" name="__codelineno-12-102" href="#__codelineno-12-102"></a>
 <a id="__codelineno-12-103" name="__codelineno-12-103" href="#__codelineno-12-103"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">result</span><span class="p">:</span>
-<a id="__codelineno-12-104" name="__codelineno-12-104" href="#__codelineno-12-104"></a>        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="mi">404</span><span class="p">,</span> <span class="s2">&quot;Relationship not found&quot;</span><span class="p">)</span>
+<a id="__codelineno-12-104" name="__codelineno-12-104" href="#__codelineno-12-104"></a>        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="mi">404</span><span class="p">,</span> <span class="s2">"Relationship not found"</span><span class="p">)</span>
 <a id="__codelineno-12-105" name="__codelineno-12-105" href="#__codelineno-12-105"></a>
 <a id="__codelineno-12-106" name="__codelineno-12-106" href="#__codelineno-12-106"></a>    <span class="c1"># Soft delete with invalidation flag</span>
-<a id="__codelineno-12-107" name="__codelineno-12-107" href="#__codelineno-12-107"></a>    <span class="n">invalidate_query</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-12-107" name="__codelineno-12-107" href="#__codelineno-12-107"></a>    <span class="n">invalidate_query</span> <span class="o">=</span> <span class="s2">"""</span>
 <a id="__codelineno-12-108" name="__codelineno-12-108" href="#__codelineno-12-108"></a><span class="s2">    MATCH (a:Concept {concept_id: $from_id})</span>
 <a id="__codelineno-12-109" name="__codelineno-12-109" href="#__codelineno-12-109"></a><span class="s2">          -[r:RELATIONSHIP {type: $rel_type}]-&gt;</span>
 <a id="__codelineno-12-110" name="__codelineno-12-110" href="#__codelineno-12-110"></a><span class="s2">          (b:Concept {concept_id: $to_id})</span>
@@ -2743,41 +2743,41 @@ This preserves original relationship but marks it as disputed.</p>
 <a id="__codelineno-12-113" name="__codelineno-12-113" href="#__codelineno-12-113"></a><span class="s2">        r.invalidated_at = timestamp(),</span>
 <a id="__codelineno-12-114" name="__codelineno-12-114" href="#__codelineno-12-114"></a><span class="s2">        r.invalidated_by = $session_id</span>
 <a id="__codelineno-12-115" name="__codelineno-12-115" href="#__codelineno-12-115"></a><span class="s2">    RETURN r</span>
-<a id="__codelineno-12-116" name="__codelineno-12-116" href="#__codelineno-12-116"></a><span class="s2">    &quot;&quot;&quot;</span>
+<a id="__codelineno-12-116" name="__codelineno-12-116" href="#__codelineno-12-116"></a><span class="s2">    """</span>
 <a id="__codelineno-12-117" name="__codelineno-12-117" href="#__codelineno-12-117"></a>
 <a id="__codelineno-12-118" name="__codelineno-12-118" href="#__codelineno-12-118"></a>    <span class="n">age_client</span><span class="o">.</span><span class="n">_execute_cypher</span><span class="p">(</span>
 <a id="__codelineno-12-119" name="__codelineno-12-119" href="#__codelineno-12-119"></a>        <span class="n">invalidate_query</span><span class="p">,</span>
 <a id="__codelineno-12-120" name="__codelineno-12-120" href="#__codelineno-12-120"></a>        <span class="n">params</span><span class="o">=</span><span class="p">{</span>
-<a id="__codelineno-12-121" name="__codelineno-12-121" href="#__codelineno-12-121"></a>            <span class="s1">&#39;from_id&#39;</span><span class="p">:</span> <span class="n">req</span><span class="o">.</span><span class="n">from_id</span><span class="p">,</span>
-<a id="__codelineno-12-122" name="__codelineno-12-122" href="#__codelineno-12-122"></a>            <span class="s1">&#39;to_id&#39;</span><span class="p">:</span> <span class="n">req</span><span class="o">.</span><span class="n">to_id</span><span class="p">,</span>
-<a id="__codelineno-12-123" name="__codelineno-12-123" href="#__codelineno-12-123"></a>            <span class="s1">&#39;rel_type&#39;</span><span class="p">:</span> <span class="n">req</span><span class="o">.</span><span class="n">relationship_type</span><span class="p">,</span>
-<a id="__codelineno-12-124" name="__codelineno-12-124" href="#__codelineno-12-124"></a>            <span class="s1">&#39;reason&#39;</span><span class="p">:</span> <span class="n">req</span><span class="o">.</span><span class="n">reason</span><span class="p">,</span>
-<a id="__codelineno-12-125" name="__codelineno-12-125" href="#__codelineno-12-125"></a>            <span class="s1">&#39;session_id&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">())</span>
+<a id="__codelineno-12-121" name="__codelineno-12-121" href="#__codelineno-12-121"></a>            <span class="s1">'from_id'</span><span class="p">:</span> <span class="n">req</span><span class="o">.</span><span class="n">from_id</span><span class="p">,</span>
+<a id="__codelineno-12-122" name="__codelineno-12-122" href="#__codelineno-12-122"></a>            <span class="s1">'to_id'</span><span class="p">:</span> <span class="n">req</span><span class="o">.</span><span class="n">to_id</span><span class="p">,</span>
+<a id="__codelineno-12-123" name="__codelineno-12-123" href="#__codelineno-12-123"></a>            <span class="s1">'rel_type'</span><span class="p">:</span> <span class="n">req</span><span class="o">.</span><span class="n">relationship_type</span><span class="p">,</span>
+<a id="__codelineno-12-124" name="__codelineno-12-124" href="#__codelineno-12-124"></a>            <span class="s1">'reason'</span><span class="p">:</span> <span class="n">req</span><span class="o">.</span><span class="n">reason</span><span class="p">,</span>
+<a id="__codelineno-12-125" name="__codelineno-12-125" href="#__codelineno-12-125"></a>            <span class="s1">'session_id'</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">())</span>
 <a id="__codelineno-12-126" name="__codelineno-12-126" href="#__codelineno-12-126"></a>        <span class="p">}</span>
 <a id="__codelineno-12-127" name="__codelineno-12-127" href="#__codelineno-12-127"></a>    <span class="p">)</span>
 <a id="__codelineno-12-128" name="__codelineno-12-128" href="#__codelineno-12-128"></a>
 <a id="__codelineno-12-129" name="__codelineno-12-129" href="#__codelineno-12-129"></a>    <span class="k">return</span> <span class="p">{</span>
-<a id="__codelineno-12-130" name="__codelineno-12-130" href="#__codelineno-12-130"></a>        <span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;invalidated&quot;</span><span class="p">,</span>
-<a id="__codelineno-12-131" name="__codelineno-12-131" href="#__codelineno-12-131"></a>        <span class="s2">&quot;from_id&quot;</span><span class="p">:</span> <span class="n">req</span><span class="o">.</span><span class="n">from_id</span><span class="p">,</span>
-<a id="__codelineno-12-132" name="__codelineno-12-132" href="#__codelineno-12-132"></a>        <span class="s2">&quot;to_id&quot;</span><span class="p">:</span> <span class="n">req</span><span class="o">.</span><span class="n">to_id</span><span class="p">,</span>
-<a id="__codelineno-12-133" name="__codelineno-12-133" href="#__codelineno-12-133"></a>        <span class="s2">&quot;relationship_type&quot;</span><span class="p">:</span> <span class="n">req</span><span class="o">.</span><span class="n">relationship_type</span><span class="p">,</span>
-<a id="__codelineno-12-134" name="__codelineno-12-134" href="#__codelineno-12-134"></a>        <span class="s2">&quot;message&quot;</span><span class="p">:</span> <span class="s2">&quot;Relationship flagged as invalid&quot;</span>
+<a id="__codelineno-12-130" name="__codelineno-12-130" href="#__codelineno-12-130"></a>        <span class="s2">"status"</span><span class="p">:</span> <span class="s2">"invalidated"</span><span class="p">,</span>
+<a id="__codelineno-12-131" name="__codelineno-12-131" href="#__codelineno-12-131"></a>        <span class="s2">"from_id"</span><span class="p">:</span> <span class="n">req</span><span class="o">.</span><span class="n">from_id</span><span class="p">,</span>
+<a id="__codelineno-12-132" name="__codelineno-12-132" href="#__codelineno-12-132"></a>        <span class="s2">"to_id"</span><span class="p">:</span> <span class="n">req</span><span class="o">.</span><span class="n">to_id</span><span class="p">,</span>
+<a id="__codelineno-12-133" name="__codelineno-12-133" href="#__codelineno-12-133"></a>        <span class="s2">"relationship_type"</span><span class="p">:</span> <span class="n">req</span><span class="o">.</span><span class="n">relationship_type</span><span class="p">,</span>
+<a id="__codelineno-12-134" name="__codelineno-12-134" href="#__codelineno-12-134"></a>        <span class="s2">"message"</span><span class="p">:</span> <span class="s2">"Relationship flagged as invalid"</span>
 <a id="__codelineno-12-135" name="__codelineno-12-135" href="#__codelineno-12-135"></a>    <span class="p">}</span>
 </code></pre></div>
 <h3 id="phase-3-mcp-server-tools-typescript">Phase 3: MCP Server Tools (TypeScript)</h3>
 <p><strong>File:</strong> <code>client/src/mcp/tools/human-editing.ts</code></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">z</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;zod&#39;</span><span class="p">;</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">apiClient</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;../../api/client&#39;</span><span class="p">;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">z</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'zod'</span><span class="p">;</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">apiClient</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'../../api/client'</span><span class="p">;</span>
 <a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>
 <a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">connectConceptsTool</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="w">  </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;connect_concepts&#39;</span><span class="p">,</span>
-<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="w">  </span><span class="nx">description</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;Create relationship between concepts with human justification&#39;</span><span class="p">,</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="w">  </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s1">'connect_concepts'</span><span class="p">,</span>
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="w">  </span><span class="nx">description</span><span class="o">:</span><span class="w"> </span><span class="s1">'Create relationship between concepts with human justification'</span><span class="p">,</span>
 <a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="w">  </span><span class="nx">inputSchema</span><span class="o">:</span><span class="w"> </span><span class="kt">z.object</span><span class="p">({</span>
-<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a><span class="w">    </span><span class="nx">from_concept</span><span class="o">:</span><span class="w"> </span><span class="kt">z.string</span><span class="p">().</span><span class="nx">describe</span><span class="p">(</span><span class="s1">&#39;First concept label or ID&#39;</span><span class="p">),</span>
-<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a><span class="w">    </span><span class="nx">to_concept</span><span class="o">:</span><span class="w"> </span><span class="kt">z.string</span><span class="p">().</span><span class="nx">describe</span><span class="p">(</span><span class="s1">&#39;Second concept label or ID&#39;</span><span class="p">),</span>
-<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a><span class="w">    </span><span class="nx">justification</span><span class="o">:</span><span class="w"> </span><span class="kt">z.string</span><span class="p">().</span><span class="nx">describe</span><span class="p">(</span><span class="s1">&#39;Why these concepts are related&#39;</span><span class="p">),</span>
-<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a><span class="w">    </span><span class="nx">relationship_type</span><span class="o">:</span><span class="w"> </span><span class="kt">z.string</span><span class="p">().</span><span class="nx">optional</span><span class="p">().</span><span class="k">default</span><span class="p">(</span><span class="s1">&#39;RELATES_TO&#39;</span><span class="p">),</span>
-<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a><span class="w">    </span><span class="nx">ontology</span><span class="o">:</span><span class="w"> </span><span class="kt">z.string</span><span class="p">().</span><span class="nx">optional</span><span class="p">().</span><span class="k">default</span><span class="p">(</span><span class="s1">&#39;human-teaching&#39;</span><span class="p">)</span>
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a><span class="w">    </span><span class="nx">from_concept</span><span class="o">:</span><span class="w"> </span><span class="kt">z.string</span><span class="p">().</span><span class="nx">describe</span><span class="p">(</span><span class="s1">'First concept label or ID'</span><span class="p">),</span>
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a><span class="w">    </span><span class="nx">to_concept</span><span class="o">:</span><span class="w"> </span><span class="kt">z.string</span><span class="p">().</span><span class="nx">describe</span><span class="p">(</span><span class="s1">'Second concept label or ID'</span><span class="p">),</span>
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a><span class="w">    </span><span class="nx">justification</span><span class="o">:</span><span class="w"> </span><span class="kt">z.string</span><span class="p">().</span><span class="nx">describe</span><span class="p">(</span><span class="s1">'Why these concepts are related'</span><span class="p">),</span>
+<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a><span class="w">    </span><span class="nx">relationship_type</span><span class="o">:</span><span class="w"> </span><span class="kt">z.string</span><span class="p">().</span><span class="nx">optional</span><span class="p">().</span><span class="k">default</span><span class="p">(</span><span class="s1">'RELATES_TO'</span><span class="p">),</span>
+<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a><span class="w">    </span><span class="nx">ontology</span><span class="o">:</span><span class="w"> </span><span class="kt">z.string</span><span class="p">().</span><span class="nx">optional</span><span class="p">().</span><span class="k">default</span><span class="p">(</span><span class="s1">'human-teaching'</span><span class="p">)</span>
 <a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a><span class="w">  </span><span class="p">}),</span>
 <a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a>
 <a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a><span class="w">  </span><span class="k">async</span><span class="w"> </span><span class="nx">execute</span><span class="p">(</span><span class="nx">args</span><span class="o">:</span><span class="w"> </span><span class="kt">z.infer</span><span class="o">&lt;</span><span class="ow">typeof</span><span class="w"> </span><span class="nx">connectConceptsTool</span><span class="p">.</span><span class="nx">inputSchema</span><span class="o">&gt;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
@@ -2786,7 +2786,7 @@ This preserves original relationship but marks it as disputed.</p>
 <a id="__codelineno-13-18" name="__codelineno-13-18" href="#__codelineno-13-18"></a><span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">toConcept</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">resolveConceptId</span><span class="p">(</span><span class="nx">args</span><span class="p">.</span><span class="nx">to_concept</span><span class="p">);</span>
 <a id="__codelineno-13-19" name="__codelineno-13-19" href="#__codelineno-13-19"></a>
 <a id="__codelineno-13-20" name="__codelineno-13-20" href="#__codelineno-13-20"></a><span class="w">    </span><span class="c1">// Submit connection</span>
-<a id="__codelineno-13-21" name="__codelineno-13-21" href="#__codelineno-13-21"></a><span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">apiClient</span><span class="p">.</span><span class="nx">post</span><span class="p">(</span><span class="s1">&#39;/api/human-edit/connect&#39;</span><span class="p">,</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-13-21" name="__codelineno-13-21" href="#__codelineno-13-21"></a><span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">apiClient</span><span class="p">.</span><span class="nx">post</span><span class="p">(</span><span class="s1">'/api/human-edit/connect'</span><span class="p">,</span><span class="w"> </span><span class="p">{</span>
 <a id="__codelineno-13-22" name="__codelineno-13-22" href="#__codelineno-13-22"></a><span class="w">      </span><span class="nx">concept_ids</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="nx">fromConcept</span><span class="p">.</span><span class="nx">concept_id</span><span class="p">,</span><span class="w"> </span><span class="nx">toConcept</span><span class="p">.</span><span class="nx">concept_id</span><span class="p">],</span>
 <a id="__codelineno-13-23" name="__codelineno-13-23" href="#__codelineno-13-23"></a><span class="w">      </span><span class="nx">justification</span><span class="o">:</span><span class="w"> </span><span class="kt">args.justification</span><span class="p">,</span>
 <a id="__codelineno-13-24" name="__codelineno-13-24" href="#__codelineno-13-24"></a><span class="w">      </span><span class="nx">relationship_type</span><span class="o">:</span><span class="w"> </span><span class="kt">args.relationship_type</span><span class="p">,</span>
@@ -2795,8 +2795,8 @@ This preserves original relationship but marks it as disputed.</p>
 <a id="__codelineno-13-27" name="__codelineno-13-27" href="#__codelineno-13-27"></a>
 <a id="__codelineno-13-28" name="__codelineno-13-28" href="#__codelineno-13-28"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">{</span>
 <a id="__codelineno-13-29" name="__codelineno-13-29" href="#__codelineno-13-29"></a><span class="w">      </span><span class="nx">content</span><span class="o">:</span><span class="w"> </span><span class="p">[{</span>
-<a id="__codelineno-13-30" name="__codelineno-13-30" href="#__codelineno-13-30"></a><span class="w">        </span><span class="kr">type</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;text&#39;</span><span class="p">,</span>
-<a id="__codelineno-13-31" name="__codelineno-13-31" href="#__codelineno-13-31"></a><span class="w">        </span><span class="nx">text</span><span class="o">:</span><span class="w"> </span><span class="sb">`Connected &quot;</span><span class="si">${</span><span class="nx">fromConcept</span><span class="p">.</span><span class="nx">label</span><span class="si">}</span><span class="sb">&quot; to &quot;</span><span class="si">${</span><span class="nx">toConcept</span><span class="p">.</span><span class="nx">label</span><span class="si">}</span><span class="sb">&quot;</span>
+<a id="__codelineno-13-30" name="__codelineno-13-30" href="#__codelineno-13-30"></a><span class="w">        </span><span class="kr">type</span><span class="o">:</span><span class="w"> </span><span class="s1">'text'</span><span class="p">,</span>
+<a id="__codelineno-13-31" name="__codelineno-13-31" href="#__codelineno-13-31"></a><span class="w">        </span><span class="nx">text</span><span class="o">:</span><span class="w"> </span><span class="sb">`Connected "</span><span class="si">${</span><span class="nx">fromConcept</span><span class="p">.</span><span class="nx">label</span><span class="si">}</span><span class="sb">" to "</span><span class="si">${</span><span class="nx">toConcept</span><span class="p">.</span><span class="nx">label</span><span class="si">}</span><span class="sb">"</span>
 <a id="__codelineno-13-32" name="__codelineno-13-32" href="#__codelineno-13-32"></a><span class="sb">               via </span><span class="si">${</span><span class="nx">args</span><span class="p">.</span><span class="nx">relationship_type</span><span class="si">}</span><span class="sb">.</span>
 <a id="__codelineno-13-33" name="__codelineno-13-33" href="#__codelineno-13-33"></a><span class="sb">               Job ID: </span><span class="si">${</span><span class="nx">result</span><span class="p">.</span><span class="nx">job_id</span><span class="si">}</span>
 <a id="__codelineno-13-34" name="__codelineno-13-34" href="#__codelineno-13-34"></a><span class="sb">               Status: </span><span class="si">${</span><span class="nx">result</span><span class="p">.</span><span class="nx">status</span><span class="si">}</span><span class="sb">`</span>
@@ -2923,43 +2923,43 @@ This preserves original relationship but marks it as disputed.</p>
 <h2 id="example-scenarios">Example Scenarios</h2>
 <h3 id="scenario-1-cross-domain-bridge">Scenario 1: Cross-Domain Bridge</h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>User sees:
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>- Cluster A: &quot;Enterprise Strategy&quot;, &quot;Cost Optimization&quot;, &quot;Value Stream&quot;
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>- Cluster B: &quot;Integration Systems&quot;, &quot;Data Flow&quot;, &quot;Centralization&quot;
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>- Cluster A: "Enterprise Strategy", "Cost Optimization", "Value Stream"
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>- Cluster B: "Integration Systems", "Data Flow", "Centralization"
 <a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>
-<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>User multi-selects: &quot;Value Stream&quot; + &quot;Integration Systems&quot;
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>User multi-selects: "Value Stream" + "Integration Systems"
 <a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>
-<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>Justification: &quot;Value streams are enabled through integration systems
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>Justification: "Value streams are enabled through integration systems
 <a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>because they connect data flows between business processes and technical
-<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a>implementation, allowing us to track end-to-end value delivery.&quot;
+<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a>implementation, allowing us to track end-to-end value delivery."
 <a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a>
 <a id="__codelineno-14-11" name="__codelineno-14-11" href="#__codelineno-14-11"></a>Result: New ENABLES relationship with human evidence
 </code></pre></div>
 <h3 id="scenario-2-correction">Scenario 2: Correction</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>User sees edge: &quot;Agile&quot; -[CONTRADICTS]-&gt; &quot;Governance&quot;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>User sees edge: "Agile" -[CONTRADICTS]-&gt; "Governance"
 <a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>
-<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>User thinks: &quot;This is wrong - they complement each other&quot;
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>User thinks: "This is wrong - they complement each other"
 <a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>
-<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>Invalidation: &quot;This relationship is misleading. Agile methodologies
-<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>don&#39;t contradict governance; they require different governance models
-<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a>focused on lightweight, adaptive controls rather than heavy processes.&quot;
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>Invalidation: "This relationship is misleading. Agile methodologies
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>don't contradict governance; they require different governance models
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a>focused on lightweight, adaptive controls rather than heavy processes."
 <a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a>
 <a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a>Result: Edge marked invalidated, hidden from default queries
 </code></pre></div>
 <h3 id="scenario-3-mcp-assisted-connection">Scenario 3: MCP-Assisted Connection</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>User to Claude: &quot;I think enterprise architecture relates to cloud migration&quot;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>User to Claude: "I think enterprise architecture relates to cloud migration"
 <a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>
 <a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>Claude: [Searches concepts]
-<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>Claude: &quot;Found these concepts:
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>Claude: "Found these concepts:
 <a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>  1. Enterprise Architecture (15 instances)
 <a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>  2. Cloud Migration (22 instances)
 <a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a>
-<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a>  Why do you think they&#39;re related?&quot;
+<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a>  Why do you think they're related?"
 <a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a>
-<a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a>User: &quot;EA provides the framework and standards for cloud migration decisions&quot;
+<a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a>User: "EA provides the framework and standards for cloud migration decisions"
 <a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a>
 <a id="__codelineno-16-12" name="__codelineno-16-12" href="#__codelineno-16-12"></a>Claude: [Calls connect_concepts]
-<a id="__codelineno-16-13" name="__codelineno-16-13" href="#__codelineno-16-13"></a>Claude: &quot;Connected! Created in human-teaching ontology. The system will
-<a id="__codelineno-16-14" name="__codelineno-16-14" href="#__codelineno-16-14"></a>process this and extract the PROVIDES_FRAMEWORK relationship.&quot;
+<a id="__codelineno-16-13" name="__codelineno-16-13" href="#__codelineno-16-13"></a>Claude: "Connected! Created in human-teaching ontology. The system will
+<a id="__codelineno-16-14" name="__codelineno-16-14" href="#__codelineno-16-14"></a>process this and extract the PROVIDES_FRAMEWORK relationship."
 </code></pre></div>
 <h2 id="future-enhancements">Future Enhancements</h2>
 <ol>
@@ -3029,7 +3029,7 @@ This preserves original relationship but marks it as disputed.</p>
       <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": [], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

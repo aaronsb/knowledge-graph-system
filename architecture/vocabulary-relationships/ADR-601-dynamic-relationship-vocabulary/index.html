@@ -19,7 +19,7 @@
       
       
       <link rel="icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -27,7 +27,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.ec1eaa64.min.css">
       
       
 
@@ -2596,29 +2596,29 @@
 <h3 id="current-problem">Current Problem</h3>
 <p><strong>Fixed Vocabulary Limitation:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">ALLOWED_RELATIONSHIP_TYPES</span> <span class="o">=</span> <span class="p">{</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="s1">&#39;IMPLIES&#39;</span><span class="p">,</span> <span class="s1">&#39;SUPPORTS&#39;</span><span class="p">,</span> <span class="s1">&#39;CONTRADICTS&#39;</span><span class="p">,</span> <span class="s1">&#39;RESULTS_FROM&#39;</span><span class="p">,</span> <span class="s1">&#39;ENABLES&#39;</span><span class="p">,</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="s1">&#39;REQUIRES&#39;</span><span class="p">,</span> <span class="s1">&#39;INFLUENCES&#39;</span><span class="p">,</span> <span class="s1">&#39;COMPLEMENTS&#39;</span><span class="p">,</span> <span class="s1">&#39;OVERLAPS&#39;</span><span class="p">,</span> <span class="s1">&#39;EXTENDS&#39;</span><span class="p">,</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="s1">'IMPLIES'</span><span class="p">,</span> <span class="s1">'SUPPORTS'</span><span class="p">,</span> <span class="s1">'CONTRADICTS'</span><span class="p">,</span> <span class="s1">'RESULTS_FROM'</span><span class="p">,</span> <span class="s1">'ENABLES'</span><span class="p">,</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="s1">'REQUIRES'</span><span class="p">,</span> <span class="s1">'INFLUENCES'</span><span class="p">,</span> <span class="s1">'COMPLEMENTS'</span><span class="p">,</span> <span class="s1">'OVERLAPS'</span><span class="p">,</span> <span class="s1">'EXTENDS'</span><span class="p">,</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="c1"># ... 20 more</span>
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="p">}</span>
 </code></pre></div></p>
 <p><strong>Lost Relationships (from actual ingestion):</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>⚠ Skipping relationship: invalid type &#39;ENHANCES&#39; (no match)
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>⚠ Skipping relationship: invalid type &#39;INTEGRATES&#39; (no match)
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>⚠ Skipping relationship: invalid type &#39;CONNECTS_TO&#39; (no match)
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>⚠ Skipping relationship: invalid type &#39;ALIGNS_WITH&#39; (no match)
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>⚠ Skipping relationship: invalid type &#39;PROVIDES&#39; (no match)
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>⚠ Skipping relationship: invalid type &#39;RECEIVES&#39; (no match)
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>⚠ Skipping relationship: invalid type &#39;POWERS&#39; (no match)
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>⚠ Skipping relationship: invalid type &#39;EMBEDDED_IN&#39; (no match)
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>⚠ Skipping relationship: invalid type &#39;CONTRIBUTES_TO&#39; (no match)
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>⚠ Skipping relationship: invalid type &#39;ENABLED_BY&#39; (no match)
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>⚠ Skipping relationship: invalid type &#39;MAINTAINS&#39; (no match)
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>⚠ Skipping relationship: invalid type &#39;SCALES_WITH&#39; (no match)
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>⚠ Skipping relationship: invalid type &#39;FOCUSES_ON&#39; (no match)
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>⚠ Skipping relationship: invalid type &#39;ENSURES&#39; (no match)
-<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>⚠ Skipping relationship: invalid type &#39;FEEDS&#39; (no match)
-<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>⚠ Skipping relationship: invalid type &#39;INFORMS&#39; (no match)
-<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>⚠ Skipping relationship: invalid type &#39;VALIDATES&#39; (no match)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>⚠ Skipping relationship: invalid type 'ENHANCES' (no match)
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>⚠ Skipping relationship: invalid type 'INTEGRATES' (no match)
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>⚠ Skipping relationship: invalid type 'CONNECTS_TO' (no match)
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>⚠ Skipping relationship: invalid type 'ALIGNS_WITH' (no match)
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>⚠ Skipping relationship: invalid type 'PROVIDES' (no match)
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>⚠ Skipping relationship: invalid type 'RECEIVES' (no match)
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>⚠ Skipping relationship: invalid type 'POWERS' (no match)
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>⚠ Skipping relationship: invalid type 'EMBEDDED_IN' (no match)
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>⚠ Skipping relationship: invalid type 'CONTRIBUTES_TO' (no match)
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>⚠ Skipping relationship: invalid type 'ENABLED_BY' (no match)
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>⚠ Skipping relationship: invalid type 'MAINTAINS' (no match)
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>⚠ Skipping relationship: invalid type 'SCALES_WITH' (no match)
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>⚠ Skipping relationship: invalid type 'FOCUSES_ON' (no match)
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>⚠ Skipping relationship: invalid type 'ENSURES' (no match)
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>⚠ Skipping relationship: invalid type 'FEEDS' (no match)
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>⚠ Skipping relationship: invalid type 'INFORMS' (no match)
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>⚠ Skipping relationship: invalid type 'VALIDATES' (no match)
 </code></pre></div></p>
 <p>Many of these are semantically valid and would enrich the knowledge graph (e.g., ENHANCES, INTEGRATES, CONTRIBUTES_TO).</p>
 <h3 id="why-fixed-vocabulary-exists">Why Fixed Vocabulary Exists</h3>
@@ -2646,7 +2646,7 @@
 <a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="w">    </span><span class="n">first_seen</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="n">NOW</span><span class="p">(),</span>
 <a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="w">    </span><span class="n">last_seen</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="n">NOW</span><span class="p">(),</span>
 <a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="w">    </span><span class="n">occurrence_count</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
-<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="w">    </span><span class="n">sample_context</span><span class="w"> </span><span class="n">JSONB</span><span class="p">,</span><span class="w">  </span><span class="c1">-- Store example {&quot;from&quot;: &quot;...&quot;, &quot;to&quot;: &quot;...&quot;, &quot;confidence&quot;: ...}</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="w">    </span><span class="n">sample_context</span><span class="w"> </span><span class="n">JSONB</span><span class="p">,</span><span class="w">  </span><span class="c1">-- Store example {"from": "...", "to": "...", "confidence": ...}</span>
 <a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="w">    </span><span class="k">UNIQUE</span><span class="p">(</span><span class="n">relationship_type</span><span class="p">,</span><span class="w"> </span><span class="n">from_concept_label</span><span class="p">,</span><span class="w"> </span><span class="n">to_concept_label</span><span class="p">)</span>
 <a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="p">);</span>
 <a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>
@@ -2659,7 +2659,7 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">relationship_vocabulary</span><span class="w"> </span><span class="p">(</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">    </span><span class="n">relationship_type</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span><span class="w"> </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="p">,</span>
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">    </span><span class="n">description</span><span class="w"> </span><span class="nb">TEXT</span><span class="p">,</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">    </span><span class="n">category</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">50</span><span class="p">),</span><span class="w">  </span><span class="c1">-- e.g., &#39;causation&#39;, &#39;composition&#39;, &#39;temporal&#39;, &#39;semantic&#39;</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">    </span><span class="n">category</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">50</span><span class="p">),</span><span class="w">  </span><span class="c1">-- e.g., 'causation', 'composition', 'temporal', 'semantic'</span>
 <a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">    </span><span class="n">added_by</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">100</span><span class="p">),</span><span class="w">  </span><span class="c1">-- User or system that approved it</span>
 <a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">    </span><span class="n">added_at</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="n">NOW</span><span class="p">(),</span>
 <a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">    </span><span class="n">usage_count</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w">  </span><span class="c1">-- Count of edges using this type</span>
@@ -2671,22 +2671,22 @@
 <a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="c1">-- Initialize with existing 30 types</span>
 <a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">relationship_vocabulary</span><span class="w"> </span><span class="p">(</span><span class="n">relationship_type</span><span class="p">,</span><span class="w"> </span><span class="n">is_builtin</span><span class="p">,</span><span class="w"> </span><span class="n">category</span><span class="p">,</span><span class="w"> </span><span class="n">description</span><span class="p">)</span>
 <a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="k">VALUES</span>
-<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;IMPLIES&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;logical&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;One concept logically implies another&#39;</span><span class="p">),</span>
-<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;SUPPORTS&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;evidential&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;One concept provides evidence for another&#39;</span><span class="p">),</span>
-<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a><span class="w">    </span><span class="p">(</span><span class="s1">&#39;CONTRADICTS&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;logical&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;One concept contradicts another&#39;</span><span class="p">),</span>
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="w">    </span><span class="p">(</span><span class="s1">'IMPLIES'</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">,</span><span class="w"> </span><span class="s1">'logical'</span><span class="p">,</span><span class="w"> </span><span class="s1">'One concept logically implies another'</span><span class="p">),</span>
+<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a><span class="w">    </span><span class="p">(</span><span class="s1">'SUPPORTS'</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">,</span><span class="w"> </span><span class="s1">'evidential'</span><span class="p">,</span><span class="w"> </span><span class="s1">'One concept provides evidence for another'</span><span class="p">),</span>
+<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a><span class="w">    </span><span class="p">(</span><span class="s1">'CONTRADICTS'</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">,</span><span class="w"> </span><span class="s1">'logical'</span><span class="p">,</span><span class="w"> </span><span class="s1">'One concept contradicts another'</span><span class="p">),</span>
 <a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a><span class="w">    </span><span class="c1">-- ... etc</span>
 <a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a><span class="p">;</span>
 </code></pre></div>
 <h4 id="3-relationship-mapping-synonym-support">3. Relationship Mapping (Synonym Support)</h4>
 <p>Allow mapping similar terms to canonical types:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1">-- Example: Map &#39;ENHANCES&#39; and &#39;IMPROVES&#39; to &#39;SUPPORTS&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1">-- Example: Map 'ENHANCES' and 'IMPROVES' to 'SUPPORTS'</span>
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="k">UPDATE</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">relationship_vocabulary</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="k">SET</span><span class="w"> </span><span class="n">synonyms</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">ARRAY</span><span class="p">[</span><span class="s1">&#39;ENHANCES&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;IMPROVES&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;STRENGTHENS&#39;</span><span class="p">]</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">relationship_type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;SUPPORTS&#39;</span><span class="p">;</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="k">SET</span><span class="w"> </span><span class="n">synonyms</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">ARRAY</span><span class="p">[</span><span class="s1">'ENHANCES'</span><span class="p">,</span><span class="w"> </span><span class="s1">'IMPROVES'</span><span class="p">,</span><span class="w"> </span><span class="s1">'STRENGTHENS'</span><span class="p">]</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">relationship_type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">'SUPPORTS'</span><span class="p">;</span>
 <a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>
 <a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="c1">-- Or add as new canonical type:</span>
 <a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">relationship_vocabulary</span><span class="w"> </span><span class="p">(</span><span class="n">relationship_type</span><span class="p">,</span><span class="w"> </span><span class="n">category</span><span class="p">,</span><span class="w"> </span><span class="n">description</span><span class="p">)</span>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="s1">&#39;ENHANCES&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;augmentation&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;One concept enhances or improves another&#39;</span><span class="p">);</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="s1">'ENHANCES'</span><span class="p">,</span><span class="w"> </span><span class="s1">'augmentation'</span><span class="p">,</span><span class="w"> </span><span class="s1">'One concept enhances or improves another'</span><span class="p">);</span>
 </code></pre></div>
 <h3 id="workflow">Workflow</h3>
 <h4 id="during-ingestion">During Ingestion</h4>
@@ -2695,7 +2695,7 @@
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="k">if</span> <span class="n">rel_type</span> <span class="ow">in</span> <span class="n">get_approved_vocabulary</span><span class="p">():</span>
 <a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>        <span class="n">create_graph_edge</span><span class="p">(</span><span class="n">from_id</span><span class="p">,</span> <span class="n">to_id</span><span class="p">,</span> <span class="n">rel_type</span><span class="p">,</span> <span class="n">confidence</span><span class="p">)</span>
 <a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>    <span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>        <span class="c1"># 2. Check if it&#39;s a known synonym</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>        <span class="c1"># 2. Check if it's a known synonym</span>
 <a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>        <span class="n">canonical_type</span> <span class="o">=</span> <span class="n">get_canonical_type</span><span class="p">(</span><span class="n">rel_type</span><span class="p">)</span>
 <a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>        <span class="k">if</span> <span class="n">canonical_type</span><span class="p">:</span>
 <a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>            <span class="n">create_graph_edge</span><span class="p">(</span><span class="n">from_id</span><span class="p">,</span> <span class="n">to_id</span><span class="p">,</span> <span class="n">canonical_type</span><span class="p">,</span> <span class="n">confidence</span><span class="p">)</span>
@@ -2705,7 +2705,7 @@
 <a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>                <span class="n">rel_type</span><span class="o">=</span><span class="n">rel_type</span><span class="p">,</span>
 <a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>                <span class="n">from_label</span><span class="o">=</span><span class="n">get_concept_label</span><span class="p">(</span><span class="n">from_id</span><span class="p">),</span>
 <a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a>                <span class="n">to_label</span><span class="o">=</span><span class="n">get_concept_label</span><span class="p">(</span><span class="n">to_id</span><span class="p">),</span>
-<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a>                <span class="n">context</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;confidence&#39;</span><span class="p">:</span> <span class="n">confidence</span><span class="p">,</span> <span class="s1">&#39;job_id&#39;</span><span class="p">:</span> <span class="n">current_job_id</span><span class="p">}</span>
+<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a>                <span class="n">context</span><span class="o">=</span><span class="p">{</span><span class="s1">'confidence'</span><span class="p">:</span> <span class="n">confidence</span><span class="p">,</span> <span class="s1">'job_id'</span><span class="p">:</span> <span class="n">current_job_id</span><span class="p">}</span>
 <a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a>            <span class="p">)</span>
 </code></pre></div>
 <h4 id="vocabulary-expansion-curator-process">Vocabulary Expansion (Curator Process)</h4>
@@ -2715,13 +2715,13 @@
 <a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="c1"># Output:</span>
 <a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="c1"># Top Skipped Relationship Types:</span>
 <a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="c1"># 1. ENHANCES (127 occurrences across 15 documents)</span>
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="c1">#    Example: &quot;Advanced Analytics&quot; ENHANCES &quot;Decision Making&quot;</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="c1">#    Example: "Advanced Analytics" ENHANCES "Decision Making"</span>
 <a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="c1"># 2. INTEGRATES (89 occurrences across 12 documents)</span>
-<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="c1">#    Example: &quot;API Layer&quot; INTEGRATES &quot;Data Pipeline&quot;</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="c1">#    Example: "API Layer" INTEGRATES "Data Pipeline"</span>
 <a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="c1"># ...</span>
 <a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>
 <a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="c1"># Approve a new relationship type</span>
-<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a>kg<span class="w"> </span>vocabulary<span class="w"> </span>add<span class="w"> </span>ENHANCES<span class="w"> </span>--category<span class="w"> </span>augmentation<span class="w"> </span>--description<span class="w"> </span><span class="s2">&quot;One concept enhances another&quot;</span>
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a>kg<span class="w"> </span>vocabulary<span class="w"> </span>add<span class="w"> </span>ENHANCES<span class="w"> </span>--category<span class="w"> </span>augmentation<span class="w"> </span>--description<span class="w"> </span><span class="s2">"One concept enhances another"</span>
 <a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a>
 <a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a><span class="c1"># Or map to existing type</span>
 <a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a>kg<span class="w"> </span>vocabulary<span class="w"> </span><span class="nb">alias</span><span class="w"> </span>ENHANCES<span class="w"> </span>--maps-to<span class="w"> </span>SUPPORTS
@@ -2729,9 +2729,9 @@
 <h4 id="backfill-process">Backfill Process</h4>
 <p>When a new relationship type is approved, optionally backfill:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">backfill_relationship_type</span><span class="p">(</span><span class="n">rel_type</span><span class="p">):</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">    </span><span class="sd">"""</span>
 <a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="sd">    Find all skipped instances of this relationship type and create edges.</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="sd">    """</span>
 <a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>    <span class="n">skipped</span> <span class="o">=</span> <span class="n">get_skipped_by_type</span><span class="p">(</span><span class="n">rel_type</span><span class="p">)</span>
 <a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>
 <a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>    <span class="k">for</span> <span class="n">skip</span> <span class="ow">in</span> <span class="n">skipped</span><span class="p">:</span>
@@ -2876,31 +2876,31 @@
 - <strong>Smart caching</strong> based on actual usage, not time</p>
 <p><strong>Low-Overhead Collection:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">track_concept_access</span><span class="p">(</span><span class="n">concept_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">query_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">    </span><span class="sd">"""</span>
 <a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="sd">    Non-blocking access tracking - fire and forget.</span>
 <a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="sd">    Every query collects stats without performance impact.</span>
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>    <span class="c1"># Async upsert (doesn&#39;t block query execution)</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="sd">    """</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>    <span class="c1"># Async upsert (doesn't block query execution)</span>
 <a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>    <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span>
-<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>        <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>        <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="sa">f</span><span class="s2">"""</span>
 <a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a><span class="s2">            INSERT INTO kg_api.concept_access_stats (concept_id, access_count, queries_as_</span><span class="si">{</span><span class="n">query_type</span><span class="si">}</span><span class="s2">)</span>
-<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a><span class="s2">            VALUES (&#39;</span><span class="si">{</span><span class="n">concept_id</span><span class="si">}</span><span class="s2">&#39;, 1, 1)</span>
+<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a><span class="s2">            VALUES ('</span><span class="si">{</span><span class="n">concept_id</span><span class="si">}</span><span class="s2">', 1, 1)</span>
 <a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a><span class="s2">            ON CONFLICT (concept_id) DO UPDATE SET</span>
 <a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a><span class="s2">                access_count = concept_access_stats.access_count + 1,</span>
 <a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a><span class="s2">                last_accessed = NOW(),</span>
 <a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a><span class="s2">                queries_as_</span><span class="si">{</span><span class="n">query_type</span><span class="si">}</span><span class="s2"> = concept_access_stats.queries_as_</span><span class="si">{</span><span class="n">query_type</span><span class="si">}</span><span class="s2"> + 1</span>
-<a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a><span class="s2">        &quot;&quot;&quot;</span><span class="p">)</span>
+<a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a><span class="s2">        """</span><span class="p">)</span>
 <a id="__codelineno-11-16" name="__codelineno-11-16" href="#__codelineno-11-16"></a>    <span class="p">)</span>
 <a id="__codelineno-11-17" name="__codelineno-11-17" href="#__codelineno-11-17"></a>
 <a id="__codelineno-11-18" name="__codelineno-11-18" href="#__codelineno-11-18"></a><span class="c1"># Usage in queries:</span>
 <a id="__codelineno-11-19" name="__codelineno-11-19" href="#__codelineno-11-19"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">search_concepts</span><span class="p">(</span><span class="n">query</span><span class="p">):</span>
 <a id="__codelineno-11-20" name="__codelineno-11-20" href="#__codelineno-11-20"></a>    <span class="n">results</span> <span class="o">=</span> <span class="k">await</span> <span class="n">execute_search</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
 <a id="__codelineno-11-21" name="__codelineno-11-21" href="#__codelineno-11-21"></a>    <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
-<a id="__codelineno-11-22" name="__codelineno-11-22" href="#__codelineno-11-22"></a>        <span class="n">track_concept_access</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">concept_id</span><span class="p">,</span> <span class="s1">&#39;result&#39;</span><span class="p">)</span>  <span class="c1"># Fire and forget</span>
+<a id="__codelineno-11-22" name="__codelineno-11-22" href="#__codelineno-11-22"></a>        <span class="n">track_concept_access</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">concept_id</span><span class="p">,</span> <span class="s1">'result'</span><span class="p">)</span>  <span class="c1"># Fire and forget</span>
 <a id="__codelineno-11-23" name="__codelineno-11-23" href="#__codelineno-11-23"></a>    <span class="k">return</span> <span class="n">results</span>
 <a id="__codelineno-11-24" name="__codelineno-11-24" href="#__codelineno-11-24"></a>
 <a id="__codelineno-11-25" name="__codelineno-11-25" href="#__codelineno-11-25"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">find_related</span><span class="p">(</span><span class="n">concept_id</span><span class="p">):</span>
-<a id="__codelineno-11-26" name="__codelineno-11-26" href="#__codelineno-11-26"></a>    <span class="n">track_concept_access</span><span class="p">(</span><span class="n">concept_id</span><span class="p">,</span> <span class="s1">&#39;start&#39;</span><span class="p">)</span>  <span class="c1"># Track starting point</span>
+<a id="__codelineno-11-26" name="__codelineno-11-26" href="#__codelineno-11-26"></a>    <span class="n">track_concept_access</span><span class="p">(</span><span class="n">concept_id</span><span class="p">,</span> <span class="s1">'start'</span><span class="p">)</span>  <span class="c1"># Track starting point</span>
 <a id="__codelineno-11-27" name="__codelineno-11-27" href="#__codelineno-11-27"></a>    <span class="k">return</span> <span class="k">await</span> <span class="n">execute_traversal</span><span class="p">(</span><span class="n">concept_id</span><span class="p">)</span>
 </code></pre></div></p>
 <p><strong>Example Query Optimization:</strong>
@@ -2970,30 +2970,30 @@
 - <strong>Edge creation</strong> → Increments <code>usage_count</code> and <code>traversal_count</code>
 - <strong>Automatic refresh</strong> → Semantically relevant concepts stay active</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">upsert_concept</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">embedding</span><span class="p">):</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">    </span><span class="sd">"""</span>
 <a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="sd">    Every concept match refreshes activation - no time-based decay needed!</span>
-<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="sd">    """</span>
 <a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>    <span class="c1"># Find existing concept via semantic similarity</span>
 <a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>    <span class="n">existing</span> <span class="o">=</span> <span class="n">vector_search</span><span class="p">(</span><span class="n">embedding</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
 <a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>
 <a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>    <span class="k">if</span> <span class="n">existing</span><span class="p">:</span>
 <a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>        <span class="c1"># REUSE triggers activation refresh</span>
-<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a>        <span class="k">await</span> <span class="n">track_concept_access</span><span class="p">(</span><span class="n">existing</span><span class="o">.</span><span class="n">concept_id</span><span class="p">,</span> <span class="s1">&#39;upsert&#39;</span><span class="p">)</span>
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a>        <span class="k">await</span> <span class="n">track_concept_access</span><span class="p">(</span><span class="n">existing</span><span class="o">.</span><span class="n">concept_id</span><span class="p">,</span> <span class="s1">'upsert'</span><span class="p">)</span>
 <a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a>        <span class="k">return</span> <span class="n">existing</span><span class="o">.</span><span class="n">concept_id</span>
 <a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a>    <span class="k">else</span><span class="p">:</span>
 <a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a>        <span class="c1"># Create new concept</span>
 <a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a>        <span class="k">return</span> <span class="n">create_concept</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">embedding</span><span class="p">)</span>
 <a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a>
 <a id="__codelineno-13-16" name="__codelineno-13-16" href="#__codelineno-13-16"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">create_relationship</span><span class="p">(</span><span class="n">from_id</span><span class="p">,</span> <span class="n">to_id</span><span class="p">,</span> <span class="n">rel_type</span><span class="p">):</span>
-<a id="__codelineno-13-17" name="__codelineno-13-17" href="#__codelineno-13-17"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-13-17" name="__codelineno-13-17" href="#__codelineno-13-17"></a><span class="w">    </span><span class="sd">"""</span>
 <a id="__codelineno-13-18" name="__codelineno-13-18" href="#__codelineno-13-18"></a><span class="sd">    Edge creation refreshes both nodes AND relationship type.</span>
-<a id="__codelineno-13-19" name="__codelineno-13-19" href="#__codelineno-13-19"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-13-19" name="__codelineno-13-19" href="#__codelineno-13-19"></a><span class="sd">    """</span>
 <a id="__codelineno-13-20" name="__codelineno-13-20" href="#__codelineno-13-20"></a>    <span class="c1"># Create graph edge</span>
 <a id="__codelineno-13-21" name="__codelineno-13-21" href="#__codelineno-13-21"></a>    <span class="n">cypher_create_edge</span><span class="p">(</span><span class="n">from_id</span><span class="p">,</span> <span class="n">to_id</span><span class="p">,</span> <span class="n">rel_type</span><span class="p">)</span>
 <a id="__codelineno-13-22" name="__codelineno-13-22" href="#__codelineno-13-22"></a>
 <a id="__codelineno-13-23" name="__codelineno-13-23" href="#__codelineno-13-23"></a>    <span class="c1"># Refresh activation for BOTH concepts</span>
-<a id="__codelineno-13-24" name="__codelineno-13-24" href="#__codelineno-13-24"></a>    <span class="k">await</span> <span class="n">track_concept_access</span><span class="p">(</span><span class="n">from_id</span><span class="p">,</span> <span class="s1">&#39;relationship_source&#39;</span><span class="p">)</span>
-<a id="__codelineno-13-25" name="__codelineno-13-25" href="#__codelineno-13-25"></a>    <span class="k">await</span> <span class="n">track_concept_access</span><span class="p">(</span><span class="n">to_id</span><span class="p">,</span> <span class="s1">&#39;relationship_target&#39;</span><span class="p">)</span>
+<a id="__codelineno-13-24" name="__codelineno-13-24" href="#__codelineno-13-24"></a>    <span class="k">await</span> <span class="n">track_concept_access</span><span class="p">(</span><span class="n">from_id</span><span class="p">,</span> <span class="s1">'relationship_source'</span><span class="p">)</span>
+<a id="__codelineno-13-25" name="__codelineno-13-25" href="#__codelineno-13-25"></a>    <span class="k">await</span> <span class="n">track_concept_access</span><span class="p">(</span><span class="n">to_id</span><span class="p">,</span> <span class="s1">'relationship_target'</span><span class="p">)</span>
 <a id="__codelineno-13-26" name="__codelineno-13-26" href="#__codelineno-13-26"></a>
 <a id="__codelineno-13-27" name="__codelineno-13-27" href="#__codelineno-13-27"></a>    <span class="c1"># Increment relationship type usage</span>
 <a id="__codelineno-13-28" name="__codelineno-13-28" href="#__codelineno-13-28"></a>    <span class="k">await</span> <span class="n">increment_vocabulary_usage</span><span class="p">(</span><span class="n">rel_type</span><span class="p">)</span>
@@ -3104,13 +3104,13 @@
 <h3 id="automated-pruning-process">Automated Pruning Process</h3>
 <p><strong>Triggered when vocabulary exceeds max limit:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">prune_to_maintain_window</span><span class="p">():</span>
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="w">    </span><span class="sd">"""</span>
 <a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="sd">    Prune lowest-value relationship types when vocabulary exceeds max.</span>
-<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="sd">    """</span>
 <a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>    <span class="n">active_count</span> <span class="o">=</span> <span class="n">count_active_custom_types</span><span class="p">()</span>
 <a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>
-<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a>    <span class="k">if</span> <span class="n">active_count</span> <span class="o">&gt;</span> <span class="n">VOCABULARY_WINDOW</span><span class="p">[</span><span class="s1">&#39;max&#39;</span><span class="p">]:</span>
-<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a>        <span class="n">prune_count</span> <span class="o">=</span> <span class="n">active_count</span> <span class="o">-</span> <span class="n">VOCABULARY_WINDOW</span><span class="p">[</span><span class="s1">&#39;max&#39;</span><span class="p">]</span>
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a>    <span class="k">if</span> <span class="n">active_count</span> <span class="o">&gt;</span> <span class="n">VOCABULARY_WINDOW</span><span class="p">[</span><span class="s1">'max'</span><span class="p">]:</span>
+<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a>        <span class="n">prune_count</span> <span class="o">=</span> <span class="n">active_count</span> <span class="o">-</span> <span class="n">VOCABULARY_WINDOW</span><span class="p">[</span><span class="s1">'max'</span><span class="p">]</span>
 <a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a>
 <a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a>        <span class="c1"># Get lowest-value types (structural value, not time-based)</span>
 <a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a>        <span class="n">candidates</span> <span class="o">=</span> <span class="n">get_custom_types_ordered_by_value</span><span class="p">()</span>  <span class="c1"># Ordered by value ASC</span>
@@ -3123,13 +3123,13 @@
 <a id="__codelineno-16-18" name="__codelineno-16-18" href="#__codelineno-16-18"></a>                <span class="c1"># Zero edges - safe to completely remove</span>
 <a id="__codelineno-16-19" name="__codelineno-16-19" href="#__codelineno-16-19"></a>                <span class="n">delete_relationship_type</span><span class="p">(</span>
 <a id="__codelineno-16-20" name="__codelineno-16-20" href="#__codelineno-16-20"></a>                    <span class="n">candidate</span><span class="o">.</span><span class="n">relationship_type</span><span class="p">,</span>
-<a id="__codelineno-16-21" name="__codelineno-16-21" href="#__codelineno-16-21"></a>                    <span class="n">reason</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;No structural value (0 edges, 0 traversals)&quot;</span>
+<a id="__codelineno-16-21" name="__codelineno-16-21" href="#__codelineno-16-21"></a>                    <span class="n">reason</span><span class="o">=</span><span class="sa">f</span><span class="s2">"No structural value (0 edges, 0 traversals)"</span>
 <a id="__codelineno-16-22" name="__codelineno-16-22" href="#__codelineno-16-22"></a>                <span class="p">)</span>
 <a id="__codelineno-16-23" name="__codelineno-16-23" href="#__codelineno-16-23"></a>            <span class="k">else</span><span class="p">:</span>
 <a id="__codelineno-16-24" name="__codelineno-16-24" href="#__codelineno-16-24"></a>                <span class="c1"># Has edges - deactivate but preserve graph integrity</span>
 <a id="__codelineno-16-25" name="__codelineno-16-25" href="#__codelineno-16-25"></a>                <span class="n">mark_inactive</span><span class="p">(</span>
 <a id="__codelineno-16-26" name="__codelineno-16-26" href="#__codelineno-16-26"></a>                    <span class="n">candidate</span><span class="o">.</span><span class="n">relationship_type</span><span class="p">,</span>
-<a id="__codelineno-16-27" name="__codelineno-16-27" href="#__codelineno-16-27"></a>                    <span class="n">reason</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Low structural value (score=</span><span class="si">{</span><span class="n">candidate</span><span class="o">.</span><span class="n">value_score</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">)&quot;</span>
+<a id="__codelineno-16-27" name="__codelineno-16-27" href="#__codelineno-16-27"></a>                    <span class="n">reason</span><span class="o">=</span><span class="sa">f</span><span class="s2">"Low structural value (score=</span><span class="si">{</span><span class="n">candidate</span><span class="o">.</span><span class="n">value_score</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">)"</span>
 <a id="__codelineno-16-28" name="__codelineno-16-28" href="#__codelineno-16-28"></a>                <span class="p">)</span>
 </code></pre></div></p>
 <p><strong>Pruning Levels:</strong></p>
@@ -3150,27 +3150,27 @@
 </ol>
 <h3 id="reactivation">Reactivation</h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="c1"># Curator can reactivate if usage pattern changes</span>
-<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>kg<span class="w"> </span>vocabulary<span class="w"> </span>reactivate<span class="w"> </span>ENHANCES<span class="w"> </span>--reason<span class="w"> </span><span class="s2">&quot;New domain requires this type&quot;</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>kg<span class="w"> </span>vocabulary<span class="w"> </span>reactivate<span class="w"> </span>ENHANCES<span class="w"> </span>--reason<span class="w"> </span><span class="s2">"New domain requires this type"</span>
 </code></pre></div>
 <h3 id="vocabulary-size-limits-sliding-window-strategy">Vocabulary Size Limits - Sliding Window Strategy</h3>
 <p><strong>Maintain a functional vocabulary window with min/max boundaries:</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="n">VOCABULARY_WINDOW</span> <span class="o">=</span> <span class="p">{</span>
-<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>    <span class="s1">&#39;min&#39;</span><span class="p">:</span> <span class="mi">30</span><span class="p">,</span>   <span class="c1"># Core builtin types (never prune)</span>
-<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>    <span class="s1">&#39;max&#39;</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span>  <span class="c1"># Soft limit for active custom types</span>
-<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>    <span class="s1">&#39;total_hard_limit&#39;</span><span class="p">:</span> <span class="mi">500</span>  <span class="c1"># Including deprecated</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>    <span class="s1">'min'</span><span class="p">:</span> <span class="mi">30</span><span class="p">,</span>   <span class="c1"># Core builtin types (never prune)</span>
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>    <span class="s1">'max'</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span>  <span class="c1"># Soft limit for active custom types</span>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>    <span class="s1">'total_hard_limit'</span><span class="p">:</span> <span class="mi">500</span>  <span class="c1"># Including deprecated</span>
 <a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="p">}</span>
 </code></pre></div>
 <p><strong>Sliding Window Pruning:</strong>
 When vocabulary reaches max limit, automatically prune least valuable types to maintain window:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">maintain_vocabulary_window</span><span class="p">():</span>
-<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="w">    </span><span class="sd">"""</span>
 <a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="sd">    Keep vocabulary between min and max by pruning least useful types.</span>
-<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="sd">    """</span>
 <a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a>    <span class="n">active_count</span> <span class="o">=</span> <span class="n">count_active_vocabulary</span><span class="p">()</span>
 <a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>
-<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a>    <span class="k">if</span> <span class="n">active_count</span> <span class="o">&gt;</span> <span class="n">VOCABULARY_WINDOW</span><span class="p">[</span><span class="s1">&#39;max&#39;</span><span class="p">]:</span>
+<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a>    <span class="k">if</span> <span class="n">active_count</span> <span class="o">&gt;</span> <span class="n">VOCABULARY_WINDOW</span><span class="p">[</span><span class="s1">'max'</span><span class="p">]:</span>
 <a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a>        <span class="c1"># Calculate how many to prune</span>
-<a id="__codelineno-19-9" name="__codelineno-19-9" href="#__codelineno-19-9"></a>        <span class="n">prune_count</span> <span class="o">=</span> <span class="n">active_count</span> <span class="o">-</span> <span class="n">VOCABULARY_WINDOW</span><span class="p">[</span><span class="s1">&#39;max&#39;</span><span class="p">]</span>
+<a id="__codelineno-19-9" name="__codelineno-19-9" href="#__codelineno-19-9"></a>        <span class="n">prune_count</span> <span class="o">=</span> <span class="n">active_count</span> <span class="o">-</span> <span class="n">VOCABULARY_WINDOW</span><span class="p">[</span><span class="s1">'max'</span><span class="p">]</span>
 <a id="__codelineno-19-10" name="__codelineno-19-10" href="#__codelineno-19-10"></a>
 <a id="__codelineno-19-11" name="__codelineno-19-11" href="#__codelineno-19-11"></a>        <span class="c1"># Get pruning candidates (excluding builtins)</span>
 <a id="__codelineno-19-12" name="__codelineno-19-12" href="#__codelineno-19-12"></a>        <span class="n">candidates</span> <span class="o">=</span> <span class="n">get_custom_types_ordered_by_value</span><span class="p">()</span>
@@ -3183,7 +3183,7 @@ When vocabulary reaches max limit, automatically prune least valuable types to m
 <a id="__codelineno-19-19" name="__codelineno-19-19" href="#__codelineno-19-19"></a>                <span class="n">deprecate_type</span><span class="p">(</span><span class="n">candidate</span><span class="p">)</span>  <span class="c1"># Has edges, just deactivate</span>
 <a id="__codelineno-19-20" name="__codelineno-19-20" href="#__codelineno-19-20"></a>
 <a id="__codelineno-19-21" name="__codelineno-19-21" href="#__codelineno-19-21"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_custom_types_ordered_by_value</span><span class="p">():</span>
-<a id="__codelineno-19-22" name="__codelineno-19-22" href="#__codelineno-19-22"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-19-22" name="__codelineno-19-22" href="#__codelineno-19-22"></a><span class="w">    </span><span class="sd">"""</span>
 <a id="__codelineno-19-23" name="__codelineno-19-23" href="#__codelineno-19-23"></a><span class="sd">    Order custom types by value score for pruning decisions.</span>
 <a id="__codelineno-19-24" name="__codelineno-19-24" href="#__codelineno-19-24"></a>
 <a id="__codelineno-19-25" name="__codelineno-19-25" href="#__codelineno-19-25"></a><span class="sd">    Value Score = (edge_count * traversal_weight * bridge_bonus)</span>
@@ -3191,13 +3191,13 @@ When vocabulary reaches max limit, automatically prune least valuable types to m
 <a id="__codelineno-19-27" name="__codelineno-19-27" href="#__codelineno-19-27"></a><span class="sd">    - traversal_weight: How frequently these edges are traversed in queries</span>
 <a id="__codelineno-19-28" name="__codelineno-19-28" href="#__codelineno-19-28"></a><span class="sd">    - bridge_bonus: Prevents catastrophic forgetting of critical bridge nodes</span>
 <a id="__codelineno-19-29" name="__codelineno-19-29" href="#__codelineno-19-29"></a>
-<a id="__codelineno-19-30" name="__codelineno-19-30" href="#__codelineno-19-30"></a><span class="sd">    Time/age is IRRELEVANT - a graph&#39;s value is structural, not temporal.</span>
+<a id="__codelineno-19-30" name="__codelineno-19-30" href="#__codelineno-19-30"></a><span class="sd">    Time/age is IRRELEVANT - a graph's value is structural, not temporal.</span>
 <a id="__codelineno-19-31" name="__codelineno-19-31" href="#__codelineno-19-31"></a>
 <a id="__codelineno-19-32" name="__codelineno-19-32" href="#__codelineno-19-32"></a><span class="sd">    CRITICAL INSIGHT: Low-activation nodes can have high structural value!</span>
 <a id="__codelineno-19-33" name="__codelineno-19-33" href="#__codelineno-19-33"></a><span class="sd">    A rarely-accessed node might be a BRIDGE to high-activation subgraphs.</span>
-<a id="__codelineno-19-34" name="__codelineno-19-34" href="#__codelineno-19-34"></a><span class="sd">    We must remember these bridges even if they&#39;re not popular endpoints.</span>
-<a id="__codelineno-19-35" name="__codelineno-19-35" href="#__codelineno-19-35"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-19-36" name="__codelineno-19-36" href="#__codelineno-19-36"></a>    <span class="k">return</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-19-34" name="__codelineno-19-34" href="#__codelineno-19-34"></a><span class="sd">    We must remember these bridges even if they're not popular endpoints.</span>
+<a id="__codelineno-19-35" name="__codelineno-19-35" href="#__codelineno-19-35"></a><span class="sd">    """</span>
+<a id="__codelineno-19-36" name="__codelineno-19-36" href="#__codelineno-19-36"></a>    <span class="k">return</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"""</span>
 <a id="__codelineno-19-37" name="__codelineno-19-37" href="#__codelineno-19-37"></a><span class="s2">        WITH bridge_scores AS (</span>
 <a id="__codelineno-19-38" name="__codelineno-19-38" href="#__codelineno-19-38"></a><span class="s2">            -- Calculate bridge value: low-activation nodes connecting to high-activation nodes</span>
 <a id="__codelineno-19-39" name="__codelineno-19-39" href="#__codelineno-19-39"></a><span class="s2">            SELECT</span>
@@ -3230,22 +3230,22 @@ When vocabulary reaches max limit, automatically prune least valuable types to m
 <a id="__codelineno-19-66" name="__codelineno-19-66" href="#__codelineno-19-66"></a><span class="s2">        LEFT JOIN bridge_scores b ON v.relationship_type = b.relationship_type</span>
 <a id="__codelineno-19-67" name="__codelineno-19-67" href="#__codelineno-19-67"></a><span class="s2">        WHERE v.is_builtin = FALSE AND v.is_active = TRUE</span>
 <a id="__codelineno-19-68" name="__codelineno-19-68" href="#__codelineno-19-68"></a><span class="s2">        ORDER BY value_score DESC</span>
-<a id="__codelineno-19-69" name="__codelineno-19-69" href="#__codelineno-19-69"></a><span class="s2">    &quot;&quot;&quot;</span><span class="p">)</span>
+<a id="__codelineno-19-69" name="__codelineno-19-69" href="#__codelineno-19-69"></a><span class="s2">    """</span><span class="p">)</span>
 <a id="__codelineno-19-70" name="__codelineno-19-70" href="#__codelineno-19-70"></a>
 <a id="__codelineno-19-71" name="__codelineno-19-71" href="#__codelineno-19-71"></a><span class="k">def</span><span class="w"> </span><span class="nf">calculate_bridge_importance</span><span class="p">(</span><span class="n">concept_id</span><span class="p">):</span>
-<a id="__codelineno-19-72" name="__codelineno-19-72" href="#__codelineno-19-72"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-19-72" name="__codelineno-19-72" href="#__codelineno-19-72"></a><span class="w">    </span><span class="sd">"""</span>
 <a id="__codelineno-19-73" name="__codelineno-19-73" href="#__codelineno-19-73"></a><span class="sd">    Prevents catastrophic forgetting by identifying bridge nodes.</span>
 <a id="__codelineno-19-74" name="__codelineno-19-74" href="#__codelineno-19-74"></a>
 <a id="__codelineno-19-75" name="__codelineno-19-75" href="#__codelineno-19-75"></a><span class="sd">    A concept might have LOW activation (rarely accessed) but HIGH value</span>
 <a id="__codelineno-19-76" name="__codelineno-19-76" href="#__codelineno-19-76"></a><span class="sd">    because it bridges to important subgraphs.</span>
 <a id="__codelineno-19-77" name="__codelineno-19-77" href="#__codelineno-19-77"></a>
 <a id="__codelineno-19-78" name="__codelineno-19-78" href="#__codelineno-19-78"></a><span class="sd">    Example:</span>
-<a id="__codelineno-19-79" name="__codelineno-19-79" href="#__codelineno-19-79"></a><span class="sd">    - Concept &quot;distributed consensus&quot; has 5 accesses (LOW)</span>
-<a id="__codelineno-19-80" name="__codelineno-19-80" href="#__codelineno-19-80"></a><span class="sd">    - But it connects to &quot;raft algorithm&quot; (500 accesses, HIGH)</span>
-<a id="__codelineno-19-81" name="__codelineno-19-81" href="#__codelineno-19-81"></a><span class="sd">    - And &quot;paxos protocol&quot; (300 accesses, HIGH)</span>
-<a id="__codelineno-19-82" name="__codelineno-19-82" href="#__codelineno-19-82"></a><span class="sd">    - → Don&#39;t prune! It&#39;s a critical bridge.</span>
-<a id="__codelineno-19-83" name="__codelineno-19-83" href="#__codelineno-19-83"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-19-84" name="__codelineno-19-84" href="#__codelineno-19-84"></a>    <span class="k">return</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-19-79" name="__codelineno-19-79" href="#__codelineno-19-79"></a><span class="sd">    - Concept "distributed consensus" has 5 accesses (LOW)</span>
+<a id="__codelineno-19-80" name="__codelineno-19-80" href="#__codelineno-19-80"></a><span class="sd">    - But it connects to "raft algorithm" (500 accesses, HIGH)</span>
+<a id="__codelineno-19-81" name="__codelineno-19-81" href="#__codelineno-19-81"></a><span class="sd">    - And "paxos protocol" (300 accesses, HIGH)</span>
+<a id="__codelineno-19-82" name="__codelineno-19-82" href="#__codelineno-19-82"></a><span class="sd">    - → Don't prune! It's a critical bridge.</span>
+<a id="__codelineno-19-83" name="__codelineno-19-83" href="#__codelineno-19-83"></a><span class="sd">    """</span>
+<a id="__codelineno-19-84" name="__codelineno-19-84" href="#__codelineno-19-84"></a>    <span class="k">return</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="sa">f</span><span class="s2">"""</span>
 <a id="__codelineno-19-85" name="__codelineno-19-85" href="#__codelineno-19-85"></a><span class="s2">        SELECT</span>
 <a id="__codelineno-19-86" name="__codelineno-19-86" href="#__codelineno-19-86"></a><span class="s2">            c.concept_id,</span>
 <a id="__codelineno-19-87" name="__codelineno-19-87" href="#__codelineno-19-87"></a><span class="s2">            c.access_count as own_activation,</span>
@@ -3254,10 +3254,10 @@ When vocabulary reaches max limit, automatically prune least valuable types to m
 <a id="__codelineno-19-90" name="__codelineno-19-90" href="#__codelineno-19-90"></a><span class="s2">        FROM kg_api.concept_access_stats c</span>
 <a id="__codelineno-19-91" name="__codelineno-19-91" href="#__codelineno-19-91"></a><span class="s2">        JOIN kg_api.edge_usage_stats e ON c.concept_id = e.from_concept_id</span>
 <a id="__codelineno-19-92" name="__codelineno-19-92" href="#__codelineno-19-92"></a><span class="s2">        JOIN kg_api.concept_access_stats neighbor ON e.to_concept_id = neighbor.concept_id</span>
-<a id="__codelineno-19-93" name="__codelineno-19-93" href="#__codelineno-19-93"></a><span class="s2">        WHERE c.concept_id = &#39;</span><span class="si">{</span><span class="n">concept_id</span><span class="si">}</span><span class="s2">&#39;</span>
+<a id="__codelineno-19-93" name="__codelineno-19-93" href="#__codelineno-19-93"></a><span class="s2">        WHERE c.concept_id = '</span><span class="si">{</span><span class="n">concept_id</span><span class="si">}</span><span class="s2">'</span>
 <a id="__codelineno-19-94" name="__codelineno-19-94" href="#__codelineno-19-94"></a><span class="s2">          AND neighbor.access_count &gt; 100  -- High activation threshold</span>
 <a id="__codelineno-19-95" name="__codelineno-19-95" href="#__codelineno-19-95"></a><span class="s2">        GROUP BY c.concept_id, c.access_count</span>
-<a id="__codelineno-19-96" name="__codelineno-19-96" href="#__codelineno-19-96"></a><span class="s2">    &quot;&quot;&quot;</span><span class="p">)</span>
+<a id="__codelineno-19-96" name="__codelineno-19-96" href="#__codelineno-19-96"></a><span class="s2">    """</span><span class="p">)</span>
 </code></pre></div>
 <p><strong>Pruning Strategy:</strong>
 1. <strong>Below min (30):</strong> Never prune (builtin types protected)
@@ -3270,7 +3270,7 @@ When vocabulary reaches max limit, automatically prune least valuable types to m
 <a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>- Custom active: 95 (within window)
 <a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a>- Deprecated: 50 (historical)
 <a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a>
-<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a>New type requested: &quot;ENHANCES&quot;
+<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a>New type requested: "ENHANCES"
 <a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a>Action: Approve (still below max of 100)
 <a id="__codelineno-20-8" name="__codelineno-20-8" href="#__codelineno-20-8"></a>
 <a id="__codelineno-20-9" name="__codelineno-20-9" href="#__codelineno-20-9"></a>After 10 more approvals:
@@ -3299,7 +3299,7 @@ When vocabulary reaches max limit, automatically prune least valuable types to m
 <div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">vocabulary_audit</span><span class="w"> </span><span class="p">(</span>
 <a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="w">    </span><span class="n">id</span><span class="w"> </span><span class="nb">SERIAL</span><span class="w"> </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="p">,</span>
 <a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="w">    </span><span class="n">relationship_type</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">100</span><span class="p">),</span>
-<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span class="w">    </span><span class="n">action</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">50</span><span class="p">),</span><span class="w">  </span><span class="c1">-- &#39;added&#39;, &#39;aliased&#39;, &#39;deprecated&#39;, &#39;backfilled&#39;</span>
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span class="w">    </span><span class="n">action</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">50</span><span class="p">),</span><span class="w">  </span><span class="c1">-- 'added', 'aliased', 'deprecated', 'backfilled'</span>
 <a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a><span class="w">    </span><span class="n">performed_by</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">100</span><span class="p">),</span>
 <a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a><span class="w">    </span><span class="n">performed_at</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="n">NOW</span><span class="p">(),</span>
 <a id="__codelineno-21-7" name="__codelineno-21-7" href="#__codelineno-21-7"></a><span class="w">    </span><span class="n">details</span><span class="w"> </span><span class="n">JSONB</span>
@@ -3319,9 +3319,9 @@ When vocabulary reaches max limit, automatically prune least valuable types to m
      <div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">kg_api</span><span class="p">.</span><span class="n">relationship_vocabulary</span>
 <a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="p">(</span><span class="n">relationship_type</span><span class="p">,</span><span class="w"> </span><span class="n">description</span><span class="p">,</span><span class="w"> </span><span class="n">category</span><span class="p">)</span>
 <a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span>
-<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="w">    </span><span class="s1">&#39;ENHANCES&#39;</span><span class="p">,</span>
-<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a><span class="w">    </span><span class="s1">&#39;One concept improves or strengthens another concept. The source concept adds value, capability, or effectiveness to the target concept without fundamentally changing it.&#39;</span><span class="p">,</span>
-<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a><span class="w">    </span><span class="s1">&#39;augmentation&#39;</span>
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="w">    </span><span class="s1">'ENHANCES'</span><span class="p">,</span>
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a><span class="w">    </span><span class="s1">'One concept improves or strengthens another concept. The source concept adds value, capability, or effectiveness to the target concept without fundamentally changing it.'</span><span class="p">,</span>
+<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a><span class="w">    </span><span class="s1">'augmentation'</span>
 <a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a><span class="p">);</span>
 </code></pre></div></p>
 </li>
@@ -3361,8 +3361,8 @@ When vocabulary reaches max limit, automatically prune least valuable types to m
 <a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>kg<span class="w"> </span>vocabulary<span class="w"> </span>review<span class="w"> </span>--show-similar<span class="w"> </span>ENHANCES
 <a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a>
 <a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a><span class="c1"># Output shows existing types with similar semantics:</span>
-<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a><span class="c1"># SUPPORTS: &quot;One concept provides evidence for another&quot;</span>
-<a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a><span class="c1"># STRENGTHENS: &quot;One concept reinforces another&quot; (SYNONYM of SUPPORTS)</span>
+<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a><span class="c1"># SUPPORTS: "One concept provides evidence for another"</span>
+<a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a><span class="c1"># STRENGTHENS: "One concept reinforces another" (SYNONYM of SUPPORTS)</span>
 <a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a><span class="c1">#</span>
 <a id="__codelineno-23-8" name="__codelineno-23-8" href="#__codelineno-23-8"></a><span class="c1"># Curator decision: ENHANCES is semantically distinct</span>
 <a id="__codelineno-23-9" name="__codelineno-23-9" href="#__codelineno-23-9"></a><span class="c1"># - SUPPORTS = evidential relationship</span>
@@ -3371,41 +3371,41 @@ When vocabulary reaches max limit, automatically prune least valuable types to m
 <a id="__codelineno-23-12" name="__codelineno-23-12" href="#__codelineno-23-12"></a>
 <a id="__codelineno-23-13" name="__codelineno-23-13" href="#__codelineno-23-13"></a>kg<span class="w"> </span>vocabulary<span class="w"> </span>add<span class="w"> </span>ENHANCES<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-23-14" name="__codelineno-23-14" href="#__codelineno-23-14"></a><span class="w">  </span>--category<span class="w"> </span>augmentation<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-23-15" name="__codelineno-23-15" href="#__codelineno-23-15"></a><span class="w">  </span>--description<span class="w"> </span><span class="s2">&quot;One concept improves or strengthens another without fundamentally changing it&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-23-16" name="__codelineno-23-16" href="#__codelineno-23-16"></a><span class="w">  </span>--example<span class="w"> </span><span class="s2">&quot;Advanced Analytics ENHANCES Decision Making&quot;</span>
+<a id="__codelineno-23-15" name="__codelineno-23-15" href="#__codelineno-23-15"></a><span class="w">  </span>--description<span class="w"> </span><span class="s2">"One concept improves or strengthens another without fundamentally changing it"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-23-16" name="__codelineno-23-16" href="#__codelineno-23-16"></a><span class="w">  </span>--example<span class="w"> </span><span class="s2">"Advanced Analytics ENHANCES Decision Making"</span>
 </code></pre></div></p>
 <h3 id="complexity-of-backfilling">Complexity of Backfilling</h3>
 <p><strong>Risk:</strong> When a new relationship type is approved, the process of backfilling it—finding all previously skipped instances and creating the corresponding edges in the graph—can be a complex and computationally expensive operation, especially on a large graph.</p>
 <p><strong>Mitigation:</strong> Backfilling should be implemented as a dedicated, asynchronous background job that can be scheduled during off-peak hours. The system should also allow for selective backfilling, prioritizing the most frequent or important relationships first.</p>
 <p><strong>Implementation Approach:</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">backfill_relationship_type</span><span class="p">(</span><span class="n">rel_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">options</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
-<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a><span class="w">    </span><span class="sd">"""</span>
 <a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a><span class="sd">    Asynchronous background job for backfilling approved relationship types.</span>
 <a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a>
 <a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a><span class="sd">    Args:</span>
 <a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a><span class="sd">        rel_type: The approved relationship type to backfill</span>
 <a id="__codelineno-24-7" name="__codelineno-24-7" href="#__codelineno-24-7"></a><span class="sd">        options: Configuration for backfill strategy</span>
-<a id="__codelineno-24-8" name="__codelineno-24-8" href="#__codelineno-24-8"></a><span class="sd">            - mode: &#39;full&#39; | &#39;selective&#39; | &#39;dry-run&#39;</span>
-<a id="__codelineno-24-9" name="__codelineno-24-9" href="#__codelineno-24-9"></a><span class="sd">            - priority: &#39;frequency&#39; | &#39;ontology&#39; | &#39;manual&#39;</span>
+<a id="__codelineno-24-8" name="__codelineno-24-8" href="#__codelineno-24-8"></a><span class="sd">            - mode: 'full' | 'selective' | 'dry-run'</span>
+<a id="__codelineno-24-9" name="__codelineno-24-9" href="#__codelineno-24-9"></a><span class="sd">            - priority: 'frequency' | 'ontology' | 'manual'</span>
 <a id="__codelineno-24-10" name="__codelineno-24-10" href="#__codelineno-24-10"></a><span class="sd">            - batch_size: Number of edges to create per transaction</span>
 <a id="__codelineno-24-11" name="__codelineno-24-11" href="#__codelineno-24-11"></a><span class="sd">            - throttle_ms: Delay between batches to reduce load</span>
-<a id="__codelineno-24-12" name="__codelineno-24-12" href="#__codelineno-24-12"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-24-12" name="__codelineno-24-12" href="#__codelineno-24-12"></a><span class="sd">    """</span>
 <a id="__codelineno-24-13" name="__codelineno-24-13" href="#__codelineno-24-13"></a>    <span class="c1"># Get all skipped instances for this type</span>
-<a id="__codelineno-24-14" name="__codelineno-24-14" href="#__codelineno-24-14"></a>    <span class="n">skipped</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-24-14" name="__codelineno-24-14" href="#__codelineno-24-14"></a>    <span class="n">skipped</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="sa">f</span><span class="s2">"""</span>
 <a id="__codelineno-24-15" name="__codelineno-24-15" href="#__codelineno-24-15"></a><span class="s2">        SELECT relationship_type, from_concept_label, to_concept_label,</span>
 <a id="__codelineno-24-16" name="__codelineno-24-16" href="#__codelineno-24-16"></a><span class="s2">               occurrence_count, job_id, ontology</span>
 <a id="__codelineno-24-17" name="__codelineno-24-17" href="#__codelineno-24-17"></a><span class="s2">        FROM kg_api.skipped_relationships</span>
-<a id="__codelineno-24-18" name="__codelineno-24-18" href="#__codelineno-24-18"></a><span class="s2">        WHERE relationship_type = &#39;</span><span class="si">{</span><span class="n">rel_type</span><span class="si">}</span><span class="s2">&#39;</span>
+<a id="__codelineno-24-18" name="__codelineno-24-18" href="#__codelineno-24-18"></a><span class="s2">        WHERE relationship_type = '</span><span class="si">{</span><span class="n">rel_type</span><span class="si">}</span><span class="s2">'</span>
 <a id="__codelineno-24-19" name="__codelineno-24-19" href="#__codelineno-24-19"></a><span class="s2">        ORDER BY occurrence_count DESC  -- High frequency first</span>
-<a id="__codelineno-24-20" name="__codelineno-24-20" href="#__codelineno-24-20"></a><span class="s2">    &quot;&quot;&quot;</span><span class="p">)</span>
+<a id="__codelineno-24-20" name="__codelineno-24-20" href="#__codelineno-24-20"></a><span class="s2">    """</span><span class="p">)</span>
 <a id="__codelineno-24-21" name="__codelineno-24-21" href="#__codelineno-24-21"></a>
 <a id="__codelineno-24-22" name="__codelineno-24-22" href="#__codelineno-24-22"></a>    <span class="n">total</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">skipped</span><span class="p">)</span>
 <a id="__codelineno-24-23" name="__codelineno-24-23" href="#__codelineno-24-23"></a>    <span class="n">created</span> <span class="o">=</span> <span class="mi">0</span>
 <a id="__codelineno-24-24" name="__codelineno-24-24" href="#__codelineno-24-24"></a>    <span class="n">failed</span> <span class="o">=</span> <span class="mi">0</span>
 <a id="__codelineno-24-25" name="__codelineno-24-25" href="#__codelineno-24-25"></a>
 <a id="__codelineno-24-26" name="__codelineno-24-26" href="#__codelineno-24-26"></a>    <span class="c1"># Process in batches to avoid transaction timeouts</span>
-<a id="__codelineno-24-27" name="__codelineno-24-27" href="#__codelineno-24-27"></a>    <span class="n">batch_size</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;batch_size&#39;</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
-<a id="__codelineno-24-28" name="__codelineno-24-28" href="#__codelineno-24-28"></a>    <span class="n">throttle</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;throttle_ms&#39;</span><span class="p">,</span> <span class="mi">50</span><span class="p">)</span>
+<a id="__codelineno-24-27" name="__codelineno-24-27" href="#__codelineno-24-27"></a>    <span class="n">batch_size</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'batch_size'</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+<a id="__codelineno-24-28" name="__codelineno-24-28" href="#__codelineno-24-28"></a>    <span class="n">throttle</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'throttle_ms'</span><span class="p">,</span> <span class="mi">50</span><span class="p">)</span>
 <a id="__codelineno-24-29" name="__codelineno-24-29" href="#__codelineno-24-29"></a>
 <a id="__codelineno-24-30" name="__codelineno-24-30" href="#__codelineno-24-30"></a>    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">total</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">):</span>
 <a id="__codelineno-24-31" name="__codelineno-24-31" href="#__codelineno-24-31"></a>        <span class="n">batch</span> <span class="o">=</span> <span class="n">skipped</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="n">batch_size</span><span class="p">]</span>
@@ -3417,25 +3417,25 @@ When vocabulary reaches max limit, automatically prune least valuable types to m
 <a id="__codelineno-24-37" name="__codelineno-24-37" href="#__codelineno-24-37"></a>                <span class="n">to_id</span> <span class="o">=</span> <span class="k">await</span> <span class="n">find_concept_by_label</span><span class="p">(</span><span class="n">skip</span><span class="o">.</span><span class="n">to_concept_label</span><span class="p">)</span>
 <a id="__codelineno-24-38" name="__codelineno-24-38" href="#__codelineno-24-38"></a>
 <a id="__codelineno-24-39" name="__codelineno-24-39" href="#__codelineno-24-39"></a>                <span class="k">if</span> <span class="n">from_id</span> <span class="ow">and</span> <span class="n">to_id</span><span class="p">:</span>
-<a id="__codelineno-24-40" name="__codelineno-24-40" href="#__codelineno-24-40"></a>                    <span class="k">if</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;mode&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;dry-run&#39;</span><span class="p">:</span>
-<a id="__codelineno-24-41" name="__codelineno-24-41" href="#__codelineno-24-41"></a>                        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[DRY-RUN] Would create: </span><span class="si">{</span><span class="n">from_id</span><span class="si">}</span><span class="s2"> -</span><span class="si">{</span><span class="n">rel_type</span><span class="si">}</span><span class="s2">-&gt; </span><span class="si">{</span><span class="n">to_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-24-40" name="__codelineno-24-40" href="#__codelineno-24-40"></a>                    <span class="k">if</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'mode'</span><span class="p">)</span> <span class="o">==</span> <span class="s1">'dry-run'</span><span class="p">:</span>
+<a id="__codelineno-24-41" name="__codelineno-24-41" href="#__codelineno-24-41"></a>                        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"[DRY-RUN] Would create: </span><span class="si">{</span><span class="n">from_id</span><span class="si">}</span><span class="s2"> -</span><span class="si">{</span><span class="n">rel_type</span><span class="si">}</span><span class="s2">-&gt; </span><span class="si">{</span><span class="n">to_id</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 <a id="__codelineno-24-42" name="__codelineno-24-42" href="#__codelineno-24-42"></a>                    <span class="k">else</span><span class="p">:</span>
 <a id="__codelineno-24-43" name="__codelineno-24-43" href="#__codelineno-24-43"></a>                        <span class="k">await</span> <span class="n">create_graph_edge</span><span class="p">(</span><span class="n">from_id</span><span class="p">,</span> <span class="n">to_id</span><span class="p">,</span> <span class="n">rel_type</span><span class="p">,</span> <span class="n">confidence</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
 <a id="__codelineno-24-44" name="__codelineno-24-44" href="#__codelineno-24-44"></a>                        <span class="n">created</span> <span class="o">+=</span> <span class="mi">1</span>
 <a id="__codelineno-24-45" name="__codelineno-24-45" href="#__codelineno-24-45"></a>                <span class="k">else</span><span class="p">:</span>
 <a id="__codelineno-24-46" name="__codelineno-24-46" href="#__codelineno-24-46"></a>                    <span class="n">failed</span> <span class="o">+=</span> <span class="mi">1</span>
-<a id="__codelineno-24-47" name="__codelineno-24-47" href="#__codelineno-24-47"></a>                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Could not resolve concepts for backfill: </span><span class="si">{</span><span class="n">skip</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-24-47" name="__codelineno-24-47" href="#__codelineno-24-47"></a>                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Could not resolve concepts for backfill: </span><span class="si">{</span><span class="n">skip</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 <a id="__codelineno-24-48" name="__codelineno-24-48" href="#__codelineno-24-48"></a>
 <a id="__codelineno-24-49" name="__codelineno-24-49" href="#__codelineno-24-49"></a>            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
 <a id="__codelineno-24-50" name="__codelineno-24-50" href="#__codelineno-24-50"></a>                <span class="n">failed</span> <span class="o">+=</span> <span class="mi">1</span>
-<a id="__codelineno-24-51" name="__codelineno-24-51" href="#__codelineno-24-51"></a>                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Backfill error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-24-51" name="__codelineno-24-51" href="#__codelineno-24-51"></a>                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Backfill error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 <a id="__codelineno-24-52" name="__codelineno-24-52" href="#__codelineno-24-52"></a>
 <a id="__codelineno-24-53" name="__codelineno-24-53" href="#__codelineno-24-53"></a>        <span class="c1"># Throttle between batches to reduce database load</span>
 <a id="__codelineno-24-54" name="__codelineno-24-54" href="#__codelineno-24-54"></a>        <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">throttle</span> <span class="o">/</span> <span class="mf">1000.0</span><span class="p">)</span>
 <a id="__codelineno-24-55" name="__codelineno-24-55" href="#__codelineno-24-55"></a>
 <a id="__codelineno-24-56" name="__codelineno-24-56" href="#__codelineno-24-56"></a>        <span class="c1"># Update progress</span>
 <a id="__codelineno-24-57" name="__codelineno-24-57" href="#__codelineno-24-57"></a>        <span class="n">progress</span> <span class="o">=</span> <span class="p">((</span><span class="n">i</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">batch</span><span class="p">))</span> <span class="o">/</span> <span class="n">total</span><span class="p">)</span> <span class="o">*</span> <span class="mi">100</span>
-<a id="__codelineno-24-58" name="__codelineno-24-58" href="#__codelineno-24-58"></a>        <span class="k">await</span> <span class="n">update_job_progress</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;backfill_</span><span class="si">{</span><span class="n">rel_type</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">progress</span><span class="p">)</span>
+<a id="__codelineno-24-58" name="__codelineno-24-58" href="#__codelineno-24-58"></a>        <span class="k">await</span> <span class="n">update_job_progress</span><span class="p">(</span><span class="sa">f</span><span class="s2">"backfill_</span><span class="si">{</span><span class="n">rel_type</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">progress</span><span class="p">)</span>
 <a id="__codelineno-24-59" name="__codelineno-24-59" href="#__codelineno-24-59"></a>
 <a id="__codelineno-24-60" name="__codelineno-24-60" href="#__codelineno-24-60"></a>    <span class="c1"># Log completion</span>
 <a id="__codelineno-24-61" name="__codelineno-24-61" href="#__codelineno-24-61"></a>    <span class="k">await</span> <span class="n">log_backfill_completion</span><span class="p">(</span><span class="n">rel_type</span><span class="p">,</span> <span class="n">created</span><span class="p">,</span> <span class="n">failed</span><span class="p">,</span> <span class="n">total</span><span class="p">)</span>
@@ -3479,7 +3479,7 @@ When vocabulary reaches max limit, automatically prune least valuable types to m
 <a id="__codelineno-25-5" name="__codelineno-25-5" href="#__codelineno-25-5"></a>kg<span class="w"> </span>vocabulary<span class="w"> </span>backfill<span class="w"> </span>ENHANCES<span class="w"> </span>--schedule<span class="w"> </span>off-peak
 <a id="__codelineno-25-6" name="__codelineno-25-6" href="#__codelineno-25-6"></a>
 <a id="__codelineno-25-7" name="__codelineno-25-7" href="#__codelineno-25-7"></a><span class="c1"># Selective backfill by ontology</span>
-<a id="__codelineno-25-8" name="__codelineno-25-8" href="#__codelineno-25-8"></a>kg<span class="w"> </span>vocabulary<span class="w"> </span>backfill<span class="w"> </span>ENHANCES<span class="w"> </span>--ontology<span class="w"> </span><span class="s2">&quot;ML Concepts&quot;</span><span class="w"> </span>--batch-size<span class="w"> </span><span class="m">50</span>
+<a id="__codelineno-25-8" name="__codelineno-25-8" href="#__codelineno-25-8"></a>kg<span class="w"> </span>vocabulary<span class="w"> </span>backfill<span class="w"> </span>ENHANCES<span class="w"> </span>--ontology<span class="w"> </span><span class="s2">"ML Concepts"</span><span class="w"> </span>--batch-size<span class="w"> </span><span class="m">50</span>
 <a id="__codelineno-25-9" name="__codelineno-25-9" href="#__codelineno-25-9"></a>
 <a id="__codelineno-25-10" name="__codelineno-25-10" href="#__codelineno-25-10"></a><span class="c1"># Prioritize by frequency</span>
 <a id="__codelineno-25-11" name="__codelineno-25-11" href="#__codelineno-25-11"></a>kg<span class="w"> </span>vocabulary<span class="w"> </span>backfill<span class="w"> </span>ENHANCES<span class="w"> </span>--mode<span class="w"> </span>frequency<span class="w"> </span>--top<span class="w"> </span><span class="m">1000</span>
@@ -3496,25 +3496,25 @@ When vocabulary reaches max limit, automatically prune least valuable types to m
 <p><strong>Resource Impact Mitigation:</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="c1"># Check graph size before backfill</span>
 <a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a><span class="k">def</span><span class="w"> </span><span class="nf">estimate_backfill_cost</span><span class="p">(</span><span class="n">rel_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a><span class="w">    </span><span class="sd">"""</span>
 <a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a><span class="sd">    Estimate resource cost before running backfill.</span>
-<a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-26-6" name="__codelineno-26-6" href="#__codelineno-26-6"></a>    <span class="n">stats</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a><span class="sd">    """</span>
+<a id="__codelineno-26-6" name="__codelineno-26-6" href="#__codelineno-26-6"></a>    <span class="n">stats</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="sa">f</span><span class="s2">"""</span>
 <a id="__codelineno-26-7" name="__codelineno-26-7" href="#__codelineno-26-7"></a><span class="s2">        SELECT</span>
 <a id="__codelineno-26-8" name="__codelineno-26-8" href="#__codelineno-26-8"></a><span class="s2">            COUNT(*) as edge_count,</span>
 <a id="__codelineno-26-9" name="__codelineno-26-9" href="#__codelineno-26-9"></a><span class="s2">            COUNT(DISTINCT ontology) as ontology_count,</span>
 <a id="__codelineno-26-10" name="__codelineno-26-10" href="#__codelineno-26-10"></a><span class="s2">            SUM(occurrence_count) as total_occurrences</span>
 <a id="__codelineno-26-11" name="__codelineno-26-11" href="#__codelineno-26-11"></a><span class="s2">        FROM kg_api.skipped_relationships</span>
-<a id="__codelineno-26-12" name="__codelineno-26-12" href="#__codelineno-26-12"></a><span class="s2">        WHERE relationship_type = &#39;</span><span class="si">{</span><span class="n">rel_type</span><span class="si">}</span><span class="s2">&#39;</span>
-<a id="__codelineno-26-13" name="__codelineno-26-13" href="#__codelineno-26-13"></a><span class="s2">    &quot;&quot;&quot;</span><span class="p">)</span>
+<a id="__codelineno-26-12" name="__codelineno-26-12" href="#__codelineno-26-12"></a><span class="s2">        WHERE relationship_type = '</span><span class="si">{</span><span class="n">rel_type</span><span class="si">}</span><span class="s2">'</span>
+<a id="__codelineno-26-13" name="__codelineno-26-13" href="#__codelineno-26-13"></a><span class="s2">    """</span><span class="p">)</span>
 <a id="__codelineno-26-14" name="__codelineno-26-14" href="#__codelineno-26-14"></a>
 <a id="__codelineno-26-15" name="__codelineno-26-15" href="#__codelineno-26-15"></a>    <span class="n">estimated_time</span> <span class="o">=</span> <span class="p">(</span><span class="n">stats</span><span class="o">.</span><span class="n">edge_count</span> <span class="o">*</span> <span class="mi">50</span><span class="p">)</span> <span class="o">/</span> <span class="mi">1000</span>  <span class="c1"># ~50ms per edge</span>
 <a id="__codelineno-26-16" name="__codelineno-26-16" href="#__codelineno-26-16"></a>
 <a id="__codelineno-26-17" name="__codelineno-26-17" href="#__codelineno-26-17"></a>    <span class="k">return</span> <span class="p">{</span>
-<a id="__codelineno-26-18" name="__codelineno-26-18" href="#__codelineno-26-18"></a>        <span class="s1">&#39;edges_to_create&#39;</span><span class="p">:</span> <span class="n">stats</span><span class="o">.</span><span class="n">edge_count</span><span class="p">,</span>
-<a id="__codelineno-26-19" name="__codelineno-26-19" href="#__codelineno-26-19"></a>        <span class="s1">&#39;estimated_duration_minutes&#39;</span><span class="p">:</span> <span class="n">estimated_time</span><span class="p">,</span>
-<a id="__codelineno-26-20" name="__codelineno-26-20" href="#__codelineno-26-20"></a>        <span class="s1">&#39;ontologies_affected&#39;</span><span class="p">:</span> <span class="n">stats</span><span class="o">.</span><span class="n">ontology_count</span><span class="p">,</span>
-<a id="__codelineno-26-21" name="__codelineno-26-21" href="#__codelineno-26-21"></a>        <span class="s1">&#39;recommendation&#39;</span><span class="p">:</span> <span class="s1">&#39;scheduled&#39;</span> <span class="k">if</span> <span class="n">stats</span><span class="o">.</span><span class="n">edge_count</span> <span class="o">&gt;</span> <span class="mi">1000</span> <span class="k">else</span> <span class="s1">&#39;immediate&#39;</span>
+<a id="__codelineno-26-18" name="__codelineno-26-18" href="#__codelineno-26-18"></a>        <span class="s1">'edges_to_create'</span><span class="p">:</span> <span class="n">stats</span><span class="o">.</span><span class="n">edge_count</span><span class="p">,</span>
+<a id="__codelineno-26-19" name="__codelineno-26-19" href="#__codelineno-26-19"></a>        <span class="s1">'estimated_duration_minutes'</span><span class="p">:</span> <span class="n">estimated_time</span><span class="p">,</span>
+<a id="__codelineno-26-20" name="__codelineno-26-20" href="#__codelineno-26-20"></a>        <span class="s1">'ontologies_affected'</span><span class="p">:</span> <span class="n">stats</span><span class="o">.</span><span class="n">ontology_count</span><span class="p">,</span>
+<a id="__codelineno-26-21" name="__codelineno-26-21" href="#__codelineno-26-21"></a>        <span class="s1">'recommendation'</span><span class="p">:</span> <span class="s1">'scheduled'</span> <span class="k">if</span> <span class="n">stats</span><span class="o">.</span><span class="n">edge_count</span> <span class="o">&gt;</span> <span class="mi">1000</span> <span class="k">else</span> <span class="s1">'immediate'</span>
 <a id="__codelineno-26-22" name="__codelineno-26-22" href="#__codelineno-26-22"></a>    <span class="p">}</span>
 </code></pre></div>
 <h2 id="documentation-impact">Documentation Impact</h2>
@@ -3623,7 +3623,7 @@ When vocabulary reaches max limit, automatically prune least valuable types to m
       <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": [], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

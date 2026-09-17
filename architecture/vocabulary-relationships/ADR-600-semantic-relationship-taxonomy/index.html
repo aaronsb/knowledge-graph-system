@@ -19,7 +19,7 @@
       
       
       <link rel="icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -27,7 +27,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.ec1eaa64.min.css">
       
       
 
@@ -2280,7 +2280,7 @@
 <h3 id="breaking-point">Breaking Point</h3>
 <p>During ingestion, LLMs consistently extracted semantically valid relationship types that weren't in the schema:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>⚠ Failed to create relationship: Invalid relationship type: CONTRASTS.
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>Must be one of [&#39;IMPLIES&#39;, &#39;CONTRADICTS&#39;, &#39;SUPPORTS&#39;, &#39;PART_OF&#39;, &#39;RELATES_TO&#39;]
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>Must be one of ['IMPLIES', 'CONTRADICTS', 'SUPPORTS', 'PART_OF', 'RELATES_TO']
 </code></pre></div>
 <p>The LLM was correct - "CONTRASTS" is semantically distinct from "CONTRADICTS" (contrasting perspectives vs logical contradiction). But the rigid 5-type system couldn't capture this.</p>
 <h2 id="decision">Decision</h2>
@@ -2354,8 +2354,8 @@
 <h2 id="implementation">Implementation</h2>
 <h3 id="1-constants-structure-apiappconstantspy">1. Constants Structure (<code>api/app/constants.py</code>)</h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">RELATIONSHIP_CATEGORIES</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    <span class="s2">&quot;logical_truth&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;IMPLIES&quot;</span><span class="p">,</span> <span class="s2">&quot;CONTRADICTS&quot;</span><span class="p">,</span> <span class="s2">&quot;PRESUPPOSES&quot;</span><span class="p">,</span> <span class="s2">&quot;EQUIVALENT_TO&quot;</span><span class="p">],</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="s2">&quot;causal&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;CAUSES&quot;</span><span class="p">,</span> <span class="s2">&quot;ENABLES&quot;</span><span class="p">,</span> <span class="s2">&quot;PREVENTS&quot;</span><span class="p">,</span> <span class="s2">&quot;INFLUENCES&quot;</span><span class="p">,</span> <span class="s2">&quot;RESULTS_FROM&quot;</span><span class="p">],</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    <span class="s2">"logical_truth"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"IMPLIES"</span><span class="p">,</span> <span class="s2">"CONTRADICTS"</span><span class="p">,</span> <span class="s2">"PRESUPPOSES"</span><span class="p">,</span> <span class="s2">"EQUIVALENT_TO"</span><span class="p">],</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="s2">"causal"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"CAUSES"</span><span class="p">,</span> <span class="s2">"ENABLES"</span><span class="p">,</span> <span class="s2">"PREVENTS"</span><span class="p">,</span> <span class="s2">"INFLUENCES"</span><span class="p">,</span> <span class="s2">"RESULTS_FROM"</span><span class="p">],</span>
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="c1"># ... 8 categories total</span>
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="p">}</span>
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
@@ -2421,15 +2421,15 @@
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">nltk.stem</span><span class="w"> </span><span class="kn">import</span> <span class="n">PorterStemmer</span>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
 <a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="k">def</span><span class="w"> </span><span class="nf">normalize_relationship_type</span><span class="p">(</span><span class="n">llm_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">fuzzy_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.8</span><span class="p">):</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">    </span><span class="sd">"""</span>
 <a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="sd">    Six-stage matching strategy:</span>
 <a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="sd">    1. Exact match (fast path)</span>
 <a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="sd">    2. Reject _BY reversed relationships (directional filtering)</span>
 <a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="sd">    3. Prefix match (CONTRASTS → CONTRASTS_WITH)</span>
 <a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="sd">    4. Contains match (CONTRADICTS_WITH → CONTRADICTS)</span>
-<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="sd">    5. Porter stem match (CAUSING → CAUSES via stem &quot;caus&quot;)</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="sd">    5. Porter stem match (CAUSING → CAUSES via stem "caus")</span>
 <a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="sd">    6. Fuzzy match (threshold 0.8 for typos only)</span>
-<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="sd">    """</span>
 <a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>    <span class="n">llm_upper</span> <span class="o">=</span> <span class="n">llm_type</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
 <a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>
 <a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>    <span class="c1"># 1. Exact match</span>
@@ -2437,7 +2437,7 @@
 <a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>        <span class="k">return</span> <span class="p">(</span><span class="n">llm_upper</span><span class="p">,</span> <span class="n">category</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
 <a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a>
 <a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a>    <span class="c1"># 2. Reject _BY reversed (CAUSED_BY, ENABLED_BY)</span>
-<a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a>    <span class="k">if</span> <span class="n">llm_upper</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;_BY&#39;</span><span class="p">):</span>
+<a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a>    <span class="k">if</span> <span class="n">llm_upper</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">'_BY'</span><span class="p">):</span>
 <a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a>        <span class="k">return</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
 <a id="__codelineno-2-23" name="__codelineno-2-23" href="#__codelineno-2-23"></a>
 <a id="__codelineno-2-24" name="__codelineno-2-24" href="#__codelineno-2-24"></a>    <span class="c1"># 3. Prefix match (input is prefix of canonical)</span>
@@ -2489,13 +2489,13 @@
 <p>Relationships store both exact type and category:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">CREATE</span><span class="w"> </span><span class="p">(</span><span class="n">a</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span><span class="err">-</span><span class="o">[</span><span class="n">r</span><span class="p">:</span><span class="n">ENABLES</span><span class="w"> </span><span class="p">{</span>
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">    </span><span class="n">confidence</span><span class="p">:</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">85</span><span class="p">,</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="n">category</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;causal&quot;</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="n">category</span><span class="p">:</span><span class="w"> </span><span class="s">"causal"</span>
 <a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="p">}</span><span class="o">]</span><span class="err">-</span><span class="p">&gt;(</span><span class="n">b</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span>
 </code></pre></div>
 <p>This enables category-level queries:
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1">// Find all causal relationships</span>
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="o">-[</span><span class="n">r</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">r</span><span class="p">.</span><span class="n">category</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">&#39;causal&#39;</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">r</span><span class="p">.</span><span class="n">category</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">'causal'</span>
 <a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="k">RETURN</span><span class="w"> </span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">r</span><span class="p">,</span><span class="w"> </span><span class="n">b</span>
 </code></pre></div></p>
 <h2 id="consequences">Consequences</h2>
@@ -2514,25 +2514,25 @@
 <h3 id="mitigations">Mitigations</h3>
 <p><strong>Token Cost:</strong> 50 tokens × $0.50/1M = $0.000025 per extraction (negligible)</p>
 <p><strong>Fuzzy Match Errors:</strong> Log all normalizations with similarity scores for monitoring:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Normalized &#39;</span><span class="si">{</span><span class="n">llm_type</span><span class="si">}</span><span class="s2">&#39; → &#39;</span><span class="si">{</span><span class="n">canonical_type</span><span class="si">}</span><span class="s2">&#39; (similarity: </span><span class="si">{</span><span class="n">score</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Normalized '</span><span class="si">{</span><span class="n">llm_type</span><span class="si">}</span><span class="s2">' → '</span><span class="si">{</span><span class="n">canonical_type</span><span class="si">}</span><span class="s2">' (similarity: </span><span class="si">{</span><span class="n">score</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
 </code></pre></div></p>
 <p><strong>LLM Hallucinations:</strong> Reject types below 70% similarity threshold, log for analysis</p>
 <h2 id="validation">Validation</h2>
 <h3 id="before-5-type-system">Before (5-Type System)</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>LLM Output: &quot;CONTRASTS&quot;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>LLM Output: "CONTRASTS"
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>Result: ❌ Relationship creation failed
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>         &quot;Invalid relationship type: CONTRASTS&quot;
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>         "Invalid relationship type: CONTRASTS"
 </code></pre></div>
 <h3 id="after-30-type-system-with-fuzzy-matching">After (30-Type System with Fuzzy Matching)</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>LLM Output: &quot;CONTRASTS&quot;
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>Normalization: &quot;CONTRASTS&quot; → &quot;CONTRASTS_WITH&quot; (similarity: 0.89)
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>Result: ✅ Edge created: (A)-[CONTRASTS_WITH {category: &quot;similarity&quot;}]-&gt;(B)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>LLM Output: "CONTRASTS"
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>Normalization: "CONTRASTS" → "CONTRASTS_WITH" (similarity: 0.89)
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>Result: ✅ Edge created: (A)-[CONTRASTS_WITH {category: "similarity"}]-&gt;(B)
 </code></pre></div>
 <h3 id="semantic-distinction-example">Semantic Distinction Example</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>Before: &quot;Brain SUPPORTS computer analogy&quot; (evidential)
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>After:  &quot;Brain ANALOGOUS_TO computer&quot; (similarity)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>Before: "Brain SUPPORTS computer analogy" (evidential)
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>After:  "Brain ANALOGOUS_TO computer" (similarity)
 <a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>The LLM can now express: &quot;This is an analogy&quot; vs &quot;This provides evidence&quot;
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>The LLM can now express: "This is an analogy" vs "This provides evidence"
 </code></pre></div>
 <h2 id="migration-path">Migration Path</h2>
 <p><strong>Phase 1: Add Types (This ADR)</strong>
@@ -2624,7 +2624,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": [], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

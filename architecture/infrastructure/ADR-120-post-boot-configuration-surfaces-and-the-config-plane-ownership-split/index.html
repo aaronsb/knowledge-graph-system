@@ -1,0 +1,2475 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Multi-dimensional knowledge extraction system using Apache AGE">
+      
+      
+        <meta name="author" content="Knowledge Graph System Contributors">
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>ADR-120: Post-boot configuration surfaces and the config-plane ownership split - Knowledge Graph System</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#adr-120-post-boot-configuration-surfaces-and-the-config-plane-ownership-split" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="Knowledge Graph System" class="md-header__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Knowledge Graph System
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              ADR-120: Post-boot configuration surfaces and the config-plane ownership split
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/aaronsb/knowledge-graph-system" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aaronsb/knowledge-graph-system
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="Knowledge Graph System" class="md-nav__button md-logo" aria-label="Knowledge Graph System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Knowledge Graph System
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/aaronsb/knowledge-graph-system" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aaronsb/knowledge-graph-system
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Get Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Get Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../get-started/what-and-why/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What and Why
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../get-started/first-graph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your First Graph
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../get-started/first-query/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your First Query
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../get-started/mcp-quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Connect via MCP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../get-started/github-history/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mining a Git Repo
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-To
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How-To
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/ingest/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ingest Documents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/query/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explore and Query
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/epistemic-status/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Filter by Epistemic Status
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/polarity-axis/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Analyze a Polarity Axis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/fuse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Use the FUSE Drive
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/ai-providers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configure AI Providers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/embeddings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configure Embeddings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/extraction-quality/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Compare Extraction Quality
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/vocabulary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Consolidate Vocabulary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Self-Host
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Self-Host
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/quick-start/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/production/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Production Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/macvlan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dedicated IP (macvlan)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/tls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    TLS and Certificates
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/appliance-libvirt/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Appliance on libvirt/KVM
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security and Access
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/backup-restore/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backup and Restore
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/scheduled-jobs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scheduled Jobs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/upgrading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Upgrading
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../self-host/troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explanation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Explanation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/how-it-works/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How It Works
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/computed-evidence/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Computed Evidence over Asserted Truth
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/grounding/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Grounding and Epistemic Confidence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/recursive-upsert/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Recursive Upsert
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/vocabulary-lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vocabulary Lifecycle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/storage-and-freshness/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Storage and Freshness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/worker-lanes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Worker Lanes and Concurrency
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/embedding-landscape/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Embedding Landscape
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/graph-program/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram DSL
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    REST API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/mcp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/mcp-session-context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Session Context
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/fuse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FUSE Driver
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/schema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Database Schema
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/cypher/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cypher Patterns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/graph-program-spec/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram Specification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/graph-program-validation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram Validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/graph-program-security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphProgram Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/backup-object-spec/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backup Object Format
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Contributing
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/voice/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Prose & Voice Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/docstring-coverage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docstring Coverage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/test-suite/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Test Suite
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../INDEX/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Context">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-gap-is-a-clean-split-not-a-scattering" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The gap is a clean split, not a scattering
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-tier-1-is-absent-is-structural-not-neglect" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why Tier 1 is absent is structural, not neglect
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#two-further-pressures" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Two further pressures
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="adr-120-post-boot-configuration-surfaces-and-the-config-plane-ownership-split">ADR-120: Post-boot configuration surfaces and the config-plane ownership split</h1>
+<h2 id="context">Context</h2>
+<p>ADR-119 §C committed the appliance to configuring itself <strong>after</strong> boot, through
+the console (DCUI) and the operator container, and named the work as follow-on:</p>
+<blockquote>
+<p><strong>Console DCUI + <code>operator.sh set-*</code></strong> (warm-reconfig, follow-on work): public
+hostname, TLS mode, DNS-01 credentials, Cockpit access — the knobs that today
+force a pre-boot seed.</p>
+</blockquote>
+<p>That follow-on was never built. The intended experience — <em>download the OVA, turn
+it on, follow prompts on the VM console, then work in the web console</em> — breaks at
+"follow prompts," because there are none. <code>kg-console.sh</code> offers ten options, of
+which exactly one (<code>c</code>, Cockpit CIDRs) changes configuration; the rest are status,
+logs, lifecycle, and two shell escape hatches. Menu 4 (network info) prints the
+interface table and tells the operator to <em>"Change network settings via Cockpit"</em>.</p>
+<p>Meanwhile the surface that <em>can</em> configure everything is the one demanding the most
+expertise: hand-author <code>provision.env</code>, wrap it in a <code>cidata</code>-labeled volume, and
+attach it on the right bus — where getting the bus wrong fails <strong>silently</strong> (the
+cloud kernel has no AHCI driver, so a SATA seed is invisible, <code>ds-identify</code> finds
+no datasource, and the box comes up on defaults with the config ignored).</p>
+<h3 id="the-gap-is-a-clean-split-not-a-scattering">The gap is a clean split, not a scattering</h3>
+<p>Surveying every configuration knob against every surface produces two tiers that
+behave differently, and the tier predicts the coverage exactly.</p>
+<p><strong>Tier 1 — host / <code>.env</code>, read at container start, authority is <code>kg-operator</code></strong></p>
+<table>
+<thead>
+<tr>
+<th>Knob</th>
+<th>Web</th>
+<th>Console</th>
+<th><code>operator.sh</code></th>
+<th><code>provision.env</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>EXTERNAL_URL</code>, <code>TLS_DOMAIN</code></td>
+<td>❌</td>
+<td>❌</td>
+<td>partial (<code>recert</code>)</td>
+<td>✅</td>
+</tr>
+<tr>
+<td><code>LE_EMAIL</code>, <code>KG_ACME_DNS_PROVIDER</code>, <code>PORKBUN_*</code></td>
+<td>❌</td>
+<td>❌</td>
+<td>partial</td>
+<td>✅</td>
+</tr>
+<tr>
+<td><code>VITE_OAUTH_CLIENT_ID</code> / <code>_REDIRECT_URI</code> / <code>VITE_API_URL</code></td>
+<td>❌</td>
+<td>❌</td>
+<td>❌</td>
+<td>derived</td>
+</tr>
+<tr>
+<td><code>KG_HTTP_PORT</code> / <code>KG_HTTPS_PORT</code></td>
+<td>❌</td>
+<td>❌</td>
+<td>❌</td>
+<td>❌</td>
+</tr>
+<tr>
+<td><code>KG_COCKPIT_ALLOW_CIDRS</code></td>
+<td>❌</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Static IP / netmask / gateway / DNS / VLAN</td>
+<td>❌</td>
+<td>❌</td>
+<td>❌</td>
+<td>❌ (DHCP only)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Tier 2 — database, live-read, authority is the API</strong></p>
+<table>
+<thead>
+<tr>
+<th>Knob</th>
+<th>Web</th>
+<th><code>configure.py</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AI providers + encrypted keys</td>
+<td>✅ save / test / enumerate / activate</td>
+<td>✅ <code>ai-provider</code>, <code>api-key</code>, <code>models</code></td>
+</tr>
+<tr>
+<td>Embedding profiles</td>
+<td>✅</td>
+<td>✅ <code>embedding</code></td>
+</tr>
+<tr>
+<td>Search similarity threshold</td>
+<td>✅ (ADR-508)</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Admin users / roles</td>
+<td>✅</td>
+<td>✅ <code>admin</code></td>
+</tr>
+<tr>
+<td>Backup / restore / scheduler</td>
+<td>✅</td>
+<td>—</td>
+</tr>
+<tr>
+<td>OAuth clients</td>
+<td>❌</td>
+<td>✅ <code>oauth</code></td>
+</tr>
+<tr>
+<td><code>platform_config</code> flags (ADR-211)</td>
+<td>❌</td>
+<td>✅ <code>platform-config</code></td>
+</tr>
+</tbody>
+</table>
+<p>The web UI is missing <strong>all of Tier 1</strong> and two Tier-2 stragglers. Tier 2 is
+otherwise well covered, and the web version is materially better than the CLI — the
+AI Providers card saves, tests connectivity, enumerates models, and gates
+activation.</p>
+<h3 id="why-tier-1-is-absent-is-structural-not-neglect">Why Tier 1 is absent is structural, not neglect</h3>
+<p>The API container owns no <code>.env</code> and holds no Docker socket. That is the
+three-layer control plane working as designed (ADR-103): host (Cockpit / console),
+platform (<code>kg-operator</code>, Docker socket + config authority), application (web +
+API). A TLS panel therefore <em>cannot</em> be implemented inside the web UI — it can only
+be proxied. Any design that closes the Tier-1 gap must either respect that boundary
+or knowingly collapse it.</p>
+<h3 id="two-further-pressures">Two further pressures</h3>
+<p><strong>Network is the one knob that cannot be repaired from the surface it enables.</strong>
+Today the console defers network changes to Cockpit — which listens on <code>:9090</code> of
+the very network being fixed. An appliance whose management surface can strand
+itself has no recovery path short of a hypervisor console shell. Every mature
+appliance solves this the same way and for the same reason: ESXi's DCUI, pfSense's
+console, TrueNAS, Home Assistant OS, and UniFi all put network configuration on the
+out-of-band console and nowhere else.</p>
+<p><strong>Roughly a year of accumulation has produced three implementations of "make a
+working platform"</strong> — <code>install.sh</code> (2823 lines, carrying its own duplicate
+<code>generate_secrets()</code>, the drift behind #502), <code>operator/lib/{headless,guided}-init.sh</code>
+plus <code>init-secrets.sh</code> (1805 lines), and the appliance's <code>kg-firstboot.sh</code> (which at
+least delegates). ADR-104 Part A already sentenced the duplicate generator; issue</p>
+<h1 id="512-tracks-it-unstarted-adding-surfaces-without-removing-duplicates-would-make">512 tracks it, unstarted. Adding surfaces without removing duplicates would make</h1>
+<p>the consistency problem worse, not better.</p>
+<p><strong>One enabling primitive already exists.</strong> <code>web/docker-entrypoint.sh</code> writes
+<code>window.APP_CONFIG</code> (<code>apiUrl</code>, <code>oauth.clientId</code>, <code>oauth.redirectUri</code>) into
+<code>config.js</code> at <strong>container start</strong>, and client code reads <code>window.APP_CONFIG?.…</code>
+ahead of the build-time <code>import.meta.env.VITE_*</code> fallback. A hostname re-key is
+therefore an <code>.env</code> rewrite plus a <code>kg-web</code> restart — no image rebuild. That
+primitive landed with the PR #526 appliance OAuth fix and makes post-boot
+reconfiguration feasible at all.</p>
+<p><strong>Design value, inherited from ADR-119: minimize novelty.</strong> The shape below is
+ESXi/pfSense/TrueNAS, not an invention.</p>
+<h2 id="decision">Decision</h2>
+<h3 id="a-tier-ownership-is-the-rule-for-which-surface-owns-a-knob">A — Tier ownership is the rule for which surface owns a knob</h3>
+<p>A configuration knob belongs to <strong>Tier 1</strong> if applying it requires writing <code>.env</code>
+or restarting containers, and to <strong>Tier 2</strong> if it is a database row the API reads
+live. Tier determines authority:</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Tier 1</th>
+<th>Tier 2</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Authority</td>
+<td><code>kg-operator</code></td>
+<td>API</td>
+</tr>
+<tr>
+<td>Applied by</td>
+<td><code>.env</code> write + targeted container restart</td>
+<td>database write, read live</td>
+</tr>
+<tr>
+<td>Reachable from web</td>
+<td>only by proxy (§D)</td>
+<td>directly</td>
+</tr>
+<tr>
+<td>Reachable from console</td>
+<td>yes, natively</td>
+<td>via the operator shell (escape hatch)</td>
+</tr>
+</tbody>
+</table>
+<p>New knobs are classified on introduction. This is the test that decides where a
+surface goes, replacing case-by-case judgment.</p>
+<h3 id="b-operatorsh-verbs-are-the-single-contract-three-surfaces-render-it">B — <code>operator.sh</code> verbs are the single contract; three surfaces render it</h3>
+<p>Per ADR-119 §C, the warm-reconfig verbs are idempotent <code>operator.sh</code> commands, with
+the existing <code>cockpit-access</code> verb as the template. There is exactly one
+implementation; three surfaces call it.</p>
+<pre class="mermaid"><code>flowchart LR
+    P[provision.env&lt;br/&gt;cold · cloud-init] --&gt; C[operator.sh verbs&lt;br/&gt;THE CONTRACT]
+    D[console DCUI&lt;br/&gt;interactive · out-of-band] --&gt; C
+    W[web admin&lt;br/&gt;post-boot re-key] --&gt;|API → operator RPC| C
+    C --&gt; E[.env write]
+    C --&gt; R[targeted container restart]</code></pre>
+<p>Each verb encapsulates the <strong>full ripple</strong> of its change, so a hostname change
+cannot silently half-apply. For external URL that ripple is: <code>EXTERNAL_URL</code> /
+<code>TLS_DOMAIN</code> in <code>.env</code>, the Traefik router, the registered OAuth <code>redirect_uri</code>,
+the web runtime config (<code>config.js</code> via the entrypoint) plus a <code>kg-web</code> restart,
+Cockpit <code>Origins</code>, and the ACME certificate.</p>
+<p>Every verb must be callable non-interactively. Programmatic configuration is a
+first-class requirement, not a byproduct — the same verbs serve Terraform, a fleet
+orchestrator, and a human at a console.</p>
+<p>Cold and warm paths share the schema and the apply logic, so they cannot drift.
+The carrier remains cold-provisioning/reload only (ADR-119 §A); editing it does not
+re-apply to a running box.</p>
+<h3 id="c-the-console-is-a-persistent-dcui-not-a-first-boot-wizard">C — The console is a persistent DCUI, not a first-boot wizard</h3>
+<p>The console adopts the <strong>ESXi DCUI shape</strong>: a persistent banner showing current
+address, hostname, and TLS state, plus an authenticated <strong>Configure System</strong> path
+that is always available — not a one-shot wizard that runs once and disappears.
+The re-key case (box comes up on DHCP, later earns a DNS name) is as common as
+first boot and must not require a reinstall or a shell.</p>
+<p>First boot remains presence-driven and non-interactive (ADR-119 §B): the DCUI does
+not pause or prompt during provisioning, it simply <em>is there</em> afterward.</p>
+<p><strong>Console scope is reachability and trust only</strong> — the closed set that must be true
+before the web console is reachable and trustworthy:</p>
+<table>
+<thead>
+<tr>
+<th>In scope</th>
+<th>Out of scope (web UI owns it)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Network: DHCP/static, IP, netmask, gateway, DNS, VLAN</td>
+<td>Reasoning provider + API keys</td>
+</tr>
+<tr>
+<td>Hostname / external URL</td>
+<td>Embedding profiles, search thresholds</td>
+</tr>
+<tr>
+<td>TLS mode, ACME challenge, DNS-01 credentials</td>
+<td>Users, roles, ontologies, vocabulary</td>
+</tr>
+<tr>
+<td>Cockpit access CIDRs</td>
+<td>Backups, jobs, workers</td>
+</tr>
+<tr>
+<td>Display of admin credentials + first-run URL</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>The line is not a matter of taste. It falls exactly where "can I reach and trust the
+web console" falls. Duplicating the AI provider card into a TUI would be strictly
+worse than the panel that already tests connectivity and enumerates models, and
+would mean typing a secret at a VM console.</p>
+<p><strong>Network configuration is console-authoritative.</strong> The web UI and Cockpit may
+<em>display</em> network state; neither may be the only way to change it, because both
+depend on the network being changed.</p>
+<h3 id="d-the-web-reaches-tier-1-by-proxying-to-the-operator">D — The web reaches Tier 1 by proxying to the operator</h3>
+<p><code>kg-operator</code> exposes a small authenticated endpoint on a local Unix socket. The
+API validates Tier-1 requests and forwards them; the operator applies them via the
+§B verbs. <strong>The API never writes <code>.env</code> and never touches the Docker socket</strong> — the
+ADR-103 privilege boundary stays intact, and the internet-facing container gains no
+host authority.</p>
+<p>The shared secret is minted per instance by <code>init-secrets.sh</code>, never baked. Routes
+are admin-RBAC gated and live in a new module rather than growing <code>admin.py</code>
+(already 1215 lines).</p>
+<p>The web panel must handle the self-restart wrinkle: changing the hostname rewrites
+the OAuth and API URLs that the entrypoint bakes into <code>config.js</code>, so <code>kg-web</code>
+restarts underneath the operator. The UI warns, then reconnects at the new URL.</p>
+<h3 id="e-build-the-contract-first-delete-the-duplicates-once-it-proves-out">E — Build the contract first; delete the duplicates once it proves out</h3>
+<p>Sequencing is deliberate. The new contract lands and is validated end-to-end on a
+real VM (bare boot → DCUI configure → web re-key → <code>operator.sh upgrade</code>) <strong>before</strong>
+anything is removed, so a working fallback exists while the new path is unproven.</p>
+<p>Removal is then in scope and expected:</p>
+<table>
+<thead>
+<tr>
+<th>Target</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>install.sh</code>'s duplicate <code>generate_secrets()</code></td>
+<td>ADR-104 Part A / #512; the #502 drift</td>
+</tr>
+<tr>
+<td><code>configure.py</code> <code>admin</code>, <code>ai-provider</code>, <code>embedding</code>, <code>api-key</code>, <code>models</code></td>
+<td>fully superseded by the web UI</td>
+</tr>
+<tr>
+<td><code>configure.py</code> <code>oauth</code>, <code>platform-config</code></td>
+<td>after their web surfaces land</td>
+</tr>
+<tr>
+<td>Console menu 4's "use Cockpit for network" deferral</td>
+<td>replaced by §C</td>
+</tr>
+</tbody>
+</table>
+<p>The operator shell, host login, and <code>status</code> remain as escape hatches.</p>
+<h2 id="consequences">Consequences</h2>
+<h3 id="positive">Positive</h3>
+<ul>
+<li><strong>The intended experience becomes literally true.</strong> Import, power on, configure
+  reachability at the console, finish in the web UI.</li>
+<li><strong>One implementation of each knob.</strong> A new Tier-1 setting is added once and
+  appears in all three surfaces; cold and warm paths cannot diverge.</li>
+<li><strong>The re-key case stops requiring a shell.</strong> DHCP-IP → real DNS name is a
+  supported operation from two surfaces.</li>
+<li><strong>The privilege boundary is reinforced rather than eroded</strong> — closing the Tier-1
+  gap explicitly does <em>not</em> hand the API host authority.</li>
+<li><strong>Programmatic configuration is preserved and improved</strong> — the verbs are the API
+  that <code>provision.env</code>, Terraform, and a fleet orchestrator all target.</li>
+<li><strong>Nothing here is novel.</strong> ESXi/pfSense/TrueNAS shape throughout, per ADR-119's
+  stated value.</li>
+</ul>
+<h3 id="negative">Negative</h3>
+<ul>
+<li><strong>A new internal service seam</strong> (operator RPC) to build, authenticate, and
+  maintain — the cost of not collapsing the privilege boundary.</li>
+<li><strong>Network configuration in a shell TUI is fiddly</strong> to write and to test; netplan
+  rendering plus VLANs is real work with real failure modes.</li>
+<li><strong>A hostname change restarts the web container out from under the operator</strong>,
+  which is an inherently awkward UX no matter how it is presented.</li>
+<li>The consolidation in §E touches the provisioning path, the highest-blast-radius
+  code in the repo, and must not be attempted before §E's validation gate.</li>
+</ul>
+<h3 id="neutral">Neutral</h3>
+<ul>
+<li>ADR-119 §C's follow-on is discharged by §B/§C here; ADR-119 stays the authority on
+  <em>delivery</em> (carrier, first-boot branching), this ADR on <em>post-boot surfaces</em>.</li>
+<li>Advances #512 (Part A consolidation) without depending on ADR-104 Part B; the
+  claim protocol remains separately unbuilt and orthogonal to these surfaces.</li>
+<li>Applies platform-wide, not only to the appliance — a dev instance or a bare-metal
+  <code>install.sh</code> deployment gains the same web Tier-1 panel.</li>
+</ul>
+<h2 id="alternatives-considered">Alternatives Considered</h2>
+<ul>
+<li>
+<p><strong>Give the API a bind-mounted <code>.env</code> and Docker socket.</strong> Simplest to build: the
+  API writes config and restarts containers directly, no new seam. Rejected because
+  it hands the internet-facing container host-level config authority, collapsing the
+  three-layer control plane that ADR-103 established — a large security regression
+  bought for a modest implementation saving.</p>
+</li>
+<li>
+<p><strong>Web admin read-only for Tier 1; console remains the sole authority.</strong> Zero new
+  privilege seam and honest about the boundary. Rejected because the post-boot
+  re-key case is exactly the one to be fixed; requiring console access for a routine
+  DNS-name change is the current pain, restated.</p>
+</li>
+<li>
+<p><strong>A one-shot first-boot wizard.</strong> Prompt through configuration once at first
+  power-on, then hand off to the menu. Rejected because re-key is as common as first
+  boot; ESXi, pfSense, and TrueNAS all keep the configuration path permanently
+  reachable rather than consuming it.</p>
+</li>
+<li>
+<p><strong>Put everything in the console TUI, including the reasoning key.</strong> Makes the box
+  fully functional without ever opening the web UI. Rejected as overbuild: it
+  duplicates a superior web panel, degrades secret entry to a VM console, and blurs
+  the reachability/trust boundary that makes the scope decidable in §C.</p>
+</li>
+<li>
+<p><strong>Extend ADR-119 rather than write a new ADR.</strong> ADR-119 is still Draft, so
+  amendment was open. Rejected because the scope here is platform-wide (the web
+  panel applies to any deployment) whereas ADR-119 is appliance-delivery-specific,
+  and because the config-plane ownership rule in §A is a general principle that
+  would be buried inside an appliance ADR.</p>
+</li>
+</ul>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": [], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

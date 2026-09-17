@@ -19,7 +19,7 @@
       
       
       <link rel="icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -27,7 +27,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.ec1eaa64.min.css">
       
       
 
@@ -2450,15 +2450,15 @@
 <h3 id="the-direction-problem">The Direction Problem</h3>
 <p>LLMs extract relationships with directional ambiguity. From extraction quality comparison (ADR-806 testing):</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># GPT-OSS 20B error:</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="s2">&quot;False sense of personal identity ENABLED_BY Language and Thought&quot;</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="c1"># ❌ Wrong! Should be: &quot;Language ENABLES identity&quot; (reversed direction)</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="s2">"False sense of personal identity ENABLED_BY Language and Thought"</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="c1"># ❌ Wrong! Should be: "Language ENABLES identity" (reversed direction)</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="c1"># Qwen 2.5 14B error rate:</span>
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="c1"># Some relationships have unclear topology (which concept_id in from vs to?)</span>
 </code></pre></div>
 <p><strong>Current prompt guidance:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="s2">&quot;from_concept_id: Source concept&quot;</span>  <span class="c1"># ← Graph terminology, not semantic!</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="s2">&quot;to_concept_id: Target concept&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="s2">"from_concept_id: Source concept"</span>  <span class="c1"># ← Graph terminology, not semantic!</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="s2">"to_concept_id: Target concept"</span>
 </code></pre></div></p>
 <p><strong>Problem:</strong> "Source" refers to edge origin (topology), not semantic role (actor/receiver). LLM must guess which concept is the "actor."</p>
 <h3 id="what-we-already-track-three-dimensions">What We Already Track (Three Dimensions)</h3>
@@ -2495,10 +2495,10 @@
 </table>
 <p><strong>Examples:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1">// Category (already stored)</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="p">(:</span><span class="n">VocabType</span><span class="w"> </span><span class="p">{</span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;ENABLES&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">category</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;causation&quot;</span><span class="p">})</span><span class="o">-[</span><span class="p">:</span><span class="n">IN_CATEGORY</span><span class="o">]-&gt;</span><span class="p">(:</span><span class="n">VocabCategory</span><span class="p">)</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="p">(:</span><span class="n">VocabType</span><span class="w"> </span><span class="p">{</span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="s">"ENABLES"</span><span class="p">,</span><span class="w"> </span><span class="n">category</span><span class="p">:</span><span class="w"> </span><span class="s">"causation"</span><span class="p">})</span><span class="o">-[</span><span class="p">:</span><span class="n">IN_CATEGORY</span><span class="o">]-&gt;</span><span class="p">(:</span><span class="n">VocabCategory</span><span class="p">)</span>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
 <a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1">// Confidence (already stored)</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="p">(</span><span class="n">Meditation</span><span class="p">)</span><span class="o">-[</span><span class="n">ENABLES</span><span class="w"> </span><span class="p">{</span><span class="n">confidence</span><span class="p">:</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">9</span><span class="p">,</span><span class="w"> </span><span class="n">category</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;causation&quot;</span><span class="p">}</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">Enlightenment</span><span class="p">)</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="p">(</span><span class="n">Meditation</span><span class="p">)</span><span class="o">-[</span><span class="n">ENABLES</span><span class="w"> </span><span class="p">{</span><span class="n">confidence</span><span class="p">:</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">9</span><span class="p">,</span><span class="w"> </span><span class="n">category</span><span class="p">:</span><span class="w"> </span><span class="s">"causation"</span><span class="p">}</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">Enlightenment</span><span class="p">)</span>
 <a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
 <a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="c1">// Direction (missing!)</span>
 <a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="c1">// Which concept acts? Which receives?</span>
@@ -2531,7 +2531,7 @@
 - <code>"bidirectional"</code>: no inherent direction (symmetric)</p>
 <h3 id="why-not-model-polarity">Why Not Model Polarity?</h3>
 <p><strong>Considered fourth dimension:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">polarity</span> <span class="o">=</span> <span class="s2">&quot;positive&quot;</span> <span class="o">|</span> <span class="s2">&quot;negative&quot;</span> <span class="o">|</span> <span class="s2">&quot;neutral&quot;</span> <span class="o">|</span> <span class="s2">&quot;measured&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">polarity</span> <span class="o">=</span> <span class="s2">"positive"</span> <span class="o">|</span> <span class="s2">"negative"</span> <span class="o">|</span> <span class="s2">"neutral"</span> <span class="o">|</span> <span class="s2">"measured"</span>
 </code></pre></div></p>
 <p><strong>Rejected as computational trap:</strong></p>
 <ol>
@@ -2542,14 +2542,14 @@
 <li><strong>Over-engineering</strong> - Adds complexity without proven utility</li>
 </ol>
 <p><strong>The test:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Query: &quot;Show me negative relationships from Ego&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Query: "Show me negative relationships from Ego"</span>
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="c1"># Option 1: Filter by polarity metadata</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="n">negative_rels</span> <span class="o">=</span> <span class="nb">filter</span><span class="p">(</span><span class="n">relationships</span><span class="p">,</span> <span class="n">polarity</span><span class="o">=</span><span class="s2">&quot;negative&quot;</span><span class="p">)</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="n">negative_rels</span> <span class="o">=</span> <span class="nb">filter</span><span class="p">(</span><span class="n">relationships</span><span class="p">,</span> <span class="n">polarity</span><span class="o">=</span><span class="s2">"negative"</span><span class="p">)</span>
 <a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>
 <a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="c1"># Option 2: Filter by type names (already meaningful)</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="n">negative_types</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;PREVENTS&quot;</span><span class="p">,</span> <span class="s2">&quot;CONTRADICTS&quot;</span><span class="p">,</span> <span class="s2">&quot;REFUTES&quot;</span><span class="p">]</span>  <span class="c1"># Obvious from name</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="n">negative_types</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"PREVENTS"</span><span class="p">,</span> <span class="s2">"CONTRADICTS"</span><span class="p">,</span> <span class="s2">"REFUTES"</span><span class="p">]</span>  <span class="c1"># Obvious from name</span>
 <a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="c1"># Conclusion: Don&#39;t store what LLM already knows</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="c1"># Conclusion: Don't store what LLM already knows</span>
 </code></pre></div></p>
 <p><strong>Direction passes the test:</strong>
 - Not obvious from type name alone ("ENABLES" doesn't tell you which concept is actor)
@@ -2590,64 +2590,64 @@
 </table>
 <p><strong>Seed types as teaching examples (not rules):</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Prompt shows patterns:</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="s2">&quot;Example: ENABLES typically used outward (actor→target)&quot;</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="s2">&quot;Example: RESULTS_FROM typically used inward (result←cause)&quot;</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="s2">"Example: ENABLES typically used outward (actor→target)"</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="s2">"Example: RESULTS_FROM typically used inward (result←cause)"</span>
 <a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>
 <a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="c1"># But NOT pre-populated in database</span>
 <a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="c1"># LLM decides on first use, even for seed types</span>
 </code></pre></div></p>
 <h3 id="implementation-three-phase-capture-loop">Implementation: Three-Phase Capture Loop</h3>
 <h4 id="phase-1-enhanced-prompt-teaching">Phase 1: Enhanced Prompt (Teaching)</h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">EXTRACTION_PROMPT</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">EXTRACTION_PROMPT</span> <span class="o">=</span> <span class="s2">"""</span>
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="s2">For each relationship, determine DIRECTION SEMANTICS based on frame of reference:</span>
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="s2">**OUTWARD (from → to):** The &quot;from&quot; concept ACTS on &quot;to&quot;</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="s2">**OUTWARD (from → to):** The "from" concept ACTS on "to"</span>
 <a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="s2">  Examples:</span>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="s2">  - &quot;Meditation ENABLES enlightenment&quot; → from=meditation (actor), to=enlightenment (target)</span>
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="s2">  - &quot;Ego PREVENTS awareness&quot; → from=ego (blocker), to=awareness (blocked)</span>
-<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="s2">  - &quot;Wheel PART_OF car&quot; → from=wheel (component), to=car (whole)</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="s2">  - "Meditation ENABLES enlightenment" → from=meditation (actor), to=enlightenment (target)</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="s2">  - "Ego PREVENTS awareness" → from=ego (blocker), to=awareness (blocked)</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="s2">  - "Wheel PART_OF car" → from=wheel (component), to=car (whole)</span>
 <a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>
-<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="s2">**INWARD (from ← to):** The &quot;from&quot; concept RECEIVES from &quot;to&quot;</span>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="s2">**INWARD (from ← to):** The "from" concept RECEIVES from "to"</span>
 <a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="s2">  Examples:</span>
-<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="s2">  - &quot;Suffering RESULTS_FROM attachment&quot; → from=suffering (result), to=attachment (cause)</span>
-<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="s2">  - &quot;Temperature MEASURED_BY thermometer&quot; → from=temperature (measured), to=thermometer (measurer)</span>
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="s2">  - "Suffering RESULTS_FROM attachment" → from=suffering (result), to=attachment (cause)</span>
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="s2">  - "Temperature MEASURED_BY thermometer" → from=temperature (measured), to=thermometer (measurer)</span>
 <a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a>
 <a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a><span class="s2">**BIDIRECTIONAL:** Symmetric relationship (both directions equivalent)</span>
 <a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a><span class="s2">  Examples:</span>
-<a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a><span class="s2">  - &quot;Ego SIMILAR_TO self-identity&quot; → direction=&quot;bidirectional&quot;</span>
-<a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a><span class="s2">  - &quot;Apple COMPETES_WITH Microsoft&quot; → direction=&quot;bidirectional&quot;</span>
+<a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a><span class="s2">  - "Ego SIMILAR_TO self-identity" → direction="bidirectional"</span>
+<a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a><span class="s2">  - "Apple COMPETES_WITH Microsoft" → direction="bidirectional"</span>
 <a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a>
 <a id="__codelineno-6-20" name="__codelineno-6-20" href="#__codelineno-6-20"></a><span class="s2">**Key Principle:** Consider which concept is the SUBJECT of the sentence:</span>
-<a id="__codelineno-6-21" name="__codelineno-6-21" href="#__codelineno-6-21"></a><span class="s2">- Active voice: &quot;A enables B&quot; → A is actor (outward)</span>
-<a id="__codelineno-6-22" name="__codelineno-6-22" href="#__codelineno-6-22"></a><span class="s2">- Passive voice: &quot;A is caused by B&quot; → A is receiver (inward)</span>
-<a id="__codelineno-6-23" name="__codelineno-6-23" href="#__codelineno-6-23"></a><span class="s2">- Mutual: &quot;A competes with B&quot; = &quot;B competes with A&quot; → bidirectional</span>
+<a id="__codelineno-6-21" name="__codelineno-6-21" href="#__codelineno-6-21"></a><span class="s2">- Active voice: "A enables B" → A is actor (outward)</span>
+<a id="__codelineno-6-22" name="__codelineno-6-22" href="#__codelineno-6-22"></a><span class="s2">- Passive voice: "A is caused by B" → A is receiver (inward)</span>
+<a id="__codelineno-6-23" name="__codelineno-6-23" href="#__codelineno-6-23"></a><span class="s2">- Mutual: "A competes with B" = "B competes with A" → bidirectional</span>
 <a id="__codelineno-6-24" name="__codelineno-6-24" href="#__codelineno-6-24"></a>
 <a id="__codelineno-6-25" name="__codelineno-6-25" href="#__codelineno-6-25"></a><span class="s2">For EVERY relationship (including novel types you create):</span>
 <a id="__codelineno-6-26" name="__codelineno-6-26" href="#__codelineno-6-26"></a><span class="s2">{{</span>
-<a id="__codelineno-6-27" name="__codelineno-6-27" href="#__codelineno-6-27"></a><span class="s2">  &quot;from_concept_id&quot;: &quot;concept_001&quot;,</span>
-<a id="__codelineno-6-28" name="__codelineno-6-28" href="#__codelineno-6-28"></a><span class="s2">  &quot;to_concept_id&quot;: &quot;concept_002&quot;,</span>
-<a id="__codelineno-6-29" name="__codelineno-6-29" href="#__codelineno-6-29"></a><span class="s2">  &quot;relationship_type&quot;: &quot;ENABLES&quot;,</span>
-<a id="__codelineno-6-30" name="__codelineno-6-30" href="#__codelineno-6-30"></a><span class="s2">  &quot;direction_semantics&quot;: &quot;outward&quot;,  // ← YOU MUST PROVIDE</span>
-<a id="__codelineno-6-31" name="__codelineno-6-31" href="#__codelineno-6-31"></a><span class="s2">  &quot;confidence&quot;: 0.9</span>
+<a id="__codelineno-6-27" name="__codelineno-6-27" href="#__codelineno-6-27"></a><span class="s2">  "from_concept_id": "concept_001",</span>
+<a id="__codelineno-6-28" name="__codelineno-6-28" href="#__codelineno-6-28"></a><span class="s2">  "to_concept_id": "concept_002",</span>
+<a id="__codelineno-6-29" name="__codelineno-6-29" href="#__codelineno-6-29"></a><span class="s2">  "relationship_type": "ENABLES",</span>
+<a id="__codelineno-6-30" name="__codelineno-6-30" href="#__codelineno-6-30"></a><span class="s2">  "direction_semantics": "outward",  // ← YOU MUST PROVIDE</span>
+<a id="__codelineno-6-31" name="__codelineno-6-31" href="#__codelineno-6-31"></a><span class="s2">  "confidence": 0.9</span>
 <a id="__codelineno-6-32" name="__codelineno-6-32" href="#__codelineno-6-32"></a><span class="s2">}}</span>
-<a id="__codelineno-6-33" name="__codelineno-6-33" href="#__codelineno-6-33"></a><span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-6-33" name="__codelineno-6-33" href="#__codelineno-6-33"></a><span class="s2">"""</span>
 </code></pre></div>
 <h4 id="phase-2-llm-extraction-reasoning">Phase 2: LLM Extraction (Reasoning)</h4>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="p">{</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span><span class="nt">&quot;relationships&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span><span class="nt">"relationships"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
 <a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">    </span><span class="p">{</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">      </span><span class="nt">&quot;from_concept_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;meditation_001&quot;</span><span class="p">,</span>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">      </span><span class="nt">&quot;to_concept_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;enlightenment_002&quot;</span><span class="p">,</span>
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="w">      </span><span class="nt">&quot;relationship_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;FACILITATES&quot;</span><span class="p">,</span>
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="w">      </span><span class="nt">&quot;direction_semantics&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;outward&quot;</span><span class="p">,</span>
-<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="w">      </span><span class="nt">&quot;confidence&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.85</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">      </span><span class="nt">"from_concept_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"meditation_001"</span><span class="p">,</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">      </span><span class="nt">"to_concept_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"enlightenment_002"</span><span class="p">,</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="w">      </span><span class="nt">"relationship_type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"FACILITATES"</span><span class="p">,</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="w">      </span><span class="nt">"direction_semantics"</span><span class="p">:</span><span class="w"> </span><span class="s2">"outward"</span><span class="p">,</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="w">      </span><span class="nt">"confidence"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.85</span>
 <a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="w">    </span><span class="p">},</span>
 <a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="w">    </span><span class="p">{</span>
-<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="w">      </span><span class="nt">&quot;from_concept_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;suffering_001&quot;</span><span class="p">,</span>
-<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="w">      </span><span class="nt">&quot;to_concept_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;attachment_002&quot;</span><span class="p">,</span>
-<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="w">      </span><span class="nt">&quot;relationship_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;STEMS_FROM&quot;</span><span class="p">,</span>
-<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a><span class="w">      </span><span class="nt">&quot;direction_semantics&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;inward&quot;</span><span class="p">,</span>
-<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a><span class="w">      </span><span class="nt">&quot;confidence&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.90</span>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="w">      </span><span class="nt">"from_concept_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"suffering_001"</span><span class="p">,</span>
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="w">      </span><span class="nt">"to_concept_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"attachment_002"</span><span class="p">,</span>
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="w">      </span><span class="nt">"relationship_type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"STEMS_FROM"</span><span class="p">,</span>
+<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a><span class="w">      </span><span class="nt">"direction_semantics"</span><span class="p">:</span><span class="w"> </span><span class="s2">"inward"</span><span class="p">,</span>
+<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a><span class="w">      </span><span class="nt">"confidence"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.90</span>
 <a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a><span class="w">    </span><span class="p">}</span>
 <a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a><span class="w">  </span><span class="p">]</span>
 <a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a><span class="p">}</span>
@@ -2656,39 +2656,39 @@
 - "Meditation facilitates..." → meditation acts → outward
 - "Suffering stems from..." → suffering receives → inward</p>
 <h4 id="phase-3-storage-and-feedback-loop">Phase 3: Storage and Feedback Loop</h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># 1. Ingestion captures LLM&#39;s decision</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="k">for</span> <span class="n">rel</span> <span class="ow">in</span> <span class="n">extracted</span><span class="p">[</span><span class="s1">&#39;relationships&#39;</span><span class="p">]:</span>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>    <span class="n">direction</span> <span class="o">=</span> <span class="n">rel</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;direction_semantics&#39;</span><span class="p">,</span> <span class="s1">&#39;outward&#39;</span><span class="p">)</span>  <span class="c1"># Safe default</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># 1. Ingestion captures LLM's decision</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="k">for</span> <span class="n">rel</span> <span class="ow">in</span> <span class="n">extracted</span><span class="p">[</span><span class="s1">'relationships'</span><span class="p">]:</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>    <span class="n">direction</span> <span class="o">=</span> <span class="n">rel</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'direction_semantics'</span><span class="p">,</span> <span class="s1">'outward'</span><span class="p">)</span>  <span class="c1"># Safe default</span>
 <a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>    <span class="c1"># Add to vocabulary with LLM&#39;s choice</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>    <span class="c1"># Add to vocabulary with LLM's choice</span>
 <a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>    <span class="n">db</span><span class="o">.</span><span class="n">add_edge_type</span><span class="p">(</span>
-<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>        <span class="n">relationship_type</span><span class="o">=</span><span class="n">rel</span><span class="p">[</span><span class="s1">&#39;relationship_type&#39;</span><span class="p">],</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>        <span class="n">relationship_type</span><span class="o">=</span><span class="n">rel</span><span class="p">[</span><span class="s1">'relationship_type'</span><span class="p">],</span>
 <a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>        <span class="n">category</span><span class="o">=</span><span class="n">inferred_category</span><span class="p">,</span>
-<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>        <span class="n">direction_semantics</span><span class="o">=</span><span class="n">direction</span>  <span class="c1"># ← Store LLM&#39;s decision</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>        <span class="n">direction_semantics</span><span class="o">=</span><span class="n">direction</span>  <span class="c1"># ← Store LLM's decision</span>
 <a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>    <span class="p">)</span>
 <a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>
 <a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="c1"># 2. Store in graph</span>
 <a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a><span class="p">(:</span><span class="n">VocabType</span> <span class="p">{</span>
-<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a>    <span class="n">name</span><span class="p">:</span> <span class="s2">&quot;FACILITATES&quot;</span><span class="p">,</span>
-<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a>    <span class="n">category</span><span class="p">:</span> <span class="s2">&quot;causation&quot;</span><span class="p">,</span>
-<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a>    <span class="n">direction_semantics</span><span class="p">:</span> <span class="s2">&quot;outward&quot;</span><span class="p">,</span>  <span class="c1"># ← LLM decided</span>
+<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a>    <span class="n">name</span><span class="p">:</span> <span class="s2">"FACILITATES"</span><span class="p">,</span>
+<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a>    <span class="n">category</span><span class="p">:</span> <span class="s2">"causation"</span><span class="p">,</span>
+<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a>    <span class="n">direction_semantics</span><span class="p">:</span> <span class="s2">"outward"</span><span class="p">,</span>  <span class="c1"># ← LLM decided</span>
 <a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a>    <span class="n">usage_count</span><span class="p">:</span> <span class="mi">1</span>
 <a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a><span class="p">})</span>
 <a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a>
 <a id="__codelineno-8-20" name="__codelineno-8-20" href="#__codelineno-8-20"></a><span class="c1"># 3. Next extraction shows established patterns</span>
-<a id="__codelineno-8-21" name="__codelineno-8-21" href="#__codelineno-8-21"></a><span class="n">query</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-8-21" name="__codelineno-8-21" href="#__codelineno-8-21"></a><span class="n">query</span> <span class="o">=</span> <span class="s2">"""</span>
 <a id="__codelineno-8-22" name="__codelineno-8-22" href="#__codelineno-8-22"></a><span class="s2">MATCH (v:VocabType)-[:IN_CATEGORY]-&gt;(c)</span>
-<a id="__codelineno-8-23" name="__codelineno-8-23" href="#__codelineno-8-23"></a><span class="s2">WHERE v.is_active = &#39;t&#39;</span>
+<a id="__codelineno-8-23" name="__codelineno-8-23" href="#__codelineno-8-23"></a><span class="s2">WHERE v.is_active = 't'</span>
 <a id="__codelineno-8-24" name="__codelineno-8-24" href="#__codelineno-8-24"></a><span class="s2">RETURN v.name, v.direction_semantics, v.usage_count</span>
 <a id="__codelineno-8-25" name="__codelineno-8-25" href="#__codelineno-8-25"></a><span class="s2">ORDER BY v.usage_count DESC</span>
-<a id="__codelineno-8-26" name="__codelineno-8-26" href="#__codelineno-8-26"></a><span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-8-26" name="__codelineno-8-26" href="#__codelineno-8-26"></a><span class="s2">"""</span>
 <a id="__codelineno-8-27" name="__codelineno-8-27" href="#__codelineno-8-27"></a>
 <a id="__codelineno-8-28" name="__codelineno-8-28" href="#__codelineno-8-28"></a><span class="c1"># Prompt includes:</span>
-<a id="__codelineno-8-29" name="__codelineno-8-29" href="#__codelineno-8-29"></a><span class="s2">&quot;Existing types with direction patterns:</span>
-<a id="__codelineno-8-30" name="__codelineno-8-30" href="#__codelineno-8-30"></a>  <span class="n">ENABLES</span> <span class="p">(</span><span class="mi">47</span> <span class="n">uses</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="s1">&#39;outward&#39;</span><span class="p">)</span>
-<a id="__codelineno-8-31" name="__codelineno-8-31" href="#__codelineno-8-31"></a>  <span class="n">FACILITATES</span> <span class="p">(</span><span class="mi">3</span> <span class="n">uses</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="s1">&#39;outward&#39;</span><span class="p">)</span>
-<a id="__codelineno-8-32" name="__codelineno-8-32" href="#__codelineno-8-32"></a>  <span class="n">RESULTS_FROM</span> <span class="p">(</span><span class="mi">12</span> <span class="n">uses</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="s1">&#39;inward&#39;</span><span class="p">)</span>
-<a id="__codelineno-8-33" name="__codelineno-8-33" href="#__codelineno-8-33"></a>  <span class="n">COMPETES_WITH</span> <span class="p">(</span><span class="mi">5</span> <span class="n">uses</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="s1">&#39;bidirectional&#39;</span><span class="p">)</span><span class="s2">&quot;</span>
+<a id="__codelineno-8-29" name="__codelineno-8-29" href="#__codelineno-8-29"></a><span class="s2">"Existing types with direction patterns:</span>
+<a id="__codelineno-8-30" name="__codelineno-8-30" href="#__codelineno-8-30"></a>  <span class="n">ENABLES</span> <span class="p">(</span><span class="mi">47</span> <span class="n">uses</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="s1">'outward'</span><span class="p">)</span>
+<a id="__codelineno-8-31" name="__codelineno-8-31" href="#__codelineno-8-31"></a>  <span class="n">FACILITATES</span> <span class="p">(</span><span class="mi">3</span> <span class="n">uses</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="s1">'outward'</span><span class="p">)</span>
+<a id="__codelineno-8-32" name="__codelineno-8-32" href="#__codelineno-8-32"></a>  <span class="n">RESULTS_FROM</span> <span class="p">(</span><span class="mi">12</span> <span class="n">uses</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="s1">'inward'</span><span class="p">)</span>
+<a id="__codelineno-8-33" name="__codelineno-8-33" href="#__codelineno-8-33"></a>  <span class="n">COMPETES_WITH</span> <span class="p">(</span><span class="mi">5</span> <span class="n">uses</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="s1">'bidirectional'</span><span class="p">)</span><span class="s2">"</span>
 </code></pre></div>
 <h3 id="schema-changes">Schema Changes</h3>
 <p><strong>Migration 016:</strong>
@@ -2709,13 +2709,13 @@
 </code></pre></div></p>
 <p><strong>JSON Schema Update:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="p">{</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">  </span><span class="nt">&quot;relationships&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">  </span><span class="nt">"relationships"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
 <a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">    </span><span class="p">{</span>
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">      </span><span class="nt">&quot;from_concept_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="p">,</span>
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="w">      </span><span class="nt">&quot;to_concept_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="p">,</span>
-<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="w">      </span><span class="nt">&quot;relationship_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="p">,</span>
-<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="w">      </span><span class="nt">&quot;direction_semantics&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;outward|inward|bidirectional&quot;</span><span class="p">,</span>
-<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a><span class="w">      </span><span class="nt">&quot;confidence&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;number (0.0-1.0)&quot;</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">      </span><span class="nt">"from_concept_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"string"</span><span class="p">,</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="w">      </span><span class="nt">"to_concept_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"string"</span><span class="p">,</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="w">      </span><span class="nt">"relationship_type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"string"</span><span class="p">,</span>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="w">      </span><span class="nt">"direction_semantics"</span><span class="p">:</span><span class="w"> </span><span class="s2">"outward|inward|bidirectional"</span><span class="p">,</span>
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a><span class="w">      </span><span class="nt">"confidence"</span><span class="p">:</span><span class="w"> </span><span class="s2">"number (0.0-1.0)"</span>
 <a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a><span class="w">    </span><span class="p">}</span>
 <a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a><span class="w">  </span><span class="p">]</span>
 <a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a><span class="p">}</span>
@@ -2733,29 +2733,29 @@
 <a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="n">INWARD</span><span class="p">:</span> <span class="n">RESULTS_FROM</span><span class="p">,</span> <span class="n">STEMS_FROM</span><span class="p">,</span> <span class="n">DERIVED_FROM</span><span class="p">,</span> <span class="o">...</span> <span class="p">(</span><span class="mi">5</span> <span class="n">types</span><span class="p">)</span>
 <a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="n">BIDIRECTIONAL</span><span class="p">:</span> <span class="n">SIMILAR_TO</span><span class="p">,</span> <span class="n">COMPETES_WITH</span><span class="p">,</span> <span class="n">MIRRORS</span><span class="p">,</span> <span class="o">...</span> <span class="p">(</span><span class="mi">8</span> <span class="n">types</span><span class="p">)</span>
 <a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>
-<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="c1"># LLM learns: &quot;*_FROM suffix → usually inward&quot;</span>
-<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a><span class="c1"># LLM learns: &quot;Competition/similarity → usually bidirectional&quot;</span>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="c1"># LLM learns: "*_FROM suffix → usually inward"</span>
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a><span class="c1"># LLM learns: "Competition/similarity → usually bidirectional"</span>
 </code></pre></div></p>
 <p><strong>3. Query Enhancement</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1">// Find what enables X (actors)</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">actor</span><span class="p">)</span><span class="o">-[</span><span class="n">r</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">target</span><span class="p">:</span><span class="n">Concept</span><span class="w"> </span><span class="p">{</span><span class="n">label</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;enlightenment&quot;</span><span class="p">})</span>
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">r</span><span class="p">.</span><span class="n">direction_semantics</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">&#39;outward&#39;</span>
-<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="w">  </span><span class="n">AND</span><span class="w"> </span><span class="n">r</span><span class="p">.</span><span class="n">category</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">&#39;causation&#39;</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">actor</span><span class="p">)</span><span class="o">-[</span><span class="n">r</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">target</span><span class="p">:</span><span class="n">Concept</span><span class="w"> </span><span class="p">{</span><span class="n">label</span><span class="p">:</span><span class="w"> </span><span class="s">"enlightenment"</span><span class="p">})</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">r</span><span class="p">.</span><span class="n">direction_semantics</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">'outward'</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="w">  </span><span class="n">AND</span><span class="w"> </span><span class="n">r</span><span class="p">.</span><span class="n">category</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">'causation'</span>
 <a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="k">RETURN</span><span class="w"> </span><span class="n">actor</span>
 <a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>
 <a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="c1">// Find what X results from (causes)</span>
 <a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">result</span><span class="p">)</span><span class="o">-[</span><span class="n">r</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">cause</span><span class="p">)</span>
-<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">r</span><span class="p">.</span><span class="n">direction_semantics</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">&#39;inward&#39;</span>
-<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a><span class="w">  </span><span class="n">AND</span><span class="w"> </span><span class="n">result</span><span class="p">.</span><span class="n">label</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">&#39;suffering&#39;</span>
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">r</span><span class="p">.</span><span class="n">direction_semantics</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">'inward'</span>
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a><span class="w">  </span><span class="n">AND</span><span class="w"> </span><span class="n">result</span><span class="p">.</span><span class="n">label</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">'suffering'</span>
 <a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a><span class="k">RETURN</span><span class="w"> </span><span class="n">cause</span>
 </code></pre></div></p>
 <p><strong>4. Validation Heuristics</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># Detect suspicious patterns</span>
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="k">if</span> <span class="n">rel_type</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;_FROM&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">direction</span> <span class="o">==</span> <span class="s2">&quot;outward&quot;</span><span class="p">:</span>
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Suspicious: </span><span class="si">{</span><span class="n">rel_type</span><span class="si">}</span><span class="s2"> marked outward (usually inward)&quot;</span><span class="p">)</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="k">if</span> <span class="n">rel_type</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">"_FROM"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">direction</span> <span class="o">==</span> <span class="s2">"outward"</span><span class="p">:</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Suspicious: </span><span class="si">{</span><span class="n">rel_type</span><span class="si">}</span><span class="s2"> marked outward (usually inward)"</span><span class="p">)</span>
 <a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>
-<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="k">if</span> <span class="n">rel_type</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;_WITH&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">direction</span> <span class="o">!=</span> <span class="s2">&quot;bidirectional&quot;</span><span class="p">:</span>
-<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Suspicious: </span><span class="si">{</span><span class="n">rel_type</span><span class="si">}</span><span class="s2"> marked directional (usually symmetric)&quot;</span><span class="p">)</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="k">if</span> <span class="n">rel_type</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">"_WITH"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">direction</span> <span class="o">!=</span> <span class="s2">"bidirectional"</span><span class="p">:</span>
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Suspicious: </span><span class="si">{</span><span class="n">rel_type</span><span class="si">}</span><span class="s2"> marked directional (usually symmetric)"</span><span class="p">)</span>
 </code></pre></div></p>
 <p><strong>5. Consistency with ADR-605</strong>
 - Categories: Emergent from embeddings
@@ -2779,13 +2779,13 @@
 - Most models will converge on obvious directions
 - Can manually override if pattern clearly wrong</p>
 <p><strong>3. Validation Complexity</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="c1"># Need to validate LLM&#39;s decision</span>
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="k">if</span> <span class="n">direction</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;outward&quot;</span><span class="p">,</span> <span class="s2">&quot;inward&quot;</span><span class="p">,</span> <span class="s2">&quot;bidirectional&quot;</span><span class="p">]:</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="c1"># Need to validate LLM's decision</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="k">if</span> <span class="n">direction</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"outward"</span><span class="p">,</span> <span class="s2">"inward"</span><span class="p">,</span> <span class="s2">"bidirectional"</span><span class="p">]:</span>
 <a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>    <span class="c1"># Invalid value - use default</span>
-<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>    <span class="n">direction</span> <span class="o">=</span> <span class="s2">&quot;outward&quot;</span>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>    <span class="n">direction</span> <span class="o">=</span> <span class="s2">"outward"</span>
 <a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>
 <a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="c1"># Need to check for suspicious patterns</span>
-<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="k">if</span> <span class="n">rel_type</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;_FROM&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">direction</span> <span class="o">!=</span> <span class="s2">&quot;inward&quot;</span><span class="p">:</span>
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="k">if</span> <span class="n">rel_type</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">"_FROM"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">direction</span> <span class="o">!=</span> <span class="s2">"inward"</span><span class="p">:</span>
 <a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a>    <span class="c1"># Flag for review</span>
 <a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a>    <span class="k">pass</span>
 </code></pre></div></p>
@@ -2807,9 +2807,9 @@
 <h3 id="alternative-1-hard-code-direction-for-all-types">Alternative 1: Hard-Code Direction for All Types</h3>
 <p><strong>Approach:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="n">DIRECTION_SEMANTICS</span> <span class="o">=</span> <span class="p">{</span>
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>    <span class="s2">&quot;CAUSES&quot;</span><span class="p">:</span> <span class="s2">&quot;outward&quot;</span><span class="p">,</span>
-<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>    <span class="s2">&quot;ENABLES&quot;</span><span class="p">:</span> <span class="s2">&quot;outward&quot;</span><span class="p">,</span>
-<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>    <span class="s2">&quot;RESULTS_FROM&quot;</span><span class="p">:</span> <span class="s2">&quot;inward&quot;</span><span class="p">,</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>    <span class="s2">"CAUSES"</span><span class="p">:</span> <span class="s2">"outward"</span><span class="p">,</span>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>    <span class="s2">"ENABLES"</span><span class="p">:</span> <span class="s2">"outward"</span><span class="p">,</span>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>    <span class="s2">"RESULTS_FROM"</span><span class="p">:</span> <span class="s2">"inward"</span><span class="p">,</span>
 <a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>    <span class="o">...</span>
 <a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a><span class="p">}</span>
 </code></pre></div></p>
@@ -2841,9 +2841,9 @@
 <h3 id="alternative-4-model-polarity-positivenegative">Alternative 4: Model Polarity (Positive/Negative)</h3>
 <p><strong>Approach:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="p">{</span>
-<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>    <span class="s2">&quot;relationship_type&quot;</span><span class="p">:</span> <span class="s2">&quot;ENABLES&quot;</span><span class="p">,</span>
-<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>    <span class="s2">&quot;direction_semantics&quot;</span><span class="p">:</span> <span class="s2">&quot;outward&quot;</span><span class="p">,</span>
-<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>    <span class="s2">&quot;polarity&quot;</span><span class="p">:</span> <span class="s2">&quot;positive&quot;</span>  <span class="o">//</span> <span class="err">←</span> <span class="n">Extra</span> <span class="n">dimension</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>    <span class="s2">"relationship_type"</span><span class="p">:</span> <span class="s2">"ENABLES"</span><span class="p">,</span>
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>    <span class="s2">"direction_semantics"</span><span class="p">:</span> <span class="s2">"outward"</span><span class="p">,</span>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>    <span class="s2">"polarity"</span><span class="p">:</span> <span class="s2">"positive"</span>  <span class="o">//</span> <span class="err">←</span> <span class="n">Extra</span> <span class="n">dimension</span>
 <a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="p">}</span>
 </code></pre></div></p>
 <p><strong>Rejected:</strong>
@@ -2854,8 +2854,8 @@
 <h3 id="alternative-5-owl-style-inverse-properties">Alternative 5: OWL-Style Inverse Properties</h3>
 <p><strong>Approach:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="n">INVERSE_PROPERTIES</span> <span class="o">=</span> <span class="p">{</span>
-<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>    <span class="s2">&quot;ENABLES&quot;</span><span class="p">:</span> <span class="s2">&quot;ENABLED_BY&quot;</span><span class="p">,</span>
-<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>    <span class="s2">&quot;CAUSES&quot;</span><span class="p">:</span> <span class="s2">&quot;CAUSED_BY&quot;</span><span class="p">,</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>    <span class="s2">"ENABLES"</span><span class="p">:</span> <span class="s2">"ENABLED_BY"</span><span class="p">,</span>
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>    <span class="s2">"CAUSES"</span><span class="p">:</span> <span class="s2">"CAUSED_BY"</span><span class="p">,</span>
 <a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>    <span class="o">...</span>
 <a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="p">}</span>
 </code></pre></div></p>
@@ -2925,30 +2925,30 @@
 </ol>
 <h2 id="example-scenarios">Example Scenarios</h2>
 <h3 id="scenario-1-seed-type-first-use">Scenario 1: Seed Type First Use</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="c1"># LLM extracts using seed type &quot;ENABLES&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="c1"># LLM extracts using seed type "ENABLES"</span>
 <a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="p">{</span>
-<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>    <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;ENABLES&quot;</span><span class="p">,</span>
-<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a>    <span class="s2">&quot;direction_semantics&quot;</span><span class="p">:</span> <span class="s2">&quot;outward&quot;</span><span class="p">,</span>  <span class="c1"># LLM decided</span>
-<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a>    <span class="s2">&quot;confidence&quot;</span><span class="p">:</span> <span class="mf">0.9</span>
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>    <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"ENABLES"</span><span class="p">,</span>
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a>    <span class="s2">"direction_semantics"</span><span class="p">:</span> <span class="s2">"outward"</span><span class="p">,</span>  <span class="c1"># LLM decided</span>
+<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a>    <span class="s2">"confidence"</span><span class="p">:</span> <span class="mf">0.9</span>
 <a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a><span class="p">}</span>
 <a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a>
 <a id="__codelineno-20-8" name="__codelineno-20-8" href="#__codelineno-20-8"></a><span class="c1"># Storage (first use sets the pattern)</span>
 <a id="__codelineno-20-9" name="__codelineno-20-9" href="#__codelineno-20-9"></a><span class="n">UPDATE</span> <span class="n">relationship_vocabulary</span>
-<a id="__codelineno-20-10" name="__codelineno-20-10" href="#__codelineno-20-10"></a><span class="n">SET</span> <span class="n">direction_semantics</span> <span class="o">=</span> <span class="s1">&#39;outward&#39;</span>
-<a id="__codelineno-20-11" name="__codelineno-20-11" href="#__codelineno-20-11"></a><span class="n">WHERE</span> <span class="n">relationship_type</span> <span class="o">=</span> <span class="s1">&#39;ENABLES&#39;</span><span class="p">;</span>
+<a id="__codelineno-20-10" name="__codelineno-20-10" href="#__codelineno-20-10"></a><span class="n">SET</span> <span class="n">direction_semantics</span> <span class="o">=</span> <span class="s1">'outward'</span>
+<a id="__codelineno-20-11" name="__codelineno-20-11" href="#__codelineno-20-11"></a><span class="n">WHERE</span> <span class="n">relationship_type</span> <span class="o">=</span> <span class="s1">'ENABLES'</span><span class="p">;</span>
 <a id="__codelineno-20-12" name="__codelineno-20-12" href="#__codelineno-20-12"></a>
 <a id="__codelineno-20-13" name="__codelineno-20-13" href="#__codelineno-20-13"></a><span class="c1"># Graph node</span>
-<a id="__codelineno-20-14" name="__codelineno-20-14" href="#__codelineno-20-14"></a><span class="p">(:</span><span class="n">VocabType</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="s2">&quot;ENABLES&quot;</span><span class="p">,</span> <span class="n">direction_semantics</span><span class="p">:</span> <span class="s2">&quot;outward&quot;</span><span class="p">,</span> <span class="n">usage_count</span><span class="p">:</span> <span class="mi">1</span><span class="p">})</span>
+<a id="__codelineno-20-14" name="__codelineno-20-14" href="#__codelineno-20-14"></a><span class="p">(:</span><span class="n">VocabType</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="s2">"ENABLES"</span><span class="p">,</span> <span class="n">direction_semantics</span><span class="p">:</span> <span class="s2">"outward"</span><span class="p">,</span> <span class="n">usage_count</span><span class="p">:</span> <span class="mi">1</span><span class="p">})</span>
 <a id="__codelineno-20-15" name="__codelineno-20-15" href="#__codelineno-20-15"></a>
 <a id="__codelineno-20-16" name="__codelineno-20-16" href="#__codelineno-20-16"></a><span class="c1"># Next extraction sees:</span>
-<a id="__codelineno-20-17" name="__codelineno-20-17" href="#__codelineno-20-17"></a><span class="s2">&quot;ENABLES (1 use, direction=&#39;outward&#39;)&quot;</span>
+<a id="__codelineno-20-17" name="__codelineno-20-17" href="#__codelineno-20-17"></a><span class="s2">"ENABLES (1 use, direction='outward')"</span>
 </code></pre></div>
 <h3 id="scenario-2-novel-vocabulary">Scenario 2: Novel Vocabulary</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="c1"># LLM creates &quot;COMPETES_WITH&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="c1"># LLM creates "COMPETES_WITH"</span>
 <a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="p">{</span>
-<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>    <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;COMPETES_WITH&quot;</span><span class="p">,</span>
-<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a>    <span class="s2">&quot;direction_semantics&quot;</span><span class="p">:</span> <span class="s2">&quot;bidirectional&quot;</span><span class="p">,</span>  <span class="c1"># LLM reasoned: symmetric</span>
-<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a>    <span class="s2">&quot;confidence&quot;</span><span class="p">:</span> <span class="mf">0.85</span>
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>    <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"COMPETES_WITH"</span><span class="p">,</span>
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a>    <span class="s2">"direction_semantics"</span><span class="p">:</span> <span class="s2">"bidirectional"</span><span class="p">,</span>  <span class="c1"># LLM reasoned: symmetric</span>
+<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a>    <span class="s2">"confidence"</span><span class="p">:</span> <span class="mf">0.85</span>
 <a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a><span class="p">}</span>
 <a id="__codelineno-21-7" name="__codelineno-21-7" href="#__codelineno-21-7"></a>
 <a id="__codelineno-21-8" name="__codelineno-21-8" href="#__codelineno-21-8"></a><span class="c1"># Storage</span>
@@ -2957,20 +2957,20 @@
 <a id="__codelineno-21-11" name="__codelineno-21-11" href="#__codelineno-21-11"></a>    <span class="n">category</span><span class="p">,</span>  <span class="c1"># From embedding similarity</span>
 <a id="__codelineno-21-12" name="__codelineno-21-12" href="#__codelineno-21-12"></a>    <span class="n">direction_semantics</span><span class="p">,</span>  <span class="c1"># From LLM</span>
 <a id="__codelineno-21-13" name="__codelineno-21-13" href="#__codelineno-21-13"></a>    <span class="n">is_builtin</span>
-<a id="__codelineno-21-14" name="__codelineno-21-14" href="#__codelineno-21-14"></a><span class="p">)</span> <span class="n">VALUES</span> <span class="p">(</span><span class="s1">&#39;COMPETES_WITH&#39;</span><span class="p">,</span> <span class="s1">&#39;semantic&#39;</span><span class="p">,</span> <span class="s1">&#39;bidirectional&#39;</span><span class="p">,</span> <span class="n">false</span><span class="p">);</span>
+<a id="__codelineno-21-14" name="__codelineno-21-14" href="#__codelineno-21-14"></a><span class="p">)</span> <span class="n">VALUES</span> <span class="p">(</span><span class="s1">'COMPETES_WITH'</span><span class="p">,</span> <span class="s1">'semantic'</span><span class="p">,</span> <span class="s1">'bidirectional'</span><span class="p">,</span> <span class="n">false</span><span class="p">);</span>
 <a id="__codelineno-21-15" name="__codelineno-21-15" href="#__codelineno-21-15"></a>
 <a id="__codelineno-21-16" name="__codelineno-21-16" href="#__codelineno-21-16"></a><span class="c1"># Graph node</span>
-<a id="__codelineno-21-17" name="__codelineno-21-17" href="#__codelineno-21-17"></a><span class="p">(:</span><span class="n">VocabType</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="s2">&quot;COMPETES_WITH&quot;</span><span class="p">,</span> <span class="n">direction_semantics</span><span class="p">:</span> <span class="s2">&quot;bidirectional&quot;</span><span class="p">})</span>
+<a id="__codelineno-21-17" name="__codelineno-21-17" href="#__codelineno-21-17"></a><span class="p">(:</span><span class="n">VocabType</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="s2">"COMPETES_WITH"</span><span class="p">,</span> <span class="n">direction_semantics</span><span class="p">:</span> <span class="s2">"bidirectional"</span><span class="p">})</span>
 <a id="__codelineno-21-18" name="__codelineno-21-18" href="#__codelineno-21-18"></a>
 <a id="__codelineno-21-19" name="__codelineno-21-19" href="#__codelineno-21-19"></a><span class="c1"># Next extraction sees:</span>
-<a id="__codelineno-21-20" name="__codelineno-21-20" href="#__codelineno-21-20"></a><span class="s2">&quot;COMPETES_WITH (1 use, direction=&#39;bidirectional&#39;)&quot;</span>
+<a id="__codelineno-21-20" name="__codelineno-21-20" href="#__codelineno-21-20"></a><span class="s2">"COMPETES_WITH (1 use, direction='bidirectional')"</span>
 </code></pre></div>
 <h3 id="scenario-3-direction-aware-query">Scenario 3: Direction-Aware Query</h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="c1">// Find what meditation enables (outward relationships)</span>
-<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">meditation</span><span class="p">:</span><span class="n">Concept</span><span class="w"> </span><span class="p">{</span><span class="n">label</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Meditation&quot;</span><span class="p">})</span><span class="o">-[</span><span class="n">r</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">meditation</span><span class="p">:</span><span class="n">Concept</span><span class="w"> </span><span class="p">{</span><span class="n">label</span><span class="p">:</span><span class="w"> </span><span class="s">"Meditation"</span><span class="p">})</span><span class="o">-[</span><span class="n">r</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
 <a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">v</span><span class="p">:</span><span class="n">VocabType</span><span class="w"> </span><span class="p">{</span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="n">type</span><span class="p">(</span><span class="n">r</span><span class="p">)})</span>
-<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">v</span><span class="p">.</span><span class="n">direction_semantics</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">&#39;outward&#39;</span>
-<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a><span class="w">  </span><span class="n">AND</span><span class="w"> </span><span class="n">v</span><span class="p">.</span><span class="n">category</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">&#39;causation&#39;</span>
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">v</span><span class="p">.</span><span class="n">direction_semantics</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">'outward'</span>
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a><span class="w">  </span><span class="n">AND</span><span class="w"> </span><span class="n">v</span><span class="p">.</span><span class="n">category</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">'causation'</span>
 <a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a><span class="k">RETURN</span><span class="w"> </span><span class="n">target</span><span class="p">.</span><span class="n">label</span><span class="p">,</span><span class="w"> </span><span class="n">type</span><span class="p">(</span><span class="n">r</span><span class="p">),</span><span class="w"> </span><span class="n">r</span><span class="p">.</span><span class="n">confidence</span>
 <a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">r</span><span class="p">.</span><span class="n">confidence</span><span class="w"> </span><span class="k">DESC</span>
 <a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a>
@@ -3053,7 +3053,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": [], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

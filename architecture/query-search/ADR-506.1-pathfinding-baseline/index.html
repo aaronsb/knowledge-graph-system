@@ -19,7 +19,7 @@
       
       
       <link rel="icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -27,7 +27,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.ec1eaa64.min.css">
       
       
 
@@ -2451,13 +2451,13 @@
 <h2 id="test-commands">Test Commands</h2>
 <p>To reproduce these measurements:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># Basic timing test</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="nb">time</span><span class="w"> </span>kg<span class="w"> </span>search<span class="w"> </span>connect<span class="w"> </span><span class="s2">&quot;buddhism meditation&quot;</span><span class="w"> </span><span class="s2">&quot;nirvana&quot;</span><span class="w"> </span>--max-hops<span class="w"> </span><span class="m">5</span><span class="w"> </span>--min-similarity<span class="w"> </span><span class="m">0</span>.8<span class="w"> </span>--no-evidence
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="nb">time</span><span class="w"> </span>kg<span class="w"> </span>search<span class="w"> </span>connect<span class="w"> </span><span class="s2">"buddhism meditation"</span><span class="w"> </span><span class="s2">"nirvana"</span><span class="w"> </span>--max-hops<span class="w"> </span><span class="m">5</span><span class="w"> </span>--min-similarity<span class="w"> </span><span class="m">0</span>.8<span class="w"> </span>--no-evidence
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
 <a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="c1"># Full JSON output for analysis</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>kg<span class="w"> </span>search<span class="w"> </span>connect<span class="w"> </span><span class="s2">&quot;buddhism meditation&quot;</span><span class="w"> </span><span class="s2">&quot;nirvana&quot;</span><span class="w"> </span>--max-hops<span class="w"> </span><span class="m">5</span><span class="w"> </span>--min-similarity<span class="w"> </span><span class="m">0</span>.8<span class="w"> </span>--no-evidence<span class="w"> </span>--json<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span><span class="s1">&#39;.&#39;</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>kg<span class="w"> </span>search<span class="w"> </span>connect<span class="w"> </span><span class="s2">"buddhism meditation"</span><span class="w"> </span><span class="s2">"nirvana"</span><span class="w"> </span>--max-hops<span class="w"> </span><span class="m">5</span><span class="w"> </span>--min-similarity<span class="w"> </span><span class="m">0</span>.8<span class="w"> </span>--no-evidence<span class="w"> </span>--json<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span><span class="s1">'.'</span>
 <a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>
 <a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="c1"># Cross-ontology test</span>
-<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="nb">time</span><span class="w"> </span>kg<span class="w"> </span>search<span class="w"> </span>connect<span class="w"> </span><span class="s2">&quot;conscious ego&quot;</span><span class="w"> </span><span class="s2">&quot;illusion of self&quot;</span><span class="w"> </span>--max-hops<span class="w"> </span><span class="m">6</span><span class="w"> </span>--min-similarity<span class="w"> </span><span class="m">0</span>.75<span class="w"> </span>--no-evidence
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="nb">time</span><span class="w"> </span>kg<span class="w"> </span>search<span class="w"> </span>connect<span class="w"> </span><span class="s2">"conscious ego"</span><span class="w"> </span><span class="s2">"illusion of self"</span><span class="w"> </span>--max-hops<span class="w"> </span><span class="m">6</span><span class="w"> </span>--min-similarity<span class="w"> </span><span class="m">0</span>.75<span class="w"> </span>--no-evidence
 </code></pre></div>
 <h2 id="references">References</h2>
 <ul>
@@ -2520,7 +2520,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": [], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

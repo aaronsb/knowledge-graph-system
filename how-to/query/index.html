@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -31,7 +31,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
       
 
@@ -2789,16 +2789,16 @@
 <h2 id="search-by-meaning">Search by Meaning</h2>
 <p><code>kg search</code> matches concepts by semantic similarity, not keyword overlap. Specific phrases return more relevant results than single words.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Direct shortcut</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>kg<span class="w"> </span>search<span class="w"> </span><span class="s2">&quot;climate change effects on agriculture&quot;</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>kg<span class="w"> </span>search<span class="w"> </span><span class="s2">"climate change effects on agriculture"</span>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># Explicit subcommand — same result, more options</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>kg<span class="w"> </span>search<span class="w"> </span>query<span class="w"> </span><span class="s2">&quot;climate change effects on agriculture&quot;</span><span class="w"> </span>--limit<span class="w"> </span><span class="m">20</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>kg<span class="w"> </span>search<span class="w"> </span>query<span class="w"> </span><span class="s2">"climate change effects on agriculture"</span><span class="w"> </span>--limit<span class="w"> </span><span class="m">20</span>
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
 <a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="c1"># Lower the similarity threshold to broaden matches (default 0.7)</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>kg<span class="w"> </span>search<span class="w"> </span>query<span class="w"> </span><span class="s2">&quot;machine learning&quot;</span><span class="w"> </span>--min-similarity<span class="w"> </span><span class="m">0</span>.5
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>kg<span class="w"> </span>search<span class="w"> </span>query<span class="w"> </span><span class="s2">"machine learning"</span><span class="w"> </span>--min-similarity<span class="w"> </span><span class="m">0</span>.5
 <a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>
 <a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="c1"># JSON output for scripting</span>
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>kg<span class="w"> </span>search<span class="w"> </span><span class="s2">&quot;economic policy&quot;</span><span class="w"> </span>--json
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>kg<span class="w"> </span>search<span class="w"> </span><span class="s2">"economic policy"</span><span class="w"> </span>--json
 </code></pre></div>
 <p>Each result reports:</p>
 <table>
@@ -2829,12 +2829,12 @@
 </table>
 <p>If results look thin, the CLI suggests a lower threshold:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>💡 3 additional concepts available at 60% threshold
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>   Try: kg search &quot;climate change&quot; --min-similarity 0.6
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>   Try: kg search "climate change" --min-similarity 0.6
 </code></pre></div>
 <h3 id="search-source-text">Search Source Text</h3>
 <p><code>kg search sources</code> searches the raw source passages rather than the extracted concepts. Use it to find where in your documents a topic appears.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kg<span class="w"> </span>search<span class="w"> </span>sources<span class="w"> </span><span class="s2">&quot;unified embedding regeneration&quot;</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>kg<span class="w"> </span>search<span class="w"> </span>sources<span class="w"> </span><span class="s2">&quot;governance framework&quot;</span><span class="w"> </span>--ontology<span class="w"> </span><span class="s2">&quot;policy-docs&quot;</span><span class="w"> </span>--limit<span class="w"> </span><span class="m">5</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kg<span class="w"> </span>search<span class="w"> </span>sources<span class="w"> </span><span class="s2">"unified embedding regeneration"</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>kg<span class="w"> </span>search<span class="w"> </span>sources<span class="w"> </span><span class="s2">"governance framework"</span><span class="w"> </span>--ontology<span class="w"> </span><span class="s2">"policy-docs"</span><span class="w"> </span>--limit<span class="w"> </span><span class="m">5</span>
 </code></pre></div>
 <hr />
 <h2 id="get-concept-details">Get Concept Details</h2>
@@ -2864,16 +2864,16 @@
 <p>Relationship types available in your graph appear under <code>kg vocab list</code>.</p>
 <h3 id="find-paths-between-concepts">Find Paths Between Concepts</h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># By natural language phrase (auto-detected)</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>kg<span class="w"> </span>search<span class="w"> </span>connect<span class="w"> </span><span class="s2">&quot;inflation&quot;</span><span class="w"> </span><span class="s2">&quot;unemployment&quot;</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>kg<span class="w"> </span>search<span class="w"> </span>connect<span class="w"> </span><span class="s2">"inflation"</span><span class="w"> </span><span class="s2">"unemployment"</span>
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
 <a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="c1"># By exact concept ID</span>
 <a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>kg<span class="w"> </span>search<span class="w"> </span>connect<span class="w"> </span>&lt;id1&gt;<span class="w"> </span>&lt;id2&gt;
 <a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>
 <a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="c1"># Limit path length</span>
-<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>kg<span class="w"> </span>search<span class="w"> </span>connect<span class="w"> </span><span class="s2">&quot;AI models&quot;</span><span class="w"> </span><span class="s2">&quot;production systems&quot;</span><span class="w"> </span>--max-hops<span class="w"> </span><span class="m">4</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>kg<span class="w"> </span>search<span class="w"> </span>connect<span class="w"> </span><span class="s2">"AI models"</span><span class="w"> </span><span class="s2">"production systems"</span><span class="w"> </span>--max-hops<span class="w"> </span><span class="m">4</span>
 <a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>
 <a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="c1"># Lower match threshold for phrase matching (default 0.5)</span>
-<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>kg<span class="w"> </span>search<span class="w"> </span>connect<span class="w"> </span><span class="s2">&quot;embedding&quot;</span><span class="w"> </span><span class="s2">&quot;migration&quot;</span><span class="w"> </span>--min-similarity<span class="w"> </span><span class="m">0</span>.3
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>kg<span class="w"> </span>search<span class="w"> </span>connect<span class="w"> </span><span class="s2">"embedding"</span><span class="w"> </span><span class="s2">"migration"</span><span class="w"> </span>--min-similarity<span class="w"> </span><span class="m">0</span>.3
 </code></pre></div>
 <p>The CLI auto-detects whether arguments are IDs (containing hyphens or underscores) or phrases. Specific 2–3 word phrases match more reliably than single generic words.</p>
 <p>A path result looks like:</p>
@@ -2887,7 +2887,7 @@
 <h3 id="explore-contradictions">Explore Contradictions</h3>
 <p>Concepts with grounding near zero or negative have mixed or opposing evidence.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Search for a contested topic, then inspect low-grounding results</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>kg<span class="w"> </span>search<span class="w"> </span><span class="s2">&quot;vaccination policy&quot;</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>kg<span class="w"> </span>search<span class="w"> </span><span class="s2">"vaccination policy"</span>
 <a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
 <a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1"># Get details to see both sides</span>
 <a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>kg<span class="w"> </span>search<span class="w"> </span>show<span class="w"> </span>&lt;concept-id&gt;
@@ -2903,9 +2903,9 @@
 <hr />
 <h2 id="saved-queries">Saved Queries</h2>
 <p>A saved query is an ordered list of graph operations. Each operation is tagged <code>+</code> (add results to graph) or <code>-</code> (remove matching nodes). This lets you sculpt a subgraph by building up and trimming down.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>+ MATCH (c:Concept)-[r*1..2]-(n:Concept) WHERE c.label CONTAINS &#39;governance&#39; RETURN c, r, n;
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>+ MATCH (c:Concept)-[r*1..1]-(n:Concept) WHERE c.label CONTAINS &#39;compliance&#39; RETURN c, r, n;
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>- MATCH (c:Concept) WHERE c.label CONTAINS &#39;legacy&#39; RETURN c;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>+ MATCH (c:Concept)-[r*1..2]-(n:Concept) WHERE c.label CONTAINS 'governance' RETURN c, r, n;
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>+ MATCH (c:Concept)-[r*1..1]-(n:Concept) WHERE c.label CONTAINS 'compliance' RETURN c, r, n;
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>- MATCH (c:Concept) WHERE c.label CONTAINS 'legacy' RETURN c;
 </code></pre></div>
 <h3 id="create-a-saved-query">Create a Saved Query</h3>
 <p><strong>From the web interface:</strong> Every search, "Add Adjacent," "Remove," and double-click follow you perform in the 2D/3D graph explorer is recorded as a step. When the graph looks right, open the Saved Queries panel (folder icon in the left rail), click <strong>Save Exploration</strong>, and name it. The full step sequence is stored.</p>
@@ -2971,13 +2971,13 @@
 <p><code>+</code> executes a Cypher statement and merges matching nodes/edges into the current graph; duplicate nodes are deduplicated by ID. <code>-</code> executes a Cypher statement and removes matching nodes and their connected edges.</p>
 <p>Start broad, then subtract noise — it is easier to remove than to find everything piecemeal:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a># Start with all governance-adjacent concepts (2 hops)
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>+ MATCH (c:Concept)-[r*1..2]-(n) WHERE c.label CONTAINS &#39;governance&#39; RETURN c, r, n;
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>+ MATCH (c:Concept)-[r*1..2]-(n) WHERE c.label CONTAINS 'governance' RETURN c, r, n;
 <a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
 <a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a># Add compliance concepts
-<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>+ MATCH (c:Concept)-[r*1..1]-(n) WHERE c.label CONTAINS &#39;compliance&#39; RETURN c, r, n;
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>+ MATCH (c:Concept)-[r*1..1]-(n) WHERE c.label CONTAINS 'compliance' RETURN c, r, n;
 <a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>
 <a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a># Remove legacy-system noise
-<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>- MATCH (c:Concept) WHERE c.label CONTAINS &#39;legacy&#39; RETURN c;
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>- MATCH (c:Concept) WHERE c.label CONTAINS 'legacy' RETURN c;
 </code></pre></div>
 <hr />
 <h2 id="web-interface-explorers">Web Interface Explorers</h2>
@@ -3008,49 +3008,49 @@
 <hr />
 <h2 id="rest-api">REST API</h2>
 <p>Authenticate first. The OAuth flow is documented at <a href="../../self-host/security/">Self-Host &gt; Security and Access</a>. The CLI stores tokens in <code>~/.config/kg/config.json</code> after <code>kg login</code>; for direct API access, use the device-code or client-credentials grant:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="s2">&quot;http://localhost:8000/auth/oauth/token&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">  </span>-d<span class="w"> </span><span class="s2">&quot;grant_type=client_credentials&amp;client_id=...&amp;client_secret=...&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="s2">"http://localhost:8000/auth/oauth/token"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">  </span>-d<span class="w"> </span><span class="s2">"grant_type=client_credentials&amp;client_id=...&amp;client_secret=..."</span>
 </code></pre></div>
 <h3 id="search-concepts">Search Concepts</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="s2">&quot;http://localhost:8000/query/search&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: Bearer </span><span class="nv">$TOKEN</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;query&quot;: &quot;climate change&quot;, &quot;limit&quot;: 10, &quot;min_similarity&quot;: 0.7}&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="s2">"http://localhost:8000/query/search"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">"Authorization: Bearer </span><span class="nv">$TOKEN</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">"Content-Type: application/json"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">'{"query": "climate change", "limit": 10, "min_similarity": 0.7}'</span>
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="p">{</span>
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="w">  </span><span class="nt">&quot;results&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="w">  </span><span class="nt">"results"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
 <a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="w">    </span><span class="p">{</span>
-<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="w">      </span><span class="nt">&quot;concept_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;abc123&quot;</span><span class="p">,</span>
-<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="w">      </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Climate change increases extreme weather&quot;</span><span class="p">,</span>
-<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="w">      </span><span class="nt">&quot;similarity&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.89</span><span class="p">,</span>
-<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="w">      </span><span class="nt">&quot;grounding_strength&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.72</span><span class="p">,</span>
-<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a><span class="w">      </span><span class="nt">&quot;source_count&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">5</span>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="w">      </span><span class="nt">"concept_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"abc123"</span><span class="p">,</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="w">      </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Climate change increases extreme weather"</span><span class="p">,</span>
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="w">      </span><span class="nt">"similarity"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.89</span><span class="p">,</span>
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="w">      </span><span class="nt">"grounding_strength"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.72</span><span class="p">,</span>
+<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a><span class="w">      </span><span class="nt">"source_count"</span><span class="p">:</span><span class="w"> </span><span class="mi">5</span>
 <a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a><span class="w">    </span><span class="p">}</span>
 <a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a><span class="w">  </span><span class="p">]</span>
 <a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a><span class="p">}</span>
 </code></pre></div>
 <h3 id="get-concept-details_1">Get Concept Details</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>curl<span class="w"> </span><span class="s2">&quot;http://localhost:8000/query/concept/abc123&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: Bearer </span><span class="nv">$TOKEN</span><span class="s2">&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>curl<span class="w"> </span><span class="s2">"http://localhost:8000/query/concept/abc123"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">"Authorization: Bearer </span><span class="nv">$TOKEN</span><span class="s2">"</span>
 </code></pre></div>
 <h3 id="find-related-concepts_1">Find Related Concepts</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="s2">&quot;http://localhost:8000/query/related&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: Bearer </span><span class="nv">$TOKEN</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;concept_id&quot;: &quot;abc123&quot;, &quot;max_depth&quot;: 2}&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="s2">"http://localhost:8000/query/related"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">"Authorization: Bearer </span><span class="nv">$TOKEN</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">"Content-Type: application/json"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">'{"concept_id": "abc123", "max_depth": 2}'</span>
 </code></pre></div>
 <h3 id="find-paths">Find Paths</h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="c1"># By concept ID</span>
-<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="s2">&quot;http://localhost:8000/query/connect&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: Bearer </span><span class="nv">$TOKEN</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;from_id&quot;: &quot;abc123&quot;, &quot;to_id&quot;: &quot;def456&quot;, &quot;max_hops&quot;: 5}&#39;</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="s2">"http://localhost:8000/query/connect"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">"Authorization: Bearer </span><span class="nv">$TOKEN</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">"Content-Type: application/json"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">'{"from_id": "abc123", "to_id": "def456", "max_hops": 5}'</span>
 <a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a>
 <a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a><span class="c1"># By phrase</span>
-<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="s2">&quot;http://localhost:8000/query/connect-by-search&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: Bearer </span><span class="nv">$TOKEN</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-18-11" name="__codelineno-18-11" href="#__codelineno-18-11"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;from_query&quot;: &quot;inflation&quot;, &quot;to_query&quot;: &quot;unemployment&quot;, &quot;max_hops&quot;: 5}&#39;</span>
+<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="s2">"http://localhost:8000/query/connect-by-search"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">"Authorization: Bearer </span><span class="nv">$TOKEN</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">"Content-Type: application/json"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-18-11" name="__codelineno-18-11" href="#__codelineno-18-11"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">'{"from_query": "inflation", "to_query": "unemployment", "max_hops": 5}'</span>
 </code></pre></div>
 <p>Full endpoint reference: <a href="../../reference/api/">Reference &gt; REST API</a>.</p>
 <hr />
@@ -3086,17 +3086,17 @@
 </tr>
 </tbody>
 </table>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>Use search tool with query &quot;sleep deprivation effects on memory&quot;
-<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>Use concept tool with action &quot;connect&quot;, from_query &quot;inflation&quot;, to_query &quot;unemployment&quot;
-<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>Use concept tool with action &quot;related&quot;, concept_id &quot;abc123&quot;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>Use search tool with query "sleep deprivation effects on memory"
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>Use concept tool with action "connect", from_query "inflation", to_query "unemployment"
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>Use concept tool with action "related", concept_id "abc123"
 </code></pre></div>
 <p>Full tool reference: <a href="../../reference/mcp/">Reference &gt; MCP Tools</a>.</p>
 <hr />
 <h2 id="cross-ontology-queries">Cross-Ontology Queries</h2>
 <p>Concepts merge across ontologies automatically when similarity exceeds the matching threshold (~70%). A concept mentioned in both a technical spec and an AI research document becomes one graph node with evidence from both sources. Path traversal crosses ontology boundaries without additional configuration.</p>
 <p>Search across all ontologies by default, or narrow to one:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>kg<span class="w"> </span>search<span class="w"> </span><span class="s2">&quot;embedding regeneration&quot;</span><span class="w">                         </span><span class="c1"># all ontologies</span>
-<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>kg<span class="w"> </span>search<span class="w"> </span>sources<span class="w"> </span><span class="s2">&quot;governance&quot;</span><span class="w"> </span>--ontology<span class="w"> </span><span class="s2">&quot;policy-docs&quot;</span><span class="w">   </span><span class="c1"># one ontology</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>kg<span class="w"> </span>search<span class="w"> </span><span class="s2">"embedding regeneration"</span><span class="w">                         </span><span class="c1"># all ontologies</span>
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>kg<span class="w"> </span>search<span class="w"> </span>sources<span class="w"> </span><span class="s2">"governance"</span><span class="w"> </span>--ontology<span class="w"> </span><span class="s2">"policy-docs"</span><span class="w">   </span><span class="c1"># one ontology</span>
 </code></pre></div>
 <p><strong>Ontology organization that supports good linking:</strong></p>
 <ul>
@@ -3167,7 +3167,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

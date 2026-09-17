@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -31,7 +31,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
       
 
@@ -2314,27 +2314,27 @@
 <a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="n">facade</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">facade</span>
 <a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>
 <a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="n">well_grounded</span> <span class="o">=</span> <span class="n">facade</span><span class="o">.</span><span class="n">match_concept_relationships</span><span class="p">(</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>    <span class="n">include_epistemic_status</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;WELL_GROUNDED&quot;</span><span class="p">],</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>    <span class="n">include_epistemic_status</span><span class="o">=</span><span class="p">[</span><span class="s2">"WELL_GROUNDED"</span><span class="p">],</span>
 <a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>    <span class="n">limit</span><span class="o">=</span><span class="mi">10</span>
 <a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="p">)</span>
 </code></pre></div>
 <p><strong>Exclude historical relationships (current state only):</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">current</span> <span class="o">=</span> <span class="n">facade</span><span class="o">.</span><span class="n">match_concept_relationships</span><span class="p">(</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="n">exclude_epistemic_status</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;HISTORICAL&quot;</span><span class="p">],</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="n">exclude_epistemic_status</span><span class="o">=</span><span class="p">[</span><span class="s2">"HISTORICAL"</span><span class="p">],</span>
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="n">limit</span><span class="o">=</span><span class="mi">50</span>
 <a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="p">)</span>
 </code></pre></div>
 <p><strong>Dialectical query — find tension and contradiction:</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">contested</span> <span class="o">=</span> <span class="n">facade</span><span class="o">.</span><span class="n">match_concept_relationships</span><span class="p">(</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>    <span class="n">include_epistemic_status</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;MIXED_GROUNDING&quot;</span><span class="p">,</span> <span class="s2">&quot;CONTRADICTED&quot;</span><span class="p">],</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>    <span class="n">include_epistemic_status</span><span class="o">=</span><span class="p">[</span><span class="s2">"MIXED_GROUNDING"</span><span class="p">,</span> <span class="s2">"CONTRADICTED"</span><span class="p">],</span>
 <a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    <span class="n">limit</span><span class="o">=</span><span class="mi">20</span>
 <a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="p">)</span>
 </code></pre></div>
 <p><strong>Combine with relationship type and confidence filters:</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">reliable_causal</span> <span class="o">=</span> <span class="n">facade</span><span class="o">.</span><span class="n">match_concept_relationships</span><span class="p">(</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    <span class="n">rel_types</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;ENABLES&quot;</span><span class="p">,</span> <span class="s2">&quot;CAUSES&quot;</span><span class="p">,</span> <span class="s2">&quot;REQUIRES&quot;</span><span class="p">],</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="n">include_epistemic_status</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;WELL_GROUNDED&quot;</span><span class="p">],</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    <span class="n">where</span><span class="o">=</span><span class="s2">&quot;r.confidence &gt; 0.8&quot;</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    <span class="n">rel_types</span><span class="o">=</span><span class="p">[</span><span class="s2">"ENABLES"</span><span class="p">,</span> <span class="s2">"CAUSES"</span><span class="p">,</span> <span class="s2">"REQUIRES"</span><span class="p">],</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="n">include_epistemic_status</span><span class="o">=</span><span class="p">[</span><span class="s2">"WELL_GROUNDED"</span><span class="p">],</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    <span class="n">where</span><span class="o">=</span><span class="s2">"r.confidence &gt; 0.8"</span>
 <a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="p">)</span>
 </code></pre></div>
 <p>Queries without epistemic status parameters return all relationships — backward-compatible behavior is unchanged.</p>
@@ -2344,11 +2344,11 @@
 <p>Measurement has not been stored. Run <code>kg vocab epistemic-status measure</code> (without <code>--no-store</code>), then retry.</p>
 <p>Verify storage:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">vocab_types</span> <span class="o">=</span> <span class="n">facade</span><span class="o">.</span><span class="n">match_vocab_types</span><span class="p">(</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>    <span class="n">where</span><span class="o">=</span><span class="s2">&quot;v.epistemic_status IS NOT NULL&quot;</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>    <span class="n">where</span><span class="o">=</span><span class="s2">"v.epistemic_status IS NOT NULL"</span>
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="p">)</span>
 <a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="k">for</span> <span class="n">vt</span> <span class="ow">in</span> <span class="n">vocab_types</span><span class="p">:</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>    <span class="n">props</span> <span class="o">=</span> <span class="n">vt</span><span class="p">[</span><span class="s1">&#39;v&#39;</span><span class="p">][</span><span class="s1">&#39;properties&#39;</span><span class="p">]</span>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">props</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">props</span><span class="p">[</span><span class="s1">&#39;epistemic_status&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> (avg: </span><span class="si">{</span><span class="n">props</span><span class="p">[</span><span class="s1">&#39;epistemic_stats&#39;</span><span class="p">][</span><span class="s1">&#39;avg_grounding&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>    <span class="n">props</span> <span class="o">=</span> <span class="n">vt</span><span class="p">[</span><span class="s1">'v'</span><span class="p">][</span><span class="s1">'properties'</span><span class="p">]</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">props</span><span class="p">[</span><span class="s1">'name'</span><span class="p">]</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">props</span><span class="p">[</span><span class="s1">'epistemic_status'</span><span class="p">]</span><span class="si">}</span><span class="s2"> (avg: </span><span class="si">{</span><span class="n">props</span><span class="p">[</span><span class="s1">'epistemic_stats'</span><span class="p">][</span><span class="s1">'avg_grounding'</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
 </code></pre></div>
 <p><strong>All types show <code>INSUFFICIENT_DATA</code></strong></p>
 <p>The graph is too small or too new to classify. Options:</p>
@@ -2431,7 +2431,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

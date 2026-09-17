@@ -19,7 +19,7 @@
       
       
       <link rel="icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -27,7 +27,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.ec1eaa64.min.css">
       
       
 
@@ -2218,10 +2218,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#phase-1-configuration-validation-adr-062a" class="md-nav__link">
+  <a href="#phase-1-configuration-validation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Phase 1: Configuration &amp; Validation (ADR-062a)
+        Phase 1: Configuration &amp; Validation
       
     </span>
   </a>
@@ -2229,10 +2229,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#phase-2-file-inspection-ingestion-adr-062b" class="md-nav__link">
+  <a href="#phase-2-file-inspection-ingestion" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Phase 2: File Inspection &amp; Ingestion (ADR-062b)
+        Phase 2: File Inspection &amp; Ingestion
       
     </span>
   </a>
@@ -2240,10 +2240,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#phase-3-directory-ingestion-adr-062c" class="md-nav__link">
+  <a href="#phase-3-directory-ingestion" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Phase 3: Directory Ingestion (ADR-062c)
+        Phase 3: Directory Ingestion
       
     </span>
   </a>
@@ -2251,10 +2251,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#phase-4-security-hardening-adr-062d" class="md-nav__link">
+  <a href="#phase-4-security-hardening" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Phase 4: Security Hardening (ADR-062d)
+        Phase 4: Security Hardening
       
     </span>
   </a>
@@ -2369,8 +2369,8 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1">// Agent sees a directory of images</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="c1">// Agent does: submit path</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="nx">ingest</span><span class="o">-</span><span class="nx">directory</span><span class="p">({</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;~/Screenshots/ui-mockups&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span><span class="nx">ontology</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;UI Design&quot;</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s2">"~/Screenshots/ui-mockups"</span><span class="p">,</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span><span class="nx">ontology</span><span class="o">:</span><span class="w"> </span><span class="s2">"UI Design"</span>
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="p">})</span>
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="c1">// System does: everything else</span>
@@ -2387,39 +2387,39 @@
 <h3 id="1-allowlist-configuration">1. Allowlist Configuration</h3>
 <p><strong>File:</strong> <code>~/.config/kg/mcp-allowed-paths.json</code></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;1.0&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span><span class="nt">&quot;allowed_directories&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">    </span><span class="s2">&quot;~/Documents/knowledge-base&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">    </span><span class="s2">&quot;~/Projects/*/docs&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">    </span><span class="s2">&quot;/home/user/research&quot;</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="nt">"version"</span><span class="p">:</span><span class="w"> </span><span class="s2">"1.0"</span><span class="p">,</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span><span class="nt">"allowed_directories"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">    </span><span class="s2">"~/Documents/knowledge-base"</span><span class="p">,</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">    </span><span class="s2">"~/Projects/*/docs"</span><span class="p">,</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">    </span><span class="s2">"/home/user/research"</span>
 <a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">  </span><span class="p">],</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">  </span><span class="nt">&quot;allowed_patterns&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">    </span><span class="s2">&quot;**/*.md&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">    </span><span class="s2">&quot;**/*.txt&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">    </span><span class="s2">&quot;**/*.pdf&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="w">    </span><span class="s2">&quot;**/*.png&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="w">    </span><span class="s2">&quot;**/*.jpg&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="w">    </span><span class="s2">&quot;**/*.jpeg&quot;</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">  </span><span class="nt">"allowed_patterns"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">    </span><span class="s2">"**/*.md"</span><span class="p">,</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">    </span><span class="s2">"**/*.txt"</span><span class="p">,</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">    </span><span class="s2">"**/*.pdf"</span><span class="p">,</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="w">    </span><span class="s2">"**/*.png"</span><span class="p">,</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="w">    </span><span class="s2">"**/*.jpg"</span><span class="p">,</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="w">    </span><span class="s2">"**/*.jpeg"</span>
 <a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="w">  </span><span class="p">],</span>
-<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="w">  </span><span class="nt">&quot;blocked_patterns&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="w">    </span><span class="s2">&quot;**/.env&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="w">    </span><span class="s2">&quot;**/.env.*&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a><span class="w">    </span><span class="s2">&quot;**/.git/**&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a><span class="w">    </span><span class="s2">&quot;**/node_modules/**&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a><span class="w">    </span><span class="s2">&quot;**/.ssh/**&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a><span class="w">    </span><span class="s2">&quot;**/*_history&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a><span class="w">    </span><span class="s2">&quot;**/*.key&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a><span class="w">    </span><span class="s2">&quot;**/*.pem&quot;</span>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="w">  </span><span class="nt">"blocked_patterns"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="w">    </span><span class="s2">"**/.env"</span><span class="p">,</span>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="w">    </span><span class="s2">"**/.env.*"</span><span class="p">,</span>
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a><span class="w">    </span><span class="s2">"**/.git/**"</span><span class="p">,</span>
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a><span class="w">    </span><span class="s2">"**/node_modules/**"</span><span class="p">,</span>
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a><span class="w">    </span><span class="s2">"**/.ssh/**"</span><span class="p">,</span>
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a><span class="w">    </span><span class="s2">"**/*_history"</span><span class="p">,</span>
+<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a><span class="w">    </span><span class="s2">"**/*.key"</span><span class="p">,</span>
+<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a><span class="w">    </span><span class="s2">"**/*.pem"</span>
 <a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a><span class="w">  </span><span class="p">],</span>
-<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a><span class="w">  </span><span class="nt">&quot;max_file_size_mb&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">10</span><span class="p">,</span>
-<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a><span class="w">  </span><span class="nt">&quot;max_files_per_directory&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1000</span>
+<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a><span class="w">  </span><span class="nt">"max_file_size_mb"</span><span class="p">:</span><span class="w"> </span><span class="mi">10</span><span class="p">,</span>
+<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a><span class="w">  </span><span class="nt">"max_files_per_directory"</span><span class="p">:</span><span class="w"> </span><span class="mi">1000</span>
 <a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a><span class="p">}</span>
 </code></pre></div>
 <p><strong>Management:</strong> CLI only (not modifiable by MCP tools)</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kg<span class="w"> </span>mcp-config<span class="w"> </span>init-allowlist
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>kg<span class="w"> </span>mcp-config<span class="w"> </span>allow-dir<span class="w"> </span>~/Documents/research
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>kg<span class="w"> </span>mcp-config<span class="w"> </span>allow-pattern<span class="w"> </span><span class="s2">&quot;**/*.md&quot;</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>kg<span class="w"> </span>mcp-config<span class="w"> </span>block-pattern<span class="w"> </span><span class="s2">&quot;**/.env*&quot;</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>kg<span class="w"> </span>mcp-config<span class="w"> </span>allow-pattern<span class="w"> </span><span class="s2">"**/*.md"</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>kg<span class="w"> </span>mcp-config<span class="w"> </span>block-pattern<span class="w"> </span><span class="s2">"**/.env*"</span>
 <a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>kg<span class="w"> </span>mcp-config<span class="w"> </span>show-allowlist
 <a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>kg<span class="w"> </span>mcp-config<span class="w"> </span>test-path<span class="w"> </span>~/Documents/notes.md
 </code></pre></div>
@@ -2428,7 +2428,7 @@
 <p>Preview file contents before ingestion (prevents "oops" moments).</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="p">{</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span><span class="w">              </span><span class="c1">// File path (validated against allowlist)</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span><span class="nx">mode</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;head&#39;</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s1">&#39;tail&#39;</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s1">&#39;range&#39;</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s1">&#39;search&#39;</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s1">&#39;metadata&#39;</span><span class="p">,</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span><span class="nx">mode</span><span class="o">:</span><span class="w"> </span><span class="s1">'head'</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s1">'tail'</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s1">'range'</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s1">'search'</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s1">'metadata'</span><span class="p">,</span>
 <a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span><span class="nx">limit?</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">,</span><span class="w">            </span><span class="c1">// Max lines/bytes to return (default: 50 lines, max: 500)</span>
 <a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">  </span><span class="nx">offset?</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">,</span><span class="w">           </span><span class="c1">// Starting line/byte (for range mode)</span>
 <a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">  </span><span class="nx">pattern?</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="w">           </span><span class="c1">// Search pattern (for search mode)</span>
@@ -2449,43 +2449,43 @@
 <p><strong>Example Workflow:</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1">// 1. Check metadata of text file</span>
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="nx">inspect</span><span class="o">-</span><span class="nx">file</span><span class="p">({</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;~/Documents/notes.md&quot;</span><span class="p">,</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span><span class="nx">mode</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;metadata&quot;</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s2">"~/Documents/notes.md"</span><span class="p">,</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span><span class="nx">mode</span><span class="o">:</span><span class="w"> </span><span class="s2">"metadata"</span>
 <a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="p">})</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="c1">// → { size: &quot;45 KB&quot;, lines: 823, type: &quot;text/markdown&quot; }</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="c1">// → { size: "45 KB", lines: 823, type: "text/markdown" }</span>
 <a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>
 <a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="c1">// 2. Preview first few lines</span>
 <a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="nx">inspect</span><span class="o">-</span><span class="nx">file</span><span class="p">({</span>
-<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="w">  </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;~/Documents/notes.md&quot;</span><span class="p">,</span>
-<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="w">  </span><span class="nx">mode</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;head&quot;</span><span class="p">,</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="w">  </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s2">"~/Documents/notes.md"</span><span class="p">,</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="w">  </span><span class="nx">mode</span><span class="o">:</span><span class="w"> </span><span class="s2">"head"</span><span class="p">,</span>
 <a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="w">  </span><span class="nx">limit</span><span class="o">:</span><span class="w"> </span><span class="kt">20</span>
 <a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="p">})</span>
-<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="c1">// → Returns first 20 lines (verify it&#39;s the right file)</span>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="c1">// → Returns first 20 lines (verify it's the right file)</span>
 <a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>
 <a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a><span class="c1">// 3. Search for specific content</span>
 <a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a><span class="nx">inspect</span><span class="o">-</span><span class="nx">file</span><span class="p">({</span>
-<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a><span class="w">  </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;~/Projects/app/config.yaml&quot;</span><span class="p">,</span>
-<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a><span class="w">  </span><span class="nx">mode</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;search&quot;</span><span class="p">,</span>
-<a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a><span class="w">  </span><span class="nx">pattern</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;database&quot;</span>
+<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a><span class="w">  </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s2">"~/Projects/app/config.yaml"</span><span class="p">,</span>
+<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a><span class="w">  </span><span class="nx">mode</span><span class="o">:</span><span class="w"> </span><span class="s2">"search"</span><span class="p">,</span>
+<a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a><span class="w">  </span><span class="nx">pattern</span><span class="o">:</span><span class="w"> </span><span class="s2">"database"</span>
 <a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a><span class="p">})</span>
-<a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a><span class="c1">// → Returns lines containing &quot;database&quot;</span>
+<a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a><span class="c1">// → Returns lines containing "database"</span>
 <a id="__codelineno-4-23" name="__codelineno-4-23" href="#__codelineno-4-23"></a>
 <a id="__codelineno-4-24" name="__codelineno-4-24" href="#__codelineno-4-24"></a><span class="c1">// 4. Check image metadata</span>
 <a id="__codelineno-4-25" name="__codelineno-4-25" href="#__codelineno-4-25"></a><span class="nx">inspect</span><span class="o">-</span><span class="nx">file</span><span class="p">({</span>
-<a id="__codelineno-4-26" name="__codelineno-4-26" href="#__codelineno-4-26"></a><span class="w">  </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;~/Documents/diagram.png&quot;</span><span class="p">,</span>
-<a id="__codelineno-4-27" name="__codelineno-4-27" href="#__codelineno-4-27"></a><span class="w">  </span><span class="nx">mode</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;metadata&quot;</span>
+<a id="__codelineno-4-26" name="__codelineno-4-26" href="#__codelineno-4-26"></a><span class="w">  </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s2">"~/Documents/diagram.png"</span><span class="p">,</span>
+<a id="__codelineno-4-27" name="__codelineno-4-27" href="#__codelineno-4-27"></a><span class="w">  </span><span class="nx">mode</span><span class="o">:</span><span class="w"> </span><span class="s2">"metadata"</span>
 <a id="__codelineno-4-28" name="__codelineno-4-28" href="#__codelineno-4-28"></a><span class="p">})</span>
-<a id="__codelineno-4-29" name="__codelineno-4-29" href="#__codelineno-4-29"></a><span class="c1">// → { size: &quot;1.2 MB&quot;, dimensions: &quot;1920x1080&quot;, format: &quot;PNG&quot; }</span>
+<a id="__codelineno-4-29" name="__codelineno-4-29" href="#__codelineno-4-29"></a><span class="c1">// → { size: "1.2 MB", dimensions: "1920x1080", format: "PNG" }</span>
 <a id="__codelineno-4-30" name="__codelineno-4-30" href="#__codelineno-4-30"></a>
 <a id="__codelineno-4-31" name="__codelineno-4-31" href="#__codelineno-4-31"></a><span class="c1">// 5. Confirmed correct files, now ingest</span>
 <a id="__codelineno-4-32" name="__codelineno-4-32" href="#__codelineno-4-32"></a><span class="nx">ingest</span><span class="o">-</span><span class="nx">file</span><span class="p">({</span>
-<a id="__codelineno-4-33" name="__codelineno-4-33" href="#__codelineno-4-33"></a><span class="w">  </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;~/Documents/notes.md&quot;</span><span class="p">,</span>
-<a id="__codelineno-4-34" name="__codelineno-4-34" href="#__codelineno-4-34"></a><span class="w">  </span><span class="nx">ontology</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;Research Notes&quot;</span>
+<a id="__codelineno-4-33" name="__codelineno-4-33" href="#__codelineno-4-33"></a><span class="w">  </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s2">"~/Documents/notes.md"</span><span class="p">,</span>
+<a id="__codelineno-4-34" name="__codelineno-4-34" href="#__codelineno-4-34"></a><span class="w">  </span><span class="nx">ontology</span><span class="o">:</span><span class="w"> </span><span class="s2">"Research Notes"</span>
 <a id="__codelineno-4-35" name="__codelineno-4-35" href="#__codelineno-4-35"></a><span class="p">})</span>
 <a id="__codelineno-4-36" name="__codelineno-4-36" href="#__codelineno-4-36"></a>
 <a id="__codelineno-4-37" name="__codelineno-4-37" href="#__codelineno-4-37"></a><span class="nx">ingest</span><span class="o">-</span><span class="nx">file</span><span class="p">({</span>
-<a id="__codelineno-4-38" name="__codelineno-4-38" href="#__codelineno-4-38"></a><span class="w">  </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;~/Documents/diagram.png&quot;</span><span class="p">,</span>
-<a id="__codelineno-4-39" name="__codelineno-4-39" href="#__codelineno-4-39"></a><span class="w">  </span><span class="nx">ontology</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;Architecture&quot;</span>
+<a id="__codelineno-4-38" name="__codelineno-4-38" href="#__codelineno-4-38"></a><span class="w">  </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s2">"~/Documents/diagram.png"</span><span class="p">,</span>
+<a id="__codelineno-4-39" name="__codelineno-4-39" href="#__codelineno-4-39"></a><span class="w">  </span><span class="nx">ontology</span><span class="o">:</span><span class="w"> </span><span class="s2">"Architecture"</span>
 <a id="__codelineno-4-40" name="__codelineno-4-40" href="#__codelineno-4-40"></a><span class="p">})</span>
 <a id="__codelineno-4-41" name="__codelineno-4-41" href="#__codelineno-4-41"></a><span class="c1">// → Auto-description via vision AI, no manual input needed</span>
 </code></pre></div>
@@ -2507,7 +2507,7 @@
 <p>Images (<code>.png</code>, <code>.jpg</code>, <code>.jpeg</code>) are <strong>fully automatic</strong> - agent does NOTHING except submit path:</p>
 <ol>
 <li>Detect image file by extension</li>
-<li>Vision AI generates description automatically (ADR-057a)</li>
+<li>Vision AI generates description automatically (ADR-305.1)</li>
 <li>Extract concepts from AI description</li>
 <li>Store image in object storage with metadata</li>
 </ol>
@@ -2523,11 +2523,11 @@
 - ✅ Submit it (optionally after checking metadata)</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1">// Literally the same as text files - zero special handling</span>
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="nx">ingest</span><span class="o">-</span><span class="nx">file</span><span class="p">({</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;~/Documents/diagrams/architecture.png&quot;</span><span class="p">,</span>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">  </span><span class="nx">ontology</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;System Architecture&quot;</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s2">"~/Documents/diagrams/architecture.png"</span><span class="p">,</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">  </span><span class="nx">ontology</span><span class="o">:</span><span class="w"> </span><span class="s2">"System Architecture"</span>
 <a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="p">})</span>
 <a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="c1">// System handles everything:</span>
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="c1">// → Detects it&#39;s an image</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="c1">// → Detects it's an image</span>
 <a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="c1">// → Vision AI auto-generates description</span>
 <a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="c1">// → Extracts concepts automatically</span>
 <a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="c1">// → Stores image for later retrieval</span>
@@ -2579,10 +2579,10 @@
 <p><strong>Resource: <code>mcp/allowed-paths</code></strong></p>
 <p>Agent-readable (not writable) resource showing current allowlist.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="p">{</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">  </span><span class="nt">&quot;allowed_directories&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="err">...</span><span class="p">],</span>
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">  </span><span class="nt">&quot;allowed_patterns&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="err">...</span><span class="p">],</span>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">  </span><span class="nt">&quot;blocked_patterns&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="err">...</span><span class="p">],</span>
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">  </span><span class="nt">&quot;max_file_size_mb&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">10</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">  </span><span class="nt">"allowed_directories"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="err">...</span><span class="p">],</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">  </span><span class="nt">"allowed_patterns"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="err">...</span><span class="p">],</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">  </span><span class="nt">"blocked_patterns"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="err">...</span><span class="p">],</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">  </span><span class="nt">"max_file_size_mb"</span><span class="p">:</span><span class="w"> </span><span class="mi">10</span>
 <a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="p">}</span>
 </code></pre></div>
 <p>Agent can check this resource to understand constraints before attempting ingestion.</p>
@@ -2612,8 +2612,8 @@
 <a id="__codelineno-10-22" name="__codelineno-10-22" href="#__codelineno-10-22"></a><span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="nx">matchesAllowedDir</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 <a id="__codelineno-10-23" name="__codelineno-10-23" href="#__codelineno-10-23"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">{</span>
 <a id="__codelineno-10-24" name="__codelineno-10-24" href="#__codelineno-10-24"></a><span class="w">      </span><span class="nx">allowed</span><span class="o">:</span><span class="w"> </span><span class="kt">false</span><span class="p">,</span>
-<a id="__codelineno-10-25" name="__codelineno-10-25" href="#__codelineno-10-25"></a><span class="w">      </span><span class="nx">reason</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;Path not in any allowed directory&quot;</span><span class="p">,</span>
-<a id="__codelineno-10-26" name="__codelineno-10-26" href="#__codelineno-10-26"></a><span class="w">      </span><span class="nx">hint</span><span class="o">:</span><span class="w"> </span><span class="sb">`Allowed directories: </span><span class="si">${</span><span class="nx">config</span><span class="p">.</span><span class="nx">allowed_directories</span><span class="p">.</span><span class="nx">join</span><span class="p">(</span><span class="s1">&#39;, &#39;</span><span class="p">)</span><span class="si">}</span><span class="sb">`</span>
+<a id="__codelineno-10-25" name="__codelineno-10-25" href="#__codelineno-10-25"></a><span class="w">      </span><span class="nx">reason</span><span class="o">:</span><span class="w"> </span><span class="s2">"Path not in any allowed directory"</span><span class="p">,</span>
+<a id="__codelineno-10-26" name="__codelineno-10-26" href="#__codelineno-10-26"></a><span class="w">      </span><span class="nx">hint</span><span class="o">:</span><span class="w"> </span><span class="sb">`Allowed directories: </span><span class="si">${</span><span class="nx">config</span><span class="p">.</span><span class="nx">allowed_directories</span><span class="p">.</span><span class="nx">join</span><span class="p">(</span><span class="s1">', '</span><span class="p">)</span><span class="si">}</span><span class="sb">`</span>
 <a id="__codelineno-10-27" name="__codelineno-10-27" href="#__codelineno-10-27"></a><span class="w">    </span><span class="p">};</span>
 <a id="__codelineno-10-28" name="__codelineno-10-28" href="#__codelineno-10-28"></a><span class="w">  </span><span class="p">}</span>
 <a id="__codelineno-10-29" name="__codelineno-10-29" href="#__codelineno-10-29"></a>
@@ -2629,8 +2629,8 @@
 <a id="__codelineno-10-39" name="__codelineno-10-39" href="#__codelineno-10-39"></a><span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="nx">matchesPattern</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 <a id="__codelineno-10-40" name="__codelineno-10-40" href="#__codelineno-10-40"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">{</span>
 <a id="__codelineno-10-41" name="__codelineno-10-41" href="#__codelineno-10-41"></a><span class="w">      </span><span class="nx">allowed</span><span class="o">:</span><span class="w"> </span><span class="kt">false</span><span class="p">,</span>
-<a id="__codelineno-10-42" name="__codelineno-10-42" href="#__codelineno-10-42"></a><span class="w">      </span><span class="nx">reason</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;File extension not allowed&quot;</span><span class="p">,</span>
-<a id="__codelineno-10-43" name="__codelineno-10-43" href="#__codelineno-10-43"></a><span class="w">      </span><span class="nx">hint</span><span class="o">:</span><span class="w"> </span><span class="sb">`Allowed patterns: </span><span class="si">${</span><span class="nx">config</span><span class="p">.</span><span class="nx">allowed_patterns</span><span class="p">.</span><span class="nx">join</span><span class="p">(</span><span class="s1">&#39;, &#39;</span><span class="p">)</span><span class="si">}</span><span class="sb">`</span>
+<a id="__codelineno-10-42" name="__codelineno-10-42" href="#__codelineno-10-42"></a><span class="w">      </span><span class="nx">reason</span><span class="o">:</span><span class="w"> </span><span class="s2">"File extension not allowed"</span><span class="p">,</span>
+<a id="__codelineno-10-43" name="__codelineno-10-43" href="#__codelineno-10-43"></a><span class="w">      </span><span class="nx">hint</span><span class="o">:</span><span class="w"> </span><span class="sb">`Allowed patterns: </span><span class="si">${</span><span class="nx">config</span><span class="p">.</span><span class="nx">allowed_patterns</span><span class="p">.</span><span class="nx">join</span><span class="p">(</span><span class="s1">', '</span><span class="p">)</span><span class="si">}</span><span class="sb">`</span>
 <a id="__codelineno-10-44" name="__codelineno-10-44" href="#__codelineno-10-44"></a><span class="w">    </span><span class="p">};</span>
 <a id="__codelineno-10-45" name="__codelineno-10-45" href="#__codelineno-10-45"></a><span class="w">  </span><span class="p">}</span>
 <a id="__codelineno-10-46" name="__codelineno-10-46" href="#__codelineno-10-46"></a>
@@ -2657,7 +2657,7 @@
 <p><strong>Audit Trail:</strong></p>
 <p>All file access attempts logged to <code>~/.config/kg/mcp-access.log</code>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>2025-11-08T22:50:00Z [INSPECT] /home/user/Documents/notes.md mode=head lines=20
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>2025-11-08T22:50:05Z [INGEST]  /home/user/Documents/notes.md -&gt; Ontology: &quot;Notes&quot;
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>2025-11-08T22:50:05Z [INGEST]  /home/user/Documents/notes.md -&gt; Ontology: "Notes"
 <a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>2025-11-08T22:50:15Z [DENIED]  /home/user/.env -&gt; Reason: Matches blocked pattern
 <a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>2025-11-08T22:50:30Z [DENIED]  /etc/passwd -&gt; Reason: Not in allowed directory
 <a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>2025-11-08T22:50:45Z [INSPECT] /home/user/wrong-file.txt mode=metadata (agent checks before rejecting)
@@ -2665,87 +2665,87 @@
 <p><strong>Agent Experience:</strong></p>
 <p>When validation fails, agent receives helpful error:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="p">{</span>
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">  </span><span class="nt">&quot;error&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Path not allowed&quot;</span><span class="p">,</span>
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">  </span><span class="nt">&quot;reason&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Path &#39;/home/user/secrets.txt&#39; not in any allowed directory&quot;</span><span class="p">,</span>
-<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">  </span><span class="nt">&quot;hint&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Allowed directories: ~/Documents/knowledge-base, ~/Projects/*/docs&quot;</span><span class="p">,</span>
-<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="w">  </span><span class="nt">&quot;suggest&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Check mcp/allowed-paths resource for full allowlist&quot;</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">  </span><span class="nt">"error"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Path not allowed"</span><span class="p">,</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">  </span><span class="nt">"reason"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Path '/home/user/secrets.txt' not in any allowed directory"</span><span class="p">,</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">  </span><span class="nt">"hint"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Allowed directories: ~/Documents/knowledge-base, ~/Projects/*/docs"</span><span class="p">,</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="w">  </span><span class="nt">"suggest"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Check mcp/allowed-paths resource for full allowlist"</span>
 <a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="p">}</span>
 </code></pre></div>
 <h3 id="6-example-workflows">6. Example Workflows</h3>
 <p><strong>Workflow 1: Research Paper Collection</strong></p>
 <p>User configures allowlist:
 <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>kg<span class="w"> </span>mcp-config<span class="w"> </span>allow-dir<span class="w"> </span>~/Documents/research
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>kg<span class="w"> </span>mcp-config<span class="w"> </span>allow-pattern<span class="w"> </span><span class="s2">&quot;**/*.pdf&quot;</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>kg<span class="w"> </span>mcp-config<span class="w"> </span>allow-pattern<span class="w"> </span><span class="s2">"**/*.pdf"</span>
 </code></pre></div></p>
 <p>Agent ingests:
 <div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1">// Single file</span>
 <a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="nx">ingest</span><span class="o">-</span><span class="nx">file</span><span class="p">({</span>
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">  </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;~/Documents/research/transformer-paper.pdf&quot;</span><span class="p">,</span>
-<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">  </span><span class="nx">ontology</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;AI Research Papers&quot;</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">  </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s2">"~/Documents/research/transformer-paper.pdf"</span><span class="p">,</span>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">  </span><span class="nx">ontology</span><span class="o">:</span><span class="w"> </span><span class="s2">"AI Research Papers"</span>
 <a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="p">})</span>
 <a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>
 <a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a><span class="c1">// Whole directory</span>
 <a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a><span class="nx">ingest</span><span class="o">-</span><span class="nx">directory</span><span class="p">({</span>
-<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a><span class="w">  </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;~/Documents/research/ml-papers&quot;</span><span class="p">,</span>
-<a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a><span class="w">  </span><span class="nx">ontology</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;Machine Learning Papers&quot;</span><span class="p">,</span>
-<a id="__codelineno-14-11" name="__codelineno-14-11" href="#__codelineno-14-11"></a><span class="w">  </span><span class="nx">pattern</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;*.pdf&quot;</span>
+<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a><span class="w">  </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s2">"~/Documents/research/ml-papers"</span><span class="p">,</span>
+<a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a><span class="w">  </span><span class="nx">ontology</span><span class="o">:</span><span class="w"> </span><span class="s2">"Machine Learning Papers"</span><span class="p">,</span>
+<a id="__codelineno-14-11" name="__codelineno-14-11" href="#__codelineno-14-11"></a><span class="w">  </span><span class="nx">pattern</span><span class="o">:</span><span class="w"> </span><span class="s2">"*.pdf"</span>
 <a id="__codelineno-14-12" name="__codelineno-14-12" href="#__codelineno-14-12"></a><span class="p">})</span>
 </code></pre></div></p>
 <p><strong>Workflow 2: Multi-Project Documentation</strong></p>
 <p>User configures:
 <div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>kg<span class="w"> </span>mcp-config<span class="w"> </span>allow-dir<span class="w"> </span>~/Projects/*/docs
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>kg<span class="w"> </span>mcp-config<span class="w"> </span>allow-pattern<span class="w"> </span><span class="s2">&quot;**/*.md&quot;</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>kg<span class="w"> </span>mcp-config<span class="w"> </span>allow-pattern<span class="w"> </span><span class="s2">"**/*.md"</span>
 </code></pre></div></p>
 <p>Agent ingests with auto-naming:
 <div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="c1">// Submit directory ingestion</span>
 <a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="kd">const</span><span class="w"> </span><span class="nx">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ingest</span><span class="o">-</span><span class="nx">directory</span><span class="p">({</span>
-<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="w">  </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;~/Projects&quot;</span><span class="p">,</span>
-<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="w">  </span><span class="nx">pattern</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;docs/**/*.md&quot;</span><span class="p">,</span>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="w">  </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s2">"~/Projects"</span><span class="p">,</span>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="w">  </span><span class="nx">pattern</span><span class="o">:</span><span class="w"> </span><span class="s2">"docs/**/*.md"</span><span class="p">,</span>
 <a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="w">  </span><span class="nx">recursive</span><span class="o">:</span><span class="w"> </span><span class="kt">true</span><span class="p">,</span>
 <a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a><span class="w">  </span><span class="nx">auto_naming</span><span class="o">:</span><span class="w"> </span><span class="kt">true</span>
 <a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="p">})</span>
 <a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a>
-<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a><span class="c1">// Result: { job_ids: [&quot;job_abc123&quot;, &quot;job_def456&quot;], message: &quot;Processing 15 files...&quot; }</span>
+<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a><span class="c1">// Result: { job_ids: ["job_abc123", "job_def456"], message: "Processing 15 files..." }</span>
 <a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a>
 <a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a><span class="c1">// ✅ CORRECT: Inform user and move on</span>
-<a id="__codelineno-16-12" name="__codelineno-16-12" href="#__codelineno-16-12"></a><span class="c1">// &quot;I&#39;ve submitted 15 files for processing (jobs: job_abc123, job_def456).</span>
-<a id="__codelineno-16-13" name="__codelineno-16-13" href="#__codelineno-16-13"></a><span class="c1">//  This will take a few minutes. You can check status with: kg jobs list&quot;</span>
+<a id="__codelineno-16-12" name="__codelineno-16-12" href="#__codelineno-16-12"></a><span class="c1">// "I've submitted 15 files for processing (jobs: job_abc123, job_def456).</span>
+<a id="__codelineno-16-13" name="__codelineno-16-13" href="#__codelineno-16-13"></a><span class="c1">//  This will take a few minutes. You can check status with: kg jobs list"</span>
 <a id="__codelineno-16-14" name="__codelineno-16-14" href="#__codelineno-16-14"></a>
-<a id="__codelineno-16-15" name="__codelineno-16-15" href="#__codelineno-16-15"></a><span class="c1">// ❌ WRONG: Don&#39;t poll immediately</span>
-<a id="__codelineno-16-16" name="__codelineno-16-16" href="#__codelineno-16-16"></a><span class="c1">// job.status(&quot;job_abc123&quot;)  // Don&#39;t do this!</span>
-<a id="__codelineno-16-17" name="__codelineno-16-17" href="#__codelineno-16-17"></a><span class="c1">// job.status(&quot;job_def456&quot;)  // Still processing, wastes context</span>
+<a id="__codelineno-16-15" name="__codelineno-16-15" href="#__codelineno-16-15"></a><span class="c1">// ❌ WRONG: Don't poll immediately</span>
+<a id="__codelineno-16-16" name="__codelineno-16-16" href="#__codelineno-16-16"></a><span class="c1">// job.status("job_abc123")  // Don't do this!</span>
+<a id="__codelineno-16-17" name="__codelineno-16-17" href="#__codelineno-16-17"></a><span class="c1">// job.status("job_def456")  // Still processing, wastes context</span>
 <a id="__codelineno-16-18" name="__codelineno-16-18" href="#__codelineno-16-18"></a>
 <a id="__codelineno-16-19" name="__codelineno-16-19" href="#__codelineno-16-19"></a><span class="c1">// Results (when done):</span>
-<a id="__codelineno-16-20" name="__codelineno-16-20" href="#__codelineno-16-20"></a><span class="c1">// ~/Projects/project-a/docs/*.md → Ontology: &quot;project-a&quot;</span>
-<a id="__codelineno-16-21" name="__codelineno-16-21" href="#__codelineno-16-21"></a><span class="c1">// ~/Projects/project-b/docs/*.md → Ontology: &quot;project-b&quot;</span>
+<a id="__codelineno-16-20" name="__codelineno-16-20" href="#__codelineno-16-20"></a><span class="c1">// ~/Projects/project-a/docs/*.md → Ontology: "project-a"</span>
+<a id="__codelineno-16-21" name="__codelineno-16-21" href="#__codelineno-16-21"></a><span class="c1">// ~/Projects/project-b/docs/*.md → Ontology: "project-b"</span>
 </code></pre></div></p>
 <p><strong>Workflow 3: Image Ingestion (Zero Agent Effort)</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="c1">// Single image - agent does NOTHING but submit path</span>
 <a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="nx">ingest</span><span class="o">-</span><span class="nx">file</span><span class="p">({</span>
-<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="w">  </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;~/Documents/diagrams/architecture.png&quot;</span><span class="p">,</span>
-<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="w">  </span><span class="nx">ontology</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;System Architecture&quot;</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="w">  </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s2">"~/Documents/diagrams/architecture.png"</span><span class="p">,</span>
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="w">  </span><span class="nx">ontology</span><span class="o">:</span><span class="w"> </span><span class="s2">"System Architecture"</span>
 <a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a><span class="p">})</span>
 <a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a><span class="c1">// Agent is done. System handles everything:</span>
-<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a><span class="c1">// → Vision AI generates: &quot;A diagram showing microservices architecture with...&quot;</span>
-<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a><span class="c1">// → Extracts concepts: &quot;microservices architecture&quot;, &quot;API gateway&quot;, etc.</span>
+<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a><span class="c1">// → Vision AI generates: "A diagram showing microservices architecture with..."</span>
+<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a><span class="c1">// → Extracts concepts: "microservices architecture", "API gateway", etc.</span>
 <a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a><span class="c1">// → Stores image for later retrieval</span>
 <a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a>
 <a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a><span class="c1">// Directory of images - agent does NOTHING but point at folder</span>
 <a id="__codelineno-17-12" name="__codelineno-17-12" href="#__codelineno-17-12"></a><span class="nx">ingest</span><span class="o">-</span><span class="nx">directory</span><span class="p">({</span>
-<a id="__codelineno-17-13" name="__codelineno-17-13" href="#__codelineno-17-13"></a><span class="w">  </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;~/Documents/screenshots&quot;</span><span class="p">,</span>
-<a id="__codelineno-17-14" name="__codelineno-17-14" href="#__codelineno-17-14"></a><span class="w">  </span><span class="nx">ontology</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;UI Screenshots&quot;</span><span class="p">,</span>
-<a id="__codelineno-17-15" name="__codelineno-17-15" href="#__codelineno-17-15"></a><span class="w">  </span><span class="nx">pattern</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;*.png&quot;</span>
+<a id="__codelineno-17-13" name="__codelineno-17-13" href="#__codelineno-17-13"></a><span class="w">  </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s2">"~/Documents/screenshots"</span><span class="p">,</span>
+<a id="__codelineno-17-14" name="__codelineno-17-14" href="#__codelineno-17-14"></a><span class="w">  </span><span class="nx">ontology</span><span class="o">:</span><span class="w"> </span><span class="s2">"UI Screenshots"</span><span class="p">,</span>
+<a id="__codelineno-17-15" name="__codelineno-17-15" href="#__codelineno-17-15"></a><span class="w">  </span><span class="nx">pattern</span><span class="o">:</span><span class="w"> </span><span class="s2">"*.png"</span>
 <a id="__codelineno-17-16" name="__codelineno-17-16" href="#__codelineno-17-16"></a><span class="p">})</span>
 <a id="__codelineno-17-17" name="__codelineno-17-17" href="#__codelineno-17-17"></a><span class="c1">// Agent is done. System processes each image:</span>
 <a id="__codelineno-17-18" name="__codelineno-17-18" href="#__codelineno-17-18"></a><span class="c1">// → screenshot-1.png → Vision AI → concepts → stored</span>
 <a id="__codelineno-17-19" name="__codelineno-17-19" href="#__codelineno-17-19"></a><span class="c1">// → screenshot-2.png → Vision AI → concepts → stored</span>
 <a id="__codelineno-17-20" name="__codelineno-17-20" href="#__codelineno-17-20"></a><span class="c1">// → screenshot-3.png → Vision AI → concepts → stored</span>
-<a id="__codelineno-17-21" name="__codelineno-17-21" href="#__codelineno-17-21"></a><span class="c1">// Agent doesn&#39;t see images, doesn&#39;t describe them, just submits the path</span>
+<a id="__codelineno-17-21" name="__codelineno-17-21" href="#__codelineno-17-21"></a><span class="c1">// Agent doesn't see images, doesn't describe them, just submits the path</span>
 <a id="__codelineno-17-22" name="__codelineno-17-22" href="#__codelineno-17-22"></a>
 <a id="__codelineno-17-23" name="__codelineno-17-23" href="#__codelineno-17-23"></a><span class="c1">// Mixed content (text + images) - still just submit path</span>
 <a id="__codelineno-17-24" name="__codelineno-17-24" href="#__codelineno-17-24"></a><span class="nx">ingest</span><span class="o">-</span><span class="nx">directory</span><span class="p">({</span>
-<a id="__codelineno-17-25" name="__codelineno-17-25" href="#__codelineno-17-25"></a><span class="w">  </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;~/Documents/project-docs&quot;</span><span class="p">,</span>
-<a id="__codelineno-17-26" name="__codelineno-17-26" href="#__codelineno-17-26"></a><span class="w">  </span><span class="nx">ontology</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;Project Documentation&quot;</span><span class="p">,</span>
+<a id="__codelineno-17-25" name="__codelineno-17-25" href="#__codelineno-17-25"></a><span class="w">  </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s2">"~/Documents/project-docs"</span><span class="p">,</span>
+<a id="__codelineno-17-26" name="__codelineno-17-26" href="#__codelineno-17-26"></a><span class="w">  </span><span class="nx">ontology</span><span class="o">:</span><span class="w"> </span><span class="s2">"Project Documentation"</span><span class="p">,</span>
 <a id="__codelineno-17-27" name="__codelineno-17-27" href="#__codelineno-17-27"></a><span class="w">  </span><span class="nx">recursive</span><span class="o">:</span><span class="w"> </span><span class="kt">true</span>
 <a id="__codelineno-17-28" name="__codelineno-17-28" href="#__codelineno-17-28"></a><span class="p">})</span>
 <a id="__codelineno-17-29" name="__codelineno-17-29" href="#__codelineno-17-29"></a><span class="c1">// → *.md files → direct text extraction</span>
@@ -2842,14 +2842,14 @@
 <p><strong>Rejected:</strong> Too disruptive.</p>
 <hr />
 <h2 id="implementation-plan">Implementation Plan</h2>
-<h3 id="phase-1-configuration-validation-adr-062a">Phase 1: Configuration &amp; Validation (ADR-062a)</h3>
+<h3 id="phase-1-configuration-validation">Phase 1: Configuration &amp; Validation</h3>
 <ul>
 <li>[ ] Allowlist configuration schema</li>
 <li>[ ] CLI commands for allowlist management</li>
 <li>[ ] Path validation logic with security tests</li>
 <li>[ ] MCP resource for allowed-paths visibility</li>
 </ul>
-<h3 id="phase-2-file-inspection-ingestion-adr-062b">Phase 2: File Inspection &amp; Ingestion (ADR-062b)</h3>
+<h3 id="phase-2-file-inspection-ingestion">Phase 2: File Inspection &amp; Ingestion</h3>
 <ul>
 <li>[ ] <code>inspect-file</code> MCP tool (preview before commit)</li>
 <li>Head/tail/range/search/metadata modes</li>
@@ -2857,18 +2857,18 @@
 <li>[ ] <code>ingest-file</code> MCP tool</li>
 <li>Text file ingestion</li>
 <li>Automatic image detection (by extension)</li>
-<li>Vision AI auto-description for images (ADR-057a)</li>
+<li>Vision AI auto-description for images (ADR-305.1)</li>
 <li>Object storage integration for images</li>
 <li>[ ] Access logging (INSPECT, INGEST, DENIED)</li>
 </ul>
-<h3 id="phase-3-directory-ingestion-adr-062c">Phase 3: Directory Ingestion (ADR-062c)</h3>
+<h3 id="phase-3-directory-ingestion">Phase 3: Directory Ingestion</h3>
 <ul>
 <li>[ ] <code>ingest-directory</code> MCP tool</li>
 <li>[ ] Recursive traversal logic</li>
 <li>[ ] Auto-naming strategies</li>
 <li>[ ] Bulk operation limits</li>
 </ul>
-<h3 id="phase-4-security-hardening-adr-062d">Phase 4: Security Hardening (ADR-062d)</h3>
+<h3 id="phase-4-security-hardening">Phase 4: Security Hardening</h3>
 <ul>
 <li>[ ] Symlink resolution and validation</li>
 <li>[ ] TOCTOU mitigation</li>
@@ -2893,7 +2893,7 @@
 </ul>
 <hr />
 <h2 id="notes">Notes</h2>
-<p>This ADR establishes the security foundation for MCP file ingestion. Implementation will be split into phases (ADR-062a-d) to allow iterative development and testing.</p>
+<p>This ADR establishes the security foundation for MCP file ingestion. Implementation will be split into the four phases above to allow iterative development and testing.</p>
 <p>The allowlist approach provides strong security guarantees while maintaining utility. It assumes users are trustworthy (they control the allowlist) but agents are not (they can only read configuration).</p>
 <p><strong>Key Insight:</strong> By making the allowlist agent-readable but not agent-writable, we give agents transparency into constraints without giving them control. This enables helpful error messages and lets agents guide users to add paths via CLI.</p>
 
@@ -2951,7 +2951,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": [], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

@@ -19,7 +19,7 @@
       
       
       <link rel="icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -27,7 +27,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.ec1eaa64.min.css">
       
       
 
@@ -2836,9 +2836,9 @@
 <p><strong>IMPORTANT:</strong> Source embeddings serve a fundamentally different purpose than grounding calculation. This distinction is critical to understanding the architecture:</p>
 <h4 id="evidence-layer-descriptive-this-adr">Evidence Layer (Descriptive - This ADR)</h4>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>Source Text → Extraction → Concept
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>&quot;The recursive depth tracker maintains state...&quot;
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>"The recursive depth tracker maintains state..."
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>                ↓
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>        [Concept: &quot;Recursive Depth Tracking&quot;]
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>        [Concept: "Recursive Depth Tracking"]
 </code></pre></div>
 <p><strong>Purpose:</strong> Provenance and evidence retrieval
 - <strong>Nature:</strong> Observational, neutral representation
@@ -2872,11 +2872,11 @@
 - Concepts from sources are neutral observations of what was written
 - Grounding emerges from how concepts relate to <em>each other</em>, not from source citations</p>
 <p><strong>Example:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>Source A: &quot;The earth is flat&quot;
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>  → Concept: &quot;Flat Earth Model&quot; (neutral observation)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>Source A: "The earth is flat"
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>  → Concept: "Flat Earth Model" (neutral observation)
 <a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>Source B: &quot;Spherical earth confirmed by gravity&quot;
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>  → Concept: &quot;Spherical Earth Model&quot; (neutral observation)
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>Source B: "Spherical earth confirmed by gravity"
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>  → Concept: "Spherical Earth Model" (neutral observation)
 <a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>
 <a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>Relationship: (Spherical Earth)-[:CONTRADICTS]-&gt;(Flat Earth)
 <a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>  → Grounding: Flat Earth has negative grounding (contradicted)
@@ -2908,9 +2908,9 @@
 - Total: 10-30 embeddings for entire document</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1">-- Source node (canonical truth)</span>
 <a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="p">(:</span><span class="k">Source</span><span class="w"> </span><span class="err">{</span>
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">    </span><span class="n">source_id</span><span class="p">:</span><span class="w"> </span><span class="ss">&quot;doc123_chunk5&quot;</span><span class="p">,</span>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">    </span><span class="n">full_text</span><span class="p">:</span><span class="w"> </span><span class="ss">&quot;...&quot;</span><span class="p">,</span><span class="w">           </span><span class="c1">-- Canonical text (500-1500 words from ingestion)</span>
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">    </span><span class="n">content_hash</span><span class="p">:</span><span class="w"> </span><span class="ss">&quot;sha256...&quot;</span><span class="w">   </span><span class="c1">-- Hash for verification (NULL for existing Sources)</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">    </span><span class="n">source_id</span><span class="p">:</span><span class="w"> </span><span class="ss">"doc123_chunk5"</span><span class="p">,</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">    </span><span class="n">full_text</span><span class="p">:</span><span class="w"> </span><span class="ss">"..."</span><span class="p">,</span><span class="w">           </span><span class="c1">-- Canonical text (500-1500 words from ingestion)</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">    </span><span class="n">content_hash</span><span class="p">:</span><span class="w"> </span><span class="ss">"sha256..."</span><span class="w">   </span><span class="c1">-- Hash for verification (NULL for existing Sources)</span>
 <a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="err">}</span><span class="p">)</span>
 <a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>
 <a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="c1">-- Separate embeddings table with offsets</span>
@@ -2920,7 +2920,7 @@
 <a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a>
 <a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a><span class="w">    </span><span class="c1">-- Chunk tracking</span>
 <a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a><span class="w">    </span><span class="n">chunk_index</span><span class="w"> </span><span class="nb">INT</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span><span class="w">         </span><span class="c1">-- 0-based chunk number</span>
-<a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a><span class="w">    </span><span class="n">chunk_strategy</span><span class="w"> </span><span class="nb">TEXT</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span><span class="w">     </span><span class="c1">-- &#39;sentence&#39;, &#39;paragraph&#39;, &#39;semantic&#39;</span>
+<a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a><span class="w">    </span><span class="n">chunk_strategy</span><span class="w"> </span><span class="nb">TEXT</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span><span class="w">     </span><span class="c1">-- 'sentence', 'paragraph', 'semantic'</span>
 <a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a>
 <a id="__codelineno-9-17" name="__codelineno-9-17" href="#__codelineno-9-17"></a><span class="w">    </span><span class="c1">-- Offset in Source.full_text (character positions)</span>
 <a id="__codelineno-9-18" name="__codelineno-9-18" href="#__codelineno-9-18"></a><span class="w">    </span><span class="n">start_offset</span><span class="w"> </span><span class="nb">INT</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span>
@@ -2952,22 +2952,22 @@
 <a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="c1"># Tuning constants (easy to adjust, no complex config needed)</span>
 <a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>
 <a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="n">CHUNKING_STRATEGIES</span> <span class="o">=</span> <span class="p">{</span>
-<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>    <span class="s2">&quot;sentence&quot;</span><span class="p">:</span> <span class="p">{</span>
-<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>        <span class="s2">&quot;max_chars&quot;</span><span class="p">:</span> <span class="mi">500</span><span class="p">,</span>      <span class="c1"># ~100-120 words</span>
-<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>        <span class="s2">&quot;splitter&quot;</span><span class="p">:</span> <span class="s2">&quot;sentence&quot;</span>  <span class="c1"># Use sentence boundaries</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>    <span class="s2">"sentence"</span><span class="p">:</span> <span class="p">{</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>        <span class="s2">"max_chars"</span><span class="p">:</span> <span class="mi">500</span><span class="p">,</span>      <span class="c1"># ~100-120 words</span>
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>        <span class="s2">"splitter"</span><span class="p">:</span> <span class="s2">"sentence"</span>  <span class="c1"># Use sentence boundaries</span>
 <a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>    <span class="p">},</span>
-<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>    <span class="s2">&quot;paragraph&quot;</span><span class="p">:</span> <span class="p">{</span>
-<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a>        <span class="s2">&quot;max_chars&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>      <span class="c1"># Use full Source.full_text</span>
-<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a>        <span class="s2">&quot;splitter&quot;</span><span class="p">:</span> <span class="kc">None</span>        <span class="c1"># No splitting needed</span>
+<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>    <span class="s2">"paragraph"</span><span class="p">:</span> <span class="p">{</span>
+<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a>        <span class="s2">"max_chars"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>      <span class="c1"># Use full Source.full_text</span>
+<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a>        <span class="s2">"splitter"</span><span class="p">:</span> <span class="kc">None</span>        <span class="c1"># No splitting needed</span>
 <a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a>    <span class="p">},</span>
-<a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a>    <span class="s2">&quot;semantic&quot;</span><span class="p">:</span> <span class="p">{</span>
-<a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a>        <span class="s2">&quot;max_chars&quot;</span><span class="p">:</span> <span class="mi">1000</span><span class="p">,</span>      <span class="c1"># ~200-250 words</span>
-<a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a>        <span class="s2">&quot;splitter&quot;</span><span class="p">:</span> <span class="s2">&quot;semantic&quot;</span>  <span class="c1"># Use existing SemanticChunk logic</span>
+<a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a>    <span class="s2">"semantic"</span><span class="p">:</span> <span class="p">{</span>
+<a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a>        <span class="s2">"max_chars"</span><span class="p">:</span> <span class="mi">1000</span><span class="p">,</span>      <span class="c1"># ~200-250 words</span>
+<a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a>        <span class="s2">"splitter"</span><span class="p">:</span> <span class="s2">"semantic"</span>  <span class="c1"># Use existing SemanticChunk logic</span>
 <a id="__codelineno-10-16" name="__codelineno-10-16" href="#__codelineno-10-16"></a>    <span class="p">}</span>
 <a id="__codelineno-10-17" name="__codelineno-10-17" href="#__codelineno-10-17"></a><span class="p">}</span>
 <a id="__codelineno-10-18" name="__codelineno-10-18" href="#__codelineno-10-18"></a>
 <a id="__codelineno-10-19" name="__codelineno-10-19" href="#__codelineno-10-19"></a><span class="c1"># Default strategy (simplest - no chunking)</span>
-<a id="__codelineno-10-20" name="__codelineno-10-20" href="#__codelineno-10-20"></a><span class="n">DEFAULT_STRATEGY</span> <span class="o">=</span> <span class="s2">&quot;paragraph&quot;</span>
+<a id="__codelineno-10-20" name="__codelineno-10-20" href="#__codelineno-10-20"></a><span class="n">DEFAULT_STRATEGY</span> <span class="o">=</span> <span class="s2">"paragraph"</span>
 </code></pre></div>
 <p><strong>Key Constraints</strong>:
 - Source.full_text already bounded (500-1500 words from ingestion chunker)
@@ -2978,10 +2978,10 @@
 <a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="c1"># Source embeddings use system-wide kg_api.embedding_config:</span>
 <a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="n">embedding_config</span> <span class="o">=</span> <span class="n">load_active_embedding_config</span><span class="p">()</span>
 <a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="p">{</span>
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>    <span class="s2">&quot;provider&quot;</span><span class="p">:</span> <span class="s2">&quot;local&quot;</span> <span class="o">|</span> <span class="s2">&quot;openai&quot;</span><span class="p">,</span>
-<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>    <span class="s2">&quot;model_name&quot;</span><span class="p">:</span> <span class="s2">&quot;nomic-ai/nomic-embed-text-v1.5&quot;</span><span class="p">,</span>
-<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>    <span class="s2">&quot;embedding_dimensions&quot;</span><span class="p">:</span> <span class="mi">768</span><span class="p">,</span>     <span class="c1"># MUST match concept embeddings!</span>
-<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>    <span class="s2">&quot;precision&quot;</span><span class="p">:</span> <span class="s2">&quot;float16&quot;</span> <span class="o">|</span> <span class="s2">&quot;float32&quot;</span><span class="p">,</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>    <span class="s2">"provider"</span><span class="p">:</span> <span class="s2">"local"</span> <span class="o">|</span> <span class="s2">"openai"</span><span class="p">,</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>    <span class="s2">"model_name"</span><span class="p">:</span> <span class="s2">"nomic-ai/nomic-embed-text-v1.5"</span><span class="p">,</span>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>    <span class="s2">"embedding_dimensions"</span><span class="p">:</span> <span class="mi">768</span><span class="p">,</span>     <span class="c1"># MUST match concept embeddings!</span>
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>    <span class="s2">"precision"</span><span class="p">:</span> <span class="s2">"float16"</span> <span class="o">|</span> <span class="s2">"float32"</span><span class="p">,</span>
 <a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>    <span class="o">...</span>
 <a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a><span class="p">}</span>
 <a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>
@@ -3009,12 +3009,12 @@
 <a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>regenerate-embeddings<span class="w"> </span>--type<span class="w"> </span><span class="nb">source</span><span class="w"> </span>--all
 <a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
 <a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="c1"># Or per ontology</span>
-<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>regenerate-embeddings<span class="w"> </span>--type<span class="w"> </span><span class="nb">source</span><span class="w"> </span>--ontology<span class="w"> </span><span class="s2">&quot;MyDocs&quot;</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>regenerate-embeddings<span class="w"> </span>--type<span class="w"> </span><span class="nb">source</span><span class="w"> </span>--ontology<span class="w"> </span><span class="s2">"MyDocs"</span>
 </code></pre></div></p>
 <h3 id="4-hash-verification-for-referential-integrity">4. Hash Verification for Referential Integrity</h3>
 <p><strong>Double verification prevents silent corruption</strong>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1"># At embedding generation</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="n">source_text</span> <span class="o">=</span> <span class="n">source</span><span class="p">[</span><span class="s1">&#39;full_text&#39;</span><span class="p">]</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="n">source_text</span> <span class="o">=</span> <span class="n">source</span><span class="p">[</span><span class="s1">'full_text'</span><span class="p">]</span>
 <a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="n">source_hash</span> <span class="o">=</span> <span class="n">sha256</span><span class="p">(</span><span class="n">source_text</span><span class="p">)</span>      <span class="c1"># Hash of full source</span>
 <a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>
 <a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">chunks</span><span class="p">:</span>
@@ -3024,14 +3024,14 @@
 <a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>        <span class="n">source_id</span><span class="o">=</span><span class="n">source_id</span><span class="p">,</span>
 <a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a>        <span class="n">chunk_text</span><span class="o">=</span><span class="n">chunk</span><span class="o">.</span><span class="n">text</span><span class="p">,</span>
 <a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a>        <span class="n">chunk_hash</span><span class="o">=</span><span class="n">chunk_hash</span><span class="p">,</span>          <span class="c1"># ✓ Verifies chunk integrity</span>
-<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a>        <span class="n">source_hash</span><span class="o">=</span><span class="n">source_hash</span><span class="p">,</span>        <span class="c1"># ✓ Verifies source hasn&#39;t changed</span>
+<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a>        <span class="n">source_hash</span><span class="o">=</span><span class="n">source_hash</span><span class="p">,</span>        <span class="c1"># ✓ Verifies source hasn't changed</span>
 <a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a>        <span class="n">start_offset</span><span class="o">=</span><span class="n">chunk</span><span class="o">.</span><span class="n">start</span><span class="p">,</span>
 <a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a>        <span class="n">end_offset</span><span class="o">=</span><span class="n">chunk</span><span class="o">.</span><span class="n">end</span><span class="p">,</span>
 <a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a>        <span class="n">embedding</span><span class="o">=</span><span class="n">generate_embedding</span><span class="p">(</span><span class="n">chunk</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
 <a id="__codelineno-13-16" name="__codelineno-13-16" href="#__codelineno-13-16"></a>    <span class="p">)</span>
 <a id="__codelineno-13-17" name="__codelineno-13-17" href="#__codelineno-13-17"></a>
 <a id="__codelineno-13-18" name="__codelineno-13-18" href="#__codelineno-13-18"></a><span class="c1"># At query time</span>
-<a id="__codelineno-13-19" name="__codelineno-13-19" href="#__codelineno-13-19"></a><span class="n">current_source_hash</span> <span class="o">=</span> <span class="n">sha256</span><span class="p">(</span><span class="n">source</span><span class="p">[</span><span class="s1">&#39;full_text&#39;</span><span class="p">])</span>
+<a id="__codelineno-13-19" name="__codelineno-13-19" href="#__codelineno-13-19"></a><span class="n">current_source_hash</span> <span class="o">=</span> <span class="n">sha256</span><span class="p">(</span><span class="n">source</span><span class="p">[</span><span class="s1">'full_text'</span><span class="p">])</span>
 <a id="__codelineno-13-20" name="__codelineno-13-20" href="#__codelineno-13-20"></a><span class="k">for</span> <span class="n">embedding</span> <span class="ow">in</span> <span class="n">embeddings</span><span class="p">:</span>
 <a id="__codelineno-13-21" name="__codelineno-13-21" href="#__codelineno-13-21"></a>    <span class="k">if</span> <span class="n">embedding</span><span class="o">.</span><span class="n">source_hash</span> <span class="o">!=</span> <span class="n">current_source_hash</span><span class="p">:</span>
 <a id="__codelineno-13-22" name="__codelineno-13-22" href="#__codelineno-13-22"></a>        <span class="c1"># Source text changed - embedding is stale</span>
@@ -3041,7 +3041,7 @@
 <a id="__codelineno-13-26" name="__codelineno-13-26" href="#__codelineno-13-26"></a>    <span class="n">extracted_chunk</span> <span class="o">=</span> <span class="n">source_text</span><span class="p">[</span><span class="n">embedding</span><span class="o">.</span><span class="n">start_offset</span><span class="p">:</span><span class="n">embedding</span><span class="o">.</span><span class="n">end_offset</span><span class="p">]</span>
 <a id="__codelineno-13-27" name="__codelineno-13-27" href="#__codelineno-13-27"></a>    <span class="k">if</span> <span class="n">sha256</span><span class="p">(</span><span class="n">extracted_chunk</span><span class="p">)</span> <span class="o">!=</span> <span class="n">embedding</span><span class="o">.</span><span class="n">chunk_hash</span><span class="p">:</span>
 <a id="__codelineno-13-28" name="__codelineno-13-28" href="#__codelineno-13-28"></a>        <span class="c1"># Corruption detected!</span>
-<a id="__codelineno-13-29" name="__codelineno-13-29" href="#__codelineno-13-29"></a>        <span class="k">raise</span> <span class="n">IntegrityError</span><span class="p">(</span><span class="s2">&quot;Chunk hash mismatch&quot;</span><span class="p">)</span>
+<a id="__codelineno-13-29" name="__codelineno-13-29" href="#__codelineno-13-29"></a>        <span class="k">raise</span> <span class="n">IntegrityError</span><span class="p">(</span><span class="s2">"Chunk hash mismatch"</span><span class="p">)</span>
 </code></pre></div>
 <p><strong>Benefits</strong>:
 - Detect when Source.full_text changes (invalidates embeddings)
@@ -3050,16 +3050,16 @@
 - Prevent serving stale embeddings</p>
 <h3 id="5-async-job-processing">5. Async Job Processing</h3>
 <p>Leverage existing job system (ADR-300) for embedding generation:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># New job type: &quot;source_embedding&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># New job type: "source_embedding"</span>
 <a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="p">{</span>
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>    <span class="s2">&quot;job_type&quot;</span><span class="p">:</span> <span class="s2">&quot;source_embedding&quot;</span><span class="p">,</span>
-<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>    <span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;pending&quot;</span><span class="p">,</span>
-<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>    <span class="s2">&quot;job_data&quot;</span><span class="p">:</span> <span class="p">{</span>
-<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>        <span class="s2">&quot;ontology&quot;</span><span class="p">:</span> <span class="s2">&quot;MyOntology&quot;</span><span class="p">,</span>
-<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>        <span class="s2">&quot;strategy&quot;</span><span class="p">:</span> <span class="s2">&quot;paragraph&quot;</span><span class="p">,</span>
-<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>        <span class="s2">&quot;source_ids&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;src_123&quot;</span><span class="p">,</span> <span class="s2">&quot;src_456&quot;</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>  <span class="o">//</span> <span class="n">Batch</span> <span class="n">of</span> <span class="n">sources</span>
-<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a>        <span class="s2">&quot;embedding_provider&quot;</span><span class="p">:</span> <span class="s2">&quot;local&quot;</span><span class="p">,</span>
-<a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a>        <span class="s2">&quot;embedding_model&quot;</span><span class="p">:</span> <span class="s2">&quot;nomic-ai/nomic-embed-text-v1.5&quot;</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>    <span class="s2">"job_type"</span><span class="p">:</span> <span class="s2">"source_embedding"</span><span class="p">,</span>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>    <span class="s2">"status"</span><span class="p">:</span> <span class="s2">"pending"</span><span class="p">,</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>    <span class="s2">"job_data"</span><span class="p">:</span> <span class="p">{</span>
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>        <span class="s2">"ontology"</span><span class="p">:</span> <span class="s2">"MyOntology"</span><span class="p">,</span>
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>        <span class="s2">"strategy"</span><span class="p">:</span> <span class="s2">"paragraph"</span><span class="p">,</span>
+<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>        <span class="s2">"source_ids"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"src_123"</span><span class="p">,</span> <span class="s2">"src_456"</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>  <span class="o">//</span> <span class="n">Batch</span> <span class="n">of</span> <span class="n">sources</span>
+<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a>        <span class="s2">"embedding_provider"</span><span class="p">:</span> <span class="s2">"local"</span><span class="p">,</span>
+<a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a>        <span class="s2">"embedding_model"</span><span class="p">:</span> <span class="s2">"nomic-ai/nomic-embed-text-v1.5"</span>
 <a id="__codelineno-14-11" name="__codelineno-14-11" href="#__codelineno-14-11"></a>    <span class="p">}</span>
 <a id="__codelineno-14-12" name="__codelineno-14-12" href="#__codelineno-14-12"></a><span class="p">}</span>
 </code></pre></div>
@@ -3069,7 +3069,7 @@
 <a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>    <span class="n">job_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 <a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>    <span class="n">job_queue</span>
 <a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="w">    </span><span class="sd">"""</span>
 <a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="sd">    Generate embeddings for source text chunks.</span>
 <a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a>
 <a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a><span class="sd">    Processing:</span>
@@ -3078,7 +3078,7 @@
 <a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a><span class="sd">    3. Generate embeddings via EmbeddingWorker (ADR-809)</span>
 <a id="__codelineno-15-13" name="__codelineno-15-13" href="#__codelineno-15-13"></a><span class="sd">    4. Update Source.embedding field</span>
 <a id="__codelineno-15-14" name="__codelineno-15-14" href="#__codelineno-15-14"></a><span class="sd">    5. Report progress to job queue</span>
-<a id="__codelineno-15-15" name="__codelineno-15-15" href="#__codelineno-15-15"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-15-15" name="__codelineno-15-15" href="#__codelineno-15-15"></a><span class="sd">    """</span>
 </code></pre></div>
 <h3 id="6-generation-triggers">6. Generation Triggers</h3>
 <p><strong>At Ingestion Time</strong> (always enabled):
@@ -3086,45 +3086,45 @@
 <a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="c1"># After creating Source node</span>
 <a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="c1"># No enable/disable check - always generate embeddings</span>
 <a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="n">job_queue</span><span class="o">.</span><span class="n">submit_job</span><span class="p">({</span>
-<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>    <span class="s2">&quot;job_type&quot;</span><span class="p">:</span> <span class="s2">&quot;source_embedding&quot;</span><span class="p">,</span>
-<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>    <span class="s2">&quot;job_data&quot;</span><span class="p">:</span> <span class="p">{</span>
-<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a>        <span class="s2">&quot;source_ids&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">source_id</span><span class="p">],</span>
-<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a>        <span class="s2">&quot;ontology&quot;</span><span class="p">:</span> <span class="n">ontology</span><span class="p">,</span>
-<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a>        <span class="s2">&quot;strategy&quot;</span><span class="p">:</span> <span class="s2">&quot;sentence&quot;</span>  <span class="c1"># Default strategy</span>
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>    <span class="s2">"job_type"</span><span class="p">:</span> <span class="s2">"source_embedding"</span><span class="p">,</span>
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>    <span class="s2">"job_data"</span><span class="p">:</span> <span class="p">{</span>
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a>        <span class="s2">"source_ids"</span><span class="p">:</span> <span class="p">[</span><span class="n">source_id</span><span class="p">],</span>
+<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a>        <span class="s2">"ontology"</span><span class="p">:</span> <span class="n">ontology</span><span class="p">,</span>
+<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a>        <span class="s2">"strategy"</span><span class="p">:</span> <span class="s2">"sentence"</span>  <span class="c1"># Default strategy</span>
 <a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a>    <span class="p">}</span>
 <a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a><span class="p">})</span>
 </code></pre></div></p>
 <p><strong>Bulk Regeneration</strong> (admin tool):
 <div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="c1"># Regenerate embeddings for entire ontology</span>
-<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>regenerate-embeddings<span class="w"> </span>--ontology<span class="w"> </span><span class="s2">&quot;MyOntology&quot;</span><span class="w"> </span>--type<span class="w"> </span><span class="nb">source</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>regenerate-embeddings<span class="w"> </span>--ontology<span class="w"> </span><span class="s2">"MyOntology"</span><span class="w"> </span>--type<span class="w"> </span><span class="nb">source</span>
 <a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>
 <a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="c1"># Regenerate for entire system (provider change)</span>
 <a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>regenerate-embeddings<span class="w"> </span>--type<span class="w"> </span><span class="nb">source</span><span class="w"> </span>--all
 </code></pre></div></p>
 <p><strong>Selective Regeneration</strong> (configuration change):
 <div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="c1"># Change embedding provider, regenerate affected sources</span>
-<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>source-embeddings<span class="w"> </span>config<span class="w"> </span>--ontology<span class="w"> </span><span class="s2">&quot;MyOntology&quot;</span><span class="w"> </span>--strategy<span class="w"> </span>paragraph
-<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>kg<span class="w"> </span>admin<span class="w"> </span>source-embeddings<span class="w"> </span>generate<span class="w"> </span>--ontology<span class="w"> </span><span class="s2">&quot;MyOntology&quot;</span><span class="w"> </span>--force
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>source-embeddings<span class="w"> </span>config<span class="w"> </span>--ontology<span class="w"> </span><span class="s2">"MyOntology"</span><span class="w"> </span>--strategy<span class="w"> </span>paragraph
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>kg<span class="w"> </span>admin<span class="w"> </span>source-embeddings<span class="w"> </span>generate<span class="w"> </span>--ontology<span class="w"> </span><span class="s2">"MyOntology"</span><span class="w"> </span>--force
 </code></pre></div></p>
 <h3 id="7-query-integration">7. Query Integration</h3>
 <p><strong>New Search Mode: Source Similarity Search</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="c1"># API endpoint: POST /queries/sources/search</span>
 <a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="p">{</span>
-<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>    <span class="s2">&quot;query_text&quot;</span><span class="p">:</span> <span class="s2">&quot;How does recursive depth affect performance?&quot;</span><span class="p">,</span>
-<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>    <span class="s2">&quot;ontology&quot;</span><span class="p">:</span> <span class="s2">&quot;SystemDocs&quot;</span><span class="p">,</span>
-<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a>    <span class="s2">&quot;limit&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
-<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>    <span class="s2">&quot;include_concepts&quot;</span><span class="p">:</span> <span class="n">true</span>  <span class="o">//</span> <span class="n">Also</span> <span class="k">return</span> <span class="n">attached</span> <span class="n">concepts</span>
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>    <span class="s2">"query_text"</span><span class="p">:</span> <span class="s2">"How does recursive depth affect performance?"</span><span class="p">,</span>
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>    <span class="s2">"ontology"</span><span class="p">:</span> <span class="s2">"SystemDocs"</span><span class="p">,</span>
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a>    <span class="s2">"limit"</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
+<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>    <span class="s2">"include_concepts"</span><span class="p">:</span> <span class="n">true</span>  <span class="o">//</span> <span class="n">Also</span> <span class="k">return</span> <span class="n">attached</span> <span class="n">concepts</span>
 <a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a><span class="p">}</span>
 <a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a>
 <a id="__codelineno-19-9" name="__codelineno-19-9" href="#__codelineno-19-9"></a><span class="c1"># Response</span>
 <a id="__codelineno-19-10" name="__codelineno-19-10" href="#__codelineno-19-10"></a><span class="p">{</span>
-<a id="__codelineno-19-11" name="__codelineno-19-11" href="#__codelineno-19-11"></a>    <span class="s2">&quot;sources&quot;</span><span class="p">:</span> <span class="p">[</span>
+<a id="__codelineno-19-11" name="__codelineno-19-11" href="#__codelineno-19-11"></a>    <span class="s2">"sources"</span><span class="p">:</span> <span class="p">[</span>
 <a id="__codelineno-19-12" name="__codelineno-19-12" href="#__codelineno-19-12"></a>        <span class="p">{</span>
-<a id="__codelineno-19-13" name="__codelineno-19-13" href="#__codelineno-19-13"></a>            <span class="s2">&quot;source_id&quot;</span><span class="p">:</span> <span class="s2">&quot;doc123_chunk5&quot;</span><span class="p">,</span>
-<a id="__codelineno-19-14" name="__codelineno-19-14" href="#__codelineno-19-14"></a>            <span class="s2">&quot;document&quot;</span><span class="p">:</span> <span class="s2">&quot;SystemDocs&quot;</span><span class="p">,</span>
-<a id="__codelineno-19-15" name="__codelineno-19-15" href="#__codelineno-19-15"></a>            <span class="s2">&quot;full_text&quot;</span><span class="p">:</span> <span class="s2">&quot;...&quot;</span><span class="p">,</span>
-<a id="__codelineno-19-16" name="__codelineno-19-16" href="#__codelineno-19-16"></a>            <span class="s2">&quot;similarity&quot;</span><span class="p">:</span> <span class="mf">0.87</span><span class="p">,</span>
-<a id="__codelineno-19-17" name="__codelineno-19-17" href="#__codelineno-19-17"></a>            <span class="s2">&quot;concepts&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">...</span><span class="p">]</span>  <span class="o">//</span> <span class="n">Concepts</span> <span class="n">extracted</span> <span class="kn">from</span><span class="w"> </span><span class="nn">this</span> <span class="n">source</span>
+<a id="__codelineno-19-13" name="__codelineno-19-13" href="#__codelineno-19-13"></a>            <span class="s2">"source_id"</span><span class="p">:</span> <span class="s2">"doc123_chunk5"</span><span class="p">,</span>
+<a id="__codelineno-19-14" name="__codelineno-19-14" href="#__codelineno-19-14"></a>            <span class="s2">"document"</span><span class="p">:</span> <span class="s2">"SystemDocs"</span><span class="p">,</span>
+<a id="__codelineno-19-15" name="__codelineno-19-15" href="#__codelineno-19-15"></a>            <span class="s2">"full_text"</span><span class="p">:</span> <span class="s2">"..."</span><span class="p">,</span>
+<a id="__codelineno-19-16" name="__codelineno-19-16" href="#__codelineno-19-16"></a>            <span class="s2">"similarity"</span><span class="p">:</span> <span class="mf">0.87</span><span class="p">,</span>
+<a id="__codelineno-19-17" name="__codelineno-19-17" href="#__codelineno-19-17"></a>            <span class="s2">"concepts"</span><span class="p">:</span> <span class="p">[</span><span class="o">...</span><span class="p">]</span>  <span class="o">//</span> <span class="n">Concepts</span> <span class="n">extracted</span> <span class="kn">from</span><span class="w"> </span><span class="nn">this</span> <span class="n">source</span>
 <a id="__codelineno-19-18" name="__codelineno-19-18" href="#__codelineno-19-18"></a>        <span class="p">}</span>
 <a id="__codelineno-19-19" name="__codelineno-19-19" href="#__codelineno-19-19"></a>    <span class="p">]</span>
 <a id="__codelineno-19-20" name="__codelineno-19-20" href="#__codelineno-19-20"></a><span class="p">}</span>
@@ -3132,10 +3132,10 @@
 <p><strong>Hybrid Search: Concept + Source</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="c1"># Find concepts, then return supporting source passages</span>
 <a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="p">{</span>
-<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>    <span class="s2">&quot;query_text&quot;</span><span class="p">:</span> <span class="s2">&quot;recursive relationships&quot;</span><span class="p">,</span>
-<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a>    <span class="s2">&quot;mode&quot;</span><span class="p">:</span> <span class="s2">&quot;hybrid&quot;</span><span class="p">,</span>  <span class="o">//</span> <span class="n">Search</span> <span class="n">both</span> <span class="n">concepts</span> <span class="n">AND</span> <span class="n">sources</span>
-<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a>    <span class="s2">&quot;concept_limit&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
-<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a>    <span class="s2">&quot;source_limit&quot;</span><span class="p">:</span> <span class="mi">10</span>
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>    <span class="s2">"query_text"</span><span class="p">:</span> <span class="s2">"recursive relationships"</span><span class="p">,</span>
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a>    <span class="s2">"mode"</span><span class="p">:</span> <span class="s2">"hybrid"</span><span class="p">,</span>  <span class="o">//</span> <span class="n">Search</span> <span class="n">both</span> <span class="n">concepts</span> <span class="n">AND</span> <span class="n">sources</span>
+<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a>    <span class="s2">"concept_limit"</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
+<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a>    <span class="s2">"source_limit"</span><span class="p">:</span> <span class="mi">10</span>
 <a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a><span class="p">}</span>
 <a id="__codelineno-20-8" name="__codelineno-20-8" href="#__codelineno-20-8"></a>
 <a id="__codelineno-20-9" name="__codelineno-20-9" href="#__codelineno-20-9"></a><span class="c1"># Returns both concept matches AND similar source passages</span>
@@ -3390,7 +3390,7 @@
 <a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>kg<span class="w"> </span>admin<span class="w"> </span>regenerate-embeddings<span class="w"> </span>--all
 <a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>
 <a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="c1"># Selective regeneration</span>
-<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>regenerate-embeddings<span class="w"> </span>--type<span class="w"> </span>concept<span class="w"> </span>--ontology<span class="w"> </span><span class="s2">&quot;MyDocs&quot;</span>
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>kg<span class="w"> </span>admin<span class="w"> </span>regenerate-embeddings<span class="w"> </span>--type<span class="w"> </span>concept<span class="w"> </span>--ontology<span class="w"> </span><span class="s2">"MyDocs"</span>
 <a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a>kg<span class="w"> </span>admin<span class="w"> </span>regenerate-embeddings<span class="w"> </span>--type<span class="w"> </span><span class="nb">source</span><span class="w"> </span>--only-missing
 <a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a>kg<span class="w"> </span>admin<span class="w"> </span>regenerate-embeddings<span class="w"> </span>--type<span class="w"> </span>vocabulary
 <a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a>
@@ -3460,12 +3460,12 @@
 <h3 id="1-dynamic-query-routing">1. Dynamic Query Routing</h3>
 <p>Route queries to the most relevant entity type automatically:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="c1"># Single query → multiple semantic entry points</span>
-<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="n">query</span> <span class="o">=</span> <span class="s2">&quot;recursive depth management&quot;</span>
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="n">query</span> <span class="o">=</span> <span class="s2">"recursive depth management"</span>
 <a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a>
 <a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a><span class="n">results</span> <span class="o">=</span> <span class="p">{</span>
-<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a>    <span class="s2">&quot;via_concepts&quot;</span><span class="p">:</span> <span class="n">search_concepts</span><span class="p">(</span><span class="n">query</span><span class="p">),</span>           <span class="c1"># Direct concept match</span>
-<a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a>    <span class="s2">&quot;via_sources&quot;</span><span class="p">:</span> <span class="n">search_sources</span><span class="p">(</span><span class="n">query</span><span class="p">),</span>             <span class="c1"># Evidence passage match</span>
-<a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a>    <span class="s2">&quot;via_relationships&quot;</span><span class="p">:</span> <span class="n">search_relationships</span><span class="p">(</span><span class="n">query</span><span class="p">),</span> <span class="c1"># Semantic edge match</span>
+<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a>    <span class="s2">"via_concepts"</span><span class="p">:</span> <span class="n">search_concepts</span><span class="p">(</span><span class="n">query</span><span class="p">),</span>           <span class="c1"># Direct concept match</span>
+<a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a>    <span class="s2">"via_sources"</span><span class="p">:</span> <span class="n">search_sources</span><span class="p">(</span><span class="n">query</span><span class="p">),</span>             <span class="c1"># Evidence passage match</span>
+<a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a>    <span class="s2">"via_relationships"</span><span class="p">:</span> <span class="n">search_relationships</span><span class="p">(</span><span class="n">query</span><span class="p">),</span> <span class="c1"># Semantic edge match</span>
 <a id="__codelineno-23-8" name="__codelineno-23-8" href="#__codelineno-23-8"></a><span class="p">}</span>
 <a id="__codelineno-23-9" name="__codelineno-23-9" href="#__codelineno-23-9"></a>
 <a id="__codelineno-23-10" name="__codelineno-23-10" href="#__codelineno-23-10"></a><span class="c1"># System automatically selects best entry point by similarity</span>
@@ -3479,24 +3479,24 @@
 <a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a>
 <a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a><span class="c1">// With embeddings: Semantic relationship discovery</span>
 <a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">c</span><span class="p">:</span><span class="n">Concept</span><span class="w"> </span><span class="p">{</span><span class="n">concept_id</span><span class="p">:</span><span class="w"> </span><span class="err">$</span><span class="n">id</span><span class="p">})</span><span class="o">-[</span><span class="n">r</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">target</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span>
-<a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">vocabulary_embedding_similarity</span><span class="p">(</span><span class="n">type</span><span class="p">(</span><span class="n">r</span><span class="p">),</span><span class="w"> </span><span class="s">&quot;strengthens, enables, reinforces&quot;</span><span class="p">)</span><span class="w"> </span><span class="p">&gt;</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">8</span>
+<a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">vocabulary_embedding_similarity</span><span class="p">(</span><span class="n">type</span><span class="p">(</span><span class="n">r</span><span class="p">),</span><span class="w"> </span><span class="s">"strengthens, enables, reinforces"</span><span class="p">)</span><span class="w"> </span><span class="p">&gt;</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">8</span>
 <a id="__codelineno-24-7" name="__codelineno-24-7" href="#__codelineno-24-7"></a><span class="k">RETURN</span><span class="w"> </span><span class="n">target</span>
 <a id="__codelineno-24-8" name="__codelineno-24-8" href="#__codelineno-24-8"></a><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">vocabulary_embedding_similarity</span><span class="p">(</span><span class="n">type</span><span class="p">(</span><span class="n">r</span><span class="p">),</span><span class="w"> </span><span class="err">$</span><span class="n">query_embedding</span><span class="p">)</span><span class="w"> </span><span class="k">DESC</span>
 </code></pre></div>
 <p><strong>Use Case:</strong> Find all concepts that "support" a given concept, but include relationships with semantically similar meanings (ENABLES, REINFORCES, STRENGTHENS, etc.).</p>
 <h3 id="3-multi-entity-blending">3. Multi-Entity Blending</h3>
 <p>Merge results from multiple entity types for comprehensive coverage:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="c1"># Query: &quot;How does probabilistic reasoning work?&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="c1"># Query: "How does probabilistic reasoning work?"</span>
 <a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>
 <a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a><span class="c1"># Strategy A: Find concepts directly</span>
-<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a><span class="n">concepts_direct</span> <span class="o">=</span> <span class="n">search_concepts</span><span class="p">(</span><span class="s2">&quot;probabilistic reasoning&quot;</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a><span class="n">concepts_direct</span> <span class="o">=</span> <span class="n">search_concepts</span><span class="p">(</span><span class="s2">"probabilistic reasoning"</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
 <a id="__codelineno-25-5" name="__codelineno-25-5" href="#__codelineno-25-5"></a>
 <a id="__codelineno-25-6" name="__codelineno-25-6" href="#__codelineno-25-6"></a><span class="c1"># Strategy B: Find source passages → extract their concepts</span>
-<a id="__codelineno-25-7" name="__codelineno-25-7" href="#__codelineno-25-7"></a><span class="n">sources</span> <span class="o">=</span> <span class="n">search_sources</span><span class="p">(</span><span class="s2">&quot;probabilistic reasoning&quot;</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<a id="__codelineno-25-7" name="__codelineno-25-7" href="#__codelineno-25-7"></a><span class="n">sources</span> <span class="o">=</span> <span class="n">search_sources</span><span class="p">(</span><span class="s2">"probabilistic reasoning"</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
 <a id="__codelineno-25-8" name="__codelineno-25-8" href="#__codelineno-25-8"></a><span class="n">concepts_from_sources</span> <span class="o">=</span> <span class="n">get_concepts_for_sources</span><span class="p">(</span><span class="n">sources</span><span class="p">)</span>
 <a id="__codelineno-25-9" name="__codelineno-25-9" href="#__codelineno-25-9"></a>
 <a id="__codelineno-25-10" name="__codelineno-25-10" href="#__codelineno-25-10"></a><span class="c1"># Strategy C: Find relationships → traverse to concepts</span>
-<a id="__codelineno-25-11" name="__codelineno-25-11" href="#__codelineno-25-11"></a><span class="n">relationships</span> <span class="o">=</span> <span class="n">search_relationships</span><span class="p">(</span><span class="s2">&quot;probabilistic reasoning&quot;</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<a id="__codelineno-25-11" name="__codelineno-25-11" href="#__codelineno-25-11"></a><span class="n">relationships</span> <span class="o">=</span> <span class="n">search_relationships</span><span class="p">(</span><span class="s2">"probabilistic reasoning"</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
 <a id="__codelineno-25-12" name="__codelineno-25-12" href="#__codelineno-25-12"></a><span class="n">concepts_via_edges</span> <span class="o">=</span> <span class="n">get_concepts_connected_by</span><span class="p">(</span><span class="n">relationships</span><span class="p">)</span>
 <a id="__codelineno-25-13" name="__codelineno-25-13" href="#__codelineno-25-13"></a>
 <a id="__codelineno-25-14" name="__codelineno-25-14" href="#__codelineno-25-14"></a><span class="c1"># BLEND: Merge + deduplicate + rank by combined signals</span>
@@ -3509,19 +3509,19 @@
 <p><strong>Use Case:</strong> Comprehensive search that considers all perspectives—concepts mentioned explicitly, concepts discussed in sources, and concepts connected via semantically relevant relationships.</p>
 <h3 id="4-contextual-re-ranking">4. Contextual Re-Ranking</h3>
 <p>Rank evidence by semantic relevance to the query, not just presence:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="c1"># Query: &quot;grounding strength calculation&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="c1"># Query: "grounding strength calculation"</span>
 <a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>
 <a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a><span class="c1"># Step 1: Find best concept match</span>
-<a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a><span class="n">concept</span> <span class="o">=</span> <span class="n">search_concepts</span><span class="p">(</span><span class="s2">&quot;grounding strength&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+<a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a><span class="n">concept</span> <span class="o">=</span> <span class="n">search_concepts</span><span class="p">(</span><span class="s2">"grounding strength"</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
 <a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a>
 <a id="__codelineno-26-6" name="__codelineno-26-6" href="#__codelineno-26-6"></a><span class="c1"># Step 2: Get evidence, but rank by CONTEXT similarity</span>
 <a id="__codelineno-26-7" name="__codelineno-26-7" href="#__codelineno-26-7"></a><span class="n">evidence</span> <span class="o">=</span> <span class="n">get_concept_evidence</span><span class="p">(</span><span class="n">concept</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
 <a id="__codelineno-26-8" name="__codelineno-26-8" href="#__codelineno-26-8"></a>
 <a id="__codelineno-26-9" name="__codelineno-26-9" href="#__codelineno-26-9"></a><span class="k">for</span> <span class="n">source</span> <span class="ow">in</span> <span class="n">evidence</span><span class="p">:</span>
-<a id="__codelineno-26-10" name="__codelineno-26-10" href="#__codelineno-26-10"></a>    <span class="c1"># Traditional: &quot;This source mentions this concept&quot; (binary)</span>
-<a id="__codelineno-26-11" name="__codelineno-26-11" href="#__codelineno-26-11"></a>    <span class="c1"># Enhanced: &quot;This source passage is contextually relevant to the query&quot; (scored)</span>
+<a id="__codelineno-26-10" name="__codelineno-26-10" href="#__codelineno-26-10"></a>    <span class="c1"># Traditional: "This source mentions this concept" (binary)</span>
+<a id="__codelineno-26-11" name="__codelineno-26-11" href="#__codelineno-26-11"></a>    <span class="c1"># Enhanced: "This source passage is contextually relevant to the query" (scored)</span>
 <a id="__codelineno-26-12" name="__codelineno-26-12" href="#__codelineno-26-12"></a>    <span class="n">source</span><span class="o">.</span><span class="n">relevance_score</span> <span class="o">=</span> <span class="n">cosine_similarity</span><span class="p">(</span>
-<a id="__codelineno-26-13" name="__codelineno-26-13" href="#__codelineno-26-13"></a>        <span class="n">embed</span><span class="p">(</span><span class="s2">&quot;grounding strength calculation&quot;</span><span class="p">),</span>
+<a id="__codelineno-26-13" name="__codelineno-26-13" href="#__codelineno-26-13"></a>        <span class="n">embed</span><span class="p">(</span><span class="s2">"grounding strength calculation"</span><span class="p">),</span>
 <a id="__codelineno-26-14" name="__codelineno-26-14" href="#__codelineno-26-14"></a>        <span class="n">source</span><span class="o">.</span><span class="n">embedding</span>
 <a id="__codelineno-26-15" name="__codelineno-26-15" href="#__codelineno-26-15"></a>    <span class="p">)</span>
 <a id="__codelineno-26-16" name="__codelineno-26-16" href="#__codelineno-26-16"></a>
@@ -3531,15 +3531,15 @@
 <p><strong>Use Case:</strong> Show the most relevant evidence first—passages that not only mention the concept but discuss it in the context the user cares about.</p>
 <h3 id="5-semantic-subgraph-extraction">5. Semantic Subgraph Extraction</h3>
 <p>Extract connected subgraphs based on semantic similarity, not just explicit edges:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a><span class="c1"># &quot;Show me everything semantically related to &#39;epistemic status&#39;&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a><span class="c1"># "Show me everything semantically related to 'epistemic status'"</span>
 <a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>
-<a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a><span class="n">query_emb</span> <span class="o">=</span> <span class="n">embed</span><span class="p">(</span><span class="s2">&quot;epistemic status&quot;</span><span class="p">)</span>
+<a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a><span class="n">query_emb</span> <span class="o">=</span> <span class="n">embed</span><span class="p">(</span><span class="s2">"epistemic status"</span><span class="p">)</span>
 <a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a>
 <a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a><span class="c1"># Find ALL entities semantically close (threshold = 0.7)</span>
 <a id="__codelineno-27-6" name="__codelineno-27-6" href="#__codelineno-27-6"></a><span class="n">semantic_neighborhood</span> <span class="o">=</span> <span class="p">{</span>
-<a id="__codelineno-27-7" name="__codelineno-27-7" href="#__codelineno-27-7"></a>    <span class="s2">&quot;concepts&quot;</span><span class="p">:</span> <span class="n">cosine_search</span><span class="p">(</span><span class="n">Concept</span><span class="o">.</span><span class="n">embedding</span><span class="p">,</span> <span class="n">query_emb</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.7</span><span class="p">),</span>
-<a id="__codelineno-27-8" name="__codelineno-27-8" href="#__codelineno-27-8"></a>    <span class="s2">&quot;sources&quot;</span><span class="p">:</span> <span class="n">cosine_search</span><span class="p">(</span><span class="n">source_embeddings</span><span class="p">,</span> <span class="n">query_emb</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.7</span><span class="p">),</span>
-<a id="__codelineno-27-9" name="__codelineno-27-9" href="#__codelineno-27-9"></a>    <span class="s2">&quot;relationships&quot;</span><span class="p">:</span> <span class="n">cosine_search</span><span class="p">(</span><span class="n">vocabulary_embeddings</span><span class="p">,</span> <span class="n">query_emb</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+<a id="__codelineno-27-7" name="__codelineno-27-7" href="#__codelineno-27-7"></a>    <span class="s2">"concepts"</span><span class="p">:</span> <span class="n">cosine_search</span><span class="p">(</span><span class="n">Concept</span><span class="o">.</span><span class="n">embedding</span><span class="p">,</span> <span class="n">query_emb</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.7</span><span class="p">),</span>
+<a id="__codelineno-27-8" name="__codelineno-27-8" href="#__codelineno-27-8"></a>    <span class="s2">"sources"</span><span class="p">:</span> <span class="n">cosine_search</span><span class="p">(</span><span class="n">source_embeddings</span><span class="p">,</span> <span class="n">query_emb</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.7</span><span class="p">),</span>
+<a id="__codelineno-27-9" name="__codelineno-27-9" href="#__codelineno-27-9"></a>    <span class="s2">"relationships"</span><span class="p">:</span> <span class="n">cosine_search</span><span class="p">(</span><span class="n">vocabulary_embeddings</span><span class="p">,</span> <span class="n">query_emb</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
 <a id="__codelineno-27-10" name="__codelineno-27-10" href="#__codelineno-27-10"></a><span class="p">}</span>
 <a id="__codelineno-27-11" name="__codelineno-27-11" href="#__codelineno-27-11"></a>
 <a id="__codelineno-27-12" name="__codelineno-27-12" href="#__codelineno-27-12"></a><span class="c1"># Extract connected subgraph containing these entities</span>
@@ -3561,19 +3561,19 @@
 <a id="__codelineno-28-9" name="__codelineno-28-9" href="#__codelineno-28-9"></a><span class="w">  </span><span class="n">AND</span><span class="w"> </span><span class="n">source_embedding_similarity</span><span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="n">c2</span><span class="p">)</span><span class="w"> </span><span class="p">&gt;</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">75</span>
 <a id="__codelineno-28-10" name="__codelineno-28-10" href="#__codelineno-28-10"></a>
 <a id="__codelineno-28-11" name="__codelineno-28-11" href="#__codelineno-28-11"></a><span class="k">RETURN</span><span class="w"> </span><span class="n">c1</span><span class="p">,</span><span class="w"> </span><span class="n">c2</span><span class="p">,</span><span class="w"> </span><span class="n">s</span>
-<a id="__codelineno-28-12" name="__codelineno-28-12" href="#__codelineno-28-12"></a><span class="c1">// Result: &quot;These concepts aren&#39;t linked, but this source passage</span>
-<a id="__codelineno-28-13" name="__codelineno-28-13" href="#__codelineno-28-13"></a><span class="c1">//          discusses both → potential emergent relationship&quot;</span>
+<a id="__codelineno-28-12" name="__codelineno-28-12" href="#__codelineno-28-12"></a><span class="c1">// Result: "These concepts aren't linked, but this source passage</span>
+<a id="__codelineno-28-13" name="__codelineno-28-13" href="#__codelineno-28-13"></a><span class="c1">//          discusses both → potential emergent relationship"</span>
 </code></pre></div>
 <p><strong>Use Case:</strong> Discover hidden connections—concepts that should be related based on semantic proximity but haven't been explicitly linked yet.</p>
 <h3 id="7-cross-modal-query-fusion-future">7. Cross-Modal Query Fusion (Future)</h3>
 <p>With visual embeddings (ADR-305), blend text + visual semantics:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a><span class="c1"># Query: &quot;system architecture&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a><span class="c1"># Query: "system architecture"</span>
 <a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a>
 <a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a><span class="n">results</span> <span class="o">=</span> <span class="n">blend_multimodal</span><span class="p">([</span>
-<a id="__codelineno-29-4" name="__codelineno-29-4" href="#__codelineno-29-4"></a>    <span class="n">search_concepts</span><span class="p">(</span><span class="s2">&quot;system architecture&quot;</span><span class="p">),</span>
-<a id="__codelineno-29-5" name="__codelineno-29-5" href="#__codelineno-29-5"></a>    <span class="n">search_sources</span><span class="p">(</span><span class="s2">&quot;architecture diagrams&quot;</span><span class="p">),</span>
-<a id="__codelineno-29-6" name="__codelineno-29-6" href="#__codelineno-29-6"></a>    <span class="n">search_relationships</span><span class="p">(</span><span class="s2">&quot;defines structure&quot;</span><span class="p">),</span>
-<a id="__codelineno-29-7" name="__codelineno-29-7" href="#__codelineno-29-7"></a>    <span class="n">search_images</span><span class="p">(</span><span class="n">visual_query</span><span class="o">=</span><span class="s2">&quot;architecture diagram&quot;</span><span class="p">)</span>  <span class="c1"># Visual similarity</span>
+<a id="__codelineno-29-4" name="__codelineno-29-4" href="#__codelineno-29-4"></a>    <span class="n">search_concepts</span><span class="p">(</span><span class="s2">"system architecture"</span><span class="p">),</span>
+<a id="__codelineno-29-5" name="__codelineno-29-5" href="#__codelineno-29-5"></a>    <span class="n">search_sources</span><span class="p">(</span><span class="s2">"architecture diagrams"</span><span class="p">),</span>
+<a id="__codelineno-29-6" name="__codelineno-29-6" href="#__codelineno-29-6"></a>    <span class="n">search_relationships</span><span class="p">(</span><span class="s2">"defines structure"</span><span class="p">),</span>
+<a id="__codelineno-29-7" name="__codelineno-29-7" href="#__codelineno-29-7"></a>    <span class="n">search_images</span><span class="p">(</span><span class="n">visual_query</span><span class="o">=</span><span class="s2">"architecture diagram"</span><span class="p">)</span>  <span class="c1"># Visual similarity</span>
 <a id="__codelineno-29-8" name="__codelineno-29-8" href="#__codelineno-29-8"></a><span class="p">])</span>
 <a id="__codelineno-29-9" name="__codelineno-29-9" href="#__codelineno-29-9"></a>
 <a id="__codelineno-29-10" name="__codelineno-29-10" href="#__codelineno-29-10"></a><span class="c1"># Result: Concepts + passages + diagrams, all ranked by semantic relevance</span>
@@ -3677,8 +3677,8 @@
 <h3 id="source-similarity-search">Source Similarity Search</h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a><span class="c1"># Find passages similar to query</span>
 <a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a><span class="n">client</span><span class="o">.</span><span class="n">search_sources</span><span class="p">(</span>
-<a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a>    <span class="n">query</span><span class="o">=</span><span class="s2">&quot;How does grounding strength work?&quot;</span><span class="p">,</span>
-<a id="__codelineno-32-4" name="__codelineno-32-4" href="#__codelineno-32-4"></a>    <span class="n">ontology</span><span class="o">=</span><span class="s2">&quot;ADRs&quot;</span><span class="p">,</span>
+<a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a>    <span class="n">query</span><span class="o">=</span><span class="s2">"How does grounding strength work?"</span><span class="p">,</span>
+<a id="__codelineno-32-4" name="__codelineno-32-4" href="#__codelineno-32-4"></a>    <span class="n">ontology</span><span class="o">=</span><span class="s2">"ADRs"</span><span class="p">,</span>
 <a id="__codelineno-32-5" name="__codelineno-32-5" href="#__codelineno-32-5"></a>    <span class="n">limit</span><span class="o">=</span><span class="mi">5</span>
 <a id="__codelineno-32-6" name="__codelineno-32-6" href="#__codelineno-32-6"></a><span class="p">)</span>
 <a id="__codelineno-32-7" name="__codelineno-32-7" href="#__codelineno-32-7"></a><span class="c1"># Returns:</span>
@@ -3689,7 +3689,7 @@
 <h3 id="hybrid-concept-source-search">Hybrid Concept + Source Search</h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a><span class="c1"># Find concepts, then expand to source context</span>
 <a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a><span class="n">results</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">hybrid_search</span><span class="p">(</span>
-<a id="__codelineno-33-3" name="__codelineno-33-3" href="#__codelineno-33-3"></a>    <span class="n">query</span><span class="o">=</span><span class="s2">&quot;epistemic status measurement&quot;</span><span class="p">,</span>
+<a id="__codelineno-33-3" name="__codelineno-33-3" href="#__codelineno-33-3"></a>    <span class="n">query</span><span class="o">=</span><span class="s2">"epistemic status measurement"</span><span class="p">,</span>
 <a id="__codelineno-33-4" name="__codelineno-33-4" href="#__codelineno-33-4"></a>    <span class="n">concept_limit</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
 <a id="__codelineno-33-5" name="__codelineno-33-5" href="#__codelineno-33-5"></a>    <span class="n">source_limit</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
 <a id="__codelineno-33-6" name="__codelineno-33-6" href="#__codelineno-33-6"></a>    <span class="n">expand_context</span><span class="o">=</span><span class="kc">True</span>  <span class="c1"># Include neighboring source paragraphs</span>
@@ -3702,7 +3702,7 @@
 <h3 id="context-window-for-concept">Context Window for Concept</h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a><span class="c1"># Given a concept, find surrounding source context</span>
 <a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a><span class="n">client</span><span class="o">.</span><span class="n">get_concept_context</span><span class="p">(</span>
-<a id="__codelineno-34-3" name="__codelineno-34-3" href="#__codelineno-34-3"></a>    <span class="n">concept_id</span><span class="o">=</span><span class="s2">&quot;concept-123&quot;</span><span class="p">,</span>
+<a id="__codelineno-34-3" name="__codelineno-34-3" href="#__codelineno-34-3"></a>    <span class="n">concept_id</span><span class="o">=</span><span class="s2">"concept-123"</span><span class="p">,</span>
 <a id="__codelineno-34-4" name="__codelineno-34-4" href="#__codelineno-34-4"></a>    <span class="n">window_size</span><span class="o">=</span><span class="mi">2</span>  <span class="c1"># ±2 paragraphs</span>
 <a id="__codelineno-34-5" name="__codelineno-34-5" href="#__codelineno-34-5"></a><span class="p">)</span>
 <a id="__codelineno-34-6" name="__codelineno-34-6" href="#__codelineno-34-6"></a><span class="c1"># Returns:</span>
@@ -3714,14 +3714,14 @@
 <h3 id="cross-document-source-similarity">Cross-Document Source Similarity</h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a><span class="c1"># Find similar passages across multiple documents</span>
 <a id="__codelineno-35-2" name="__codelineno-35-2" href="#__codelineno-35-2"></a><span class="n">client</span><span class="o">.</span><span class="n">cross_document_similarity</span><span class="p">(</span>
-<a id="__codelineno-35-3" name="__codelineno-35-3" href="#__codelineno-35-3"></a>    <span class="n">source_id</span><span class="o">=</span><span class="s2">&quot;doc1_chunk5&quot;</span><span class="p">,</span>
-<a id="__codelineno-35-4" name="__codelineno-35-4" href="#__codelineno-35-4"></a>    <span class="n">ontologies</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;ADRs&quot;</span><span class="p">,</span> <span class="s2">&quot;CodeDocs&quot;</span><span class="p">,</span> <span class="s2">&quot;Research&quot;</span><span class="p">],</span>
+<a id="__codelineno-35-3" name="__codelineno-35-3" href="#__codelineno-35-3"></a>    <span class="n">source_id</span><span class="o">=</span><span class="s2">"doc1_chunk5"</span><span class="p">,</span>
+<a id="__codelineno-35-4" name="__codelineno-35-4" href="#__codelineno-35-4"></a>    <span class="n">ontologies</span><span class="o">=</span><span class="p">[</span><span class="s2">"ADRs"</span><span class="p">,</span> <span class="s2">"CodeDocs"</span><span class="p">,</span> <span class="s2">"Research"</span><span class="p">],</span>
 <a id="__codelineno-35-5" name="__codelineno-35-5" href="#__codelineno-35-5"></a>    <span class="n">limit</span><span class="o">=</span><span class="mi">10</span>
 <a id="__codelineno-35-6" name="__codelineno-35-6" href="#__codelineno-35-6"></a><span class="p">)</span>
 <a id="__codelineno-35-7" name="__codelineno-35-7" href="#__codelineno-35-7"></a><span class="c1"># Returns:</span>
 <a id="__codelineno-35-8" name="__codelineno-35-8" href="#__codelineno-35-8"></a><span class="c1"># - Similar passages from other documents</span>
 <a id="__codelineno-35-9" name="__codelineno-35-9" href="#__codelineno-35-9"></a><span class="c1"># - Identifies conceptual overlap</span>
-<a id="__codelineno-35-10" name="__codelineno-35-10" href="#__codelineno-35-10"></a><span class="c1"># - Builds &quot;source graph&quot; of related passages</span>
+<a id="__codelineno-35-10" name="__codelineno-35-10" href="#__codelineno-35-10"></a><span class="c1"># - Builds "source graph" of related passages</span>
 </code></pre></div>
 <hr />
 <p><strong>Last Updated:</strong> 2025-11-27
@@ -3781,7 +3781,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": [], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

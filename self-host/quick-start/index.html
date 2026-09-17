@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -31,7 +31,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
       
 
@@ -2410,7 +2410,7 @@
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span>--ssl<span class="w"> </span>letsencrypt<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span>--ssl-email<span class="w"> </span>admin@example.com<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">  </span>--ai-provider<span class="w"> </span>openai<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">  </span>--ai-key<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$OPENAI_API_KEY</span><span class="s2">&quot;</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">  </span>--ai-key<span class="w"> </span><span class="s2">"</span><span class="nv">$OPENAI_API_KEY</span><span class="s2">"</span>
 </code></pre></div>
 <p>To configure AI credentials after installation, omit the AI flags:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>curl<span class="w"> </span>-fsSL<span class="w"> </span>https://raw.githubusercontent.com/aaronsb/knowledge-graph-system/main/install.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>bash<span class="w"> </span>-s<span class="w"> </span>--<span class="w"> </span><span class="se">\</span>
@@ -2518,7 +2518,7 @@
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>./operator.sh<span class="w"> </span>ai-provider<span class="w"> </span>openai<span class="w"> </span><span class="c1"># Switch AI provider</span>
 <a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>./operator.sh<span class="w"> </span>api-key<span class="w"> </span>openai<span class="w">     </span><span class="c1"># Store a provider API key</span>
 <a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>./operator.sh<span class="w"> </span>embedding<span class="w">          </span><span class="c1"># Configure embeddings</span>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>./operator.sh<span class="w"> </span>query<span class="w"> </span><span class="s1">&#39;SQL&#39;</span><span class="w">        </span><span class="c1"># Run a SQL query against PostgreSQL</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>./operator.sh<span class="w"> </span>query<span class="w"> </span><span class="s1">'SQL'</span><span class="w">        </span><span class="c1"># Run a SQL query against PostgreSQL</span>
 </code></pre></div>
 <p>Inside the configuration shell (<code>./operator.sh shell</code>):</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>configure.py<span class="w"> </span>status<span class="w">              </span><span class="c1"># Show current configuration</span>
@@ -2579,7 +2579,7 @@
 <p>Configuration is stored at <code>~/.config/kg/config.json</code>. The FUSE driver reads credentials from the same file.</p>
 <h3 id="cli-quick-reference">CLI quick reference</h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>kg<span class="w"> </span>health<span class="w">              </span><span class="c1"># Check API connection</span>
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>kg<span class="w"> </span>search<span class="w"> </span><span class="s2">&quot;query&quot;</span><span class="w">      </span><span class="c1"># Search concepts</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>kg<span class="w"> </span>search<span class="w"> </span><span class="s2">"query"</span><span class="w">      </span><span class="c1"># Search concepts</span>
 <a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file.pdf<span class="w">     </span><span class="c1"># Ingest a document</span>
 <a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>kg<span class="w"> </span>--help<span class="w">              </span><span class="c1"># Full command list</span>
 </code></pre></div>
@@ -2599,7 +2599,7 @@
 <h2 id="troubleshooting">Troubleshooting</h2>
 <p><strong><code>kg</code>: command not found after installation</strong></p>
 <p>Ensure <code>~/.local/bin</code> is in your PATH:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">PATH</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$HOME</span><span class="s2">/.local/bin:</span><span class="nv">$PATH</span><span class="s2">&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">PATH</span><span class="o">=</span><span class="s2">"</span><span class="nv">$HOME</span><span class="s2">/.local/bin:</span><span class="nv">$PATH</span><span class="s2">"</span>
 </code></pre></div>
 <p>Add this line to <code>~/.bashrc</code> or <code>~/.zshrc</code> for persistence.</p>
 <p><strong>Authentication errors</strong></p>
@@ -2678,7 +2678,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -31,7 +31,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
       
 
@@ -2382,7 +2382,7 @@ import wizard.</p>
 </blockquote>
 <h3 id="quick-start-qcow2-zero-config-no-seed">Quick start — qcow2, zero-config (no seed)</h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># download + decompress into a libvirt pool (e.g. /srv/storage/libvirt/images)</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>gh<span class="w"> </span>release<span class="w"> </span>download<span class="w"> </span>v&lt;ver&gt;<span class="w"> </span>-p<span class="w"> </span><span class="s1">&#39;kg-appliance-&lt;ver&gt;.qcow2.xz&#39;</span><span class="w"> </span>-D<span class="w"> </span>&lt;pool-dir&gt;
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>gh<span class="w"> </span>release<span class="w"> </span>download<span class="w"> </span>v&lt;ver&gt;<span class="w"> </span>-p<span class="w"> </span><span class="s1">'kg-appliance-&lt;ver&gt;.qcow2.xz'</span><span class="w"> </span>-D<span class="w"> </span>&lt;pool-dir&gt;
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>unxz<span class="w"> </span>&lt;pool-dir&gt;/kg-appliance-&lt;ver&gt;.qcow2.xz
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>sudo<span class="w"> </span>virt-install<span class="w"> </span>--name<span class="w"> </span>kg-appliance<span class="w"> </span>--memory<span class="w"> </span><span class="m">4096</span><span class="w"> </span>--vcpus<span class="w"> </span><span class="m">2</span><span class="w"> </span>--os-variant<span class="w"> </span>debian12<span class="w"> </span><span class="se">\</span>
@@ -2424,11 +2424,11 @@ box boots with defaults and your <code>provision.env</code> is silently ignored.
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="s">instance-id: kg-appliance-01</span>
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="s">local-hostname: kg-appliance</span>
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="s">EOF</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>cat<span class="w"> </span>&gt;<span class="w"> </span>user-data<span class="w"> </span><span class="s">&lt;&lt;&#39;EOF&#39;</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>cat<span class="w"> </span>&gt;<span class="w"> </span>user-data<span class="w"> </span><span class="s">&lt;&lt;'EOF'</span>
 <a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="s">#cloud-config</span>
 <a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="s">write_files:</span>
 <a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="s">  - path: /etc/kg/provision.env</span>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="s">    permissions: &#39;0600&#39;</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="s">    permissions: '0600'</span>
 <a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="s">    content: |</span>
 <a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="s">      KG_EXTERNAL_URL=https://kg.example.com</span>
 <a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="s">      KG_TLS_MODE=letsencrypt</span>
@@ -2440,7 +2440,7 @@ box boots with defaults and your <code>provision.env</code> is silently ignored.
 <a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a><span class="s">EOF</span>
 <a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a><span class="c1"># label MUST be cidata for NoCloud</span>
 <a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>xorriso<span class="w"> </span>-as<span class="w"> </span>mkisofs<span class="w"> </span>-V<span class="w"> </span>cidata<span class="w"> </span>-J<span class="w"> </span>-r<span class="w"> </span>-o<span class="w"> </span>kg-seed.iso<span class="w"> </span>user-data<span class="w"> </span>meta-data
-<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>sudo<span class="w"> </span>cp<span class="w"> </span>kg-seed.iso<span class="w"> </span>/srv/storage/libvirt/images/<span class="w">   </span><span class="c1"># xorriso can&#39;t write a root-owned pool dir directly</span>
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>sudo<span class="w"> </span>cp<span class="w"> </span>kg-seed.iso<span class="w"> </span>/srv/storage/libvirt/images/<span class="w">   </span><span class="c1"># xorriso can't write a root-owned pool dir directly</span>
 </code></pre></div>
 <p><code>provision.env</code> is the appliance's single declarative control surface; unknown
 keys are ignored. See <a href="../../appliance/files/provision.env.example"><code>appliance/files/provision.env.example</code></a>.</p>
@@ -2478,23 +2478,23 @@ inside the VM. Then sign in to the web UI at the external URL:</p>
 <p>The appliance has no sshd. Run commands inside the guest through the
 qemu-guest-agent from the libvirt host. This helper executes a command in the VM
 and prints its output:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>vmx<span class="o">()</span><span class="w"> </span><span class="o">{</span><span class="w">  </span><span class="c1"># usage: vmx &quot;shell command&quot; [wait_seconds]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>vmx<span class="o">()</span><span class="w"> </span><span class="o">{</span><span class="w">  </span><span class="c1"># usage: vmx "shell command" [wait_seconds]</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="nb">local</span><span class="w"> </span>pid
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span><span class="nv">pid</span><span class="o">=</span><span class="k">$(</span>sudo<span class="w"> </span>virsh<span class="w"> </span>qemu-agent-command<span class="w"> </span>kg-appliance<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">    </span><span class="s2">&quot;{\&quot;execute\&quot;:\&quot;guest-exec\&quot;,\&quot;arguments\&quot;:{\&quot;path\&quot;:\&quot;/bin/sh\&quot;,\&quot;arg\&quot;:[\&quot;-c\&quot;,\&quot;</span><span class="nv">$1</span><span class="s2">\&quot;],\&quot;capture-output\&quot;:true}}&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">    </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-oE<span class="w"> </span><span class="s1">&#39;&quot;pid&quot;:[0-9]+&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>cut<span class="w"> </span>-d:<span class="w"> </span>-f2<span class="k">)</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">  </span><span class="o">[</span><span class="w"> </span>-z<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$pid</span><span class="s2">&quot;</span><span class="w"> </span><span class="o">]</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="o">{</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;(agent busy / not ready)&quot;</span><span class="p">;</span><span class="w"> </span><span class="k">return</span><span class="p">;</span><span class="w"> </span><span class="o">}</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">  </span>sleep<span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">2</span><span class="k">:-</span><span class="nv">3</span><span class="si">}</span><span class="s2">&quot;</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">    </span><span class="s2">"{\"execute\":\"guest-exec\",\"arguments\":{\"path\":\"/bin/sh\",\"arg\":[\"-c\",\"</span><span class="nv">$1</span><span class="s2">\"],\"capture-output\":true}}"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">    </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-oE<span class="w"> </span><span class="s1">'"pid":[0-9]+'</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>cut<span class="w"> </span>-d:<span class="w"> </span>-f2<span class="k">)</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">  </span><span class="o">[</span><span class="w"> </span>-z<span class="w"> </span><span class="s2">"</span><span class="nv">$pid</span><span class="s2">"</span><span class="w"> </span><span class="o">]</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="o">{</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">"(agent busy / not ready)"</span><span class="p">;</span><span class="w"> </span><span class="k">return</span><span class="p">;</span><span class="w"> </span><span class="o">}</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">  </span>sleep<span class="w"> </span><span class="s2">"</span><span class="si">${</span><span class="nv">2</span><span class="k">:-</span><span class="nv">3</span><span class="si">}</span><span class="s2">"</span>
 <a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">  </span>sudo<span class="w"> </span>virsh<span class="w"> </span>qemu-agent-command<span class="w"> </span>kg-appliance<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="w">    </span><span class="s2">&quot;{\&quot;execute\&quot;:\&quot;guest-exec-status\&quot;,\&quot;arguments\&quot;:{\&quot;pid\&quot;:</span><span class="nv">$pid</span><span class="s2">}}&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">    </span><span class="p">|</span><span class="w"> </span>python3<span class="w"> </span>-c<span class="w"> </span><span class="s1">&#39;import sys,json,base64</span>
-<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="s1">d=json.load(sys.stdin)[&quot;return&quot;]</span>
-<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="s1">for k in (&quot;out-data&quot;,&quot;err-data&quot;):</span>
-<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="s1">    if d.get(k): sys.stdout.write(base64.b64decode(d[k]).decode(&quot;utf-8&quot;,&quot;replace&quot;))&#39;</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="w">    </span><span class="s2">"{\"execute\":\"guest-exec-status\",\"arguments\":{\"pid\":</span><span class="nv">$pid</span><span class="s2">}}"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">    </span><span class="p">|</span><span class="w"> </span>python3<span class="w"> </span>-c<span class="w"> </span><span class="s1">'import sys,json,base64</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="s1">d=json.load(sys.stdin)["return"]</span>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="s1">for k in ("out-data","err-data"):</span>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="s1">    if d.get(k): sys.stdout.write(base64.b64decode(d[k]).decode("utf-8","replace"))'</span>
 <a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="o">}</span>
 <a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>
-<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>vmx<span class="w"> </span><span class="s2">&quot;docker ps --format &#39;{{.Names}}: {{.Status}}&#39;&quot;</span>
-<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>vmx<span class="w"> </span><span class="s2">&quot;cd /opt/kg &amp;&amp; ./operator.sh status&quot;</span>
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>vmx<span class="w"> </span><span class="s2">"docker ps --format '{{.Names}}: {{.Status}}'"</span>
+<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>vmx<span class="w"> </span><span class="s2">"cd /opt/kg &amp;&amp; ./operator.sh status"</span>
 </code></pre></div>
 <p>For commands with awkward quoting (heredocs, JSON), base64-encode them:
 <code>vmx "echo &lt;base64&gt; | base64 -d | sh"</code>. Decode <code>out-data</code> and <code>err-data</code>
@@ -2738,7 +2738,7 @@ so renewals survive restarts. Verify from the libvirt host:</p>
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

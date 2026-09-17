@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -31,7 +31,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
       
 
@@ -2217,7 +2217,7 @@
 <hr />
 <h2 id="search-for-concepts">Search for concepts</h2>
 <p><code>kg search</code> finds concepts by semantic similarity — it matches meaning, not keywords.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kg<span class="w"> </span>search<span class="w"> </span>query<span class="w"> </span><span class="s2">&quot;uselessness&quot;</span><span class="w"> </span>--limit<span class="w"> </span><span class="m">3</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kg<span class="w"> </span>search<span class="w"> </span>query<span class="w"> </span><span class="s2">"uselessness"</span><span class="w"> </span>--limit<span class="w"> </span><span class="m">3</span>
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Found 2 concepts:
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
@@ -2237,7 +2237,7 @@
 </code></pre></div>
 <p>The search returned concepts related to uselessness as a philosophical idea — not just text containing the word. The similarity score measures how close each concept's embedding is to your query. The grounding score measures how consistently the concept is supported across the corpus.</p>
 <p>If you get fewer results than expected, lower the similarity threshold:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kg<span class="w"> </span>search<span class="w"> </span>query<span class="w"> </span><span class="s2">&quot;uselessness&quot;</span><span class="w"> </span>--min-similarity<span class="w"> </span><span class="m">0</span>.5
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kg<span class="w"> </span>search<span class="w"> </span>query<span class="w"> </span><span class="s2">"uselessness"</span><span class="w"> </span>--min-similarity<span class="w"> </span><span class="m">0</span>.5
 </code></pre></div>
 <hr />
 <h2 id="examine-evidence">Examine evidence</h2>
@@ -2255,9 +2255,9 @@
 <a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>────────────────────────────────────────────────────────────────────────────────
 <a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>
 <a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>1. Watts Taoism 02 (para 1)
-<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>   &quot;The whole notion of something of life, any moment in life or any
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>   "The whole notion of something of life, any moment in life or any
 <a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>    event in life being useful, that is to say serving the end of some
-<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>    future event in life, is to a Taoist absurd.&quot;
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>    future event in life, is to a Taoist absurd."
 <a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>
 <a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>Relationships (2)
 <a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a>────────────────────────────────────────────────────────────────────────────────
@@ -2300,13 +2300,13 @@
 <a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span>variety_as_a_fulcrum_chunk2_8e05c87e
 </code></pre></div>
 <p><strong>By phrase (the system resolves to the closest matching concepts):</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>kg<span class="w"> </span>search<span class="w"> </span>connect<span class="w"> </span><span class="s2">&quot;value of uselessness&quot;</span><span class="w"> </span><span class="s2">&quot;requisite variety&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>kg<span class="w"> </span>search<span class="w"> </span>connect<span class="w"> </span><span class="s2">"value of uselessness"</span><span class="w"> </span><span class="s2">"requisite variety"</span>
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>Finding Connection
 <a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>  From: Value of Uselessness (matched: &quot;value of uselessness&quot;)
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>  From: Value of Uselessness (matched: "value of uselessness")
 <a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>        Match: 89%
-<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>  To:   Requisite Variety    (matched: &quot;requisite variety&quot;)
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>  To:   Requisite Variety    (matched: "requisite variety")
 <a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>        Match: 83%
 <a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>  Max hops: 5
 <a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>
@@ -2326,7 +2326,7 @@
 <hr />
 <h2 id="query-the-raw-source-text">Query the raw source text</h2>
 <p><code>kg search sources</code> searches the original source chunks by embedding similarity rather than concept embeddings. Use it to find where in the raw text a topic appears.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>kg<span class="w"> </span>search<span class="w"> </span>sources<span class="w"> </span><span class="s2">&quot;human variety adaptive capacity&quot;</span><span class="w"> </span>--limit<span class="w"> </span><span class="m">5</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>kg<span class="w"> </span>search<span class="w"> </span>sources<span class="w"> </span><span class="s2">"human variety adaptive capacity"</span><span class="w"> </span>--limit<span class="w"> </span><span class="m">5</span>
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>Source Search: human variety adaptive capacity
 <a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>
@@ -2336,8 +2336,8 @@
 <a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>   Source ID: src_ai_paper_chunk2_d49e1a0c
 <a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>   Similarity: 82.1%
 <a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>   Matched chunk: [0:847]
-<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a>   &quot;For a human, variety is built through experience, training, and
-<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a>    critical thinking...&quot;
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a>   "For a human, variety is built through experience, training, and
+<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a>    critical thinking..."
 <a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a>   Concepts: (3 extracted)
 <a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a>     → Requisite Variety (variety_as_a_fulcrum_chunk2_8e05c87e)
 <a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a>     → Human Variety     (ai_paper_chunk3_b2c9f104)
@@ -2348,14 +2348,14 @@
 <h2 id="access-the-same-graph-three-ways">Access the same graph three ways</h2>
 <p>Every query above uses the CLI. The same data is accessible via MCP (for LLM agents) and via direct Cypher (for custom analysis):</p>
 <p><strong>CLI:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>kg<span class="w"> </span>search<span class="w"> </span>query<span class="w"> </span><span class="s2">&quot;adoption valley&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>kg<span class="w"> </span>search<span class="w"> </span>query<span class="w"> </span><span class="s2">"adoption valley"</span>
 </code></pre></div>
 <p><strong>MCP — in an MCP-connected client such as Claude Desktop:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>search_concepts(&quot;adoption valley&quot;)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>search_concepts("adoption valley")
 <a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>→ Returns concept list with relationships and evidence
 </code></pre></div>
 <p><strong>Cypher — direct query against Apache AGE / PostgreSQL 18:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">c</span><span class="p">:</span><span class="n">Concept</span><span class="w"> </span><span class="p">{</span><span class="n">label</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Adoption Valley&quot;</span><span class="p">})</span><span class="o">-[</span><span class="n">r</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">related</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">c</span><span class="p">:</span><span class="n">Concept</span><span class="w"> </span><span class="p">{</span><span class="n">label</span><span class="p">:</span><span class="w"> </span><span class="s">"Adoption Valley"</span><span class="p">})</span><span class="o">-[</span><span class="n">r</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">related</span><span class="p">:</span><span class="n">Concept</span><span class="p">)</span>
 <a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="k">RETURN</span><span class="w"> </span><span class="n">c</span><span class="p">,</span><span class="w"> </span><span class="n">r</span><span class="p">,</span><span class="w"> </span><span class="n">related</span>
 </code></pre></div>
 <p>All three read the same persistent graph. The web interface at <code>http://localhost:3000</code> renders Cypher results as an interactive graph.</p>
@@ -2436,7 +2436,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

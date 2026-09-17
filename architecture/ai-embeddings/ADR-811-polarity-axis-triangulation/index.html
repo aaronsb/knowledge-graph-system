@@ -19,7 +19,7 @@
       
       
       <link rel="icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -27,7 +27,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.ec1eaa64.min.css">
       
       
 
@@ -2590,11 +2590,11 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">calculate_grounding_strength_semantic</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">concept_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>    <span class="c1"># Step 1: Define polarity pairs</span>
 <a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>    <span class="n">POLARITY_PAIRS</span> <span class="o">=</span> <span class="p">[</span>
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>        <span class="p">(</span><span class="s2">&quot;SUPPORTS&quot;</span><span class="p">,</span> <span class="s2">&quot;CONTRADICTS&quot;</span><span class="p">),</span>
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>        <span class="p">(</span><span class="s2">&quot;VALIDATES&quot;</span><span class="p">,</span> <span class="s2">&quot;REFUTES&quot;</span><span class="p">),</span>
-<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>        <span class="p">(</span><span class="s2">&quot;CONFIRMS&quot;</span><span class="p">,</span> <span class="s2">&quot;DISPROVES&quot;</span><span class="p">),</span>
-<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>        <span class="p">(</span><span class="s2">&quot;REINFORCES&quot;</span><span class="p">,</span> <span class="s2">&quot;OPPOSES&quot;</span><span class="p">),</span>
-<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>        <span class="p">(</span><span class="s2">&quot;ENABLES&quot;</span><span class="p">,</span> <span class="s2">&quot;PREVENTS&quot;</span><span class="p">),</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>        <span class="p">(</span><span class="s2">"SUPPORTS"</span><span class="p">,</span> <span class="s2">"CONTRADICTS"</span><span class="p">),</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>        <span class="p">(</span><span class="s2">"VALIDATES"</span><span class="p">,</span> <span class="s2">"REFUTES"</span><span class="p">),</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>        <span class="p">(</span><span class="s2">"CONFIRMS"</span><span class="p">,</span> <span class="s2">"DISPROVES"</span><span class="p">),</span>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>        <span class="p">(</span><span class="s2">"REINFORCES"</span><span class="p">,</span> <span class="s2">"OPPOSES"</span><span class="p">),</span>
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>        <span class="p">(</span><span class="s2">"ENABLES"</span><span class="p">,</span> <span class="s2">"PREVENTS"</span><span class="p">),</span>
 <a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>    <span class="p">]</span>
 <a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>
 <a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>    <span class="c1"># Step 2: Fetch embeddings for all pair terms</span>
@@ -2620,9 +2620,9 @@
 <a id="__codelineno-11-31" name="__codelineno-11-31" href="#__codelineno-11-31"></a>    <span class="n">total_polarity</span> <span class="o">=</span> <span class="mf">0.0</span>
 <a id="__codelineno-11-32" name="__codelineno-11-32" href="#__codelineno-11-32"></a>    <span class="n">total_confidence</span> <span class="o">=</span> <span class="mf">0.0</span>
 <a id="__codelineno-11-33" name="__codelineno-11-33" href="#__codelineno-11-33"></a>    <span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="n">edges</span><span class="p">:</span>
-<a id="__codelineno-11-34" name="__codelineno-11-34" href="#__codelineno-11-34"></a>        <span class="n">projection</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">edge</span><span class="p">[</span><span class="s1">&#39;embedding&#39;</span><span class="p">],</span> <span class="n">polarity_axis</span><span class="p">)</span>
-<a id="__codelineno-11-35" name="__codelineno-11-35" href="#__codelineno-11-35"></a>        <span class="n">total_polarity</span> <span class="o">+=</span> <span class="n">edge</span><span class="p">[</span><span class="s1">&#39;confidence&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">projection</span>
-<a id="__codelineno-11-36" name="__codelineno-11-36" href="#__codelineno-11-36"></a>        <span class="n">total_confidence</span> <span class="o">+=</span> <span class="n">edge</span><span class="p">[</span><span class="s1">&#39;confidence&#39;</span><span class="p">]</span>
+<a id="__codelineno-11-34" name="__codelineno-11-34" href="#__codelineno-11-34"></a>        <span class="n">projection</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">edge</span><span class="p">[</span><span class="s1">'embedding'</span><span class="p">],</span> <span class="n">polarity_axis</span><span class="p">)</span>
+<a id="__codelineno-11-35" name="__codelineno-11-35" href="#__codelineno-11-35"></a>        <span class="n">total_polarity</span> <span class="o">+=</span> <span class="n">edge</span><span class="p">[</span><span class="s1">'confidence'</span><span class="p">]</span> <span class="o">*</span> <span class="n">projection</span>
+<a id="__codelineno-11-36" name="__codelineno-11-36" href="#__codelineno-11-36"></a>        <span class="n">total_confidence</span> <span class="o">+=</span> <span class="n">edge</span><span class="p">[</span><span class="s1">'confidence'</span><span class="p">]</span>
 <a id="__codelineno-11-37" name="__codelineno-11-37" href="#__codelineno-11-37"></a>
 <a id="__codelineno-11-38" name="__codelineno-11-38" href="#__codelineno-11-38"></a>    <span class="c1"># Step 7: Calculate weighted average projection</span>
 <a id="__codelineno-11-39" name="__codelineno-11-39" href="#__codelineno-11-39"></a>    <span class="n">grounding_strength</span> <span class="o">=</span> <span class="n">total_polarity</span> <span class="o">/</span> <span class="n">total_confidence</span> <span class="k">if</span> <span class="n">total_confidence</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mf">0.0</span>
@@ -2781,13 +2781,13 @@
 <h3 id="alternative-2-manual-polarity-scores">Alternative 2: Manual Polarity Scores</h3>
 <p><strong>Approach:</strong> Add <code>polarity</code> column to vocabulary table with manually-curated scores:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="k">UPDATE</span><span class="w"> </span><span class="n">relationship_vocabulary</span>
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="k">SET</span><span class="w"> </span><span class="n">polarity</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">.</span><span class="mi">0</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">relationship_type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;SUPPORTS&#39;</span><span class="p">;</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="k">SET</span><span class="w"> </span><span class="n">polarity</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">.</span><span class="mi">0</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">relationship_type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">'SUPPORTS'</span><span class="p">;</span>
 <a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>
 <a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="k">UPDATE</span><span class="w"> </span><span class="n">relationship_vocabulary</span>
-<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="k">SET</span><span class="w"> </span><span class="n">polarity</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">-</span><span class="mi">1</span><span class="p">.</span><span class="mi">0</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">relationship_type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;CONTRADICTS&#39;</span><span class="p">;</span>
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="k">SET</span><span class="w"> </span><span class="n">polarity</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">-</span><span class="mi">1</span><span class="p">.</span><span class="mi">0</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">relationship_type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">'CONTRADICTS'</span><span class="p">;</span>
 <a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>
 <a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="k">UPDATE</span><span class="w"> </span><span class="n">relationship_vocabulary</span>
-<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a><span class="k">SET</span><span class="w"> </span><span class="n">polarity</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">.</span><span class="mi">0</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">relationship_type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;MOUNTED_ON&#39;</span><span class="p">;</span>
+<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a><span class="k">SET</span><span class="w"> </span><span class="n">polarity</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">.</span><span class="mi">0</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">relationship_type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">'MOUNTED_ON'</span><span class="p">;</span>
 </code></pre></div>
 <p><strong>Advantages:</strong>
 - Semantically accurate (human-curated)
@@ -2831,14 +2831,14 @@
 <p>Allow configuration of polarity pairs per ontology or domain:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="c1"># Science domain</span>
 <a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="n">SCIENCE_PAIRS</span> <span class="o">=</span> <span class="p">[</span>
-<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>    <span class="p">(</span><span class="s2">&quot;VALIDATES&quot;</span><span class="p">,</span> <span class="s2">&quot;REFUTES&quot;</span><span class="p">),</span>
-<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>    <span class="p">(</span><span class="s2">&quot;CONFIRMS&quot;</span><span class="p">,</span> <span class="s2">&quot;DISPROVES&quot;</span><span class="p">),</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>    <span class="p">(</span><span class="s2">"VALIDATES"</span><span class="p">,</span> <span class="s2">"REFUTES"</span><span class="p">),</span>
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>    <span class="p">(</span><span class="s2">"CONFIRMS"</span><span class="p">,</span> <span class="s2">"DISPROVES"</span><span class="p">),</span>
 <a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a><span class="p">]</span>
 <a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a>
 <a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a><span class="c1"># Causal domain</span>
 <a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a><span class="n">CAUSAL_PAIRS</span> <span class="o">=</span> <span class="p">[</span>
-<a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a>    <span class="p">(</span><span class="s2">&quot;CAUSES&quot;</span><span class="p">,</span> <span class="s2">&quot;PREVENTS&quot;</span><span class="p">),</span>
-<a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a>    <span class="p">(</span><span class="s2">&quot;ENABLES&quot;</span><span class="p">,</span> <span class="s2">&quot;BLOCKS&quot;</span><span class="p">),</span>
+<a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a>    <span class="p">(</span><span class="s2">"CAUSES"</span><span class="p">,</span> <span class="s2">"PREVENTS"</span><span class="p">),</span>
+<a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a>    <span class="p">(</span><span class="s2">"ENABLES"</span><span class="p">,</span> <span class="s2">"BLOCKS"</span><span class="p">),</span>
 <a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a><span class="p">]</span>
 </code></pre></div>
 <h3 id="visualization">Visualization</h3>
@@ -2947,7 +2947,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": [], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

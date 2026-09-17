@@ -19,7 +19,7 @@
       
       
       <link rel="icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -27,7 +27,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.ec1eaa64.min.css">
       
       
 
@@ -2763,7 +2763,7 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nd">@dataclass</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="k">class</span><span class="w"> </span><span class="nc">ElectionOpen</span><span class="p">:</span>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="n">election_id</span><span class="p">:</span> <span class="nb">str</span>          <span class="c1"># Unique election identifier</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="n">election_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;SINGLE&quot;</span><span class="p">,</span> <span class="s2">&quot;SUBGRAPH&quot;</span><span class="p">,</span> <span class="s2">&quot;CONSOLIDATION&quot;</span><span class="p">]</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="n">election_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"SINGLE"</span><span class="p">,</span> <span class="s2">"SUBGRAPH"</span><span class="p">,</span> <span class="s2">"CONSOLIDATION"</span><span class="p">]</span>
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="c1"># For SINGLE elections</span>
 <a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="n">concept_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>    <span class="c1"># Single concept being offered</span>
@@ -2772,7 +2772,7 @@
 <a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>    <span class="n">concept_ids</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span>  <span class="c1"># Multiple concepts as unit</span>
 <a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>    <span class="n">aggregate_embedding</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span>  <span class="c1"># Centroid of group</span>
 <a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>    <span class="n">originator_shard</span><span class="p">:</span> <span class="nb">str</span>     <span class="c1"># Who&#39;s offering</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>    <span class="n">originator_shard</span><span class="p">:</span> <span class="nb">str</span>     <span class="c1"># Who's offering</span>
 <a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>    <span class="n">originator_score</span><span class="p">:</span> <span class="nb">float</span>   <span class="c1"># Current fit score (floor for bids)</span>
 <a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>    <span class="n">fetch_endpoint</span><span class="p">:</span> <span class="nb">str</span>       <span class="c1"># Where to fetch embedding(s) for comparison</span>
 <a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>    <span class="n">ttl_seconds</span><span class="p">:</span> <span class="nb">int</span>          <span class="c1"># Election duration (default: 5)</span>
@@ -2796,7 +2796,7 @@
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bid</span><span class="p">:</span>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="n">election_id</span><span class="p">:</span> <span class="nb">str</span>
 <a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="n">bidder_shard</span><span class="p">:</span> <span class="nb">str</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="n">bid_score</span><span class="p">:</span> <span class="nb">float</span>          <span class="c1"># Candidate&#39;s local fit score</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="n">bid_score</span><span class="p">:</span> <span class="nb">float</span>          <span class="c1"># Candidate's local fit score</span>
 <a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    <span class="n">capacity_ok</span><span class="p">:</span> <span class="nb">bool</span>         <span class="c1"># Bidder confirms they have capacity</span>
 <a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>    <span class="n">coherence_projection</span><span class="p">:</span> <span class="nb">float</span>  <span class="c1"># Projected coherence if concept added</span>
 </code></pre></div>
@@ -2839,7 +2839,7 @@
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>    <span class="n">election_id</span><span class="p">:</span> <span class="nb">str</span>
 <a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>    <span class="n">winner_shard</span><span class="p">:</span> <span class="nb">str</span>
 <a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>    <span class="n">coherence_after</span><span class="p">:</span> <span class="nb">float</span>    <span class="c1"># Actual coherence after adding concept</span>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>    <span class="n">status</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;SUCCESS&quot;</span><span class="p">,</span> <span class="s2">&quot;ROLLBACK&quot;</span><span class="p">]</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>    <span class="n">status</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"SUCCESS"</span><span class="p">,</span> <span class="s2">"ROLLBACK"</span><span class="p">]</span>
 <a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>    <span class="n">rollback_reason</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
 </code></pre></div>
 <p><strong>Semantics</strong>: "Received. Coherence is 0.79. Committed." Or: "Rollback. Coherence dropped to 0.41."</p>
@@ -2856,11 +2856,11 @@
 <h3 id="fit-score-calculation">Fit Score Calculation</h3>
 <p>Each shard computes fit as similarity between concept embedding and its hub concepts:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">calculate_fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">concept_embedding</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">    </span><span class="sd">"""</span>
 <a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="sd">    How well does this concept fit with my existing knowledge?</span>
 <a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>
 <a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="sd">    Uses hub concepts as domain signature (top-k by PageRank/betweenness).</span>
-<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="sd">    """</span>
 <a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">hub_concepts</span><span class="p">:</span>
 <a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>        <span class="k">return</span> <span class="mf">0.0</span>
 <a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>
@@ -2887,29 +2887,29 @@
 <a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>├─────────────────────────────────────────────────────────────────┤
 <a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>│                                                                 │
 <a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>│  HIGH (Hubs)        │ Top 10% by ConceptRank                   │
-<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>│  ████████           │ &quot;Most obvious thing&quot;                      │
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>│  ████████           │ "Most obvious thing"                      │
 <a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>│                     │ Moving one = moving a topic cluster       │
 <a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>│                     │                                           │
 <a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>│  MEDIUM (Core)      │ Middle 60% by ConceptRank                │
-<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>│  ████████████████   │ &quot;Most average thing&quot;                      │
-<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>│  ████████████████   │ Stable anchors, generally don&#39;t move      │
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>│  ████████████████   │ "Most average thing"                      │
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>│  ████████████████   │ Stable anchors, generally don't move      │
 <a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a>│                     │                                           │
 <a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a>│  LOW (Orphans)      │ Bottom 30% by ConceptRank                │
-<a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a>│  ██████████         │ &quot;Most obscure thing&quot;                      │
+<a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a>│  ██████████         │ "Most obscure thing"                      │
 <a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a>│                     │ Consolidate or grow                       │
 <a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a>│                                                                 │
 <a id="__codelineno-9-17" name="__codelineno-9-17" href="#__codelineno-9-17"></a>└─────────────────────────────────────────────────────────────────┘
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nd">@dataclass</span>
 <a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="k">class</span><span class="w"> </span><span class="nc">ConceptTier</span><span class="p">:</span>
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>    <span class="n">HIGH</span> <span class="o">=</span> <span class="s2">&quot;hub&quot;</span>      <span class="c1"># Top 10% connectivity</span>
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>    <span class="n">MEDIUM</span> <span class="o">=</span> <span class="s2">&quot;core&quot;</span>   <span class="c1"># Middle 60% connectivity  </span>
-<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>    <span class="n">LOW</span> <span class="o">=</span> <span class="s2">&quot;orphan&quot;</span>    <span class="c1"># Bottom 30% connectivity</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>    <span class="n">HIGH</span> <span class="o">=</span> <span class="s2">"hub"</span>      <span class="c1"># Top 10% connectivity</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>    <span class="n">MEDIUM</span> <span class="o">=</span> <span class="s2">"core"</span>   <span class="c1"># Middle 60% connectivity  </span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>    <span class="n">LOW</span> <span class="o">=</span> <span class="s2">"orphan"</span>    <span class="c1"># Bottom 30% connectivity</span>
 <a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>
 <a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="k">def</span><span class="w"> </span><span class="nf">classify_concept</span><span class="p">(</span><span class="n">concept</span><span class="p">:</span> <span class="n">Concept</span><span class="p">,</span> <span class="n">ontology</span><span class="p">:</span> <span class="n">Ontology</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ConceptTier</span><span class="p">:</span>
-<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="w">    </span><span class="sd">"""</span>
 <a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a><span class="sd">    Classify concept by its ConceptRank percentile within ontology.</span>
-<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a><span class="sd">    """</span>
 <a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a>    <span class="n">percentile</span> <span class="o">=</span> <span class="n">ontology</span><span class="o">.</span><span class="n">get_conceptrank_percentile</span><span class="p">(</span><span class="n">concept</span><span class="p">)</span>
 <a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a>
 <a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a>    <span class="k">if</span> <span class="n">percentile</span> <span class="o">&gt;=</span> <span class="mf">0.90</span><span class="p">:</span>
@@ -2924,12 +2924,12 @@
 <h4 id="high-tier-hubs-subgraph-election">HIGH Tier (Hubs): Subgraph Election</h4>
 <p>When a hub concept is a misfit, its connected neighborhood is likely also misfit. Elect the subgraph, not just the node.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">elect_hub_subgraph</span><span class="p">(</span><span class="n">hub_concept</span><span class="p">:</span> <span class="n">Concept</span><span class="p">,</span> <span class="n">max_hops</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">):</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">    </span><span class="sd">"""</span>
 <a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="sd">    Elect a hub + its neighborhood as a unit.</span>
 <a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>
 <a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="sd">    Rationale: Moving a hub alone orphans its connections.</span>
 <a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="sd">    Moving the subgraph keeps the cluster coherent.</span>
-<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="sd">    """</span>
 <a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>    <span class="c1"># Gather neighborhood</span>
 <a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>    <span class="n">subgraph</span> <span class="o">=</span> <span class="n">traverse_neighborhood</span><span class="p">(</span>
 <a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>        <span class="n">start</span><span class="o">=</span><span class="n">hub_concept</span><span class="p">,</span>
@@ -2946,7 +2946,7 @@
 <a id="__codelineno-11-21" name="__codelineno-11-21" href="#__codelineno-11-21"></a>    <span class="c1"># Open election for the subgraph as a unit</span>
 <a id="__codelineno-11-22" name="__codelineno-11-22" href="#__codelineno-11-22"></a>    <span class="k">return</span> <span class="n">ElectionOpen</span><span class="p">(</span>
 <a id="__codelineno-11-23" name="__codelineno-11-23" href="#__codelineno-11-23"></a>        <span class="n">election_id</span><span class="o">=</span><span class="n">generate_id</span><span class="p">(),</span>
-<a id="__codelineno-11-24" name="__codelineno-11-24" href="#__codelineno-11-24"></a>        <span class="n">election_type</span><span class="o">=</span><span class="s2">&quot;SUBGRAPH&quot;</span><span class="p">,</span>
+<a id="__codelineno-11-24" name="__codelineno-11-24" href="#__codelineno-11-24"></a>        <span class="n">election_type</span><span class="o">=</span><span class="s2">"SUBGRAPH"</span><span class="p">,</span>
 <a id="__codelineno-11-25" name="__codelineno-11-25" href="#__codelineno-11-25"></a>        <span class="n">concept_ids</span><span class="o">=</span><span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">id</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">subgraph</span><span class="p">],</span>
 <a id="__codelineno-11-26" name="__codelineno-11-26" href="#__codelineno-11-26"></a>        <span class="n">aggregate_embedding</span><span class="o">=</span><span class="n">aggregate_embedding</span><span class="p">,</span>
 <a id="__codelineno-11-27" name="__codelineno-11-27" href="#__codelineno-11-27"></a>        <span class="n">originator_score</span><span class="o">=</span><span class="n">calculate_fit</span><span class="p">(</span><span class="n">aggregate_embedding</span><span class="p">),</span>
@@ -2956,10 +2956,10 @@
 </code></pre></div>
 <p><strong>Example</strong>: Hub "regulatory frameworks" (misfit in Biology shard)
 <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>Subgraph includes:
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>  - &quot;regulatory frameworks&quot; (hub, 47 connections)
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>  - &quot;policy compliance&quot; (2 hops, 12 connections)
-<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>  - &quot;governance structures&quot; (1 hop, 8 connections)
-<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>  - &quot;oversight mechanisms&quot; (2 hops, 5 connections)
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>  - "regulatory frameworks" (hub, 47 connections)
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>  - "policy compliance" (2 hops, 12 connections)
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>  - "governance structures" (1 hop, 8 connections)
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>  - "oversight mechanisms" (2 hops, 5 connections)
 <a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>
 <a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>Elected as unit → Policy shard bids 0.91 → Entire cluster transfers
 </code></pre></div></p>
@@ -2970,7 +2970,7 @@
 <a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>
 <a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>    <span class="k">if</span> <span class="n">tier</span> <span class="o">==</span> <span class="n">ConceptTier</span><span class="o">.</span><span class="n">MEDIUM</span><span class="p">:</span>
 <a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>        <span class="c1"># Core concepts are protected</span>
-<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>        <span class="c1"># They ARE the ontology&#39;s identity</span>
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>        <span class="c1"># They ARE the ontology's identity</span>
 <a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>        <span class="k">return</span> <span class="kc">False</span>
 <a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>
 <a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>    <span class="k">if</span> <span class="n">tier</span> <span class="o">==</span> <span class="n">ConceptTier</span><span class="o">.</span><span class="n">HIGH</span><span class="p">:</span>
@@ -2984,10 +2984,10 @@
 <h4 id="low-tier-orphans-batch-consolidation-election">LOW Tier (Orphans): Batch Consolidation Election</h4>
 <p>Individual orphan elections create noise. Instead, batch similar orphans and elect them as a consolidation group.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">elect_orphan_batch</span><span class="p">(</span><span class="n">ontology</span><span class="p">:</span> <span class="n">Ontology</span><span class="p">):</span>
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="w">    </span><span class="sd">"""</span>
 <a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="sd">    Find orphan concepts, cluster them by similarity,</span>
 <a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="sd">    and elect each cluster as a consolidation group.</span>
-<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="sd">    """</span>
 <a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>    <span class="n">orphans</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">ontology</span><span class="o">.</span><span class="n">concepts</span> 
 <a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>               <span class="k">if</span> <span class="n">classify_concept</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="o">==</span> <span class="n">ConceptTier</span><span class="o">.</span><span class="n">LOW</span>
 <a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>               <span class="ow">and</span> <span class="n">c</span><span class="o">.</span><span class="n">coherence_score</span> <span class="o">&lt;</span> <span class="n">COHERENCE_THRESHOLD</span><span class="p">]</span>
@@ -2998,7 +2998,7 @@
 <a id="__codelineno-14-13" name="__codelineno-14-13" href="#__codelineno-14-13"></a>    <span class="c1"># Cluster orphans by embedding similarity</span>
 <a id="__codelineno-14-14" name="__codelineno-14-14" href="#__codelineno-14-14"></a>    <span class="n">clusters</span> <span class="o">=</span> <span class="n">cluster_by_similarity</span><span class="p">(</span>
 <a id="__codelineno-14-15" name="__codelineno-14-15" href="#__codelineno-14-15"></a>        <span class="n">concepts</span><span class="o">=</span><span class="n">orphans</span><span class="p">,</span>
-<a id="__codelineno-14-16" name="__codelineno-14-16" href="#__codelineno-14-16"></a>        <span class="n">method</span><span class="o">=</span><span class="s2">&quot;agglomerative&quot;</span><span class="p">,</span>
+<a id="__codelineno-14-16" name="__codelineno-14-16" href="#__codelineno-14-16"></a>        <span class="n">method</span><span class="o">=</span><span class="s2">"agglomerative"</span><span class="p">,</span>
 <a id="__codelineno-14-17" name="__codelineno-14-17" href="#__codelineno-14-17"></a>        <span class="n">threshold</span><span class="o">=</span><span class="mf">0.7</span>  <span class="c1"># Orphans in same cluster are 70%+ similar</span>
 <a id="__codelineno-14-18" name="__codelineno-14-18" href="#__codelineno-14-18"></a>    <span class="p">)</span>
 <a id="__codelineno-14-19" name="__codelineno-14-19" href="#__codelineno-14-19"></a>
@@ -3014,7 +3014,7 @@
 <a id="__codelineno-14-29" name="__codelineno-14-29" href="#__codelineno-14-29"></a>
 <a id="__codelineno-14-30" name="__codelineno-14-30" href="#__codelineno-14-30"></a>        <span class="k">yield</span> <span class="n">ElectionOpen</span><span class="p">(</span>
 <a id="__codelineno-14-31" name="__codelineno-14-31" href="#__codelineno-14-31"></a>            <span class="n">election_id</span><span class="o">=</span><span class="n">generate_id</span><span class="p">(),</span>
-<a id="__codelineno-14-32" name="__codelineno-14-32" href="#__codelineno-14-32"></a>            <span class="n">election_type</span><span class="o">=</span><span class="s2">&quot;CONSOLIDATION&quot;</span><span class="p">,</span>
+<a id="__codelineno-14-32" name="__codelineno-14-32" href="#__codelineno-14-32"></a>            <span class="n">election_type</span><span class="o">=</span><span class="s2">"CONSOLIDATION"</span><span class="p">,</span>
 <a id="__codelineno-14-33" name="__codelineno-14-33" href="#__codelineno-14-33"></a>            <span class="n">concept_ids</span><span class="o">=</span><span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">id</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cluster</span><span class="p">],</span>
 <a id="__codelineno-14-34" name="__codelineno-14-34" href="#__codelineno-14-34"></a>            <span class="n">aggregate_embedding</span><span class="o">=</span><span class="n">aggregate_embedding</span><span class="p">,</span>
 <a id="__codelineno-14-35" name="__codelineno-14-35" href="#__codelineno-14-35"></a>            <span class="n">originator_score</span><span class="o">=</span><span class="n">calculate_fit</span><span class="p">(</span><span class="n">aggregate_embedding</span><span class="p">),</span>
@@ -3024,8 +3024,8 @@
 </code></pre></div>
 <p><strong>Example</strong>: 23 orphan concepts in Biology shard
 <div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>Clustering finds:
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>  Cluster A (7 concepts): regulatory, policy, legal → &quot;Governance orphans&quot;
-<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>  Cluster B (5 concepts): software, API, deployment → &quot;Tech orphans&quot;  
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>  Cluster A (7 concepts): regulatory, policy, legal → "Governance orphans"
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>  Cluster B (5 concepts): software, API, deployment → "Tech orphans"  
 <a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>  Cluster C (11 concepts): scattered, no clear theme → Wait for more data
 <a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>
 <a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>Election A → Policy shard wins → 7 concepts transfer as unit
@@ -3062,10 +3062,10 @@
 <a id="__codelineno-16-26" name="__codelineno-16-26" href="#__codelineno-16-26"></a>                    <span class="bp">self</span><span class="o">.</span><span class="n">open_election</span><span class="p">(</span><span class="n">batch_election</span><span class="p">)</span>
 <a id="__codelineno-16-27" name="__codelineno-16-27" href="#__codelineno-16-27"></a>
 <a id="__codelineno-16-28" name="__codelineno-16-28" href="#__codelineno-16-28"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">identify_misfits</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ontology</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Concept</span><span class="p">]:</span>
-<a id="__codelineno-16-29" name="__codelineno-16-29" href="#__codelineno-16-29"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-16-29" name="__codelineno-16-29" href="#__codelineno-16-29"></a><span class="w">        </span><span class="sd">"""</span>
 <a id="__codelineno-16-30" name="__codelineno-16-30" href="#__codelineno-16-30"></a><span class="sd">        Find concepts whose similarity to ontology centroid </span>
 <a id="__codelineno-16-31" name="__codelineno-16-31" href="#__codelineno-16-31"></a><span class="sd">        is &gt; 2 standard deviations below mean.</span>
-<a id="__codelineno-16-32" name="__codelineno-16-32" href="#__codelineno-16-32"></a><span class="sd">        &quot;&quot;&quot;</span>
+<a id="__codelineno-16-32" name="__codelineno-16-32" href="#__codelineno-16-32"></a><span class="sd">        """</span>
 <a id="__codelineno-16-33" name="__codelineno-16-33" href="#__codelineno-16-33"></a>        <span class="n">centroid</span> <span class="o">=</span> <span class="n">ontology</span><span class="o">.</span><span class="n">get_centroid_embedding</span><span class="p">()</span>
 <a id="__codelineno-16-34" name="__codelineno-16-34" href="#__codelineno-16-34"></a>
 <a id="__codelineno-16-35" name="__codelineno-16-35" href="#__codelineno-16-35"></a>        <span class="n">similarities</span> <span class="o">=</span> <span class="p">[</span>
@@ -3186,8 +3186,8 @@
 <a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>    <span class="k">pass</span>
 </code></pre></div>
 <h4 id="transfer-failure">Transfer Failure</h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="k">if</span> <span class="n">transfer_confirm</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="s2">&quot;ROLLBACK&quot;</span><span class="p">:</span>
-<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>    <span class="c1"># Winner couldn&#39;t integrate concept</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="k">if</span> <span class="n">transfer_confirm</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="s2">"ROLLBACK"</span><span class="p">:</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>    <span class="c1"># Winner couldn't integrate concept</span>
 <a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>    <span class="c1"># Originator still has data (never deleted)</span>
 <a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>    <span class="c1"># Log failure reason</span>
 <a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a>    <span class="c1"># Maybe exclude this bidder from next election</span>
@@ -3287,15 +3287,15 @@
 <hr />
 <h2 id="examples">Examples</h2>
 <h3 id="example-1-subgraph-election-hub-tier">Example 1: Subgraph Election (Hub Tier)</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>Shard-3 (Biology) detects hub misfit: &quot;regulatory frameworks&quot;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>Shard-3 (Biology) detects hub misfit: "regulatory frameworks"
 <a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>  ConceptRank: 94th percentile (HUB tier)
 <a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a>  Local fit: 0.34
 <a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a>  Connected concepts (2-hop): 15 concepts, all low coherence
 <a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a>
 <a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a>Elect as SUBGRAPH:
-<a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a>  - &quot;regulatory frameworks&quot; (hub)
-<a id="__codelineno-23-8" name="__codelineno-23-8" href="#__codelineno-23-8"></a>  - &quot;policy compliance&quot; (12 connections)
-<a id="__codelineno-23-9" name="__codelineno-23-9" href="#__codelineno-23-9"></a>  - &quot;governance structures&quot; (8 connections)
+<a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a>  - "regulatory frameworks" (hub)
+<a id="__codelineno-23-8" name="__codelineno-23-8" href="#__codelineno-23-8"></a>  - "policy compliance" (12 connections)
+<a id="__codelineno-23-9" name="__codelineno-23-9" href="#__codelineno-23-9"></a>  - "governance structures" (8 connections)
 <a id="__codelineno-23-10" name="__codelineno-23-10" href="#__codelineno-23-10"></a>  - ... 12 more connected concepts
 <a id="__codelineno-23-11" name="__codelineno-23-11" href="#__codelineno-23-11"></a>
 <a id="__codelineno-23-12" name="__codelineno-23-12" href="#__codelineno-23-12"></a>  Aggregate embedding: centroid of 15 concepts
@@ -3321,22 +3321,22 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>Shard-3 (Biology) audit finds 23 orphans (bottom 30% ConceptRank)
 <a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>
 <a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a>Clustering orphans by similarity:
-<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a>  Cluster A: [&quot;regulatory&quot;, &quot;policy&quot;, &quot;compliance&quot;, &quot;oversight&quot;, 
-<a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a>              &quot;guidelines&quot;, &quot;standards&quot;, &quot;enforcement&quot;] 
-<a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a>              → 7 concepts, theme: &quot;Governance&quot;
+<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a>  Cluster A: ["regulatory", "policy", "compliance", "oversight", 
+<a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a>              "guidelines", "standards", "enforcement"] 
+<a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a>              → 7 concepts, theme: "Governance"
 <a id="__codelineno-24-7" name="__codelineno-24-7" href="#__codelineno-24-7"></a>
-<a id="__codelineno-24-8" name="__codelineno-24-8" href="#__codelineno-24-8"></a>  Cluster B: [&quot;API endpoint&quot;, &quot;deployment&quot;, &quot;container&quot;, 
-<a id="__codelineno-24-9" name="__codelineno-24-9" href="#__codelineno-24-9"></a>              &quot;kubernetes&quot;, &quot;dockerfile&quot;]
-<a id="__codelineno-24-10" name="__codelineno-24-10" href="#__codelineno-24-10"></a>              → 5 concepts, theme: &quot;DevOps&quot;
+<a id="__codelineno-24-8" name="__codelineno-24-8" href="#__codelineno-24-8"></a>  Cluster B: ["API endpoint", "deployment", "container", 
+<a id="__codelineno-24-9" name="__codelineno-24-9" href="#__codelineno-24-9"></a>              "kubernetes", "dockerfile"]
+<a id="__codelineno-24-10" name="__codelineno-24-10" href="#__codelineno-24-10"></a>              → 5 concepts, theme: "DevOps"
 <a id="__codelineno-24-11" name="__codelineno-24-11" href="#__codelineno-24-11"></a>
-<a id="__codelineno-24-12" name="__codelineno-24-12" href="#__codelineno-24-12"></a>  Cluster C: [&quot;mitochondria&quot;, &quot;chloroplast&quot;, &quot;organelle&quot;, ...]
+<a id="__codelineno-24-12" name="__codelineno-24-12" href="#__codelineno-24-12"></a>  Cluster C: ["mitochondria", "chloroplast", "organelle", ...]
 <a id="__codelineno-24-13" name="__codelineno-24-13" href="#__codelineno-24-13"></a>              → 11 concepts, but coherence WITH Biology is 0.72
 <a id="__codelineno-24-14" name="__codelineno-24-14" href="#__codelineno-24-14"></a>              → Not misfits, just low-connectivity. Skip.
 <a id="__codelineno-24-15" name="__codelineno-24-15" href="#__codelineno-24-15"></a>
 <a id="__codelineno-24-16" name="__codelineno-24-16" href="#__codelineno-24-16"></a>ELECTION_OPEN for Cluster A (type=CONSOLIDATION, concept_count=7)
 <a id="__codelineno-24-17" name="__codelineno-24-17" href="#__codelineno-24-17"></a>  Aggregate embedding: centroid of 7 governance concepts
 <a id="__codelineno-24-18" name="__codelineno-24-18" href="#__codelineno-24-18"></a>  Originator fit: 0.31
-<a id="__codelineno-24-19" name="__codelineno-24-19" href="#__codelineno-24-19"></a>  Theme: &quot;Governance and regulatory concepts&quot;
+<a id="__codelineno-24-19" name="__codelineno-24-19" href="#__codelineno-24-19"></a>  Theme: "Governance and regulatory concepts"
 <a id="__codelineno-24-20" name="__codelineno-24-20" href="#__codelineno-24-20"></a>
 <a id="__codelineno-24-21" name="__codelineno-24-21" href="#__codelineno-24-21"></a>Shard-7 (Policy): bids 0.88
 <a id="__codelineno-24-22" name="__codelineno-24-22" href="#__codelineno-24-22"></a>Shard-12 (Legal): bids 0.79
@@ -3350,7 +3350,7 @@
 <a id="__codelineno-24-30" name="__codelineno-24-30" href="#__codelineno-24-30"></a>ELECTION_OPEN for Cluster B (type=CONSOLIDATION, concept_count=5)
 <a id="__codelineno-24-31" name="__codelineno-24-31" href="#__codelineno-24-31"></a>  Aggregate embedding: centroid of 5 DevOps concepts
 <a id="__codelineno-24-32" name="__codelineno-24-32" href="#__codelineno-24-32"></a>  Originator fit: 0.22
-<a id="__codelineno-24-33" name="__codelineno-24-33" href="#__codelineno-24-33"></a>  Theme: &quot;Software deployment infrastructure&quot;
+<a id="__codelineno-24-33" name="__codelineno-24-33" href="#__codelineno-24-33"></a>  Theme: "Software deployment infrastructure"
 <a id="__codelineno-24-34" name="__codelineno-24-34" href="#__codelineno-24-34"></a>
 <a id="__codelineno-24-35" name="__codelineno-24-35" href="#__codelineno-24-35"></a>Shard-15 (Engineering): bids 0.91
 <a id="__codelineno-24-36" name="__codelineno-24-36" href="#__codelineno-24-36"></a>Shard-8 (Cloud): bids 0.85
@@ -3368,59 +3368,59 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>Shard-3 (Biology) coherence audit
 <a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>
 <a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a>Misfit candidates identified:
-<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a>  - &quot;CRISPR gene editing&quot; (ConceptRank: 65th percentile) → CORE tier
-<a id="__codelineno-25-5" name="__codelineno-25-5" href="#__codelineno-25-5"></a>  - &quot;DNA replication&quot; (ConceptRank: 78th percentile) → CORE tier
-<a id="__codelineno-25-6" name="__codelineno-25-6" href="#__codelineno-25-6"></a>  - &quot;cellular respiration&quot; (ConceptRank: 55th percentile) → CORE tier
+<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a>  - "CRISPR gene editing" (ConceptRank: 65th percentile) → CORE tier
+<a id="__codelineno-25-5" name="__codelineno-25-5" href="#__codelineno-25-5"></a>  - "DNA replication" (ConceptRank: 78th percentile) → CORE tier
+<a id="__codelineno-25-6" name="__codelineno-25-6" href="#__codelineno-25-6"></a>  - "cellular respiration" (ConceptRank: 55th percentile) → CORE tier
 <a id="__codelineno-25-7" name="__codelineno-25-7" href="#__codelineno-25-7"></a>
 <a id="__codelineno-25-8" name="__codelineno-25-8" href="#__codelineno-25-8"></a>All three are MEDIUM tier (core concepts).
 <a id="__codelineno-25-9" name="__codelineno-25-9" href="#__codelineno-25-9"></a>
 <a id="__codelineno-25-10" name="__codelineno-25-10" href="#__codelineno-25-10"></a>Even though coherence check flagged them, they are PROTECTED:
 <a id="__codelineno-25-11" name="__codelineno-25-11" href="#__codelineno-25-11"></a>  → No election opened
-<a id="__codelineno-25-12" name="__codelineno-25-12" href="#__codelineno-25-12"></a>  → These concepts ARE the Biology shard&#39;s identity
+<a id="__codelineno-25-12" name="__codelineno-25-12" href="#__codelineno-25-12"></a>  → These concepts ARE the Biology shard's identity
 <a id="__codelineno-25-13" name="__codelineno-25-13" href="#__codelineno-25-13"></a>  → Moving them would hollow out the ontology
 <a id="__codelineno-25-14" name="__codelineno-25-14" href="#__codelineno-25-14"></a>
 <a id="__codelineno-25-15" name="__codelineno-25-15" href="#__codelineno-25-15"></a>Instead: Flag for human review
-<a id="__codelineno-25-16" name="__codelineno-25-16" href="#__codelineno-25-16"></a>  &quot;3 core concepts have low coherence. Ontology may be fragmenting.
-<a id="__codelineno-25-17" name="__codelineno-25-17" href="#__codelineno-25-17"></a>   Consider: Is this ontology too broad? Should it split?&quot;
+<a id="__codelineno-25-16" name="__codelineno-25-16" href="#__codelineno-25-16"></a>  "3 core concepts have low coherence. Ontology may be fragmenting.
+<a id="__codelineno-25-17" name="__codelineno-25-17" href="#__codelineno-25-17"></a>   Consider: Is this ontology too broad? Should it split?"
 </code></pre></div>
 <h3 id="example-4-no-winner-orphans-stay-home">Example 4: No Winner (Orphans Stay Home)</h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>Shard-3 (Biology) has orphan batch: 
-<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>  [&quot;obscure_bacteria_xyz&quot;, &quot;rare_enzyme_abc&quot;, &quot;novel_protein_123&quot;]
+<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>  ["obscure_bacteria_xyz", "rare_enzyme_abc", "novel_protein_123"]
 <a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a>
-<a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a>  Theme: &quot;Obscure biological entities&quot;
+<a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a>  Theme: "Obscure biological entities"
 <a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a>  Aggregate fit at Shard-3: 0.45
 <a id="__codelineno-26-6" name="__codelineno-26-6" href="#__codelineno-26-6"></a>
 <a id="__codelineno-26-7" name="__codelineno-26-7" href="#__codelineno-26-7"></a>ELECTION_OPEN (type=CONSOLIDATION, concept_count=3)
 <a id="__codelineno-26-8" name="__codelineno-26-8" href="#__codelineno-26-8"></a>
 <a id="__codelineno-26-9" name="__codelineno-26-9" href="#__codelineno-26-9"></a>All other shards compute fit:
-<a id="__codelineno-26-10" name="__codelineno-26-10" href="#__codelineno-26-10"></a>  Shard-7 (Policy): 0.12 (no bid, can&#39;t beat 0.45)
+<a id="__codelineno-26-10" name="__codelineno-26-10" href="#__codelineno-26-10"></a>  Shard-7 (Policy): 0.12 (no bid, can't beat 0.45)
 <a id="__codelineno-26-11" name="__codelineno-26-11" href="#__codelineno-26-11"></a>  Shard-15 (Engineering): 0.08 (no bid)
 <a id="__codelineno-26-12" name="__codelineno-26-12" href="#__codelineno-26-12"></a>  Shard-4 (Chemistry): 0.41 (no bid, below originator)
 <a id="__codelineno-26-13" name="__codelineno-26-13" href="#__codelineno-26-13"></a>
 <a id="__codelineno-26-14" name="__codelineno-26-14" href="#__codelineno-26-14"></a>WINNER: None (no bids exceeded 0.45)
 <a id="__codelineno-26-15" name="__codelineno-26-15" href="#__codelineno-26-15"></a>
 <a id="__codelineno-26-16" name="__codelineno-26-16" href="#__codelineno-26-16"></a>Concepts stay at Shard-3.
-<a id="__codelineno-26-17" name="__codelineno-26-17" href="#__codelineno-26-17"></a>Flagged: &quot;Orphan batch has no better home. Consider:
+<a id="__codelineno-26-17" name="__codelineno-26-17" href="#__codelineno-26-17"></a>Flagged: "Orphan batch has no better home. Consider:
 <a id="__codelineno-26-18" name="__codelineno-26-18" href="#__codelineno-26-18"></a>  - Are these concepts too niche? (pruning candidate)
 <a id="__codelineno-26-19" name="__codelineno-26-19" href="#__codelineno-26-19"></a>  - Is there a missing ontology? (new shard needed)
-<a id="__codelineno-26-20" name="__codelineno-26-20" href="#__codelineno-26-20"></a>  - Will future documents strengthen them? (wait and see)&quot;
+<a id="__codelineno-26-20" name="__codelineno-26-20" href="#__codelineno-26-20"></a>  - Will future documents strengthen them? (wait and see)"
 </code></pre></div>
 <h3 id="example-5-hub-concept-replication-not-election">Example 5: Hub Concept Replication (Not Election)</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>Hub concept &quot;machine learning&quot; exists on Shard-2 (AI/ML)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>Hub concept "machine learning" exists on Shard-2 (AI/ML)
 <a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>  ConceptRank: 99th percentile
 <a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a>  Connections: 234 edges
 <a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a>
 <a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a>Shard-5 (Data Engineering) frequently references it:
-<a id="__codelineno-27-6" name="__codelineno-27-6" href="#__codelineno-27-6"></a>  - 47 cross-shard edges point to &quot;machine learning&quot;
+<a id="__codelineno-27-6" name="__codelineno-27-6" href="#__codelineno-27-6"></a>  - 47 cross-shard edges point to "machine learning"
 <a id="__codelineno-27-7" name="__codelineno-27-7" href="#__codelineno-27-7"></a>  - Queries often traverse Shard-2 → Shard-5
 <a id="__codelineno-27-8" name="__codelineno-27-8" href="#__codelineno-27-8"></a>
 <a id="__codelineno-27-9" name="__codelineno-27-9" href="#__codelineno-27-9"></a>This is NOT an election case (hub is well-placed at Shard-2).
 <a id="__codelineno-27-10" name="__codelineno-27-10" href="#__codelineno-27-10"></a>Instead: REPLICATION REQUEST
 <a id="__codelineno-27-11" name="__codelineno-27-11" href="#__codelineno-27-11"></a>
-<a id="__codelineno-27-12" name="__codelineno-27-12" href="#__codelineno-27-12"></a>Shard-5: &quot;Can I get a replica of &#39;machine learning&#39;? 
-<a id="__codelineno-27-13" name="__codelineno-27-13" href="#__codelineno-27-13"></a>          I have 47 edges pointing to it.&quot;
+<a id="__codelineno-27-12" name="__codelineno-27-12" href="#__codelineno-27-12"></a>Shard-5: "Can I get a replica of 'machine learning'? 
+<a id="__codelineno-27-13" name="__codelineno-27-13" href="#__codelineno-27-13"></a>          I have 47 edges pointing to it."
 <a id="__codelineno-27-14" name="__codelineno-27-14" href="#__codelineno-27-14"></a>
-<a id="__codelineno-27-15" name="__codelineno-27-15" href="#__codelineno-27-15"></a>Shard-2: &quot;machine learning&quot; is hub (protected), but replication allowed.
+<a id="__codelineno-27-15" name="__codelineno-27-15" href="#__codelineno-27-15"></a>Shard-2: "machine learning" is hub (protected), but replication allowed.
 <a id="__codelineno-27-16" name="__codelineno-27-16" href="#__codelineno-27-16"></a>
 <a id="__codelineno-27-17" name="__codelineno-27-17" href="#__codelineno-27-17"></a>Transfer as REPLICA (not migration):
 <a id="__codelineno-27-18" name="__codelineno-27-18" href="#__codelineno-27-18"></a>  - Shard-5 gets read-only copy
@@ -3656,7 +3656,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": [], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

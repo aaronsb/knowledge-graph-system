@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -31,7 +31,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
       
 
@@ -2299,24 +2299,24 @@
 </ol>
 <p>The CLI auto-approves by default. The API does not; use <code>auto_approve=true</code> to skip manual approval when calling the API directly.</p>
 <h2 id="ingest-a-file">Ingest a file</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>/path/to/document.pdf<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;research-papers&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>/path/to/document.pdf<span class="w"> </span>-o<span class="w"> </span><span class="s2">"research-papers"</span>
 </code></pre></div>
 <p>The <code>-o</code>/<code>--ontology</code> flag is required. If the named ontology does not exist, it is created.</p>
 <p><strong>Wait for completion</strong> (polls until done and streams progress):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>/path/to/document.pdf<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;research-papers&quot;</span><span class="w"> </span>-w
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>/path/to/document.pdf<span class="w"> </span>-o<span class="w"> </span><span class="s2">"research-papers"</span><span class="w"> </span>-w
 </code></pre></div>
 <p><strong>Require manual approval</strong> (job pauses at <code>awaiting_approval</code>):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>/path/to/document.pdf<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;research-papers&quot;</span><span class="w"> </span>--no-approve
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>/path/to/document.pdf<span class="w"> </span>-o<span class="w"> </span><span class="s2">"research-papers"</span><span class="w"> </span>--no-approve
 </code></pre></div>
 <p><strong>Re-ingest after a model or prompt update</strong> (bypasses duplicate detection):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>/path/to/document.pdf<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;research-papers&quot;</span><span class="w"> </span>--force
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>/path/to/document.pdf<span class="w"> </span>-o<span class="w"> </span><span class="s2">"research-papers"</span><span class="w"> </span>--force
 </code></pre></div>
 <h2 id="ingest-a-directory">Ingest a directory</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kg<span class="w"> </span>ingest<span class="w"> </span>directory<span class="w"> </span>/path/to/docs/<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;codebase&quot;</span><span class="w"> </span>-r<span class="w"> </span>--depth<span class="w"> </span>all
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kg<span class="w"> </span>ingest<span class="w"> </span>directory<span class="w"> </span>/path/to/docs/<span class="w"> </span>-o<span class="w"> </span><span class="s2">"codebase"</span><span class="w"> </span>-r<span class="w"> </span>--depth<span class="w"> </span>all
 </code></pre></div>
 <p><code>-r</code>/<code>--recurse</code> with <code>--depth &lt;n&gt;</code> or <code>--depth all</code> controls how deep the scan goes. Pass <code>--directories-as-ontologies</code> to create one ontology per subdirectory automatically.</p>
 <h2 id="ingest-raw-text">Ingest raw text</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>kg<span class="w"> </span>ingest<span class="w"> </span>text<span class="w"> </span><span class="s2">&quot;Some text content&quot;</span><span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;notes&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>kg<span class="w"> </span>ingest<span class="w"> </span>text<span class="w"> </span><span class="s2">"Some text content"</span><span class="w"> </span>-o<span class="w"> </span><span class="s2">"notes"</span>
 </code></pre></div>
 <p>Useful for piped output or programmatically generated content. Chunking behavior is identical to file ingestion.</p>
 <h2 id="check-job-status">Check job status</h2>
@@ -2335,18 +2335,18 @@
 </ol>
 <h2 id="use-the-api">Use the API</h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># File upload</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="s2">&quot;http://localhost:8000/ingest&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: Bearer </span><span class="nv">$TOKEN</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">  </span>-F<span class="w"> </span><span class="s2">&quot;file=@document.pdf&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">  </span>-F<span class="w"> </span><span class="s2">&quot;ontology=research&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="w">  </span>-F<span class="w"> </span><span class="s2">&quot;auto_approve=true&quot;</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="s2">"http://localhost:8000/ingest"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">"Authorization: Bearer </span><span class="nv">$TOKEN</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">  </span>-F<span class="w"> </span><span class="s2">"file=@document.pdf"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">  </span>-F<span class="w"> </span><span class="s2">"ontology=research"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="w">  </span>-F<span class="w"> </span><span class="s2">"auto_approve=true"</span>
 <a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>
 <a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="c1"># Raw text</span>
-<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="s2">&quot;http://localhost:8000/ingest/text&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: Bearer </span><span class="nv">$TOKEN</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="w">  </span>-F<span class="w"> </span><span class="s2">&quot;text=Some text content&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="w">  </span>-F<span class="w"> </span><span class="s2">&quot;ontology=notes&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="w">  </span>-F<span class="w"> </span><span class="s2">&quot;auto_approve=true&quot;</span>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="s2">"http://localhost:8000/ingest/text"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">"Authorization: Bearer </span><span class="nv">$TOKEN</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="w">  </span>-F<span class="w"> </span><span class="s2">"text=Some text content"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="w">  </span>-F<span class="w"> </span><span class="s2">"ontology=notes"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="w">  </span>-F<span class="w"> </span><span class="s2">"auto_approve=true"</span>
 </code></pre></div>
 <p>Both endpoints return a <code>job_id</code>. Poll <code>GET /jobs/&lt;job_id&gt;</code> for status or stream progress with <code>GET /jobs/&lt;job_id&gt;/stream</code>.</p>
 <h2 id="manage-ontologies">Manage ontologies</h2>
@@ -2355,7 +2355,7 @@
 <a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>kg<span class="w"> </span>ontology<span class="w"> </span>list
 <a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
 <a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1"># View details (file count, concept count, evidence)</span>
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>kg<span class="w"> </span>ontology<span class="w"> </span>info<span class="w"> </span><span class="s2">&quot;climate-research&quot;</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>kg<span class="w"> </span>ontology<span class="w"> </span>info<span class="w"> </span><span class="s2">"climate-research"</span>
 </code></pre></div>
 <p>An ontology in the <strong>frozen</strong> lifecycle state rejects new ingestion. Set it back to <code>active</code> before ingesting.</p>
 <h2 id="troubleshooting">Troubleshooting</h2>
@@ -2370,7 +2370,7 @@
 <p>Different models produce different extraction quality. See <a href="../ai-providers/">Configure AI Providers</a> to switch providers.</p>
 <p><strong>Duplicate detected unexpectedly</strong></p>
 <p>The system hashes document content (SHA-256) and skips re-ingestion of identical content in the same ontology. Use <code>--force</code> to override:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>document.pdf<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;research&quot;</span><span class="w"> </span>--force
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>kg<span class="w"> </span>ingest<span class="w"> </span>file<span class="w"> </span>document.pdf<span class="w"> </span>-o<span class="w"> </span><span class="s2">"research"</span><span class="w"> </span>--force
 </code></pre></div>
 <p><strong>Memory exhaustion on large documents</strong></p>
 <p>Large documents with many chunks can exhaust available memory. Reduce load by splitting the document into smaller files, or lower <code>MAX_CONCURRENT_JOBS</code> in the platform configuration (requires an API restart).</p>
@@ -2429,7 +2429,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

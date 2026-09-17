@@ -19,7 +19,7 @@
       
       
       <link rel="icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -27,7 +27,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.ec1eaa64.min.css">
       
       
 
@@ -2453,19 +2453,19 @@
 <h3 id="2-content-based-identity">2. Content-Based Identity</h3>
 <p>Documents are identified by content hash, not filename:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">compute_document_identity</span><span class="p">(</span><span class="n">content</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">ontology</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DocumentIdentity</span><span class="p">:</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span><span class="sd">"""</span>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="sd">    Compute content-based identity for a document.</span>
 <a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
 <a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="sd">    Returns:</span>
 <a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="sd">        DocumentIdentity with hash, garage_key, and metadata</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="sd">    """</span>
 <a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>    <span class="n">content_hash</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">content</span><span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
 <a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>
 <a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>    <span class="c1"># Garage key uses hash prefix (32 chars = 128 bits = UUID-equivalent)</span>
 <a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>    <span class="c1"># This provides collision resistance for a future sharded universe</span>
 <a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>    <span class="c1"># where billions of documents may exist across many shards.</span>
 <a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>    <span class="c1"># Extension preserved for content-type inference.</span>
-<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>    <span class="n">garage_key</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;sources/</span><span class="si">{</span><span class="n">sanitize</span><span class="p">(</span><span class="n">ontology</span><span class="p">)</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">content_hash</span><span class="p">[:</span><span class="mi">32</span><span class="p">]</span><span class="si">}</span><span class="s2">.txt&quot;</span>
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>    <span class="n">garage_key</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"sources/</span><span class="si">{</span><span class="n">sanitize</span><span class="p">(</span><span class="n">ontology</span><span class="p">)</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">content_hash</span><span class="p">[:</span><span class="mi">32</span><span class="p">]</span><span class="si">}</span><span class="s2">.txt"</span>
 <a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>
 <a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>    <span class="k">return</span> <span class="n">DocumentIdentity</span><span class="p">(</span>
 <a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>        <span class="n">content_hash</span><span class="o">=</span><span class="n">content_hash</span><span class="p">,</span>
@@ -2578,16 +2578,16 @@ rather than a blocking gate.</p>
 <h3 id="4-schema-changes">4. Schema Changes</h3>
 <h4 id="source-node-enhancement">Source Node Enhancement</h4>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="p">(:</span><span class="n">Source</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">    </span><span class="n">source_id</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;src-abc123&quot;</span><span class="p">,</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">    </span><span class="n">document</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Philosophy&quot;</span><span class="p">,</span><span class="w">                    </span><span class="c1">// Ontology name</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">    </span><span class="n">source_id</span><span class="p">:</span><span class="w"> </span><span class="s">"src-abc123"</span><span class="p">,</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">    </span><span class="n">document</span><span class="p">:</span><span class="w"> </span><span class="s">"Philosophy"</span><span class="p">,</span><span class="w">                    </span><span class="c1">// Ontology name</span>
 <a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>
 <a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">    </span><span class="c1">// Existing fields</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">    </span><span class="n">full_text</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;The chunk text content...&quot;</span><span class="p">,</span><span class="w">   </span><span class="c1">// Still needed for graph queries</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">    </span><span class="n">full_text</span><span class="p">:</span><span class="w"> </span><span class="s">"The chunk text content..."</span><span class="p">,</span><span class="w">   </span><span class="c1">// Still needed for graph queries</span>
 <a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">    </span><span class="n">paragraph</span><span class="p">:</span><span class="w"> </span><span class="m">3</span><span class="p">,</span><span class="w">                              </span><span class="c1">// Legacy paragraph number</span>
 <a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>
 <a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="w">    </span><span class="c1">// NEW: Garage reference (32-char hash = 128 bits)</span>
-<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">    </span><span class="n">garage_key</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;sources/Philosophy/a1b2c3d4e5f6789012345678abcdef01.txt&quot;</span><span class="p">,</span>
-<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="w">    </span><span class="n">content_hash</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;a1b2c3d4e5f6789012345678abcdef01...&quot;</span><span class="p">,</span><span class="w">  </span><span class="c1">// Full SHA-256</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">    </span><span class="n">garage_key</span><span class="p">:</span><span class="w"> </span><span class="s">"sources/Philosophy/a1b2c3d4e5f6789012345678abcdef01.txt"</span><span class="p">,</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="w">    </span><span class="n">content_hash</span><span class="p">:</span><span class="w"> </span><span class="s">"a1b2c3d4e5f6789012345678abcdef01..."</span><span class="p">,</span><span class="w">  </span><span class="c1">// Full SHA-256</span>
 <a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>
 <a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="w">    </span><span class="c1">// NEW: Position in original document</span>
 <a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="w">    </span><span class="n">char_offset_start</span><span class="p">:</span><span class="w"> </span><span class="m">4521</span><span class="p">,</span><span class="w">                  </span><span class="c1">// Character position</span>
@@ -2597,27 +2597,27 @@ rather than a blocking gate.</p>
 <a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a><span class="w">    </span><span class="n">chunk_index</span><span class="p">:</span><span class="w"> </span><span class="m">3</span><span class="p">,</span><span class="w">                           </span><span class="c1">// Sequential chunk number</span>
 <a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a>
 <a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a><span class="w">    </span><span class="c1">// NEW: Chunking metadata</span>
-<a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a><span class="w">    </span><span class="n">chunk_method</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;ast_semantic&quot;</span><span class="p">,</span><span class="w">             </span><span class="c1">// How it was chunked</span>
+<a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a><span class="w">    </span><span class="n">chunk_method</span><span class="p">:</span><span class="w"> </span><span class="s">"ast_semantic"</span><span class="p">,</span><span class="w">             </span><span class="c1">// How it was chunked</span>
 <a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a><span class="w">    </span><span class="n">overlap_chars</span><span class="p">:</span><span class="w"> </span><span class="m">200</span><span class="w">                        </span><span class="c1">// Overlap with adjacent chunks</span>
 <a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a><span class="p">})</span>
 </code></pre></div>
 <h4 id="document-node-new">Document Node (New)</h4>
 <p>Track document-level metadata separately from chunks:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="p">(:</span><span class="n">Document</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">    </span><span class="n">garage_key</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;sources/Philosophy/a1b2c3d4e5f6789012345678abcdef01.txt&quot;</span><span class="p">,</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="n">content_hash</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;a1b2c3d4e5f6789012345678abcdef01...&quot;</span><span class="p">,</span><span class="w">  </span><span class="c1">// Full SHA-256</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">    </span><span class="n">ontology</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Philosophy&quot;</span><span class="p">,</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">    </span><span class="n">garage_key</span><span class="p">:</span><span class="w"> </span><span class="s">"sources/Philosophy/a1b2c3d4e5f6789012345678abcdef01.txt"</span><span class="p">,</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="n">content_hash</span><span class="p">:</span><span class="w"> </span><span class="s">"a1b2c3d4e5f6789012345678abcdef01..."</span><span class="p">,</span><span class="w">  </span><span class="c1">// Full SHA-256</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">    </span><span class="n">ontology</span><span class="p">:</span><span class="w"> </span><span class="s">"Philosophy"</span><span class="p">,</span>
 <a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>
 <a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">    </span><span class="c1">// Metadata</span>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">    </span><span class="n">original_filename</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;watts_zen.txt&quot;</span><span class="p">,</span><span class="w">       </span><span class="c1">// For display only</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">    </span><span class="n">original_filename</span><span class="p">:</span><span class="w"> </span><span class="s">"watts_zen.txt"</span><span class="p">,</span><span class="w">       </span><span class="c1">// For display only</span>
 <a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">    </span><span class="n">size_bytes</span><span class="p">:</span><span class="w"> </span><span class="m">45230</span><span class="p">,</span>
 <a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="w">    </span><span class="n">chunk_count</span><span class="p">:</span><span class="w"> </span><span class="m">12</span><span class="p">,</span>
 <a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="w">    </span><span class="n">ingested_at</span><span class="p">:</span><span class="w"> </span><span class="n">datetime</span><span class="p">(),</span>
 <a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>
 <a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="w">    </span><span class="c1">// Versioning</span>
 <a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="w">    </span><span class="n">version</span><span class="p">:</span><span class="w"> </span><span class="m">1</span><span class="p">,</span>
-<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="w">    </span><span class="n">supersedes</span><span class="p">:</span><span class="w"> </span><span class="k">null</span><span class="p">,</span><span class="w">                         </span><span class="c1">// Previous version&#39;s garage_key</span>
-<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a><span class="w">    </span><span class="n">superseded_by</span><span class="p">:</span><span class="w"> </span><span class="k">null</span><span class="p">,</span><span class="w">                      </span><span class="c1">// Newer version&#39;s garage_key</span>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="w">    </span><span class="n">supersedes</span><span class="p">:</span><span class="w"> </span><span class="k">null</span><span class="p">,</span><span class="w">                         </span><span class="c1">// Previous version's garage_key</span>
+<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a><span class="w">    </span><span class="n">superseded_by</span><span class="p">:</span><span class="w"> </span><span class="k">null</span><span class="p">,</span><span class="w">                      </span><span class="c1">// Newer version's garage_key</span>
 <a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>
 <a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a><span class="w">    </span><span class="c1">// Shard provenance (for future universe of shards)</span>
 <a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a><span class="w">    </span><span class="n">shard_origin</span><span class="p">:</span><span class="w"> </span><span class="k">null</span><span class="w">                        </span><span class="c1">// Shard ID if received via trade</span>
@@ -2631,10 +2631,10 @@ rather than a blocking gate.</p>
 <p>When the graph is corrupted or needs re-processing:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">regenerate_graph_from_garage</span><span class="p">(</span>
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    <span class="n">ontology</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="n">strategy</span><span class="p">:</span> <span class="n">ConceptMatchingStrategy</span> <span class="o">=</span> <span class="s2">&quot;hybrid&quot;</span><span class="p">,</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="n">strategy</span><span class="p">:</span> <span class="n">ConceptMatchingStrategy</span> <span class="o">=</span> <span class="s2">"hybrid"</span><span class="p">,</span>
 <a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    <span class="n">dry_run</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
 <a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RegenerationPlan</span><span class="p">:</span>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">    </span><span class="sd">"""</span>
 <a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="sd">    Re-ingest all documents for an ontology from Garage.</span>
 <a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>
 <a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="sd">    Use cases:</span>
@@ -2646,16 +2646,16 @@ rather than a blocking gate.</p>
 <a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="sd">    Args:</span>
 <a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a><span class="sd">        ontology: Which ontology to regenerate</span>
 <a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a><span class="sd">        strategy: Concept matching strategy to use</span>
-<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a><span class="sd">            - &quot;random&quot;: Full random sampling for matches</span>
-<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a><span class="sd">            - &quot;popularity&quot;: Max popularity by edge count</span>
-<a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a><span class="sd">            - &quot;hybrid&quot;: Popularity with random tail</span>
+<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a><span class="sd">            - "random": Full random sampling for matches</span>
+<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a><span class="sd">            - "popularity": Max popularity by edge count</span>
+<a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a><span class="sd">            - "hybrid": Popularity with random tail</span>
 <a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a><span class="sd">        dry_run: If True, return plan without executing</span>
 <a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a>
 <a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a><span class="sd">    Returns:</span>
 <a id="__codelineno-5-24" name="__codelineno-5-24" href="#__codelineno-5-24"></a><span class="sd">        RegenerationPlan with estimated cost and changes</span>
-<a id="__codelineno-5-25" name="__codelineno-5-25" href="#__codelineno-5-25"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-5-25" name="__codelineno-5-25" href="#__codelineno-5-25"></a><span class="sd">    """</span>
 <a id="__codelineno-5-26" name="__codelineno-5-26" href="#__codelineno-5-26"></a>    <span class="c1"># List all source documents for ontology</span>
-<a id="__codelineno-5-27" name="__codelineno-5-27" href="#__codelineno-5-27"></a>    <span class="n">documents</span> <span class="o">=</span> <span class="k">await</span> <span class="n">garage</span><span class="o">.</span><span class="n">list</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;sources/</span><span class="si">{</span><span class="n">ontology</span><span class="si">}</span><span class="s2">/&quot;</span><span class="p">)</span>
+<a id="__codelineno-5-27" name="__codelineno-5-27" href="#__codelineno-5-27"></a>    <span class="n">documents</span> <span class="o">=</span> <span class="k">await</span> <span class="n">garage</span><span class="o">.</span><span class="n">list</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="sa">f</span><span class="s2">"sources/</span><span class="si">{</span><span class="n">ontology</span><span class="si">}</span><span class="s2">/"</span><span class="p">)</span>
 <a id="__codelineno-5-28" name="__codelineno-5-28" href="#__codelineno-5-28"></a>
 <a id="__codelineno-5-29" name="__codelineno-5-29" href="#__codelineno-5-29"></a>    <span class="k">if</span> <span class="n">dry_run</span><span class="p">:</span>
 <a id="__codelineno-5-30" name="__codelineno-5-30" href="#__codelineno-5-30"></a>        <span class="k">return</span> <span class="n">RegenerationPlan</span><span class="p">(</span>
@@ -2666,16 +2666,16 @@ rather than a blocking gate.</p>
 <a id="__codelineno-5-35" name="__codelineno-5-35" href="#__codelineno-5-35"></a>        <span class="p">)</span>
 <a id="__codelineno-5-36" name="__codelineno-5-36" href="#__codelineno-5-36"></a>
 <a id="__codelineno-5-37" name="__codelineno-5-37" href="#__codelineno-5-37"></a>    <span class="c1"># Clear existing graph data for ontology</span>
-<a id="__codelineno-5-38" name="__codelineno-5-38" href="#__codelineno-5-38"></a>    <span class="k">await</span> <span class="n">graph</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-5-38" name="__codelineno-5-38" href="#__codelineno-5-38"></a>    <span class="k">await</span> <span class="n">graph</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"""</span>
 <a id="__codelineno-5-39" name="__codelineno-5-39" href="#__codelineno-5-39"></a><span class="s2">        MATCH (s:Source {document: $ontology})</span>
 <a id="__codelineno-5-40" name="__codelineno-5-40" href="#__codelineno-5-40"></a><span class="s2">        DETACH DELETE s</span>
-<a id="__codelineno-5-41" name="__codelineno-5-41" href="#__codelineno-5-41"></a><span class="s2">    &quot;&quot;&quot;</span><span class="p">,</span> <span class="n">ontology</span><span class="o">=</span><span class="n">ontology</span><span class="p">)</span>
+<a id="__codelineno-5-41" name="__codelineno-5-41" href="#__codelineno-5-41"></a><span class="s2">    """</span><span class="p">,</span> <span class="n">ontology</span><span class="o">=</span><span class="n">ontology</span><span class="p">)</span>
 <a id="__codelineno-5-42" name="__codelineno-5-42" href="#__codelineno-5-42"></a>
-<a id="__codelineno-5-43" name="__codelineno-5-43" href="#__codelineno-5-43"></a>    <span class="k">await</span> <span class="n">graph</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-5-43" name="__codelineno-5-43" href="#__codelineno-5-43"></a>    <span class="k">await</span> <span class="n">graph</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"""</span>
 <a id="__codelineno-5-44" name="__codelineno-5-44" href="#__codelineno-5-44"></a><span class="s2">        MATCH (c:Concept)-[:APPEARS_IN]-&gt;(:Source {document: $ontology})</span>
 <a id="__codelineno-5-45" name="__codelineno-5-45" href="#__codelineno-5-45"></a><span class="s2">        WHERE NOT EXISTS((c)-[:APPEARS_IN]-&gt;(:Source))</span>
 <a id="__codelineno-5-46" name="__codelineno-5-46" href="#__codelineno-5-46"></a><span class="s2">        DETACH DELETE c</span>
-<a id="__codelineno-5-47" name="__codelineno-5-47" href="#__codelineno-5-47"></a><span class="s2">    &quot;&quot;&quot;</span><span class="p">,</span> <span class="n">ontology</span><span class="o">=</span><span class="n">ontology</span><span class="p">)</span>
+<a id="__codelineno-5-47" name="__codelineno-5-47" href="#__codelineno-5-47"></a><span class="s2">    """</span><span class="p">,</span> <span class="n">ontology</span><span class="o">=</span><span class="n">ontology</span><span class="p">)</span>
 <a id="__codelineno-5-48" name="__codelineno-5-48" href="#__codelineno-5-48"></a>
 <a id="__codelineno-5-49" name="__codelineno-5-49" href="#__codelineno-5-49"></a>    <span class="c1"># Re-ingest each document</span>
 <a id="__codelineno-5-50" name="__codelineno-5-50" href="#__codelineno-5-50"></a>    <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">documents</span><span class="p">:</span>
@@ -2697,59 +2697,59 @@ rather than a blocking gate.</p>
 <p>Remove a document and its associated knowledge:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">delete_document</span><span class="p">(</span>
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>    <span class="n">garage_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>    <span class="n">cascade</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;orphans&quot;</span><span class="p">,</span> <span class="s2">&quot;all&quot;</span><span class="p">,</span> <span class="s2">&quot;none&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;orphans&quot;</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>    <span class="n">cascade</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"orphans"</span><span class="p">,</span> <span class="s2">"all"</span><span class="p">,</span> <span class="s2">"none"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"orphans"</span>
 <a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DeletionResult</span><span class="p">:</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">    </span><span class="sd">"""</span>
 <a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="sd">    Delete a document and optionally its derived knowledge.</span>
 <a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>
 <a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="sd">    Args:</span>
 <a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="sd">        garage_key: Document to delete</span>
 <a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="sd">        cascade: What to delete beyond the document</span>
-<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="sd">            - &quot;none&quot;: Only delete from Garage, leave graph intact</span>
-<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="sd">            - &quot;orphans&quot;: Delete Sources, delete Concepts with no other evidence</span>
-<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="sd">            - &quot;all&quot;: Delete Sources and ALL connected Concepts</span>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="sd">            - "none": Only delete from Garage, leave graph intact</span>
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="sd">            - "orphans": Delete Sources, delete Concepts with no other evidence</span>
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="sd">            - "all": Delete Sources and ALL connected Concepts</span>
 <a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a>
 <a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a><span class="sd">    Use cases:</span>
 <a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a><span class="sd">    - Removing incorrect/outdated information</span>
 <a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a><span class="sd">    - GDPR/privacy compliance (right to be forgotten)</span>
-<a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a><span class="sd">    - &quot;Compressing memories&quot; - removing low-value evidence</span>
-<a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a><span class="sd">    - "Compressing memories" - removing low-value evidence</span>
+<a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a><span class="sd">    """</span>
 <a id="__codelineno-6-20" name="__codelineno-6-20" href="#__codelineno-6-20"></a>    <span class="n">result</span> <span class="o">=</span> <span class="n">DeletionResult</span><span class="p">(</span><span class="n">garage_key</span><span class="o">=</span><span class="n">garage_key</span><span class="p">)</span>
 <a id="__codelineno-6-21" name="__codelineno-6-21" href="#__codelineno-6-21"></a>
-<a id="__codelineno-6-22" name="__codelineno-6-22" href="#__codelineno-6-22"></a>    <span class="k">if</span> <span class="n">cascade</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;orphans&quot;</span><span class="p">,</span> <span class="s2">&quot;all&quot;</span><span class="p">):</span>
+<a id="__codelineno-6-22" name="__codelineno-6-22" href="#__codelineno-6-22"></a>    <span class="k">if</span> <span class="n">cascade</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"orphans"</span><span class="p">,</span> <span class="s2">"all"</span><span class="p">):</span>
 <a id="__codelineno-6-23" name="__codelineno-6-23" href="#__codelineno-6-23"></a>        <span class="c1"># Delete Source nodes for this document</span>
-<a id="__codelineno-6-24" name="__codelineno-6-24" href="#__codelineno-6-24"></a>        <span class="n">sources</span> <span class="o">=</span> <span class="k">await</span> <span class="n">graph</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-6-24" name="__codelineno-6-24" href="#__codelineno-6-24"></a>        <span class="n">sources</span> <span class="o">=</span> <span class="k">await</span> <span class="n">graph</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"""</span>
 <a id="__codelineno-6-25" name="__codelineno-6-25" href="#__codelineno-6-25"></a><span class="s2">            MATCH (s:Source {garage_key: $key})</span>
 <a id="__codelineno-6-26" name="__codelineno-6-26" href="#__codelineno-6-26"></a><span class="s2">            DETACH DELETE s</span>
 <a id="__codelineno-6-27" name="__codelineno-6-27" href="#__codelineno-6-27"></a><span class="s2">            RETURN count(s) as deleted</span>
-<a id="__codelineno-6-28" name="__codelineno-6-28" href="#__codelineno-6-28"></a><span class="s2">        &quot;&quot;&quot;</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">garage_key</span><span class="p">)</span>
+<a id="__codelineno-6-28" name="__codelineno-6-28" href="#__codelineno-6-28"></a><span class="s2">        """</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">garage_key</span><span class="p">)</span>
 <a id="__codelineno-6-29" name="__codelineno-6-29" href="#__codelineno-6-29"></a>        <span class="n">result</span><span class="o">.</span><span class="n">sources_deleted</span> <span class="o">=</span> <span class="n">sources</span><span class="o">.</span><span class="n">deleted</span>
 <a id="__codelineno-6-30" name="__codelineno-6-30" href="#__codelineno-6-30"></a>
-<a id="__codelineno-6-31" name="__codelineno-6-31" href="#__codelineno-6-31"></a>        <span class="k">if</span> <span class="n">cascade</span> <span class="o">==</span> <span class="s2">&quot;orphans&quot;</span><span class="p">:</span>
+<a id="__codelineno-6-31" name="__codelineno-6-31" href="#__codelineno-6-31"></a>        <span class="k">if</span> <span class="n">cascade</span> <span class="o">==</span> <span class="s2">"orphans"</span><span class="p">:</span>
 <a id="__codelineno-6-32" name="__codelineno-6-32" href="#__codelineno-6-32"></a>            <span class="c1"># Delete concepts with no remaining evidence</span>
-<a id="__codelineno-6-33" name="__codelineno-6-33" href="#__codelineno-6-33"></a>            <span class="n">concepts</span> <span class="o">=</span> <span class="k">await</span> <span class="n">graph</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-6-33" name="__codelineno-6-33" href="#__codelineno-6-33"></a>            <span class="n">concepts</span> <span class="o">=</span> <span class="k">await</span> <span class="n">graph</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"""</span>
 <a id="__codelineno-6-34" name="__codelineno-6-34" href="#__codelineno-6-34"></a><span class="s2">                MATCH (c:Concept)</span>
 <a id="__codelineno-6-35" name="__codelineno-6-35" href="#__codelineno-6-35"></a><span class="s2">                WHERE NOT EXISTS((c)-[:APPEARS_IN]-&gt;(:Source))</span>
 <a id="__codelineno-6-36" name="__codelineno-6-36" href="#__codelineno-6-36"></a><span class="s2">                  AND NOT EXISTS((c)-[:EVIDENCED_BY]-&gt;(:Instance))</span>
 <a id="__codelineno-6-37" name="__codelineno-6-37" href="#__codelineno-6-37"></a><span class="s2">                DETACH DELETE c</span>
 <a id="__codelineno-6-38" name="__codelineno-6-38" href="#__codelineno-6-38"></a><span class="s2">                RETURN count(c) as deleted</span>
-<a id="__codelineno-6-39" name="__codelineno-6-39" href="#__codelineno-6-39"></a><span class="s2">            &quot;&quot;&quot;</span><span class="p">)</span>
+<a id="__codelineno-6-39" name="__codelineno-6-39" href="#__codelineno-6-39"></a><span class="s2">            """</span><span class="p">)</span>
 <a id="__codelineno-6-40" name="__codelineno-6-40" href="#__codelineno-6-40"></a>            <span class="n">result</span><span class="o">.</span><span class="n">concepts_deleted</span> <span class="o">=</span> <span class="n">concepts</span><span class="o">.</span><span class="n">deleted</span>
 <a id="__codelineno-6-41" name="__codelineno-6-41" href="#__codelineno-6-41"></a>
-<a id="__codelineno-6-42" name="__codelineno-6-42" href="#__codelineno-6-42"></a>        <span class="k">elif</span> <span class="n">cascade</span> <span class="o">==</span> <span class="s2">&quot;all&quot;</span><span class="p">:</span>
+<a id="__codelineno-6-42" name="__codelineno-6-42" href="#__codelineno-6-42"></a>        <span class="k">elif</span> <span class="n">cascade</span> <span class="o">==</span> <span class="s2">"all"</span><span class="p">:</span>
 <a id="__codelineno-6-43" name="__codelineno-6-43" href="#__codelineno-6-43"></a>            <span class="c1"># More aggressive - would need concept tracking</span>
 <a id="__codelineno-6-44" name="__codelineno-6-44" href="#__codelineno-6-44"></a>            <span class="c1"># Not implemented in v1</span>
-<a id="__codelineno-6-45" name="__codelineno-6-45" href="#__codelineno-6-45"></a>            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Full cascade not yet supported&quot;</span><span class="p">)</span>
+<a id="__codelineno-6-45" name="__codelineno-6-45" href="#__codelineno-6-45"></a>            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">"Full cascade not yet supported"</span><span class="p">)</span>
 <a id="__codelineno-6-46" name="__codelineno-6-46" href="#__codelineno-6-46"></a>
 <a id="__codelineno-6-47" name="__codelineno-6-47" href="#__codelineno-6-47"></a>    <span class="c1"># Delete from Garage</span>
 <a id="__codelineno-6-48" name="__codelineno-6-48" href="#__codelineno-6-48"></a>    <span class="k">await</span> <span class="n">garage</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">garage_key</span><span class="p">)</span>
 <a id="__codelineno-6-49" name="__codelineno-6-49" href="#__codelineno-6-49"></a>    <span class="n">result</span><span class="o">.</span><span class="n">garage_deleted</span> <span class="o">=</span> <span class="kc">True</span>
 <a id="__codelineno-6-50" name="__codelineno-6-50" href="#__codelineno-6-50"></a>
 <a id="__codelineno-6-51" name="__codelineno-6-51" href="#__codelineno-6-51"></a>    <span class="c1"># Delete Document node</span>
-<a id="__codelineno-6-52" name="__codelineno-6-52" href="#__codelineno-6-52"></a>    <span class="k">await</span> <span class="n">graph</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-6-52" name="__codelineno-6-52" href="#__codelineno-6-52"></a>    <span class="k">await</span> <span class="n">graph</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"""</span>
 <a id="__codelineno-6-53" name="__codelineno-6-53" href="#__codelineno-6-53"></a><span class="s2">        MATCH (d:Document {garage_key: $key})</span>
 <a id="__codelineno-6-54" name="__codelineno-6-54" href="#__codelineno-6-54"></a><span class="s2">        DELETE d</span>
-<a id="__codelineno-6-55" name="__codelineno-6-55" href="#__codelineno-6-55"></a><span class="s2">    &quot;&quot;&quot;</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">garage_key</span><span class="p">)</span>
+<a id="__codelineno-6-55" name="__codelineno-6-55" href="#__codelineno-6-55"></a><span class="s2">    """</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">garage_key</span><span class="p">)</span>
 <a id="__codelineno-6-56" name="__codelineno-6-56" href="#__codelineno-6-56"></a>
 <a id="__codelineno-6-57" name="__codelineno-6-57" href="#__codelineno-6-57"></a>    <span class="k">return</span> <span class="n">result</span>
 </code></pre></div>
@@ -2760,7 +2760,7 @@ rather than a blocking gate.</p>
 <a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>    <span class="n">ontology</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 <a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>    <span class="n">supersedes</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># garage_key of previous version</span>
 <a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">IngestResult</span><span class="p">:</span>
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="w">    </span><span class="sd">"""</span>
 <a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="sd">    Ingest document as a new version of an existing document.</span>
 <a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>
 <a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="sd">    The new version:</span>
@@ -2768,7 +2768,7 @@ rather than a blocking gate.</p>
 <a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="sd">    - Links to previous version via supersedes relationship</span>
 <a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="sd">    - Creates new Source nodes (may deduplicate to same Concepts)</span>
 <a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="sd">    - Novel concepts from the 5-20% difference become new nodes</span>
-<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a><span class="sd">    """</span>
 <a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a>    <span class="c1"># Compute identity for new content</span>
 <a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a>    <span class="n">identity</span> <span class="o">=</span> <span class="n">compute_document_identity</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="n">ontology</span><span class="p">)</span>
 <a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a>
@@ -2776,7 +2776,7 @@ rather than a blocking gate.</p>
 <a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a>    <span class="k">await</span> <span class="n">garage</span><span class="o">.</span><span class="n">store</span><span class="p">(</span><span class="n">identity</span><span class="o">.</span><span class="n">garage_key</span><span class="p">,</span> <span class="n">content</span><span class="p">)</span>
 <a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a>
 <a id="__codelineno-7-21" name="__codelineno-7-21" href="#__codelineno-7-21"></a>    <span class="c1"># Create Document node with version link</span>
-<a id="__codelineno-7-22" name="__codelineno-7-22" href="#__codelineno-7-22"></a>    <span class="k">await</span> <span class="n">graph</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-7-22" name="__codelineno-7-22" href="#__codelineno-7-22"></a>    <span class="k">await</span> <span class="n">graph</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"""</span>
 <a id="__codelineno-7-23" name="__codelineno-7-23" href="#__codelineno-7-23"></a><span class="s2">        MATCH (old:Document {garage_key: $supersedes})</span>
 <a id="__codelineno-7-24" name="__codelineno-7-24" href="#__codelineno-7-24"></a><span class="s2">        CREATE (new:Document {</span>
 <a id="__codelineno-7-25" name="__codelineno-7-25" href="#__codelineno-7-25"></a><span class="s2">            garage_key: $new_key,</span>
@@ -2787,7 +2787,7 @@ rather than a blocking gate.</p>
 <a id="__codelineno-7-30" name="__codelineno-7-30" href="#__codelineno-7-30"></a><span class="s2">            ingested_at: datetime()</span>
 <a id="__codelineno-7-31" name="__codelineno-7-31" href="#__codelineno-7-31"></a><span class="s2">        })</span>
 <a id="__codelineno-7-32" name="__codelineno-7-32" href="#__codelineno-7-32"></a><span class="s2">        SET old.superseded_by = $new_key</span>
-<a id="__codelineno-7-33" name="__codelineno-7-33" href="#__codelineno-7-33"></a><span class="s2">    &quot;&quot;&quot;</span><span class="p">,</span>
+<a id="__codelineno-7-33" name="__codelineno-7-33" href="#__codelineno-7-33"></a><span class="s2">    """</span><span class="p">,</span>
 <a id="__codelineno-7-34" name="__codelineno-7-34" href="#__codelineno-7-34"></a>        <span class="n">supersedes</span><span class="o">=</span><span class="n">supersedes</span><span class="p">,</span>
 <a id="__codelineno-7-35" name="__codelineno-7-35" href="#__codelineno-7-35"></a>        <span class="n">new_key</span><span class="o">=</span><span class="n">identity</span><span class="o">.</span><span class="n">garage_key</span><span class="p">,</span>
 <a id="__codelineno-7-36" name="__codelineno-7-36" href="#__codelineno-7-36"></a>        <span class="nb">hash</span><span class="o">=</span><span class="n">identity</span><span class="o">.</span><span class="n">content_hash</span><span class="p">,</span>
@@ -2963,7 +2963,7 @@ rather than a blocking gate.</p>
       <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": [], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

@@ -109,7 +109,12 @@ RETIRED_EXEMPT_NAMES = {"adr.yaml"}
 # that consistent. Fix such refs in the source, not the generated page.
 RETIRED_SKIP_REL_PREFIXES = ("docs/reference/",)
 RETIRED_ALLOW_MARKER = "doclint-allow-retired"
-ADR_ANYREF_RE = re.compile(r"\bADR-0*(\d+)(\.\d+)?\b")
+# The optional [a-z] suffix matters: the pre-domain scheme used lettered ADR
+# numbers (a trailing letter after the digits). Without it the trailing \b cannot
+# match between the final digit and the letter, so every lettered reference was
+# invisible to the retired-range guard — it silently passed on exactly the kind
+# of reference it exists to catch.
+ADR_ANYREF_RE = re.compile(r"\bADR-0*(\d+)(\.\d+)?[a-z]?\b")
 
 
 # ============================================================================

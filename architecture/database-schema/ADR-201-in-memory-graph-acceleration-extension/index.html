@@ -19,7 +19,7 @@
       
       
       <link rel="icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -27,7 +27,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.ec1eaa64.min.css">
       
       
 
@@ -2503,20 +2503,20 @@
 </code></pre></div>
 <p>Users can narrow the scope via configuration:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a># Only load edges between Concept nodes (our use case)
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>graph_accel.node_labels = &#39;Concept&#39;
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>graph_accel.node_labels = 'Concept'
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a># Load all node types (someone else&#39;s use case)
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>graph_accel.node_labels = &#39;*&#39;
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a># Load all node types (someone else's use case)
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>graph_accel.node_labels = '*'
 <a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
 <a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a># Only load specific relationship types
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>graph_accel.edge_types = &#39;IMPLIES,SUPPORTS,CONTRADICTS&#39;
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>graph_accel.edge_types = 'IMPLIES,SUPPORTS,CONTRADICTS'
 </code></pre></div>
 <p><strong>Node identity:</strong> The extension uses AGE's internal graph IDs (<code>id(node)</code>) as the primary key in the adjacency structure. It also indexes a configurable property (default: <code>concept_id</code> for our use case, but configurable to <code>name</code>, <code>uuid</code>, or any string property) so callers can look up nodes by their application-level identifier.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a># Our project: nodes identified by concept_id property
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>graph_accel.node_id_property = &#39;concept_id&#39;
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>graph_accel.node_id_property = 'concept_id'
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a># Another project: nodes identified by &#39;name&#39; property
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>graph_accel.node_id_property = &#39;name&#39;
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a># Another project: nodes identified by 'name' property
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>graph_accel.node_id_property = 'name'
 </code></pre></div>
 <h3 id="core-design">Core Design</h3>
 <p><strong>Data structure:</strong> <code>HashMap&lt;NodeId, Vec&lt;(TargetId, RelType)&gt;&gt;</code> stored in PostgreSQL shared memory. Bidirectional — both outgoing and incoming edges indexed. A secondary index maps application-level IDs (string property values) to internal node IDs.</p>
@@ -2589,7 +2589,7 @@
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
 <a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c1">-- Check without triggering reload</span>
 <a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">graph_accel_status</span><span class="p">();</span>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="c1">-- → loaded_epoch: 41, current_epoch: 42, status: &#39;stale_serving&#39;</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="c1">-- → loaded_epoch: 41, current_epoch: 42, status: 'stale_serving'</span>
 <a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>
 <a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="c1">-- Application-specific: stored procedure that checks business logic</span>
 <a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="c1">-- before signaling a reload</span>
@@ -2599,7 +2599,7 @@
 <a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="k">BEGIN</span>
 <a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="w">    </span><span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">status</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">graph_accel_status</span><span class="p">();</span>
 <a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="w">    </span><span class="k">IF</span><span class="w"> </span><span class="n">status</span><span class="p">.</span><span class="n">current_epoch</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">status</span><span class="p">.</span><span class="n">loaded_epoch</span>
-<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a><span class="w">       </span><span class="k">AND</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="p">(</span><span class="k">SELECT</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">ingestion_jobs</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;running&#39;</span><span class="p">)</span>
+<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a><span class="w">       </span><span class="k">AND</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="p">(</span><span class="k">SELECT</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">ingestion_jobs</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">'running'</span><span class="p">)</span>
 <a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a><span class="w">    </span><span class="k">THEN</span>
 <a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a><span class="w">        </span><span class="c1">-- No active ingestion — safe to reload</span>
 <a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a><span class="w">        </span><span class="n">PERFORM</span><span class="w"> </span><span class="n">graph_accel_reload</span><span class="p">();</span>
@@ -2611,18 +2611,18 @@
 <p><strong>RAM is the accelerator.</strong> The extension's value proposition is trading RAM for query speed. It is intentionally greedy with memory — the entire edge graph lives resident in shared memory at all times. There is no eviction, no LRU, no paging. If the graph fits in <code>max_memory_mb</code>, it stays loaded until Postgres restarts or the extension is explicitly unloaded. This is a deliberate design choice: the complexity and latency of cache management is not worth it when the entire graph fits in a few GB.</p>
 <p><strong>SQL interface:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1">-- Load/reload the graph (or automatic via epoch check)</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="k">SELECT</span><span class="w"> </span><span class="n">graph_accel_load</span><span class="p">(</span><span class="s1">&#39;knowledge_graph&#39;</span><span class="p">);</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="k">SELECT</span><span class="w"> </span><span class="n">graph_accel_load</span><span class="p">(</span><span class="s1">'knowledge_graph'</span><span class="p">);</span>
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
 <a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="c1">-- Neighborhood traversal (BFS, any depth)</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">graph_accel_neighborhood</span><span class="p">(</span><span class="s1">&#39;node_id_value&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">max_depth</span><span class="w"> </span><span class="p">:</span><span class="o">=</span><span class="w"> </span><span class="mi">10</span><span class="p">);</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">graph_accel_neighborhood</span><span class="p">(</span><span class="s1">'node_id_value'</span><span class="p">,</span><span class="w"> </span><span class="n">max_depth</span><span class="w"> </span><span class="p">:</span><span class="o">=</span><span class="w"> </span><span class="mi">10</span><span class="p">);</span>
 <a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="c1">-- Returns: node_id, label, distance, path_types[]</span>
 <a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>
 <a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="c1">-- Shortest path between two nodes</span>
-<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">graph_accel_path</span><span class="p">(</span><span class="s1">&#39;from_id&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;to_id&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">max_hops</span><span class="w"> </span><span class="p">:</span><span class="o">=</span><span class="w"> </span><span class="mi">20</span><span class="p">);</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">graph_accel_path</span><span class="p">(</span><span class="s1">'from_id'</span><span class="p">,</span><span class="w"> </span><span class="s1">'to_id'</span><span class="p">,</span><span class="w"> </span><span class="n">max_hops</span><span class="w"> </span><span class="p">:</span><span class="o">=</span><span class="w"> </span><span class="mi">20</span><span class="p">);</span>
 <a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="c1">-- Returns: step, node_id, label, rel_type (one row per hop)</span>
 <a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>
 <a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="c1">-- Connected components / subgraph extraction</span>
-<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">graph_accel_subgraph</span><span class="p">(</span><span class="s1">&#39;node_id_value&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">max_depth</span><span class="w"> </span><span class="p">:</span><span class="o">=</span><span class="w"> </span><span class="mi">5</span><span class="p">);</span>
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">graph_accel_subgraph</span><span class="p">(</span><span class="s1">'node_id_value'</span><span class="p">,</span><span class="w"> </span><span class="n">max_depth</span><span class="w"> </span><span class="p">:</span><span class="o">=</span><span class="w"> </span><span class="mi">5</span><span class="p">);</span>
 <a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a><span class="c1">-- Returns: node_id, label, component_id</span>
 <a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a>
 <a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a><span class="c1">-- Degree centrality (useful for graph analysis)</span>
@@ -3171,7 +3171,7 @@
 <a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>
 <a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="c1"># Activate</span>
 <a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>knowledge-graph-postgres<span class="w"> </span>psql<span class="w"> </span>-U<span class="w"> </span>admin<span class="w"> </span>-d<span class="w"> </span>knowledge_graph<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a><span class="w">  </span>-c<span class="w"> </span><span class="s2">&quot;CREATE EXTENSION graph_accel;&quot;</span>
+<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a><span class="w">  </span>-c<span class="w"> </span><span class="s2">"CREATE EXTENSION graph_accel;"</span>
 </code></pre></div>
 <p>Pros: Zero infrastructure changes. Works right now with the existing container.
 Cons: Lost on container restart. Manual and not reproducible. Good for "does this work at all" testing.</p>
@@ -3218,14 +3218,14 @@ Cons: Custom image to maintain. Must rebuild when AGE or PG version changes.</p>
 <a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>
 <a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="c1">-- Verify</span>
 <a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="k">SELECT</span><span class="w"> </span><span class="n">graph_accel_status</span><span class="p">();</span>
-<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="c1">-- → loaded_epoch: 0, current_epoch: 42, status: &#39;not_loaded&#39;</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="c1">-- → loaded_epoch: 0, current_epoch: 42, status: 'not_loaded'</span>
 <a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>
 <a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a><span class="c1">-- Manual load (or automatic if preload = on)</span>
 <a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a><span class="k">SELECT</span><span class="w"> </span><span class="n">graph_accel_load</span><span class="p">();</span>
 <a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a><span class="c1">-- → loaded 5000000 concepts, 50000000 edges in 2.3s</span>
 <a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>
 <a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a><span class="k">SELECT</span><span class="w"> </span><span class="n">graph_accel_status</span><span class="p">();</span>
-<a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a><span class="c1">-- → loaded_epoch: 42, current_epoch: 42, status: &#39;ready&#39;, memory_mb: 2847</span>
+<a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a><span class="c1">-- → loaded_epoch: 42, current_epoch: 42, status: 'ready', memory_mb: 2847</span>
 </code></pre></div>
 <p>The <code>CREATE EXTENSION</code> line would be added to <code>schema/00_baseline.sql</code> alongside the existing <code>CREATE EXTENSION IF NOT EXISTS age;</code>.</p>
 <h3 id="safety-and-correctness">Safety and Correctness</h3>
@@ -3358,7 +3358,7 @@ Cons: Custom image to maintain. Must rebuild when AGE or PG version changes.</p>
       <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": [], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

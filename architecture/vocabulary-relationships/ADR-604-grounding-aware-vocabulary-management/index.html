@@ -19,7 +19,7 @@
       
       
       <link rel="icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -27,7 +27,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.ec1eaa64.min.css">
       
       
 
@@ -2379,16 +2379,16 @@
 <p>As the system operates, vocabulary expands through LLM-generated edge types (ADR-603). While this enables semantic richness, unchecked growth creates <strong>dilution risks</strong>:</p>
 <p><strong>Problem 1: LLM Prompt Cognitive Overload</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Manageable (30 types)</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">EXTRACTION_PROMPT</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">EXTRACTION_PROMPT</span> <span class="o">=</span> <span class="s2">"""</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="s2">Relationships: IMPLIES, SUPPORTS, CONTRADICTS, ENABLES, ... (30 types)</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="s2">"""</span>
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="c1"># Cognitive overload (200 types)</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="n">EXTRACTION_PROMPT</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="n">EXTRACTION_PROMPT</span> <span class="o">=</span> <span class="s2">"""</span>
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="s2">Relationships: IMPLIES, SUPPORTS, CONTRADICTS, ENABLES, ENHANCES, FACILITATES,</span>
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="s2">STRENGTHENS, REINFORCES, BOLSTERS, UPHOLDS, VALIDATES, CORROBORATES,</span>
 <a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="s2">SUBSTANTIATES, CONFIRMS, VERIFIES, ATTESTS, ... (200 types)</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="s2">"""</span>
 </code></pre></div>
 <p><strong>Result:</strong> LLM gets confused, picks random types, extraction quality degrades.</p>
 <p><strong>Problem 2: Synonym Explosion</strong></p>
@@ -2407,12 +2407,12 @@
 - <strong>Query results</strong> - Relationships scattered across synonyms</p>
 <p><strong>Problem 3: Grounding Strength Degradation</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Before synonym explosion</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">Concept</span> <span class="s2">&quot;System uses Apache AGE&quot;</span><span class="p">:</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">Concept</span> <span class="s2">"System uses Apache AGE"</span><span class="p">:</span>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>  <span class="err">←</span> <span class="n">SUPPORTS</span> <span class="p">(</span><span class="mi">38</span> <span class="n">edges</span><span class="p">,</span> <span class="n">avg</span> <span class="n">confidence</span> <span class="mf">0.85</span><span class="p">)</span> <span class="o">=</span> <span class="mf">32.3</span> <span class="n">weight</span>
 <a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>  <span class="n">grounding_strength</span> <span class="o">=</span> <span class="mf">32.3</span> <span class="o">/</span> <span class="mf">32.3</span> <span class="o">=</span> <span class="mf">1.00</span> <span class="p">(</span><span class="mi">100</span><span class="o">%</span><span class="p">)</span>
 <a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>
 <a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="c1"># After synonym explosion</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="n">Concept</span> <span class="s2">&quot;System uses Apache AGE&quot;</span><span class="p">:</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="n">Concept</span> <span class="s2">"System uses Apache AGE"</span><span class="p">:</span>
 <a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>  <span class="err">←</span> <span class="n">SUPPORTS</span> <span class="p">(</span><span class="mi">12</span> <span class="n">edges</span><span class="p">,</span> <span class="n">avg</span> <span class="n">confidence</span> <span class="mf">0.85</span><span class="p">)</span> <span class="o">=</span> <span class="mf">10.2</span> <span class="n">weight</span>
 <a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>  <span class="err">←</span> <span class="n">CORROBORATES</span> <span class="p">(</span><span class="mi">8</span> <span class="n">edges</span><span class="p">,</span> <span class="n">avg</span> <span class="n">confidence</span> <span class="mf">0.80</span><span class="p">)</span> <span class="o">=</span> <span class="mf">6.4</span> <span class="n">weight</span>
 <a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>  <span class="err">←</span> <span class="n">VALIDATES</span> <span class="p">(</span><span class="mi">7</span> <span class="n">edges</span><span class="p">,</span> <span class="n">avg</span> <span class="n">confidence</span> <span class="mf">0.82</span><span class="p">)</span> <span class="o">=</span> <span class="mf">5.74</span> <span class="n">weight</span>
@@ -2422,7 +2422,7 @@
 <a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>  <span class="c1"># Grounding calculation WITHOUT synonym awareness</span>
 <a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>  <span class="n">grounding_strength</span> <span class="o">=</span> <span class="mf">10.2</span> <span class="o">/</span> <span class="mf">31.37</span> <span class="o">=</span> <span class="mf">0.325</span> <span class="p">(</span><span class="mi">32</span><span class="o">%</span><span class="p">)</span>  <span class="err">←</span> <span class="n">INCORRECT</span><span class="err">!</span>
 <a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>
-<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>  <span class="c1"># Should be: All are &quot;support-like&quot;, total = 31.37</span>
+<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>  <span class="c1"># Should be: All are "support-like", total = 31.37</span>
 <a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>  <span class="n">grounding_strength</span> <span class="o">=</span> <span class="mf">31.37</span> <span class="o">/</span> <span class="mf">31.37</span> <span class="o">=</span> <span class="mf">1.00</span> <span class="p">(</span><span class="mi">100</span><span class="o">%</span><span class="p">)</span>
 </code></pre></div>
 <p><strong>The core issue:</strong> Binary pruning (keep/delete) doesn't preserve semantic meaning. We need <strong>grounding-aware clustering</strong> that understands synonyms contribute to the same semantic dimension.</p>
@@ -2433,7 +2433,7 @@
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">VOCAB_EMERGENCY</span> <span class="o">=</span> <span class="mi">200</span>   <span class="c1"># Hard limit - aggressive pruning</span>
 <a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>
 <a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="k">def</span><span class="w"> </span><span class="nf">calculate_aggressiveness</span><span class="p">(</span><span class="n">vocab_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">    </span><span class="sd">"""</span>
 <a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="sd">    Returns pruning aggressiveness (0.0-1.0).</span>
 <a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>
 <a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="sd">    Zones:</span>
@@ -2441,7 +2441,7 @@
 <a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="sd">    - Active (90-150): 0.0-0.5 (gentle)</span>
 <a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="sd">    - Critical (150-200): 0.5-1.0 (aggressive)</span>
 <a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="sd">    - Emergency (200+): 1.0 (maximum)</span>
-<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="sd">    """</span>
 </code></pre></div>
 <p><strong>Pruning strategies:</strong>
 - <strong>Naive:</strong> Usage count only (low edges = prune)
@@ -2474,7 +2474,7 @@
 4. Manage vocabulary lifecycle with semantic awareness</p>
 <h3 id="core-principles">Core Principles</h3>
 <p><strong>Principle 1: Semantic Clustering</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>Vocabulary is not a flat list - it&#39;s clusters in embedding space.
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>Vocabulary is not a flat list - it's clusters in embedding space.
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
 <a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>Cluster 1 (Support dimension):
 <a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>  SUPPORTS [canonical] ← 38 edges, builtin
@@ -2488,7 +2488,7 @@
 <p><strong>Principle 2: Grounding Contribution is Value</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Type A: High usage, low grounding impact</span>
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="n">RELATED_TO</span><span class="p">:</span> <span class="mi">45</span> <span class="n">edges</span><span class="p">,</span> <span class="n">but</span> <span class="n">grounding_contribution</span> <span class="o">=</span> <span class="mf">0.05</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="c1"># → Low value (structural, doesn&#39;t affect truth)</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="c1"># → Low value (structural, doesn't affect truth)</span>
 <a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>
 <a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="c1"># Type B: Low usage, high grounding impact</span>
 <a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="n">SUPPORTS</span><span class="p">:</span> <span class="mi">38</span> <span class="n">edges</span><span class="p">,</span> <span class="n">grounding_contribution</span> <span class="o">=</span> <span class="mf">0.92</span>
@@ -2499,7 +2499,7 @@
 <a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="c1"># → Candidate for pruning</span>
 </code></pre></div></p>
 <p><strong>Principle 3: Dynamic LLM Vocabulary</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># Don&#39;t show all 200 types to LLM</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># Don't show all 200 types to LLM</span>
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="c1"># Show curated subset based on:</span>
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="c1"># 1. Document domain relevance</span>
 <a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="c1"># 2. Global usage frequency</span>
@@ -2513,7 +2513,7 @@
 <p><strong>Extend <code>EdgeTypeScore</code> with grounding metrics:</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nd">@dataclass</span>
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="k">class</span><span class="w"> </span><span class="nc">EdgeTypeScore</span><span class="p">:</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">    </span><span class="sd">"""</span>
 <a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="sd">    Extended scoring for vocabulary types with grounding awareness.</span>
 <a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>
 <a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="sd">    ADR-603 metrics (existing):</span>
@@ -2526,7 +2526,7 @@
 <a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="sd">    - synonym_cluster_size: Number of near-synonyms (redundancy indicator)</span>
 <a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a><span class="sd">    - avg_confidence: Average edge confidence</span>
 <a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a><span class="sd">    - semantic_diversity: Distance from nearest neighbor in embedding space</span>
-<a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a><span class="sd">    """</span>
 <a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a>    <span class="c1"># Existing (ADR-603)</span>
 <a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a>    <span class="n">relationship_type</span><span class="p">:</span> <span class="nb">str</span>
 <a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a>    <span class="n">usage_count</span><span class="p">:</span> <span class="nb">int</span>
@@ -2543,12 +2543,12 @@
 <a id="__codelineno-7-30" name="__codelineno-7-30" href="#__codelineno-7-30"></a>    <span class="n">value_score</span><span class="p">:</span> <span class="nb">float</span>         <span class="c1"># Composite score (see calculation below)</span>
 <a id="__codelineno-7-31" name="__codelineno-7-31" href="#__codelineno-7-31"></a>
 <a id="__codelineno-7-32" name="__codelineno-7-32" href="#__codelineno-7-32"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">calculate_value_score</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<a id="__codelineno-7-33" name="__codelineno-7-33" href="#__codelineno-7-33"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-7-33" name="__codelineno-7-33" href="#__codelineno-7-33"></a><span class="w">        </span><span class="sd">"""</span>
 <a id="__codelineno-7-34" name="__codelineno-7-34" href="#__codelineno-7-34"></a><span class="sd">        Composite value score for pruning decisions.</span>
 <a id="__codelineno-7-35" name="__codelineno-7-35" href="#__codelineno-7-35"></a>
 <a id="__codelineno-7-36" name="__codelineno-7-36" href="#__codelineno-7-36"></a><span class="sd">        High value = protect from pruning</span>
 <a id="__codelineno-7-37" name="__codelineno-7-37" href="#__codelineno-7-37"></a><span class="sd">        Low value = candidate for consolidation/pruning</span>
-<a id="__codelineno-7-38" name="__codelineno-7-38" href="#__codelineno-7-38"></a><span class="sd">        &quot;&quot;&quot;</span>
+<a id="__codelineno-7-38" name="__codelineno-7-38" href="#__codelineno-7-38"></a><span class="sd">        """</span>
 <a id="__codelineno-7-39" name="__codelineno-7-39" href="#__codelineno-7-39"></a>        <span class="n">score</span> <span class="o">=</span> <span class="mf">0.0</span>
 <a id="__codelineno-7-40" name="__codelineno-7-40" href="#__codelineno-7-40"></a>
 <a id="__codelineno-7-41" name="__codelineno-7-41" href="#__codelineno-7-41"></a>        <span class="c1"># Usage weight (20%)</span>
@@ -2581,7 +2581,7 @@
 <p><strong>Example scoring:</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># High-value type: SUPPORTS</span>
 <a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="n">EdgeTypeScore</span><span class="p">(</span>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>    <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;SUPPORTS&quot;</span><span class="p">,</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>    <span class="nb">type</span><span class="o">=</span><span class="s2">"SUPPORTS"</span><span class="p">,</span>
 <a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>    <span class="n">usage_count</span><span class="o">=</span><span class="mi">38</span><span class="p">,</span>
 <a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>    <span class="n">bridge_score</span><span class="o">=</span><span class="mf">0.67</span><span class="p">,</span>
 <a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>    <span class="n">trend_score</span><span class="o">=</span><span class="mf">0.15</span><span class="p">,</span>
@@ -2594,7 +2594,7 @@
 <a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a>
 <a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a><span class="c1"># Low-value type: CORROBORATES</span>
 <a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a><span class="n">EdgeTypeScore</span><span class="p">(</span>
-<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a>    <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;CORROBORATES&quot;</span><span class="p">,</span>
+<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a>    <span class="nb">type</span><span class="o">=</span><span class="s2">"CORROBORATES"</span><span class="p">,</span>
 <a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a>    <span class="n">usage_count</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
 <a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a>    <span class="n">bridge_score</span><span class="o">=</span><span class="mf">0.02</span><span class="p">,</span>
 <a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a>    <span class="n">trend_score</span><span class="o">=-</span><span class="mf">0.20</span><span class="p">,</span>
@@ -2607,7 +2607,7 @@
 </code></pre></div>
 <h3 id="grounding-contribution-calculation">Grounding Contribution Calculation</h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">calculate_grounding_contribution</span><span class="p">(</span><span class="n">edge_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">age_client</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">    </span><span class="sd">"""</span>
 <a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="sd">    Measure how much this edge type contributes to grounding across all concepts.</span>
 <a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>
 <a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="sd">    High contribution = valuable for truth convergence</span>
@@ -2621,12 +2621,12 @@
 <a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a>
 <a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a><span class="sd">    Returns:</span>
 <a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a><span class="sd">        Float 0.0-1.0 indicating grounding contribution</span>
-<a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a><span class="sd">    """</span>
 <a id="__codelineno-9-17" name="__codelineno-9-17" href="#__codelineno-9-17"></a>    <span class="c1"># Find concepts with this edge type</span>
-<a id="__codelineno-9-18" name="__codelineno-9-18" href="#__codelineno-9-18"></a>    <span class="n">query</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-9-18" name="__codelineno-9-18" href="#__codelineno-9-18"></a>    <span class="n">query</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"""</span>
 <a id="__codelineno-9-19" name="__codelineno-9-19" href="#__codelineno-9-19"></a><span class="s2">    MATCH (c:Concept)&lt;-[r:</span><span class="si">{</span><span class="n">edge_type</span><span class="si">}</span><span class="s2">]-()</span>
 <a id="__codelineno-9-20" name="__codelineno-9-20" href="#__codelineno-9-20"></a><span class="s2">    RETURN DISTINCT c.concept_id as concept_id</span>
-<a id="__codelineno-9-21" name="__codelineno-9-21" href="#__codelineno-9-21"></a><span class="s2">    &quot;&quot;&quot;</span>
+<a id="__codelineno-9-21" name="__codelineno-9-21" href="#__codelineno-9-21"></a><span class="s2">    """</span>
 <a id="__codelineno-9-22" name="__codelineno-9-22" href="#__codelineno-9-22"></a>    <span class="n">concepts</span> <span class="o">=</span> <span class="n">age_client</span><span class="o">.</span><span class="n">_execute_cypher</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
 <a id="__codelineno-9-23" name="__codelineno-9-23" href="#__codelineno-9-23"></a>
 <a id="__codelineno-9-24" name="__codelineno-9-24" href="#__codelineno-9-24"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">concepts</span><span class="p">:</span>
@@ -2635,19 +2635,19 @@
 <a id="__codelineno-9-27" name="__codelineno-9-27" href="#__codelineno-9-27"></a>    <span class="n">total_delta</span> <span class="o">=</span> <span class="mf">0.0</span>
 <a id="__codelineno-9-28" name="__codelineno-9-28" href="#__codelineno-9-28"></a>
 <a id="__codelineno-9-29" name="__codelineno-9-29" href="#__codelineno-9-29"></a>    <span class="k">for</span> <span class="n">concept</span> <span class="ow">in</span> <span class="n">concepts</span><span class="p">:</span>
-<a id="__codelineno-9-30" name="__codelineno-9-30" href="#__codelineno-9-30"></a>        <span class="n">concept_id</span> <span class="o">=</span> <span class="n">concept</span><span class="p">[</span><span class="s2">&quot;concept_id&quot;</span><span class="p">]</span>
+<a id="__codelineno-9-30" name="__codelineno-9-30" href="#__codelineno-9-30"></a>        <span class="n">concept_id</span> <span class="o">=</span> <span class="n">concept</span><span class="p">[</span><span class="s2">"concept_id"</span><span class="p">]</span>
 <a id="__codelineno-9-31" name="__codelineno-9-31" href="#__codelineno-9-31"></a>
 <a id="__codelineno-9-32" name="__codelineno-9-32" href="#__codelineno-9-32"></a>        <span class="c1"># Calculate grounding WITH this edge type</span>
 <a id="__codelineno-9-33" name="__codelineno-9-33" href="#__codelineno-9-33"></a>        <span class="n">grounding_with</span> <span class="o">=</span> <span class="n">calculate_grounding_strength_semantic</span><span class="p">(</span>
 <a id="__codelineno-9-34" name="__codelineno-9-34" href="#__codelineno-9-34"></a>            <span class="n">concept_id</span><span class="p">,</span>
 <a id="__codelineno-9-35" name="__codelineno-9-35" href="#__codelineno-9-35"></a>            <span class="n">include_types</span><span class="o">=</span><span class="p">[</span><span class="n">edge_type</span><span class="p">]</span>
-<a id="__codelineno-9-36" name="__codelineno-9-36" href="#__codelineno-9-36"></a>        <span class="p">)[</span><span class="s2">&quot;grounding_strength&quot;</span><span class="p">]</span>
+<a id="__codelineno-9-36" name="__codelineno-9-36" href="#__codelineno-9-36"></a>        <span class="p">)[</span><span class="s2">"grounding_strength"</span><span class="p">]</span>
 <a id="__codelineno-9-37" name="__codelineno-9-37" href="#__codelineno-9-37"></a>
 <a id="__codelineno-9-38" name="__codelineno-9-38" href="#__codelineno-9-38"></a>        <span class="c1"># Calculate grounding WITHOUT this edge type</span>
 <a id="__codelineno-9-39" name="__codelineno-9-39" href="#__codelineno-9-39"></a>        <span class="n">grounding_without</span> <span class="o">=</span> <span class="n">calculate_grounding_strength_semantic</span><span class="p">(</span>
 <a id="__codelineno-9-40" name="__codelineno-9-40" href="#__codelineno-9-40"></a>            <span class="n">concept_id</span><span class="p">,</span>
 <a id="__codelineno-9-41" name="__codelineno-9-41" href="#__codelineno-9-41"></a>            <span class="n">exclude_types</span><span class="o">=</span><span class="p">[</span><span class="n">edge_type</span><span class="p">]</span>
-<a id="__codelineno-9-42" name="__codelineno-9-42" href="#__codelineno-9-42"></a>        <span class="p">)[</span><span class="s2">&quot;grounding_strength&quot;</span><span class="p">]</span>
+<a id="__codelineno-9-42" name="__codelineno-9-42" href="#__codelineno-9-42"></a>        <span class="p">)[</span><span class="s2">"grounding_strength"</span><span class="p">]</span>
 <a id="__codelineno-9-43" name="__codelineno-9-43" href="#__codelineno-9-43"></a>
 <a id="__codelineno-9-44" name="__codelineno-9-44" href="#__codelineno-9-44"></a>        <span class="c1"># How much does this edge type affect grounding?</span>
 <a id="__codelineno-9-45" name="__codelineno-9-45" href="#__codelineno-9-45"></a>        <span class="n">delta</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">grounding_with</span> <span class="o">-</span> <span class="n">grounding_without</span><span class="p">)</span>
@@ -2662,13 +2662,13 @@
 </code></pre></div>
 <p><strong>Example:</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># SUPPORTS: High contribution</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="n">calculate_grounding_contribution</span><span class="p">(</span><span class="s2">&quot;SUPPORTS&quot;</span><span class="p">)</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="n">calculate_grounding_contribution</span><span class="p">(</span><span class="s2">"SUPPORTS"</span><span class="p">)</span>
 <a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="c1"># 38 concepts affected</span>
 <a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="c1"># Average delta: 0.47 (removing SUPPORTS drops grounding by 47% on average)</span>
 <a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="c1"># → 0.94 contribution (critical!)</span>
 <a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>
 <a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="c1"># RELATED_TO: Low contribution</span>
-<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="n">calculate_grounding_contribution</span><span class="p">(</span><span class="s2">&quot;RELATED_TO&quot;</span><span class="p">)</span>
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="n">calculate_grounding_contribution</span><span class="p">(</span><span class="s2">"RELATED_TO"</span><span class="p">)</span>
 <a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a><span class="c1"># 23 concepts affected</span>
 <a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a><span class="c1"># Average delta: 0.02 (removing RELATED_TO barely affects grounding)</span>
 <a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a><span class="c1"># → 0.04 contribution (not important for truth)</span>
@@ -2680,7 +2680,7 @@
 <a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>    <span class="n">similarity_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.85</span><span class="p">,</span>
 <a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>    <span class="n">min_cluster_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span>
 <a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">SynonymCluster</span><span class="p">]:</span>
-<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="w">    </span><span class="sd">"""</span>
 <a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="sd">    Cluster vocabulary types by embedding similarity.</span>
 <a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>
 <a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a><span class="sd">    Uses semantic embeddings (ADR-809) instead of string matching.</span>
@@ -2693,7 +2693,7 @@
 <a id="__codelineno-11-16" name="__codelineno-11-16" href="#__codelineno-11-16"></a>
 <a id="__codelineno-11-17" name="__codelineno-11-17" href="#__codelineno-11-17"></a><span class="sd">    Returns:</span>
 <a id="__codelineno-11-18" name="__codelineno-11-18" href="#__codelineno-11-18"></a><span class="sd">        List of synonym clusters, each with canonical type and variants</span>
-<a id="__codelineno-11-19" name="__codelineno-11-19" href="#__codelineno-11-19"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-11-19" name="__codelineno-11-19" href="#__codelineno-11-19"></a><span class="sd">    """</span>
 <a id="__codelineno-11-20" name="__codelineno-11-20" href="#__codelineno-11-20"></a>    <span class="c1"># Get all active vocabulary types</span>
 <a id="__codelineno-11-21" name="__codelineno-11-21" href="#__codelineno-11-21"></a>    <span class="n">types</span> <span class="o">=</span> <span class="n">age_client</span><span class="o">.</span><span class="n">get_all_edge_types</span><span class="p">(</span><span class="n">include_inactive</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <a id="__codelineno-11-22" name="__codelineno-11-22" href="#__codelineno-11-22"></a>
@@ -2701,13 +2701,13 @@
 <a id="__codelineno-11-24" name="__codelineno-11-24" href="#__codelineno-11-24"></a>    <span class="n">similarity_matrix</span> <span class="o">=</span> <span class="p">{}</span>
 <a id="__codelineno-11-25" name="__codelineno-11-25" href="#__codelineno-11-25"></a>
 <a id="__codelineno-11-26" name="__codelineno-11-26" href="#__codelineno-11-26"></a>    <span class="k">for</span> <span class="n">type_a</span> <span class="ow">in</span> <span class="n">types</span><span class="p">:</span>
-<a id="__codelineno-11-27" name="__codelineno-11-27" href="#__codelineno-11-27"></a>        <span class="n">emb_a</span> <span class="o">=</span> <span class="n">age_client</span><span class="o">.</span><span class="n">get_vocabulary_embedding</span><span class="p">(</span><span class="n">type_a</span><span class="p">)[</span><span class="s2">&quot;embedding&quot;</span><span class="p">]</span>
+<a id="__codelineno-11-27" name="__codelineno-11-27" href="#__codelineno-11-27"></a>        <span class="n">emb_a</span> <span class="o">=</span> <span class="n">age_client</span><span class="o">.</span><span class="n">get_vocabulary_embedding</span><span class="p">(</span><span class="n">type_a</span><span class="p">)[</span><span class="s2">"embedding"</span><span class="p">]</span>
 <a id="__codelineno-11-28" name="__codelineno-11-28" href="#__codelineno-11-28"></a>
 <a id="__codelineno-11-29" name="__codelineno-11-29" href="#__codelineno-11-29"></a>        <span class="k">for</span> <span class="n">type_b</span> <span class="ow">in</span> <span class="n">types</span><span class="p">:</span>
 <a id="__codelineno-11-30" name="__codelineno-11-30" href="#__codelineno-11-30"></a>            <span class="k">if</span> <span class="n">type_a</span> <span class="o">==</span> <span class="n">type_b</span><span class="p">:</span>
 <a id="__codelineno-11-31" name="__codelineno-11-31" href="#__codelineno-11-31"></a>                <span class="k">continue</span>
 <a id="__codelineno-11-32" name="__codelineno-11-32" href="#__codelineno-11-32"></a>
-<a id="__codelineno-11-33" name="__codelineno-11-33" href="#__codelineno-11-33"></a>            <span class="n">emb_b</span> <span class="o">=</span> <span class="n">age_client</span><span class="o">.</span><span class="n">get_vocabulary_embedding</span><span class="p">(</span><span class="n">type_b</span><span class="p">)[</span><span class="s2">&quot;embedding&quot;</span><span class="p">]</span>
+<a id="__codelineno-11-33" name="__codelineno-11-33" href="#__codelineno-11-33"></a>            <span class="n">emb_b</span> <span class="o">=</span> <span class="n">age_client</span><span class="o">.</span><span class="n">get_vocabulary_embedding</span><span class="p">(</span><span class="n">type_b</span><span class="p">)[</span><span class="s2">"embedding"</span><span class="p">]</span>
 <a id="__codelineno-11-34" name="__codelineno-11-34" href="#__codelineno-11-34"></a>
 <a id="__codelineno-11-35" name="__codelineno-11-35" href="#__codelineno-11-35"></a>            <span class="c1"># Calculate cosine similarity</span>
 <a id="__codelineno-11-36" name="__codelineno-11-36" href="#__codelineno-11-36"></a>            <span class="n">similarity</span> <span class="o">=</span> <span class="n">cosine_similarity</span><span class="p">(</span><span class="n">emb_a</span><span class="p">,</span> <span class="n">emb_b</span><span class="p">)</span>
@@ -2742,7 +2742,7 @@
 <a id="__codelineno-11-65" name="__codelineno-11-65" href="#__codelineno-11-65"></a>    <span class="k">return</span> <span class="n">clusters</span>
 <a id="__codelineno-11-66" name="__codelineno-11-66" href="#__codelineno-11-66"></a>
 <a id="__codelineno-11-67" name="__codelineno-11-67" href="#__codelineno-11-67"></a><span class="k">def</span><span class="w"> </span><span class="nf">select_canonical_type</span><span class="p">(</span><span class="n">cluster</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">age_client</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<a id="__codelineno-11-68" name="__codelineno-11-68" href="#__codelineno-11-68"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-11-68" name="__codelineno-11-68" href="#__codelineno-11-68"></a><span class="w">    </span><span class="sd">"""</span>
 <a id="__codelineno-11-69" name="__codelineno-11-69" href="#__codelineno-11-69"></a><span class="sd">    Select the canonical (preferred) type from a synonym cluster.</span>
 <a id="__codelineno-11-70" name="__codelineno-11-70" href="#__codelineno-11-70"></a>
 <a id="__codelineno-11-71" name="__codelineno-11-71" href="#__codelineno-11-71"></a><span class="sd">    Scoring criteria (in order of priority):</span>
@@ -2750,37 +2750,37 @@
 <a id="__codelineno-11-73" name="__codelineno-11-73" href="#__codelineno-11-73"></a><span class="sd">    2. Highest grounding contribution</span>
 <a id="__codelineno-11-74" name="__codelineno-11-74" href="#__codelineno-11-74"></a><span class="sd">    3. Highest usage count</span>
 <a id="__codelineno-11-75" name="__codelineno-11-75" href="#__codelineno-11-75"></a><span class="sd">    4. Alphabetically first (tiebreaker)</span>
-<a id="__codelineno-11-76" name="__codelineno-11-76" href="#__codelineno-11-76"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-11-76" name="__codelineno-11-76" href="#__codelineno-11-76"></a><span class="sd">    """</span>
 <a id="__codelineno-11-77" name="__codelineno-11-77" href="#__codelineno-11-77"></a>    <span class="n">scores</span> <span class="o">=</span> <span class="p">[]</span>
 <a id="__codelineno-11-78" name="__codelineno-11-78" href="#__codelineno-11-78"></a>
 <a id="__codelineno-11-79" name="__codelineno-11-79" href="#__codelineno-11-79"></a>    <span class="k">for</span> <span class="n">edge_type</span> <span class="ow">in</span> <span class="n">cluster</span><span class="p">:</span>
 <a id="__codelineno-11-80" name="__codelineno-11-80" href="#__codelineno-11-80"></a>        <span class="n">info</span> <span class="o">=</span> <span class="n">age_client</span><span class="o">.</span><span class="n">get_edge_type_info</span><span class="p">(</span><span class="n">edge_type</span><span class="p">)</span>
 <a id="__codelineno-11-81" name="__codelineno-11-81" href="#__codelineno-11-81"></a>
 <a id="__codelineno-11-82" name="__codelineno-11-82" href="#__codelineno-11-82"></a>        <span class="n">score</span> <span class="o">=</span> <span class="p">{</span>
-<a id="__codelineno-11-83" name="__codelineno-11-83" href="#__codelineno-11-83"></a>            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="n">edge_type</span><span class="p">,</span>
-<a id="__codelineno-11-84" name="__codelineno-11-84" href="#__codelineno-11-84"></a>            <span class="s2">&quot;is_builtin&quot;</span><span class="p">:</span> <span class="n">info</span><span class="p">[</span><span class="s2">&quot;is_builtin&quot;</span><span class="p">],</span>
-<a id="__codelineno-11-85" name="__codelineno-11-85" href="#__codelineno-11-85"></a>            <span class="s2">&quot;usage&quot;</span><span class="p">:</span> <span class="n">info</span><span class="p">[</span><span class="s2">&quot;edge_count&quot;</span><span class="p">],</span>
-<a id="__codelineno-11-86" name="__codelineno-11-86" href="#__codelineno-11-86"></a>            <span class="s2">&quot;grounding&quot;</span><span class="p">:</span> <span class="n">calculate_grounding_contribution</span><span class="p">(</span><span class="n">edge_type</span><span class="p">,</span> <span class="n">age_client</span><span class="p">),</span>
-<a id="__codelineno-11-87" name="__codelineno-11-87" href="#__codelineno-11-87"></a>            <span class="s2">&quot;total&quot;</span><span class="p">:</span> <span class="mi">0</span>
+<a id="__codelineno-11-83" name="__codelineno-11-83" href="#__codelineno-11-83"></a>            <span class="s2">"type"</span><span class="p">:</span> <span class="n">edge_type</span><span class="p">,</span>
+<a id="__codelineno-11-84" name="__codelineno-11-84" href="#__codelineno-11-84"></a>            <span class="s2">"is_builtin"</span><span class="p">:</span> <span class="n">info</span><span class="p">[</span><span class="s2">"is_builtin"</span><span class="p">],</span>
+<a id="__codelineno-11-85" name="__codelineno-11-85" href="#__codelineno-11-85"></a>            <span class="s2">"usage"</span><span class="p">:</span> <span class="n">info</span><span class="p">[</span><span class="s2">"edge_count"</span><span class="p">],</span>
+<a id="__codelineno-11-86" name="__codelineno-11-86" href="#__codelineno-11-86"></a>            <span class="s2">"grounding"</span><span class="p">:</span> <span class="n">calculate_grounding_contribution</span><span class="p">(</span><span class="n">edge_type</span><span class="p">,</span> <span class="n">age_client</span><span class="p">),</span>
+<a id="__codelineno-11-87" name="__codelineno-11-87" href="#__codelineno-11-87"></a>            <span class="s2">"total"</span><span class="p">:</span> <span class="mi">0</span>
 <a id="__codelineno-11-88" name="__codelineno-11-88" href="#__codelineno-11-88"></a>        <span class="p">}</span>
 <a id="__codelineno-11-89" name="__codelineno-11-89" href="#__codelineno-11-89"></a>
 <a id="__codelineno-11-90" name="__codelineno-11-90" href="#__codelineno-11-90"></a>        <span class="c1"># Builtin types massively weighted (ensure they win)</span>
-<a id="__codelineno-11-91" name="__codelineno-11-91" href="#__codelineno-11-91"></a>        <span class="k">if</span> <span class="n">score</span><span class="p">[</span><span class="s2">&quot;is_builtin&quot;</span><span class="p">]:</span>
-<a id="__codelineno-11-92" name="__codelineno-11-92" href="#__codelineno-11-92"></a>            <span class="n">score</span><span class="p">[</span><span class="s2">&quot;total&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">10000</span>
+<a id="__codelineno-11-91" name="__codelineno-11-91" href="#__codelineno-11-91"></a>        <span class="k">if</span> <span class="n">score</span><span class="p">[</span><span class="s2">"is_builtin"</span><span class="p">]:</span>
+<a id="__codelineno-11-92" name="__codelineno-11-92" href="#__codelineno-11-92"></a>            <span class="n">score</span><span class="p">[</span><span class="s2">"total"</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">10000</span>
 <a id="__codelineno-11-93" name="__codelineno-11-93" href="#__codelineno-11-93"></a>
 <a id="__codelineno-11-94" name="__codelineno-11-94" href="#__codelineno-11-94"></a>        <span class="c1"># Grounding contribution (most important for non-builtins)</span>
-<a id="__codelineno-11-95" name="__codelineno-11-95" href="#__codelineno-11-95"></a>        <span class="n">score</span><span class="p">[</span><span class="s2">&quot;total&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">score</span><span class="p">[</span><span class="s2">&quot;grounding&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="mi">1000</span>
+<a id="__codelineno-11-95" name="__codelineno-11-95" href="#__codelineno-11-95"></a>        <span class="n">score</span><span class="p">[</span><span class="s2">"total"</span><span class="p">]</span> <span class="o">+=</span> <span class="n">score</span><span class="p">[</span><span class="s2">"grounding"</span><span class="p">]</span> <span class="o">*</span> <span class="mi">1000</span>
 <a id="__codelineno-11-96" name="__codelineno-11-96" href="#__codelineno-11-96"></a>
 <a id="__codelineno-11-97" name="__codelineno-11-97" href="#__codelineno-11-97"></a>        <span class="c1"># Usage count</span>
-<a id="__codelineno-11-98" name="__codelineno-11-98" href="#__codelineno-11-98"></a>        <span class="n">score</span><span class="p">[</span><span class="s2">&quot;total&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">score</span><span class="p">[</span><span class="s2">&quot;usage&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="mi">10</span>
+<a id="__codelineno-11-98" name="__codelineno-11-98" href="#__codelineno-11-98"></a>        <span class="n">score</span><span class="p">[</span><span class="s2">"total"</span><span class="p">]</span> <span class="o">+=</span> <span class="n">score</span><span class="p">[</span><span class="s2">"usage"</span><span class="p">]</span> <span class="o">*</span> <span class="mi">10</span>
 <a id="__codelineno-11-99" name="__codelineno-11-99" href="#__codelineno-11-99"></a>
 <a id="__codelineno-11-100" name="__codelineno-11-100" href="#__codelineno-11-100"></a>        <span class="c1"># Alphabetical tiebreaker (negative score for earlier letters)</span>
-<a id="__codelineno-11-101" name="__codelineno-11-101" href="#__codelineno-11-101"></a>        <span class="n">score</span><span class="p">[</span><span class="s2">&quot;total&quot;</span><span class="p">]</span> <span class="o">-=</span> <span class="nb">ord</span><span class="p">(</span><span class="n">edge_type</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<a id="__codelineno-11-101" name="__codelineno-11-101" href="#__codelineno-11-101"></a>        <span class="n">score</span><span class="p">[</span><span class="s2">"total"</span><span class="p">]</span> <span class="o">-=</span> <span class="nb">ord</span><span class="p">(</span><span class="n">edge_type</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
 <a id="__codelineno-11-102" name="__codelineno-11-102" href="#__codelineno-11-102"></a>
 <a id="__codelineno-11-103" name="__codelineno-11-103" href="#__codelineno-11-103"></a>        <span class="n">scores</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">score</span><span class="p">)</span>
 <a id="__codelineno-11-104" name="__codelineno-11-104" href="#__codelineno-11-104"></a>
 <a id="__codelineno-11-105" name="__codelineno-11-105" href="#__codelineno-11-105"></a>    <span class="c1"># Return highest-scoring type</span>
-<a id="__codelineno-11-106" name="__codelineno-11-106" href="#__codelineno-11-106"></a>    <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="s2">&quot;total&quot;</span><span class="p">])[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span>
+<a id="__codelineno-11-106" name="__codelineno-11-106" href="#__codelineno-11-106"></a>    <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="s2">"total"</span><span class="p">])[</span><span class="s2">"type"</span><span class="p">]</span>
 </code></pre></div>
 <p><strong>Example clustering:</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="n">clusters</span> <span class="o">=</span> <span class="n">find_synonym_clusters</span><span class="p">(</span><span class="n">age_client</span><span class="p">,</span> <span class="n">similarity_threshold</span><span class="o">=</span><span class="mf">0.85</span><span class="p">)</span>
@@ -2788,18 +2788,18 @@
 <a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="c1"># Result:</span>
 <a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="p">[</span>
 <a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>    <span class="n">SynonymCluster</span><span class="p">(</span>
-<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>        <span class="n">canonical</span><span class="o">=</span><span class="s2">&quot;SUPPORTS&quot;</span><span class="p">,</span>  <span class="c1"># Builtin, highest grounding (0.92)</span>
-<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>        <span class="n">members</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;SUPPORTS&quot;</span><span class="p">,</span> <span class="s2">&quot;CORROBORATES&quot;</span><span class="p">,</span> <span class="s2">&quot;VALIDATES&quot;</span><span class="p">,</span> <span class="s2">&quot;CONFIRMS&quot;</span><span class="p">,</span> <span class="s2">&quot;SUBSTANTIATES&quot;</span><span class="p">],</span>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>        <span class="n">canonical</span><span class="o">=</span><span class="s2">"SUPPORTS"</span><span class="p">,</span>  <span class="c1"># Builtin, highest grounding (0.92)</span>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>        <span class="n">members</span><span class="o">=</span><span class="p">[</span><span class="s2">"SUPPORTS"</span><span class="p">,</span> <span class="s2">"CORROBORATES"</span><span class="p">,</span> <span class="s2">"VALIDATES"</span><span class="p">,</span> <span class="s2">"CONFIRMS"</span><span class="p">,</span> <span class="s2">"SUBSTANTIATES"</span><span class="p">],</span>
 <a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>        <span class="n">avg_similarity</span><span class="o">=</span><span class="mf">0.88</span>
 <a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a>    <span class="p">),</span>
 <a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a>    <span class="n">SynonymCluster</span><span class="p">(</span>
-<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a>        <span class="n">canonical</span><span class="o">=</span><span class="s2">&quot;ENABLES&quot;</span><span class="p">,</span>   <span class="c1"># Builtin, high usage (21 edges)</span>
-<a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a>        <span class="n">members</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;ENABLES&quot;</span><span class="p">,</span> <span class="s2">&quot;FACILITATES&quot;</span><span class="p">,</span> <span class="s2">&quot;ALLOWS&quot;</span><span class="p">,</span> <span class="s2">&quot;PERMITS&quot;</span><span class="p">],</span>
+<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a>        <span class="n">canonical</span><span class="o">=</span><span class="s2">"ENABLES"</span><span class="p">,</span>   <span class="c1"># Builtin, high usage (21 edges)</span>
+<a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a>        <span class="n">members</span><span class="o">=</span><span class="p">[</span><span class="s2">"ENABLES"</span><span class="p">,</span> <span class="s2">"FACILITATES"</span><span class="p">,</span> <span class="s2">"ALLOWS"</span><span class="p">,</span> <span class="s2">"PERMITS"</span><span class="p">],</span>
 <a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a>        <span class="n">avg_similarity</span><span class="o">=</span><span class="mf">0.87</span>
 <a id="__codelineno-12-14" name="__codelineno-12-14" href="#__codelineno-12-14"></a>    <span class="p">),</span>
 <a id="__codelineno-12-15" name="__codelineno-12-15" href="#__codelineno-12-15"></a>    <span class="n">SynonymCluster</span><span class="p">(</span>
-<a id="__codelineno-12-16" name="__codelineno-12-16" href="#__codelineno-12-16"></a>        <span class="n">canonical</span><span class="o">=</span><span class="s2">&quot;CONTRADICTS&quot;</span><span class="p">,</span>  <span class="c1"># Builtin</span>
-<a id="__codelineno-12-17" name="__codelineno-12-17" href="#__codelineno-12-17"></a>        <span class="n">members</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;CONTRADICTS&quot;</span><span class="p">,</span> <span class="s2">&quot;REFUTES&quot;</span><span class="p">,</span> <span class="s2">&quot;OPPOSES&quot;</span><span class="p">,</span> <span class="s2">&quot;CONFLICTS_WITH&quot;</span><span class="p">],</span>
+<a id="__codelineno-12-16" name="__codelineno-12-16" href="#__codelineno-12-16"></a>        <span class="n">canonical</span><span class="o">=</span><span class="s2">"CONTRADICTS"</span><span class="p">,</span>  <span class="c1"># Builtin</span>
+<a id="__codelineno-12-17" name="__codelineno-12-17" href="#__codelineno-12-17"></a>        <span class="n">members</span><span class="o">=</span><span class="p">[</span><span class="s2">"CONTRADICTS"</span><span class="p">,</span> <span class="s2">"REFUTES"</span><span class="p">,</span> <span class="s2">"OPPOSES"</span><span class="p">,</span> <span class="s2">"CONFLICTS_WITH"</span><span class="p">],</span>
 <a id="__codelineno-12-18" name="__codelineno-12-18" href="#__codelineno-12-18"></a>        <span class="n">avg_similarity</span><span class="o">=</span><span class="mf">0.86</span>
 <a id="__codelineno-12-19" name="__codelineno-12-19" href="#__codelineno-12-19"></a>    <span class="p">)</span>
 <a id="__codelineno-12-20" name="__codelineno-12-20" href="#__codelineno-12-20"></a><span class="p">]</span>
@@ -2813,7 +2813,7 @@
 <a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>    <span class="n">min_grounding</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.3</span><span class="p">,</span>
 <a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>    <span class="n">age_client</span> <span class="o">=</span> <span class="kc">None</span>
 <a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="w">    </span><span class="sd">"""</span>
 <a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a><span class="sd">    Return a curated vocabulary subset for LLM extraction prompts.</span>
 <a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>
 <a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a><span class="sd">    Selection criteria:</span>
@@ -2830,7 +2830,7 @@
 <a id="__codelineno-13-21" name="__codelineno-13-21" href="#__codelineno-13-21"></a>
 <a id="__codelineno-13-22" name="__codelineno-13-22" href="#__codelineno-13-22"></a><span class="sd">    Returns:</span>
 <a id="__codelineno-13-23" name="__codelineno-13-23" href="#__codelineno-13-23"></a><span class="sd">        List of edge type names, curated for LLM prompt</span>
-<a id="__codelineno-13-24" name="__codelineno-13-24" href="#__codelineno-13-24"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-13-24" name="__codelineno-13-24" href="#__codelineno-13-24"></a><span class="sd">    """</span>
 <a id="__codelineno-13-25" name="__codelineno-13-25" href="#__codelineno-13-25"></a>    <span class="c1"># Get all active types with scores</span>
 <a id="__codelineno-13-26" name="__codelineno-13-26" href="#__codelineno-13-26"></a>    <span class="n">all_types</span> <span class="o">=</span> <span class="n">age_client</span><span class="o">.</span><span class="n">get_all_edge_types</span><span class="p">(</span><span class="n">include_inactive</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <a id="__codelineno-13-27" name="__codelineno-13-27" href="#__codelineno-13-27"></a>
@@ -2844,12 +2844,12 @@
 <a id="__codelineno-13-35" name="__codelineno-13-35" href="#__codelineno-13-35"></a>
 <a id="__codelineno-13-36" name="__codelineno-13-36" href="#__codelineno-13-36"></a>        <span class="c1"># Grounding contribution (50% weight)</span>
 <a id="__codelineno-13-37" name="__codelineno-13-37" href="#__codelineno-13-37"></a>        <span class="n">grounding</span> <span class="o">=</span> <span class="n">calculate_grounding_contribution</span><span class="p">(</span><span class="n">edge_type</span><span class="p">,</span> <span class="n">age_client</span><span class="p">)</span>
-<a id="__codelineno-13-38" name="__codelineno-13-38" href="#__codelineno-13-38"></a>        <span class="k">if</span> <span class="n">grounding</span> <span class="o">&lt;</span> <span class="n">min_grounding</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">info</span><span class="p">[</span><span class="s2">&quot;is_builtin&quot;</span><span class="p">]:</span>
+<a id="__codelineno-13-38" name="__codelineno-13-38" href="#__codelineno-13-38"></a>        <span class="k">if</span> <span class="n">grounding</span> <span class="o">&lt;</span> <span class="n">min_grounding</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">info</span><span class="p">[</span><span class="s2">"is_builtin"</span><span class="p">]:</span>
 <a id="__codelineno-13-39" name="__codelineno-13-39" href="#__codelineno-13-39"></a>            <span class="k">continue</span>  <span class="c1"># Skip low-grounding non-builtins</span>
 <a id="__codelineno-13-40" name="__codelineno-13-40" href="#__codelineno-13-40"></a>        <span class="n">score</span> <span class="o">+=</span> <span class="n">grounding</span> <span class="o">*</span> <span class="mf">0.50</span>
 <a id="__codelineno-13-41" name="__codelineno-13-41" href="#__codelineno-13-41"></a>
 <a id="__codelineno-13-42" name="__codelineno-13-42" href="#__codelineno-13-42"></a>        <span class="c1"># Usage frequency (30% weight)</span>
-<a id="__codelineno-13-43" name="__codelineno-13-43" href="#__codelineno-13-43"></a>        <span class="n">usage_normalized</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">info</span><span class="p">[</span><span class="s2">&quot;edge_count&quot;</span><span class="p">]</span> <span class="o">/</span> <span class="mi">50</span><span class="p">)</span>
+<a id="__codelineno-13-43" name="__codelineno-13-43" href="#__codelineno-13-43"></a>        <span class="n">usage_normalized</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">info</span><span class="p">[</span><span class="s2">"edge_count"</span><span class="p">]</span> <span class="o">/</span> <span class="mi">50</span><span class="p">)</span>
 <a id="__codelineno-13-44" name="__codelineno-13-44" href="#__codelineno-13-44"></a>        <span class="n">score</span> <span class="o">+=</span> <span class="n">usage_normalized</span> <span class="o">*</span> <span class="mf">0.30</span>
 <a id="__codelineno-13-45" name="__codelineno-13-45" href="#__codelineno-13-45"></a>
 <a id="__codelineno-13-46" name="__codelineno-13-46" href="#__codelineno-13-46"></a>        <span class="c1"># Semantic diversity (20% weight)</span>
@@ -2862,18 +2862,18 @@
 <a id="__codelineno-13-53" name="__codelineno-13-53" href="#__codelineno-13-53"></a>            <span class="n">score</span> <span class="o">*=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">relevance</span><span class="p">)</span>  <span class="c1"># Boost score by relevance</span>
 <a id="__codelineno-13-54" name="__codelineno-13-54" href="#__codelineno-13-54"></a>
 <a id="__codelineno-13-55" name="__codelineno-13-55" href="#__codelineno-13-55"></a>        <span class="n">scored_types</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
-<a id="__codelineno-13-56" name="__codelineno-13-56" href="#__codelineno-13-56"></a>            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="n">edge_type</span><span class="p">,</span>
-<a id="__codelineno-13-57" name="__codelineno-13-57" href="#__codelineno-13-57"></a>            <span class="s2">&quot;score&quot;</span><span class="p">:</span> <span class="n">score</span><span class="p">,</span>
-<a id="__codelineno-13-58" name="__codelineno-13-58" href="#__codelineno-13-58"></a>            <span class="s2">&quot;is_builtin&quot;</span><span class="p">:</span> <span class="n">info</span><span class="p">[</span><span class="s2">&quot;is_builtin&quot;</span><span class="p">]</span>
+<a id="__codelineno-13-56" name="__codelineno-13-56" href="#__codelineno-13-56"></a>            <span class="s2">"type"</span><span class="p">:</span> <span class="n">edge_type</span><span class="p">,</span>
+<a id="__codelineno-13-57" name="__codelineno-13-57" href="#__codelineno-13-57"></a>            <span class="s2">"score"</span><span class="p">:</span> <span class="n">score</span><span class="p">,</span>
+<a id="__codelineno-13-58" name="__codelineno-13-58" href="#__codelineno-13-58"></a>            <span class="s2">"is_builtin"</span><span class="p">:</span> <span class="n">info</span><span class="p">[</span><span class="s2">"is_builtin"</span><span class="p">]</span>
 <a id="__codelineno-13-59" name="__codelineno-13-59" href="#__codelineno-13-59"></a>        <span class="p">})</span>
 <a id="__codelineno-13-60" name="__codelineno-13-60" href="#__codelineno-13-60"></a>
 <a id="__codelineno-13-61" name="__codelineno-13-61" href="#__codelineno-13-61"></a>    <span class="c1"># Sort by score descending</span>
-<a id="__codelineno-13-62" name="__codelineno-13-62" href="#__codelineno-13-62"></a>    <span class="n">scored_types</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="s2">&quot;is_builtin&quot;</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="s2">&quot;score&quot;</span><span class="p">]),</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-13-62" name="__codelineno-13-62" href="#__codelineno-13-62"></a>    <span class="n">scored_types</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="s2">"is_builtin"</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="s2">"score"</span><span class="p">]),</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <a id="__codelineno-13-63" name="__codelineno-13-63" href="#__codelineno-13-63"></a>
 <a id="__codelineno-13-64" name="__codelineno-13-64" href="#__codelineno-13-64"></a>    <span class="c1"># Apply diversity filter to avoid near-duplicates</span>
 <a id="__codelineno-13-65" name="__codelineno-13-65" href="#__codelineno-13-65"></a>    <span class="n">curated</span> <span class="o">=</span> <span class="n">diversity_filter</span><span class="p">(</span><span class="n">scored_types</span><span class="p">,</span> <span class="n">max_types</span><span class="p">,</span> <span class="n">age_client</span><span class="p">)</span>
 <a id="__codelineno-13-66" name="__codelineno-13-66" href="#__codelineno-13-66"></a>
-<a id="__codelineno-13-67" name="__codelineno-13-67" href="#__codelineno-13-67"></a>    <span class="k">return</span> <span class="p">[</span><span class="n">t</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">curated</span><span class="p">]</span>
+<a id="__codelineno-13-67" name="__codelineno-13-67" href="#__codelineno-13-67"></a>    <span class="k">return</span> <span class="p">[</span><span class="n">t</span><span class="p">[</span><span class="s2">"type"</span><span class="p">]</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">curated</span><span class="p">]</span>
 <a id="__codelineno-13-68" name="__codelineno-13-68" href="#__codelineno-13-68"></a>
 <a id="__codelineno-13-69" name="__codelineno-13-69" href="#__codelineno-13-69"></a><span class="k">def</span><span class="w"> </span><span class="nf">diversity_filter</span><span class="p">(</span>
 <a id="__codelineno-13-70" name="__codelineno-13-70" href="#__codelineno-13-70"></a>    <span class="n">scored_types</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">],</span>
@@ -2881,11 +2881,11 @@
 <a id="__codelineno-13-72" name="__codelineno-13-72" href="#__codelineno-13-72"></a>    <span class="n">age_client</span><span class="p">,</span>
 <a id="__codelineno-13-73" name="__codelineno-13-73" href="#__codelineno-13-73"></a>    <span class="n">min_similarity_distance</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.15</span>
 <a id="__codelineno-13-74" name="__codelineno-13-74" href="#__codelineno-13-74"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">]:</span>
-<a id="__codelineno-13-75" name="__codelineno-13-75" href="#__codelineno-13-75"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-13-75" name="__codelineno-13-75" href="#__codelineno-13-75"></a><span class="w">    </span><span class="sd">"""</span>
 <a id="__codelineno-13-76" name="__codelineno-13-76" href="#__codelineno-13-76"></a><span class="sd">    Filter to ensure semantic diversity (avoid showing synonyms together).</span>
 <a id="__codelineno-13-77" name="__codelineno-13-77" href="#__codelineno-13-77"></a>
-<a id="__codelineno-13-78" name="__codelineno-13-78" href="#__codelineno-13-78"></a><span class="sd">    If SUPPORTS is included, don&#39;t also include CORROBORATES, VALIDATES, etc.</span>
-<a id="__codelineno-13-79" name="__codelineno-13-79" href="#__codelineno-13-79"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-13-78" name="__codelineno-13-78" href="#__codelineno-13-78"></a><span class="sd">    If SUPPORTS is included, don't also include CORROBORATES, VALIDATES, etc.</span>
+<a id="__codelineno-13-79" name="__codelineno-13-79" href="#__codelineno-13-79"></a><span class="sd">    """</span>
 <a id="__codelineno-13-80" name="__codelineno-13-80" href="#__codelineno-13-80"></a>    <span class="n">selected</span> <span class="o">=</span> <span class="p">[]</span>
 <a id="__codelineno-13-81" name="__codelineno-13-81" href="#__codelineno-13-81"></a>
 <a id="__codelineno-13-82" name="__codelineno-13-82" href="#__codelineno-13-82"></a>    <span class="k">for</span> <span class="n">candidate</span> <span class="ow">in</span> <span class="n">scored_types</span><span class="p">:</span>
@@ -2894,10 +2894,10 @@
 <a id="__codelineno-13-85" name="__codelineno-13-85" href="#__codelineno-13-85"></a>
 <a id="__codelineno-13-86" name="__codelineno-13-86" href="#__codelineno-13-86"></a>        <span class="c1"># Check if too similar to already-selected types</span>
 <a id="__codelineno-13-87" name="__codelineno-13-87" href="#__codelineno-13-87"></a>        <span class="n">too_similar</span> <span class="o">=</span> <span class="kc">False</span>
-<a id="__codelineno-13-88" name="__codelineno-13-88" href="#__codelineno-13-88"></a>        <span class="n">candidate_emb</span> <span class="o">=</span> <span class="n">age_client</span><span class="o">.</span><span class="n">get_vocabulary_embedding</span><span class="p">(</span><span class="n">candidate</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">])[</span><span class="s2">&quot;embedding&quot;</span><span class="p">]</span>
+<a id="__codelineno-13-88" name="__codelineno-13-88" href="#__codelineno-13-88"></a>        <span class="n">candidate_emb</span> <span class="o">=</span> <span class="n">age_client</span><span class="o">.</span><span class="n">get_vocabulary_embedding</span><span class="p">(</span><span class="n">candidate</span><span class="p">[</span><span class="s2">"type"</span><span class="p">])[</span><span class="s2">"embedding"</span><span class="p">]</span>
 <a id="__codelineno-13-89" name="__codelineno-13-89" href="#__codelineno-13-89"></a>
 <a id="__codelineno-13-90" name="__codelineno-13-90" href="#__codelineno-13-90"></a>        <span class="k">for</span> <span class="n">selected_type</span> <span class="ow">in</span> <span class="n">selected</span><span class="p">:</span>
-<a id="__codelineno-13-91" name="__codelineno-13-91" href="#__codelineno-13-91"></a>            <span class="n">selected_emb</span> <span class="o">=</span> <span class="n">age_client</span><span class="o">.</span><span class="n">get_vocabulary_embedding</span><span class="p">(</span><span class="n">selected_type</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">])[</span><span class="s2">&quot;embedding&quot;</span><span class="p">]</span>
+<a id="__codelineno-13-91" name="__codelineno-13-91" href="#__codelineno-13-91"></a>            <span class="n">selected_emb</span> <span class="o">=</span> <span class="n">age_client</span><span class="o">.</span><span class="n">get_vocabulary_embedding</span><span class="p">(</span><span class="n">selected_type</span><span class="p">[</span><span class="s2">"type"</span><span class="p">])[</span><span class="s2">"embedding"</span><span class="p">]</span>
 <a id="__codelineno-13-92" name="__codelineno-13-92" href="#__codelineno-13-92"></a>            <span class="n">similarity</span> <span class="o">=</span> <span class="n">cosine_similarity</span><span class="p">(</span><span class="n">candidate_emb</span><span class="p">,</span> <span class="n">selected_emb</span><span class="p">)</span>
 <a id="__codelineno-13-93" name="__codelineno-13-93" href="#__codelineno-13-93"></a>
 <a id="__codelineno-13-94" name="__codelineno-13-94" href="#__codelineno-13-94"></a>            <span class="c1"># If very similar (&gt;0.85), skip this candidate</span>
@@ -2912,12 +2912,12 @@
 </code></pre></div>
 <p><strong>Example output:</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># All 64 types in vocabulary (with synonyms)</span>
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="n">all_types</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;SUPPORTS&quot;</span><span class="p">,</span> <span class="s2">&quot;CORROBORATES&quot;</span><span class="p">,</span> <span class="s2">&quot;VALIDATES&quot;</span><span class="p">,</span> <span class="s2">&quot;CONFIRMS&quot;</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="n">all_types</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"SUPPORTS"</span><span class="p">,</span> <span class="s2">"CORROBORATES"</span><span class="p">,</span> <span class="s2">"VALIDATES"</span><span class="p">,</span> <span class="s2">"CONFIRMS"</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
 <a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>
 <a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="c1"># Curated subset for LLM (semantic diversity, high value)</span>
 <a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="n">curated</span> <span class="o">=</span> <span class="n">get_extraction_vocabulary</span><span class="p">(</span><span class="n">max_types</span><span class="o">=</span><span class="mi">40</span><span class="p">)</span>
-<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a><span class="c1"># → [&quot;SUPPORTS&quot;, &quot;CONTRADICTS&quot;, &quot;ENABLES&quot;, &quot;REQUIRES&quot;, &quot;IMPLIES&quot;,</span>
-<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a><span class="c1">#     &quot;PART_OF&quot;, &quot;RESULTS_FROM&quot;, &quot;INFLUENCES&quot;, ...] (40 types)</span>
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a><span class="c1"># → ["SUPPORTS", "CONTRADICTS", "ENABLES", "REQUIRES", "IMPLIES",</span>
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a><span class="c1">#     "PART_OF", "RESULTS_FROM", "INFLUENCES", ...] (40 types)</span>
 <a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a><span class="c1">#</span>
 <a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a><span class="c1"># Notable: CORROBORATES, VALIDATES, CONFIRMS excluded (synonyms of SUPPORTS)</span>
 </code></pre></div>
@@ -2927,14 +2927,14 @@
 <a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>    <span class="n">vocab_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
 <a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>    <span class="n">age_client</span>
 <a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">MergeRecommendation</span><span class="p">]:</span>
-<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="w">    </span><span class="sd">"""</span>
 <a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="sd">    Generate merge recommendations with grounding awareness.</span>
 <a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a>
 <a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a><span class="sd">    Priority formula:</span>
 <a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a><span class="sd">    - High similarity (&gt;0.85) + low grounding contribution = high priority</span>
 <a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a><span class="sd">    - High similarity + high grounding contribution = manual review</span>
 <a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a><span class="sd">    - Low similarity = no merge (preserve semantic diversity)</span>
-<a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a><span class="sd">    """</span>
 <a id="__codelineno-15-13" name="__codelineno-15-13" href="#__codelineno-15-13"></a>    <span class="n">aggressiveness</span> <span class="o">=</span> <span class="n">calculate_aggressiveness</span><span class="p">(</span><span class="n">vocab_size</span><span class="p">)</span>
 <a id="__codelineno-15-14" name="__codelineno-15-14" href="#__codelineno-15-14"></a>
 <a id="__codelineno-15-15" name="__codelineno-15-15" href="#__codelineno-15-15"></a>    <span class="k">if</span> <span class="n">aggressiveness</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">:</span>
@@ -2950,7 +2950,7 @@
 <a id="__codelineno-15-25" name="__codelineno-15-25" href="#__codelineno-15-25"></a>
 <a id="__codelineno-15-26" name="__codelineno-15-26" href="#__codelineno-15-26"></a>        <span class="k">for</span> <span class="n">member</span> <span class="ow">in</span> <span class="n">cluster</span><span class="o">.</span><span class="n">members</span><span class="p">:</span>
 <a id="__codelineno-15-27" name="__codelineno-15-27" href="#__codelineno-15-27"></a>            <span class="k">if</span> <span class="n">member</span> <span class="o">==</span> <span class="n">canonical</span><span class="p">:</span>
-<a id="__codelineno-15-28" name="__codelineno-15-28" href="#__codelineno-15-28"></a>                <span class="k">continue</span>  <span class="c1"># Don&#39;t merge canonical into itself</span>
+<a id="__codelineno-15-28" name="__codelineno-15-28" href="#__codelineno-15-28"></a>                <span class="k">continue</span>  <span class="c1"># Don't merge canonical into itself</span>
 <a id="__codelineno-15-29" name="__codelineno-15-29" href="#__codelineno-15-29"></a>
 <a id="__codelineno-15-30" name="__codelineno-15-30" href="#__codelineno-15-30"></a>            <span class="c1"># Get grounding contribution for deprecated type</span>
 <a id="__codelineno-15-31" name="__codelineno-15-31" href="#__codelineno-15-31"></a>            <span class="n">deprecated_grounding</span> <span class="o">=</span> <span class="n">calculate_grounding_contribution</span><span class="p">(</span><span class="n">member</span><span class="p">,</span> <span class="n">age_client</span><span class="p">)</span>
@@ -2967,14 +2967,14 @@
 <a id="__codelineno-15-42" name="__codelineno-15-42" href="#__codelineno-15-42"></a>
 <a id="__codelineno-15-43" name="__codelineno-15-43" href="#__codelineno-15-43"></a>            <span class="c1"># Determine review level</span>
 <a id="__codelineno-15-44" name="__codelineno-15-44" href="#__codelineno-15-44"></a>            <span class="k">if</span> <span class="n">priority</span> <span class="o">&gt;</span> <span class="mf">0.9</span><span class="p">:</span>
-<a id="__codelineno-15-45" name="__codelineno-15-45" href="#__codelineno-15-45"></a>                <span class="n">review</span> <span class="o">=</span> <span class="s2">&quot;auto&quot;</span>  <span class="c1"># Very high confidence - auto-approve</span>
+<a id="__codelineno-15-45" name="__codelineno-15-45" href="#__codelineno-15-45"></a>                <span class="n">review</span> <span class="o">=</span> <span class="s2">"auto"</span>  <span class="c1"># Very high confidence - auto-approve</span>
 <a id="__codelineno-15-46" name="__codelineno-15-46" href="#__codelineno-15-46"></a>            <span class="k">elif</span> <span class="n">deprecated_grounding</span> <span class="o">&gt;</span> <span class="mf">0.5</span><span class="p">:</span>
-<a id="__codelineno-15-47" name="__codelineno-15-47" href="#__codelineno-15-47"></a>                <span class="n">review</span> <span class="o">=</span> <span class="s2">&quot;hitl&quot;</span>  <span class="c1"># High grounding impact - human review</span>
+<a id="__codelineno-15-47" name="__codelineno-15-47" href="#__codelineno-15-47"></a>                <span class="n">review</span> <span class="o">=</span> <span class="s2">"hitl"</span>  <span class="c1"># High grounding impact - human review</span>
 <a id="__codelineno-15-48" name="__codelineno-15-48" href="#__codelineno-15-48"></a>            <span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-15-49" name="__codelineno-15-49" href="#__codelineno-15-49"></a>                <span class="n">review</span> <span class="o">=</span> <span class="s2">&quot;aitl&quot;</span>  <span class="c1"># Medium confidence - AI review</span>
+<a id="__codelineno-15-49" name="__codelineno-15-49" href="#__codelineno-15-49"></a>                <span class="n">review</span> <span class="o">=</span> <span class="s2">"aitl"</span>  <span class="c1"># Medium confidence - AI review</span>
 <a id="__codelineno-15-50" name="__codelineno-15-50" href="#__codelineno-15-50"></a>
 <a id="__codelineno-15-51" name="__codelineno-15-51" href="#__codelineno-15-51"></a>            <span class="n">recommendations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">MergeRecommendation</span><span class="p">(</span>
-<a id="__codelineno-15-52" name="__codelineno-15-52" href="#__codelineno-15-52"></a>                <span class="n">action</span><span class="o">=</span><span class="s2">&quot;merge&quot;</span><span class="p">,</span>
+<a id="__codelineno-15-52" name="__codelineno-15-52" href="#__codelineno-15-52"></a>                <span class="n">action</span><span class="o">=</span><span class="s2">"merge"</span><span class="p">,</span>
 <a id="__codelineno-15-53" name="__codelineno-15-53" href="#__codelineno-15-53"></a>                <span class="n">deprecated_type</span><span class="o">=</span><span class="n">member</span><span class="p">,</span>
 <a id="__codelineno-15-54" name="__codelineno-15-54" href="#__codelineno-15-54"></a>                <span class="n">canonical_type</span><span class="o">=</span><span class="n">canonical</span><span class="p">,</span>
 <a id="__codelineno-15-55" name="__codelineno-15-55" href="#__codelineno-15-55"></a>                <span class="n">similarity</span><span class="o">=</span><span class="n">cluster</span><span class="o">.</span><span class="n">avg_similarity</span><span class="p">,</span>
@@ -2994,12 +2994,12 @@
 <a id="__codelineno-15-69" name="__codelineno-15-69" href="#__codelineno-15-69"></a>    <span class="n">canonical_grounding</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
 <a id="__codelineno-15-70" name="__codelineno-15-70" href="#__codelineno-15-70"></a>    <span class="n">aggressiveness</span><span class="p">:</span> <span class="nb">float</span>
 <a id="__codelineno-15-71" name="__codelineno-15-71" href="#__codelineno-15-71"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<a id="__codelineno-15-72" name="__codelineno-15-72" href="#__codelineno-15-72"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-15-72" name="__codelineno-15-72" href="#__codelineno-15-72"></a><span class="w">    </span><span class="sd">"""</span>
 <a id="__codelineno-15-73" name="__codelineno-15-73" href="#__codelineno-15-73"></a><span class="sd">    Calculate merge priority (0.0-1.0).</span>
 <a id="__codelineno-15-74" name="__codelineno-15-74" href="#__codelineno-15-74"></a>
 <a id="__codelineno-15-75" name="__codelineno-15-75" href="#__codelineno-15-75"></a><span class="sd">    High priority = should merge immediately</span>
 <a id="__codelineno-15-76" name="__codelineno-15-76" href="#__codelineno-15-76"></a><span class="sd">    Low priority = preserve diversity</span>
-<a id="__codelineno-15-77" name="__codelineno-15-77" href="#__codelineno-15-77"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-15-77" name="__codelineno-15-77" href="#__codelineno-15-77"></a><span class="sd">    """</span>
 <a id="__codelineno-15-78" name="__codelineno-15-78" href="#__codelineno-15-78"></a>    <span class="n">priority</span> <span class="o">=</span> <span class="mf">0.0</span>
 <a id="__codelineno-15-79" name="__codelineno-15-79" href="#__codelineno-15-79"></a>
 <a id="__codelineno-15-80" name="__codelineno-15-80" href="#__codelineno-15-80"></a>    <span class="c1"># Base priority from aggressiveness</span>
@@ -3007,7 +3007,7 @@
 <a id="__codelineno-15-82" name="__codelineno-15-82" href="#__codelineno-15-82"></a>
 <a id="__codelineno-15-83" name="__codelineno-15-83" href="#__codelineno-15-83"></a>    <span class="c1"># Low usage of deprecated type (high priority to merge)</span>
 <a id="__codelineno-15-84" name="__codelineno-15-84" href="#__codelineno-15-84"></a>    <span class="n">deprecated_info</span> <span class="o">=</span> <span class="n">age_client</span><span class="o">.</span><span class="n">get_edge_type_info</span><span class="p">(</span><span class="n">deprecated</span><span class="p">)</span>
-<a id="__codelineno-15-85" name="__codelineno-15-85" href="#__codelineno-15-85"></a>    <span class="k">if</span> <span class="n">deprecated_info</span><span class="p">[</span><span class="s2">&quot;edge_count&quot;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">5</span><span class="p">:</span>
+<a id="__codelineno-15-85" name="__codelineno-15-85" href="#__codelineno-15-85"></a>    <span class="k">if</span> <span class="n">deprecated_info</span><span class="p">[</span><span class="s2">"edge_count"</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">5</span><span class="p">:</span>
 <a id="__codelineno-15-86" name="__codelineno-15-86" href="#__codelineno-15-86"></a>        <span class="n">priority</span> <span class="o">+=</span> <span class="mf">0.3</span>
 <a id="__codelineno-15-87" name="__codelineno-15-87" href="#__codelineno-15-87"></a>
 <a id="__codelineno-15-88" name="__codelineno-15-88" href="#__codelineno-15-88"></a>    <span class="c1"># Grounding contribution delta</span>
@@ -3034,24 +3034,24 @@
 <a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a><span class="n">recommendations</span> <span class="o">=</span> <span class="n">generate_merge_recommendations</span><span class="p">(</span><span class="mi">120</span><span class="p">,</span> <span class="n">age_client</span><span class="p">)</span>
 <a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="c1"># → [</span>
 <a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a><span class="c1">#     MergeRecommendation(</span>
-<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a><span class="c1">#         deprecated=&quot;SUPPORTED_BY&quot;,</span>
-<a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a><span class="c1">#         canonical=&quot;SUPPORTS&quot;,</span>
+<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a><span class="c1">#         deprecated="SUPPORTED_BY",</span>
+<a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a><span class="c1">#         canonical="SUPPORTS",</span>
 <a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a><span class="c1">#         similarity=0.94,</span>
 <a id="__codelineno-16-12" name="__codelineno-16-12" href="#__codelineno-16-12"></a><span class="c1">#         deprecated_grounding=0.02,</span>
 <a id="__codelineno-16-13" name="__codelineno-16-13" href="#__codelineno-16-13"></a><span class="c1">#         canonical_grounding=0.92,</span>
 <a id="__codelineno-16-14" name="__codelineno-16-14" href="#__codelineno-16-14"></a><span class="c1">#         priority=0.87,</span>
-<a id="__codelineno-16-15" name="__codelineno-16-15" href="#__codelineno-16-15"></a><span class="c1">#         review_level=&quot;auto&quot;,</span>
-<a id="__codelineno-16-16" name="__codelineno-16-16" href="#__codelineno-16-16"></a><span class="c1">#         reason=&quot;Inverse relationship with high similarity&quot;</span>
+<a id="__codelineno-16-15" name="__codelineno-16-15" href="#__codelineno-16-15"></a><span class="c1">#         review_level="auto",</span>
+<a id="__codelineno-16-16" name="__codelineno-16-16" href="#__codelineno-16-16"></a><span class="c1">#         reason="Inverse relationship with high similarity"</span>
 <a id="__codelineno-16-17" name="__codelineno-16-17" href="#__codelineno-16-17"></a><span class="c1">#     ),</span>
 <a id="__codelineno-16-18" name="__codelineno-16-18" href="#__codelineno-16-18"></a><span class="c1">#     MergeRecommendation(</span>
-<a id="__codelineno-16-19" name="__codelineno-16-19" href="#__codelineno-16-19"></a><span class="c1">#         deprecated=&quot;ENABLED_BY&quot;,</span>
-<a id="__codelineno-16-20" name="__codelineno-16-20" href="#__codelineno-16-20"></a><span class="c1">#         canonical=&quot;ENABLES&quot;,</span>
+<a id="__codelineno-16-19" name="__codelineno-16-19" href="#__codelineno-16-19"></a><span class="c1">#         deprecated="ENABLED_BY",</span>
+<a id="__codelineno-16-20" name="__codelineno-16-20" href="#__codelineno-16-20"></a><span class="c1">#         canonical="ENABLES",</span>
 <a id="__codelineno-16-21" name="__codelineno-16-21" href="#__codelineno-16-21"></a><span class="c1">#         similarity=0.92,</span>
 <a id="__codelineno-16-22" name="__codelineno-16-22" href="#__codelineno-16-22"></a><span class="c1">#         deprecated_grounding=0.04,</span>
 <a id="__codelineno-16-23" name="__codelineno-16-23" href="#__codelineno-16-23"></a><span class="c1">#         canonical_grounding=0.71,</span>
 <a id="__codelineno-16-24" name="__codelineno-16-24" href="#__codelineno-16-24"></a><span class="c1">#         priority=0.83,</span>
-<a id="__codelineno-16-25" name="__codelineno-16-25" href="#__codelineno-16-25"></a><span class="c1">#         review_level=&quot;auto&quot;,</span>
-<a id="__codelineno-16-26" name="__codelineno-16-26" href="#__codelineno-16-26"></a><span class="c1">#         reason=&quot;Inverse relationship with high similarity&quot;</span>
+<a id="__codelineno-16-25" name="__codelineno-16-25" href="#__codelineno-16-25"></a><span class="c1">#         review_level="auto",</span>
+<a id="__codelineno-16-26" name="__codelineno-16-26" href="#__codelineno-16-26"></a><span class="c1">#         reason="Inverse relationship with high similarity"</span>
 <a id="__codelineno-16-27" name="__codelineno-16-27" href="#__codelineno-16-27"></a><span class="c1">#     )</span>
 <a id="__codelineno-16-28" name="__codelineno-16-28" href="#__codelineno-16-28"></a><span class="c1"># ]</span>
 <a id="__codelineno-16-29" name="__codelineno-16-29" href="#__codelineno-16-29"></a>
@@ -3078,7 +3078,7 @@
 <a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>    <span class="n">edge_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 <a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>    <span class="n">age_client</span>
 <a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculate grounding contribution for edge type.&quot;&quot;&quot;</span>
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a><span class="w">    </span><span class="sd">"""Calculate grounding contribution for edge type."""</span>
 <a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a>    <span class="c1"># Implementation from Decision section above</span>
 </code></pre></div>
 <p><strong>3. Update <code>VocabularyScorer.score_edge_types()</code></strong></p>
@@ -3091,11 +3091,11 @@
 <a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>    <span class="n">age_client</span><span class="p">,</span>
 <a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>    <span class="n">similarity_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.85</span>
 <a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">SynonymCandidate</span><span class="p">]:</span>
-<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="w">    </span><span class="sd">"""</span>
 <a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="sd">    Detect synonyms using embedding similarity (ADR-809).</span>
 <a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a>
 <a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a><span class="sd">    Replaces string-based detection with semantic similarity.</span>
-<a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a><span class="sd">    """</span>
 <a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a>    <span class="c1"># Implementation from Decision section above</span>
 </code></pre></div>
 <p><strong>2. Implement canonical type selection</strong></p>
@@ -3103,7 +3103,7 @@
 <a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>    <span class="n">cluster</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
 <a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>    <span class="n">age_client</span>
 <a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Select canonical type from synonym cluster.&quot;&quot;&quot;</span>
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="w">    </span><span class="sd">"""Select canonical type from synonym cluster."""</span>
 <a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>    <span class="c1"># Implementation from Decision section above</span>
 </code></pre></div>
 <h3 id="phase-3-dynamic-vocabulary-curation-week-3">Phase 3: Dynamic Vocabulary Curation (Week 3)</h3>
@@ -3115,7 +3115,7 @@
 <a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a>    <span class="n">min_grounding</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.3</span><span class="p">,</span>
 <a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a>    <span class="n">age_client</span> <span class="o">=</span> <span class="kc">None</span>
 <a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Curate vocabulary subset for LLM extraction.&quot;&quot;&quot;</span>
+<a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a><span class="w">    </span><span class="sd">"""Curate vocabulary subset for LLM extraction."""</span>
 <a id="__codelineno-20-8" name="__codelineno-20-8" href="#__codelineno-20-8"></a>    <span class="c1"># Implementation from Decision section above</span>
 </code></pre></div>
 <p><strong>2. Update extraction prompt to use curated vocabulary</strong></p>
@@ -3132,7 +3132,7 @@
 <a id="__codelineno-21-10" name="__codelineno-21-10" href="#__codelineno-21-10"></a>    <span class="n">age_client</span><span class="o">=</span><span class="n">age_client</span>
 <a id="__codelineno-21-11" name="__codelineno-21-11" href="#__codelineno-21-11"></a><span class="p">)</span>
 <a id="__codelineno-21-12" name="__codelineno-21-12" href="#__codelineno-21-12"></a><span class="n">formatted_prompt</span> <span class="o">=</span> <span class="n">EXTRACTION_PROMPT_TEMPLATE</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-<a id="__codelineno-21-13" name="__codelineno-21-13" href="#__codelineno-21-13"></a>    <span class="n">relationship_types</span><span class="o">=</span><span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">curated_types</span><span class="p">)</span>
+<a id="__codelineno-21-13" name="__codelineno-21-13" href="#__codelineno-21-13"></a>    <span class="n">relationship_types</span><span class="o">=</span><span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">curated_types</span><span class="p">)</span>
 <a id="__codelineno-21-14" name="__codelineno-21-14" href="#__codelineno-21-14"></a><span class="p">)</span>
 </code></pre></div>
 <h3 id="phase-4-grounding-aware-merge-recommendations-week-4">Phase 4: Grounding-Aware Merge Recommendations (Week 4)</h3>
@@ -3142,7 +3142,7 @@
 <a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>    <span class="n">vocab_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
 <a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>    <span class="n">age_client</span>
 <a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">ActionRecommendation</span><span class="p">]:</span>
-<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Generate merge recommendations with grounding awareness.&quot;&quot;&quot;</span>
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a><span class="w">    </span><span class="sd">"""Generate merge recommendations with grounding awareness."""</span>
 <a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a>    <span class="c1"># Implementation from Decision section above</span>
 </code></pre></div>
 <p><strong>2. Update merge execution to preserve embeddings</strong></p>
@@ -3152,9 +3152,9 @@
 <a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>    <span class="bp">self</span><span class="p">,</span>
 <a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a>    <span class="n">deprecated_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 <a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a>    <span class="n">target_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a>    <span class="n">performed_by</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;system&quot;</span>
+<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a>    <span class="n">performed_by</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"system"</span>
 <a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
-<a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Merge edge types with embedding management.&quot;&quot;&quot;</span>
+<a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a><span class="w">    </span><span class="sd">"""Merge edge types with embedding management."""</span>
 <a id="__codelineno-23-8" name="__codelineno-23-8" href="#__codelineno-23-8"></a>    <span class="c1"># Existing graph edge update logic...</span>
 <a id="__codelineno-23-9" name="__codelineno-23-9" href="#__codelineno-23-9"></a>
 <a id="__codelineno-23-10" name="__codelineno-23-10" href="#__codelineno-23-10"></a>    <span class="c1"># NEW: Ensure target has embedding</span>
@@ -3163,16 +3163,16 @@
 <a id="__codelineno-23-13" name="__codelineno-23-13" href="#__codelineno-23-13"></a>        <span class="n">worker</span><span class="o">.</span><span class="n">generate_vocabulary_embedding</span><span class="p">(</span><span class="n">target_type</span><span class="p">)</span>
 <a id="__codelineno-23-14" name="__codelineno-23-14" href="#__codelineno-23-14"></a>
 <a id="__codelineno-23-15" name="__codelineno-23-15" href="#__codelineno-23-15"></a>    <span class="c1"># Preserve deprecated embedding for rollback</span>
-<a id="__codelineno-23-16" name="__codelineno-23-16" href="#__codelineno-23-16"></a>    <span class="c1"># (mark as inactive, don&#39;t delete)</span>
+<a id="__codelineno-23-16" name="__codelineno-23-16" href="#__codelineno-23-16"></a>    <span class="c1"># (mark as inactive, don't delete)</span>
 <a id="__codelineno-23-17" name="__codelineno-23-17" href="#__codelineno-23-17"></a>
 <a id="__codelineno-23-18" name="__codelineno-23-18" href="#__codelineno-23-18"></a>    <span class="c1"># ... rest of existing logic</span>
 </code></pre></div>
 <h3 id="phase-5-admin-endpoints-week-5">Phase 5: Admin Endpoints (Week 5)</h3>
 <p><strong>1. Vocabulary analysis endpoint</strong></p>
 <p>File: <code>api/app/routes/vocabulary.py</code></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/vocab/analysis&quot;</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"/vocab/analysis"</span><span class="p">)</span>
 <a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">analyze_vocabulary</span><span class="p">():</span>
-<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a><span class="w">    </span><span class="sd">"""</span>
 <a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a><span class="sd">    Analyze vocabulary with grounding metrics.</span>
 <a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a>
 <a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a><span class="sd">    Returns:</span>
@@ -3180,7 +3180,7 @@
 <a id="__codelineno-24-8" name="__codelineno-24-8" href="#__codelineno-24-8"></a><span class="sd">        - Grounding contribution scores</span>
 <a id="__codelineno-24-9" name="__codelineno-24-9" href="#__codelineno-24-9"></a><span class="sd">        - Merge recommendations</span>
 <a id="__codelineno-24-10" name="__codelineno-24-10" href="#__codelineno-24-10"></a><span class="sd">        - Vocabulary health metrics</span>
-<a id="__codelineno-24-11" name="__codelineno-24-11" href="#__codelineno-24-11"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-24-11" name="__codelineno-24-11" href="#__codelineno-24-11"></a><span class="sd">    """</span>
 <a id="__codelineno-24-12" name="__codelineno-24-12" href="#__codelineno-24-12"></a>    <span class="n">age_client</span> <span class="o">=</span> <span class="n">get_age_client</span><span class="p">()</span>
 <a id="__codelineno-24-13" name="__codelineno-24-13" href="#__codelineno-24-13"></a>
 <a id="__codelineno-24-14" name="__codelineno-24-14" href="#__codelineno-24-14"></a>    <span class="c1"># Find synonym clusters</span>
@@ -3197,10 +3197,10 @@
 <a id="__codelineno-24-25" name="__codelineno-24-25" href="#__codelineno-24-25"></a>    <span class="p">)</span>
 <a id="__codelineno-24-26" name="__codelineno-24-26" href="#__codelineno-24-26"></a>
 <a id="__codelineno-24-27" name="__codelineno-24-27" href="#__codelineno-24-27"></a>    <span class="k">return</span> <span class="p">{</span>
-<a id="__codelineno-24-28" name="__codelineno-24-28" href="#__codelineno-24-28"></a>        <span class="s2">&quot;vocab_size&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">scores</span><span class="p">),</span>
-<a id="__codelineno-24-29" name="__codelineno-24-29" href="#__codelineno-24-29"></a>        <span class="s2">&quot;synonym_clusters&quot;</span><span class="p">:</span> <span class="n">clusters</span><span class="p">,</span>
-<a id="__codelineno-24-30" name="__codelineno-24-30" href="#__codelineno-24-30"></a>        <span class="s2">&quot;top_contributors&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">scores</span> <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">grounding_contribution</span> <span class="o">&gt;</span> <span class="mf">0.5</span><span class="p">],</span>
-<a id="__codelineno-24-31" name="__codelineno-24-31" href="#__codelineno-24-31"></a>        <span class="s2">&quot;merge_recommendations&quot;</span><span class="p">:</span> <span class="n">recommendations</span>
+<a id="__codelineno-24-28" name="__codelineno-24-28" href="#__codelineno-24-28"></a>        <span class="s2">"vocab_size"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">scores</span><span class="p">),</span>
+<a id="__codelineno-24-29" name="__codelineno-24-29" href="#__codelineno-24-29"></a>        <span class="s2">"synonym_clusters"</span><span class="p">:</span> <span class="n">clusters</span><span class="p">,</span>
+<a id="__codelineno-24-30" name="__codelineno-24-30" href="#__codelineno-24-30"></a>        <span class="s2">"top_contributors"</span><span class="p">:</span> <span class="p">[</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">scores</span> <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">grounding_contribution</span> <span class="o">&gt;</span> <span class="mf">0.5</span><span class="p">],</span>
+<a id="__codelineno-24-31" name="__codelineno-24-31" href="#__codelineno-24-31"></a>        <span class="s2">"merge_recommendations"</span><span class="p">:</span> <span class="n">recommendations</span>
 <a id="__codelineno-24-32" name="__codelineno-24-32" href="#__codelineno-24-32"></a>    <span class="p">}</span>
 </code></pre></div>
 <p><strong>2. CLI command</strong></p>
@@ -3372,7 +3372,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": [], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

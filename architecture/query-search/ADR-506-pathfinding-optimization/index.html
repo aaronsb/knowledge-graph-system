@@ -19,7 +19,7 @@
       
       
       <link rel="icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -27,7 +27,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.ec1eaa64.min.css">
       
       
 
@@ -2411,12 +2411,12 @@
 <h3 id="strategy-1-bidirectional-bfs-recommended-for-shortest-path">Strategy 1: Bidirectional BFS (Recommended for Shortest Path)</h3>
 <p>Instead of one query that enumerates all paths, use iterative neighbor expansion from both ends:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">find_shortest_path</span><span class="p">(</span><span class="n">from_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">to_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">max_hops</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span><span class="sd">"""</span>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="sd">    Bidirectional BFS - meets in the middle.</span>
 <a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
 <a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="sd">    Time complexity: O(b^(d/2)) instead of O(b^d)</span>
 <a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="sd">    For b=20, d=6: 8000 vs 64,000,000 node lookups</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="sd">    """</span>
 <a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>    <span class="k">if</span> <span class="n">from_id</span> <span class="o">==</span> <span class="n">to_id</span><span class="p">:</span>
 <a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>        <span class="k">return</span> <span class="p">[</span><span class="n">from_id</span><span class="p">]</span>
 <a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>
@@ -2466,7 +2466,7 @@
 <a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    <span class="n">end_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 <a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>    <span class="n">max_hops</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">6</span>
 <a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="w">    </span><span class="sd">"""</span>
 <a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="sd">    Finds the shortest path between two concepts using Bidirectional BFS.</span>
 <a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>
 <a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="sd">    Why this is fast:</span>
@@ -2482,7 +2482,7 @@
 <a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a>
 <a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a><span class="sd">    Returns:</span>
 <a id="__codelineno-3-24" name="__codelineno-3-24" href="#__codelineno-3-24"></a><span class="sd">        List of concept_ids forming the path [start, ..., end], or None if no path found.</span>
-<a id="__codelineno-3-25" name="__codelineno-3-25" href="#__codelineno-3-25"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-3-25" name="__codelineno-3-25" href="#__codelineno-3-25"></a><span class="sd">    """</span>
 <a id="__codelineno-3-26" name="__codelineno-3-26" href="#__codelineno-3-26"></a>
 <a id="__codelineno-3-27" name="__codelineno-3-27" href="#__codelineno-3-27"></a>    <span class="c1"># 0. Edge case: Start equals End</span>
 <a id="__codelineno-3-28" name="__codelineno-3-28" href="#__codelineno-3-28"></a>    <span class="k">if</span> <span class="n">start_id</span> <span class="o">==</span> <span class="n">end_id</span><span class="p">:</span>
@@ -2518,23 +2518,23 @@
 <a id="__codelineno-3-58" name="__codelineno-3-58" href="#__codelineno-3-58"></a>        <span class="c1"># Convert set to list for JSON serialization in query</span>
 <a id="__codelineno-3-59" name="__codelineno-3-59" href="#__codelineno-3-59"></a>        <span class="n">current_ids</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">front_start</span><span class="p">)</span>
 <a id="__codelineno-3-60" name="__codelineno-3-60" href="#__codelineno-3-60"></a>
-<a id="__codelineno-3-61" name="__codelineno-3-61" href="#__codelineno-3-61"></a>        <span class="n">query</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-3-61" name="__codelineno-3-61" href="#__codelineno-3-61"></a>        <span class="n">query</span> <span class="o">=</span> <span class="s2">"""</span>
 <a id="__codelineno-3-62" name="__codelineno-3-62" href="#__codelineno-3-62"></a><span class="s2">        MATCH (current:Concept)-[]-(next:Concept)</span>
 <a id="__codelineno-3-63" name="__codelineno-3-63" href="#__codelineno-3-63"></a><span class="s2">        WHERE current.concept_id IN $ids</span>
 <a id="__codelineno-3-64" name="__codelineno-3-64" href="#__codelineno-3-64"></a><span class="s2">        RETURN current.concept_id as parent, next.concept_id as child</span>
-<a id="__codelineno-3-65" name="__codelineno-3-65" href="#__codelineno-3-65"></a><span class="s2">        &quot;&quot;&quot;</span>
+<a id="__codelineno-3-65" name="__codelineno-3-65" href="#__codelineno-3-65"></a><span class="s2">        """</span>
 <a id="__codelineno-3-66" name="__codelineno-3-66" href="#__codelineno-3-66"></a>
 <a id="__codelineno-3-67" name="__codelineno-3-67" href="#__codelineno-3-67"></a>        <span class="c1"># Execute via your AGEClient</span>
-<a id="__codelineno-3-68" name="__codelineno-3-68" href="#__codelineno-3-68"></a>        <span class="n">results</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">_execute_cypher</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;ids&#39;</span><span class="p">:</span> <span class="n">current_ids</span><span class="p">})</span>
+<a id="__codelineno-3-68" name="__codelineno-3-68" href="#__codelineno-3-68"></a>        <span class="n">results</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">_execute_cypher</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s1">'ids'</span><span class="p">:</span> <span class="n">current_ids</span><span class="p">})</span>
 <a id="__codelineno-3-69" name="__codelineno-3-69" href="#__codelineno-3-69"></a>
 <a id="__codelineno-3-70" name="__codelineno-3-70" href="#__codelineno-3-70"></a>        <span class="c1"># 4. Process Neighbors</span>
 <a id="__codelineno-3-71" name="__codelineno-3-71" href="#__codelineno-3-71"></a>        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
-<a id="__codelineno-3-72" name="__codelineno-3-72" href="#__codelineno-3-72"></a>            <span class="n">parent</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;parent&#39;</span><span class="p">]</span>
-<a id="__codelineno-3-73" name="__codelineno-3-73" href="#__codelineno-3-73"></a>            <span class="n">child</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;child&#39;</span><span class="p">]</span>
+<a id="__codelineno-3-72" name="__codelineno-3-72" href="#__codelineno-3-72"></a>            <span class="n">parent</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s1">'parent'</span><span class="p">]</span>
+<a id="__codelineno-3-73" name="__codelineno-3-73" href="#__codelineno-3-73"></a>            <span class="n">child</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s1">'child'</span><span class="p">]</span>
 <a id="__codelineno-3-74" name="__codelineno-3-74" href="#__codelineno-3-74"></a>
 <a id="__codelineno-3-75" name="__codelineno-3-75" href="#__codelineno-3-75"></a>            <span class="c1"># Check for Intersection: Have we seen this child in the OTHER frontier?</span>
 <a id="__codelineno-3-76" name="__codelineno-3-76" href="#__codelineno-3-76"></a>            <span class="k">if</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">parents_end</span><span class="p">:</span>
-<a id="__codelineno-3-77" name="__codelineno-3-77" href="#__codelineno-3-77"></a>                <span class="c1"># FOUND IT! The paths have met at &#39;child&#39;.</span>
+<a id="__codelineno-3-77" name="__codelineno-3-77" href="#__codelineno-3-77"></a>                <span class="c1"># FOUND IT! The paths have met at 'child'.</span>
 <a id="__codelineno-3-78" name="__codelineno-3-78" href="#__codelineno-3-78"></a>                <span class="k">return</span> <span class="n">_reconstruct_path</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">parents_start</span><span class="p">,</span> <span class="n">parents_end</span><span class="p">)</span>
 <a id="__codelineno-3-79" name="__codelineno-3-79" href="#__codelineno-3-79"></a>
 <a id="__codelineno-3-80" name="__codelineno-3-80" href="#__codelineno-3-80"></a>            <span class="c1"># If not visited yet on this side, record it</span>
@@ -2554,12 +2554,12 @@
 <a id="__codelineno-3-94" name="__codelineno-3-94" href="#__codelineno-3-94"></a>    <span class="n">active_parents</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span>
 <a id="__codelineno-3-95" name="__codelineno-3-95" href="#__codelineno-3-95"></a>    <span class="n">passive_parents</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
 <a id="__codelineno-3-96" name="__codelineno-3-96" href="#__codelineno-3-96"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<a id="__codelineno-3-97" name="__codelineno-3-97" href="#__codelineno-3-97"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-3-97" name="__codelineno-3-97" href="#__codelineno-3-97"></a><span class="w">    </span><span class="sd">"""</span>
 <a id="__codelineno-3-98" name="__codelineno-3-98" href="#__codelineno-3-98"></a><span class="sd">    Stitches the two half-paths together.</span>
 <a id="__codelineno-3-99" name="__codelineno-3-99" href="#__codelineno-3-99"></a>
 <a id="__codelineno-3-100" name="__codelineno-3-100" href="#__codelineno-3-100"></a><span class="sd">    Because we swap frontiers for optimization, we need to figure out which</span>
-<a id="__codelineno-3-101" name="__codelineno-3-101" href="#__codelineno-3-101"></a><span class="sd">    parent map belongs to the &#39;start&#39; side and which to the &#39;end&#39; side.</span>
-<a id="__codelineno-3-102" name="__codelineno-3-102" href="#__codelineno-3-102"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-3-101" name="__codelineno-3-101" href="#__codelineno-3-101"></a><span class="sd">    parent map belongs to the 'start' side and which to the 'end' side.</span>
+<a id="__codelineno-3-102" name="__codelineno-3-102" href="#__codelineno-3-102"></a><span class="sd">    """</span>
 <a id="__codelineno-3-103" name="__codelineno-3-103" href="#__codelineno-3-103"></a>
 <a id="__codelineno-3-104" name="__codelineno-3-104" href="#__codelineno-3-104"></a>    <span class="c1"># 1. Record the connection across the meeting point</span>
 <a id="__codelineno-3-105" name="__codelineno-3-105" href="#__codelineno-3-105"></a>    <span class="n">active_parents</span><span class="p">[</span><span class="n">meeting_node</span><span class="p">]</span> <span class="o">=</span> <span class="n">meeting_parent_from_active_side</span>
@@ -2598,33 +2598,33 @@
 <h3 id="strategy-2-depth-limited-search-with-early-termination">Strategy 2: Depth-Limited Search with Early Termination</h3>
 <p>For related concepts traversal (not point-to-point), use incremental depth queries:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">find_related_concepts</span><span class="p">(</span><span class="n">start_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">max_depth</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">]:</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">    </span><span class="sd">"""</span>
 <a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="sd">    Incremental depth search - stops when we have enough results.</span>
 <a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>
 <a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="sd">    Each depth level is a separate, bounded query.</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="sd">    """</span>
 <a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>    <span class="n">all_related</span> <span class="o">=</span> <span class="p">{}</span>
 <a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>
 <a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>    <span class="k">for</span> <span class="n">depth</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_depth</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
 <a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>        <span class="c1"># Query ONLY this exact depth</span>
-<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>        <span class="n">query</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>        <span class="n">query</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"""</span>
 <a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="s2">            MATCH (start:Concept </span><span class="se">{{</span><span class="s2">concept_id: $start_id</span><span class="se">}}</span><span class="s2">)-[r*</span><span class="si">{</span><span class="n">depth</span><span class="si">}</span><span class="s2">]-(related:Concept)</span>
 <a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="s2">            WHERE related.concept_id &lt;&gt; $start_id</span>
 <a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="s2">              AND NOT related.concept_id IN $already_seen</span>
 <a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a><span class="s2">            RETURN DISTINCT related.concept_id, related.label</span>
 <a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a><span class="s2">            LIMIT 100</span>
-<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a><span class="s2">        &quot;&quot;&quot;</span>
+<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a><span class="s2">        """</span>
 <a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a>
 <a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a>        <span class="n">results</span> <span class="o">=</span> <span class="n">execute_query</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="p">{</span>
-<a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a>            <span class="s1">&#39;start_id&#39;</span><span class="p">:</span> <span class="n">start_id</span><span class="p">,</span>
-<a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a>            <span class="s1">&#39;already_seen&#39;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">all_related</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+<a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a>            <span class="s1">'start_id'</span><span class="p">:</span> <span class="n">start_id</span><span class="p">,</span>
+<a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a>            <span class="s1">'already_seen'</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">all_related</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
 <a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a>        <span class="p">})</span>
 <a id="__codelineno-4-23" name="__codelineno-4-23" href="#__codelineno-4-23"></a>
 <a id="__codelineno-4-24" name="__codelineno-4-24" href="#__codelineno-4-24"></a>        <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
-<a id="__codelineno-4-25" name="__codelineno-4-25" href="#__codelineno-4-25"></a>            <span class="k">if</span> <span class="n">r</span><span class="p">[</span><span class="s1">&#39;concept_id&#39;</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">all_related</span><span class="p">:</span>
-<a id="__codelineno-4-26" name="__codelineno-4-26" href="#__codelineno-4-26"></a>                <span class="n">all_related</span><span class="p">[</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;concept_id&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
-<a id="__codelineno-4-27" name="__codelineno-4-27" href="#__codelineno-4-27"></a>                    <span class="s1">&#39;label&#39;</span><span class="p">:</span> <span class="n">r</span><span class="p">[</span><span class="s1">&#39;label&#39;</span><span class="p">],</span>
-<a id="__codelineno-4-28" name="__codelineno-4-28" href="#__codelineno-4-28"></a>                    <span class="s1">&#39;distance&#39;</span><span class="p">:</span> <span class="n">depth</span>
+<a id="__codelineno-4-25" name="__codelineno-4-25" href="#__codelineno-4-25"></a>            <span class="k">if</span> <span class="n">r</span><span class="p">[</span><span class="s1">'concept_id'</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">all_related</span><span class="p">:</span>
+<a id="__codelineno-4-26" name="__codelineno-4-26" href="#__codelineno-4-26"></a>                <span class="n">all_related</span><span class="p">[</span><span class="n">r</span><span class="p">[</span><span class="s1">'concept_id'</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+<a id="__codelineno-4-27" name="__codelineno-4-27" href="#__codelineno-4-27"></a>                    <span class="s1">'label'</span><span class="p">:</span> <span class="n">r</span><span class="p">[</span><span class="s1">'label'</span><span class="p">],</span>
+<a id="__codelineno-4-28" name="__codelineno-4-28" href="#__codelineno-4-28"></a>                    <span class="s1">'distance'</span><span class="p">:</span> <span class="n">depth</span>
 <a id="__codelineno-4-29" name="__codelineno-4-29" href="#__codelineno-4-29"></a>                <span class="p">}</span>
 <a id="__codelineno-4-30" name="__codelineno-4-30" href="#__codelineno-4-30"></a>
 <a id="__codelineno-4-31" name="__codelineno-4-31" href="#__codelineno-4-31"></a>        <span class="c1"># Early termination if we have enough</span>
@@ -2658,9 +2658,9 @@
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="n">dijkstra</span> <span class="o">=</span> <span class="n">AGEDijkstra</span><span class="p">(</span><span class="n">connection</span><span class="p">)</span>
 <a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="n">path</span> <span class="o">=</span> <span class="n">dijkstra</span><span class="o">.</span><span class="n">shortest_path</span><span class="p">(</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>    <span class="n">start_vertex</span><span class="o">=</span><span class="s1">&#39;concept_123&#39;</span><span class="p">,</span>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>    <span class="n">end_vertex</span><span class="o">=</span><span class="s1">&#39;concept_456&#39;</span><span class="p">,</span>
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>    <span class="n">weight_property</span><span class="o">=</span><span class="s1">&#39;confidence&#39;</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>    <span class="n">start_vertex</span><span class="o">=</span><span class="s1">'concept_123'</span><span class="p">,</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>    <span class="n">end_vertex</span><span class="o">=</span><span class="s1">'concept_456'</span><span class="p">,</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>    <span class="n">weight_property</span><span class="o">=</span><span class="s1">'confidence'</span>
 <a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="p">)</span>
 </code></pre></div>
 <h2 id="implementation-plan">Implementation Plan</h2>
@@ -2748,7 +2748,7 @@
 <li><a href="https://github.com/apache/age/issues/195">Apache AGE GitHub Issue #195 - Variable-length path performance</a></li>
 <li><a href="https://pypi.org/project/apache-age-dijkstra/">apache-age-dijkstra PyPI package</a></li>
 <li><a href="https://en.wikipedia.org/wiki/Bidirectional_search">Bidirectional Search Algorithm</a></li>
-<li><a href="../../database-schema/ADR-208-apache-age-migration/">ADR-208: Apache AGE Migration</a></li>
+<li><a href="../../archive/database-schema/ADR-208-apache-age-migration/">ADR-208: Apache AGE Migration</a></li>
 </ul>
 <h2 id="notes">Notes</h2>
 <h3 id="query-optimization-quick-wins">Query Optimization Quick Wins</h3>
@@ -2839,7 +2839,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": [], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

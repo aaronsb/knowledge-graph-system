@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -29,7 +29,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
       
 
@@ -2086,6 +2086,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#archived" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Archived
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -2230,6 +2241,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#archived" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Archived
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -2251,7 +2273,7 @@
 
 
 <h1 id="architecture-decision-records">Architecture Decision Records</h1>
-<p>This directory contains Architecture Decision Records (ADRs) for the Knowledge Graph System.
+<p>This directory contains Architecture Decision Records (ADRs) for Knowledge Graph System.
 Each ADR documents a significant architectural decision, its context, and consequences.</p>
 <h2 id="adr-format">ADR Format</h2>
 <p>All ADRs follow a consistent format:
@@ -2304,11 +2326,6 @@ Each ADR documents a significant architectural decision, its context, and conseq
 <td>Accepted</td>
 </tr>
 <tr>
-<td><a href="../infrastructure/ADR-106-api-server-architecture/">ADR-106</a></td>
-<td>API Server Architecture for Scalable Neo4j Access</td>
-<td>Accepted</td>
-</tr>
-<tr>
 <td><a href="../infrastructure/ADR-107-backup-restore-streaming/">ADR-107</a></td>
 <td>Backup/Restore Streaming Architecture</td>
 <td>Accepted</td>
@@ -2322,11 +2339,6 @@ Each ADR documents a significant architectural decision, its context, and conseq
 <td><a href="../infrastructure/ADR-109-admin-module-architecture/">ADR-109</a></td>
 <td>Admin Module Architecture Pattern</td>
 <td>Accepted</td>
-</tr>
-<tr>
-<td><a href="../infrastructure/ADR-110-live-man-switch-ai-safety/">ADR-110</a></td>
-<td>Live Man Switch - AI Safety for Critical Operations</td>
-<td>Superseded</td>
 </tr>
 <tr>
 <td><a href="../infrastructure/ADR-111-scheduled-jobs-system/">ADR-111</a></td>
@@ -2373,6 +2385,11 @@ Each ADR documents a significant architectural decision, its context, and conseq
 <td>appliance configuration delivery and first-boot orchestration</td>
 <td>Draft</td>
 </tr>
+<tr>
+<td><a href="../infrastructure/ADR-120-post-boot-configuration-surfaces-and-the-config-plane-ownership-split/">ADR-120</a></td>
+<td>Post-boot configuration surfaces and the config-plane ownership split</td>
+<td>Draft</td>
+</tr>
 </tbody>
 </table>
 <h2 id="databaseschema">Database/Schema</h2>
@@ -2394,7 +2411,7 @@ Each ADR documents a significant architectural decision, its context, and conseq
 <tr>
 <td><a href="../database-schema/ADR-201-in-memory-graph-acceleration-extension/">ADR-201</a></td>
 <td>In-Memory Graph Acceleration Extension</td>
-<td>Draft</td>
+<td>Accepted</td>
 </tr>
 <tr>
 <td><a href="../database-schema/ADR-202-timestamp-timezone-normalization/">ADR-202</a></td>
@@ -2404,7 +2421,7 @@ Each ADR documents a significant architectural decision, its context, and conseq
 <tr>
 <td><a href="../database-schema/ADR-203-graph-epoch-event-log/">ADR-203</a></td>
 <td>Graph Epoch Event Log</td>
-<td>Draft</td>
+<td>Accepted</td>
 </tr>
 <tr>
 <td><a href="../database-schema/ADR-204-node-type-and-abstract-property-representation-for-concept-nodes/">ADR-204</a></td>
@@ -2419,17 +2436,12 @@ Each ADR documents a significant architectural decision, its context, and conseq
 <tr>
 <td><a href="../database-schema/ADR-206-closed-vocabulary-annealing-actions-with-tiered-escalation-and-epistemic-ledger/">ADR-206</a></td>
 <td>Closed-Vocabulary Annealing Actions with Tiered Escalation and Epistemic Ledger</td>
-<td>Draft</td>
+<td>Accepted</td>
 </tr>
 <tr>
 <td><a href="../database-schema/ADR-207-derived-state-freshness-contract/">ADR-207</a></td>
 <td>A Uniform Freshness Contract for Materialized Graph Derivations</td>
 <td>Accepted</td>
-</tr>
-<tr>
-<td><a href="../database-schema/ADR-208-apache-age-migration/">ADR-208</a></td>
-<td>Apache AGE Migration (Neo4j Replacement)</td>
-<td>Proposed</td>
 </tr>
 <tr>
 <td><a href="../database-schema/ADR-209-multi-schema-postgresql-architecture/">ADR-209</a></td>
@@ -2462,7 +2474,7 @@ Each ADR documents a significant architectural decision, its context, and conseq
 <tr>
 <td><a href="../ingestion-content/ADR-300-job-approval-workflow/">ADR-300</a></td>
 <td>Job Approval Workflow with Pre-Ingestion Analysis</td>
-<td>Draft</td>
+<td>Accepted</td>
 </tr>
 <tr>
 <td><a href="../ingestion-content/ADR-301-markdown-structured-content-preprocessing/">ADR-301</a></td>
@@ -2492,12 +2504,12 @@ Each ADR documents a significant architectural decision, its context, and conseq
 <tr>
 <td><a href="../ingestion-content/ADR-305.1-multimodal-image-ingestion/">ADR-305.1</a></td>
 <td>Multimodal Image Ingestion with Visual Context Injection</td>
-<td>Proposed</td>
+<td>Accepted</td>
 </tr>
 <tr>
 <td><a href="../ingestion-content/ADR-305.2-appendix-single-vs-two-stage/">ADR-305.2</a></td>
 <td>Appendix: Single-Stage vs Two-Stage Image Processing</td>
-<td>Draft</td>
+<td>Accepted</td>
 </tr>
 <tr>
 <td><a href="../ingestion-content/ADR-306-concept-matching-strategies/">ADR-306</a></td>
@@ -2507,12 +2519,12 @@ Each ADR documents a significant architectural decision, its context, and conseq
 <tr>
 <td><a href="../ingestion-content/ADR-307-source-document-lifecycle/">ADR-307</a></td>
 <td>Source Document Lifecycle</td>
-<td>Proposed</td>
+<td>Accepted</td>
 </tr>
 <tr>
 <td><a href="../ingestion-content/ADR-308-deterministic-node-edge-creation/">ADR-308</a></td>
 <td>Deterministic Node and Edge Creation</td>
-<td>Draft</td>
+<td>Accepted</td>
 </tr>
 </tbody>
 </table>
@@ -2536,11 +2548,6 @@ Each ADR documents a significant architectural decision, its context, and conseq
 <td><a href="../authentication-security/ADR-401-deterministic-security-enforcement-baseline/">ADR-401</a></td>
 <td>Deterministic Security Enforcement Baseline</td>
 <td>Draft</td>
-</tr>
-<tr>
-<td><a href="../authentication-security/ADR-402-sensitive-auth-verification/">ADR-402</a></td>
-<td>Client-Initiated Token Revocation for Elevated Operations</td>
-<td>Superseded</td>
 </tr>
 <tr>
 <td><a href="../authentication-security/ADR-403-user-management-api/">ADR-403</a></td>
@@ -2598,12 +2605,12 @@ Each ADR documents a significant architectural decision, its context, and conseq
 <tr>
 <td><a href="../query-search/ADR-500-graph-program-dsl-and-ast-architecture/">ADR-500</a></td>
 <td>Graph Program DSL and AST Architecture</td>
-<td>Draft</td>
+<td>Accepted</td>
 </tr>
 <tr>
 <td><a href="../query-search/ADR-501-catalog-browse-facade/">ADR-501</a></td>
 <td>Catalog Browse Facade</td>
-<td>Proposed</td>
+<td>Accepted</td>
 </tr>
 <tr>
 <td><a href="../query-search/ADR-502-concept-deduplication-validation/">ADR-502</a></td>
@@ -2613,7 +2620,7 @@ Each ADR documents a significant architectural decision, its context, and conseq
 <tr>
 <td><a href="../query-search/ADR-503-semantic-diversity-authenticity-signal/">ADR-503</a></td>
 <td>Semantic Diversity as Authenticity Signal</td>
-<td>Draft</td>
+<td>Accepted</td>
 </tr>
 <tr>
 <td><a href="../query-search/ADR-504-published-query-endpoints/">ADR-504</a></td>
@@ -2648,7 +2655,7 @@ Each ADR documents a significant architectural decision, its context, and conseq
 <tr>
 <td><a href="../query-search/ADR-508-configurable-search-similarity-threshold/">ADR-508</a></td>
 <td>Configurable Search Similarity Threshold</td>
-<td>Draft</td>
+<td>Accepted</td>
 </tr>
 </tbody>
 </table>
@@ -2681,7 +2688,7 @@ Each ADR documents a significant architectural decision, its context, and conseq
 <tr>
 <td><a href="../vocabulary-relationships/ADR-603.1-automatic-edge-vocabulary-expansion/">ADR-603.1</a></td>
 <td>Automatic Edge Vocabulary Expansion with Intelligent Pruning</td>
-<td>Proposed</td>
+<td>Accepted</td>
 </tr>
 <tr>
 <td><a href="../vocabulary-relationships/ADR-603.2-implementation-notes/">ADR-603.2</a></td>
@@ -2726,7 +2733,7 @@ Each ADR documents a significant architectural decision, its context, and conseq
 <tr>
 <td><a href="../vocabulary-relationships/ADR-611-vocabulary-explorers/">ADR-611</a></td>
 <td>Vocabulary Explorers</td>
-<td>Draft</td>
+<td>Accepted</td>
 </tr>
 </tbody>
 </table>
@@ -2769,7 +2776,7 @@ Each ADR documents a significant architectural decision, its context, and conseq
 <tr>
 <td><a href="../user-interfaces/ADR-705-session-visibility-and-declarative-capability-gating/">ADR-705</a></td>
 <td>Session Visibility and Declarative Capability Gating</td>
-<td>Draft</td>
+<td>Accepted</td>
 </tr>
 <tr>
 <td><a href="../user-interfaces/ADR-706-cli-admin-separation/">ADR-706</a></td>
@@ -2797,18 +2804,8 @@ Each ADR documents a significant architectural decision, its context, and conseq
 <td>Proposed</td>
 </tr>
 <tr>
-<td><a href="../user-interfaces/ADR-711-explorer-methods-uses-capabilities/">ADR-711</a></td>
-<td>Explorer Methods, Uses, and Capabilities</td>
-<td>Proposed</td>
-</tr>
-<tr>
 <td><a href="../user-interfaces/ADR-712-universal-visual-query-builder/">ADR-712</a></td>
 <td>Universal Visual Query Builder</td>
-<td>Proposed</td>
-</tr>
-<tr>
-<td><a href="../user-interfaces/ADR-713-specialized-truth-convergence-visualizations/">ADR-713</a></td>
-<td>Specialized Truth Convergence Visualizations</td>
 <td>Proposed</td>
 </tr>
 <tr>
@@ -2827,19 +2824,9 @@ Each ADR documents a significant architectural decision, its context, and conseq
 <td>Proposed</td>
 </tr>
 <tr>
-<td><a href="../user-interfaces/ADR-716-postmodern-theme/">ADR-716</a></td>
-<td>Postmodern Theme System</td>
-<td>Proposed</td>
-</tr>
-<tr>
 <td><a href="../visualization/ADR-717-embedding-landscape-explorer/">ADR-717</a></td>
 <td>Embedding Landscape Explorer</td>
 <td>Accepted</td>
-</tr>
-<tr>
-<td><a href="../visualization/ADR-718-document-explorer/">ADR-718</a></td>
-<td>Document Explorer with Radial Concept Visualization</td>
-<td>Proposed</td>
 </tr>
 </tbody>
 </table>
@@ -2882,7 +2869,7 @@ Each ADR documents a significant architectural decision, its context, and conseq
 <tr>
 <td><a href="../ai-embeddings/ADR-805-ai-extraction-config/">ADR-805</a></td>
 <td>AI Extraction Provider Configuration</td>
-<td>Proposed</td>
+<td>Accepted</td>
 </tr>
 <tr>
 <td><a href="../ai-embeddings/ADR-806-local-extraction-inference/">ADR-806</a></td>
@@ -2897,7 +2884,7 @@ Each ADR documents a significant architectural decision, its context, and conseq
 <tr>
 <td><a href="../ai-embeddings/ADR-808-probabilistic-truth-convergence/">ADR-808</a></td>
 <td>Probabilistic Truth Convergence Through Contradiction Resolution</td>
-<td>Proposed</td>
+<td>Accepted</td>
 </tr>
 <tr>
 <td><a href="../ai-embeddings/ADR-809-unified-embedding-generation/">ADR-809</a></td>
@@ -2943,47 +2930,34 @@ Each ADR documents a significant architectural decision, its context, and conseq
 <td>Accepted</td>
 </tr>
 <tr>
-<td><a href="../access-workflow/ADR-901-multi-tier-agent-access/">ADR-901</a></td>
-<td>Multi-Tier Agent Access Model</td>
-<td>Proposed</td>
-</tr>
-<tr>
-<td><a href="../access-workflow/ADR-902-node-fitness-scoring/">ADR-902</a></td>
-<td>Node Fitness Scoring System</td>
-<td>Proposed</td>
-</tr>
-<tr>
-<td><a href="../access-workflow/ADR-903-semantic-tool-hints/">ADR-903</a></td>
-<td>Semantic Tool Hint Networks</td>
-<td>Proposed</td>
-</tr>
-<tr>
-<td><a href="../access-workflow/ADR-904-pure-graph-design/">ADR-904</a></td>
-<td>Pure Graph Design (Library Metaphor)</td>
-<td>Proposed</td>
-</tr>
-<tr>
-<td><a href="../access-workflow/ADR-905-source-text-tracking/">ADR-905</a></td>
-<td>Source Text Tracking and Retrieval</td>
-<td>Proposed</td>
-</tr>
-<tr>
-<td><a href="../access-workflow/ADR-906-staging-migration-workflows/">ADR-906</a></td>
-<td>Staging and Migration Workflows</td>
-<td>Proposed</td>
-</tr>
-<tr>
-<td><a href="../access-workflow/ADR-907-official-project-apparel/">ADR-907</a></td>
-<td>Official Project Apparel Design Specifications</td>
-<td>Proposed</td>
-</tr>
-<tr>
 <td><a href="../access-workflow/ADR-908-documentation-strategy/">ADR-908</a></td>
 <td>Documentation Strategy and Audience Framework</td>
 <td>Accepted</td>
 </tr>
 </tbody>
 </table>
+<h2 id="archived">Archived</h2>
+<details><summary>15 archived ADRs — no longer part of the active set; kept for history</summary>
+
+| ADR | Title | Status |
+|-----|-------|--------|
+| [ADR-106](./archive/infrastructure/ADR-106-api-server-architecture.md) | API Server Architecture for Scalable Neo4j Access | Superseded (superseded by ADR-208) |
+| [ADR-110](./archive/infrastructure/ADR-110-live-man-switch-ai-safety.md) | Live Man Switch - AI Safety for Critical Operations | Superseded |
+| [ADR-208](./archive/database-schema/ADR-208-apache-age-migration.md) | Apache AGE Migration (Neo4j Replacement) | Deprecated |
+| [ADR-402](./archive/authentication-security/ADR-402-sensitive-auth-verification.md) | Client-Initiated Token Revocation for Elevated Operations | Superseded |
+| [ADR-711](./archive/user-interfaces/ADR-711-explorer-methods-uses-capabilities.md) | Explorer Methods, Uses, and Capabilities | Rejected |
+| [ADR-713](./archive/user-interfaces/ADR-713-specialized-truth-convergence-visualizations.md) | Specialized Truth Convergence Visualizations | Rejected |
+| [ADR-716](./archive/user-interfaces/ADR-716-postmodern-theme.md) | Postmodern Theme System | Rejected |
+| [ADR-718](./archive/visualization/ADR-718-document-explorer.md) | Document Explorer with Radial Concept Visualization | Rejected |
+| [ADR-901](./archive/access-workflow/ADR-901-multi-tier-agent-access.md) | Multi-Tier Agent Access Model | Rejected |
+| [ADR-902](./archive/access-workflow/ADR-902-node-fitness-scoring.md) | Node Fitness Scoring System | Rejected |
+| [ADR-903](./archive/access-workflow/ADR-903-semantic-tool-hints.md) | Semantic Tool Hint Networks | Rejected |
+| [ADR-904](./archive/access-workflow/ADR-904-pure-graph-design.md) | Pure Graph Design (Library Metaphor) | Rejected |
+| [ADR-905](./archive/access-workflow/ADR-905-source-text-tracking.md) | Source Text Tracking and Retrieval | Superseded (superseded by ADR-812) |
+| [ADR-906](./archive/access-workflow/ADR-906-staging-migration-workflows.md) | Staging and Migration Workflows | Rejected |
+| [ADR-907](./archive/access-workflow/ADR-907-official-project-apparel.md) | Official Project Apparel Design Specifications | Rejected |
+
+</details>
 
 
 
@@ -3036,7 +3010,7 @@ Each ADR documents a significant architectural decision, its context, and conseq
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

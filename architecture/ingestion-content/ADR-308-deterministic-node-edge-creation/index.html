@@ -19,7 +19,7 @@
       
       
       <link rel="icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -27,7 +27,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.ec1eaa64.min.css">
       
       
 
@@ -2664,7 +2664,7 @@
 </ol>
 <h3 id="new-property-creation_method">New Property: <code>creation_method</code></h3>
 <p>Add to <strong>Concept nodes</strong>:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>creation_method: &quot;llm_extraction&quot; | &quot;manual_api&quot; | &quot;mcp_tool&quot; | &quot;workstation&quot; | &quot;graph_import&quot;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>creation_method: "llm_extraction" | "manual_api" | "mcp_tool" | "workstation" | "graph_import"
 </code></pre></div></p>
 <p>Values:
 - <code>llm_extraction</code> - Created through document ingest pipeline
@@ -2678,18 +2678,18 @@
 <h4 id="create-concept">Create Concept</h4>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>POST /api/v1/concepts
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>{
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>  &quot;label&quot;: &quot;Quantum Entanglement&quot;,
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>  &quot;description&quot;: &quot;A quantum mechanical phenomenon...&quot;,
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>  &quot;search_terms&quot;: [&quot;entanglement&quot;, &quot;quantum correlation&quot;],
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>  &quot;ontology&quot;: &quot;physics&quot;,
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>  &quot;matching_mode&quot;: &quot;auto&quot; | &quot;force_create&quot; | &quot;match_only&quot;
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>  "label": "Quantum Entanglement",
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>  "description": "A quantum mechanical phenomenon...",
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>  "search_terms": ["entanglement", "quantum correlation"],
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>  "ontology": "physics",
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>  "matching_mode": "auto" | "force_create" | "match_only"
 <a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>}
 <a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>
 <a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>Response:
 <a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>{
-<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>  &quot;concept_id&quot;: &quot;manual_abc123&quot;,
-<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>  &quot;matched_existing&quot;: false,
-<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>  &quot;embedding_generated&quot;: true
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>  "concept_id": "manual_abc123",
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>  "matched_existing": false,
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>  "embedding_generated": true
 <a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>}
 </code></pre></div>
 <p><strong>Matching modes:</strong>
@@ -2700,22 +2700,22 @@
 <p>When using <code>matching_mode: "auto"</code>, creators (agents or humans) can work freely without graph topology knowledge:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>┌─────────────────────────────────────────────────────────────────────────┐
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>│  AGENT REASONING                                                        │
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>│  &quot;I notice these documents discuss supply chain resilience...&quot;          │
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>│  "I notice these documents discuss supply chain resilience..."          │
 <a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>│                           ↓                                             │
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>│  Agent emits concept: { label: &quot;Supply Chain Resilience&quot;, ... }         │
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>│  Agent emits concept: { label: "Supply Chain Resilience", ... }         │
 <a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>└─────────────────────────────────────────────────────────────────────────┘
 <a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>                            ↓
 <a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>┌─────────────────────────────────────────────────────────────────────────┐
 <a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>│  GRAPH MATCHING (automatic)                                             │
 <a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>│  - Embed new concept                                                    │
 <a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>│  - Search existing concepts (≥0.85 similarity)                          │
-<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>│  - Found match? → Link to existing &quot;Supply Chain Robustness&quot;            │
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>│  - Found match? → Link to existing "Supply Chain Robustness"            │
 <a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>│  - No match? → Create new node, auto-attach via relationships           │
 <a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>└─────────────────────────────────────────────────────────────────────────┘
 <a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>                            ↓
 <a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>┌─────────────────────────────────────────────────────────────────────────┐
 <a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a>│  RESULT                                                                 │
-<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a>│  Agent&#39;s thought integrated into graph without explicit wiring          │
+<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a>│  Agent's thought integrated into graph without explicit wiring          │
 <a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a>└─────────────────────────────────────────────────────────────────────────┘
 </code></pre></div>
 <p><strong>Why this matters:</strong>
@@ -2740,18 +2740,18 @@
 <h4 id="create-edge">Create Edge</h4>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>POST /api/v1/edges
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>{
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>  &quot;from_concept_id&quot;: &quot;concept_123&quot;,
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>  &quot;to_concept_id&quot;: &quot;concept_456&quot;,
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>  &quot;relationship_type&quot;: &quot;IMPLIES&quot;,
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>  &quot;confidence&quot;: 0.85,
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>  &quot;ontology&quot;: &quot;physics&quot;
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>  "from_concept_id": "concept_123",
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>  "to_concept_id": "concept_456",
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>  "relationship_type": "IMPLIES",
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>  "confidence": 0.85,
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>  "ontology": "physics"
 <a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>}
 <a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>
 <a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>Response:
 <a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>{
-<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>  &quot;edge_id&quot;: &quot;edge_abc123&quot;,
-<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>  &quot;relationship_type&quot;: &quot;IMPLIES&quot;,  // May be normalized
-<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>  &quot;vocabulary_created&quot;: false      // True if new type added
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>  "edge_id": "edge_abc123",
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>  "relationship_type": "IMPLIES",  // May be normalized
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>  "vocabulary_created": false      // True if new type added
 <a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a>}
 </code></pre></div>
 <p><strong>Relationship handling:</strong>
@@ -2761,24 +2761,24 @@
 <h4 id="create-evidence-instance">Create Evidence (Instance)</h4>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>POST /api/v1/concepts/{concept_id}/evidence
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>{
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>  &quot;quote&quot;: &quot;Einstein described entanglement as &#39;spooky action&#39;&quot;,
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>  &quot;source_reference&quot;: &quot;Einstein 1935 paper&quot;  // Optional metadata
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>  "quote": "Einstein described entanglement as 'spooky action'",
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>  "source_reference": "Einstein 1935 paper"  // Optional metadata
 <a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>}
 </code></pre></div>
 <h4 id="update-concept">Update Concept</h4>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>PATCH /api/v1/concepts/{concept_id}
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>{
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>  &quot;label&quot;: &quot;Quantum Entanglement (updated)&quot;,
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>  &quot;description&quot;: &quot;Revised description...&quot;,
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>  &quot;search_terms&quot;: [&quot;entanglement&quot;, &quot;quantum correlation&quot;, &quot;spooky action&quot;]
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>  "label": "Quantum Entanglement (updated)",
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>  "description": "Revised description...",
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>  "search_terms": ["entanglement", "quantum correlation", "spooky action"]
 <a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>}
 <a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>
 <a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>Response:
 <a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>{
-<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>  &quot;concept_id&quot;: &quot;concept_123&quot;,
-<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>  &quot;embedding_regenerated&quot;: true,
-<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>  &quot;modified_by&quot;: &quot;user_456&quot;,
-<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>  &quot;modified_at&quot;: &quot;2026-01-25T...&quot;
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>  "concept_id": "concept_123",
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>  "embedding_regenerated": true,
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>  "modified_by": "user_456",
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>  "modified_at": "2026-01-25T..."
 <a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a>}
 </code></pre></div>
 <p><strong>Update behavior:</strong>
@@ -2789,8 +2789,8 @@
 <h4 id="update-edge">Update Edge</h4>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>PATCH /api/v1/edges/{edge_id}
 <a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>{
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>  &quot;confidence&quot;: 0.95,
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>  &quot;relationship_type&quot;: &quot;STRONGLY_IMPLIES&quot;  // Type change allowed
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>  "confidence": 0.95,
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>  "relationship_type": "STRONGLY_IMPLIES"  // Type change allowed
 <a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>}
 </code></pre></div>
 <h4 id="delete-concept">Delete Concept</h4>
@@ -2798,9 +2798,9 @@
 <a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>
 <a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>Response:
 <a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>{
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>  &quot;deleted&quot;: true,
-<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>  &quot;edges_orphaned&quot;: 3,      // If cascade=false
-<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>  &quot;edges_deleted&quot;: 0        // If cascade=true, these would be deleted
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>  "deleted": true,
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>  "edges_orphaned": 3,      // If cascade=false
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>  "edges_deleted": 0        // If cascade=true, these would be deleted
 <a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>}
 </code></pre></div>
 <p><strong>Delete modes:</strong>
@@ -2813,10 +2813,10 @@
 <h4 id="batch-creation">Batch Creation</h4>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>POST /api/v1/graph/batch
 <a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>{
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>  &quot;ontology&quot;: &quot;physics&quot;,
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>  &quot;concepts&quot;: [...],
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>  &quot;edges&quot;: [...],
-<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>  &quot;instances&quot;: [...]
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>  "ontology": "physics",
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>  "concepts": [...],
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>  "edges": [...],
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>  "instances": [...]
 <a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>}
 </code></pre></div>
 <h3 id="foreign-graph-import">Foreign Graph Import</h3>
@@ -2874,32 +2874,32 @@
 <h4 id="import-api">Import API</h4>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>POST /api/v1/graph/import
 <a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>{
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>  &quot;format&quot;: &quot;json_graph&quot; | &quot;neo4j&quot; | &quot;rdf&quot; | &quot;graphml&quot; | &quot;csv&quot;,
-<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>  &quot;ontology&quot;: &quot;imported_knowledge&quot;,
-<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>  &quot;data&quot;: { ... } | &quot;file_path&quot;,
-<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>  &quot;options&quot;: {
-<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>    &quot;matching_mode&quot;: &quot;auto&quot; | &quot;force_create&quot;,
-<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>    &quot;generate_embeddings&quot;: true,
-<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>    &quot;create_synthetic_sources&quot;: true,
-<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a>    &quot;node_mapping&quot;: {
-<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a>      &quot;label_field&quot;: &quot;name&quot;,
-<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a>      &quot;description_field&quot;: &quot;description&quot;
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>  "format": "json_graph" | "neo4j" | "rdf" | "graphml" | "csv",
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>  "ontology": "imported_knowledge",
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>  "data": { ... } | "file_path",
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>  "options": {
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>    "matching_mode": "auto" | "force_create",
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>    "generate_embeddings": true,
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>    "create_synthetic_sources": true,
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a>    "node_mapping": {
+<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a>      "label_field": "name",
+<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a>      "description_field": "description"
 <a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a>    },
-<a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a>    &quot;edge_mapping&quot;: {
-<a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a>      &quot;type_field&quot;: &quot;relationship&quot;,
-<a id="__codelineno-13-16" name="__codelineno-13-16" href="#__codelineno-13-16"></a>      &quot;confidence_field&quot;: &quot;weight&quot;
+<a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a>    "edge_mapping": {
+<a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a>      "type_field": "relationship",
+<a id="__codelineno-13-16" name="__codelineno-13-16" href="#__codelineno-13-16"></a>      "confidence_field": "weight"
 <a id="__codelineno-13-17" name="__codelineno-13-17" href="#__codelineno-13-17"></a>    }
 <a id="__codelineno-13-18" name="__codelineno-13-18" href="#__codelineno-13-18"></a>  }
 <a id="__codelineno-13-19" name="__codelineno-13-19" href="#__codelineno-13-19"></a>}
 <a id="__codelineno-13-20" name="__codelineno-13-20" href="#__codelineno-13-20"></a>
 <a id="__codelineno-13-21" name="__codelineno-13-21" href="#__codelineno-13-21"></a>Response:
 <a id="__codelineno-13-22" name="__codelineno-13-22" href="#__codelineno-13-22"></a>{
-<a id="__codelineno-13-23" name="__codelineno-13-23" href="#__codelineno-13-23"></a>  &quot;job_id&quot;: &quot;import_abc123&quot;,
-<a id="__codelineno-13-24" name="__codelineno-13-24" href="#__codelineno-13-24"></a>  &quot;nodes_imported&quot;: 150,
-<a id="__codelineno-13-25" name="__codelineno-13-25" href="#__codelineno-13-25"></a>  &quot;edges_imported&quot;: 320,
-<a id="__codelineno-13-26" name="__codelineno-13-26" href="#__codelineno-13-26"></a>  &quot;nodes_matched&quot;: 12,
-<a id="__codelineno-13-27" name="__codelineno-13-27" href="#__codelineno-13-27"></a>  &quot;nodes_created&quot;: 138,
-<a id="__codelineno-13-28" name="__codelineno-13-28" href="#__codelineno-13-28"></a>  &quot;warnings&quot;: [&quot;Unknown relationship type &#39;RELATED_TO&#39; normalized to &#39;RELATES_TO&#39;&quot;]
+<a id="__codelineno-13-23" name="__codelineno-13-23" href="#__codelineno-13-23"></a>  "job_id": "import_abc123",
+<a id="__codelineno-13-24" name="__codelineno-13-24" href="#__codelineno-13-24"></a>  "nodes_imported": 150,
+<a id="__codelineno-13-25" name="__codelineno-13-25" href="#__codelineno-13-25"></a>  "edges_imported": 320,
+<a id="__codelineno-13-26" name="__codelineno-13-26" href="#__codelineno-13-26"></a>  "nodes_matched": 12,
+<a id="__codelineno-13-27" name="__codelineno-13-27" href="#__codelineno-13-27"></a>  "nodes_created": 138,
+<a id="__codelineno-13-28" name="__codelineno-13-28" href="#__codelineno-13-28"></a>  "warnings": ["Unknown relationship type 'RELATED_TO' normalized to 'RELATES_TO'"]
 <a id="__codelineno-13-29" name="__codelineno-13-29" href="#__codelineno-13-29"></a>}
 </code></pre></div>
 <h4 id="normalization-requirements">Normalization Requirements</h4>
@@ -2948,11 +2948,11 @@
 <h4 id="provenance-for-imports">Provenance for Imports</h4>
 <p>Each import creates a synthetic Source node for provenance:
 <div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="p">(:</span><span class="n">Source</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="w">  </span><span class="n">source_id</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;import_{job_id}&quot;</span><span class="p">,</span>
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">  </span><span class="n">document</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;graph_import:{format}:{source_name}&quot;</span><span class="p">,</span>
-<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">  </span><span class="n">full_text</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Imported from {source_system} on {date}&quot;</span><span class="p">,</span>
-<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="w">  </span><span class="n">content_type</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;graph_import&quot;</span><span class="p">,</span>
-<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a><span class="w">  </span><span class="n">original_format</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;neo4j&quot;</span><span class="p">,</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="w">  </span><span class="n">source_id</span><span class="p">:</span><span class="w"> </span><span class="s">"import_{job_id}"</span><span class="p">,</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">  </span><span class="n">document</span><span class="p">:</span><span class="w"> </span><span class="s">"graph_import:{format}:{source_name}"</span><span class="p">,</span>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">  </span><span class="n">full_text</span><span class="p">:</span><span class="w"> </span><span class="s">"Imported from {source_system} on {date}"</span><span class="p">,</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="w">  </span><span class="n">content_type</span><span class="p">:</span><span class="w"> </span><span class="s">"graph_import"</span><span class="p">,</span>
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a><span class="w">  </span><span class="n">original_format</span><span class="p">:</span><span class="w"> </span><span class="s">"neo4j"</span><span class="p">,</span>
 <a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a><span class="w">  </span><span class="n">original_node_count</span><span class="p">:</span><span class="w"> </span><span class="m">150</span><span class="p">,</span>
 <a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a><span class="w">  </span><span class="n">original_edge_count</span><span class="p">:</span><span class="w"> </span><span class="m">320</span>
 <a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a><span class="p">})</span>
@@ -3009,22 +3009,22 @@
 <p>Beyond document extraction, LLMs can assist human curators in drafting and refining concepts:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>POST /api/v1/concepts/draft
 <a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>{
-<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>  &quot;prompt&quot;: &quot;Create a concept about quantum entanglement for a physics ontology&quot;,
-<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>  &quot;context&quot;: [&quot;related_concept_id_1&quot;, &quot;related_concept_id_2&quot;],  // Optional
-<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>  &quot;ontology&quot;: &quot;physics&quot;
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>  "prompt": "Create a concept about quantum entanglement for a physics ontology",
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>  "context": ["related_concept_id_1", "related_concept_id_2"],  // Optional
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>  "ontology": "physics"
 <a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>}
 <a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a>
 <a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a>Response:
 <a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a>{
-<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a>  &quot;draft&quot;: {
-<a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a>    &quot;label&quot;: &quot;Quantum Entanglement&quot;,
-<a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a>    &quot;description&quot;: &quot;A quantum mechanical phenomenon where...&quot;,
-<a id="__codelineno-15-13" name="__codelineno-15-13" href="#__codelineno-15-13"></a>    &quot;search_terms&quot;: [&quot;entanglement&quot;, &quot;EPR paradox&quot;, &quot;quantum correlation&quot;],
-<a id="__codelineno-15-14" name="__codelineno-15-14" href="#__codelineno-15-14"></a>    &quot;suggested_relationships&quot;: [
-<a id="__codelineno-15-15" name="__codelineno-15-15" href="#__codelineno-15-15"></a>      {&quot;to&quot;: &quot;concept_123&quot;, &quot;type&quot;: &quot;IMPLIES&quot;, &quot;rationale&quot;: &quot;...&quot;}
+<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a>  "draft": {
+<a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a>    "label": "Quantum Entanglement",
+<a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a>    "description": "A quantum mechanical phenomenon where...",
+<a id="__codelineno-15-13" name="__codelineno-15-13" href="#__codelineno-15-13"></a>    "search_terms": ["entanglement", "EPR paradox", "quantum correlation"],
+<a id="__codelineno-15-14" name="__codelineno-15-14" href="#__codelineno-15-14"></a>    "suggested_relationships": [
+<a id="__codelineno-15-15" name="__codelineno-15-15" href="#__codelineno-15-15"></a>      {"to": "concept_123", "type": "IMPLIES", "rationale": "..."}
 <a id="__codelineno-15-16" name="__codelineno-15-16" href="#__codelineno-15-16"></a>    ]
 <a id="__codelineno-15-17" name="__codelineno-15-17" href="#__codelineno-15-17"></a>  },
-<a id="__codelineno-15-18" name="__codelineno-15-18" href="#__codelineno-15-18"></a>  &quot;requires_approval&quot;: true
+<a id="__codelineno-15-18" name="__codelineno-15-18" href="#__codelineno-15-18"></a>  "requires_approval": true
 <a id="__codelineno-15-19" name="__codelineno-15-19" href="#__codelineno-15-19"></a>}
 </code></pre></div>
 <p><strong>Use cases:</strong>
@@ -3050,13 +3050,13 @@
 </code></pre></div>
 <p><strong>File format (concept):</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="p">{</span>
-<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="w">  </span><span class="nt">&quot;concept_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;concept_123&quot;</span><span class="p">,</span>
-<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="w">  </span><span class="nt">&quot;label&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Quantum Entanglement&quot;</span><span class="p">,</span>
-<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="w">  </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;...&quot;</span><span class="p">,</span>
-<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a><span class="w">  </span><span class="nt">&quot;search_terms&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;...&quot;</span><span class="p">],</span>
-<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a><span class="w">  </span><span class="nt">&quot;creation_method&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;workstation&quot;</span><span class="p">,</span>
-<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a><span class="w">  </span><span class="nt">&quot;created_by&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;user_456&quot;</span><span class="p">,</span>
-<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a><span class="w">  </span><span class="nt">&quot;readonly&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="w">  </span><span class="nt">"concept_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"concept_123"</span><span class="p">,</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="w">  </span><span class="nt">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Quantum Entanglement"</span><span class="p">,</span>
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="w">  </span><span class="nt">"description"</span><span class="p">:</span><span class="w"> </span><span class="s2">"..."</span><span class="p">,</span>
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a><span class="w">  </span><span class="nt">"search_terms"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"..."</span><span class="p">],</span>
+<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a><span class="w">  </span><span class="nt">"creation_method"</span><span class="p">:</span><span class="w"> </span><span class="s2">"workstation"</span><span class="p">,</span>
+<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a><span class="w">  </span><span class="nt">"created_by"</span><span class="p">:</span><span class="w"> </span><span class="s2">"user_456"</span><span class="p">,</span>
+<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a><span class="w">  </span><span class="nt">"readonly"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span>
 <a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a><span class="p">}</span>
 </code></pre></div></p>
 <p><strong>Editing via FUSE:</strong>
@@ -3106,23 +3106,23 @@
 <h3 id="mcp-tools">MCP Tools</h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="c1">// Create single concept</span>
 <a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="nx">mcp__kg__create_concept</span><span class="p">({</span>
-<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="w">  </span><span class="nx">label</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;Quantum Entanglement&quot;</span><span class="p">,</span>
-<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="w">  </span><span class="nx">description</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;...&quot;</span><span class="p">,</span>
-<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="w">  </span><span class="nx">ontology</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;physics&quot;</span><span class="p">,</span>
-<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="w">  </span><span class="nx">matching_mode</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;auto&quot;</span>
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="w">  </span><span class="nx">label</span><span class="o">:</span><span class="w"> </span><span class="s2">"Quantum Entanglement"</span><span class="p">,</span>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="w">  </span><span class="nx">description</span><span class="o">:</span><span class="w"> </span><span class="s2">"..."</span><span class="p">,</span>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="w">  </span><span class="nx">ontology</span><span class="o">:</span><span class="w"> </span><span class="s2">"physics"</span><span class="p">,</span>
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="w">  </span><span class="nx">matching_mode</span><span class="o">:</span><span class="w"> </span><span class="s2">"auto"</span>
 <a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a><span class="p">})</span>
 <a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a>
 <a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a><span class="c1">// Create relationship between concepts</span>
 <a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a><span class="nx">mcp__kg__create_edge</span><span class="p">({</span>
-<a id="__codelineno-18-11" name="__codelineno-18-11" href="#__codelineno-18-11"></a><span class="w">  </span><span class="nx">from_query</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;quantum entanglement&quot;</span><span class="p">,</span><span class="w">  </span><span class="c1">// Semantic search</span>
-<a id="__codelineno-18-12" name="__codelineno-18-12" href="#__codelineno-18-12"></a><span class="w">  </span><span class="nx">to_query</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;quantum superposition&quot;</span><span class="p">,</span><span class="w">    </span><span class="c1">// Semantic search</span>
-<a id="__codelineno-18-13" name="__codelineno-18-13" href="#__codelineno-18-13"></a><span class="w">  </span><span class="nx">relationship_type</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;REQUIRES&quot;</span><span class="p">,</span>
+<a id="__codelineno-18-11" name="__codelineno-18-11" href="#__codelineno-18-11"></a><span class="w">  </span><span class="nx">from_query</span><span class="o">:</span><span class="w"> </span><span class="s2">"quantum entanglement"</span><span class="p">,</span><span class="w">  </span><span class="c1">// Semantic search</span>
+<a id="__codelineno-18-12" name="__codelineno-18-12" href="#__codelineno-18-12"></a><span class="w">  </span><span class="nx">to_query</span><span class="o">:</span><span class="w"> </span><span class="s2">"quantum superposition"</span><span class="p">,</span><span class="w">    </span><span class="c1">// Semantic search</span>
+<a id="__codelineno-18-13" name="__codelineno-18-13" href="#__codelineno-18-13"></a><span class="w">  </span><span class="nx">relationship_type</span><span class="o">:</span><span class="w"> </span><span class="s2">"REQUIRES"</span><span class="p">,</span>
 <a id="__codelineno-18-14" name="__codelineno-18-14" href="#__codelineno-18-14"></a><span class="w">  </span><span class="nx">confidence</span><span class="o">:</span><span class="w"> </span><span class="kt">0.9</span>
 <a id="__codelineno-18-15" name="__codelineno-18-15" href="#__codelineno-18-15"></a><span class="p">})</span>
 <a id="__codelineno-18-16" name="__codelineno-18-16" href="#__codelineno-18-16"></a>
 <a id="__codelineno-18-17" name="__codelineno-18-17" href="#__codelineno-18-17"></a><span class="c1">// Batch create subgraph</span>
 <a id="__codelineno-18-18" name="__codelineno-18-18" href="#__codelineno-18-18"></a><span class="nx">mcp__kg__create_subgraph</span><span class="p">({</span>
-<a id="__codelineno-18-19" name="__codelineno-18-19" href="#__codelineno-18-19"></a><span class="w">  </span><span class="nx">ontology</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;physics&quot;</span><span class="p">,</span>
+<a id="__codelineno-18-19" name="__codelineno-18-19" href="#__codelineno-18-19"></a><span class="w">  </span><span class="nx">ontology</span><span class="o">:</span><span class="w"> </span><span class="s2">"physics"</span><span class="p">,</span>
 <a id="__codelineno-18-20" name="__codelineno-18-20" href="#__codelineno-18-20"></a><span class="w">  </span><span class="nx">nodes</span><span class="o">:</span><span class="w"> </span><span class="p">[...],</span>
 <a id="__codelineno-18-21" name="__codelineno-18-21" href="#__codelineno-18-21"></a><span class="w">  </span><span class="nx">edges</span><span class="o">:</span><span class="w"> </span><span class="p">[...]</span>
 <a id="__codelineno-18-22" name="__codelineno-18-22" href="#__codelineno-18-22"></a><span class="p">})</span>
@@ -3136,10 +3136,10 @@
 <p><strong>Option A: Synthetic Source (Recommended)</strong>
 Create a placeholder source node for provenance:
 <div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="p">(:</span><span class="n">Source</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="w">  </span><span class="n">source_id</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;manual_{user_id}_{timestamp}&quot;</span><span class="p">,</span>
-<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="w">  </span><span class="n">document</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;manual_entry&quot;</span><span class="p">,</span>
-<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="w">  </span><span class="n">full_text</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;{description}&quot;</span><span class="p">,</span>
-<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="w">  </span><span class="n">content_type</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;manual&quot;</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="w">  </span><span class="n">source_id</span><span class="p">:</span><span class="w"> </span><span class="s">"manual_{user_id}_{timestamp}"</span><span class="p">,</span>
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="w">  </span><span class="n">document</span><span class="p">:</span><span class="w"> </span><span class="s">"manual_entry"</span><span class="p">,</span>
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="w">  </span><span class="n">full_text</span><span class="p">:</span><span class="w"> </span><span class="s">"{description}"</span><span class="p">,</span>
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="w">  </span><span class="n">content_type</span><span class="p">:</span><span class="w"> </span><span class="s">"manual"</span>
 <a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a><span class="p">})</span>
 </code></pre></div></p>
 <p><strong>Option B: Optional Source</strong>
@@ -3151,10 +3151,10 @@ Single shared "manual entries" source per ontology.</p>
 <p>Manual edges get same properties as auto edges:
 <div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="o">[</span><span class="p">:</span><span class="n">IMPLIES</span><span class="w"> </span><span class="p">{</span>
 <a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="w">  </span><span class="n">confidence</span><span class="p">:</span><span class="w"> </span><span class="m">0</span><span class="p">.</span><span class="m">85</span><span class="p">,</span><span class="w">           </span><span class="c1">// User-provided or default 1.0</span>
-<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="w">  </span><span class="n">category</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;logical_truth&quot;</span><span class="p">,</span><span class="w">  </span><span class="c1">// From vocabulary</span>
-<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="w">  </span><span class="n">source</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;manual_api&quot;</span><span class="p">,</span><span class="w">       </span><span class="c1">// Distinguishes from llm_extraction</span>
-<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a><span class="w">  </span><span class="n">created_by</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;user_123&quot;</span><span class="p">,</span>
-<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a><span class="w">  </span><span class="n">created_at</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2026-01-25T...&quot;</span><span class="p">,</span>
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="w">  </span><span class="n">category</span><span class="p">:</span><span class="w"> </span><span class="s">"logical_truth"</span><span class="p">,</span><span class="w">  </span><span class="c1">// From vocabulary</span>
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="w">  </span><span class="n">source</span><span class="p">:</span><span class="w"> </span><span class="s">"manual_api"</span><span class="p">,</span><span class="w">       </span><span class="c1">// Distinguishes from llm_extraction</span>
+<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a><span class="w">  </span><span class="n">created_by</span><span class="p">:</span><span class="w"> </span><span class="s">"user_123"</span><span class="p">,</span>
+<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a><span class="w">  </span><span class="n">created_at</span><span class="p">:</span><span class="w"> </span><span class="s">"2026-01-25T..."</span><span class="p">,</span>
 <a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a><span class="w">  </span><span class="n">job_id</span><span class="p">:</span><span class="w"> </span><span class="k">null</span><span class="p">,</span><span class="w">               </span><span class="c1">// No job for manual</span>
 <a id="__codelineno-20-8" name="__codelineno-20-8" href="#__codelineno-20-8"></a><span class="w">  </span><span class="n">document_id</span><span class="p">:</span><span class="w"> </span><span class="k">null</span><span class="w">           </span><span class="c1">// No document for manual</span>
 <a id="__codelineno-20-9" name="__codelineno-20-9" href="#__codelineno-20-9"></a><span class="p">}</span><span class="o">]</span>
@@ -3204,17 +3204,17 @@ Single shared "manual entries" source per ontology.</p>
 <p>MCP tools MUST respect the OAuth token's scopes:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="c1">// MCP tool registration includes required scope</span>
 <a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="nx">mcp__kg__create_concept</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a><span class="w">  </span><span class="nx">required_scope</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;kg:write&quot;</span><span class="p">,</span>
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a><span class="w">  </span><span class="nx">required_scope</span><span class="o">:</span><span class="w"> </span><span class="s2">"kg:write"</span><span class="p">,</span>
 <a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="w">  </span><span class="c1">// ...</span>
 <a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a><span class="p">}</span>
 <a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a>
 <a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a><span class="nx">mcp__kg__update_concept</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a><span class="w">  </span><span class="nx">required_scope</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;kg:edit&quot;</span><span class="p">,</span>
+<a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a><span class="w">  </span><span class="nx">required_scope</span><span class="o">:</span><span class="w"> </span><span class="s2">"kg:edit"</span><span class="p">,</span>
 <a id="__codelineno-22-9" name="__codelineno-22-9" href="#__codelineno-22-9"></a><span class="w">  </span><span class="c1">// ...</span>
 <a id="__codelineno-22-10" name="__codelineno-22-10" href="#__codelineno-22-10"></a><span class="p">}</span>
 <a id="__codelineno-22-11" name="__codelineno-22-11" href="#__codelineno-22-11"></a>
 <a id="__codelineno-22-12" name="__codelineno-22-12" href="#__codelineno-22-12"></a><span class="nx">mcp__kg__delete_concept</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-22-13" name="__codelineno-22-13" href="#__codelineno-22-13"></a><span class="w">  </span><span class="nx">required_scope</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;kg:edit&quot;</span><span class="p">,</span>
+<a id="__codelineno-22-13" name="__codelineno-22-13" href="#__codelineno-22-13"></a><span class="w">  </span><span class="nx">required_scope</span><span class="o">:</span><span class="w"> </span><span class="s2">"kg:edit"</span><span class="p">,</span>
 <a id="__codelineno-22-14" name="__codelineno-22-14" href="#__codelineno-22-14"></a><span class="w">  </span><span class="c1">// ...</span>
 <a id="__codelineno-22-15" name="__codelineno-22-15" href="#__codelineno-22-15"></a><span class="p">}</span>
 </code></pre></div>
@@ -3225,25 +3225,25 @@ Single shared "manual entries" source per ontology.</p>
 - Audit log captures attempted unauthorized operations</p>
 <h4 id="api-permission-checks">API Permission Checks</h4>
 <p>All mutation endpoints verify permissions:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="nd">@router</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/concepts&quot;</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="nd">@router</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">"/concepts"</span><span class="p">)</span>
 <a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">create_concept</span><span class="p">(</span>
 <a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a>    <span class="n">request</span><span class="p">:</span> <span class="n">CreateConceptRequest</span><span class="p">,</span>
-<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a>    <span class="n">user</span><span class="p">:</span> <span class="n">User</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">require_scope</span><span class="p">(</span><span class="s2">&quot;kg:write&quot;</span><span class="p">))</span>
+<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a>    <span class="n">user</span><span class="p">:</span> <span class="n">User</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">require_scope</span><span class="p">(</span><span class="s2">"kg:write"</span><span class="p">))</span>
 <a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a><span class="p">):</span>
 <a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a>    <span class="c1"># User has kg:write scope, proceed</span>
 <a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a>    <span class="o">...</span>
 <a id="__codelineno-23-8" name="__codelineno-23-8" href="#__codelineno-23-8"></a>
-<a id="__codelineno-23-9" name="__codelineno-23-9" href="#__codelineno-23-9"></a><span class="nd">@router</span><span class="o">.</span><span class="n">patch</span><span class="p">(</span><span class="s2">&quot;/concepts/</span><span class="si">{concept_id}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-23-9" name="__codelineno-23-9" href="#__codelineno-23-9"></a><span class="nd">@router</span><span class="o">.</span><span class="n">patch</span><span class="p">(</span><span class="s2">"/concepts/</span><span class="si">{concept_id}</span><span class="s2">"</span><span class="p">)</span>
 <a id="__codelineno-23-10" name="__codelineno-23-10" href="#__codelineno-23-10"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">update_concept</span><span class="p">(</span>
 <a id="__codelineno-23-11" name="__codelineno-23-11" href="#__codelineno-23-11"></a>    <span class="n">concept_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 <a id="__codelineno-23-12" name="__codelineno-23-12" href="#__codelineno-23-12"></a>    <span class="n">request</span><span class="p">:</span> <span class="n">UpdateConceptRequest</span><span class="p">,</span>
-<a id="__codelineno-23-13" name="__codelineno-23-13" href="#__codelineno-23-13"></a>    <span class="n">user</span><span class="p">:</span> <span class="n">User</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">require_scope</span><span class="p">(</span><span class="s2">&quot;kg:edit&quot;</span><span class="p">))</span>
+<a id="__codelineno-23-13" name="__codelineno-23-13" href="#__codelineno-23-13"></a>    <span class="n">user</span><span class="p">:</span> <span class="n">User</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">require_scope</span><span class="p">(</span><span class="s2">"kg:edit"</span><span class="p">))</span>
 <a id="__codelineno-23-14" name="__codelineno-23-14" href="#__codelineno-23-14"></a><span class="p">):</span>
 <a id="__codelineno-23-15" name="__codelineno-23-15" href="#__codelineno-23-15"></a>    <span class="c1"># Also check ontology-level permissions if user is contributor</span>
-<a id="__codelineno-23-16" name="__codelineno-23-16" href="#__codelineno-23-16"></a>    <span class="k">if</span> <span class="n">user</span><span class="o">.</span><span class="n">role</span> <span class="o">==</span> <span class="s2">&quot;contributor&quot;</span><span class="p">:</span>
+<a id="__codelineno-23-16" name="__codelineno-23-16" href="#__codelineno-23-16"></a>    <span class="k">if</span> <span class="n">user</span><span class="o">.</span><span class="n">role</span> <span class="o">==</span> <span class="s2">"contributor"</span><span class="p">:</span>
 <a id="__codelineno-23-17" name="__codelineno-23-17" href="#__codelineno-23-17"></a>        <span class="n">concept</span> <span class="o">=</span> <span class="n">get_concept</span><span class="p">(</span><span class="n">concept_id</span><span class="p">)</span>
 <a id="__codelineno-23-18" name="__codelineno-23-18" href="#__codelineno-23-18"></a>        <span class="k">if</span> <span class="n">concept</span><span class="o">.</span><span class="n">ontology</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">user</span><span class="o">.</span><span class="n">allowed_ontologies</span><span class="p">:</span>
-<a id="__codelineno-23-19" name="__codelineno-23-19" href="#__codelineno-23-19"></a>            <span class="k">raise</span> <span class="n">PermissionDenied</span><span class="p">(</span><span class="s2">&quot;Cannot edit concepts in this ontology&quot;</span><span class="p">)</span>
+<a id="__codelineno-23-19" name="__codelineno-23-19" href="#__codelineno-23-19"></a>            <span class="k">raise</span> <span class="n">PermissionDenied</span><span class="p">(</span><span class="s2">"Cannot edit concepts in this ontology"</span><span class="p">)</span>
 <a id="__codelineno-23-20" name="__codelineno-23-20" href="#__codelineno-23-20"></a>    <span class="o">...</span>
 </code></pre></div>
 <h4 id="fuse-permission-mapping">FUSE Permission Mapping</h4>
@@ -3460,7 +3460,7 @@ Single shared "manual entries" source per ontology.</p>
       <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": [], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

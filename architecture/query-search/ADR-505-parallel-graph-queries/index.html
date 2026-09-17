@@ -19,7 +19,7 @@
       
       
       <link rel="icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -27,7 +27,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.ec1eaa64.min.css">
       
       
 
@@ -2201,10 +2201,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#actual-performance-results-adr-071a" class="md-nav__link">
+  <a href="#actual-performance-results" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Actual Performance Results (ADR-071a)
+        Actual Performance Results
       
     </span>
   </a>
@@ -2400,22 +2400,22 @@ Returns ~100-500 concepts in ~500ms.</p>
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="n">chunk_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span>           <span class="c1"># Concepts per worker chunk</span>
 <a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="n">timeout_seconds</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">120.0</span> <span class="c1"># Wall-clock timeout</span>
 <a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>    <span class="n">per_worker_limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">200</span>    <span class="c1"># Max results per worker</span>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>    <span class="n">discovery_slot_pct</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.2</span> <span class="c1"># Epsilon-greedy (ADR-071a)</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>    <span class="n">discovery_slot_pct</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.2</span> <span class="c1"># Epsilon-greedy (see Actual Performance Results)</span>
 <a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>
 <a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="k">class</span><span class="w"> </span><span class="nc">GraphParallelizer</span><span class="p">:</span>
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="w">    </span><span class="sd">"""</span>
 <a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="sd">    Reusable n-hop query parallelizer using connection pooling.</span>
 <a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>
 <a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="sd">    Breaks multi-hop graph queries into:</span>
 <a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="sd">    1. Phase 1: Fast single query for 1-hop neighbors</span>
 <a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="sd">    2. Phase 2: Parallel queries for 2-hop neighbors</span>
-<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="sd">    """</span>
 <a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>
 <a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">get_nhop_neighbors</span><span class="p">(</span>
 <a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>        <span class="bp">self</span><span class="p">,</span>
 <a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>        <span class="n">seed_ids</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
 <a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>        <span class="n">max_hops</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>        <span class="n">filter_clause</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;neighbor.embedding IS NOT NULL&quot;</span>
+<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>        <span class="n">filter_clause</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"neighbor.embedding IS NOT NULL"</span>
 <a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>        <span class="c1"># Phase 1: Single batched query</span>
 <a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a>        <span class="n">neighbors_1hop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_1hop_neighbors</span><span class="p">(</span><span class="n">seed_ids</span><span class="p">,</span> <span class="n">filter_clause</span><span class="p">)</span>
@@ -2435,12 +2435,12 @@ Returns ~100-500 concepts in ~500ms.</p>
 <p><strong>Before (Sequential):</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">discover_candidate_concepts</span><span class="p">(</span><span class="n">positive_pole_id</span><span class="p">,</span> <span class="n">negative_pole_id</span><span class="p">,</span> <span class="n">age_client</span><span class="p">,</span> <span class="n">max_hops</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>    <span class="c1"># Single query with variable-length path - takes 3+ minutes</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="n">results</span> <span class="o">=</span> <span class="n">age_client</span><span class="o">.</span><span class="n">facade</span><span class="o">.</span><span class="n">execute_raw</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="n">results</span> <span class="o">=</span> <span class="n">age_client</span><span class="o">.</span><span class="n">facade</span><span class="o">.</span><span class="n">execute_raw</span><span class="p">(</span><span class="sa">f</span><span class="s2">"""</span>
 <a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="s2">        MATCH (pole)-[*1..</span><span class="si">{</span><span class="n">max_hops</span><span class="si">}</span><span class="s2">]-(candidate)</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="s2">        WHERE pole.concept_id IN [&#39;</span><span class="si">{</span><span class="n">positive_pole_id</span><span class="si">}</span><span class="s2">&#39;, &#39;</span><span class="si">{</span><span class="n">negative_pole_id</span><span class="si">}</span><span class="s2">&#39;]</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="s2">        WHERE pole.concept_id IN ['</span><span class="si">{</span><span class="n">positive_pole_id</span><span class="si">}</span><span class="s2">', '</span><span class="si">{</span><span class="n">negative_pole_id</span><span class="si">}</span><span class="s2">']</span>
 <a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="s2">        RETURN DISTINCT candidate.concept_id</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="s2">    &quot;&quot;&quot;</span><span class="p">)</span>
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>    <span class="k">return</span> <span class="p">[</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;concept_id&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">results</span><span class="p">]</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="s2">    """</span><span class="p">)</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>    <span class="k">return</span> <span class="p">[</span><span class="n">r</span><span class="p">[</span><span class="s1">'concept_id'</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">results</span><span class="p">]</span>
 </code></pre></div></p>
 <p><strong>After (Parallel):</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">discover_candidate_concepts</span><span class="p">(</span><span class="n">positive_pole_id</span><span class="p">,</span> <span class="n">negative_pole_id</span><span class="p">,</span> <span class="n">age_client</span><span class="p">,</span> <span class="n">max_hops</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
@@ -2449,7 +2449,7 @@ Returns ~100-500 concepts in ~500ms.</p>
 <a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="n">neighbor_ids</span> <span class="o">=</span> <span class="n">parallelizer</span><span class="o">.</span><span class="n">get_nhop_neighbors</span><span class="p">(</span>
 <a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>        <span class="n">seed_ids</span><span class="o">=</span><span class="p">[</span><span class="n">positive_pole_id</span><span class="p">,</span> <span class="n">negative_pole_id</span><span class="p">],</span>
 <a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>        <span class="n">max_hops</span><span class="o">=</span><span class="n">max_hops</span><span class="p">,</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>        <span class="n">filter_clause</span><span class="o">=</span><span class="s2">&quot;candidate.embedding IS NOT NULL&quot;</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>        <span class="n">filter_clause</span><span class="o">=</span><span class="s2">"candidate.embedding IS NOT NULL"</span>
 <a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>    <span class="p">)</span>
 <a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>
 <a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>    <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">neighbor_ids</span><span class="p">)</span>
@@ -2489,7 +2489,7 @@ Guarantees queries complete within timeout, not just individual workers.</p>
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>    <span class="n">neighbors</span> <span class="o">=</span> <span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
 <a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>    <span class="n">all_neighbors</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">neighbors</span><span class="p">)</span>
 <a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="k">except</span> <span class="ne">TimeoutError</span><span class="p">:</span>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Worker failed, continuing with partial results&quot;</span><span class="p">)</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Worker failed, continuing with partial results"</span><span class="p">)</span>
 </code></pre></div>
 Partial results acceptable for graph exploration - one slow worker doesn't fail entire query.</p>
 <h3 id="5-connection-pool-configuration">5. Connection Pool Configuration</h3>
@@ -2508,7 +2508,7 @@ Partial results acceptable for graph exploration - one slow worker doesn't fail 
 <p><div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">seed</span><span class="p">.</span><span class="n">concept_id</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="err">$</span><span class="n">seed_ids</span><span class="w">  </span><span class="err">--</span><span class="w"> </span><span class="n">Parameterized</span>
 </code></pre></div>
 All queries use parameter binding to prevent Cypher injection, not f-string interpolation.</p>
-<h2 id="actual-performance-results-adr-071a">Actual Performance Results (ADR-071a)</h2>
+<h2 id="actual-performance-results">Actual Performance Results</h2>
 <p>Implementation testing revealed:</p>
 <table>
 <thead>
@@ -2559,7 +2559,7 @@ All queries use parameter binding to prevent Cypher injection, not f-string inte
 </tbody>
 </table>
 <p><strong>Critical Discovery:</strong> The 3x speedup comes from <strong>batched queries with IN clauses</strong>, NOT from parallelization. Parallelization adds overhead beyond 1-2 workers.</p>
-<p>The detailed analysis is the section above — the planned standalone "ADR-071a: Parallel Implementation Findings" was never split out from this ADR and the findings live inline here under <a href="#actual-performance-results-adr-071a">Actual Performance Results</a>.</p>
+<p>The detailed analysis is the section above — the planned standalone findings document under the legacy numbering was never split out from this ADR and the findings live inline here under <a href="#actual-performance-results">Actual Performance Results</a>.</p>
 <h2 id="configuration-management">Configuration Management</h2>
 <h3 id="database-first-following-adr-805049-pattern">Database-First (Following ADR-805/049 Pattern)</h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1">-- Migration: Add parallel query configuration</span>
@@ -2572,12 +2572,12 @@ All queries use parameter binding to prevent Cypher injection, not f-string inte
 </code></pre></div>
 <h3 id="loading-config">Loading Config</h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">load_parallel_config</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">ParallelQueryConfig</span><span class="p">:</span>
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Load configuration from database (ADR-805/049 pattern)&quot;&quot;&quot;</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">    </span><span class="sd">"""Load configuration from database (ADR-805/049 pattern)"""</span>
 <a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>    <span class="k">try</span><span class="p">:</span>
-<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>        <span class="n">config</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">&quot;SELECT parallel_query_max_workers, ...&quot;</span><span class="p">)</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>        <span class="n">config</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">"SELECT parallel_query_max_workers, ..."</span><span class="p">)</span>
 <a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>        <span class="k">return</span> <span class="n">ParallelQueryConfig</span><span class="p">(</span>
-<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>            <span class="n">max_workers</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;parallel_query_max_workers&#39;</span><span class="p">],</span>
-<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>            <span class="n">timeout_seconds</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;parallel_query_timeout_seconds&#39;</span><span class="p">]</span>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>            <span class="n">max_workers</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s1">'parallel_query_max_workers'</span><span class="p">],</span>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>            <span class="n">timeout_seconds</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s1">'parallel_query_timeout_seconds'</span><span class="p">]</span>
 <a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>        <span class="p">)</span>
 <a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a>    <span class="k">except</span><span class="p">:</span>
 <a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a>        <span class="k">return</span> <span class="n">ParallelQueryConfig</span><span class="p">()</span>  <span class="c1"># Fallback to defaults</span>
@@ -2674,7 +2674,7 @@ All queries use parameter binding to prevent Cypher injection, not f-string inte
       <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": [], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>
