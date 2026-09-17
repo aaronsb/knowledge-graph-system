@@ -2661,10 +2661,12 @@ so renewals survive restarts. Verify from the libvirt host:</p>
   rendering and ship a DHCP netplan matched by interface name (<code>e*</code>), so MAC
   changes are safe. If stranded, rewrite <code>/etc/netplan/50-cloud-init.yaml</code> to
   match by name and <code>netplan apply</code>.</li>
-<li><strong>Traefik can't reach Docker (<code>client version 1.24 is too old</code>)</strong> — Traefik v3
-  hard-codes Docker API 1.24 while Engine ≥25 serves a minimum of 1.40. Current
-  images bake <code>DOCKER_MIN_API_VERSION=1.24</code> as a <code>docker.service</code> drop-in. To fix
-  a running box: write that drop-in and <code>systemctl restart docker</code>.</li>
+<li><strong>Traefik can't reach Docker (<code>client version 1.24 is too old</code>)</strong> — Traefik
+  ≤v3.6.15 hard-coded Docker API 1.24 while Engine ≥25 serves a minimum of 1.40.
+  Current images bake <code>DOCKER_MIN_API_VERSION=1.24</code> as a <code>docker.service</code> drop-in.
+  To fix a running box: write that drop-in and <code>systemctl restart docker</code>. The
+  platform now pins Traefik v3.7.13, whose provider requires API ≥1.40, so new
+  deployments should not hit this at all.</li>
 <li><strong>TLS stuck on the self-signed default / <code>acme.json</code> empty</strong> — Traefik only
   requests a cert for a declared domain; it does not mint on-demand from SNI.
   Ensure <code>EXTERNAL_URL</code>/<code>TLS_DOMAIN</code> is a public FQDN (not <code>localhost</code>) so the
