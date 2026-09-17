@@ -6,11 +6,7 @@ license = "Apache-2.0"
 description = "PostgreSQL extension for in-memory graph traversal acceleration (ADR-201)"
 
 [lib]
-crate-type = ["cdylib", "lib"]
-
-[[bin]]
-name = "pgrx_embed_graph_accel_ext"
-path = "src/bin/pgrx_embed.rs"
+crate-type = ["cdylib"]
 
 [features]
 default = ["pg18"]
@@ -24,9 +20,9 @@ pg_test = []
 
 [dependencies]
 graph-accel-core = { path = "../core" }
-pgrx = { version = "=0.16.1", default-features = false }
+pgrx = { version = "=0.19.2", default-features = false }
 serde_json = "1"
 
 [dev-dependencies]
-pgrx-tests = { version = "=0.16.1", default-features = false }
+pgrx-tests = { version = "=0.19.2", default-features = false }
 
