@@ -2634,7 +2634,7 @@
 </thead>
 <tbody>
 <tr>
-<td>PostgreSQL 18 + Apache AGE 1.7.0</td>
+<td>PostgreSQL 18 + Apache AGE 1.8.0</td>
 <td>Concepts, relationships, ontologies, users, config, migration state</td>
 <td><code>pg_dump --format=custom</code></td>
 </tr>
@@ -2777,7 +2777,7 @@
 <h2 id="test-your-backups">Test your backups</h2>
 <p>Test restores using an image that includes Apache AGE. The stock <code>postgres:18</code> image does not have the AGE extension; <code>apache/age</code> does.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="c1"># Spin up a test instance</span>
-<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>docker<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span>--name<span class="w"> </span>backup-test<span class="w"> </span>-e<span class="w"> </span><span class="nv">POSTGRES_PASSWORD</span><span class="o">=</span><span class="nb">test</span><span class="w"> </span>apache/age:release_PG18_1.7.0
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>docker<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span>--name<span class="w"> </span>backup-test<span class="w"> </span>-e<span class="w"> </span><span class="nv">POSTGRES_PASSWORD</span><span class="o">=</span><span class="nb">test</span><span class="w"> </span>apache/age:release_PG18_1.8.0
 <a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>
 <a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="c1"># Restore the custom-format dump</span>
 <a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-i<span class="w"> </span>backup-test<span class="w"> </span>pg_restore<span class="w"> </span>-U<span class="w"> </span>postgres<span class="w"> </span>-d<span class="w"> </span>postgres<span class="w"> </span>--create<span class="w"> </span>&lt;<span class="w"> </span>backup.dump

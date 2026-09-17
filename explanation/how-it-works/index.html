@@ -2228,7 +2228,7 @@
 <p><strong>Chunking.</strong> Submitted documents are split into overlapping segments of roughly 1,000 words. Overlap preserves ideas that span a boundary; no concept is lost because it crossed a page break.</p>
 <p><strong>Extraction.</strong> Each chunk is sent to a configured LLM (GPT-4o, Claude Sonnet, or a local Ollama model). The LLM returns structured output: the concepts present in that chunk, the relationships between them, and verbatim evidence quotes that ground each concept in the source text.</p>
 <p><strong>Deduplication.</strong> Every extracted concept is embedded and compared against existing concepts using vector similarity. If the incoming concept is sufficiently similar to an existing one, they are merged — the grounding score updates, the evidence list grows, and the source count rises. If they conflict, both are kept and the contradiction is recorded. This is the recursive upsert: new documents do not replace old knowledge, they accumulate on top of it.</p>
-<p><strong>Graph storage.</strong> The result lives in Apache AGE 1.7.0, a graph extension for PostgreSQL 18. The data model is:</p>
+<p><strong>Graph storage.</strong> The result lives in Apache AGE 1.8.0, a graph extension for PostgreSQL 18. The data model is:</p>
 <pre class="mermaid"><code>classDiagram
     class Concept {
         label : string
