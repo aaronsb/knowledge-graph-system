@@ -336,10 +336,12 @@ echo | openssl s_client -connect <vm-ip>:443 -servername kg.example.com 2>/dev/n
   rendering and ship a DHCP netplan matched by interface name (`e*`), so MAC
   changes are safe. If stranded, rewrite `/etc/netplan/50-cloud-init.yaml` to
   match by name and `netplan apply`.
-- **Traefik can't reach Docker (`client version 1.24 is too old`)** — Traefik v3
-  hard-codes Docker API 1.24 while Engine ≥25 serves a minimum of 1.40. Current
-  images bake `DOCKER_MIN_API_VERSION=1.24` as a `docker.service` drop-in. To fix
-  a running box: write that drop-in and `systemctl restart docker`.
+- **Traefik can't reach Docker (`client version 1.24 is too old`)** — Traefik
+  ≤v3.6.15 hard-coded Docker API 1.24 while Engine ≥25 serves a minimum of 1.40.
+  Current images bake `DOCKER_MIN_API_VERSION=1.24` as a `docker.service` drop-in.
+  To fix a running box: write that drop-in and `systemctl restart docker`. The
+  platform now pins Traefik v3.7.13, whose provider requires API ≥1.40, so new
+  deployments should not hit this at all.
 - **TLS stuck on the self-signed default / `acme.json` empty** — Traefik only
   requests a cert for a declared domain; it does not mint on-demand from SNI.
   Ensure `EXTERNAL_URL`/`TLS_DOMAIN` is a public FQDN (not `localhost`) so the
