@@ -4,7 +4,7 @@
 #   - Docker BuildKit enabled (for mount cache support)
 #   - Set DOCKER_BUILDKIT=1 or use docker-compose (BuildKit enabled by default)
 
-FROM python:3.11-slim
+FROM python:3.13-slim
 
 # Build metadata (git commit, build time)
 ARG GIT_COMMIT=unknown
