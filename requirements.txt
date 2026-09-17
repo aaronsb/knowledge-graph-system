@@ -4,7 +4,23 @@ python-dotenv>=1.0.0
 anthropic>=0.18.0  # Optional: only needed if using AI_PROVIDER=anthropic
 numpy>=1.24.0  # Required for learned knowledge similarity calculations & vector search
 sentence-transformers>=2.3.0  # Local embedding models for ADR-804 (nomic-embed-text, BGE)
-transformers>=4.56.0,<5.0  # Lower bound: AutoModel.from_pretrained `dtype` kwarg (replaces deprecated `torch_dtype`) added in 4.56.0 — older versions silently ignore it via **kwargs and load fp32 on GPU, defeating PR #429's VRAM fix. Upper bound: Nomic Vision requires trust_remote_code, broken on transformers 5.x (#313).
+# transformers upper bound (#313): the default embedding profile (Nomic v1.5 text + vision,
+# schema/00_baseline.sql) loads with trust_remote_code, and that remote code
+# (nomic-ai/nomic-bert-2048 @ 7710840, last changed 2025-04-29) is broken on transformers 5.x.
+# Re-tested 2026-09-17 on transformers 5.17.0 / sentence-transformers 6.0.1 / torch 2.14.0 (CPU):
+#   - nomic-embed-vision-v1.5 (@e3a725b): fails at AutoConfig.from_pretrained —
+#     StrictDataclassFieldValidationError: config.json has "n_inner": 2048.0 (float), 5.x wants int.
+#   - nomic-embed-text-v1.5 (@e9b6763, the 2026-04-07 "v5 Transformers" commit): loads, but
+#     encode() raises AttributeError: 'NomicBertModel' object has no attribute
+#     'get_extended_attention_mask' (removed from PreTrainedModel in 5.x).
+#   The original #313 symptom (all_tied_weights_keys) no longer reproduces; these are different
+#   5.x removals. Lifting the cap needs upstream fixes to the nomic-bert-2048 remote code or a
+#   default-profile migration to SigLIP 2 (no remote code). Note the cap transitively holds
+#   sentence-transformers at 5.x (6.0 requires transformers>=5).
+# Verified working under the cap on 2026-09-17: transformers 4.57.6 / sentence-transformers 5.7.0 /
+# torch 2.14.0 / numpy 2.5.3 — both Nomic models load, 768-d unit-norm embeddings, cross-modal
+# matching pairs rank above mismatched pairs.
+transformers>=4.56.0,<5.0  # Lower bound: AutoModel.from_pretrained `dtype` kwarg (replaces deprecated `torch_dtype`) added in 4.56.0 — older versions silently ignore it via **kwargs and load fp32 on GPU, defeating PR #429's VRAM fix. Upper bound: see block comment above (#313).
 torch>=2.0.0  # Required for visual embeddings (Nomic Vision)
 torchvision>=0.15.0  # Fast image preprocessing for transformers (ADR-305)
 accelerate>=0.20.0  # Required for device_map in transformers model loading
