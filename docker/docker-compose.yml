@@ -132,7 +132,12 @@ services:
     image: kg-api:latest
     container_name: kg-api-dev
     ports:
-      - "8000:8000"  # API endpoint
+      # Host bind address is configurable; the default (0.0.0.0) is unchanged.
+      # Set KG_API_BIND=127.0.0.1 in .env for loopback-only publishing — the
+      # same treatment #502 already applied to postgres and garage. Left open
+      # by default because, unlike those, the API is browser-facing and may
+      # legitimately need to be reachable off-box.
+      - "${KG_API_BIND:-0.0.0.0}:8000:8000"  # API endpoint
     environment:
       # Infrastructure secrets (from .env)
       ENCRYPTION_KEY: ${ENCRYPTION_KEY}
@@ -208,7 +213,9 @@ services:
     image: kg-web:latest
     container_name: kg-web-dev
     ports:
-      - "3000:80"  # Web UI
+      # Host bind address is configurable; the default (0.0.0.0) is unchanged.
+      # Set KG_WEB_BIND=127.0.0.1 in .env for loopback-only publishing.
+      - "${KG_WEB_BIND:-0.0.0.0}:3000:80"  # Web UI
     environment:
       # Runtime config (no rebuild required)
       VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
