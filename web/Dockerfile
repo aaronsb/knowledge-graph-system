@@ -14,7 +14,7 @@
 # enabling CDN deployment and Docker deployment with the same build artifacts.
 
 # Stage 1: Build the Vite React app
-FROM node:20-alpine AS builder
+FROM node:24-alpine AS builder
 
 WORKDIR /app
 
