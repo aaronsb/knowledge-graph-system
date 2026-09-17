@@ -69,6 +69,27 @@ assert_secrets_safe
 
 cd "$DOCKER_DIR"
 
+# Garage 2.x replaced replication_mode with replication_factor + consistency_mode
+# and refuses to start on a config that still has the old key. Installs that
+# predate the v2 image carry the old key in config/garage.toml, so rewrite it
+# in place before the container comes up. Garage 2.x reads 1.x metadata as-is.
+migrate_garage_config() {
+    local toml="$PROJECT_ROOT/config/garage.toml"
+    [ -f "$toml" ] || return 0
+    grep -qE '^[[:space:]]*replication_mode[[:space:]]*=' "$toml" || return 0
+    local mode
+    mode=$(sed -nE 's/^[[:space:]]*replication_mode[[:space:]]*=[[:space:]]*"?([^"[:space:]]+)"?.*/\1/p' "$toml" | head -1)
+    local factor=1
+    case "$mode" in
+        2|3) factor="$mode" ;;
+        none|1|"") factor=1 ;;
+        *) echo -e "${RED}✗ Unrecognized replication_mode '$mode' in config/garage.toml; edit it by hand (Garage 2.x needs replication_factor + consistency_mode)${NC}"; exit 1 ;;
+    esac
+    sed -i -E "s/^([[:space:]]*)replication_mode[[:space:]]*=.*/\1replication_factor = ${factor}\n\1consistency_mode = \"consistent\"/" "$toml"
+    echo -e "${YELLOW}→ Rewrote config/garage.toml for Garage 2.x: replication_mode=\"$mode\" → replication_factor=${factor}, consistency_mode=\"consistent\"${NC}"
+}
+migrate_garage_config
+
 # Start postgres and garage (uses config from .operator.conf)
 echo -e "${BLUE}→ Starting postgres and garage...${NC}"
 run_compose up -d postgres garage

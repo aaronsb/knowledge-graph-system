@@ -193,7 +193,7 @@ The first Stage-2 artifact is an x86 qcow2/OVA. Its build contract (tooling in
 - **AGE arm64**: the Postgres+AGE image is pinned to a SHA digest
   (`apache/age@sha256:e7de17…`). Confirm that build publishes an arm64 variant,
   or repin/rebuild.
-- **Garage arm64**: `dxflrs/garage:v1.0.0` — Garage is an edge/self-host
+- **Garage arm64**: `dxflrs/garage:v2.4.1` — Garage is an edge/self-host
   product so arm64 almost certainly exists; verify.
 - **Pi RAM budget**: validate Postgres+AGE + Garage + API + nomic (~400MB
   loaded) fit comfortably in 4GB under real ingestion.

@@ -89,7 +89,7 @@ services:
   garage:
     # Garage S3-compatible object storage for image assets
     # Deuxfleurs cooperative governance - no Enterprise edition trap
-    image: dxflrs/garage:v1.0.0
+    image: dxflrs/garage:v2.4.1
     container_name: knowledge-graph-garage
     ports:
       # Loopback only — API/operator reach garage over the docker network
