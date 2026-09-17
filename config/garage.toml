@@ -8,8 +8,12 @@ data_dir = "/data"
 # Metadata engine: sqlite (single-node) or lmdb (production)
 db_engine = "sqlite"
 
-# Replication mode (single-node: 1 copy, production: 3 copies)
-replication_mode = "1"
+# Replication (single-node: 1 copy, production: 3 copies).
+# Garage 2.x split the legacy replication_mode into these two keys and refuses
+# to start if replication_mode is still present. operator/lib/start-infra.sh
+# rewrites an old file automatically.
+replication_factor = 1
+consistency_mode = "consistent"
 
 # Compression level (0=none, 1=fast/zstd, 2=best/zstd)
 compression_level = 1

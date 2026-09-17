@@ -37,7 +37,7 @@ services:
     restart: unless-stopped
 
   garage:
-    image: dxflrs/garage:v1.0.0
+    image: dxflrs/garage:v2.4.1
     container_name: kg-garage
     environment:
       GARAGE_RPC_SECRET: ${GARAGE_RPC_SECRET}
