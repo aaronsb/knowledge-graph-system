@@ -154,8 +154,10 @@ a future fleet orchestrator would template per node.
   --network mac=<reserved>`) and it still gets an address. (cloud-init's default,
   MAC-pinned, would strand the NIC.)
 - **Modern Docker Engine just works.** Engine ≥25 raised its minimum served API
-  to 1.40, which Traefik v3's hard-coded 1.24 client would be rejected by; the
-  image bakes `DOCKER_MIN_API_VERSION=1.24` as a `docker.service` drop-in.
+  to 1.40, which Traefik ≤v3.6.15's hard-coded 1.24 client would be rejected by;
+  the image bakes `DOCKER_MIN_API_VERSION=1.24` as a `docker.service` drop-in.
+  Traefik v3.6.16+ requires API ≥1.40, so the drop-in is vestigial for the pinned
+  v3.7.13 — it is harmless (it only lowers the minimum served) and kept for now.
 
 ## Layout
 

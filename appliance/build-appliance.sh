@@ -185,9 +185,13 @@ VC_ARGS=(
     --install "${DOCKER_PKGS}"
     --run-command 'systemctl enable docker qemu-guest-agent'
     # Keep dockerd serving the legacy API version. Docker Engine >=25 raised its
-    # minimum served API to 1.40, but Traefik v3's Docker provider hard-codes
-    # 1.24 (and ignores DOCKER_API_VERSION), so it gets rejected. DOCKER_MIN_API_VERSION
+    # minimum served API to 1.40, but Traefik <=v3.6.15's Docker provider hard-coded
+    # 1.24 (and ignored DOCKER_API_VERSION), so it got rejected. DOCKER_MIN_API_VERSION
     # tells the daemon to keep accepting the old API. (Discovered on the cube deploy.)
+    # NOTE: Traefik v3.6.16+ requires API >=1.40, so this drop-in is no longer needed
+    # for Traefik (the platform now pins v3.7.13). It is harmless — it only lowers the
+    # minimum the daemon will serve, 1.40+ still works — and is kept for images that
+    # may still run an older Traefik. Safe to drop once no such image is supported.
     --mkdir /etc/systemd/system/docker.service.d
     --run-command 'printf "[Service]\nEnvironment=\"DOCKER_MIN_API_VERSION=1.24\"\n" > /etc/systemd/system/docker.service.d/api-compat.conf'
     # --- MAC-agnostic networking ---

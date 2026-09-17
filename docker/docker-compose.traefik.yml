@@ -29,16 +29,19 @@ networks:
 services:
   traefik:
     # Traefik Proxy core is MIT-licensed (ADR-105 licensing posture). Pinned.
-    image: traefik:v3.3.1
+    image: traefik:v3.7.13
     container_name: ${CONTAINER_PREFIX:-knowledge-graph}-traefik
     restart: unless-stopped
-    # NOTE on modern Docker Engine: Traefik v3.3.1's Docker provider HARD-CODES
-    # API version 1.24 and ignores the DOCKER_API_VERSION env (it builds its
-    # client with an explicit WithVersion("1.24")). Engine >=25 raised its
-    # minimum served API to 1.40, so it rejects 1.24 with "client version 1.24
-    # is too old". The fix lives on the DAEMON, not here: set
-    # DOCKER_MIN_API_VERSION=1.24 on dockerd to keep serving the old API. The
-    # appliance bakes that as a docker.service drop-in (appliance/build-appliance.sh).
+    # NOTE on the Docker provider's API version: Traefik <=v3.6.15 HARD-CODED
+    # Docker API 1.24 (ignoring DOCKER_API_VERSION), while Engine >=25 raised its
+    # minimum served API to 1.40 — so the provider was rejected with "client
+    # version 1.24 is too old", and the workaround lived on the DAEMON
+    # (DOCKER_MIN_API_VERSION=1.24, baked by appliance/build-appliance.sh).
+    # As of v3.6.16 the provider REQUIRES API >=1.40 (Engine >=19.03), which every
+    # supported Engine already serves, so that daemon drop-in is now vestigial for
+    # Traefik's sake. It is harmless (it only lowers the minimum the daemon will
+    # serve, 1.40+ still works) and is left in place; removing it is a separate
+    # appliance-image change.
     command:
       - --providers.docker=true
       - --providers.docker.exposedbydefault=false
