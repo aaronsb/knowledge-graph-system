@@ -17,6 +17,12 @@ services:
       - postgres_data:/var/lib/postgresql
       - ../schema/00_baseline.sql:/docker-entrypoint-initdb.d/10-baseline.sql
       - ../schema/11_graph_accel.sql:/docker-entrypoint-initdb.d/11-graph-accel.sql
+      # Dev runs the stock apache/age image, which ships no age--*--*.sql update
+      # scripts (apache/age#2570) — Dockerfile.postgres COPYs this one in, so mount
+      # it here to give dev the same ALTER EXTENSION age UPDATE path that
+      # operator/lib/start-infra.sh relies on. Without it, a dev volume created
+      # under AGE 1.7.0 keeps a 1.7.0 catalog and every graph read fails.
+      - ./age/age--1.7.0--1.8.0.sql:/usr/share/postgresql/18/extension/age--1.7.0--1.8.0.sql:ro
       - postgres_import:/import
       # graph_accel: mount build artifacts for install via deploy-option0.sh.
       # Build with: ./graph-accel/build-in-container.sh

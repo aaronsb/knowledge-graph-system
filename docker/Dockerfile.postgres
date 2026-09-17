@@ -30,6 +30,20 @@ LABEL org.opencontainers.image.source="https://github.com/aaronsb/knowledge-grap
 LABEL org.opencontainers.image.revision="${GIT_COMMIT}"
 LABEL org.opencontainers.image.created="${BUILD_DATE}"
 
+# Apache AGE extension update script, vendored from upstream.
+#
+# The base image ships only age--1.8.0.sql: upstream's Makefile installs every
+# age--*--*.sql, but upstream's docker/Dockerfile enumerates the files it copies
+# out of its build stage and omits them (apache/age#2570). Without the update
+# script, an existing cluster started on this image keeps a 1.7.0 catalog while
+# running the 1.8.0 library — writes work, every read fails with "type with OID
+# 0 does not exist" — and ALTER EXTENSION age UPDATE cannot repair it ("no update
+# path from version 1.7.0 to version 1.8.0").
+#
+# operator/lib/start-infra.sh runs the update on start. See docker/age/ for
+# provenance and the byte-identity check.
+COPY docker/age/age--1.7.0--1.8.0.sql /usr/share/postgresql/18/extension/
+
 # graph_accel extension artifacts (per-architecture, pre-built for PG 18)
 COPY graph-accel/dist/pg18/${TARGETARCH}/graph_accel.so /usr/lib/postgresql/18/lib/
 COPY graph-accel/dist/pg18/${TARGETARCH}/graph_accel.control /usr/share/postgresql/18/extension/
