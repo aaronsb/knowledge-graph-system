@@ -11,7 +11,7 @@ services:
     # Build with: ./graph-accel/build-in-container.sh
     # If dist/ files don't exist, postgres starts fine — extension is optional.
     # Pinned to an explicit PG18 release tag (not :latest which may advance further).
-    image: apache/age:release_PG18_1.7.0
+    image: apache/age:release_PG18_1.8.0
     volumes:
       # PG18+: volume mounts at /var/lib/postgresql (version-specific PGDATA subdir)
       - postgres_data:/var/lib/postgresql

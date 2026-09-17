@@ -32,7 +32,7 @@ flowchart LR
 
 **Deduplication.** Every extracted concept is embedded and compared against existing concepts using vector similarity. If the incoming concept is sufficiently similar to an existing one, they are merged — the grounding score updates, the evidence list grows, and the source count rises. If they conflict, both are kept and the contradiction is recorded. This is the recursive upsert: new documents do not replace old knowledge, they accumulate on top of it.
 
-**Graph storage.** The result lives in Apache AGE 1.7.0, a graph extension for PostgreSQL 18. The data model is:
+**Graph storage.** The result lives in Apache AGE 1.8.0, a graph extension for PostgreSQL 18. The data model is:
 
 ```mermaid
 classDiagram

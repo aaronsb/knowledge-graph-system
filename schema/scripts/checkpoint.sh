@@ -33,8 +33,8 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PROJECT_ROOT="$( cd "$SCRIPT_DIR/../.." && pwd )"
 SCHEMA_DIR="$PROJECT_ROOT/schema"
 
-# Same base image pinned by docker/Dockerfile.postgres (PG18 + AGE 1.7.0)
-IMAGE="apache/age:release_PG18_1.7.0"
+# Same base image pinned by docker/Dockerfile.postgres (PG18 + AGE 1.8.0)
+IMAGE="apache/age:release_PG18_1.8.0"
 
 DB_USER="admin"
 DB_NAME="knowledge_graph"

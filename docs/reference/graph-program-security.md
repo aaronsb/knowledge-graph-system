@@ -130,7 +130,7 @@ Apache AGE and PostgreSQL 18 provide the final defense layer:
 
 | Constraint | Effect |
 |-----------|--------|
-| **Cypher syntax validation** | AGE 1.7.0 rejects syntactically invalid Cypher. |
+| **Cypher syntax validation** | AGE 1.8.0 rejects syntactically invalid Cypher. |
 | **Graph schema** | Node labels (`:Concept`, `:Source`, `:Instance`, `:VocabType`) enforce structure. |
 | **Connection limits** | PostgreSQL `max_connections` bounds concurrent access. |
 | **Transaction isolation** | Each query runs in a transaction; failures roll back cleanly. |

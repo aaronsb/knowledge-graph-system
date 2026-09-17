@@ -33,7 +33,7 @@ flowchart TD
     DOCS([("External Documents<br>PDF / MD / Images / Text")])
     API(["FastAPI<br>Extraction Pipeline and REST API"])
     LLM(["LLM Extraction<br>Concept and Relationship Mining"])
-    PG[("PostgreSQL 18 + AGE 1.7.0<br>Graph Store — ACID Source of Truth")]
+    PG[("PostgreSQL 18 + AGE 1.8.0<br>Graph Store — ACID Source of Truth")]
     GA(["graph_accel<br>Rust Extension — In-Memory BFS and Shortest Path"])
     S3[("Garage S3<br>Document Asset Storage")]
     WEB(["React + D3<br>Web Visualization"])
@@ -57,7 +57,7 @@ flowchart TD
     style CLI  fill:#64748b,color:#ffffff,stroke:#475569
 ```
 
-**PostgreSQL 18 + Apache AGE 1.7.0** — Graph database with native openCypher queries. ACID transactions, schema integrity, vector search via pgvector.
+**PostgreSQL 18 + Apache AGE 1.8.0** — Graph database with native openCypher queries. ACID transactions, schema integrity, vector search via pgvector.
 
 **graph_accel** — Rust PostgreSQL extension that maintains an adjacency structure in shared memory for instant BFS and shortest-path traversal. AGE handles writes; graph_accel handles reads. Epoch-based invalidation keeps the read model current. ([ADR-201](architecture/database-schema/ADR-201-in-memory-graph-acceleration-extension.md))
 

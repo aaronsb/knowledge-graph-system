@@ -35,9 +35,9 @@ DBML_FILE = OUTPUT_DIR / "schema.dbml"
 # Platform versions are pinned in the Postgres image, not in the DDL. Stated
 # here so the reference does not repeat the stale "Postgres 16 / AGE 1.5.0"
 # claim that the consolidation audit flagged. Verified against
-# docker/Dockerfile.postgres (apache/age:release_PG18_1.7.0).
+# docker/Dockerfile.postgres (apache/age:release_PG18_1.8.0).
 POSTGRES_VERSION = "18"
-AGE_VERSION = "1.7.0"
+AGE_VERSION = "1.8.0"
 
 # Logical schemas and what each holds, for the page intro. Sourced from the
 # COMMENT ON SCHEMA statements in 00_baseline.sql.

@@ -22,7 +22,7 @@ Each document goes through a pipeline:
 
 Step 4 is why results compound over time. The LLM sees what the graph already knows before it extracts from the next chunk, so it can connect new material to existing concepts rather than creating duplicates. As more documents arrive, concept hit rates climb — a new domain starts near 0%; a mature corpus typically runs 60%+ hit rate.
 
-The graph layer is Apache AGE 1.7.0 on PostgreSQL 18, using openCypher. Every concept and relationship carries a grounding strength score derived from evidence count and source diversity.
+The graph layer is Apache AGE 1.8.0 on PostgreSQL 18, using openCypher. Every concept and relationship carries a grounding strength score derived from evidence count and source diversity.
 
 ---
 

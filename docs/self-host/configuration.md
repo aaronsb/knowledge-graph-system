@@ -35,7 +35,7 @@ Generated during `./operator.sh init`. Do not edit.
 
 ### Database
 
-Kappa Graph runs PostgreSQL 18 with Apache AGE 1.7.0.
+Kappa Graph runs PostgreSQL 18 with Apache AGE 1.8.0.
 
 | Variable | Default | Description |
 |----------|---------|-------------|
