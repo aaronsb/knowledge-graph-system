@@ -317,6 +317,36 @@ class TestAnthropic:
         provider.call_with_tools("s", "u", [SAMPLE_TOOL], temperature=0.3)
         kwargs = provider.client.messages.create.call_args.kwargs
         assert "temperature" not in kwargs
+        # Nothing at all for this family — not even an empty extra_body.
+        assert "extra_body" not in kwargs
+
+    def test_temperature_sent_via_extra_body(self):
+        """anthropic-sdk v1.0 removed temperature/top_p/top_k from the
+        messages.create() signature; sampling-capable models take them through
+        extra_body. A top-level kwarg would be a TypeError on 1.x."""
+        provider = _bare_anthropic_provider()
+        provider.client.messages.create.return_value = _anthropic_response(
+            "record_decision", {"verb": "MERGE", "reason": "x"}
+        )
+
+        provider.call_with_tools("s", "u", [SAMPLE_TOOL], temperature=0.3)
+        kwargs = provider.client.messages.create.call_args.kwargs
+        assert "temperature" not in kwargs
+        assert "top_p" not in kwargs
+        assert "top_k" not in kwargs
+        assert kwargs["extra_body"] == {"temperature": 0.3}
+
+    def test_no_extra_body_when_temperature_unset(self):
+        """An unset temperature must not produce an empty extra_body."""
+        provider = _bare_anthropic_provider()
+        provider.client.messages.create.return_value = _anthropic_response(
+            "record_decision", {"verb": "MERGE", "reason": "x"}
+        )
+
+        provider.call_with_tools("s", "u", [SAMPLE_TOOL])
+        kwargs = provider.client.messages.create.call_args.kwargs
+        assert "temperature" not in kwargs
+        assert "extra_body" not in kwargs
 
 
 @pytest.mark.unit

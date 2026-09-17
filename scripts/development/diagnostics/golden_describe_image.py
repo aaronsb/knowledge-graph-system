@@ -25,7 +25,7 @@ import copy
 import sys
 from unittest.mock import MagicMock
 
-from api.app.lib.ai_providers import AnthropicProvider, _anthropic_drops_sampling_params
+from api.app.lib.ai_providers import AnthropicProvider, _anthropic_sampling_kwargs
 from api.app.lib.vision_providers import LITERAL_DESCRIPTION_PROMPT, resolve_vision_selection
 
 import os
@@ -61,8 +61,8 @@ def _old_vision_providers_anthropic_request(image_bytes, prompt, model):
             }
         ],
     }
-    if not _anthropic_drops_sampling_params(model):
-        request_kwargs["temperature"] = 0.1
+    # anthropic-sdk v1.0: sampling params ride in extra_body, not top level.
+    request_kwargs.update(_anthropic_sampling_kwargs(model, temperature=0.1))
     return request_kwargs
 
 
@@ -97,7 +97,7 @@ def part1_request_equivalence(image_bytes):
     if copy.deepcopy(old) == copy.deepcopy(new):
         print("✅ PART 1 — request payloads IDENTICAL (old vision_providers ≡ new AIProvider)")
         print(f"   model={new['model']} max_tokens={new['max_tokens']} "
-              f"temperature={new.get('temperature')} "
+              f"extra_body={new.get('extra_body')} "
               f"content_order={[c['type'] for c in new['messages'][0]['content']]} "
               f"media_type={new['messages'][0]['content'][0]['source']['media_type']}")
         return True
