@@ -192,7 +192,7 @@ The extension loads AGE's graph data via SPI (Server Programming Interface), rea
 
 ### GUC Registration
 
-Configuration uses PostgreSQL's Grand Unified Configuration system. pgrx 0.16.1 requires `GucSetting<Option<CString>>` for string parameters with `c"..."` C string literals for defaults.
+Configuration uses PostgreSQL's Grand Unified Configuration system. pgrx (0.16+) requires `GucSetting<Option<CString>>` for string parameters with `c"..."` C string literals for defaults.
 
 All GUCs currently use `GucContext::Userset` (settable per-session via `SET`). This will tighten to `Sighup` or `Postmaster` when shared memory is added, since changes would affect all backends.
 

@@ -33,7 +33,7 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | \
 ENV PATH="/root/.cargo/bin:${PATH}"
 
 # Install cargo-pgrx (pinned to match graph-accel/ext/Cargo.toml)
-RUN cargo install cargo-pgrx --version =0.16.1 --locked
+RUN cargo install cargo-pgrx --version =0.19.2 --locked
 
 # Initialize pgrx with the system pg_config (same PG as runtime)
 RUN cargo pgrx init --pg18=$(which pg_config)
