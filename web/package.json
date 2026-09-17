@@ -25,7 +25,7 @@
     "@types/d3": "^7.4.3",
     "axios": "^1.20.0",
     "d3": "^7.9.0",
-    "lucide-react": "^0.546.0",
+    "lucide-react": "^1.47.0",
     "react": "~19.2.0",
     "react-dom": "~19.2.0",
     "react-markdown": "^10.1.0",

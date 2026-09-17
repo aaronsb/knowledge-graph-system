@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { X, Github, BookOpen, Database, Brain, Sparkles, User, Bot } from 'lucide-react';
+import { X, GitBranch, BookOpen, Database, Brain, Sparkles, User, Bot } from 'lucide-react';
 
 export interface AboutInfoBoxProps {
   x: number;
@@ -102,7 +102,7 @@ export const AboutInfoBox: React.FC<AboutInfoBoxProps> = ({ x, y, onDismiss }) =
                 rel="noopener noreferrer"
                 className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-card-foreground transition-colors"
               >
-                <Github className="w-3.5 h-3.5" />
+                <GitBranch className="w-3.5 h-3.5" />
                 <span>GitHub</span>
               </a>
               <a
