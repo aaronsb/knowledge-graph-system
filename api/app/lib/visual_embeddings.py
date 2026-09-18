@@ -163,7 +163,7 @@ class VisualEmbeddingGenerator:
             # it explicitly so behavior doesn't drift with the dependency.
             load_kwargs["low_cpu_mem_usage"] = False
 
-        processor_kwargs = {"trust_remote_code": self.trust_remote_code, "use_fast": True}
+        processor_kwargs = {"trust_remote_code": self.trust_remote_code}
         if self.model_revision:
             processor_kwargs["revision"] = self.model_revision
 
