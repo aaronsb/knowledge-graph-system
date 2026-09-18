@@ -28,7 +28,7 @@
 #     - ./publish.sh status          (get current versions)
 #     - ./publish.sh release ...     (bump, commit, tag)
 #     - ./publish.sh images ...      (build and push)
-#     - ./publish.sh cli ...         (npm publish)
+#     - ./publish.sh cli ...         (dispatch publish-npm.yml, npm trusted publisher)
 #     - ./publish.sh fuse ...        (pypi publish)
 #
 # ============================================================================
@@ -283,7 +283,9 @@ check_ghcr_auth() {
 }
 
 check_npm_auth() {
-    npm whoami &>/dev/null
+    # npm publishes through the GitHub Actions trusted publisher; the local
+    # requirement is a gh login to dispatch the workflow.
+    gh auth status &>/dev/null
 }
 
 check_pypi_auth() {
@@ -299,7 +301,7 @@ verify_auth() {
 
     case "$target" in
         ghcr) auth_cmd="docker login ghcr.io" ;;
-        npm)  auth_cmd="npm login" ;;
+        npm)  auth_cmd="gh auth login" ;;
         pypi) auth_cmd="Configure ~/.pypirc or install twine" ;;
     esac
 
@@ -564,7 +566,7 @@ step_execute() {
 
     if [[ "$PUBLISH_CLI" == "true" ]]; then
         echo ""
-        log_info "Publishing CLI to npm..."
+        log_info "Dispatching the npm trusted-publisher workflow..."
         verify_auth npm || exit 1
         "$PUBLISH_SH" cli
     fi

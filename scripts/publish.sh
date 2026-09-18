@@ -5,7 +5,7 @@
 # Manages:
 #   - Version bumping (platform, scripts, packages)
 #   - Docker images (api, web, operator) → GitHub Container Registry
-#   - npm package (CLI/MCP)              → npm registry
+#   - npm package (CLI/MCP)              → npm registry (via GitHub Actions, see below)
 #   - Python package (FUSE)              → PyPI
 #
 # Usage:
@@ -15,7 +15,7 @@
 #   ./scripts/publish.sh sync-scripts            # Update script versions
 #   ./scripts/publish.sh release patch -m "msg"  # Full release workflow
 #   ./scripts/publish.sh images [api|web]        # Publish Docker images
-#   ./scripts/publish.sh cli                     # Publish npm package
+#   ./scripts/publish.sh cli                     # Dispatch the npm publish workflow
 #   ./scripts/publish.sh fuse                    # Publish PyPI package
 #
 # Options:
@@ -23,19 +23,19 @@
 #   --dry-run              Preview without making changes
 #   --skip-build           Skip build step
 #
-# npm authentication (the `cli` command):
-#   A token from `npm login` STILL requires interactive browser 2FA to
-#   publish. That works in a real terminal but fails with EOTP when this
-#   script runs through a pipe — CI, `| tee`, or a coding agent — because
-#   there is no TTY for the browser handoff.
+# npm publishing (the `cli` command):
+#   @aaronsb/kg-cli is published by .github/workflows/publish-npm.yml through
+#   npm's trusted publisher (OIDC, with provenance). No npm login, token or
+#   2FA on this machine. The workflow runs on every pushed v*.*.* tag and
+#   publishes whatever version cli/package.json carries at that commit, so
+#   bump the CLI BEFORE `release` when cli/ changed:
+#       ./scripts/publish.sh bump cli minor && ./scripts/publish.sh release minor -m "..."
+#   `cli` here dispatches that workflow on the current branch (workflow_dispatch)
+#   for the case where the CLI was bumped after the tag.
 #
-#   To publish non-interactively, create a classic *Automation* token
-#   (npmjs.com -> Access Tokens -> Generate New Token -> Classic Token ->
-#   Automation). Automation tokens bypass 2FA. Put it in ~/.npmrc:
-#       //registry.npmjs.org/:_authToken=npm_xxxxxxxxxxxxxxxxxxxx
-#
-#   Without an Automation token, run the publish yourself in a terminal:
-#       cd cli && npm publish --access public
+# GHCR authentication (the `images` commands):
+#   docker is logged in to ghcr.io with the gh CLI token. Pushing needs the
+#   write:packages scope: `gh auth refresh -h github.com -s write:packages`.
 # ============================================================================
 
 set -e
@@ -89,7 +89,7 @@ Publishing:
   images [api|web|operator] Publish Docker images to GHCR
   images-rocm [variant...]  Publish kg-api ROCm variants (rocm72-host)
                             Defaults to rocm72-host only; --force enables deferred variants
-  cli                       Publish npm package (@aaronsb/kg-cli)
+  cli                       Dispatch publish-npm.yml (npm trusted publisher) for @aaronsb/kg-cli
   fuse                      Publish Python package (kg-fuse) to PyPI
   appliance                 Build + attach the thin-appliance OVA to the GitHub
                             release (bootstrap seed; stay current via operator upgrade)
@@ -463,10 +463,14 @@ cmd_status() {
     else
         echo -e "  GHCR:   ${RED}✗ not logged in${NC}"
     fi
-    if check_npm_auth; then
-        echo -e "  npm:    ${GREEN}✓ authenticated${NC} ($(npm whoami 2>/dev/null))"
+    if gh auth status &>/dev/null; then
+        echo -e "  npm:    ${GREEN}✓ trusted publisher${NC} (publish-npm.yml on tag push; gh authenticated)"
+        if ! gh auth status 2>&1 | grep -q "write:packages"; then
+            echo -e "          ${YELLOW}⚠ gh token lacks write:packages; image pushes will be denied${NC}"
+            echo -e "          ${DIM}gh auth refresh -h github.com -s write:packages${NC}"
+        fi
     else
-        echo -e "  npm:    ${RED}✗ not logged in${NC}"
+        echo -e "  npm:    ${YELLOW}○ trusted publisher${NC} (publish-npm.yml); ${RED}gh not authenticated${NC} for dispatch"
     fi
     if check_pypi_auth; then
         echo -e "  PyPI:   ${GREEN}✓ twine available${NC}"
@@ -573,6 +577,19 @@ cmd_release() {
     local new_version=$(bump_version "$VERSION" "$BUMP_TYPE")
 
     echo -e "${BOLD}Release workflow: $VERSION → $new_version${NC}"
+
+    # The tag push triggers publish-npm.yml, which publishes cli/package.json's
+    # version. If that version is already on npm the workflow fails and the CLI
+    # changes in this release never ship. Catch it before the tag exists.
+    if [ "$FORCE" != "true" ] && is_version_published "cli" "$CLI_VERSION" 2>/dev/null; then
+        # A bump-only change (cli/package.json) is not shippable code; look past it.
+        if [ -n "$(git -C "$PROJECT_ROOT" log --oneline "${LATEST_TAG:-HEAD}..HEAD" -- cli/ ':!cli/package.json' 2>/dev/null)" ]; then
+            echo -e "${RED}✗ cli/ changed since $LATEST_TAG but cli/package.json is still $CLI_VERSION, already on npm.${NC}"
+            echo -e "  The v$new_version tag push would run publish-npm.yml against a published version."
+            echo -e "  Bump first: ${BOLD}./publish.sh bump cli <patch|minor|major>${NC}  (or --force to release anyway)"
+            exit 1
+        fi
+    fi
     [ -n "$DESCRIPTION" ] && echo -e "  Message: $DESCRIPTION"
     [ "$DRY_RUN" = "true" ] && echo -e "  ${YELLOW}DRY RUN MODE${NC}"
     echo ""
@@ -609,8 +626,9 @@ cmd_release() {
     echo -e "${CYAN}Next steps:${NC}"
     local current_branch=$(git -C "$PROJECT_ROOT" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "main")
     echo "  1. Push: git push origin $current_branch --tags"
-    echo "  2. Publish images: ./publish.sh images"
-    echo "  3. Publish CLI (if needed): ./publish.sh cli"
+    echo "     → the tag push runs publish-npm.yml: @aaronsb/kg-cli@$CLI_VERSION via npm trusted publisher"
+    echo "  2. GitHub release: gh release create v$VERSION --generate-notes"
+    echo "  3. Publish images: ./publish.sh images   (+ ./publish.sh images-rocm)"
     echo "  4. Publish FUSE (if needed): ./publish.sh fuse"
     echo ""
 }
@@ -973,59 +991,41 @@ cmd_images_rocm() {
 
 cmd_cli() {
     get_versions
-
-    echo -e "${BOLD}Publishing CLI to npm${NC}"
-    echo -e "  Version: ${BLUE}$CLI_VERSION${NC}"
-    [ "$DRY_RUN" = "true" ] && echo -e "  Mode:    ${YELLOW}DRY RUN${NC}"
+    echo -e "${BOLD}Publishing CLI to npm via trusted publisher${NC}"
+    echo -e "  Version:  ${BLUE}$CLI_VERSION${NC} (cli/package.json)"
+    echo -e "  Workflow: ${BLUE}.github/workflows/publish-npm.yml${NC} (OIDC, provenance)"
+    [ "$DRY_RUN" = "true" ] && echo -e "  Mode:     ${YELLOW}DRY RUN${NC}"
     echo ""
 
-    # Smart check: is this version already published?
+    # A pushed v* tag already runs the workflow. This command is for the case
+    # where cli/package.json was bumped after the tag.
     if [ "$DRY_RUN" = "false" ] && ! check_publish_needed "cli" "$CLI_VERSION" "$FORCE"; then
         echo -e "  ${DIM}Bump first: ./scripts/publish.sh bump cli patch${NC}"
         exit 0
     fi
-
-    if [ "$DRY_RUN" = "false" ] && ! check_npm_auth; then
-        echo -e "${RED}Not authenticated to npm${NC}"
-        echo "Run: npm login"
+    if ! gh auth status &>/dev/null; then
+        echo -e "${RED}gh is not authenticated; cannot dispatch the workflow${NC}"
+        echo "Run: gh auth login"
+        exit 1
+    fi
+    if [ -n "$(git -C "$PROJECT_ROOT" status --porcelain cli/package.json)" ]; then
+        echo -e "${RED}cli/package.json has uncommitted changes; commit and push the bump first${NC}"
         exit 1
     fi
 
-    cd "$PROJECT_ROOT/cli"
-
-    if [ "$SKIP_BUILD" = "false" ]; then
-        echo -e "${BLUE}→ Building CLI...${NC}"
-        npm run clean
-        npm run build
-        echo -e "${GREEN}✓ Build complete${NC}"
+    local ref
+    ref=$(git -C "$PROJECT_ROOT" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "main")
+    if [ "$DRY_RUN" = "true" ]; then
+        echo -e "${DIM}Would run: gh workflow run publish-npm.yml --ref $ref${NC}"
+        return 0
     fi
-
-    echo ""
-    if [ "$DRY_RUN" = "false" ]; then
-        echo -e "${BLUE}→ Publishing to npm...${NC}"
-        # A plain `npm login` token needs interactive browser 2FA to
-        # publish — impossible without a TTY. Flag it up front so a
-        # non-interactive run (CI / agent) fails loud, not cryptic.
-        if [ ! -t 0 ]; then
-            echo -e "${DIM}  non-interactive shell: this needs an Automation token in${NC}"
-            echo -e "${DIM}  ~/.npmrc, or it will fail — a normal npm-login token cannot${NC}"
-            echo -e "${DIM}  clear browser 2FA here. See this script's header.${NC}"
-        fi
-        # `if` guards the call so set -e doesn't abort before the hint.
-        if npm publish --access public; then
-            echo -e "${GREEN}✓ Published @aaronsb/kg-cli@$CLI_VERSION${NC}"
-        else
-            echo ""
-            echo -e "${RED}✗ npm publish failed.${NC}"
-            echo -e "${YELLOW}If this was a 2FA / EOTP error, npm needs a human:${NC} a"
-            echo -e "  normal \`npm login\` token cannot publish from a script. Either —"
-            echo -e "    1. Run it yourself in a real terminal:"
-            echo -e "         ${BOLD}cd $PROJECT_ROOT/cli && npm publish --access public${NC}"
-            echo -e "    2. Or add a classic ${BOLD}Automation${NC} token to ~/.npmrc to"
-            echo -e "       publish unattended — see this script's header."
-            exit 1
-        fi
-    fi
+    echo -e "${BLUE}→ Dispatching publish-npm.yml on $ref...${NC}"
+    gh workflow run publish-npm.yml --ref "$ref"
+    sleep 5
+    local run_url
+    run_url=$(gh run list --workflow publish-npm.yml --limit 1 --json url --jq '.[0].url' 2>/dev/null)
+    echo -e "${GREEN}✓ Dispatched${NC}${run_url:+ — $run_url}"
+    echo -e "  ${DIM}gh run watch; then: npm view @aaronsb/kg-cli version${NC}"
 }
 
 cmd_fuse() {

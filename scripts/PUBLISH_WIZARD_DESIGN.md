@@ -159,10 +159,12 @@ verify_auth_before_push() {
             fi
             ;;
         npm)
+            # npm publishes via the GitHub Actions trusted publisher
+            # (publish-npm.yml); locally only gh needs to be logged in.
             if ! check_npm_auth; then
-                echo -e "${YELLOW}⚠ npm auth expired${NC}"
+                echo -e "${YELLOW}⚠ gh auth missing${NC}"
                 echo "Please re-authenticate:"
-                echo "  npm login"
+                echo "  gh auth login"
                 read -p "Press Enter when ready..." </dev/tty
                 ...
             fi
