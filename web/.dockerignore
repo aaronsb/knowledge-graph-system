@@ -1,0 +1,12 @@
+# The build context is web/. COPY . . must not drag the host's node_modules
+# (whatever version set happens to be installed locally) over the image's
+# fresh `npm ci`; a stale host jiti 1.x once shadowed the 2.x the lockfile
+# pins and broke `vite build` only inside Docker.
+node_modules
+dist
+coverage
+.vite
+npm-debug.log*
+*.log
+.env
+.env.*
