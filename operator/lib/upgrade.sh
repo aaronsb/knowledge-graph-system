@@ -275,8 +275,11 @@ run_migrations() {
         fi
     else
         # Catalog before schema: a pulled postgres image may carry a newer AGE
-        # library than the volume's catalog (see operator/lib/age-catalog.sh).
-        "$PROJECT_ROOT/operator/lib/age-catalog.sh"
+        # library than the volume's catalog. Use the copy next to this script:
+        # on standalone hosts PROJECT_ROOT (/project) carries only a few lib files.
+        if [ -x "$SCRIPT_DIR/age-catalog.sh" ]; then
+            "$SCRIPT_DIR/age-catalog.sh"
+        fi
         if [ -f "$PROJECT_ROOT/operator/database/migrate-db.sh" ]; then
             "$PROJECT_ROOT/operator/database/migrate-db.sh" -y
         else
