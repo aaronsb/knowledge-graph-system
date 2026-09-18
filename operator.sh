@@ -217,6 +217,13 @@ cmd_start() {
     # Bootstrap: start infra from host
     cmd_start_infra
 
+    # Reconcile the AGE extension catalog to the library the (possibly new)
+    # postgres image ships. `up -d postgres` above recreates the container on
+    # an updated image without touching the catalog in the volume; graph reads
+    # then fail until ALTER EXTENSION age UPDATE runs. Container-side start
+    # (start-infra.sh) does the same; this is the host path.
+    docker exec "$OPERATOR_CONTAINER" /workspace/operator/lib/age-catalog.sh || exit 1
+
     # Run migrations via container
     echo -e "${BLUE}→ Running migrations...${NC}"
     docker exec "$OPERATOR_CONTAINER" /workspace/operator/database/migrate-db.sh -y 2>/dev/null || true
@@ -756,10 +763,15 @@ cmd_restart() {
     if [ "$service" = "all" ]; then
         echo -e "${BLUE}→ Restarting all services...${NC}"
         run_compose restart
+        docker exec "$OPERATOR_CONTAINER" /workspace/operator/lib/age-catalog.sh || exit 1
         echo -e "${GREEN}✓ All services restarted${NC}"
     elif is_known_service "$service"; then
         echo -e "${BLUE}→ Restarting $service...${NC}"
         run_compose restart "$service"
+        # A postgres restart may be the first boot on a pulled image (see cmd_start).
+        if [ "$service" = "postgres" ]; then
+            docker exec "$OPERATOR_CONTAINER" /workspace/operator/lib/age-catalog.sh || exit 1
+        fi
         echo -e "${GREEN}✓ $service restarted${NC}"
     else
         echo -e "${RED}Unknown service: $service${NC}"

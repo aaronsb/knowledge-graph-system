@@ -274,6 +274,9 @@ run_migrations() {
             "$PROJECT_ROOT/operator/database/migrate-db.sh" --dry-run 2>/dev/null || true
         fi
     else
+        # Catalog before schema: a pulled postgres image may carry a newer AGE
+        # library than the volume's catalog (see operator/lib/age-catalog.sh).
+        "$PROJECT_ROOT/operator/lib/age-catalog.sh"
         if [ -f "$PROJECT_ROOT/operator/database/migrate-db.sh" ]; then
             "$PROJECT_ROOT/operator/database/migrate-db.sh" -y
         else
