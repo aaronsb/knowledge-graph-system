@@ -210,12 +210,31 @@ cmd_start_infra() {
 # DELEGATED TO CONTAINER: Complex operations
 # ============================================================================
 
+# reconcile_age_catalog — bring the AGE extension catalog up to the library the
+# running postgres image ships, via operator/lib/age-catalog.sh inside the
+# operator container (the same place migrate-db.sh runs from). `up -d postgres`
+# recreates the container on a pulled image without touching the catalog in
+# the volume; until ALTER EXTENSION age UPDATE runs, graph writes succeed and
+# every graph read fails. A failed update is fatal. A missing script means the
+# operator image predates it: warn and continue.  @verified 060280191
+reconcile_age_catalog() {
+    if ! docker exec "$OPERATOR_CONTAINER" test -x /workspace/operator/lib/age-catalog.sh 2>/dev/null; then
+        echo -e "${YELLOW}  ⚠ operator image lacks operator/lib/age-catalog.sh; AGE catalog not checked${NC}"
+        echo -e "${YELLOW}    (run ./operator.sh self-update, then ./operator.sh start)${NC}"
+        return 0
+    fi
+    docker exec "$OPERATOR_CONTAINER" /workspace/operator/lib/age-catalog.sh || exit 1
+}
+
 cmd_start() {
     check_env
     load_config
 
     # Bootstrap: start infra from host
     cmd_start_infra
+
+    # Catalog before schema (see reconcile_age_catalog).
+    reconcile_age_catalog
 
     # Run migrations via container
     echo -e "${BLUE}→ Running migrations...${NC}"
@@ -451,6 +470,12 @@ cmd_upgrade() {
         exit 1
     fi
     echo ""
+
+    # Catalog before schema: the postgres recreate above may be the first boot
+    # on a pulled image (see reconcile_age_catalog).
+    if docker ps --format '{{.Names}}' | grep -q "^${OPERATOR_CONTAINER}$"; then
+        reconcile_age_catalog
+    fi
 
     # Run migrations via operator container (uses psql)
     echo -e "${BLUE}→ Running migrations...${NC}"

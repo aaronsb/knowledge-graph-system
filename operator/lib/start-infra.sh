@@ -195,50 +195,12 @@ else
     echo -e "${RED}✗ AGE extension not found${NC}"
 fi
 
-# Pulling a new postgres image swaps the AGE shared library, but the extension's
-# CATALOG entries live in the database and stay at whatever version created them.
-# A 1.8.0 library on a 1.7.0 catalog still accepts writes while every read fails
-# with "type with OID 0 does not exist" — 1.8.0 re-signatured three functions the
-# executor uses to build rows (_agtype_build_vertex / _agtype_build_edge take
-# agtype where they took cstring; _label_name RETURNS agtype, not cstring).
-#
-# So reconcile the catalog to the library here: after postgres is up and before
-# the warm migrations run Cypher against it (and well before the API starts).
-# Idempotent — when the versions already agree this is two SELECTs and no output.
-#
-# The update script comes from docker/age/, COPYed in by docker/Dockerfile.postgres
-# (and bind-mounted by docker-compose.dev.yml); the stock apache/age image ships
-# none — see apache/age#2570.
-migrate_age_extension() {
-    local psql_args=(-U "${POSTGRES_USER:-admin}" -d "${POSTGRES_DB:-knowledge_graph}" -tAc)
-    local installed available err
-
-    installed=$(docker exec "$POSTGRES_CONTAINER" psql "${psql_args[@]}" \
-        "SELECT extversion FROM pg_extension WHERE extname='age'" 2>/dev/null) || return 0
-    available=$(docker exec "$POSTGRES_CONTAINER" psql "${psql_args[@]}" \
-        "SELECT default_version FROM pg_available_extensions WHERE name='age'" 2>/dev/null) || return 0
-
-    # Extension absent, or version unreadable — the presence check above already
-    # reported it; nothing to reconcile.
-    [ -n "$installed" ] && [ -n "$available" ] || return 0
-    [ "$installed" = "$available" ] && return 0
-
-    echo -e "${BLUE}  Updating AGE extension catalog: ${installed} → ${available}...${NC}"
-    if ! err=$(docker exec "$POSTGRES_CONTAINER" psql \
-            -U "${POSTGRES_USER:-admin}" -d "${POSTGRES_DB:-knowledge_graph}" \
-            -v ON_ERROR_STOP=1 -c "ALTER EXTENSION age UPDATE" 2>&1); then
-        echo -e "${RED}✗ AGE extension update ${installed} → ${available} failed${NC}"
-        echo "$err" | sed 's/^/    /'
-        echo ""
-        echo -e "${RED}Refusing to continue: the AGE library is ${available} but the catalog is"
-        echo -e "still ${installed}. Graph writes would succeed and every graph read would fail.${NC}"
-        echo "  If this is \"no update path\", the image is missing"
-        echo "  /usr/share/postgresql/18/extension/age--${installed}--${available}.sql"
-        echo "  (see docker/age/ and apache/age#2570)."
-        exit 1
-    fi
-    echo -e "${GREEN}✓ AGE extension updated ${installed} → ${available}${NC}"
-}
+# Reconcile the AGE extension catalog to the library the image ships (shared
+# with the host operator.sh start/restart and upgrade paths — see the header of
+# age-catalog.sh). Runs after postgres is up and before the warm migrations run
+# Cypher against it.
+# shellcheck source=age-catalog.sh
+source "$SCRIPT_DIR/age-catalog.sh"
 migrate_age_extension
 
 # Apply warm migrations (require running AGE/graph engine)
