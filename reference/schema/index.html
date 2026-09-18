@@ -3604,7 +3604,7 @@
 <p>Relational schema for the Kappa Graph control plane. The knowledge graph itself (concepts, sources, instances, and their typed edges) lives in the Apache AGE <code>knowledge_graph</code> graph; the tables below hold operational state, authorization, and observability around it.</p>
 <p>Backed by PostgreSQL 18 with Apache AGE 1.8.0. This page is generated from <code>schema/00_baseline.sql</code> and <code>schema/migrations/*.sql</code>; do not edit it by hand.</p>
 <!-- GENERATED FILE — edit the SQL DDL, then run `make docs-schema`. -->
-<!-- Generated: 2026-09-17 -->
+<!-- Generated: 2026-09-18 -->
 
 <h2 id="diagram">Diagram</h2>
 <iframe src="../schema-erd.html" title="Interactive schema ER diagram" loading="lazy" style="width:100%;height:720px;border:1px solid var(--md-default-fg-color--lightest,#ccc);border-radius:8px;"></iframe>
@@ -8177,7 +8177,24 @@
 </table>
 <h2 id="migration-history">Migration history</h2>
 <p>Schema evolves through numbered migrations under <code>schema/migrations/</code>. Each is recorded in <code>public.schema_migrations</code> when applied. The baseline (<code>00_baseline.sql</code>) is a generated checkpoint consolidating migrations 001–080 (see <code>schema/migrations/archived/</code>); migrations after it are applied in order.</p>
-<p>No post-checkpoint migrations yet — the baseline is the complete current schema.</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Migration</th>
+<th>ADRs</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>81</td>
+<td>modernbert siglip2 default profile</td>
+<td>ADR-803, ADR-814</td>
+<td>Seed the ModernBERT + SigLIP 2 embedding profile and make it the default (ADR-814)</td>
+</tr>
+</tbody>
+</table>
 
 
 

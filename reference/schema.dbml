@@ -1,6 +1,6 @@
 // Database schema for the Knowledge Graph System control plane.
 // GENERATED FILE — edit the SQL DDL, then run `make docs-schema`.
-// Generated: 2026-09-17
+// Generated: 2026-09-18
 //
 // Render: schema/scripts/render-schema-diagram.mjs (interactive ERD)
 // Or paste into https://dbdiagram.io to explore/edit.

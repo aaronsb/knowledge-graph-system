@@ -2780,6 +2780,9 @@
 - Switching from nomic → BGE requires full re-embedding (incompatible spaces)
 - Once migrated, ALL clients must use the same model</p>
 <h3 id="6-model-recommendation">6. Model Recommendation</h3>
+<blockquote>
+<p><strong>Superseded by <a href="../ADR-814-siglip-2-as-the-default-local-embedding-profile/">ADR-814</a> (2026-09-18).</strong> The default local profile is <code>nomic-ai/modernbert-embed-base</code> (text) + <code>google/siglip2-base-patch16-256</code> (image index). The nomic-embed-text-v1.5 recommendation below depends on remote code that does not load on transformers 5.x.</p>
+</blockquote>
 <p><strong>Recommended for Most Use Cases: nomic-embed-text-v1.5</strong></p>
 <table>
 <thead>

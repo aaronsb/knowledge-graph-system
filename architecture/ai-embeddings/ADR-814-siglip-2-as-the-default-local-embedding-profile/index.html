@@ -23,7 +23,7 @@
     
     
       
-        <title>ADR-103: Distribution strategy: nomic-first thin appliance with app-store tenancy - Knowledge Graph System</title>
+        <title>ADR-814: SigLIP 2 as the default local embedding profile - Knowledge Graph System</title>
       
     
     
@@ -64,7 +64,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#adr-103-distribution-strategy-nomic-first-thin-appliance-with-app-store-tenancy" class="md-skip">
+        <a href="#adr-814-siglip-2-as-the-default-local-embedding-profile" class="md-skip">
           Skip to content
         </a>
       
@@ -100,7 +100,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              ADR-103: Distribution strategy: nomic-first thin appliance with app-store tenancy
+              ADR-814: SigLIP 2 as the default local embedding profile
             
           </span>
         </div>
@@ -1984,17 +1984,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#stage-2-build-contract-x86-thin-appliance" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Stage 2 Build Contract — x86 thin appliance
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#consequences" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2045,17 +2034,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#open-questions-verification-gates" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Open Questions / Verification Gates
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#alternatives-considered" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2086,243 +2064,173 @@
   
 
 
-<h1 id="adr-103-distribution-strategy-nomic-first-thin-appliance-with-app-store-tenancy">ADR-103: Distribution strategy: nomic-first thin appliance with app-store tenancy</h1>
+<h1 id="adr-814-siglip-2-as-the-default-local-embedding-profile">ADR-814: SigLIP 2 as the default local embedding profile</h1>
 <h2 id="context">Context</h2>
-<p>The system is fully containerized and managed by <code>operator.sh</code> (an apt-style
-lifecycle tool) with a standalone <code>install.sh</code> for production deployment.
-Despite this, the single biggest constraint on broader adoption is <strong>distribution</strong>:
-standing the platform up requires the operator to understand Docker, Compose,
-<code>operator.sh</code>, provider configuration, and secret generation. That is a steep
-funnel for a system that is otherwise self-contained.</p>
-<p>"Distribution" is not one problem but four, and they have different solutions:</p>
+<p>The default embedding profile (<code>Nomic v1.5</code>, seeded by migration 056 and carried
+in <code>schema/00_baseline.sql</code>) loads <code>nomic-ai/nomic-embed-text-v1.5</code> and
+<code>nomic-ai/nomic-embed-vision-v1.5</code> with <code>trust_remote_code</code>. Both models run
+on the <code>nomic-ai/nomic-bert-2048</code> remote code, last changed 2025-04-29, and
+that code is broken on transformers 5.x (issue #565, PR #552):</p>
+<ul>
+<li>the vision model's <code>config.json</code> carries <code>"n_inner": 2048.0</code>, which the 5.x
+  strict config dataclass rejects;</li>
+<li>the text model calls <code>get_extended_attention_mask</code>, removed from
+  <code>PreTrainedModel</code> in 5.x.</li>
+</ul>
+<p><code>requirements.txt</code> therefore caps <code>transformers&lt;5.0</code>, and the cap transitively
+holds sentence-transformers at 5.x. The cap is the last held dependency from
+the 2026-09-17 sweep. Waiting on an upstream fix has no date attached.</p>
+<p>ADR-803 settled the shape of the embedding system: one universal text space,
+and a modality's native embedding is an independent same-modality index that is
+never compared to the text space. That decoupling means the text model and the
+image model can be replaced independently, and neither needs to be a single
+co-spatial multimodal model.</p>
+<p>Verified on 2026-09-18 with transformers 5.17.0, sentence-transformers 6.1.0,
+torch 2.14.0 (CPU):</p>
 <table>
 <thead>
 <tr>
-<th>Axis</th>
-<th>What it means</th>
-<th>Solved by an appliance?</th>
+<th>Model</th>
+<th>Role</th>
+<th>Dims</th>
+<th>Context</th>
+<th>Remote code</th>
+<th>License</th>
+<th>Weights</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>Install friction</strong></td>
-<td>Docker/Compose/operator literacy required</td>
-<td>Yes — flash, boot, paste a key</td>
+<td><code>nomic-ai/modernbert-embed-base</code></td>
+<td>text</td>
+<td>768</td>
+<td>8192 tokens</td>
+<td>no (<code>model_type: modernbert</code>)</td>
+<td>Apache 2.0</td>
+<td>596 MB fp32</td>
 </tr>
 <tr>
-<td><strong>Discovery</strong></td>
-<td>People finding the project at all</td>
-<td>No — needs to live where self-hosters browse</td>
-</tr>
-<tr>
-<td><strong>Update lifecycle</strong></td>
-<td>Keeping deployed instances current</td>
-<td>Partly — <code>operator.sh upgrade</code> is already proto-OTA</td>
-</tr>
-<tr>
-<td><strong>Support surface</strong></td>
-<td>Variance across host environments</td>
-<td>Mixed — known-good env helps; tenant management adds surface</td>
+<td><code>google/siglip2-base-patch16-256</code></td>
+<td>image</td>
+<td>768</td>
+<td>256 px</td>
+<td>no (<code>model_type: siglip</code>)</td>
+<td>Apache 2.0</td>
+<td>1.5 GB fp32 (both towers)</td>
 </tr>
 </tbody>
 </table>
-<p>A naive "ship it all as one VM" framing hides a fork. A <strong>fat appliance</strong> bakes
-images + data into a frozen VM image (truly offline, but fights the existing
-pull-based <code>operator.sh upgrade</code> lifecycle and ships multi-GB images per
-release). A <strong>thin appliance</strong> ships a minimal host with Docker + <code>operator.sh</code>
-preinstalled and pulls images on first boot (keeps the incremental update story,
-needs network on first boot). For a system whose deployment philosophy is
-already "pull images, migrate, restart," the thin model is the natural fit.</p>
-<p>Two technical facts shape the strategy:</p>
-<ol>
-<li>
-<p><strong>The embedding/reasoning split is already a code path, not a thing to
-   build.</strong> <code>LocalEmbeddingProvider</code> does on-device embeddings via
-   sentence-transformers and explicitly cannot extract (ADR-804). Concept
-   <em>extraction/reasoning</em> is a separate provider path that calls a remote LLM.
-   This lets the appliance own the cheap, private, edge-friendly compute
-   (embeddings, vector similarity, graph storage — the user's data) while
-   farming out only document chunks to a cloud LLM for extraction.</p>
-</li>
-<li>
-<p><strong>Multi-arch images are already produced.</strong> <code>publish.sh</code> runs
-   <code>docker buildx --platform linux/amd64,linux/arm64</code>, auto-enabled on
-   <code>release</code>/<code>main</code>. An ARM64 target (Raspberry Pi 4GB+, Home Assistant OS
-   style) is feasible because the CPU/RAM profile fits when reasoning is remote
-   and embeddings use a small local model.</p>
-</li>
-</ol>
-<p>A target deployment is a Raspberry-Pi-class appliance (HAOS-like): a flashable
-image that runs the containers, does embeddings on-device, and only reaches out
-for reasoning. Local inference for <em>reasoning</em> (e.g. vLLM passthrough) is
-explicitly out of scope — if a user wants it, that is their own add-on
-container, not a core responsibility.</p>
+<p>ModernBERT-embed is Nomic's own successor to nomic-embed-text: same 768
+dimensions, same <code>search_query:</code> / <code>search_document:</code> task prefixes, same
+8K context, native transformers architecture. The SigLIP 2 vision tower's
+<code>pooler_output</code> matches the full model's <code>get_image_features</code> exactly, so the
+image index only needs the vision tower loaded.</p>
+<p>SigLIP 2's text tower is limited to 64 tokens. It is not usable as the
+universal text embedder for 1000-word source chunks, which rules out the
+single-model "multimodal" profile shape that the earlier plan (commit
+3649c73a5) sketched.</p>
 <h2 id="decision">Decision</h2>
-<blockquote>
-<p><strong>Amended by <a href="../../ai-embeddings/ADR-814-siglip-2-as-the-default-local-embedding-profile/">ADR-814</a> (2026-09-18).</strong> The invariant below is <em>local-first</em>: the out-of-the-box embedding profile is local and baked for offline boot, reasoning stays remote. The model pair is <code>nomic-ai/modernbert-embed-base</code> + <code>google/siglip2-base-patch16-256</code>; the nomic-embed v1.5 models named here no longer load on transformers 5.x.</p>
-</blockquote>
-<p>Adopt a <strong>staged, thin-appliance distribution strategy</strong> with a <strong>nomic-first
-local-embedding invariant</strong>, and <strong>defer</strong> building a bespoke supervisor OS.</p>
-<p><strong>Invariant — nomic-first, reasoning-remote.</strong> The out-of-the-box embedding
-model is the local <code>nomic-ai/nomic-embed-text-v1.5</code> profile (768-dim,
-on-device, no API key). Cloud OpenAI embeddings remain a one-command
-alternative but are no longer the default. Reasoning/extraction continues to
-require a remote LLM provider. This makes the appliance self-contained for the
-private/edge half of the workload and means a fresh install needs a cloud key
-<em>only</em> for extraction, never for embeddings. Both default models — text
-(<code>nomic-embed-text-v1.5</code>) <strong>and</strong> vision (<code>nomic-embed-vision-v1.5</code>, loaded via
-the profile's image slot) — are baked into the API image at build time so the
-platform boots without a runtime HuggingFace download, the precondition for an
-offline / air-gapped / Pi appliance.</p>
-<p><strong>Cache-topology constraint (non-obvious).</strong> The HF cache path
-(<code>~/.cache/huggingface</code>) sits under a mounted volume (<code>hf_cache -&gt;
-/home/api/.cache</code>) in every compose variant. Weights baked <em>directly</em> into that
-path are shadowed by the empty volume on first boot, re-triggering the download.
-So the image bakes both models into a path <em>outside</em> the volume (<code>/opt/hf-seed</code>,
-loaded — not merely downloaded — so the <code>trust_remote_code</code> dynamic-module cache
-is populated too), and a first-boot entrypoint (<code>docker-entrypoint.sh</code>) copies
-them into the live cache with <code>cp -n</code> (preserving any model a user later
-switches to or adds). This keeps the deliberate persistent-cache design intact
-while guaranteeing offline first boot.</p>
-<p>The bake and seed live in <strong>shared scripts</strong> (<code>api/bake_embedding_models.py</code> +
-<code>api/docker-entrypoint.sh</code>) invoked by <em>every</em> published image variant — the
-standard CPU/x86/arm64/NVIDIA <code>api/Dockerfile</code> (runs as <code>api</code>, seeds the cache
-volume) and the AMD <code>api/Dockerfile.rocm-host</code> (runs as root, seeds <code>$HOME</code>).
-This was learned the hard way: an inline bake added only to <code>api/Dockerfile</code>
-silently skipped the ROCm image, which kept re-downloading at runtime. One
-source of truth for the model list is the only way the variants stay in lockstep.</p>
-<p><strong>Staged distribution path:</strong></p>
 <ol>
 <li>
-<p><strong>Stage 1 — app-store tenancy.</strong> Publish to existing self-host platforms
-   (Portainer template, CasaOS, Umbrel, TrueNAS SCALE app, Proxmox helper
-   script, Home Assistant add-on). These are <em>already</em> "an appliance OS that
-   manages container tenants." Being a tenant solves discovery <strong>and</strong> install
-   at a fraction of the cost of authoring an OS. Lowest effort, highest leverage.</p>
+<p><strong>The default local embedding profile becomes <code>ModernBERT + SigLIP 2</code></strong>
+   (migration 081): text slot <code>nomic-ai/modernbert-embed-base</code> via
+   sentence-transformers, image slot <code>google/siglip2-base-patch16-256</code> via
+   transformers, <code>multimodal = false</code>, <code>trust_remote_code = false</code> on both
+   slots, vector space <code>modernbert-embed-base</code>, image vector space
+   <code>siglip2-base-p16-256</code>.</p>
 </li>
 <li>
-<p><strong>Stage 2 — thin appliance images.</strong> Ship prebuilt OVA/qcow2 + an arm64 Pi
-   image: a minimal host with Docker + <code>operator.sh</code> preinstalled, nomic
-   weights baked, reasoning cloud-only. Still thin — updates flow through the
-   existing <code>operator.sh upgrade</code> pull lifecycle, not whole-image replacement.</p>
+<p><strong>The <code>transformers&lt;5.0</code> cap is lifted.</strong> <code>requirements.txt</code> floors
+   <code>transformers&gt;=5.0</code> and <code>sentence-transformers&gt;=6.0</code>.</p>
 </li>
 <li>
-<p><strong>Stage 3 — supervisor model (deferred).</strong> Becoming our own appliance OS
-   with a first-class add-on model (e.g. user-supplied vLLM-passthrough
-   container) is explicitly out of scope for now. We only <strong>preserve the seam</strong>:
-   keep <code>operator.sh</code> add-on-shaped so the door stays open if demand proves out.</p>
+<p><strong>Migration 081 switches existing installs whose active profile is the
+   seeded <code>Nomic v1.5</code> row</strong> to the new profile, mirroring the
+   <code>activate_embedding_config</code> flow (protection flags, vocabulary embeddings
+   marked stale). The Nomic row stays in the table, inactive and unprotected.
+   Installs on any other active profile (OpenAI, custom) are left alone.</p>
+</li>
+<li>
+<p><strong>Existing text embeddings are re-generated by the operator</strong>, not by the
+   migration:</p>
 </li>
 </ol>
-<p>This ADR records the strategy and the nomic-first invariant. The nomic-first
-flip is implemented on branch <code>survey/nomic-first-defaults</code> (seed migrations
-003/008, mig-012 fallback, Dockerfile bake, mock/test dimension alignment,
-operator-help/API-doc defaults).</p>
-<h2 id="stage-2-build-contract-x86-thin-appliance">Stage 2 Build Contract — x86 thin appliance</h2>
-<p>The first Stage-2 artifact is an x86 qcow2/OVA. Its build contract (tooling in
-<code>appliance/</code>) records the non-obvious decisions:</p>
-<ul>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="s2">"</span><span class="nv">$API</span><span class="s2">/admin/embedding/regenerate?embedding_type=all&amp;only_incompatible=true"</span>
+</code></pre></div>
+<p>The migration prints this as a NOTICE. Re-embedding is ADR-803's stated
+   consequence of changing the universal text embedder, and it needs the API
+   running with the new model loaded, which a schema migration cannot assume.</p>
+<ol>
 <li>
-<p><strong>The appliance is ADR-117's "cube" deployment, baked.</strong> Not a new installer:
-  a minimal Debian host with Docker + the repo at <code>/opt/kg</code>, <code>image-source=ghcr</code>,
-  reusing the tested <code>operator.sh init --headless</code> path verbatim. <code>install.sh</code>'s
-  standalone curl-fetch is <em>staged at bake time</em> instead of run at install time.</p>
+<p><strong>The image loader resolves the vision tower by <code>model_type</code></strong>
+   (<code>siglip</code> → <code>SiglipVisionModel</code>, <code>clip</code> → <code>CLIPVisionModel</code>) and pools with
+   <code>pooler_output</code> when the model provides one, falling back to the CLS token.
+   SigLIP has no CLS token; its pooled output is the attention-pooling head.</p>
 </li>
 <li>
-<p><strong>Bake / first-boot split, with a no-baked-secrets invariant.</strong> The image
-  carries OS + Docker + repo but <strong>no <code>.env</code> and no secrets</strong>. A oneshot
-  systemd unit (<code>kg-firstboot</code>, self-disarming via a sentinel) runs
-  <code>operator.sh init --headless --image-source=ghcr --gpu=cpu --skip-ai-config</code>
-  on first power-on, so <code>operator/lib/init-secrets.sh</code> mints <strong>unique
-  per-instance</strong> <code>ENCRYPTION_KEY</code>/<code>POSTGRES_PASSWORD</code>/etc. A baked <code>.env</code> would
-  ship every appliance with identical secrets — the one thing the split exists
-  to prevent. <code>WEB_HOSTNAME</code> is derived from the DHCP lease at first boot.</p>
+<p><strong>Task prefixes are applied as raw strings</strong> (<code>encode(prompt=...)</code>) rather
+   than by registered prompt name. ModernBERT-embed registers <code>query</code> and
+   <code>document</code> prompt names with empty strings, so <code>prompt_name="query"</code> would
+   silently drop the prefix.</p>
 </li>
 <li>
-<p><strong>Thin, literally.</strong> Container images are <em>not</em> baked; they are pulled on
-  first boot (network required once), so updates stay on the <code>operator.sh
-  upgrade</code> pull lifecycle. The only offline asset is the nomic weight set, which
-  rides inside the <code>kg-api</code> image. A warm (images-baked) variant is a deferred
-  build flag, not the default.</p>
+<p><strong>ADR-103's "nomic-first" invariant is read as "local-first"</strong>: the
+   out-of-the-box profile is local, offline-baked, and reasoning stays remote.
+   The specific model pair is this ADR's to choose. ADR-804 §6's model
+   recommendation is superseded by the table above.</p>
 </li>
-<li>
-<p><strong>Build tool: virt-customize now, Packer deferred.</strong> libguestfs customizes the
-  Debian genericcloud qcow2 in place (no VM boot), which fits a "stage files +
-  install Docker" job. A Packer/QEMU template is the deferred CI-release path.</p>
-</li>
-<li>
-<p><strong>Reasoning key is never required to reach a running platform.</strong> First boot
-  yields a live box doing local embeddings; the operator pastes a reasoning key
-  in the web UI afterward. This is the "flash, boot, paste a key" curve made
-  concrete.</p>
-</li>
-</ul>
+</ol>
 <h2 id="consequences">Consequences</h2>
 <h3 id="positive">Positive</h3>
 <ul>
-<li>Collapses install friction to "flash, boot, paste a reasoning key" on the
-  HAOS adoption curve.</li>
-<li>App-store tenancy (Stage 1) hits discovery + install together without the
-  multi-year cost of building an OS.</li>
-<li>The nomic-first invariant makes the appliance self-contained for embeddings
-  and keeps the private graph local; only document chunks leave the box.</li>
-<li>Keeps the existing pull-based <code>operator.sh upgrade</code> lifecycle intact (thin,
-  not fat) — no multi-GB per-release image churn.</li>
-<li>Reuses code paths that already exist (LocalEmbeddingProvider, multi-arch
-  buildx) rather than introducing new architecture.</li>
+<li>transformers and sentence-transformers track upstream again; the last held
+  dependency from the sweep is released.</li>
+<li>No remote code in the default profile. The bake step no longer has to warm
+  the <code>HF_HOME/modules</code> dynamic-module cache for offline boot.</li>
+<li>Text quality is at least preserved: same dimensions, same prefixes, same
+  context, a newer base architecture.</li>
+<li>The image index moves from a 2024 vision model to SigLIP 2.</li>
 </ul>
 <h3 id="negative">Negative</h3>
 <ul>
-<li>Baking both default models (text ~275MB + vision) adds several hundred MB to
-  the API image, including for cloud-only deployments that will not use local
-  embeddings, and first boot pays a one-time seed-copy into the cache volume.
-  A build ARG to opt out of baking is a possible later refinement.</li>
-<li>Local 768-dim and OpenAI 1536-dim embeddings are incompatible vector spaces;
-  the appliance standardizes on 768 and switching costs a full re-embed.</li>
-<li>A thin appliance still needs network on first boot to pull images (only the
-  embedding model is offline); true air-gap remains a separate, later effort.</li>
-<li>App-store tenancy adds per-platform packaging/maintenance surface (Portainer
-  vs CasaOS vs HA add-on manifests).</li>
+<li>Every existing install on the seeded Nomic profile must re-embed concepts,
+  sources, and vocabulary after upgrade. Search over old embeddings degrades
+  until that runs. Cube and the development volume are both in this state.</li>
+<li>The baked model layer is 2.1 GB (measured: <code>kg-api:latest</code> grew from
+  6.58 GB to 8.56 GB). SigLIP 2 ships both towers in one safetensors file,
+  and the runtime loads only the vision tower from it.</li>
+<li>The <code>Nomic v1.5</code> profile row can no longer be activated: its models do not
+  load on transformers 5.x. It is kept for history and for restores of old
+  backups, not for use.</li>
 </ul>
 <h3 id="neutral">Neutral</h3>
 <ul>
-<li>ARM64 viability depends on two upstream images having arm64 variants —
-  see open gates below.</li>
-<li>Stage 3 deliberately leaves the supervisor/add-on model unbuilt; this is a
-  recorded non-goal, not an oversight.</li>
-<li>No deployed environments exist yet, so the seed-default flip is a direct
-  migration edit rather than a forward reconciliation migration.</li>
-</ul>
-<h2 id="open-questions-verification-gates">Open Questions / Verification Gates</h2>
-<ul>
-<li><strong>AGE arm64</strong>: the Postgres+AGE image is pinned to a SHA digest
-  (<code>apache/age@sha256:e7de17…</code>). Confirm that build publishes an arm64 variant,
-  or repin/rebuild.</li>
-<li><strong>Garage arm64</strong>: <code>dxflrs/garage:v2.4.1</code> — Garage is an edge/self-host
-  product so arm64 almost certainly exists; verify.</li>
-<li><strong>Pi RAM budget</strong>: validate Postgres+AGE + Garage + API + nomic (~400MB
-  loaded) fit comfortably in 4GB under real ingestion.</li>
-<li><strong>Offline boot</strong> ✅ <em>verified 2026-06-11</em> (AMD ROCm image, <code>Dockerfile.rocm-host</code>):
-  a freshly built image seeded <code>/opt/hf-seed</code> into the runtime cache and loaded
-  both text + vision models with logs showing "Loaded from local cache" and zero
-  download lines. The appliance offline precondition holds on real hardware.</li>
-<li><strong>QEMU bake</strong>: confirm the bake step (which <em>loads</em> both models, populating the
-  dynamic-module cache) completes when building the arm64 image under emulation.</li>
+<li>Backups carry the embedding identity (<code>provider:model@dims</code>); restores of
+  pre-081 backups report the mismatch through the existing identity check.</li>
+<li><code>IMAGE_EMBEDDING_MODEL</code> and the module-level defaults in
+  <code>embedding_model_manager.py</code> / <code>visual_embeddings.py</code> follow the new pair.</li>
+<li>ADR-103's Pi RAM budget line (<code>nomic ~400MB</code>) needs re-measuring with the
+  new pair when Stage 2 resumes (#515).</li>
 </ul>
 <h2 id="alternatives-considered">Alternatives Considered</h2>
 <ul>
-<li><strong>Fat VM appliance</strong> (bake images + data into a frozen VM). Rejected as the
-  default: fights the pull-based upgrade lifecycle, ships multi-GB images per
-  release, and only earns its weight for a hard air-gapped requirement that no
-  user has yet.</li>
-<li><strong>Build our own supervisor OS now</strong> (HAOS from scratch). Rejected for now:
-  multi-year effort; existing self-host app stores already provide the
-  container-tenant substrate. Deferred to Stage 3, seam preserved.</li>
-<li><strong>Keep OpenAI-embedding default, add appliance packaging only.</strong> Rejected:
-  would force every appliance to carry a cloud embedding key and send all
-  content out for embeddings, defeating the private/edge value proposition.</li>
-<li><strong>Local reasoning in-appliance (bundled vLLM/Ollama).</strong> Rejected as a core
-  responsibility: GPU passthrough into a VM/Pi is host-specific and fragile;
-  left to user-supplied add-on containers.</li>
+<li><strong>Vendor or monkey-patch the Nomic remote code.</strong> Fixing <code>n_inner</code> and
+  re-adding <code>get_extended_attention_mask</code> in-tree is a private fork of code
+  loaded via <code>trust_remote_code</code>; every transformers major would reopen it.
+  Rejected.</li>
+<li><strong>Keep the cap.</strong> transformers 4.57 is the last 4.x line; sentence-transformers
+  6 requires 5. The cap would hold both indefinitely. Rejected.</li>
+<li><strong>Single multimodal SigLIP 2 profile</strong> (<code>multimodal = true</code>, text and image
+  from one model). The 64-token text tower cannot embed source chunks. Rejected.</li>
+<li><strong>SigLIP 2 so400m</strong> (1152 dims, 1.1 B params) for images. Better retrieval,
+  2.3 GB at fp16, too heavy for the CPU appliance target. Not chosen for the
+  default; selectable as a custom profile.</li>
+<li><strong><code>google/embeddinggemma-300m</code>, <code>Qwen/Qwen3-Embedding-0.6B</code></strong> for text. Both
+  native and higher on MTEB, but 300 M and 600 M parameters against
+  ModernBERT-embed's 149 M, and the Gemma license is not Apache 2.0. Not chosen
+  for the default.</li>
+<li><strong><code>nomic-ai/nomic-embed-text-v2-moe</code>.</strong> Remote code. Rejected for the same
+  reason as v1.5.</li>
 </ul>
 
 

@@ -2256,7 +2256,7 @@
 </tr>
 <tr>
 <td><code>local</code></td>
-<td><code>nomic-ai/nomic-embed-text-v1.5</code></td>
+<td><code>nomic-ai/modernbert-embed-base</code> (default, with <code>google/siglip2-base-patch16-256</code> as the image index)</td>
 <td>768</td>
 </tr>
 </tbody>
@@ -2279,7 +2279,7 @@
 <a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>  Inactive Config 2
 <a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>    ID:           2
 <a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>    Vector Space: cosine
-<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>    Text:         local / nomic-ai/nomic-embed-text-v1.5
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>    Text:         local / nomic-ai/modernbert-embed-base
 <a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>      Dims:       768  Loader: auto
 <a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>    Image:        (none)
 <a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>    Updated: 10/21/2025, 3:45:12 PM by admin
@@ -2310,7 +2310,7 @@
 <a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="c1"># Local (full resource config)</span>
 <a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span>create<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="w">  </span>--provider<span class="w"> </span><span class="nb">local</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="w">  </span>--model<span class="w"> </span><span class="s2">"nomic-ai/nomic-embed-text-v1.5"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="w">  </span>--model<span class="w"> </span><span class="s2">"nomic-ai/modernbert-embed-base"</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="w">  </span>--dimensions<span class="w"> </span><span class="m">768</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="w">  </span>--precision<span class="w"> </span>float16<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="w">  </span>--device<span class="w"> </span>cpu<span class="w"> </span><span class="se">\</span>
@@ -2342,7 +2342,7 @@
 <p>To change memory, threads, or batch size without changing the provider or dimensions, create a new profile with updated resource values, activate it, and reload. There is no in-place update — use <code>create</code> + <code>activate</code> + <code>reload</code>.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span>create<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">  </span>--provider<span class="w"> </span><span class="nb">local</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">  </span>--model<span class="w"> </span><span class="s2">"nomic-ai/nomic-embed-text-v1.5"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">  </span>--model<span class="w"> </span><span class="s2">"nomic-ai/modernbert-embed-base"</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">  </span>--dimensions<span class="w"> </span><span class="m">768</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">  </span>--precision<span class="w"> </span>float16<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="w">  </span>--memory<span class="w"> </span><span class="m">256</span><span class="w"> </span><span class="se">\</span>
@@ -2429,12 +2429,12 @@
 <p><strong>Vector search returns wrong results after a dimension change</strong></p>
 <p>The dimensions changed but the stored embeddings were not rebuilt. Re-ingest your data (see above).</p>
 <p><strong>Local model download fails</strong></p>
-<p>Use the full HuggingFace model identifier: <code>nomic-ai/nomic-embed-text-v1.5</code>, not <code>nomic-embed-text</code>. Verify network access to <code>huggingface.co</code> from the server.</p>
+<p>Use the full HuggingFace model identifier: <code>nomic-ai/modernbert-embed-base</code>, not <code>modernbert-embed-base</code>. Verify network access to <code>huggingface.co</code> from the server.</p>
 <p><strong>OOM during local model load</strong></p>
 <p>Reduce memory or precision:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>kg<span class="w"> </span>admin<span class="w"> </span>embedding<span class="w"> </span>create<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="w">  </span>--provider<span class="w"> </span><span class="nb">local</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">  </span>--model<span class="w"> </span><span class="s2">"nomic-ai/nomic-embed-text-v1.5"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">  </span>--model<span class="w"> </span><span class="s2">"nomic-ai/modernbert-embed-base"</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">  </span>--dimensions<span class="w"> </span><span class="m">768</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="w">  </span>--precision<span class="w"> </span>float16<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a><span class="w">  </span>--memory<span class="w"> </span><span class="m">256</span><span class="w"> </span><span class="se">\</span>

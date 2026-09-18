@@ -2216,7 +2216,7 @@
     alt vocab_size &gt; target
         loop Until target reached or no candidates
             VM-&gt;&gt;SD: find_synonyms(types)
-            SD-&gt;&gt;DB: Fetch embeddings (768-dim nomic)
+            SD-&gt;&gt;DB: Fetch embeddings (768-dim modernbert-embed)
             SD--&gt;&gt;VM: Ranked synonym candidates
 
             VM-&gt;&gt;PS: evaluate_synonym(candidate, scores)
@@ -2287,7 +2287,7 @@
     subgraph Provider Layer
         GP["get_provider()"] --&gt; RP[ReasoningProvider]
         RP --&gt;|".embedding_provider"| LP
-        GEP["get_embedding_provider()"] --&gt; LP[LocalEmbeddingProvider&lt;br/&gt;nomic-embed-text-v1.5]
+        GEP["get_embedding_provider()"] --&gt; LP[LocalEmbeddingProvider&lt;br/&gt;modernbert-embed-base]
     end
 
     subgraph Output
