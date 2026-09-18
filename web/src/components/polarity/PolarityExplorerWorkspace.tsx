@@ -396,7 +396,7 @@ export const PolarityExplorerWorkspace: React.FC = () => {
               value={positivePoleQuery}
               onChange={(e) => setPositivePoleQuery(e.target.value)}
               placeholder="Type to search..."
-              className="w-full px-3 py-2 pr-10 border border-blue-500/30 rounded-lg bg-background text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+              className="w-full px-3 py-2 pr-10 border border-blue-500/30 rounded-lg bg-background text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-hidden"
             />
             {isSearchingPositive && (
               <LoadingSpinner className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-500" />
@@ -462,7 +462,7 @@ export const PolarityExplorerWorkspace: React.FC = () => {
               value={negativePoleQuery}
               onChange={(e) => setNegativePoleQuery(e.target.value)}
               placeholder="Type to search..."
-              className="w-full px-3 py-2 pr-10 border border-orange-500/30 rounded-lg bg-background text-sm focus:border-orange-500 focus:ring-1 focus:ring-orange-500 focus:outline-none"
+              className="w-full px-3 py-2 pr-10 border border-orange-500/30 rounded-lg bg-background text-sm focus:border-orange-500 focus:ring-1 focus:ring-orange-500 focus:outline-hidden"
             />
             {isSearchingNegative && (
               <LoadingSpinner className="absolute right-3 top-1/2 transform -translate-y-1/2 text-orange-500" />

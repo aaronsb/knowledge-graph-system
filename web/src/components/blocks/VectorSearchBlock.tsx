@@ -58,7 +58,7 @@ export const VectorSearchBlock: React.FC<NodeProps<BlockData>> = ({ data }) => {
         onPointerDown={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
         placeholder="Enter search phrase..."
-        className="w-full px-2 py-1.5 text-sm border border-border dark:border-gray-600 bg-background dark:bg-gray-900 text-foreground dark:text-gray-100 rounded mb-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 nodrag"
+        className="w-full px-2 py-1.5 text-sm border border-border dark:border-gray-600 bg-background dark:bg-gray-900 text-foreground dark:text-gray-100 rounded mb-3 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 nodrag"
       />
 
       {/* Similarity Threshold Slider */}

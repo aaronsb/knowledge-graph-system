@@ -50,7 +50,7 @@ export const SearchBlock: React.FC<NodeProps<BlockData>> = ({ data }) => {
         onPointerDown={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
         placeholder="Enter search term..."
-        className="w-full px-2 py-1.5 text-sm border border-border dark:border-gray-600 bg-background dark:bg-gray-900 text-foreground dark:text-gray-100 rounded mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 nodrag"
+        className="w-full px-2 py-1.5 text-sm border border-border dark:border-gray-600 bg-background dark:bg-gray-900 text-foreground dark:text-gray-100 rounded mb-3 focus:outline-hidden focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 nodrag"
       />
 
       {/* Similarity Slider */}

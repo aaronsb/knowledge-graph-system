@@ -484,7 +484,7 @@ export const RolesTab: React.FC<RolesTabProps> = ({ onError, onSuccess }) => {
                   value={newRoleData.role_name}
                   onChange={(e) => setNewRoleData({ ...newRoleData, role_name: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '_') })}
                   placeholder="e.g., data_analyst"
-                  className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:ring-2 focus:ring-primary"
                 />
                 <p className="text-xs text-muted-foreground mt-1">Lowercase letters, numbers, and underscores only</p>
               </div>
@@ -497,7 +497,7 @@ export const RolesTab: React.FC<RolesTabProps> = ({ onError, onSuccess }) => {
                   value={newRoleData.display_name}
                   onChange={(e) => setNewRoleData({ ...newRoleData, display_name: e.target.value })}
                   placeholder="e.g., Data Analyst"
-                  className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:ring-2 focus:ring-primary"
                 />
               </div>
               <div>
@@ -509,7 +509,7 @@ export const RolesTab: React.FC<RolesTabProps> = ({ onError, onSuccess }) => {
                   onChange={(e) => setNewRoleData({ ...newRoleData, description: e.target.value })}
                   placeholder="Describe the role's purpose..."
                   rows={2}
-                  className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+                  className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:ring-2 focus:ring-primary resize-none"
                 />
               </div>
               <div>
@@ -519,7 +519,7 @@ export const RolesTab: React.FC<RolesTabProps> = ({ onError, onSuccess }) => {
                 <select
                   value={newRoleData.parent_role}
                   onChange={(e) => setNewRoleData({ ...newRoleData, parent_role: e.target.value })}
-                  className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground focus:outline-hidden focus:ring-2 focus:ring-primary"
                 >
                   <option value="">No parent (standalone role)</option>
                   {roles.filter(r => r.is_active).map(role => (

@@ -290,7 +290,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onError, onSuccess }) => {
                   value={newUserData.username}
                   onChange={(e) => setNewUserData(prev => ({ ...prev, username: e.target.value }))}
                   placeholder="Enter username"
-                  className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:ring-2 focus:ring-primary"
                 />
               </div>
               <div>
@@ -302,7 +302,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onError, onSuccess }) => {
                   value={newUserData.password}
                   onChange={(e) => setNewUserData(prev => ({ ...prev, password: e.target.value }))}
                   placeholder="Minimum 8 characters"
-                  className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:ring-2 focus:ring-primary"
                 />
               </div>
               <div>
@@ -312,7 +312,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onError, onSuccess }) => {
                 <select
                   value={newUserData.role}
                   onChange={(e) => setNewUserData(prev => ({ ...prev, role: e.target.value }))}
-                  className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground focus:outline-hidden focus:ring-2 focus:ring-primary"
                 >
                   <option value="read_only">Read Only</option>
                   <option value="contributor">Contributor</option>
@@ -381,7 +381,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onError, onSuccess }) => {
                 <select
                   value={editUserData.role}
                   onChange={(e) => setEditUserData(prev => ({ ...prev, role: e.target.value }))}
-                  className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground focus:outline-hidden focus:ring-2 focus:ring-primary"
                 >
                   <option value="read_only">Read Only</option>
                   <option value="contributor">Contributor</option>
@@ -522,7 +522,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({ onError, onSuccess }) => {
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="Minimum 8 characters"
-                  className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:ring-2 focus:ring-primary"
                 />
               </div>
             </div>

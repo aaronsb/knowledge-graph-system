@@ -395,7 +395,7 @@ export const PolarityScatterPlot: React.FC<PolarityScatterPlotProps> = ({
       {/* Context Menu */}
       {contextMenu && (
         <div
-          className="fixed z-[9999] bg-card dark:bg-gray-800 border border-border dark:border-gray-600 rounded-lg shadow-xl py-1 min-w-[220px]"
+          className="fixed z-9999 bg-card dark:bg-gray-800 border border-border dark:border-gray-600 rounded-lg shadow-xl py-1 min-w-[220px]"
           style={{ left: contextMenu.x, top: contextMenu.y }}
           onClick={(e) => e.stopPropagation()}
         >
@@ -572,7 +572,7 @@ export const PolarityScatterPlot: React.FC<PolarityScatterPlotProps> = ({
 
       {/* Scatter Plot - responsive with aspect ratio constraint */}
       {/* [&_*] selector removes focus outlines from all nested elements to prevent white rectangle on click */}
-      <div className="w-full aspect-[4/3] [&_.recharts-wrapper]:outline-none [&_.recharts-surface]:outline-none [&_*:focus]:outline-none [&_*]:focus-visible:outline-none">
+      <div className="w-full aspect-4/3 [&_.recharts-wrapper]:outline-hidden [&_.recharts-surface]:outline-hidden [&_*:focus]:outline-hidden focus-visible:**:outline-hidden">
       <ResponsiveContainer width="100%" height="100%">
         <ScatterChart
           margin={{ top: 20, right: 30, bottom: 60, left: 60 }}

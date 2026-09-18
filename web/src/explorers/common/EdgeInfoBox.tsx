@@ -43,7 +43,7 @@ export const EdgeInfoBox: React.FC<EdgeInfoBoxProps> = ({ info, onDismiss }) => 
       {/* Speech bubble pointer - theme-aware */}
       <div className="relative">
         <div
-          className="absolute left-1/2 bottom-0 w-0 h-0 border-l-[8px] border-r-[8px] border-t-[8px] border-l-transparent border-r-transparent border-t-card dark:border-t-gray-800"
+          className="absolute left-1/2 bottom-0 w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-card dark:border-t-gray-800"
           style={{
             transform: 'translateX(-50%) translateY(100%)',
           }}

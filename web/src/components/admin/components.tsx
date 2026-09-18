@@ -274,7 +274,7 @@ export const NewClientCredentialsDisplay: React.FC<{
   return (
     <div className="p-4 bg-status-active/10 border border-status-active/30 rounded-lg overflow-hidden">
       <div className="flex items-start gap-3 min-w-0">
-        <Check className="w-5 h-5 text-status-active mt-0.5 flex-shrink-0" />
+        <Check className="w-5 h-5 text-status-active mt-0.5 shrink-0" />
         <div className="flex-1 min-w-0 overflow-hidden">
           <h3 className="font-medium text-status-active">
             Client Created: {credentials.client_name}
@@ -357,7 +357,7 @@ export const NewClientCredentialsDisplay: React.FC<{
                   </label>
                   <button
                     onClick={() => copyToClipboard(mcpJsonConfig, 'json')}
-                    className="flex-shrink-0 flex items-center gap-1 px-2 py-1 text-xs bg-status-active/20 text-status-active rounded hover:bg-status-active/30 transition-colors"
+                    className="shrink-0 flex items-center gap-1 px-2 py-1 text-xs bg-status-active/20 text-status-active rounded hover:bg-status-active/30 transition-colors"
                   >
                     {copied === 'json' ? (
                       <>
@@ -387,7 +387,7 @@ export const NewClientCredentialsDisplay: React.FC<{
                   </label>
                   <button
                     onClick={() => copyToClipboard(claudeCliCommand, 'cli')}
-                    className="flex-shrink-0 flex items-center gap-1 px-2 py-1 text-xs bg-status-active/20 text-status-active rounded hover:bg-status-active/30 transition-colors"
+                    className="shrink-0 flex items-center gap-1 px-2 py-1 text-xs bg-status-active/20 text-status-active rounded hover:bg-status-active/30 transition-colors"
                   >
                     {copied === 'cli' ? (
                       <>

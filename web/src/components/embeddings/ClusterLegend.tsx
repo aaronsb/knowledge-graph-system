@@ -195,13 +195,13 @@ export function ClusterLegend({
               title={`${name} (${size} points) — click to toggle`}
             >
               <div
-                className="w-2.5 h-2.5 rounded-sm flex-shrink-0"
+                className="w-2.5 h-2.5 rounded-sm shrink-0"
                 style={{ backgroundColor: clusterColor(palette, id) }}
               />
               <span className="text-xs text-muted-foreground truncate flex-1">
                 {name}
               </span>
-              <span className="text-xs text-muted-foreground/40 flex-shrink-0 tabular-nums">
+              <span className="text-xs text-muted-foreground/40 shrink-0 tabular-nums">
                 {size}
               </span>
             </button>
@@ -213,7 +213,7 @@ export function ClusterLegend({
       {noiseCount > 0 && (
         <div className="flex items-center gap-1.5 pt-1 mt-1 border-t border-border/30 px-1">
           <div
-            className="w-2.5 h-2.5 rounded-sm flex-shrink-0"
+            className="w-2.5 h-2.5 rounded-sm shrink-0"
             style={{ backgroundColor: NOISE_COLOR }}
           />
           <span className="text-xs text-muted-foreground/60 flex-1">

@@ -140,7 +140,7 @@ export const SavedQueriesPanel: React.FC<SavedQueriesPanelProps> = ({
               title="Replay your current exploration session against the server (always fresh data)"
             >
               <div className="flex items-start gap-2">
-                <History className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                <History className="w-4 h-4 text-primary mt-0.5 shrink-0" />
                 <div className="flex-1 min-w-0">
                   <div className="font-medium text-sm text-primary truncate">Autosave</div>
                   <div className="text-xs text-muted-foreground mt-1">

@@ -274,7 +274,7 @@ export function VocabularyChordWorkspace() {
       {/* Main content area */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="flex-shrink-0 border-b border-border bg-card px-4 py-3">
+        <div className="shrink-0 border-b border-border bg-card px-4 py-3">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-lg font-semibold">Vocabulary Analysis</h1>
@@ -290,7 +290,7 @@ export function VocabularyChordWorkspace() {
                   onClick={() => setViewMode(mode)}
                   className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
                     viewMode === mode
-                      ? 'bg-background text-foreground shadow-sm'
+                      ? 'bg-background text-foreground shadow-xs'
                       : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
@@ -330,7 +330,7 @@ export function VocabularyChordWorkspace() {
         </div>
 
         {/* Side panel */}
-        <div className="w-80 border-l border-border bg-card overflow-y-auto flex-shrink-0 relative z-10">
+        <div className="w-80 border-l border-border bg-card overflow-y-auto shrink-0 relative z-10">
           {/* Subgraph stats */}
           {subgraphStats && (
             <div className="p-4 border-b border-border">
@@ -452,14 +452,14 @@ export function VocabularyChordWorkspace() {
                       >
                         <div className="flex items-center gap-2 min-w-0">
                           <div
-                            className="w-2 h-2 rounded-full flex-shrink-0"
+                            className="w-2 h-2 rounded-full shrink-0"
                             style={{ backgroundColor: color }}
                           />
                           <span className="truncate" title={et.relationship_type}>
                             {et.relationship_type}
                           </span>
                         </div>
-                        <span className="text-muted-foreground flex-shrink-0 ml-2">
+                        <span className="text-muted-foreground shrink-0 ml-2">
                           {et.edge_count}
                         </span>
                       </div>

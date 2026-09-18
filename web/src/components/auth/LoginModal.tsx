@@ -76,7 +76,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               disabled={isLoading}
-              className="w-full px-3 py-2 bg-background border border-border rounded focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
+              className="w-full px-3 py-2 bg-background border border-border rounded focus:outline-hidden focus:ring-2 focus:ring-primary disabled:opacity-50"
               placeholder="Enter your username"
               autoFocus
             />
@@ -93,7 +93,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={isLoading}
-              className="w-full px-3 py-2 bg-background border border-border rounded focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
+              className="w-full px-3 py-2 bg-background border border-border rounded focus:outline-hidden focus:ring-2 focus:ring-primary disabled:opacity-50"
               placeholder="Enter your password"
             />
           </div>

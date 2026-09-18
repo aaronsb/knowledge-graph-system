@@ -424,7 +424,7 @@ export const OntologyTab: React.FC<OntologyTabProps> = ({ onError, onSuccess }) 
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-2 py-1 text-sm bg-muted border border-border rounded text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            className="px-2 py-1 text-sm bg-muted border border-border rounded text-foreground focus:outline-hidden focus:ring-2 focus:ring-primary"
           >
             <option value="all">All active</option>
             <option value="pending">Pending</option>
@@ -486,7 +486,7 @@ export const OntologyTab: React.FC<OntologyTabProps> = ({ onError, onSuccess }) 
                     </div>
                   </div>
                   {canManage && p.status === 'pending' && (
-                    <div className="flex items-center gap-1 flex-shrink-0">
+                    <div className="flex items-center gap-1 shrink-0">
                       <button
                         onClick={() => handleReview(p.id, 'approved')}
                         disabled={reviewingId === p.id}

@@ -73,7 +73,7 @@ export const VisualControls: React.FC<VisualControlsProps> = ({
           {lightingFollowsProjection ? 'Shading (follows view)' : 'Shading'}
         </span>
         <select
-          className="flex-[2] bg-card border border-border rounded px-1 py-0.5 text-xs"
+          className="flex-2 bg-card border border-border rounded px-1 py-0.5 text-xs"
           value={lighting}
           disabled={lightingFollowsProjection}
           onChange={(e) => onLighting(e.target.value as 'flat' | 'lit')}
@@ -101,7 +101,7 @@ export const VisualControls: React.FC<VisualControlsProps> = ({
         <span className={valCls}>{nodeSize.toFixed(2)}</span>
         <input
           type="range"
-          className="flex-[2]"
+          className="flex-2"
           min={nodeSizeRange.min}
           max={nodeSizeRange.max}
           step={nodeSizeRange.step}

@@ -351,7 +351,7 @@ LIMIT 50`);
       {/* Header with Mode Info, Refresh, and Dial */}
       <div className="flex items-start justify-between gap-4">
         <div className="flex gap-3 flex-1">
-          <div className="flex-shrink-0">
+          <div className="shrink-0">
             <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
               <ModeIcon className="w-6 h-6 text-primary" />
             </div>
@@ -584,7 +584,7 @@ LIMIT 50`);
                 value={cypherQuery}
                 onChange={(e) => setCypherQuery(e.target.value)}
                 placeholder="Enter openCypher query..."
-                className="w-full h-48 px-3 py-2 font-mono text-sm rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring resize-y"
+                className="w-full h-48 px-3 py-2 font-mono text-sm rounded-lg border border-input bg-background focus:outline-hidden focus:ring-2 focus:ring-ring resize-y"
                 spellCheck={false}
               />
 

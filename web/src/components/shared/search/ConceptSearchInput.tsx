@@ -94,7 +94,7 @@ export const ConceptSearchInput: React.FC<ConceptSearchInputProps> = ({
           onChange={(e) => onQueryChange(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
-          className="w-full pl-10 pr-10 py-2 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+          className="w-full pl-10 pr-10 py-2 rounded-lg border border-input bg-background focus:outline-hidden focus:ring-2 focus:ring-ring"
         />
         {isLoading && (
           <LoadingSpinner className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />

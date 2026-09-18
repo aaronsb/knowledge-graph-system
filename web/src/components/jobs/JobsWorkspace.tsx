@@ -525,7 +525,7 @@ export const JobsWorkspace: React.FC = () => {
                 <XCircle className="w-4 h-4 text-destructive" />
                 <span className="font-medium text-destructive">Error</span>
               </div>
-              <div className="text-sm text-foreground font-mono break-words">
+              <div className="text-sm text-foreground font-mono wrap-break-word">
                 {job.error}
               </div>
             </div>

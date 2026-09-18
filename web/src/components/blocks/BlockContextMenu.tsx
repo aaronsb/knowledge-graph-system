@@ -71,7 +71,7 @@ export const BlockContextMenu: React.FC<BlockContextMenuProps> = ({
 
   return (
     <div
-      className="fixed bg-card dark:bg-gray-800 border border-border rounded-lg shadow-lg py-1 z-[9999] min-w-[160px]"
+      className="fixed bg-card dark:bg-gray-800 border border-border rounded-lg shadow-lg py-1 z-9999 min-w-[160px]"
       style={{ top, left }}
       onContextMenu={(e) => e.preventDefault()}
     >

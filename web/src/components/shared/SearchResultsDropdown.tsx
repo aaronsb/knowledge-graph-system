@@ -15,7 +15,7 @@ interface SearchResultsDropdownProps {
 export const SearchResultsDropdown: React.FC<SearchResultsDropdownProps> = ({ results, onSelect }) => {
   return (
     <div
-      className="absolute top-full left-0 right-0 mt-2 space-y-2 bg-background/95 backdrop-blur-sm rounded-lg p-2 shadow-lg max-h-80 overflow-y-auto"
+      className="absolute top-full left-0 right-0 mt-2 space-y-2 bg-background/95 backdrop-blur-xs rounded-lg p-2 shadow-lg max-h-80 overflow-y-auto"
       style={{ zIndex: getZIndexValue('searchResults') }}
     >
       {results.map((result) => {

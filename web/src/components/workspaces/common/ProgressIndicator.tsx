@@ -63,7 +63,7 @@ export const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({
         {/* Progress bar */}
         <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-status-info to-primary transition-all duration-300"
+            className="h-full bg-linear-to-r from-status-info to-primary transition-all duration-300"
             style={{ width: `${percent}%` }}
           />
         </div>
@@ -116,11 +116,11 @@ export const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({
         </div>
         <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-status-info to-primary transition-all duration-300 relative"
+            className="h-full bg-linear-to-r from-status-info to-primary transition-all duration-300 relative"
             style={{ width: `${percent}%` }}
           >
             {/* Animated shine effect */}
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse" />
+            <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/20 to-transparent animate-pulse" />
           </div>
         </div>
       </div>

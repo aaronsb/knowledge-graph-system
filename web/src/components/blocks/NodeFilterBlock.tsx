@@ -126,7 +126,7 @@ export const NodeFilterBlock: React.FC<NodeProps<BlockData>> = ({ data }) => {
             }}
             onKeyDown={handleLabelKeyDown}
             placeholder={useRegex ? "Regex pattern..." : "Type and press Enter..."}
-            className={`flex-1 px-2 py-1 text-xs border ${regexError ? 'border-red-500 dark:border-red-400' : 'border-border dark:border-gray-600'} bg-background dark:bg-gray-900 text-foreground dark:text-gray-100 rounded focus:outline-none focus:ring-1 focus:ring-purple-500 dark:focus:ring-purple-400`}
+            className={`flex-1 px-2 py-1 text-xs border ${regexError ? 'border-red-500 dark:border-red-400' : 'border-border dark:border-gray-600'} bg-background dark:bg-gray-900 text-foreground dark:text-gray-100 rounded focus:outline-hidden focus:ring-1 focus:ring-purple-500 dark:focus:ring-purple-400`}
           />
           <button
             onClick={handleAddLabel}
