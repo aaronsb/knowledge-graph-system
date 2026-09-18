@@ -5,7 +5,7 @@ Manages heavy sentence-transformers and transformers models that should be loade
 once at startup and reused across all requests.
 
 Supports multiple loaders (ADR-804 + migration 055):
-- sentence-transformers: SentenceTransformer (nomic, bge, etc.)
+- sentence-transformers: SentenceTransformer (modernbert-embed, bge, etc.)
 - transformers: AutoModel + AutoTokenizer (SigLIP text, custom models)
 - api: No local model needed (OpenAI, etc.)
 
@@ -40,7 +40,7 @@ class EmbeddingModelManager:
 
     def __init__(
         self,
-        model_name: str = "nomic-ai/nomic-embed-text-v1.5",
+        model_name: str = "nomic-ai/modernbert-embed-base",
         precision: str = "float16",
         device: str = None,
         loader: str = "sentence-transformers",
@@ -260,7 +260,7 @@ class EmbeddingModelManager:
             purpose: 'query' for search queries, 'document' for stored content
 
         Dispatches based on loader type:
-        - sentence-transformers: model.encode() with prompt_name if prefixes configured
+        - sentence-transformers: model.encode() with the profile's raw prefix as `prompt`
         - transformers: prepend raw prefix, tokenize -> forward -> CLS pool -> normalize
         """
         if self.model is None:
@@ -305,10 +305,14 @@ class EmbeddingModelManager:
         try:
             encode_kwargs = {"normalize_embeddings": True, "show_progress_bar": False}
 
-            # Apply task prefix via prompt_name if model supports it
-            if self._query_prefix:
-                prompt_name_map = {"query": "query", "document": "document"}
-                encode_kwargs["prompt_name"] = prompt_name_map.get(purpose, "document")
+            # Apply the profile's task prefix as a raw prompt string. Looking the
+            # prefix up by prompt_name would trust the model's own registry, and
+            # modernbert-embed-base registers 'query'/'document' as EMPTY strings,
+            # which silently drops the prefix. The profile row is the source of
+            # truth (ADR-814).
+            prefix = self._query_prefix if purpose == "query" else self._document_prefix
+            if prefix:
+                encode_kwargs["prompt"] = prefix
 
             embedding = self.model.encode(text, **encode_kwargs)
             if self.precision == "float16":

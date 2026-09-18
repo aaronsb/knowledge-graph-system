@@ -800,7 +800,7 @@ EOF
         # Configure embeddings (GPU-aware device selection)
         echo -e "${BLUE}→ Configuring embeddings...${NC}"
         cai_configure_embedding "$OPERATOR_CONTAINER" "$GPU_MODE"
-        echo -e "${GREEN}✓ Embeddings configured (local nomic-embed)${NC}"
+        echo -e "${GREEN}✓ Embeddings configured (local modernbert-embed + SigLIP 2)${NC}"
         echo ""
     else
         echo -e "${YELLOW}→ Step 6: Skipping AI configuration (--skip-ai-config)${NC}"

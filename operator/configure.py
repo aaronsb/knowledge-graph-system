@@ -266,7 +266,8 @@ class OperatorConfig:
                     cur.execute(
                         """SELECT id, text_provider AS provider, text_model_name AS model_name,
                                   text_dimensions AS embedding_dimensions, text_precision AS precision, device
-                           FROM kg_api.embedding_profile WHERE text_provider = %s LIMIT 1""",
+                           FROM kg_api.embedding_profile WHERE text_provider = %s
+                           ORDER BY active DESC, id DESC LIMIT 1""",
                         (provider_name,)
                     )
                 else:

@@ -8,9 +8,13 @@ For non-multimodal profiles: uses image_* fields.
 For multimodal profiles: uses text_* fields (same model handles both).
 
 Supports loaders:
-- transformers: AutoModel + AutoProcessor (Nomic Vision, SigLIP)
+- transformers: vision tower + AutoProcessor (SigLIP 2, CLIP, Nomic Vision)
 - sentence-transformers: SentenceTransformer (less common for vision)
 - api: external API (no local model)
+
+The image vector is an independent same-modality index (ADR-803): it is
+never compared to the text space, so the image model is chosen on its own
+merits. The default is google/siglip2-base-patch16-256 (ADR-814).
 """
 
 import os
@@ -27,17 +31,19 @@ class VisualEmbeddingGenerator:
     """
     Generate visual embeddings using the active profile's image model.
 
-    Uses transformers library with CLS token pooling.
+    Pools with the model's ``pooler_output`` when it has one (SigLIP's
+    attention-pooling head, CLIP's post-layernorm CLS state) and falls back to
+    the CLS token for encoders without a pooler (Nomic Vision).
     Supports GPU acceleration with automatic CPU fallback.
     """
 
     def __init__(
         self,
-        model_name: str = "nomic-ai/nomic-embed-vision-v1.5",
+        model_name: str = "google/siglip2-base-patch16-256",
         device: Optional[str] = None,
         loader: str = "transformers",
         model_revision: Optional[str] = None,
-        trust_remote_code: bool = True,
+        trust_remote_code: bool = False,
         dimensions: Optional[int] = None
     ):
         """
@@ -84,9 +90,60 @@ class VisualEmbeddingGenerator:
         else:
             raise RuntimeError(f"Unknown visual embedding loader: {self.loader}")
 
+    def _resolve_vision_model_class(self):
+        """Resolve the class that loads only the vision tower.
+
+        Two-tower models (SigLIP, CLIP) ship text and vision weights in one
+        checkpoint. ``AutoModel`` would load both towers and its forward()
+        would demand ``input_ids`` alongside ``pixel_values``. The vision
+        subclass loads the image half alone and accepts pixel_values only.
+        Single-tower encoders (Nomic Vision) fall through to ``AutoModel``.
+        """
+        from transformers import AutoConfig, AutoModel
+        import transformers
+
+        config_kwargs = {
+            "trust_remote_code": self.trust_remote_code,
+            "revision": self.model_revision,
+        }
+        # Cache first, like the weights below: on an offline appliance an
+        # unconditional from_pretrained waits out the hub etag timeout before
+        # falling back to the cached config.
+        try:
+            config = AutoConfig.from_pretrained(self.model_name, local_files_only=True, **config_kwargs)
+        except (OSError, ValueError):
+            config = AutoConfig.from_pretrained(self.model_name, **config_kwargs)
+        model_type = getattr(config, 'model_type', '')
+        vision_tower_map = {
+            'siglip': 'SiglipVisionModel',
+            'siglip2': 'Siglip2VisionModel',
+            'clip': 'CLIPVisionModel',
+        }
+        cls_name = vision_tower_map.get(model_type)
+        if cls_name:
+            cls = getattr(transformers, cls_name, None)
+            if cls:
+                logger.info(f"  Two-tower model ({model_type}) — loading vision tower: {cls_name}")
+                return cls
+            logger.warning(f"  {cls_name} not found in transformers, falling back to AutoModel")
+        return AutoModel
+
+    @staticmethod
+    def _pool(outputs):
+        """Pick the image vector from a vision-model output.
+
+        ``pooler_output`` when the architecture defines one (SigLIP's
+        attention-pooling head, CLIP's post-layernorm CLS state), else the
+        CLS token of ``last_hidden_state`` (Nomic Vision has no pooler).
+        """
+        pooled = getattr(outputs, 'pooler_output', None)
+        if pooled is not None:
+            return pooled
+        return outputs.last_hidden_state[:, 0, :]
+
     def _load_transformers(self):
-        """Load model via transformers AutoModel + AutoProcessor."""
-        from transformers import AutoModel, AutoProcessor
+        """Load model via a transformers vision class + AutoProcessor."""
+        from transformers import AutoProcessor
         import torch
 
         load_kwargs = {
@@ -112,14 +169,16 @@ class VisualEmbeddingGenerator:
             # it explicitly so behavior doesn't drift with the dependency.
             load_kwargs["low_cpu_mem_usage"] = False
 
-        processor_kwargs = {"trust_remote_code": self.trust_remote_code, "use_fast": True}
+        processor_kwargs = {"trust_remote_code": self.trust_remote_code}
         if self.model_revision:
             processor_kwargs["revision"] = self.model_revision
 
         try:
+            model_cls = self._resolve_vision_model_class()
+
             # Try loading from local cache first
             try:
-                self.model = AutoModel.from_pretrained(
+                self.model = model_cls.from_pretrained(
                     self.model_name,
                     local_files_only=True,
                     **load_kwargs,
@@ -133,7 +192,7 @@ class VisualEmbeddingGenerator:
 
             except (OSError, ValueError):
                 logger.warning(f"  Vision model not in cache, downloading...")
-                self.model = AutoModel.from_pretrained(
+                self.model = model_cls.from_pretrained(
                     self.model_name,
                     **load_kwargs,
                 )
@@ -239,14 +298,12 @@ class VisualEmbeddingGenerator:
 
                 with torch.no_grad():
                     outputs = self.model(**inputs)
-                    # CLS token (first token) as embedding. Cast to fp32 on
-                    # GPU before .cpu() so the numpy array we hand back to
+                    # Pooled image vector (see _pool). Cast to fp32 on GPU
+                    # before .cpu() so the numpy array we hand back to
                     # callers is fp32 regardless of the model's compute
                     # dtype — preserves the output contract that pre-dates
                     # the fp16-on-GPU change.
-                    embedding = (
-                        outputs.last_hidden_state[:, 0, :].squeeze().float().cpu().numpy()
-                    )
+                    embedding = self._pool(outputs).squeeze().float().cpu().numpy()
 
                 # L2 normalize
                 norm = np.linalg.norm(embedding)
@@ -294,7 +351,7 @@ class VisualEmbeddingGenerator:
                     outputs = self.model(**inputs)
                     # Cast to fp32 on GPU (see generate_embedding's note on
                     # output contract).
-                    embeddings = outputs.last_hidden_state[:, 0, :].float().cpu().numpy()
+                    embeddings = self._pool(outputs).float().cpu().numpy()
 
                 norms = np.linalg.norm(embeddings, axis=1, keepdims=True)
                 embeddings = embeddings / np.maximum(norms, 1e-10)
@@ -495,7 +552,7 @@ def get_visual_embedding_generator(
             return _embedding_generator
 
     # Fallback: use default model name from env or hardcoded default
-    fallback_model = os.getenv("IMAGE_EMBEDDING_MODEL", "nomic-ai/nomic-embed-vision-v1.5")
+    fallback_model = os.getenv("IMAGE_EMBEDDING_MODEL", "google/siglip2-base-patch16-256")
     logger.info(f"Creating visual embedding generator with fallback: {fallback_model}")
     _embedding_generator = VisualEmbeddingGenerator(
         model_name=fallback_model,

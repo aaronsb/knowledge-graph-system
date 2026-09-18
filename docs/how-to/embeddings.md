@@ -23,7 +23,7 @@ This opens the configuration shell for embedding-specific options. Embedding pro
 | Provider | Model example | Dimensions |
 |---|---|---|
 | `openai` | `text-embedding-3-small` | 1536 |
-| `local` | `nomic-ai/nomic-embed-text-v1.5` | 768 |
+| `local` | `nomic-ai/modernbert-embed-base` (default, with `google/siglip2-base-patch16-256` as the image index) | 768 |
 
 OpenAI uses API-based inference. Local uses sentence-transformers; the model downloads from HuggingFace on first load.
 
@@ -50,7 +50,7 @@ Output:
   Inactive Config 2
     ID:           2
     Vector Space: cosine
-    Text:         local / nomic-ai/nomic-embed-text-v1.5
+    Text:         local / nomic-ai/modernbert-embed-base
       Dims:       768  Loader: auto
     Image:        (none)
     Updated: 10/21/2025, 3:45:12 PM by admin
@@ -95,7 +95,7 @@ kg admin embedding create \
 # Local (full resource config)
 kg admin embedding create \
   --provider local \
-  --model "nomic-ai/nomic-embed-text-v1.5" \
+  --model "nomic-ai/modernbert-embed-base" \
   --dimensions 768 \
   --precision float16 \
   --device cpu \
@@ -146,7 +146,7 @@ To change memory, threads, or batch size without changing the provider or dimens
 ```bash
 kg admin embedding create \
   --provider local \
-  --model "nomic-ai/nomic-embed-text-v1.5" \
+  --model "nomic-ai/modernbert-embed-base" \
   --dimensions 768 \
   --precision float16 \
   --memory 256 \
@@ -228,7 +228,7 @@ The dimensions changed but the stored embeddings were not rebuilt. Re-ingest you
 
 **Local model download fails**
 
-Use the full HuggingFace model identifier: `nomic-ai/nomic-embed-text-v1.5`, not `nomic-embed-text`. Verify network access to `huggingface.co` from the server.
+Use the full HuggingFace model identifier: `nomic-ai/modernbert-embed-base`, not `modernbert-embed-base`. Verify network access to `huggingface.co` from the server.
 
 **OOM during local model load**
 
@@ -237,7 +237,7 @@ Reduce memory or precision:
 ```bash
 kg admin embedding create \
   --provider local \
-  --model "nomic-ai/nomic-embed-text-v1.5" \
+  --model "nomic-ai/modernbert-embed-base" \
   --dimensions 768 \
   --precision float16 \
   --memory 256 \

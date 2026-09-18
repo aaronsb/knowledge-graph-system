@@ -60,6 +60,8 @@ container, not a core responsibility.
 
 ## Decision
 
+> **Amended by [ADR-814](../ai-embeddings/ADR-814-siglip-2-as-the-default-local-embedding-profile.md) (2026-09-18).** The invariant below is *local-first*: the out-of-the-box embedding profile is local and baked for offline boot, reasoning stays remote. The model pair is `nomic-ai/modernbert-embed-base` + `google/siglip2-base-patch16-256`; the nomic-embed v1.5 models named here no longer load on transformers 5.x.
+
 Adopt a **staged, thin-appliance distribution strategy** with a **nomic-first
 local-embedding invariant**, and **defer** building a bespoke supervisor OS.
 

@@ -98,18 +98,18 @@ COPY scripts/development/lint/lint_backup.py /app/scripts/development/lint/lint_
 # Set Python path for imports (api.app.lib.*)
 ENV PYTHONPATH=/app
 
-# Pre-bake the default nomic-first embedding models (text + vision) into the
+# Pre-bake the default local-first embedding models (text + image) into the
 # image at /opt/hf-seed — a path OUTSIDE the runtime cache volume. The platform
-# is nomic-first: local on-device embeddings (text nomic-embed-text-v1.5 768d +
-# vision nomic-embed-vision-v1.5), with only reasoning/extraction calling a
-# remote LLM. docker-entrypoint.sh seeds these into the mounted hf_cache volume
-# on first boot, so the system runs fully OFFLINE (no HuggingFace download) —
-# the precondition for an air-gapped / Raspberry-Pi appliance.
+# is local-first: on-device embeddings (text nomic-ai/modernbert-embed-base 768d +
+# image index google/siglip2-base-patch16-256, ADR-814), with only
+# reasoning/extraction calling a remote LLM. docker-entrypoint.sh seeds these
+# into the mounted hf_cache volume on first boot, so the system runs fully
+# OFFLINE (no HuggingFace download) — the precondition for an air-gapped /
+# Raspberry-Pi appliance.
 #
-# We bake by LOADING (not just downloading) so the trust_remote_code dynamic
-# module cache (modules/) is populated too — offline loads need it. HF_HOME is
-# scoped to this RUN only; the runtime must NOT inherit it (it would bypass the
-# volume). See ADR-103 (nomic-first appliance) and ADR-039.
+# We bake by LOADING (not just downloading) so loader-side artifacts land in the
+# cache too. HF_HOME is scoped to this RUN only; the runtime must NOT inherit it
+# (it would bypass the volume). See ADR-103 (local-first appliance), ADR-814.
 RUN HF_HOME=/opt/hf-seed python /app/api/bake_embedding_models.py
 
 # First-boot cache seeder (copies /opt/hf-seed into the mounted hf_cache volume)
