@@ -109,7 +109,7 @@ const TreeRow: React.FC<TreeRowProps> = ({ node, depth, settings }) => {
         style={{ paddingLeft: `${depth * 16 + 8}px` }}
         onClick={toggle}
       >
-        <span className="w-4 flex-shrink-0">
+        <span className="w-4 shrink-0">
           {expandable ? (
             loading ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground" />

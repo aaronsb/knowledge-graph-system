@@ -606,7 +606,7 @@ export function EmbeddingLandscapeWorkspace() {
                           </button>
 
                           <div
-                            className="w-3 h-3 rounded-full flex-shrink-0"
+                            className="w-3 h-3 rounded-full shrink-0"
                             style={{ backgroundColor: ont.color }}
                           />
 
@@ -624,7 +624,7 @@ export function EmbeddingLandscapeWorkspace() {
                 </div>
 
                 {/* Stats footer pinned at bottom */}
-                <div className="flex-shrink-0 p-4 border-t border-border bg-muted/50">
+                <div className="shrink-0 p-4 border-t border-border bg-muted/50">
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     <div>
                       <span className="text-muted-foreground">Ontologies</span>
@@ -1008,7 +1008,7 @@ export function EmbeddingLandscapeWorkspace() {
         {/* Context menu for right-click — info + actions */}
         {contextMenu && (
           <div
-            className="absolute z-[9999] bg-card border border-border rounded-lg shadow-xl py-1 min-w-[220px]"
+            className="absolute z-9999 bg-card border border-border rounded-lg shadow-xl py-1 min-w-[220px]"
             style={{ left: contextMenu.x, top: contextMenu.y }}
             onClick={(e) => e.stopPropagation()}
           >

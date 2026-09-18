@@ -73,13 +73,13 @@ export const Toggle: React.FC<{
     <button
       onClick={() => onChange(!enabled)}
       className={`
-        relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0
+        relative inline-flex h-6 w-11 items-center rounded-full transition-colors shrink-0
         ${enabled ? 'bg-primary' : 'bg-muted-foreground/30'}
       `}
     >
       <span
         className={`
-          inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-sm
+          inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-xs
           ${enabled ? 'translate-x-6' : 'translate-x-1'}
         `}
       />
@@ -122,7 +122,7 @@ export const NumberInput: React.FC<{
       min={min}
       max={max}
       step={step}
-      className="w-24 px-3 py-1.5 text-sm text-right bg-muted border border-border rounded-lg text-card-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+      className="w-24 px-3 py-1.5 text-sm text-right bg-muted border border-border rounded-lg text-card-foreground focus:outline-hidden focus:ring-2 focus:ring-primary"
     />
   </div>
 );
@@ -151,7 +151,7 @@ export const Select: React.FC<{
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="px-3 py-1.5 text-sm bg-muted border border-border rounded-lg text-card-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+      className="px-3 py-1.5 text-sm bg-muted border border-border rounded-lg text-card-foreground focus:outline-hidden focus:ring-2 focus:ring-primary"
     >
       {options.map((opt) => (
         <option key={opt.value} value={opt.value}>
@@ -298,7 +298,7 @@ export const HueGrid: React.FC<{
               key={hue}
               onClick={() => onChange(hue)}
               className={`
-                aspect-[2/1] transition-all
+                aspect-2/1 transition-all
                 ${isSelected ? 'ring-2 ring-foreground ring-offset-1 ring-offset-background scale-105 z-10' : 'hover:scale-105'}
               `}
               style={{ backgroundColor: `hsl(${hue}, ${saturation}%, ${lightness}%)` }}
@@ -340,7 +340,7 @@ export const SaturationGrid: React.FC<{
               key={sat}
               onClick={() => onChange(sat)}
               className={`
-                aspect-[3/1] transition-all
+                aspect-3/1 transition-all
                 ${isSelected ? 'ring-2 ring-foreground ring-offset-1 ring-offset-background scale-105 z-10' : 'hover:scale-105'}
               `}
               style={{ backgroundColor: `hsl(${hue}, ${sat}%, ${lightness}%)` }}
@@ -382,7 +382,7 @@ export const LightnessGrid: React.FC<{
               key={light}
               onClick={() => onChange(light)}
               className={`
-                aspect-[3/1] transition-all
+                aspect-3/1 transition-all
                 ${isSelected ? 'ring-2 ring-foreground ring-offset-1 ring-offset-background scale-105 z-10' : 'hover:scale-105'}
               `}
               style={{ backgroundColor: `hsl(${hue}, ${saturation}%, ${light}%)` }}
@@ -422,7 +422,7 @@ export const SVGrid: React.FC<{
                 key={`${s}-${l}-${si}`}
                 onClick={() => onChange(s, l)}
                 className={`
-                  aspect-[2.5/1] transition-all
+                  aspect-2.5/1 transition-all
                   ${isSelected ? 'ring-2 ring-foreground ring-offset-1 ring-offset-background scale-105 z-10' : 'hover:scale-105'}
                 `}
                 style={{ backgroundColor: `hsl(${hue}, ${s}%, ${l}%)` }}
@@ -446,7 +446,7 @@ export const ColorPreview: React.FC<{
 }> = ({ hue, saturation, lightness, hex, compact = false }) => (
   <div className={`flex items-center gap-3 bg-surface-2 rounded ${compact ? 'p-2' : 'p-3'}`}>
     <div
-      className={`flex-shrink-0 border border-border ${compact ? 'w-6 h-6' : 'w-8 h-8'}`}
+      className={`shrink-0 border border-border ${compact ? 'w-6 h-6' : 'w-8 h-8'}`}
       style={{ backgroundColor: `hsl(${hue}, ${saturation}%, ${lightness}%)` }}
     />
     <div className="font-mono text-xs text-muted-foreground">

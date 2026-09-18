@@ -30,11 +30,11 @@ export const SidebarCategory: React.FC<SidebarCategoryProps> = ({
         className="w-full flex items-center gap-2 px-3 py-2 text-sm font-semibold text-muted-foreground hover:text-foreground hover:bg-accent/50 rounded-lg transition-colors"
       >
         {expanded ? (
-          <ChevronDown className="w-4 h-4 flex-shrink-0" />
+          <ChevronDown className="w-4 h-4 shrink-0" />
         ) : (
-          <ChevronRight className="w-4 h-4 flex-shrink-0" />
+          <ChevronRight className="w-4 h-4 shrink-0" />
         )}
-        {Icon && <Icon className="w-4 h-4 flex-shrink-0" />}
+        {Icon && <Icon className="w-4 h-4 shrink-0" />}
         <span className="uppercase tracking-wide">{title}</span>
       </button>
 
@@ -83,7 +83,7 @@ export const SidebarItem: React.FC<SidebarItemProps> = ({
         }
       `}
     >
-      <Icon className="w-4 h-4 flex-shrink-0" />
+      <Icon className="w-4 h-4 shrink-0" />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <span className="font-medium text-sm truncate">{label}</span>

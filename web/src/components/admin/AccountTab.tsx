@@ -129,7 +129,7 @@ export const AccountTab: React.FC<AccountTabProps> = ({ onError }) => {
             value={newClientName}
             onChange={(e) => setNewClientName(e.target.value)}
             placeholder="Client name (e.g., 'My Laptop CLI')"
-            className="flex-1 px-3 py-2 bg-muted border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            className="flex-1 px-3 py-2 bg-muted border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:ring-2 focus:ring-primary"
             onKeyDown={(e) => e.key === 'Enter' && handleCreateClient()}
           />
           <button

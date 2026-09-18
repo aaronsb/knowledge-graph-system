@@ -150,7 +150,7 @@ export const HomeWorkspace: React.FC = () => {
           <div className="max-w-lg text-center">
             {/* Logo/Icon */}
             <div className="mb-8">
-              <div className="w-24 h-24 mx-auto rounded-2xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg backdrop-blur-sm">
+              <div className="w-24 h-24 mx-auto rounded-2xl bg-linear-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg backdrop-blur-xs">
                 <Network className="w-12 h-12 text-white" />
               </div>
             </div>

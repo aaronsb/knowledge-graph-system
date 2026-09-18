@@ -92,7 +92,7 @@ export const Legend: React.FC<LegendProps> = ({ data, nodeColorMode, visibilityC
           {ontologies.map((ontology) => (
             <div key={ontology} className="flex items-center gap-2 text-xs">
               <div
-                className="w-3 h-3 rounded-full flex-shrink-0"
+                className="w-3 h-3 rounded-full shrink-0"
                 style={{ backgroundColor: ontologyColors.get(ontology) || '#6b7280' }}
               />
               <span className="text-card-foreground truncate" title={ontology}>

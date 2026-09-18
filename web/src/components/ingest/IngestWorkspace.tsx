@@ -447,7 +447,7 @@ export const IngestWorkspace: React.FC = () => {
                   <span className="text-sm text-card-foreground truncate">
                     {qf.file.name}
                   </span>
-                  <span className="text-xs text-muted-foreground flex-shrink-0">
+                  <span className="text-xs text-muted-foreground shrink-0">
                     {formatSize(qf.file.size)}
                   </span>
                 </div>
@@ -496,7 +496,7 @@ export const IngestWorkspace: React.FC = () => {
       >
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2 flex-1">
-            <Plus className="w-4 h-4 text-status-active flex-shrink-0" />
+            <Plus className="w-4 h-4 text-status-active shrink-0" />
             {isEditing ? (
               <input
                 type="text"
@@ -506,7 +506,7 @@ export const IngestWorkspace: React.FC = () => {
                   if (e.key === 'Enter') renameNewOntology(ontologyName, (e.target as HTMLInputElement).value);
                   if (e.key === 'Escape') setEditingOntologyName(null);
                 }}
-                className="flex-1 px-2 py-1 text-sm bg-input border border-status-active/40 rounded focus:outline-none focus:ring-2 focus:ring-status-active"
+                className="flex-1 px-2 py-1 text-sm bg-input border border-status-active/40 rounded focus:outline-hidden focus:ring-2 focus:ring-status-active"
                 autoFocus
               />
             ) : (
@@ -548,7 +548,7 @@ export const IngestWorkspace: React.FC = () => {
                 <span className="text-sm text-card-foreground truncate">
                   {qf.file.name}
                 </span>
-                <span className="text-xs text-muted-foreground flex-shrink-0">
+                <span className="text-xs text-muted-foreground shrink-0">
                   {formatSize(qf.file.size)}
                 </span>
               </div>
@@ -598,7 +598,7 @@ export const IngestWorkspace: React.FC = () => {
                 value={pendingNewOntologyName}
                 onChange={(e) => setPendingNewOntologyName(e.target.value)}
                 placeholder="Enter new ontology name"
-                className="flex-1 px-3 py-2 bg-input border border-status-active/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-status-active"
+                className="flex-1 px-3 py-2 bg-input border border-status-active/40 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-status-active"
                 autoFocus
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && pendingNewOntologyName.trim()) {
@@ -869,7 +869,7 @@ export const IngestWorkspace: React.FC = () => {
           {/* Error display */}
           {submitError && (
             <div className="flex items-start gap-2 p-3 bg-destructive/10 border border-destructive/30 rounded-lg text-destructive">
-              <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+              <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
               <div className="text-sm whitespace-pre-line">{submitError}</div>
               <button onClick={() => setSubmitError(null)} className="ml-auto">
                 <X className="w-4 h-4" />

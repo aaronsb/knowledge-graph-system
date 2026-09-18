@@ -862,7 +862,7 @@ export const ReportWorkspace: React.FC = () => {
             onChange={(e) => setDocQuery(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleDocumentSearch()}
             placeholder="e.g., machine learning"
-            className="w-full pl-7 pr-2 py-1.5 text-sm bg-background border rounded focus:outline-none focus:ring-1 focus:ring-ring"
+            className="w-full pl-7 pr-2 py-1.5 text-sm bg-background border rounded focus:outline-hidden focus:ring-1 focus:ring-ring"
           />
         </div>
       </div>
@@ -1464,7 +1464,7 @@ export const ReportWorkspace: React.FC = () => {
         {/* Toolbar */}
         <div className="h-14 border-b border-border bg-card px-4 flex items-center justify-between">
           <div className="flex items-center gap-3 flex-1 min-w-0">
-            <FileText className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+            <FileText className="w-5 h-5 text-muted-foreground shrink-0" />
             <div className="flex-1 min-w-0">
               {selectedReport && editingName === selectedReport.id ? (
                 <div className="flex items-center gap-2">
@@ -1477,7 +1477,7 @@ export const ReportWorkspace: React.FC = () => {
                       if (e.key === 'Enter') handleFinishRename(selectedReport.id);
                       if (e.key === 'Escape') setEditingName(null);
                     }}
-                    className="font-semibold text-sm px-2 py-1 bg-background border border-border rounded flex-1 min-w-0 focus:outline-none focus:ring-1 focus:ring-primary"
+                    className="font-semibold text-sm px-2 py-1 bg-background border border-border rounded flex-1 min-w-0 focus:outline-hidden focus:ring-1 focus:ring-primary"
                   />
                   <button
                     onClick={() => handleFinishRename(selectedReport.id)}

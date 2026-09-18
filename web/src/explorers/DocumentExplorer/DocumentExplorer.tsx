@@ -539,7 +539,7 @@ export const DocumentExplorer: React.FC<
       </div>
 
       {/* Legend — bottom left */}
-      <div className="absolute bottom-4 left-4 bg-card/90 backdrop-blur-sm border border-border rounded-lg p-3 text-xs space-y-1.5">
+      <div className="absolute bottom-4 left-4 bg-card/90 backdrop-blur-xs border border-border rounded-lg p-3 text-xs space-y-1.5">
         <div className="flex items-center gap-2">
           <span className="inline-block w-3 h-3 rounded-full" style={{ background: COLORS.document }} />
           <span>Document</span>

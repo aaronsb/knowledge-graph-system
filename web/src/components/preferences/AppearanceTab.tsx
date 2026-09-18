@@ -205,7 +205,7 @@ export const AppearanceTab: React.FC = () => {
                   className={`
                     relative flex flex-col items-center gap-1 p-3 transition-all
                     ${option.id === 'dark' ? 'bg-[hsl(20,8%,12%)] text-[hsl(20,15%,75%)]' : ''}
-                    ${option.id === 'twilight' ? 'bg-gradient-to-br from-[hsl(30,25%,45%)] to-[hsl(220,30%,35%)] text-[hsl(40,30%,90%)]' : ''}
+                    ${option.id === 'twilight' ? 'bg-linear-to-br from-[hsl(30,25%,45%)] to-[hsl(220,30%,35%)] text-[hsl(40,30%,90%)]' : ''}
                     ${option.id === 'light' ? 'bg-[hsl(40,20%,92%)] text-[hsl(20,15%,25%)]' : ''}
                     ${option.id === 'system' ? 'bg-muted text-muted-foreground' : ''}
                     ${isSelected ? '' : 'opacity-80 hover:opacity-100'}
@@ -534,9 +534,9 @@ export const AppearanceTab: React.FC = () => {
                 <div
                   className={`
                     absolute inset-0 opacity-30
-                    ${option.id === 'dither-25' ? 'bg-[url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'4\' height=\'4\'%3E%3Crect x=\'0\' y=\'0\' width=\'1\' height=\'1\' fill=\'%23888\'/%3E%3C/svg%3E")] bg-[length:4px_4px]' : ''}
-                    ${option.id === 'dither-50' ? 'bg-[url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'2\' height=\'2\'%3E%3Crect x=\'0\' y=\'0\' width=\'1\' height=\'1\' fill=\'%23888\'/%3E%3Crect x=\'1\' y=\'1\' width=\'1\' height=\'1\' fill=\'%23888\'/%3E%3C/svg%3E")] bg-[length:4px_4px]' : ''}
-                    ${option.id === 'dither-75' ? 'bg-[url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'4\' height=\'4\'%3E%3Crect x=\'0\' y=\'0\' width=\'4\' height=\'4\' fill=\'%23888\'/%3E%3Crect x=\'0\' y=\'0\' width=\'1\' height=\'1\' fill=\'transparent\'/%3E%3C/svg%3E")] bg-[length:4px_4px]' : ''}
+                    ${option.id === 'dither-25' ? 'bg-[url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'4\' height=\'4\'%3E%3Crect x=\'0\' y=\'0\' width=\'1\' height=\'1\' fill=\'%23888\'/%3E%3C/svg%3E")] bg-size-[4px_4px]' : ''}
+                    ${option.id === 'dither-50' ? 'bg-[url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'2\' height=\'2\'%3E%3Crect x=\'0\' y=\'0\' width=\'1\' height=\'1\' fill=\'%23888\'/%3E%3Crect x=\'1\' y=\'1\' width=\'1\' height=\'1\' fill=\'%23888\'/%3E%3C/svg%3E")] bg-size-[4px_4px]' : ''}
+                    ${option.id === 'dither-75' ? 'bg-[url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'4\' height=\'4\'%3E%3Crect x=\'0\' y=\'0\' width=\'4\' height=\'4\' fill=\'%23888\'/%3E%3Crect x=\'0\' y=\'0\' width=\'1\' height=\'1\' fill=\'transparent\'/%3E%3C/svg%3E")] bg-size-[4px_4px]' : ''}
                   `}
                   style={{ imageRendering: 'pixelated' }}
                 />

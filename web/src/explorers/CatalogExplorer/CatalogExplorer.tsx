@@ -59,7 +59,7 @@ export const CatalogExplorer: React.FC<
       {/* Tree pane */}
       <div className="flex flex-col flex-1 min-w-0 border-r border-border">
         <div className="flex items-center gap-2 px-3 py-2 border-b border-border">
-          <FolderTree className="w-4 h-4 text-amber-500 flex-shrink-0" />
+          <FolderTree className="w-4 h-4 text-amber-500 shrink-0" />
           <span className="text-sm font-medium">Catalog</span>
           <div className="flex-1" />
           <div className="relative">
@@ -68,7 +68,7 @@ export const CatalogExplorer: React.FC<
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Filter by name…"
-              className="pl-7 pr-2 py-1 text-sm bg-background border border-border rounded w-48 focus:outline-none focus:ring-1 focus:ring-ring"
+              className="pl-7 pr-2 py-1 text-sm bg-background border border-border rounded w-48 focus:outline-hidden focus:ring-1 focus:ring-ring"
             />
           </div>
           <button
@@ -92,7 +92,7 @@ export const CatalogExplorer: React.FC<
       </div>
 
       {/* Detail pane */}
-      <div className="w-80 flex-shrink-0 overflow-auto">
+      <div className="w-80 shrink-0 overflow-auto">
         <CatalogDetailPanel node={selected} />
       </div>
     </div>

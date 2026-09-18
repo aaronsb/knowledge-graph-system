@@ -366,7 +366,7 @@ export const DocumentExplorerWorkspace: React.FC = () => {
             }}
             placeholder={sidebarDocs.length > 0 ? 'Search passages... (Enter)' : 'Load a query first...'}
             disabled={sidebarDocs.length === 0 || isCommittingQuery}
-            className="w-full pl-10 pr-4 py-2 bg-background border border-input rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
+            className="w-full pl-10 pr-4 py-2 bg-background border border-input rounded-md text-sm focus:outline-hidden focus:ring-2 focus:ring-ring disabled:opacity-50"
           />
           {isCommittingQuery && (
             <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />

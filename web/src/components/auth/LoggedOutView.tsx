@@ -32,7 +32,7 @@ export function LoggedOutView({ what }: LoggedOutViewProps) {
       <div className="max-w-3xl mx-auto px-6 py-10">
         {/* Sign-in prompt */}
         <div className="text-center mb-10">
-          <div className="w-16 h-16 mx-auto mb-5 rounded-2xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg">
+          <div className="w-16 h-16 mx-auto mb-5 rounded-2xl bg-linear-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg">
             <Network className="w-8 h-8 text-white" />
           </div>
           <h2 className="text-xl font-semibold text-foreground mb-2">

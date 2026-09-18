@@ -76,7 +76,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps<ForceGraphSettings>> = (
   ) => (
     <input
       type="range"
-      className="flex-[2]"
+      className="flex-2"
       min={min}
       max={max}
       step={step}
@@ -174,7 +174,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps<ForceGraphSettings>> = (
         <label className="flex items-center gap-2 text-xs text-card-foreground py-1.5">
           <span className="flex-1 min-w-0 truncate font-medium">Projection</span>
           <select
-            className="flex-[2] bg-card border border-border rounded px-1 py-0.5 text-xs"
+            className="flex-2 bg-card border border-border rounded px-1 py-0.5 text-xs"
             value={settings.projection}
             onChange={(e) =>
               onChange({ ...settings, projection: e.target.value as ForceGraphSettings['projection'] })
@@ -275,7 +275,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps<ForceGraphSettings>> = (
             <label className="flex items-center gap-2 text-xs text-card-foreground">
               <span className="flex-1 min-w-0 truncate">Node color</span>
               <select
-                className="flex-[2] bg-card border border-border rounded px-1 py-0.5 text-xs"
+                className="flex-2 bg-card border border-border rounded px-1 py-0.5 text-xs"
                 value={settings.visual.nodeColorBy}
                 onChange={(e) =>
                   updateVisual({ nodeColorBy: e.target.value as ForceGraphSettings['visual']['nodeColorBy'] })
@@ -289,7 +289,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps<ForceGraphSettings>> = (
             <label className="flex items-center gap-2 text-xs text-card-foreground">
               <span className="flex-1 min-w-0 truncate">Edge color</span>
               <select
-                className="flex-[2] bg-card border border-border rounded px-1 py-0.5 text-xs"
+                className="flex-2 bg-card border border-border rounded px-1 py-0.5 text-xs"
                 value={settings.visual.edgeColorBy}
                 onChange={(e) =>
                   updateVisual({ edgeColorBy: e.target.value as ForceGraphSettings['visual']['edgeColorBy'] })

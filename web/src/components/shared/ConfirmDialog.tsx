@@ -64,7 +64,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   const iconColor = variant === 'warning' ? 'text-status-warning' : variant === 'info' ? 'text-status-info' : 'text-muted-foreground';
 
   const getButtonClasses = (btnVariant?: string) => {
-    const base = 'px-4 py-2 text-sm font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2';
+    const base = 'px-4 py-2 text-sm font-medium rounded-lg transition-colors focus:outline-hidden focus:ring-2 focus:ring-offset-2';
 
     switch (btnVariant) {
       case 'primary':
@@ -80,7 +80,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-background/80 backdrop-blur-sm"
+        className="absolute inset-0 bg-background/80 backdrop-blur-xs"
         onClick={onClose}
       />
 
@@ -93,7 +93,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
         aria-labelledby="dialog-title"
       >
         <div className="flex items-start gap-4">
-          <div className={`flex-shrink-0 ${iconColor}`}>
+          <div className={`shrink-0 ${iconColor}`}>
             <Icon className="w-6 h-6" />
           </div>
           <div className="flex-1">

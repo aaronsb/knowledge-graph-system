@@ -1031,7 +1031,7 @@ export const BlockBuilder = forwardRef<BlockBuilderHandle, BlockBuilderProps>(({
             <div className="space-y-2">
               {compileErrors.map((error, i) => (
                 <div key={i} className="flex items-start gap-2 text-red-400 dark:text-red-500 text-sm">
-                  <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                  <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
                   <span>{error}</span>
                 </div>
               ))}
@@ -1095,7 +1095,7 @@ export const BlockBuilder = forwardRef<BlockBuilderHandle, BlockBuilderProps>(({
                   value={saveName}
                   onChange={(e) => setSaveName(e.target.value)}
                   placeholder="My Query Diagram"
-                  className="w-full px-3 py-2 border border-border dark:border-gray-600 bg-background dark:bg-gray-900 text-foreground dark:text-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-border dark:border-gray-600 bg-background dark:bg-gray-900 text-foreground dark:text-gray-100 rounded focus:outline-hidden focus:ring-2 focus:ring-blue-500"
                   autoFocus
                 />
               </div>
@@ -1107,7 +1107,7 @@ export const BlockBuilder = forwardRef<BlockBuilderHandle, BlockBuilderProps>(({
                   onChange={(e) => setSaveDescription(e.target.value)}
                   placeholder="What does this query do?"
                   rows={2}
-                  className="w-full px-3 py-2 border border-border dark:border-gray-600 bg-background dark:bg-gray-900 text-foreground dark:text-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  className="w-full px-3 py-2 border border-border dark:border-gray-600 bg-background dark:bg-gray-900 text-foreground dark:text-gray-100 rounded focus:outline-hidden focus:ring-2 focus:ring-blue-500 resize-none"
                 />
               </div>
             </div>

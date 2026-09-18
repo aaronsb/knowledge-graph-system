@@ -124,7 +124,7 @@ export const CatalogDetailPanel: React.FC<CatalogDetailPanelProps> = ({ node }) 
         <div className="text-xs uppercase tracking-wide text-muted-foreground">
           {KIND_LABEL[d.kind] || d.kind}
         </div>
-        <div className="font-medium break-words">{d.name}</div>
+        <div className="font-medium wrap-break-word">{d.name}</div>
         <ActionRow copyText={d.id} copyLabel="Copy ID" />
       </div>
 
@@ -277,7 +277,7 @@ const DocumentDetail: React.FC<{
         <p className="text-xs text-muted-foreground">Content unavailable.</p>
       ) : (
         <>
-          <pre className="text-xs whitespace-pre-wrap break-words max-h-96 overflow-auto bg-muted/50 rounded p-2">
+          <pre className="text-xs whitespace-pre-wrap wrap-break-word max-h-96 overflow-auto bg-muted/50 rounded p-2">
             {text}
           </pre>
           <ActionRow
@@ -400,8 +400,8 @@ function SearchTermChip({ term }: { term: string }) {
 function Row({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (
     <div className="flex gap-2">
-      <dt className="text-muted-foreground min-w-[7rem] flex-shrink-0">{label}</dt>
-      <dd className={`break-words ${mono ? 'font-mono text-xs' : ''}`}>{value}</dd>
+      <dt className="text-muted-foreground min-w-28 shrink-0">{label}</dt>
+      <dd className={`wrap-break-word ${mono ? 'font-mono text-xs' : ''}`}>{value}</dd>
     </div>
   );
 }
