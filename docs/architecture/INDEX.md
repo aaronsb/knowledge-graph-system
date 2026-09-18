@@ -167,6 +167,7 @@ _Providers, extraction, convergence, prompts_
 | [ADR-811](./ai-embeddings/ADR-811-polarity-axis-triangulation.md) | Polarity Axis Triangulation for Grounding Calculation | Accepted |
 | [ADR-812](./ai-embeddings/ADR-812-source-text-embeddings.md) | Source Text Embeddings for Grounding Truth Retrieval | Accepted |
 | [ADR-813](./ai-embeddings/ADR-813-polarity-axis-analysis.md) | Polarity Axis Analysis for Bidirectional Semantic Dimensions | Accepted |
+| [ADR-814](./ai-embeddings/ADR-814-siglip-2-as-the-default-local-embedding-profile.md) | SigLIP 2 as the default local embedding profile | Proposed |
 
 ## Meta/Process
 _Documentation, workflow, access models, ADR system_

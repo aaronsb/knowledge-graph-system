@@ -331,6 +331,8 @@ kg embedding migrate --model nomic-embed-text-v1.5
 
 ### 6. Model Recommendation
 
+> **Superseded by [ADR-814](ADR-814-siglip-2-as-the-default-local-embedding-profile.md) (2026-09-18).** The default local profile is `nomic-ai/modernbert-embed-base` (text) + `google/siglip2-base-patch16-256` (image index). The nomic-embed-text-v1.5 recommendation below depends on remote code that does not load on transformers 5.x.
+
 **Recommended for Most Use Cases: nomic-embed-text-v1.5**
 
 | Criterion | nomic-embed-text-v1.5 | BGE-large-en-v1.5 | OpenAI text-embedding-3-small |
