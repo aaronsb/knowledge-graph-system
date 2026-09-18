@@ -66,8 +66,8 @@ BEGIN
 
     IF nomic_id IS NULL THEN
         IF NOT EXISTS (SELECT 1 FROM kg_api.embedding_profile WHERE active = TRUE) THEN
-            -- Fresh database (baseline seeds Nomic active, so this branch is
-            -- for hand-built or emptied tables): activate the new default.
+            -- No active profile at all (the baseline seeds Nomic active, so
+            -- this is a hand-built or emptied table): activate the new default.
             UPDATE kg_api.embedding_profile
             SET active = TRUE, delete_protected = TRUE, change_protected = TRUE,
                 updated_at = CURRENT_TIMESTAMP, updated_by = 'migration-081'
@@ -78,6 +78,18 @@ BEGIN
         END IF;
         RETURN;
     END IF;
+
+    -- Carry the resource settings the operator wrote onto the Nomic row
+    -- (configure.py embedding --device cuda on GPU installs, tuned memory /
+    -- thread / batch values) so the switch does not silently move a GPU
+    -- install to CPU embeddings.
+    UPDATE kg_api.embedding_profile AS n
+    SET device        = o.device,
+        max_memory_mb = o.max_memory_mb,
+        num_threads   = o.num_threads,
+        batch_size    = o.batch_size
+    FROM kg_api.embedding_profile AS o
+    WHERE n.id = new_id AND o.id = nomic_id;
 
     UPDATE kg_api.embedding_profile
     SET active = FALSE, delete_protected = FALSE, change_protected = FALSE,
@@ -97,7 +109,7 @@ BEGIN
       AND embedding_validation_status != 'stale';
     GET DIAGNOSTICS stale_count = ROW_COUNT;
 
-    RAISE NOTICE 'Migration 081: switched active embedding profile % (Nomic v1.5) -> % (ModernBERT + SigLIP 2); % vocabulary embeddings marked stale', nomic_id, new_id, stale_count;
+    RAISE NOTICE 'Migration 081: switched active embedding profile % (Nomic v1.5) -> % (ModernBERT + SigLIP 2), device/memory/threads/batch carried over; % vocabulary embeddings marked stale', nomic_id, new_id, stale_count;
     RAISE NOTICE 'Migration 081: existing concept/source/vocabulary embeddings are in the old vector space. After the API is up, run: POST /admin/embedding/regenerate?embedding_type=all&only_incompatible=true';
 END $$;
 

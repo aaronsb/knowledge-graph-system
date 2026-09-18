@@ -32,7 +32,7 @@ class VisualEmbeddingGenerator:
     Generate visual embeddings using the active profile's image model.
 
     Pools with the model's ``pooler_output`` when it has one (SigLIP's
-    attention-pooling head, CLIP's projected pooled state) and falls back to
+    attention-pooling head, CLIP's post-layernorm CLS state) and falls back to
     the CLS token for encoders without a pooler (Nomic Vision).
     Supports GPU acceleration with automatic CPU fallback.
     """
@@ -102,11 +102,17 @@ class VisualEmbeddingGenerator:
         from transformers import AutoConfig, AutoModel
         import transformers
 
-        config = AutoConfig.from_pretrained(
-            self.model_name,
-            trust_remote_code=self.trust_remote_code,
-            revision=self.model_revision,
-        )
+        config_kwargs = {
+            "trust_remote_code": self.trust_remote_code,
+            "revision": self.model_revision,
+        }
+        # Cache first, like the weights below: on an offline appliance an
+        # unconditional from_pretrained waits out the hub etag timeout before
+        # falling back to the cached config.
+        try:
+            config = AutoConfig.from_pretrained(self.model_name, local_files_only=True, **config_kwargs)
+        except (OSError, ValueError):
+            config = AutoConfig.from_pretrained(self.model_name, **config_kwargs)
         model_type = getattr(config, 'model_type', '')
         vision_tower_map = {
             'siglip': 'SiglipVisionModel',
@@ -127,7 +133,7 @@ class VisualEmbeddingGenerator:
         """Pick the image vector from a vision-model output.
 
         ``pooler_output`` when the architecture defines one (SigLIP's
-        attention-pooling head, CLIP's post-layernorm pooled state), else the
+        attention-pooling head, CLIP's post-layernorm CLS state), else the
         CLS token of ``last_hidden_state`` (Nomic Vision has no pooler).
         """
         pooled = getattr(outputs, 'pooler_output', None)
