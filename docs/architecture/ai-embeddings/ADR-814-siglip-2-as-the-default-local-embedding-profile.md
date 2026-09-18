@@ -115,8 +115,9 @@ single-model "multimodal" profile shape that the earlier plan (commit
 - Every existing install on the seeded Nomic profile must re-embed concepts,
   sources, and vocabulary after upgrade. Search over old embeddings degrades
   until that runs. Cube and the development volume are both in this state.
-- The baked image grows by roughly 1 GB (SigLIP 2 ships both towers in one
-  safetensors file; the text tower is loaded only at bake time).
+- The baked model layer is 2.1 GB (measured: `kg-api:latest` grew from
+  6.58 GB to 8.56 GB). SigLIP 2 ships both towers in one safetensors file,
+  and the runtime loads only the vision tower from it.
 - The `Nomic v1.5` profile row can no longer be activated: its models do not
   load on transformers 5.x. It is kept for history and for restores of old
   backups, not for use.
