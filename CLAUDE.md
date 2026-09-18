@@ -128,24 +128,27 @@ git add . && git commit && git push
 
 **Release (workstation):**
 ```bash
-# Check auth status and versions
+# Check versions and auth (GHCR pushes need the gh token to carry write:packages)
 ./publish.sh status
 
-# Publish Docker images (api, web)
+# 1. If cli/ changed, bump the CLI FIRST — the release tag publishes it
+./publish.sh bump cli <patch|minor>
+
+# 2. Bump platform version, sync script versions, commit, tag
+./publish.sh release <patch|minor> -m "Description of changes"
+git push origin main --tags
+gh release create vX.Y.Z --generate-notes
+
+# The tag push runs .github/workflows/publish-npm.yml: @aaronsb/kg-cli goes to npm
+# through the trusted publisher (OIDC + provenance). No npm login anywhere.
+# CLI bumped after the tag? ./publish.sh cli dispatches that workflow.
+
+# 3. Docker images: api, web, operator, postgres — amd64 + arm64 on main
 ./publish.sh images -m "Description of changes"
+./publish.sh images-rocm            # kg-api rocm72-host variant (amd64)
 
-# Publish CLI/MCP to npm
-./publish.sh cli
-
-# Publish FUSE driver to PyPI
+# 4. FUSE driver to PyPI
 ./publish.sh fuse
-
-# Publish everything
-./publish.sh all -m "Release v1.2.3"
-
-# If operator.sh or operator/* changed, rebuild operator too
-docker build -t ghcr.io/aaronsb/knowledge-graph-system/kg-operator:latest -f operator/Dockerfile .
-docker push ghcr.io/aaronsb/knowledge-graph-system/kg-operator:latest
 ```
 
 **Deploy (standalone installs like cube):**
