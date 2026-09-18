@@ -4,6 +4,7 @@
  */
 
 import { Command } from 'commander';
+import ora from 'ora';
 import * as fs from 'fs';
 import * as path from 'path';
 import { createClientFromEnv } from '../../api/client';
@@ -83,7 +84,6 @@ export function createBackupCommand(): Command {
         }
 
         // Download backup with progress tracking
-        const ora = require('ora');
         const spinner = ora('Preparing backup...').start();
 
         try {
@@ -307,7 +307,6 @@ export function createRestoreCommand(): Command {
         }
 
         // Upload backup with progress tracking
-        const ora = require('ora');
         let spinner = ora('Uploading backup...').start();
 
         try {
@@ -454,7 +453,6 @@ export function createVerifyBackupCommand(): Command {
           process.exit(1);
         }
 
-        const ora = require('ora');
         const spinner = ora('Uploading & validating...').start();
         let report;
         try {

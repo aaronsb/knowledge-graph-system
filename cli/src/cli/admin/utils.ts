@@ -4,6 +4,7 @@
  */
 
 import * as readline from 'readline';
+import logUpdate from 'log-update';
 import * as colors from '../colors';
 import { separator } from '../colors';
 import { createClientFromEnv } from '../../api/client';
@@ -228,8 +229,6 @@ export function createProgressBar(current: number, total: number, width: number 
  * Update multi-line progress display
  */
 function updateSpinnerForProgress(spinner: any, progress: JobProgress): any {
-  const logUpdate = require('log-update').default || require('log-update');
-
   if (!(spinner as any).__multiProgress) {
     const stages = new Map<string, StageProgress>();
     const orderedStages = [
@@ -357,7 +356,6 @@ export async function trackJobWithSSE(
         if (settled) return;
 
         try {
-          const logUpdate = require('log-update').default || require('log-update');
           const state: MultiProgressState = (spinner as any).__multiProgress;
 
           if (state) {
