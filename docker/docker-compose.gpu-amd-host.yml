@@ -4,10 +4,10 @@
 # Uses AMD's official ROCm PyTorch Docker image which includes all
 # ROCm libraries properly configured.
 #
-# Base image: rocm/pytorch:rocm7.1_ubuntu24.04_py3.13_pytorch_release_2.9.1
-#   - ROCm 7.1 (compatible with host ROCm 7.x)
-#   - Python 3.13
-#   - PyTorch 2.9.1 with full ROCm support
+# Base image: rocm/pytorch:rocm7.14_ubuntu24.04_py3.12_pytorch_release_2.12.0
+#   - ROCm 7.14 (compatible with host ROCm 7.x)
+#   - Python 3.12
+#   - PyTorch 2.12.0 with full ROCm support
 #
 # Requirements:
 #   - AMD GPU with ROCm support (RX 5000/6000/7000 series, or Instinct)
@@ -47,7 +47,7 @@ services:
       # processes this typically cuts reserved-but-unallocated VRAM materially.
       # `PYTORCH_ALLOC_CONF` is the unified env var added in PyTorch 2.5+
       # (supersedes both PYTORCH_HIP_ALLOC_CONF and PYTORCH_CUDA_ALLOC_CONF).
-      # Our amd-host base ships torch 2.9.1; the old name still works but
+      # Our amd-host base ships torch 2.12.0; the old name still works but
       # warns on every process start.
       - PYTORCH_ALLOC_CONF=expandable_segments:True
     # Single uvicorn worker on the GPU variant: each worker is a separate
