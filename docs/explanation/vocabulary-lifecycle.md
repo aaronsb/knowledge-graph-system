@@ -46,7 +46,7 @@ sequenceDiagram
     alt vocab_size > target
         loop Until target reached or no candidates
             VM->>SD: find_synonyms(types)
-            SD->>DB: Fetch embeddings (768-dim nomic)
+            SD->>DB: Fetch embeddings (768-dim modernbert-embed)
             SD-->>VM: Ranked synonym candidates
 
             VM->>PS: evaluate_synonym(candidate, scores)
@@ -128,7 +128,7 @@ flowchart LR
     subgraph Provider Layer
         GP["get_provider()"] --> RP[ReasoningProvider]
         RP -->|".embedding_provider"| LP
-        GEP["get_embedding_provider()"] --> LP[LocalEmbeddingProvider<br/>nomic-embed-text-v1.5]
+        GEP["get_embedding_provider()"] --> LP[LocalEmbeddingProvider<br/>modernbert-embed-base]
     end
 
     subgraph Output

@@ -57,10 +57,10 @@ ENV PYTHONPATH=/app
 ENV HOME=/home/api
 RUN mkdir -p /home/api/.cache
 
-# Pre-bake the default nomic-first embedding models (text + vision) into the
+# Pre-bake the default local-first embedding models (text + image) into the
 # image at /opt/hf-seed — a path OUTSIDE the runtime cache volume. Same shared
 # bake script + entrypoint as api/Dockerfile, so the CPU/NVIDIA and ROCm images
-# behave identically (offline first boot). See ADR-103 / ADR-039. The bake loads
+# behave identically (offline first boot). See ADR-103 / ADR-814. The bake loads
 # on CPU at build time (no GPU during docker build) — it only warms the cache.
 RUN HF_HOME=/opt/hf-seed python /app/api/bake_embedding_models.py
 

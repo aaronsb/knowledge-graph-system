@@ -1158,7 +1158,7 @@ class LocalEmbeddingProvider(AIProvider):
         return {
             "extraction": [],  # Local provider doesn't do extraction
             "embedding": [
-                "nomic-ai/nomic-embed-text-v1.5",    # 768 dims, 8K context (recommended)
+                "nomic-ai/modernbert-embed-base",    # 768 dims, 8K context, no remote code (default, ADR-814)
                 "BAAI/bge-small-en-v1.5",            # 384 dims, lightweight
                 "BAAI/bge-base-en-v1.5",             # 768 dims, balanced
                 "BAAI/bge-large-en-v1.5",            # 1024 dims, high quality

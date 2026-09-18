@@ -61,14 +61,14 @@ cai_map_embedding_device() {
 }
 
 # cai_configure_embedding <container> <gpu_mode>
-# Activate the local embedding profile (nomic-embed-text-v1.5) by PROVIDER name
+# Activate the local embedding profile (modernbert-embed-base + SigLIP 2, ADR-814) by PROVIDER name
 # on the device implied by gpu_mode. Selecting by --provider (not a positional
 # profile id) is robust to catalog ordering. Shared by all three init paths so
 # device selection is computed identically everywhere.  @verified cbd07870c
 cai_configure_embedding() {
     local container="$1" gpu_mode="${2:-cpu}" device
     device=$(cai_map_embedding_device "$gpu_mode")
-    echo -e "${BLUE}→${NC} Activating local embeddings (nomic-embed-text-v1.5) on device: ${device}"
+    echo -e "${BLUE}→${NC} Activating local embeddings (modernbert-embed-base + SigLIP 2) on device: ${device}"
     _cai_op "$container" embedding --provider local --device "$device"
 }
 

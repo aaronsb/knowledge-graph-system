@@ -92,7 +92,7 @@ show_embedding_help() {
     echo "  configure.py embedding 2"
     echo ""
     echo -e "${CYAN}Available Profiles:${NC}"
-    echo "  [1] local / nomic-embed-text-v1.5 (768 dims) - Local GPU/CPU (default)"
+    echo "  [1] local / modernbert-embed-base (768 dims) - Local GPU/CPU (default)"
     echo "  [2] openai / text-embedding-3-small (1536 dims) - Cloud API"
     echo ""
     echo -e "${YELLOW}Important:${NC}"
