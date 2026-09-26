@@ -52,7 +52,9 @@ services:
     # uvicorn's watchfiles supervisor. --reload is incompatible with --workers,
     # so the flag is omitted. Only api/ is watched; edits to tests/ or scripts/
     # don't bounce the server. Each reload re-runs startup, including the
-    # local embedding model load.
+    # local embedding model load. A reload waits for the old process to exit,
+    # so an edit during a running ingest job holds the API down until the job
+    # finishes; `./operator.sh restart api` kills it after docker's 10s grace.
     command: ["uvicorn", "api.app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--reload-dir", "/app/api"]
     build:
       context: ..

@@ -50,8 +50,7 @@ services:
       # Our amd-host base ships torch 2.12.0; the old name still works but
       # warns on every process start.
       - PYTORCH_ALLOC_CONF=expandable_segments:True
-    # Single uvicorn worker on the GPU variant: each worker is a separate
-    # Python process and would load its own copy of the embedding model(s)
-    # + ROCm runtime context into VRAM. One process is enough for the API's
-    # async workload; ingestion runs in the job queue regardless.
-    command: ["uvicorn", "api.app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
+    # No `command` override: Dockerfile.rocm-host's CMD already runs a single
+    # uvicorn worker (each worker would load its own model copy + ROCm context
+    # into VRAM), and an override here would replace the dev overlay's
+    # --reload, since this overlay is applied after it.

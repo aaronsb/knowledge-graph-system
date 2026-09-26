@@ -43,7 +43,7 @@ while [[ $# -gt 0 ]]; do
             echo ""
             echo "Options:"
             echo "  --dev    Enable development mode with volume mounts"
-            echo "           • API: source mounted, restart to pick up changes"
+            echo "           • API: source mounted, uvicorn --reload"
             echo "           • Web: Vite dev server with hot module replacement"
             echo "           • Source code mounted as volumes"
             echo "  --mac    Force Mac/CPU-only mode (disable NVIDIA GPU)"
@@ -66,9 +66,9 @@ if [ "$DEV_MODE" = true ]; then
     echo ""
     echo -e "${YELLOW}Development mode:${NC}"
     echo "  • Operator: Scripts mounted at /workspace (live edits)"
-    echo "  • API: Source mounted at /app/api (restart to pick up changes)"
+    echo "  • API: Source mounted at /app/api (uvicorn --reload)"
     echo "  • Web: Source mounted at /app/src (Vite HMR)"
-    echo "  • Web changes auto-reload; API changes require: ./operator.sh restart api"
+    echo "  • API and web changes auto-reload"
     echo ""
 else
     echo -e "${BLUE}Starting application containers (production mode)...${NC}"
@@ -194,7 +194,10 @@ if run_compose config --services 2>/dev/null | grep -q "^web$\|^viz$"; then
     echo ""
     echo -e "${BLUE}→ Starting web visualization...${NC}"
     # Build metadata already exported above
-    run_compose up -d --build web 2>/dev/null || run_compose up -d --build viz 2>/dev/null || true
+    # Dev: renew web's anonymous node_modules volume so rebuilt deps reach Vite
+    WEB_UP_FLAGS="--build"
+    [ "$DEV_MODE" = true ] && WEB_UP_FLAGS="--build --no-deps --renew-anon-volumes"
+    run_compose up -d $WEB_UP_FLAGS web 2>/dev/null || run_compose up -d $WEB_UP_FLAGS viz 2>/dev/null || true
 
     if [ "$DEV_MODE" = true ]; then
         echo -e "${GREEN}✓ Web dev server starting (Vite HMR enabled)${NC}"
@@ -217,14 +220,14 @@ if [ "$DEV_MODE" = true ]; then
     echo "    - Live script edits (operator/*, schema/*)"
     echo "  • API server: http://localhost:8000"
     echo "    - Source: $PROJECT_ROOT/api → /app/api"
-    echo "    - Restart to pick up changes: ./operator.sh restart api"
+    echo "    - Hot reload (uvicorn --reload)"
     echo "  • Web app: http://localhost:3000"
     echo "    - Source: $PROJECT_ROOT/web/src → /app/src"
     echo "    - Hot Module Replacement (Vite HMR)"
     echo ""
     echo "Workflow:"
     echo "  1. Edit files in $PROJECT_ROOT (operator/*, api/*, web/*)"
-    echo "  2. Web changes auto-reload; API changes need: ./operator.sh restart api"
+    echo "  2. API and web changes auto-reload"
     echo "  3. No rebuild required (unless deps change)!"
     echo ""
 else

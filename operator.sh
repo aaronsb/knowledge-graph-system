@@ -229,13 +229,17 @@ reconcile_age_catalog() {
 # up_app_services — bring up api and web. In dev mode the web container keeps
 # node_modules in an anonymous volume (docker-compose.dev.yml), which compose
 # reuses across recreates; without --renew-anon-volumes a package.json change
-# never reaches the running Vite server. --build is web-only: npm ci is cached
-# on package*.json, while an api rebuild re-bakes the embedding models.
+# never reaches the running Vite server. Only web is built: `up --build web`
+# would also build its depends_on chain (api, postgres), and the api image
+# re-bakes the embedding models after any api/ edit. api comes up on its own
+# first: --renew-anon-volumes recreates every service it touches, and a
+# needless api recreate reloads the embedding models.
 # @verified (new)
 up_app_services() {
     if [ "$DEV_MODE" = "true" ]; then
-        run_compose up -d --build --renew-anon-volumes web
+        run_compose build web
         run_compose up -d api
+        run_compose up -d --no-deps --renew-anon-volumes web
     else
         run_compose up -d api web
     fi

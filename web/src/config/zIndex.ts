@@ -20,8 +20,8 @@
  * - Modal layer (40-49): Modals, dialogs, top-level menus
  * - Notification layer (50+): Critical notifications, toasts
  *
- * IMPORTANT: When adding new z-index values here, you MUST also add them to
- * web/tailwind.config.js theme.extend.zIndex for Tailwind JIT compilation.
+ * Tailwind 4 generates z-<n> for any integer, so these values need no theme
+ * entry.
  */
 
 export const Z_INDEX = {

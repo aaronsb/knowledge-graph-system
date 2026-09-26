@@ -54,7 +54,8 @@ Cypher fallback. Key patterns:
 ## After API Changes
 
 ```bash
-./operator.sh restart api    # Required — no hot reload in dev or prod
+# Dev: uvicorn --reload picks up api/ edits. Prod: no reload.
+./operator.sh restart api    # Prod, or to force a restart in dev
 ```
 
 ## Testing Endpoints
