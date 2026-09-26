@@ -226,6 +226,21 @@ reconcile_age_catalog() {
     docker exec "$OPERATOR_CONTAINER" /workspace/operator/lib/age-catalog.sh || exit 1
 }
 
+# up_app_services — bring up api and web. In dev mode the web container keeps
+# node_modules in an anonymous volume (docker-compose.dev.yml), which compose
+# reuses across recreates; without --renew-anon-volumes a package.json change
+# never reaches the running Vite server. --build is web-only: npm ci is cached
+# on package*.json, while an api rebuild re-bakes the embedding models.
+# @verified (new)
+up_app_services() {
+    if [ "$DEV_MODE" = "true" ]; then
+        run_compose up -d --build --renew-anon-volumes web
+        run_compose up -d api
+    else
+        run_compose up -d api web
+    fi
+}
+
 cmd_start() {
     check_env
     load_config
@@ -244,7 +259,7 @@ cmd_start() {
     # (running compose inside container causes paths like ../api to resolve to /workspace/api)
     echo -e "${BLUE}→ Starting application (api, web)...${NC}"
     cd "$DOCKER_DIR"
-    run_compose up -d api web
+    up_app_services
 
     # Bring up the in-VM router when enabled (ADR-105). cmd_start ups services by
     # name, so the traefik overlay being in the compose command isn't enough — it
@@ -488,7 +503,7 @@ cmd_upgrade() {
 
     # Start application
     echo -e "${BLUE}→ Starting application...${NC}"
-    run_compose up -d api web
+    up_app_services
 
     # Health check
     echo -e "${BLUE}→ Waiting for API health...${NC}"
