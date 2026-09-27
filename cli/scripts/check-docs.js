@@ -2,7 +2,7 @@
 /**
  * Documentation Validation Script
  *
- * Checks that all CLI commands are properly documented in CLI_USAGE.md
+ * Checks that all CLI commands are properly documented in docs/reference/cli.md
  * and that documentation references match actual command structure.
  */
 
@@ -29,7 +29,7 @@ const log = {
 };
 
 const ROOT = path.resolve(__dirname, '../..');
-const CLI_USAGE_PATH = path.join(ROOT, 'docs/guides/CLI_USAGE.md');
+const CLI_USAGE_PATH = path.join(ROOT, 'docs/reference/cli.md');
 
 /**
  * Get list of all main commands from kg CLI
@@ -43,7 +43,7 @@ function getMainCommands() {
       help = execSync('kg --help', { encoding: 'utf8', cwd: ROOT });
     } catch {
       // Try using dist/index.js directly
-      const distPath = path.join(ROOT, 'client/dist/index.js');
+      const distPath = path.join(ROOT, 'cli/dist/index.js');
       if (!fs.existsSync(distPath)) {
         throw new Error('kg CLI not installed and dist/index.js not found. Run: npm run build');
       }
@@ -84,11 +84,12 @@ function getMainCommands() {
 }
 
 /**
- * Check if a command is documented in CLI_USAGE.md
+ * Check if a command is documented in docs/reference/cli.md
  */
 function isCommandDocumented(commandName, docContent) {
-  // Look for section headers like "## 4. Job Commands"
   const patterns = [
+    // docs/reference/cli.md (simple-doc-gen.mjs): "## health", "## config (cfg)"
+    new RegExp(`^##\\s+${commandName}(\\s|$)`, 'im'),
     new RegExp(`##\\s+\\d+\\.\\s+${commandName}\\s+Command`, 'i'),
     new RegExp(`\\*\\*Command:\\*\\*\\s+\`kg ${commandName}`, 'i'),
     new RegExp(`### .*\`kg ${commandName}`, 'i')
@@ -105,7 +106,7 @@ async function validateDocs() {
   log.info('Documentation Validation');
   console.log('='.repeat(80) + '\n');
 
-  // Check if CLI_USAGE.md exists
+  // Check that the CLI reference exists
   if (!fs.existsSync(CLI_USAGE_PATH)) {
     log.error(`Documentation file not found: ${CLI_USAGE_PATH}`);
     process.exit(1);

@@ -9,8 +9,6 @@ mode: reference
 > **Auto-Generated Documentation**
 > 
 > Generated from CLI source code.
-> Last updated: 2026-07-01
-
 ---
 
 ## Commands
@@ -3074,10 +3072,10 @@ kg set [options]
 |--------|-------------|---------|
 | `--provider <provider>` | Provider: openai, anthropic, ollama, or vllm | - |
 | `--model <model>` | Model name (e.g., gpt-4o, mistral:7b-instruct) | - |
-| `--vision` | Enable vision support | - |
-| `--no-vision` | Disable vision support | - |
-| `--json-mode` | Enable JSON mode | - |
-| `--no-json-mode` | Disable JSON mode | - |
+| `--vision` | Enable vision support (fallback; the model catalog wins when it lists the model) | - |
+| `--no-vision` | Disable vision support (fallback; the model catalog wins when it lists the model) | - |
+| `--json-mode` | Enable JSON mode (fallback; the model catalog wins when it lists the model) | - |
+| `--no-json-mode` | Disable JSON mode (fallback; the model catalog wins when it lists the model) | - |
 | `--max-tokens <n>` | Max tokens | - |
 | `--base-url <url>` | Base URL for local providers (e.g., http://localhost:11434) | - |
 | `--temperature <n>` | Sampling temperature 0.0-1.0 (default: 0.1) | - |
