@@ -134,20 +134,25 @@ git add . && git commit && git push
 # 1. If cli/ changed, bump the CLI FIRST — the release tag publishes it
 ./publish.sh bump cli <patch|minor>
 
-# 2. Bump platform version, sync script versions, commit, tag
+# 2. Write the release's CHANGELOG.md entry: "## [X.Y.Z] - YYYY-MM-DD", with
+#    Upgrade notes first, then Added / Changed / Fixed / Removed. Write it from
+#    the commits and PRs since the last tag (git log vPREV..HEAD) for the reader
+#    deciding whether and how to upgrade. `release` refuses a version without one.
+
+# 3. Bump platform version, sync script versions, commit (with CHANGELOG.md), tag
 ./publish.sh release <patch|minor> -m "Description of changes"
 git push origin main --tags
-gh release create vX.Y.Z --generate-notes
+./publish.sh gh-release             # CHANGELOG.md entry + generated PR list
 
 # The tag push runs .github/workflows/publish-npm.yml: @aaronsb/kg-cli goes to npm
 # through the trusted publisher (OIDC + provenance). No npm login anywhere.
 # CLI bumped after the tag? ./publish.sh cli dispatches that workflow.
 
-# 3. Docker images: api, web, operator, postgres — amd64 + arm64 on main
+# 4. Docker images: api, web, operator, postgres — amd64 + arm64 on main
 ./publish.sh images -m "Description of changes"
 ./publish.sh images-rocm            # kg-api rocm72-host variant (amd64)
 
-# 4. FUSE driver to PyPI
+# 5. FUSE driver to PyPI
 ./publish.sh fuse
 ```
 

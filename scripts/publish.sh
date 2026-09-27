@@ -83,12 +83,15 @@ Version Management:
   bump <type> [target]      Bump version (type: major|minor|patch)
                             target: platform (default), cli, fuse
   sync-scripts              Update script versions to match VERSION file
-  release <type> -m "msg"   Full release: bump, sync, tag, publish
+  release <type> -m "msg"   Full release: bump, sync, tag (needs a CHANGELOG.md entry)
+  notes [version]           Print a version's CHANGELOG.md entry (default: VERSION)
 
 Publishing:
   images [api|web|operator] Publish Docker images to GHCR
   images-rocm [variant...]  Publish kg-api ROCm variants (rocm72-host)
                             Defaults to rocm72-host only; --force enables deferred variants
+  gh-release                Create the GitHub release for VERSION from its
+                            CHANGELOG.md entry plus generated PR notes
   cli                       Dispatch publish-npm.yml (npm trusted publisher) for @aaronsb/kg-cli
   fuse                      Publish Python package (kg-fuse) to PyPI
   appliance                 Build + attach the thin-appliance OVA to the GitHub
@@ -116,7 +119,7 @@ EOF
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        status|bump|sync-scripts|release|images|images-rocm|appliance|all)
+        status|bump|sync-scripts|release|notes|gh-release|images|images-rocm|appliance|all)
             COMMAND="$1"
             shift
             ;;
@@ -141,6 +144,11 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         api|web|operator|postgres|rocm72-host)
+            TARGETS+=("$1")
+            shift
+            ;;
+        [0-9]*.[0-9]*.[0-9]*)
+            # A version argument (publish.sh notes 0.19.0)
             TARGETS+=("$1")
             shift
             ;;
@@ -566,6 +574,60 @@ cmd_sync_scripts() {
     update_script_version "$PROJECT_ROOT/client-manager.sh" "CLIENT_MANAGER_VERSION" "$VERSION"
 }
 
+# changelog_entry <version>
+#
+# Print the body of CHANGELOG.md's "## [<version>]" section (without the
+# heading), stopping at the next "## [" heading. Empty output means the version
+# has no entry.  @verified (new)
+changelog_entry() {
+    local version="$1" file="$PROJECT_ROOT/CHANGELOG.md"
+    [ -f "$file" ] || return 0
+    awk -v v="$version" '
+        index($0, "## [" v "]") == 1 { on = 1; next }
+        on && /^## \[/ { exit }
+        on { print }
+    ' "$file" | sed -e '/./,$!d'
+}
+
+cmd_notes() {
+    get_versions
+    local version="${TARGETS[0]:-$VERSION}"
+    local body
+    body=$(changelog_entry "$version")
+    if [ -z "$body" ]; then
+        echo -e "${RED}✗ CHANGELOG.md has no entry for $version${NC}" >&2
+        exit 1
+    fi
+    printf '%s\n' "$body"
+}
+
+# cmd_gh_release — create the GitHub release for VERSION. The body is the
+# version's CHANGELOG.md entry; --generate-notes appends GitHub's PR list.
+cmd_gh_release() {
+    get_versions
+    local tag="v$VERSION" body
+    body=$(changelog_entry "$VERSION")
+    if [ -z "$body" ]; then
+        echo -e "${RED}✗ CHANGELOG.md has no entry for $VERSION; write it before publishing${NC}"
+        exit 1
+    fi
+    if ! git -C "$PROJECT_ROOT" ls-remote --exit-code --tags origin "$tag" >/dev/null 2>&1; then
+        echo -e "${RED}✗ $tag is not on origin; push it first: git push origin --tags${NC}"
+        exit 1
+    fi
+    if gh release view "$tag" >/dev/null 2>&1; then
+        echo -e "${YELLOW}⚠ GitHub release $tag already exists${NC}"
+        exit 0
+    fi
+    if [ "$DRY_RUN" = "true" ]; then
+        echo -e "${DIM}Would create GitHub release $tag with:${NC}"
+        printf '%s\n' "$body"
+        return 0
+    fi
+    printf '%s\n' "$body" | gh release create "$tag" --title "$tag" --notes-file - --generate-notes
+    echo -e "${GREEN}✓ GitHub release $tag created${NC}"
+}
+
 cmd_release() {
     if [ -z "$BUMP_TYPE" ]; then
         echo -e "${RED}Release requires bump type: major, minor, or patch${NC}"
@@ -577,6 +639,14 @@ cmd_release() {
     local new_version=$(bump_version "$VERSION" "$BUMP_TYPE")
 
     echo -e "${BOLD}Release workflow: $VERSION → $new_version${NC}"
+
+    # Release notes come from CHANGELOG.md; a tag without an entry would
+    # publish a release that says nothing about what it contains.
+    if [ "$FORCE" != "true" ] && [ -z "$(changelog_entry "$new_version")" ]; then
+        echo -e "${RED}✗ CHANGELOG.md has no entry for $new_version.${NC}"
+        echo -e "  Add ${BOLD}## [$new_version] - $(date +%Y-%m-%d)${NC} describing the release, then rerun."
+        exit 1
+    fi
 
     # The tag push triggers publish-npm.yml, which publishes cli/package.json's
     # version. If that version is already on npm the workflow fails and the CLI
@@ -613,7 +683,7 @@ cmd_release() {
         echo -e "${DIM}Would commit: 'Release v$VERSION'${NC}"
         echo -e "${DIM}Would tag: v$VERSION${NC}"
     else
-        git -C "$PROJECT_ROOT" add VERSION install.sh operator.sh client-manager.sh
+        git -C "$PROJECT_ROOT" add VERSION install.sh operator.sh client-manager.sh CHANGELOG.md
         local commit_msg="Release v$VERSION"
         [ -n "$DESCRIPTION" ] && commit_msg="$commit_msg: $DESCRIPTION"
         git -C "$PROJECT_ROOT" commit -m "$commit_msg"
@@ -627,7 +697,7 @@ cmd_release() {
     local current_branch=$(git -C "$PROJECT_ROOT" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "main")
     echo "  1. Push: git push origin $current_branch --tags"
     echo "     → the tag push runs publish-npm.yml: @aaronsb/kg-cli@$CLI_VERSION via npm trusted publisher"
-    echo "  2. GitHub release: gh release create v$VERSION --generate-notes"
+    echo "  2. GitHub release: ./publish.sh gh-release   (CHANGELOG.md entry + generated PR list)"
     echo "  3. Publish images: ./publish.sh images   (+ ./publish.sh images-rocm)"
     echo "  4. Publish FUSE (if needed): ./publish.sh fuse"
     echo ""
@@ -1212,6 +1282,8 @@ case "$COMMAND" in
     bump)         cmd_bump ;;
     sync-scripts) cmd_sync_scripts ;;
     release)      cmd_release ;;
+    notes)        cmd_notes ;;
+    gh-release)   cmd_gh_release ;;
     images)       cmd_images ;;
     images-rocm)  cmd_images_rocm ;;
     cli)          cmd_cli ;;
