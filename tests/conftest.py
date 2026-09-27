@@ -113,7 +113,10 @@ async def async_api_client():
     import httpx
     from api.app.main import app
 
-    async with httpx.AsyncClient(app=app, base_url="http://test") as client:
+    # httpx 0.28 removed the AsyncClient(app=...) shortcut; ASGITransport is
+    # the replacement.
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
         yield client
 
 
