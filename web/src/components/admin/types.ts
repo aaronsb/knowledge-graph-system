@@ -130,6 +130,9 @@ export interface ExtractionConfig {
   supports_vision: boolean;
   supports_json_mode: boolean;
   max_tokens: number;
+  /** Model limits from the model catalog; null when the catalog doesn't list the model. */
+  model_context_length?: number | null;
+  model_max_output_tokens?: number | null;
   rate_limit_config?: {
     max_concurrent_requests: number;
     max_retries: number;

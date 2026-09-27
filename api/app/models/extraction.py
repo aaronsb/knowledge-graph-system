@@ -21,6 +21,8 @@ class ExtractionConfigResponse(BaseModel):
     supports_vision: bool = Field(..., description="Whether the model supports vision/image inputs")
     supports_json_mode: bool = Field(..., description="Whether the model supports JSON mode")
     max_tokens: Optional[int] = Field(None, description="Maximum token limit")
+    model_context_length: Optional[int] = Field(None, description="Model's input context window, from the model catalog")
+    model_max_output_tokens: Optional[int] = Field(None, description="Model's maximum output tokens, from the model catalog")
     config_id: Optional[int] = Field(None, description="Database config ID")
 
     # Local provider configuration (Ollama, vLLM) - ADR-806
@@ -48,6 +50,8 @@ class ExtractionConfigDetail(BaseModel):
     supports_vision: bool
     supports_json_mode: bool
     max_tokens: Optional[int] = None
+    model_context_length: Optional[int] = None
+    model_max_output_tokens: Optional[int] = None
     created_at: datetime
     updated_at: datetime
     updated_by: Optional[str] = None
@@ -74,8 +78,10 @@ class UpdateExtractionConfigRequest(BaseModel):
     """
     provider: str = Field(..., description="Provider: 'openai', 'anthropic', or 'ollama'")
     model_name: str = Field(..., description="Model identifier (e.g., 'gpt-4o', 'mistral:7b-instruct')")
-    supports_vision: Optional[bool] = Field(False, description="Model supports vision inputs")
-    supports_json_mode: Optional[bool] = Field(True, description="Model supports JSON mode")
+    # None leaves the stored flag alone (the upsert COALESCEs); the model
+    # catalog is the source of truth for capabilities when it lists the model.
+    supports_vision: Optional[bool] = Field(None, description="Model supports vision inputs (catalog value wins)")
+    supports_json_mode: Optional[bool] = Field(None, description="Model supports JSON mode (catalog value wins)")
     max_tokens: Optional[int] = Field(None, description="Maximum token limit")
     updated_by: Optional[str] = Field('api', description="User/admin who made the change")
 

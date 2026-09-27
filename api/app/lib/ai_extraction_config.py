@@ -16,6 +16,12 @@ def load_active_extraction_config() -> Optional[Dict[str, Any]]:
     """
     Load the active AI extraction configuration from the database.
 
+    supports_vision and supports_json_mode come from the model catalog row for
+    (provider, model_name, 'extraction') when one exists, falling back to the
+    stored flags, then to False / True. model_context_length and
+    model_max_output_tokens are the catalog's limits (None when unlisted).
+    @verified 48118f9a8
+
     Returns:
         Dict with config parameters if found, None otherwise
 
@@ -27,6 +33,8 @@ def load_active_extraction_config() -> Optional[Dict[str, Any]]:
             "supports_vision": True,
             "supports_json_mode": True,
             "max_tokens": 16384,
+            "model_context_length": 1000000,
+            "model_max_output_tokens": 128000,
             "created_at": "...",
             "updated_at": "...",
             "updated_by": "..."
@@ -40,15 +48,27 @@ def load_active_extraction_config() -> Optional[Dict[str, Any]]:
 
         try:
             with conn.cursor() as cur:
+                # Capabilities come from the model catalog (ADR-800) when the
+                # active model has a row there; the stored flags are a fallback
+                # for models the catalog doesn't list. The literal defaults
+                # cover rows saved without either: a new row stores NULL, not
+                # the column default, because the upsert passes it explicitly.
                 cur.execute("""
                     SELECT
-                        id, provider, model_name, supports_vision,
-                        supports_json_mode, max_tokens,
-                        created_at, updated_at, updated_by, active,
-                        base_url, temperature, top_p, gpu_layers, num_threads,
-                        thinking_mode, max_concurrent_requests, max_retries
-                    FROM kg_api.ai_extraction_config
-                    WHERE active = TRUE
+                        c.id, c.provider, c.model_name,
+                        COALESCE(m.supports_vision, c.supports_vision, FALSE),
+                        COALESCE(m.supports_json_mode, c.supports_json_mode, TRUE),
+                        c.max_tokens,
+                        c.created_at, c.updated_at, c.updated_by, c.active,
+                        c.base_url, c.temperature, c.top_p, c.gpu_layers, c.num_threads,
+                        c.thinking_mode, c.max_concurrent_requests, c.max_retries,
+                        m.context_length, m.max_completion_tokens
+                    FROM kg_api.ai_extraction_config c
+                    LEFT JOIN kg_api.provider_model_catalog m
+                      ON m.provider = c.provider
+                     AND m.model_id = c.model_name
+                     AND m.category = 'extraction'
+                    WHERE c.active = TRUE
                     LIMIT 1
                 """)
 
@@ -76,7 +96,9 @@ def load_active_extraction_config() -> Optional[Dict[str, Any]]:
                     "num_threads": row[14],
                     "thinking_mode": row[15],
                     "max_concurrent_requests": row[16],
-                    "max_retries": row[17]
+                    "max_retries": row[17],
+                    "model_context_length": row[18],
+                    "model_max_output_tokens": row[19]
                 }
 
                 logger.debug(f"✅ Loaded AI extraction config: {config['provider']} / {config.get('model_name', 'N/A')}")
@@ -194,8 +216,9 @@ def save_extraction_config(config: Dict[str, Any], updated_by: str = "api") -> b
                 # base_url" / "save config wipes model" bug class for every
                 # present and future caller — the fix lives at this one layer,
                 # not threaded through each endpoint. Absent fields are passed
-                # as NULL so brand-new rows fall to column defaults
-                # (supports_* , thinking_mode='off', active=TRUE).
+                # as NULL, and on a brand-new row that NULL is stored as-is:
+                # an explicit NULL does not fall back to the column default.
+                # Readers supply defaults (load_active_extraction_config).
                 #
                 # model_name is special: '' is the new-row sentinel (NOT NULL
                 # column) but must never overwrite a real stored model — hence
@@ -330,5 +353,7 @@ def get_extraction_config_summary() -> Dict[str, Any]:
         "num_threads": config.get('num_threads'),
         "thinking_mode": config.get('thinking_mode'),
         "max_concurrent_requests": config.get('max_concurrent_requests'),
-        "max_retries": config.get('max_retries')
+        "max_retries": config.get('max_retries'),
+        "model_context_length": config.get('model_context_length'),
+        "model_max_output_tokens": config.get('model_max_output_tokens')
     }

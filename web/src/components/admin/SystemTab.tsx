@@ -1264,7 +1264,13 @@ export const SystemTab: React.FC<SystemTabProps> = ({ onError }) => {
                   {/* Active provider: persisted capability detail (read-only) */}
                   {isActive && extractionConfig && (
                     <div className="mt-3 pt-3 border-t border-border flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                      <span>Max tokens: {extractionConfig.max_tokens?.toLocaleString() ?? '—'}</span>
+                      <span>Max tokens (configured): {extractionConfig.max_tokens?.toLocaleString() ?? '—'}</span>
+                      {extractionConfig.model_context_length != null && (
+                        <span>Context: {extractionConfig.model_context_length.toLocaleString()}</span>
+                      )}
+                      {extractionConfig.model_max_output_tokens != null && (
+                        <span>Max output: {extractionConfig.model_max_output_tokens.toLocaleString()}</span>
+                      )}
                       <span>Vision: {extractionConfig.supports_vision ? 'Yes' : 'No'}</span>
                       <span>JSON mode: {extractionConfig.supports_json_mode ? 'Yes' : 'No'}</span>
                       {extractionConfig.rate_limit_config && (

@@ -886,6 +886,9 @@ export interface ExtractionConfigResponse {
   supports_vision: boolean;
   supports_json_mode: boolean;
   max_tokens: number;
+  /** Model limits from the model catalog; null when the catalog doesn't list the model. */
+  model_context_length?: number | null;
+  model_max_output_tokens?: number | null;
   config_id: number;
 }
 
@@ -896,6 +899,8 @@ export interface ExtractionConfigDetail {
   supports_vision: boolean;
   supports_json_mode: boolean;
   max_tokens?: number;
+  model_context_length?: number | null;
+  model_max_output_tokens?: number | null;
   created_at: string;
   updated_at: string;
   updated_by?: string;
