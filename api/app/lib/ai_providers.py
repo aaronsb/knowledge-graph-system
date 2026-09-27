@@ -9,9 +9,10 @@ API Key Loading (ADR-405):
 - Maintains backward compatibility
 """
 
+import time
 import os
 import logging
-from typing import List, Dict, Any, Literal, Optional, Union
+from typing import List, Dict, Any, Literal, Optional, Tuple, Union
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 import json
@@ -411,6 +412,66 @@ def _list_models_from_catalog(provider: str) -> Optional[Dict[str, List[str]]]:
         return None
 
 
+_HTTP_CLIENT = None
+
+
+def _shared_http_client():
+    """Process-wide httpx.Client for provider REST calls (thread-safe, pooled).
+
+    Providers are built per get_provider() call; sharing one client lets
+    connections be reused instead of opening a new pool each time.  @verified (new)
+    """
+    global _HTTP_CLIENT
+    if _HTTP_CLIENT is None:
+        import httpx
+        _HTTP_CLIENT = httpx.Client(follow_redirects=True)
+    return _HTTP_CLIENT
+
+
+# (provider, model_id) -> (max_completion_tokens or None, monotonic time).
+# One lookup per model per TTL instead of one per LLM call; a catalog refresh
+# is picked up within the TTL.
+_OUTPUT_CAP_CACHE: Dict[Tuple[str, str], Tuple[Optional[int], float]] = {}
+_OUTPUT_CAP_TTL_S = 300
+
+
+def _output_token_budget(provider: str, model_id: Optional[str], requested: int) -> int:
+    """Cap a requested output-token budget at the model's catalog limit (ADR-800).
+
+    Returns `requested` unless the catalog records a smaller
+    max_completion_tokens for (provider, model_id), in which case that limit
+    wins; asking for more than the model allows fails the request. A failed
+    catalog lookup leaves `requested` unchanged.  @verified (new)
+    """
+    if not model_id:
+        return requested
+    key = (provider, model_id)
+    cached = _OUTPUT_CAP_CACHE.get(key)
+    if cached is not None and time.monotonic() - cached[1] < _OUTPUT_CAP_TTL_S:
+        cap = cached[0]
+        return min(requested, cap) if cap else requested
+    try:
+        client = _get_catalog_age_client()
+        conn = client.pool.getconn()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """SELECT MIN(max_completion_tokens)
+                       FROM kg_api.provider_model_catalog
+                       WHERE provider = %s AND model_id = %s""",
+                    (provider, model_id),
+                )
+                row = cur.fetchone()
+        finally:
+            client.pool.putconn(conn)
+    except Exception as e:
+        logger.warning(f"Output-token cap lookup failed for {provider}/{model_id}: {e}")
+        return requested
+    cap = row[0] if row else None
+    _OUTPUT_CAP_CACHE[key] = (cap, time.monotonic())
+    return min(requested, cap) if cap else requested
+
+
 class AIProvider(ABC):
     """Abstract base class for AI providers"""
 
@@ -556,17 +617,52 @@ class AIProvider(ABC):
         return []
 
 
+# OpenAI's models API reports no limits, so output caps are kept here by id
+# prefix, most specific first (operator-maintained, like the pricing table).
+# Unknown models get None: uncapped, the request goes as configured.
+_OPENAI_MAX_OUTPUT = (
+    ("gpt-5", 128000),
+    ("gpt-4.1", 32768),
+    ("gpt-4o", 16384),
+    ("gpt-4-turbo", 4096),
+    ("gpt-4-1106", 4096),
+    ("gpt-4-0125", 4096),
+    ("gpt-4-vision", 4096),
+    ("gpt-4", 8192),
+    ("gpt-3.5-turbo", 4096),
+    ("o1-mini", 65536),
+    ("o1-preview", 32768),
+    ("o1", 100000),
+    ("o3", 100000),
+    ("o4", 100000),
+)
+
+
+def _openai_max_output(model_id: str) -> Optional[int]:
+    """Known max output tokens for an OpenAI model id, or None.  @verified (new)"""
+    for prefix, limit in _OPENAI_MAX_OUTPUT:
+        if model_id.startswith(prefix):
+            return limit
+    return None
+
+
 class OpenAIProvider(AIProvider):
     """OpenAI provider for GPT models and embeddings"""
+
+    CATALOG_PROVIDER = "openai"
 
     def __init__(
         self,
         api_key: Optional[str] = None,
         extraction_model: Optional[str] = None,
         embedding_model: Optional[str] = None,
-        embedding_provider: Optional[AIProvider] = None
+        embedding_provider: Optional[AIProvider] = None,
+        max_tokens: Optional[int] = None,
     ):
         from openai import OpenAI
+
+        # Configured extraction output budget; None falls back to 4096.
+        self.max_tokens = max_tokens
 
         # Load API key with fallback chain (ADR-405)
         self.api_key = _load_api_key("openai", api_key, "OPENAI_API_KEY")
@@ -646,7 +742,11 @@ class OpenAIProvider(AIProvider):
                     {"role": "system", "content": system_prompt},  # Already formatted
                     {"role": "user", "content": f"Text to analyze:\n\n{text}"}
                 ],
-                max_tokens=4096,
+                # max_completion_tokens: reasoning models (o-series, gpt-5)
+                # reject max_tokens; every chat model accepts this name.
+                max_completion_tokens=_output_token_budget(
+                    self.CATALOG_PROVIDER, self.extraction_model, self.max_tokens or 4096
+                ),
                 temperature=0.3,  # Lower for consistency
                 response_format={"type": "json_object"}
             )
@@ -722,7 +822,9 @@ class OpenAIProvider(AIProvider):
             ],
             "tools": openai_tools,
             "tool_choice": native_choice,
-            "max_tokens": max_tokens,
+            "max_completion_tokens": _output_token_budget(
+                self.CATALOG_PROVIDER, model or self.extraction_model, max_tokens
+            ),
         }
         if temperature is not None:
             request_kwargs["temperature"] = temperature
@@ -744,7 +846,7 @@ class OpenAIProvider(AIProvider):
 
         if stop_reason == "max_tokens":
             raise Exception(
-                f"OpenAI call_with_tools truncated at max_tokens={max_tokens} "
+                f"OpenAI call_with_tools truncated at max_tokens={request_kwargs['max_completion_tokens']} "
                 f"(model={request_kwargs['model']})."
             )
 
@@ -848,7 +950,9 @@ class OpenAIProvider(AIProvider):
                     {"role": "system", "content": "You are a technical writer who explains code and diagrams in clear, simple prose."},
                     {"role": "user", "content": f"{prompt}\n\n{code}"}
                 ],
-                max_tokens=1000,  # Prose translations are typically shorter than code
+                max_completion_tokens=_output_token_budget(
+                    self.CATALOG_PROVIDER, translation_model, 1000
+                ),  # Prose translations are typically shorter than code
                 temperature=0.5   # Balanced: clear but not robotic
             )
 
@@ -899,6 +1003,7 @@ class OpenAIProvider(AIProvider):
             if detail is not None:
                 image_url["detail"] = detail
 
+            image_budget = _output_token_budget(self.CATALOG_PROVIDER, vision_model, 8192)
             response = self.client.chat.completions.create(
                 model=vision_model,
                 messages=[
@@ -910,14 +1015,14 @@ class OpenAIProvider(AIProvider):
                         ]
                     }
                 ],
-                max_tokens=8192,
+                max_completion_tokens=image_budget,
                 temperature=temperature
             )
 
             choice = response.choices[0]
             if choice.finish_reason == "length":
                 raise Exception(
-                    f"OpenAI image description truncated at max_tokens=8192 "
+                    f"OpenAI image description truncated at max_tokens={image_budget} "
                     f"(model={vision_model}). Downstream concept extraction "
                     "would receive partial text. Split the image or raise the cap."
                 )
@@ -1019,6 +1124,7 @@ class OpenAIProvider(AIProvider):
 
                 category = "embedding" if is_embedding else "extraction"
                 pricing = known_pricing.get(mid, (None, None))
+                max_out = None if is_embedding else _openai_max_output(mid)
 
                 entries.append({
                     "provider": "openai",
@@ -1026,6 +1132,7 @@ class OpenAIProvider(AIProvider):
                     "display_name": mid,
                     "category": category,
                     "context_length": None,
+                    "max_completion_tokens": max_out,
                     # Vision-capable families: 4o, gpt-4-turbo, the o-series
                     # reasoning models (o1/o3/o4 accept image input), gpt-5.
                     # Known maintenance point: the o-series prefix list is a
@@ -1205,13 +1312,19 @@ class LocalEmbeddingProvider(AIProvider):
 class AnthropicProvider(AIProvider):
     """Anthropic provider for Claude models"""
 
+    CATALOG_PROVIDER = "anthropic"
+
     def __init__(
         self,
         api_key: Optional[str] = None,
         extraction_model: Optional[str] = None,
-        embedding_provider: Optional[AIProvider] = None
+        embedding_provider: Optional[AIProvider] = None,
+        max_tokens: Optional[int] = None,
     ):
         from anthropic import Anthropic
+
+        # Configured extraction output budget; None falls back to 16384.
+        self.max_tokens = max_tokens
 
         # Load API key with fallback chain (ADR-405)
         self.api_key = _load_api_key("anthropic", api_key, "ANTHROPIC_API_KEY")
@@ -1281,9 +1394,12 @@ class AnthropicProvider(AIProvider):
         # both handled by _anthropic_sampling_kwargs (drop, or send via extra_body).
         # The configured extraction_model may be Opus 4.7 per the user's
         # provider/model selection, so the request shape has to adapt.
+        extraction_budget = _output_token_budget(
+            self.CATALOG_PROVIDER, self.extraction_model, self.max_tokens or 16384
+        )
         request_kwargs: Dict[str, Any] = {
             "model": self.extraction_model,
-            "max_tokens": 16384,
+            "max_tokens": extraction_budget,
             "system": system_prompt,
             "tools": [EXTRACTION_TOOL_SCHEMA],
             "tool_choice": {"type": "tool", "name": EXTRACTION_TOOL_NAME},
@@ -1300,7 +1416,7 @@ class AnthropicProvider(AIProvider):
 
             if message.stop_reason == "max_tokens":
                 raise Exception(
-                    "Anthropic extraction truncated at max_tokens=16384. "
+                    f"Anthropic extraction truncated at max_tokens={extraction_budget}. "
                     "The chunk produced more concepts/instances/relationships "
                     "than fit in one response — split the chunk or raise the cap."
                 )
@@ -1369,7 +1485,7 @@ class AnthropicProvider(AIProvider):
 
         request_kwargs: Dict[str, Any] = {
             "model": target_model,
-            "max_tokens": max_tokens,
+            "max_tokens": _output_token_budget(self.CATALOG_PROVIDER, target_model, max_tokens),
             "system": system_prompt,
             "tools": anthropic_tools,
             "tool_choice": native_choice,
@@ -1388,7 +1504,7 @@ class AnthropicProvider(AIProvider):
 
         if stop_reason == "max_tokens":
             raise Exception(
-                f"Anthropic call_with_tools truncated at max_tokens={max_tokens} "
+                f"Anthropic call_with_tools truncated at max_tokens={request_kwargs['max_tokens']} "
                 f"(model={target_model})."
             )
 
@@ -1450,7 +1566,7 @@ class AnthropicProvider(AIProvider):
 
             request_kwargs: Dict[str, Any] = {
                 "model": translation_model,
-                "max_tokens": 1000,
+                "max_tokens": _output_token_budget(self.CATALOG_PROVIDER, translation_model, 1000),
                 "system": "You are a technical writer who explains code and diagrams in clear, simple prose.",
                 "messages": [
                     {"role": "user", "content": f"{prompt}\n\n{code}"}
@@ -1524,9 +1640,10 @@ class AnthropicProvider(AIProvider):
 
             # Opus 4.7 removes sampling params (temperature/top_p/top_k → 400);
             # anthropic-sdk v1.0 takes the rest via extra_body. Both via helper.
+            image_budget = _output_token_budget(self.CATALOG_PROVIDER, vision_model, 8192)
             request_kwargs: Dict[str, Any] = {
                 "model": vision_model,
-                "max_tokens": 8192,
+                "max_tokens": image_budget,
                 "messages": [{
                     "role": "user",
                     "content": [
@@ -1550,7 +1667,7 @@ class AnthropicProvider(AIProvider):
 
             if message.stop_reason == "max_tokens":
                 raise Exception(
-                    f"Anthropic image description truncated at max_tokens=8192 "
+                    f"Anthropic image description truncated at max_tokens={image_budget} "
                     f"(model={vision_model}). The downstream concept extraction "
                     "would receive a partial description — split the image or raise the cap."
                 )
@@ -1769,7 +1886,7 @@ class OpenRouterProvider(AIProvider):
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": f"Text to analyze:\n\n{text}"},
                 ],
-                max_tokens=self.max_tokens,
+                max_tokens=_output_token_budget("openrouter", self.extraction_model, self.max_tokens),
                 temperature=0.3,
                 response_format={"type": "json_object"},
             )
@@ -1839,7 +1956,7 @@ class OpenRouterProvider(AIProvider):
             ],
             "tools": openai_tools,
             "tool_choice": native_choice,
-            "max_tokens": max_tokens,
+            "max_tokens": _output_token_budget("openrouter", model or self.extraction_model, max_tokens),
         }
         if temperature is not None:
             request_kwargs["temperature"] = temperature
@@ -1854,7 +1971,7 @@ class OpenRouterProvider(AIProvider):
 
         if finish_reason == "length":
             raise Exception(
-                f"OpenRouter call_with_tools truncated at max_tokens={max_tokens} "
+                f"OpenRouter call_with_tools truncated at max_tokens={request_kwargs['max_tokens']} "
                 f"(model={request_kwargs['model']})."
             )
 
@@ -1946,7 +2063,7 @@ class OpenRouterProvider(AIProvider):
                     },
                     {"role": "user", "content": f"{prompt}\n\n{code}"},
                 ],
-                max_tokens=1000,
+                max_tokens=_output_token_budget("openrouter", translation_model, 1000),
                 temperature=0.5,
             )
 
@@ -2010,7 +2127,7 @@ class OpenRouterProvider(AIProvider):
                         ],
                     }
                 ],
-                max_tokens=8192,
+                max_tokens=_output_token_budget("openrouter", vision_model, 8192),
                 temperature=temperature,
             )
 
@@ -2093,15 +2210,16 @@ class OpenRouterProvider(AIProvider):
 
     def fetch_model_catalog(self) -> List[Dict[str, Any]]:
         """Fetch models from OpenRouter API with pricing (ADR-800)."""
-        import requests
+        import httpx
 
         entries = []
         try:
             # OpenRouter models endpoint is public but we use auth for higher rate limits
-            resp = requests.get(
+            resp = httpx.get(
                 f"{self.OPENROUTER_BASE_URL}/models",
                 headers={"Authorization": f"Bearer {self.api_key}"},
                 timeout=30,
+                follow_redirects=True,
             )
             resp.raise_for_status()
             data = resp.json()
@@ -2184,7 +2302,7 @@ class OllamaProvider(AIProvider):
             top_p: Nucleus sampling threshold (0.0-1.0)
             thinking_mode: Thinking mode - 'off', 'low', 'medium', 'high' (Ollama 0.12.x+)
         """
-        import requests
+        import httpx
 
         self.base_url = base_url or os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
         # Catalog-driven model resolution (no hardcoded literals — ADR-800/801).
@@ -2196,7 +2314,7 @@ class OllamaProvider(AIProvider):
         self.top_p = top_p
         self.thinking_mode = thinking_mode
         logger.info(f"🔍 OllamaProvider.__init__: thinking_mode={self.thinking_mode}")
-        self.session = requests.Session()
+        self.session = _shared_http_client()
 
         # Ollama doesn't provide embeddings - delegate to separate provider
         self.embedding_provider = embedding_provider
@@ -2238,7 +2356,7 @@ class OllamaProvider(AIProvider):
 
         Note: system_prompt is already formatted by llm_extractor.py
         """
-        import requests
+        import httpx
 
         try:
             # Ollama API request (using /api/chat endpoint)
@@ -2374,7 +2492,7 @@ class OllamaProvider(AIProvider):
                 "performance": metrics["performance"]
             }
 
-        except requests.exceptions.ConnectionError:
+        except httpx.ConnectError:
             raise Exception(
                 f"Cannot connect to Ollama at {self.base_url}. "
                 "Ensure Ollama is running:\n"
@@ -2383,7 +2501,7 @@ class OllamaProvider(AIProvider):
                 "  - System: systemctl status ollama\n"
                 "  - Remote: Check base_url configuration"
             )
-        except requests.exceptions.Timeout:
+        except httpx.TimeoutException:
             raise Exception(
                 f"Ollama request timed out after 300s. "
                 f"Model '{self.extraction_model}' may be too large or system is overloaded."
@@ -2408,7 +2526,7 @@ class OllamaProvider(AIProvider):
         model returns no tool_calls, this raises rather than silently
         returning prose.
         """
-        import requests
+        import httpx
 
         if not tools:
             raise ValueError("Ollama call_with_tools requires at least one tool")
@@ -2455,7 +2573,7 @@ class OllamaProvider(AIProvider):
                 return resp
 
             response = _make_request()
-        except requests.exceptions.ConnectionError as e:
+        except httpx.ConnectError as e:
             raise Exception(
                 f"Cannot connect to Ollama at {self.base_url}: {e}"
             ) from e
@@ -2544,7 +2662,7 @@ class OllamaProvider(AIProvider):
 
         Returns dict with 'text' (prose) and 'tokens' (always 0 for local).
         """
-        import requests
+        import httpx
 
         try:
             # Wrap with retry logic for rate limiting
@@ -2601,7 +2719,7 @@ class OllamaProvider(AIProvider):
 
         Requires a vision-capable model like llava:7b, llava:13b, or bakllava.
         """
-        import requests
+        import httpx
         import base64
 
         try:
@@ -2611,10 +2729,11 @@ class OllamaProvider(AIProvider):
             # Use the explicit vision model when threaded through (ADR-802 §2);
             # otherwise the configured extraction model.
             vision_model = model or self.extraction_model
-            if "llava" not in vision_model.lower() and "bakllava" not in vision_model.lower():
+            caps = (self._show_model(vision_model) or {}).get("capabilities")
+            if caps is not None and "vision" not in caps:
                 logger.warning(
-                    f"Model '{vision_model}' may not support vision. "
-                    "Consider using 'llava:7b' or 'llava:13b' for image description."
+                    f"Ollama reports no vision capability for '{vision_model}' "
+                    f"(capabilities: {caps}); image description will likely fail."
                 )
 
             # Wrap with retry logic for rate limiting
@@ -2677,7 +2796,7 @@ class OllamaProvider(AIProvider):
 
         For local provider, this checks service availability and model presence.
         """
-        import requests
+        import httpx
 
         try:
             # Check if Ollama is running
@@ -2701,7 +2820,7 @@ class OllamaProvider(AIProvider):
             logger.info(f"✅ Ollama validated at {self.base_url} with model '{self.extraction_model}'")
             return True
 
-        except requests.exceptions.ConnectionError:
+        except httpx.ConnectError:
             logger.error(f"Cannot connect to Ollama at {self.base_url}")
             return False
         except Exception as e:
@@ -2710,22 +2829,17 @@ class OllamaProvider(AIProvider):
 
     def list_available_models(self) -> Dict[str, List[str]]:
         """List available Ollama models. Prefers catalog (ADR-800), falls back to API then hardcoded."""
-        import requests
+        import httpx
 
         catalog = _list_models_from_catalog("ollama")
         if catalog:
             return catalog
 
         try:
-            response = self.session.get(f"{self.base_url}/api/tags", timeout=5)
-            response.raise_for_status()
-
-            models_data = response.json()
-            available_models = [m['name'] for m in models_data.get('models', [])]
-
-            # Separate vision models from text models
-            vision_models = [m for m in available_models if any(v in m.lower() for v in ['llava', 'bakllava', 'vision'])]
-            text_models = [m for m in available_models if m not in vision_models]
+            # Same classification as the catalog: /api/show capabilities.
+            entries = self.fetch_model_catalog()
+            vision_models = [e["model_id"] for e in entries if e["category"] == "vision"]
+            text_models = [e["model_id"] for e in entries if e["category"] == "extraction"]
 
             return {
                 "extraction": text_models or AVAILABLE_MODELS["ollama"]["extraction"],
@@ -2738,10 +2852,29 @@ class OllamaProvider(AIProvider):
             # Return recommended models as fallback
             return AVAILABLE_MODELS["ollama"]
 
-    def fetch_model_catalog(self) -> List[Dict[str, Any]]:
-        """Fetch installed models from Ollama instance (ADR-800)."""
-        import requests
+    def _show_model(self, name: str) -> Optional[Dict[str, Any]]:
+        """Return Ollama's /api/show for a model, or None if the call fails.  @verified (new)"""
+        try:
+            resp = self.session.post(
+                f"{self.base_url}/api/show", json={"model": name}, timeout=5
+            )
+            resp.raise_for_status()
+            return resp.json()
+        except Exception as e:
+            logger.debug(f"Ollama /api/show failed for {name}: {e}")
+            return None
 
+    def fetch_model_catalog(self) -> List[Dict[str, Any]]:
+        """Fetch installed models from the Ollama instance (ADR-800).
+
+        Capabilities and context length come from /api/show: `capabilities`
+        lists completion/vision/tools/embedding, and model_info carries
+        `<architecture>.context_length`. Completion models are catalogued as
+        extraction and vision models as vision; a multimodal model gets both
+        rows. Embedding-only models are skipped. When /api/show is unavailable
+        (older Ollama), the model name is the fallback signal for vision.
+        @verified (new)
+        """
         entries = []
         try:
             response = self.session.get(f"{self.base_url}/api/tags", timeout=5)
@@ -2750,25 +2883,46 @@ class OllamaProvider(AIProvider):
 
             for model in models_data.get("models", []):
                 name = model.get("name", "")
-                details = model.get("details", {})
-                is_vision = any(v in name.lower() for v in ["llava", "bakllava", "vision"])
-                category = "vision" if is_vision else "extraction"
+                show = self._show_model(name)
+                caps = (show or {}).get("capabilities")
 
-                entries.append({
-                    "provider": "ollama",
-                    "model_id": name,
-                    "display_name": name,
-                    "category": category,
-                    "context_length": None,
-                    "supports_vision": is_vision,
-                    "supports_json_mode": not is_vision,
-                    "supports_tool_use": False,
-                    "supports_streaming": True,
-                    "price_prompt_per_m": 0,
-                    "price_completion_per_m": 0,
-                    "upstream_provider": None,
-                    "raw_metadata": model,
-                })
+                if caps is None:
+                    # Older Ollama without /api/show: name is the only signal.
+                    is_vision = any(v in name.lower() for v in ["llava", "bakllava", "vision"])
+                    categories = ["vision"] if is_vision else ["extraction"]
+                    json_mode = not is_vision
+                    supports_tools = False
+                    context_length = None
+                else:
+                    # A multimodal model (gemma3, qwen2.5vl, llama3.2-vision)
+                    # reports completion and vision; it gets a row in each
+                    # category (unique on provider, model_id, category).
+                    # Embedding-only models get none.
+                    is_vision = "vision" in caps
+                    categories = (["extraction"] if "completion" in caps else []) + (
+                        ["vision"] if is_vision else [])
+                    json_mode = "completion" in caps
+                    supports_tools = "tools" in caps
+                    info = show.get("model_info", {}) or {}
+                    arch = info.get("general.architecture")
+                    context_length = info.get(f"{arch}.context_length") if arch else None
+
+                for category in categories:
+                    entries.append({
+                        "provider": "ollama",
+                        "model_id": name,
+                        "display_name": name,
+                        "category": category,
+                        "context_length": context_length,
+                        "supports_vision": is_vision,
+                        "supports_json_mode": json_mode,
+                        "supports_tool_use": supports_tools,
+                        "supports_streaming": True,
+                        "price_prompt_per_m": 0,
+                        "price_completion_per_m": 0,
+                        "upstream_provider": None,
+                        "raw_metadata": {**model, "capabilities": caps},
+                    })
 
         except Exception as e:
             logger.warning(f"Failed to fetch Ollama model catalog: {e}")
@@ -2807,6 +2961,7 @@ class LlamaCppProvider(OpenAIProvider):
     embedder stays separate (delegated), as with every reasoning provider.
     """
 
+    CATALOG_PROVIDER = "llamacpp"
     DEFAULT_BASE_URL = "http://localhost:8080/v1"
 
     def __init__(
@@ -2856,28 +3011,56 @@ class LlamaCppProvider(OpenAIProvider):
         except Exception:
             return {"extraction": [], "embedding": []}
 
+    def _server_props(self) -> Dict[str, Any]:
+        """Return llama-server's /props (server root, not /v1), or {} on failure.  @verified (new)"""
+        import httpx
+        root = self.base_url.rstrip("/")
+        if root.endswith("/v1"):
+            root = root[: -len("/v1")]
+        try:
+            resp = httpx.get(f"{root}/props", timeout=5, follow_redirects=True)
+            resp.raise_for_status()
+            return resp.json()
+        except Exception as e:
+            logger.debug(f"llama.cpp /props unavailable at {root}: {e}")
+            return {}
+
     def fetch_model_catalog(self) -> List[Dict[str, Any]]:
-        """Enumerate models the running llama.cpp server actually exposes."""
+        """Enumerate models the running llama.cpp server actually exposes.
+
+        Limits and capabilities come from the server: /props reports the
+        served context (default_generation_settings.n_ctx), modalities.vision
+        and chat_template_caps.supports_tools; /v1/models meta gives n_ctx and
+        n_ctx_train as fallbacks. The served n_ctx is what a request can use,
+        so it wins over the model's training context.  @verified (new)
+        """
+        props = self._server_props()
+        gen = props.get("default_generation_settings") or {}
+        vision = bool((props.get("modalities") or {}).get("vision", False))
+        tools = bool((props.get("chat_template_caps") or {}).get("supports_tools", False))
+
         entries: List[Dict[str, Any]] = []
         try:
             resp = self.client.models.list()
             for m in resp.data:
+                raw = m.model_dump() if hasattr(m, "model_dump") else {}
+                meta = raw.get("meta") or {}
                 entries.append({
                     "provider": "llamacpp",
                     "model_id": m.id,
                     "display_name": m.id,
                     "category": "extraction",
-                    "context_length": None,
+                    "context_length": gen.get("n_ctx") or meta.get("n_ctx") or meta.get("n_ctx_train"),
                     "max_completion_tokens": None,
-                    "supports_vision": False,
+                    "supports_vision": vision,
                     "supports_json_mode": True,
-                    "supports_tool_use": False,
+                    "supports_tool_use": tools,
                     "supports_streaming": True,
                     "price_prompt_per_m": 0,
                     "price_completion_per_m": 0,
                     "price_cache_read_per_m": None,
                     "upstream_provider": None,
-                    "raw_metadata": m.model_dump() if hasattr(m, "model_dump") else {},
+                    "raw_metadata": raw,
                 })
         except Exception as e:
             logger.warning(f"Failed to fetch llama.cpp model catalog: {e}")
@@ -2915,10 +3098,10 @@ def validate_provider_key(provider: str, api_key: str) -> tuple[bool, Optional[s
             return (True, None)
 
         if provider == "openrouter":
-            import requests
+            import httpx
             # OpenRouter's /models is unauthenticated; /key is the real
             # authenticated check (zero token cost, 401 on a bad key).
-            resp = requests.get(
+            resp = httpx.get(
                 f"{OpenRouterProvider.OPENROUTER_BASE_URL}/key",
                 headers={"Authorization": f"Bearer {api_key}"},
                 timeout=10,
@@ -3037,12 +3220,14 @@ def get_provider(provider_name: Optional[str] = None) -> AIProvider:
     if provider_name == "openai":
         return OpenAIProvider(
             extraction_model=extraction_model,
-            embedding_provider=embedding_provider
+            embedding_provider=embedding_provider,
+            max_tokens=max_tokens,
         )
     elif provider_name == "anthropic":
         return AnthropicProvider(
             extraction_model=extraction_model,
-            embedding_provider=embedding_provider
+            embedding_provider=embedding_provider,
+            max_tokens=max_tokens,
         )
     elif provider_name == "ollama":
         # Load Ollama-specific config from database (production) or environment (dev)
