@@ -48,17 +48,19 @@ services:
   api:
     # Override standalone container_name back to dev name
     container_name: kg-api-dev
-    # Single worker (matches production). Each uvicorn worker is a separate
-    # process and would load its own copy of any local embedding model; the
-    # API workload is async and doesn't benefit from extra workers on this
-    # box. Hot reload (--reload) is incompatible with --workers, so restart
-    # the container after code changes: ./operator.sh restart api
-    command: ["uvicorn", "api.app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
+    # Hot reload: one app process (matches production's single worker) under
+    # uvicorn's watchfiles supervisor. --reload is incompatible with --workers,
+    # so the flag is omitted. Only api/ is watched; edits to tests/ or scripts/
+    # don't bounce the server. Each reload re-runs startup, including the
+    # local embedding model load. A reload waits for the old process to exit,
+    # so an edit during a running ingest job holds the API down until the job
+    # finishes; `./operator.sh restart api` kills it after docker's 10s grace.
+    command: ["uvicorn", "api.app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--reload-dir", "/app/api"]
     build:
       context: ..
       dockerfile: api/Dockerfile
     volumes:
-      # Mount source for development (restart container to pick up changes)
+      # Mount source for development (uvicorn --reload picks up api/ changes)
       - ../api:/app/api
       - ../schema:/app/schema
       # Mount tests for in-container testing
@@ -93,7 +95,7 @@ services:
       - ../web/public:/app/public
       - ../web/index.html:/app/index.html
       - ../web/vite.config.ts:/app/vite.config.ts
-      - ../web/tailwind.config.js:/app/tailwind.config.js
+      - ../web/tsconfig.app.json:/app/tsconfig.app.json
       - ../web/tsconfig.json:/app/tsconfig.json
       - ../web/tsconfig.node.json:/app/tsconfig.node.json
       # Preserve node_modules from image (don't mount from host)

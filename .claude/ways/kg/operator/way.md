@@ -105,10 +105,10 @@ Bring up / tear down the inference container from its own repo
 
 ## Gotchas
 
-- **The `kg-api-dev` container does NOT hot-reload Python.** After any
-  edit under `api/`, run `./operator.sh restart api` before testing —
-  otherwise the old code is still serving. (`kg-web-dev` *does*
-  hot-reload via Vite; web edits need no restart.)
+- **Dev mode hot-reloads both apps.** `kg-api-dev` runs uvicorn
+  `--reload` on `api/`; `kg-web-dev` runs Vite HMR. Dependency changes
+  (`package.json`, `requirements.txt`) need `./operator.sh start` or
+  `upgrade`, not `restart`.
 - **Apply pending schema migrations:**
   ```bash
   docker exec kg-operator bash -lc '/workspace/operator/database/migrate-db.sh -y'
