@@ -16,7 +16,7 @@ python-dotenv==1.2.3
 
 # AI provider SDKs (for API key validation and catalog refresh in configure.py)
 # openai 3.x / anthropic 1.x use httpx2 (the Pydantic-maintained fork) and no
-# longer depend on httpx; httpx is kept pinned only for other transitive users.
+# longer depend on httpx. configure.py uses httpx directly (OpenRouter /key check).
 httpx==0.28.1
 openai==3.14.1
 anthropic==1.6.0

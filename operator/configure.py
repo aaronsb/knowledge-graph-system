@@ -403,8 +403,14 @@ class OperatorConfig:
             if resp.status_code in (401, 403):
                 return False
             if resp.status_code == 429:
-                return True  # rate-limited, but the key was accepted
+                # Rate-limited before the key was checked; treat as valid so
+                # setup can continue, as the API-side validator does.
+                return True
             resp.raise_for_status()
+            # A 200 from a captive portal or proxy is not OpenRouter; its
+            # /key response carries a "data" object.
+            if "data" not in resp.json():
+                raise RuntimeError("unexpected response from openrouter.ai/api/v1/key")
             return True
         return None
 

@@ -31,13 +31,27 @@ def _direct_calls(route: APIRoute):
     return [d.call for d in route.dependant.dependencies]
 
 
+def _bare_get_current_user(dependant, parent=None) -> bool:
+    """True if get_current_user is reached other than through the active check.
+
+    Walks the whole dependency tree, so a helper dependency that wraps
+    get_current_user without the disabled check is caught too.
+    """
+    for d in dependant.dependencies:
+        if d.call is get_current_user and parent is not get_current_active_user:
+            return True
+        if _bare_get_current_user(d, d.call):
+            return True
+    return False
+
+
 @pytest.mark.unit
 @pytest.mark.security
 def test_no_endpoint_depends_on_get_current_user_directly():
     offenders = [
         f"{sorted(r.methods)} {r.path}"
         for r in _api_routes(app.routes)
-        if get_current_user in _direct_calls(r)
+        if _bare_get_current_user(r.dependant)
     ]
     assert len(list(_api_routes(app.routes))) > 100, "route walk found too few routes"
     assert offenders == [], (

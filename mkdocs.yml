@@ -103,8 +103,7 @@ site_dir: site
 # Don't include these in the built site
 exclude_docs: |
   site/
-  # Generators still emit per-item subdir stubs; the flat reference/{cli,mcp}.md
-  # pages are the published surface (consolidation spec §5). Drop the stubs.
-  reference/cli/
-  reference/mcp/
+  # The flat reference/{cli,mcp,fuse}.md pages are the published surface
+  # (consolidation spec §5); the CLI/MCP generators no longer write per-item
+  # pages (#560). fuse/ stubs remain.
   reference/fuse/
