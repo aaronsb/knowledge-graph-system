@@ -589,6 +589,24 @@ changelog_entry() {
     ' "$file" | sed -e '/./,$!d'
 }
 
+# unwrap_markdown — join hard-wrapped paragraph and list-item lines.
+#
+# CHANGELOG.md wraps at ~80 columns; GitHub renders each newline in a release
+# body as a line break, so wrapped lines would display ragged. Headings, list
+# item starts, blank lines and fenced code keep their line breaks.  @verified (new)
+unwrap_markdown() {
+    awk '
+        function flush() { if (buf != "") { print buf; buf = "" } }
+        /^```/ { flush(); print; code = !code; next }
+        code { print; next }
+        /^[[:space:]]*$/ { flush(); print ""; next }
+        /^#/ { flush(); print; next }
+        /^[[:space:]]*([-*]|[0-9]+\.) / { flush(); buf = $0; next }
+        { line = $0; sub(/^[[:space:]]+/, "", line); buf = (buf == "") ? line : buf " " line }
+        END { flush() }
+    '
+}
+
 cmd_notes() {
     get_versions
     local version="${TARGETS[0]:-$VERSION}"
@@ -606,7 +624,7 @@ cmd_notes() {
 cmd_gh_release() {
     get_versions
     local tag="v$VERSION" body
-    body=$(changelog_entry "$VERSION")
+    body=$(changelog_entry "$VERSION" | unwrap_markdown)
     if [ -z "$body" ]; then
         echo -e "${RED}✗ CHANGELOG.md has no entry for $VERSION; write it before publishing${NC}"
         exit 1
