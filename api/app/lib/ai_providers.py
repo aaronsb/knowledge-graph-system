@@ -411,6 +411,36 @@ def _list_models_from_catalog(provider: str) -> Optional[Dict[str, List[str]]]:
         return None
 
 
+def _output_token_budget(provider: str, model_id: Optional[str], requested: int) -> int:
+    """Cap a requested output-token budget at the model's catalog limit (ADR-800).
+
+    Returns `requested` unless the catalog records a smaller
+    max_completion_tokens for (provider, model_id), in which case that limit
+    wins; asking for more than the model allows fails the request. A failed
+    catalog lookup leaves `requested` unchanged.  @verified (new)
+    """
+    if not model_id:
+        return requested
+    try:
+        client = _get_catalog_age_client()
+        conn = client.pool.getconn()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """SELECT MIN(max_completion_tokens)
+                       FROM kg_api.provider_model_catalog
+                       WHERE provider = %s AND model_id = %s""",
+                    (provider, model_id),
+                )
+                row = cur.fetchone()
+        finally:
+            client.pool.putconn(conn)
+    except Exception:
+        return requested
+    cap = row[0] if row else None
+    return min(requested, cap) if cap else requested
+
+
 class AIProvider(ABC):
     """Abstract base class for AI providers"""
 
@@ -559,14 +589,20 @@ class AIProvider(ABC):
 class OpenAIProvider(AIProvider):
     """OpenAI provider for GPT models and embeddings"""
 
+    CATALOG_PROVIDER = "openai"
+
     def __init__(
         self,
         api_key: Optional[str] = None,
         extraction_model: Optional[str] = None,
         embedding_model: Optional[str] = None,
-        embedding_provider: Optional[AIProvider] = None
+        embedding_provider: Optional[AIProvider] = None,
+        max_tokens: Optional[int] = None,
     ):
         from openai import OpenAI
+
+        # Configured extraction output budget; None falls back to 4096.
+        self.max_tokens = max_tokens
 
         # Load API key with fallback chain (ADR-405)
         self.api_key = _load_api_key("openai", api_key, "OPENAI_API_KEY")
@@ -646,7 +682,11 @@ class OpenAIProvider(AIProvider):
                     {"role": "system", "content": system_prompt},  # Already formatted
                     {"role": "user", "content": f"Text to analyze:\n\n{text}"}
                 ],
-                max_tokens=4096,
+                # max_completion_tokens: reasoning models (o-series, gpt-5)
+                # reject max_tokens; every chat model accepts this name.
+                max_completion_tokens=_output_token_budget(
+                    self.CATALOG_PROVIDER, self.extraction_model, self.max_tokens or 4096
+                ),
                 temperature=0.3,  # Lower for consistency
                 response_format={"type": "json_object"}
             )
@@ -722,7 +762,9 @@ class OpenAIProvider(AIProvider):
             ],
             "tools": openai_tools,
             "tool_choice": native_choice,
-            "max_tokens": max_tokens,
+            "max_completion_tokens": _output_token_budget(
+                self.CATALOG_PROVIDER, model or self.extraction_model, max_tokens
+            ),
         }
         if temperature is not None:
             request_kwargs["temperature"] = temperature
@@ -848,7 +890,9 @@ class OpenAIProvider(AIProvider):
                     {"role": "system", "content": "You are a technical writer who explains code and diagrams in clear, simple prose."},
                     {"role": "user", "content": f"{prompt}\n\n{code}"}
                 ],
-                max_tokens=1000,  # Prose translations are typically shorter than code
+                max_completion_tokens=_output_token_budget(
+                    self.CATALOG_PROVIDER, translation_model, 1000
+                ),  # Prose translations are typically shorter than code
                 temperature=0.5   # Balanced: clear but not robotic
             )
 
@@ -899,6 +943,7 @@ class OpenAIProvider(AIProvider):
             if detail is not None:
                 image_url["detail"] = detail
 
+            image_budget = _output_token_budget(self.CATALOG_PROVIDER, vision_model, 8192)
             response = self.client.chat.completions.create(
                 model=vision_model,
                 messages=[
@@ -910,14 +955,14 @@ class OpenAIProvider(AIProvider):
                         ]
                     }
                 ],
-                max_tokens=8192,
+                max_completion_tokens=image_budget,
                 temperature=temperature
             )
 
             choice = response.choices[0]
             if choice.finish_reason == "length":
                 raise Exception(
-                    f"OpenAI image description truncated at max_tokens=8192 "
+                    f"OpenAI image description truncated at max_tokens={image_budget} "
                     f"(model={vision_model}). Downstream concept extraction "
                     "would receive partial text. Split the image or raise the cap."
                 )
@@ -1205,13 +1250,19 @@ class LocalEmbeddingProvider(AIProvider):
 class AnthropicProvider(AIProvider):
     """Anthropic provider for Claude models"""
 
+    CATALOG_PROVIDER = "anthropic"
+
     def __init__(
         self,
         api_key: Optional[str] = None,
         extraction_model: Optional[str] = None,
-        embedding_provider: Optional[AIProvider] = None
+        embedding_provider: Optional[AIProvider] = None,
+        max_tokens: Optional[int] = None,
     ):
         from anthropic import Anthropic
+
+        # Configured extraction output budget; None falls back to 16384.
+        self.max_tokens = max_tokens
 
         # Load API key with fallback chain (ADR-405)
         self.api_key = _load_api_key("anthropic", api_key, "ANTHROPIC_API_KEY")
@@ -1281,9 +1332,12 @@ class AnthropicProvider(AIProvider):
         # both handled by _anthropic_sampling_kwargs (drop, or send via extra_body).
         # The configured extraction_model may be Opus 4.7 per the user's
         # provider/model selection, so the request shape has to adapt.
+        extraction_budget = _output_token_budget(
+            self.CATALOG_PROVIDER, self.extraction_model, self.max_tokens or 16384
+        )
         request_kwargs: Dict[str, Any] = {
             "model": self.extraction_model,
-            "max_tokens": 16384,
+            "max_tokens": extraction_budget,
             "system": system_prompt,
             "tools": [EXTRACTION_TOOL_SCHEMA],
             "tool_choice": {"type": "tool", "name": EXTRACTION_TOOL_NAME},
@@ -1300,7 +1354,7 @@ class AnthropicProvider(AIProvider):
 
             if message.stop_reason == "max_tokens":
                 raise Exception(
-                    "Anthropic extraction truncated at max_tokens=16384. "
+                    f"Anthropic extraction truncated at max_tokens={extraction_budget}. "
                     "The chunk produced more concepts/instances/relationships "
                     "than fit in one response — split the chunk or raise the cap."
                 )
@@ -1369,7 +1423,7 @@ class AnthropicProvider(AIProvider):
 
         request_kwargs: Dict[str, Any] = {
             "model": target_model,
-            "max_tokens": max_tokens,
+            "max_tokens": _output_token_budget(self.CATALOG_PROVIDER, target_model, max_tokens),
             "system": system_prompt,
             "tools": anthropic_tools,
             "tool_choice": native_choice,
@@ -1450,7 +1504,7 @@ class AnthropicProvider(AIProvider):
 
             request_kwargs: Dict[str, Any] = {
                 "model": translation_model,
-                "max_tokens": 1000,
+                "max_tokens": _output_token_budget(self.CATALOG_PROVIDER, translation_model, 1000),
                 "system": "You are a technical writer who explains code and diagrams in clear, simple prose.",
                 "messages": [
                     {"role": "user", "content": f"{prompt}\n\n{code}"}
@@ -1524,9 +1578,10 @@ class AnthropicProvider(AIProvider):
 
             # Opus 4.7 removes sampling params (temperature/top_p/top_k → 400);
             # anthropic-sdk v1.0 takes the rest via extra_body. Both via helper.
+            image_budget = _output_token_budget(self.CATALOG_PROVIDER, vision_model, 8192)
             request_kwargs: Dict[str, Any] = {
                 "model": vision_model,
-                "max_tokens": 8192,
+                "max_tokens": image_budget,
                 "messages": [{
                     "role": "user",
                     "content": [
@@ -1550,7 +1605,7 @@ class AnthropicProvider(AIProvider):
 
             if message.stop_reason == "max_tokens":
                 raise Exception(
-                    f"Anthropic image description truncated at max_tokens=8192 "
+                    f"Anthropic image description truncated at max_tokens={image_budget} "
                     f"(model={vision_model}). The downstream concept extraction "
                     "would receive a partial description — split the image or raise the cap."
                 )
@@ -1769,7 +1824,7 @@ class OpenRouterProvider(AIProvider):
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": f"Text to analyze:\n\n{text}"},
                 ],
-                max_tokens=self.max_tokens,
+                max_tokens=_output_token_budget("openrouter", self.extraction_model, self.max_tokens),
                 temperature=0.3,
                 response_format={"type": "json_object"},
             )
@@ -2834,6 +2889,7 @@ class LlamaCppProvider(OpenAIProvider):
     embedder stays separate (delegated), as with every reasoning provider.
     """
 
+    CATALOG_PROVIDER = "llamacpp"
     DEFAULT_BASE_URL = "http://localhost:8080/v1"
 
     def __init__(
@@ -3092,12 +3148,14 @@ def get_provider(provider_name: Optional[str] = None) -> AIProvider:
     if provider_name == "openai":
         return OpenAIProvider(
             extraction_model=extraction_model,
-            embedding_provider=embedding_provider
+            embedding_provider=embedding_provider,
+            max_tokens=max_tokens,
         )
     elif provider_name == "anthropic":
         return AnthropicProvider(
             extraction_model=extraction_model,
-            embedding_provider=embedding_provider
+            embedding_provider=embedding_provider,
+            max_tokens=max_tokens,
         )
     elif provider_name == "ollama":
         # Load Ollama-specific config from database (production) or environment (dev)
