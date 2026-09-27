@@ -179,8 +179,6 @@ async function main() {
   console.log(`📋 Found ${tools.length} MCP tools\n`);
 
   // Create output directory
-  const outDir = path.join(__dirname, '../../docs/reference/mcp');
-  fs.mkdirSync(outDir, { recursive: true });
 
   // Create smart writer to avoid git churn
   const writer = new DocWriter();
@@ -195,7 +193,6 @@ async function main() {
   index.push('> **Auto-Generated Documentation**');
   index.push('> ');
   index.push('> Generated from MCP server tool schemas.');
-  index.push(`> Last updated: ${new Date().toISOString().split('T')[0]}\n`);
   index.push('---\n');
 
   // Overview
@@ -221,26 +218,9 @@ async function main() {
   writer.write(path.join(__dirname, '../../docs/reference/mcp.md'), index.join('\n'));
   console.log(`✅ Generated: docs/reference/mcp.md`);
 
-  // Generate individual tool files in tools/ subdirectory
-  const toolsDir = path.join(outDir, 'tools');
-  fs.mkdirSync(toolsDir, { recursive: true });
-
-  tools.forEach(tool => {
-    const toolMd = [
-      `# ${tool.name}\n`,
-      '> Auto-generated from MCP tool schema\n',
-      generateToolMarkdown(tool)
-    ];
-
-    writer.write(
-      path.join(toolsDir, `${tool.name}.md`),
-      toolMd.join('\n')
-    );
-  });
-
-  console.log(`✅ Generated ${tools.length} tool files`);
+  // One page only: mcp.md carries every tool's full section, so per-tool
+  // files would duplicate it (#560).
   writer.printStats();
-  console.log('\n📂 View docs at: docs/reference/mcp/\n');
   console.log('✨ Done!');
 }
 

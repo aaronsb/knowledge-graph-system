@@ -121,8 +121,6 @@ async function main() {
   console.log(`📋 Extracted ${commands.length} commands from the registry\n`);
 
   // Create output directory
-  const outDir = path.join(__dirname, '../../docs/reference/cli');
-  fs.mkdirSync(outDir, { recursive: true });
 
   // Create smart writer to track stats and avoid git churn
   const writer = new DocWriter();
@@ -137,7 +135,6 @@ async function main() {
   index.push('> **Auto-Generated Documentation**');
   index.push('> ');
   index.push('> Generated from CLI source code.');
-  index.push(`> Last updated: ${new Date().toISOString().split('T')[0]}\n`);
   index.push('---\n');
 
   // TOC
@@ -157,20 +154,9 @@ async function main() {
   writer.write(path.join(__dirname, '../../docs/reference/cli.md'), index.join('\n'));
   console.log(`✅ Generated: docs/reference/cli.md`);
 
-  // Individual command files in commands/ subdirectory
-  const commandsDir = path.join(outDir, 'commands');
-  fs.mkdirSync(commandsDir, { recursive: true });
-
-  commands.forEach(cmd => {
-    writer.write(
-      path.join(commandsDir, `${cmd.name}.md`),
-      `# kg ${cmd.name}\n\n> Auto-generated\n\n${generateMarkdown(cmd, 2)}`
-    );
-  });
-
-  console.log(`✅ Generated ${commands.length} command files`);
+  // One page only: cli.md carries every command's full section, so
+  // per-command files would duplicate it (#560).
   writer.printStats();
-  console.log('\n📂 View docs at: docs/reference/cli/\n');
   console.log('✨ Done!');
 }
 

@@ -367,8 +367,8 @@ class OperatorConfig:
         their __init__ requires environment that doesn't exist yet (e.g.
         AnthropicProvider needs an OpenAI embedding provider; all of them
         resolve an extraction model from the catalog which may be empty).
-        Each provider's validate_api_key() in ai_providers.py uses the same
-        "list models" pattern reproduced here.
+        OpenAI and Anthropic list models; OpenRouter calls its authenticated
+        /key endpoint, since its model list is public.
 
         Returns True on success, False if the SDK rejected the key as
         unauthorized, None if the provider is unknown (caller stores without
@@ -391,15 +391,27 @@ class OperatorConfig:
             except AuthenticationError:
                 return False
         if provider == "openrouter":
-            from openai import OpenAI, AuthenticationError
-            try:
-                OpenAI(
-                    api_key=key,
-                    base_url="https://openrouter.ai/api/v1",
-                ).models.list()
-                return True
-            except AuthenticationError:
+            # /models is public, so listing models accepts any string. /key
+            # authenticates (401 on a bad key, no token cost), matching the
+            # API's validate_provider_key.
+            import httpx
+            resp = httpx.get(
+                "https://openrouter.ai/api/v1/key",
+                headers={"Authorization": f"Bearer {key}"},
+                timeout=10,
+            )
+            if resp.status_code in (401, 403):
                 return False
+            if resp.status_code == 429:
+                # Rate-limited before the key was checked; treat as valid so
+                # setup can continue, as the API-side validator does.
+                return True
+            resp.raise_for_status()
+            # A 200 from a captive portal or proxy is not OpenRouter; its
+            # /key response carries a "data" object.
+            if "data" not in resp.json():
+                raise RuntimeError("unexpected response from openrouter.ai/api/v1/key")
+            return True
         return None
 
     def _fetch_catalog_via_sdk(self, provider):

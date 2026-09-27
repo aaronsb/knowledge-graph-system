@@ -9,8 +9,6 @@ mode: reference
 > **Auto-Generated Documentation**
 > 
 > Generated from MCP server tool schemas.
-> Last updated: 2026-06-15
-
 ---
 
 ## Overview

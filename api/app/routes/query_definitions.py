@@ -18,7 +18,7 @@ from ..models.query_definition import (
     DEFINITION_TYPES
 )
 from ..models.auth import UserInDB
-from ..dependencies.auth import get_current_user, get_db_connection
+from ..dependencies.auth import get_current_active_user, get_db_connection
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +34,7 @@ async def list_query_definitions(
     definition_type: Optional[str] = Query(None, description="Filter by definition type"),
     limit: int = Query(50, ge=1, le=500, description="Maximum definitions to return"),
     offset: int = Query(0, ge=0, description="Number to skip for pagination"),
-    current_user: UserInDB = Depends(get_current_user)
+    current_user: UserInDB = Depends(get_current_active_user)
 ):
     """
     List query definitions.
@@ -113,7 +113,7 @@ async def list_query_definitions(
 )
 async def get_query_definition(
     definition_id: int,
-    current_user: UserInDB = Depends(get_current_user)
+    current_user: UserInDB = Depends(get_current_active_user)
 ):
     """
     Get a query definition by ID.
@@ -165,7 +165,7 @@ async def get_query_definition(
 )
 async def create_query_definition(
     definition: QueryDefinitionCreate,
-    current_user: UserInDB = Depends(get_current_user)
+    current_user: UserInDB = Depends(get_current_active_user)
 ):
     """
     Create a new query definition.
@@ -218,7 +218,7 @@ async def create_query_definition(
 async def update_query_definition(
     definition_id: int,
     update: QueryDefinitionUpdate,
-    current_user: UserInDB = Depends(get_current_user)
+    current_user: UserInDB = Depends(get_current_active_user)
 ):
     """
     Update a query definition.
@@ -314,7 +314,7 @@ async def update_query_definition(
 )
 async def delete_query_definition(
     definition_id: int,
-    current_user: UserInDB = Depends(get_current_user)
+    current_user: UserInDB = Depends(get_current_active_user)
 ):
     """
     Delete a query definition.
