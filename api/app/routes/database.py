@@ -153,6 +153,7 @@ def get_database_info(
         "user": postgres_user,
         "connected": False,
         "version": None,
+        "age_version": None,
         "edition": "PostgreSQL + Apache AGE",
         "error": None
     }
@@ -170,6 +171,12 @@ def get_database_info(
                     if version_result:
                         info["connected"] = True
                         info["version"] = version_result[0]
+                    cur.execute(
+                        "SELECT extversion FROM pg_extension WHERE extname = 'age'"
+                    )
+                    age_result = cur.fetchone()
+                    if age_result:
+                        info["age_version"] = age_result[0]
             finally:
                 client.pool.putconn(conn)
         finally:
@@ -544,20 +551,10 @@ def execute_cypher_query(
                     params=request.params or {}
                 )
 
-            # Convert results to list of dicts (handle agtype unwrapping)
-            result_list = []
-            if results:
-                for row in results:
-                    # Unwrap agtype values if present
-                    unwrapped_row = {}
-                    for key, value in row.items():
-                        try:
-                            # Try to unwrap if it's an agtype value
-                            unwrapped_row[key] = client._unwrap_agtype(value)
-                        except:
-                            # If unwrapping fails, use raw value
-                            unwrapped_row[key] = value
-                    result_list.append(unwrapped_row)
+            # Both execution paths already parse agtype per value
+            # (_execute_cypher -> _parse_agtype); parsing again would turn
+            # strings like "123" into numbers.
+            result_list = list(results) if results else []
 
             return CypherQueryResponse(
                 success=True,

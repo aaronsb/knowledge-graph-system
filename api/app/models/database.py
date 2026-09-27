@@ -30,6 +30,7 @@ class DatabaseInfoResponse(BaseModel):
     user: str
     connected: bool
     version: Optional[str] = None
+    age_version: Optional[str] = None
     edition: Optional[str] = None
     error: Optional[str] = None
 
