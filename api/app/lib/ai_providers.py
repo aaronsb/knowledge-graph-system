@@ -1647,6 +1647,11 @@ class AnthropicProvider(AIProvider):
                     return p
             return (None, None)
 
+        def _cap(caps: Any, name: str, default: bool) -> bool:
+            cap = getattr(caps, name, None) if caps is not None else None
+            supported = getattr(cap, "supported", None)
+            return default if supported is None else bool(supported)
+
         entries: List[Dict[str, Any]] = []
         try:
             models_response = self.client.models.list(limit=1000)
@@ -1657,11 +1662,6 @@ class AnthropicProvider(AIProvider):
                 # constants are fallbacks for responses that omit them.
                 caps = getattr(model, "capabilities", None)
 
-                def _cap(name: str, default: bool) -> bool:
-                    cap = getattr(caps, name, None) if caps is not None else None
-                    supported = getattr(cap, "supported", None)
-                    return default if supported is None else bool(supported)
-
                 entries.append({
                     "provider": "anthropic",
                     "model_id": mid,
@@ -1669,8 +1669,11 @@ class AnthropicProvider(AIProvider):
                     "category": "extraction",  # Anthropic serves no embeddings
                     "context_length": getattr(model, "max_input_tokens", None) or 200000,
                     "max_completion_tokens": getattr(model, "max_tokens", None),
-                    "supports_vision": _cap("image_input", True),
-                    "supports_json_mode": _cap("structured_outputs", True),
+                    "supports_vision": _cap(caps, "image_input", True),
+                    # JSON output comes from forced tool use, which every
+                    # Claude model supports; capabilities.structured_outputs
+                    # is a narrower feature and would mislabel older models.
+                    "supports_json_mode": True,
                     "supports_tool_use": True,
                     "supports_streaming": True,
                     "price_prompt_per_m": prompt_cost,

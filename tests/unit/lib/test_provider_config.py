@@ -16,6 +16,7 @@ save/load tests use the real container DB and snapshot-restore the
 ai_extraction_config table so the shared dev DB is left untouched.
 """
 
+import json
 import pytest
 from unittest.mock import MagicMock, patch
 
@@ -173,6 +174,55 @@ class TestAnthropicCatalogIsDynamic:
                self._provider_with_models(models).fetch_model_catalog()}
         assert cat["claude-sonnet-4-20250514"]["price_prompt_per_m"] == 3.00
         assert cat["claude-future-99"]["price_prompt_per_m"] is None
+
+    def test_should_take_limits_and_vision_from_model_info(self):
+        from anthropic.types import ModelInfo
+        info = ModelInfo.model_validate({
+            "id": "claude-sonnet-5", "type": "model",
+            "display_name": "Claude Sonnet 5",
+            "created_at": "2026-06-29T00:00:00Z",
+            "max_input_tokens": 1000000, "max_tokens": 128000,
+            # Shape of a live /v1/models response, with vision off.
+            "capabilities": {
+                "batch": {"supported": True},
+                "citations": {"supported": True},
+                "code_execution": {"supported": True},
+                "context_management": {
+                    "supported": True,
+                    "clear_thinking_20251015": {"supported": True},
+                    "clear_tool_uses_20250919": {"supported": True},
+                    "compact_20260112": {"supported": True}},
+                "effort": {
+                    "supported": True,
+                    "low": {"supported": True}, "medium": {"supported": True},
+                    "high": {"supported": True}, "xhigh": {"supported": True},
+                    "max": {"supported": True}},
+                "image_input": {"supported": False},
+                "pdf_input": {"supported": True},
+                "structured_outputs": {"supported": True},
+                "thinking": {"supported": True, "types": {
+                    "adaptive": {"supported": True},
+                    "enabled": {"supported": False}}},
+            },
+        })
+        entry = self._provider_with_models([info]).fetch_model_catalog()[0]
+        assert entry["context_length"] == 1000000
+        assert entry["max_completion_tokens"] == 128000
+        assert entry["supports_vision"] is False
+        assert entry["supports_json_mode"] is True  # forced tool use
+        json.dumps(entry["raw_metadata"])  # stored as JSON by the upsert
+
+    def test_should_fall_back_when_model_info_omits_capabilities(self):
+        from anthropic.types import ModelInfo
+        info = ModelInfo.model_construct(
+            id="claude-old", type="model", display_name="Old",
+            created_at=None, max_input_tokens=None, max_tokens=None,
+            capabilities=None,
+        )
+        entry = self._provider_with_models([info]).fetch_model_catalog()[0]
+        assert entry["context_length"] == 200000
+        assert entry["max_completion_tokens"] is None
+        assert entry["supports_vision"] is True
 
 
 # ===========================================================================
