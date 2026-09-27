@@ -2612,10 +2612,11 @@ class OllamaProvider(AIProvider):
             # Use the explicit vision model when threaded through (ADR-802 §2);
             # otherwise the configured extraction model.
             vision_model = model or self.extraction_model
-            if "llava" not in vision_model.lower() and "bakllava" not in vision_model.lower():
+            caps = (self._show_model(vision_model) or {}).get("capabilities")
+            if caps is not None and "vision" not in caps:
                 logger.warning(
-                    f"Model '{vision_model}' may not support vision. "
-                    "Consider using 'llava:7b' or 'llava:13b' for image description."
+                    f"Ollama reports no vision capability for '{vision_model}' "
+                    f"(capabilities: {caps}); image description will likely fail."
                 )
 
             # Wrap with retry logic for rate limiting
@@ -2718,15 +2719,10 @@ class OllamaProvider(AIProvider):
             return catalog
 
         try:
-            response = self.session.get(f"{self.base_url}/api/tags", timeout=5)
-            response.raise_for_status()
-
-            models_data = response.json()
-            available_models = [m['name'] for m in models_data.get('models', [])]
-
-            # Separate vision models from text models
-            vision_models = [m for m in available_models if any(v in m.lower() for v in ['llava', 'bakllava', 'vision'])]
-            text_models = [m for m in available_models if m not in vision_models]
+            # Same classification as the catalog: /api/show capabilities.
+            entries = self.fetch_model_catalog()
+            vision_models = [e["model_id"] for e in entries if e["category"] == "vision"]
+            text_models = [e["model_id"] for e in entries if e["category"] == "extraction"]
 
             return {
                 "extraction": text_models or AVAILABLE_MODELS["ollama"]["extraction"],
@@ -2739,10 +2735,28 @@ class OllamaProvider(AIProvider):
             # Return recommended models as fallback
             return AVAILABLE_MODELS["ollama"]
 
-    def fetch_model_catalog(self) -> List[Dict[str, Any]]:
-        """Fetch installed models from Ollama instance (ADR-800)."""
-        import httpx
+    def _show_model(self, name: str) -> Optional[Dict[str, Any]]:
+        """Return Ollama's /api/show for a model, or None if the call fails.  @verified (new)"""
+        try:
+            resp = self.session.post(
+                f"{self.base_url}/api/show", json={"model": name}, timeout=5
+            )
+            resp.raise_for_status()
+            return resp.json()
+        except Exception as e:
+            logger.debug(f"Ollama /api/show failed for {name}: {e}")
+            return None
 
+    def fetch_model_catalog(self) -> List[Dict[str, Any]]:
+        """Fetch installed models from the Ollama instance (ADR-800).
+
+        Capabilities and context length come from /api/show: `capabilities`
+        lists completion/vision/tools/embedding, and model_info carries
+        `<architecture>.context_length`. Vision models are catalogued as
+        vision, other completion models as extraction; embedding-only models
+        are skipped. When /api/show is unavailable (older Ollama), the model
+        name is the fallback signal for vision.  @verified (new)
+        """
         entries = []
         try:
             response = self.session.get(f"{self.base_url}/api/tags", timeout=5)
@@ -2751,24 +2765,36 @@ class OllamaProvider(AIProvider):
 
             for model in models_data.get("models", []):
                 name = model.get("name", "")
-                details = model.get("details", {})
-                is_vision = any(v in name.lower() for v in ["llava", "bakllava", "vision"])
-                category = "vision" if is_vision else "extraction"
+                show = self._show_model(name)
+                caps = (show or {}).get("capabilities")
+
+                if caps is None:
+                    is_vision = any(v in name.lower() for v in ["llava", "bakllava", "vision"])
+                    supports_tools = False
+                    context_length = None
+                else:
+                    if "completion" not in caps and "vision" not in caps:
+                        continue  # embedding-only model
+                    is_vision = "vision" in caps
+                    supports_tools = "tools" in caps
+                    info = show.get("model_info", {}) or {}
+                    arch = info.get("general.architecture")
+                    context_length = info.get(f"{arch}.context_length") if arch else None
 
                 entries.append({
                     "provider": "ollama",
                     "model_id": name,
                     "display_name": name,
-                    "category": category,
-                    "context_length": None,
+                    "category": "vision" if is_vision else "extraction",
+                    "context_length": context_length,
                     "supports_vision": is_vision,
                     "supports_json_mode": not is_vision,
-                    "supports_tool_use": False,
+                    "supports_tool_use": supports_tools,
                     "supports_streaming": True,
                     "price_prompt_per_m": 0,
                     "price_completion_per_m": 0,
                     "upstream_provider": None,
-                    "raw_metadata": model,
+                    "raw_metadata": {**model, "capabilities": caps},
                 })
 
         except Exception as e:
@@ -2857,28 +2883,56 @@ class LlamaCppProvider(OpenAIProvider):
         except Exception:
             return {"extraction": [], "embedding": []}
 
+    def _server_props(self) -> Dict[str, Any]:
+        """Return llama-server's /props (server root, not /v1), or {} on failure.  @verified (new)"""
+        import httpx
+        root = self.base_url.rstrip("/")
+        if root.endswith("/v1"):
+            root = root[: -len("/v1")]
+        try:
+            resp = httpx.get(f"{root}/props", timeout=5, follow_redirects=True)
+            resp.raise_for_status()
+            return resp.json()
+        except Exception as e:
+            logger.debug(f"llama.cpp /props unavailable at {root}: {e}")
+            return {}
+
     def fetch_model_catalog(self) -> List[Dict[str, Any]]:
-        """Enumerate models the running llama.cpp server actually exposes."""
+        """Enumerate models the running llama.cpp server actually exposes.
+
+        Limits and capabilities come from the server: /props reports the
+        served context (default_generation_settings.n_ctx), modalities.vision
+        and chat_template_caps.supports_tools; /v1/models meta gives n_ctx and
+        n_ctx_train as fallbacks. The served n_ctx is what a request can use,
+        so it wins over the model's training context.  @verified (new)
+        """
+        props = self._server_props()
+        gen = props.get("default_generation_settings") or {}
+        vision = bool((props.get("modalities") or {}).get("vision", False))
+        tools = bool((props.get("chat_template_caps") or {}).get("supports_tools", False))
+
         entries: List[Dict[str, Any]] = []
         try:
             resp = self.client.models.list()
             for m in resp.data:
+                raw = m.model_dump() if hasattr(m, "model_dump") else {}
+                meta = raw.get("meta") or {}
                 entries.append({
                     "provider": "llamacpp",
                     "model_id": m.id,
                     "display_name": m.id,
                     "category": "extraction",
-                    "context_length": None,
+                    "context_length": gen.get("n_ctx") or meta.get("n_ctx") or meta.get("n_ctx_train"),
                     "max_completion_tokens": None,
-                    "supports_vision": False,
+                    "supports_vision": vision,
                     "supports_json_mode": True,
-                    "supports_tool_use": False,
+                    "supports_tool_use": tools,
                     "supports_streaming": True,
                     "price_prompt_per_m": 0,
                     "price_completion_per_m": 0,
                     "price_cache_read_per_m": None,
                     "upstream_provider": None,
-                    "raw_metadata": m.model_dump() if hasattr(m, "model_dump") else {},
+                    "raw_metadata": raw,
                 })
         except Exception as e:
             logger.warning(f"Failed to fetch llama.cpp model catalog: {e}")
