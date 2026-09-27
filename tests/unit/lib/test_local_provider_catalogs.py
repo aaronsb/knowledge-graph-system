@@ -14,6 +14,7 @@ OLLAMA_TAGS = {"models": [
     {"name": "qwen2.5:0.5b", "details": {"family": "qwen2"}},
     {"name": "moondream:latest", "details": {"family": "phi2"}},
     {"name": "nomic-embed-text:latest", "details": {"family": "nomic-bert"}},
+    {"name": "gemma3:4b", "details": {"family": "gemma3"}},
 ]}
 OLLAMA_SHOW = {
     "qwen2.5:0.5b": {"capabilities": ["completion", "tools"], "model_info": {
@@ -22,6 +23,8 @@ OLLAMA_SHOW = {
         "general.architecture": "phi2", "phi2.context_length": 2048}},
     "nomic-embed-text:latest": {"capabilities": ["embedding"], "model_info": {
         "general.architecture": "nomic-bert"}},
+    "gemma3:4b": {"capabilities": ["completion", "vision"], "model_info": {
+        "general.architecture": "gemma3", "gemma3.context_length": 131072}},
 }
 
 
@@ -49,9 +52,10 @@ def _ollama(show=OLLAMA_SHOW):
 @pytest.mark.unit
 class TestOllamaCatalog:
     def test_should_classify_from_capabilities_not_name(self):
-        cat = {e["model_id"]: e for e in _ollama().fetch_model_catalog()}
-        assert cat["moondream:latest"]["category"] == "vision"   # name has no "llava"/"vision"
-        assert cat["moondream:latest"]["supports_vision"] is True
+        cat = {(e["model_id"], e["category"]): e for e in _ollama().fetch_model_catalog()}
+        assert cat[("moondream:latest", "vision")]["supports_vision"] is True  # name has no "llava"
+        assert ("qwen2.5:0.5b", "vision") not in cat
+        cat = {e["model_id"]: e for e in _ollama().fetch_model_catalog() if e["category"] == "extraction"}
         assert cat["qwen2.5:0.5b"]["category"] == "extraction"
         assert cat["qwen2.5:0.5b"]["supports_tool_use"] is True
 
@@ -59,6 +63,11 @@ class TestOllamaCatalog:
         cat = {e["model_id"]: e for e in _ollama().fetch_model_catalog()}
         assert cat["qwen2.5:0.5b"]["context_length"] == 32768
         assert cat["moondream:latest"]["context_length"] == 2048
+
+    def test_should_list_multimodal_model_under_extraction_and_vision(self):
+        rows = [e for e in _ollama().fetch_model_catalog() if e["model_id"] == "gemma3:4b"]
+        assert sorted(e["category"] for e in rows) == ["extraction", "vision"]
+        assert all(e["supports_json_mode"] for e in rows)
 
     def test_should_skip_embedding_only_models(self):
         ids = {e["model_id"] for e in _ollama().fetch_model_catalog()}

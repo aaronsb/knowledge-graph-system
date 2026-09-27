@@ -9,9 +9,10 @@ API Key Loading (ADR-405):
 - Maintains backward compatibility
 """
 
+import time
 import os
 import logging
-from typing import List, Dict, Any, Literal, Optional, Union
+from typing import List, Dict, Any, Literal, Optional, Tuple, Union
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 import json
@@ -411,6 +412,29 @@ def _list_models_from_catalog(provider: str) -> Optional[Dict[str, List[str]]]:
         return None
 
 
+_HTTP_CLIENT = None
+
+
+def _shared_http_client():
+    """Process-wide httpx.Client for provider REST calls (thread-safe, pooled).
+
+    Providers are built per get_provider() call; sharing one client lets
+    connections be reused instead of opening a new pool each time.  @verified (new)
+    """
+    global _HTTP_CLIENT
+    if _HTTP_CLIENT is None:
+        import httpx
+        _HTTP_CLIENT = httpx.Client(follow_redirects=True)
+    return _HTTP_CLIENT
+
+
+# (provider, model_id) -> (max_completion_tokens or None, monotonic time).
+# One lookup per model per TTL instead of one per LLM call; a catalog refresh
+# is picked up within the TTL.
+_OUTPUT_CAP_CACHE: Dict[Tuple[str, str], Tuple[Optional[int], float]] = {}
+_OUTPUT_CAP_TTL_S = 300
+
+
 def _output_token_budget(provider: str, model_id: Optional[str], requested: int) -> int:
     """Cap a requested output-token budget at the model's catalog limit (ADR-800).
 
@@ -421,6 +445,11 @@ def _output_token_budget(provider: str, model_id: Optional[str], requested: int)
     """
     if not model_id:
         return requested
+    key = (provider, model_id)
+    cached = _OUTPUT_CAP_CACHE.get(key)
+    if cached is not None and time.monotonic() - cached[1] < _OUTPUT_CAP_TTL_S:
+        cap = cached[0]
+        return min(requested, cap) if cap else requested
     try:
         client = _get_catalog_age_client()
         conn = client.pool.getconn()
@@ -435,9 +464,11 @@ def _output_token_budget(provider: str, model_id: Optional[str], requested: int)
                 row = cur.fetchone()
         finally:
             client.pool.putconn(conn)
-    except Exception:
+    except Exception as e:
+        logger.warning(f"Output-token cap lookup failed for {provider}/{model_id}: {e}")
         return requested
     cap = row[0] if row else None
+    _OUTPUT_CAP_CACHE[key] = (cap, time.monotonic())
     return min(requested, cap) if cap else requested
 
 
@@ -584,6 +615,35 @@ class AIProvider(ABC):
         this to query their model listing APIs.
         """
         return []
+
+
+# OpenAI's models API reports no limits, so output caps are kept here by id
+# prefix, most specific first (operator-maintained, like the pricing table).
+# Unknown models get None: uncapped, the request goes as configured.
+_OPENAI_MAX_OUTPUT = (
+    ("gpt-5", 128000),
+    ("gpt-4.1", 32768),
+    ("gpt-4o", 16384),
+    ("gpt-4-turbo", 4096),
+    ("gpt-4-1106", 4096),
+    ("gpt-4-0125", 4096),
+    ("gpt-4-vision", 4096),
+    ("gpt-4", 8192),
+    ("gpt-3.5-turbo", 4096),
+    ("o1-mini", 65536),
+    ("o1-preview", 32768),
+    ("o1", 100000),
+    ("o3", 100000),
+    ("o4", 100000),
+)
+
+
+def _openai_max_output(model_id: str) -> Optional[int]:
+    """Known max output tokens for an OpenAI model id, or None.  @verified (new)"""
+    for prefix, limit in _OPENAI_MAX_OUTPUT:
+        if model_id.startswith(prefix):
+            return limit
+    return None
 
 
 class OpenAIProvider(AIProvider):
@@ -786,7 +846,7 @@ class OpenAIProvider(AIProvider):
 
         if stop_reason == "max_tokens":
             raise Exception(
-                f"OpenAI call_with_tools truncated at max_tokens={max_tokens} "
+                f"OpenAI call_with_tools truncated at max_tokens={request_kwargs['max_completion_tokens']} "
                 f"(model={request_kwargs['model']})."
             )
 
@@ -1064,6 +1124,7 @@ class OpenAIProvider(AIProvider):
 
                 category = "embedding" if is_embedding else "extraction"
                 pricing = known_pricing.get(mid, (None, None))
+                max_out = None if is_embedding else _openai_max_output(mid)
 
                 entries.append({
                     "provider": "openai",
@@ -1071,6 +1132,7 @@ class OpenAIProvider(AIProvider):
                     "display_name": mid,
                     "category": category,
                     "context_length": None,
+                    "max_completion_tokens": max_out,
                     # Vision-capable families: 4o, gpt-4-turbo, the o-series
                     # reasoning models (o1/o3/o4 accept image input), gpt-5.
                     # Known maintenance point: the o-series prefix list is a
@@ -1442,7 +1504,7 @@ class AnthropicProvider(AIProvider):
 
         if stop_reason == "max_tokens":
             raise Exception(
-                f"Anthropic call_with_tools truncated at max_tokens={max_tokens} "
+                f"Anthropic call_with_tools truncated at max_tokens={request_kwargs['max_tokens']} "
                 f"(model={target_model})."
             )
 
@@ -1894,7 +1956,7 @@ class OpenRouterProvider(AIProvider):
             ],
             "tools": openai_tools,
             "tool_choice": native_choice,
-            "max_tokens": max_tokens,
+            "max_tokens": _output_token_budget("openrouter", model or self.extraction_model, max_tokens),
         }
         if temperature is not None:
             request_kwargs["temperature"] = temperature
@@ -1909,7 +1971,7 @@ class OpenRouterProvider(AIProvider):
 
         if finish_reason == "length":
             raise Exception(
-                f"OpenRouter call_with_tools truncated at max_tokens={max_tokens} "
+                f"OpenRouter call_with_tools truncated at max_tokens={request_kwargs['max_tokens']} "
                 f"(model={request_kwargs['model']})."
             )
 
@@ -2001,7 +2063,7 @@ class OpenRouterProvider(AIProvider):
                     },
                     {"role": "user", "content": f"{prompt}\n\n{code}"},
                 ],
-                max_tokens=1000,
+                max_tokens=_output_token_budget("openrouter", translation_model, 1000),
                 temperature=0.5,
             )
 
@@ -2065,7 +2127,7 @@ class OpenRouterProvider(AIProvider):
                         ],
                     }
                 ],
-                max_tokens=8192,
+                max_tokens=_output_token_budget("openrouter", vision_model, 8192),
                 temperature=temperature,
             )
 
@@ -2252,7 +2314,7 @@ class OllamaProvider(AIProvider):
         self.top_p = top_p
         self.thinking_mode = thinking_mode
         logger.info(f"🔍 OllamaProvider.__init__: thinking_mode={self.thinking_mode}")
-        self.session = httpx.Client(follow_redirects=True)
+        self.session = _shared_http_client()
 
         # Ollama doesn't provide embeddings - delegate to separate provider
         self.embedding_provider = embedding_provider
@@ -2807,10 +2869,11 @@ class OllamaProvider(AIProvider):
 
         Capabilities and context length come from /api/show: `capabilities`
         lists completion/vision/tools/embedding, and model_info carries
-        `<architecture>.context_length`. Vision models are catalogued as
-        vision, other completion models as extraction; embedding-only models
-        are skipped. When /api/show is unavailable (older Ollama), the model
-        name is the fallback signal for vision.  @verified (new)
+        `<architecture>.context_length`. Completion models are catalogued as
+        extraction and vision models as vision; a multimodal model gets both
+        rows. Embedding-only models are skipped. When /api/show is unavailable
+        (older Ollama), the model name is the fallback signal for vision.
+        @verified (new)
         """
         entries = []
         try:
@@ -2824,33 +2887,42 @@ class OllamaProvider(AIProvider):
                 caps = (show or {}).get("capabilities")
 
                 if caps is None:
+                    # Older Ollama without /api/show: name is the only signal.
                     is_vision = any(v in name.lower() for v in ["llava", "bakllava", "vision"])
+                    categories = ["vision"] if is_vision else ["extraction"]
+                    json_mode = not is_vision
                     supports_tools = False
                     context_length = None
                 else:
-                    if "completion" not in caps and "vision" not in caps:
-                        continue  # embedding-only model
+                    # A multimodal model (gemma3, qwen2.5vl, llama3.2-vision)
+                    # reports completion and vision; it gets a row in each
+                    # category (unique on provider, model_id, category).
+                    # Embedding-only models get none.
                     is_vision = "vision" in caps
+                    categories = (["extraction"] if "completion" in caps else []) + (
+                        ["vision"] if is_vision else [])
+                    json_mode = "completion" in caps
                     supports_tools = "tools" in caps
                     info = show.get("model_info", {}) or {}
                     arch = info.get("general.architecture")
                     context_length = info.get(f"{arch}.context_length") if arch else None
 
-                entries.append({
-                    "provider": "ollama",
-                    "model_id": name,
-                    "display_name": name,
-                    "category": "vision" if is_vision else "extraction",
-                    "context_length": context_length,
-                    "supports_vision": is_vision,
-                    "supports_json_mode": not is_vision,
-                    "supports_tool_use": supports_tools,
-                    "supports_streaming": True,
-                    "price_prompt_per_m": 0,
-                    "price_completion_per_m": 0,
-                    "upstream_provider": None,
-                    "raw_metadata": {**model, "capabilities": caps},
-                })
+                for category in categories:
+                    entries.append({
+                        "provider": "ollama",
+                        "model_id": name,
+                        "display_name": name,
+                        "category": category,
+                        "context_length": context_length,
+                        "supports_vision": is_vision,
+                        "supports_json_mode": json_mode,
+                        "supports_tool_use": supports_tools,
+                        "supports_streaming": True,
+                        "price_prompt_per_m": 0,
+                        "price_completion_per_m": 0,
+                        "upstream_provider": None,
+                        "raw_metadata": {**model, "capabilities": caps},
+                    })
 
         except Exception as e:
             logger.warning(f"Failed to fetch Ollama model catalog: {e}")

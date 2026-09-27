@@ -21,6 +21,7 @@ from api.app.lib.ai_providers import (
 
 def _catalog_cap(cap):
     """Patch the catalog lookup to report `cap` as max_completion_tokens."""
+    ai_providers._OUTPUT_CAP_CACHE.clear()
     cur = MagicMock()
     cur.fetchone.return_value = (cap,)
     conn = MagicMock()
@@ -98,3 +99,28 @@ class TestProvidersSendConfiguredBudget:
             except Exception:
                 pass
         assert p.client.messages.create.call_args.kwargs["max_tokens"] == 128000
+
+
+@pytest.mark.unit
+class TestOpenAIKnownOutputLimits:
+    @pytest.mark.parametrize("model_id,limit", [
+        ("gpt-4o-mini", 16384),
+        ("gpt-4-turbo-2024-04-09", 4096),
+        ("gpt-4-1106-preview", 4096),
+        ("gpt-4-0613", 8192),
+        ("gpt-4.1-mini", 32768),
+        ("o1-mini", 65536),
+        ("o3-mini", 100000),
+        ("gpt-5", 128000),
+        ("some-new-model", None),
+    ])
+    def test_should_map_id_prefix_to_limit(self, model_id, limit):
+        assert ai_providers._openai_max_output(model_id) == limit
+
+    def test_should_cache_lookup_per_model(self):
+        ai_providers._OUTPUT_CAP_CACHE.clear()
+        with _catalog_cap(4096) as get_client:
+            _output_token_budget("openai", "gpt-4-turbo", 16384)
+            _output_token_budget("openai", "gpt-4-turbo", 16384)
+        assert get_client.call_count == 1
+        ai_providers._OUTPUT_CAP_CACHE.clear()
