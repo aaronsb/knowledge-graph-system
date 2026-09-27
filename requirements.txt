@@ -1,7 +1,6 @@
 psycopg2-binary>=2.9.9  # PostgreSQL adapter
 openai>=3.0.0  # v3.0.0 made httpx2 the default HTTP client and stopped installing httpx; no custom httpx client/transport is passed to OpenAI() here, so the floor just pins the verified-against major (3.14.1).
 python-dotenv>=1.0.0
-requests>=2.32.0  # HTTP client for the Ollama, OpenRouter and llama.cpp providers (ai_providers.py). Declared explicitly: it arrived transitively until openai 3.x / anthropic 1.x moved to httpx2, so 0.18.0 shipped without it.
 anthropic>=1.0.0  # Optional: only needed if using AI_PROVIDER=anthropic. v1.0.0 removed temperature/top_p/top_k from messages.create()/stream()/parse() (now sent via extra_body — see _anthropic_sampling_kwargs), removed completions.create()/HUMAN_PROMPT/AI_PROMPT/Transport/ProxiesTypes, and switched to httpx2. Verified against 1.6.0.
 numpy>=1.24.0  # Required for learned knowledge similarity calculations & vector search
 sentence-transformers>=6.0.0  # Local embedding models for ADR-804 (ModernBERT-embed, BGE). 6.0 requires transformers>=5.
@@ -38,7 +37,7 @@ python-jose[cryptography]>=3.3.0  # JWT token generation and validation
 # Testing Dependencies
 pytest>=8.0.0  # Main testing framework
 pytest-asyncio>=0.23.0  # Async test support for FastAPI
-httpx>=0.26.0  # HTTP client for FastAPI testing
+httpx>=0.28.0  # HTTP client for the Ollama, OpenRouter and llama.cpp providers, and for FastAPI testing (ASGITransport). openai/anthropic ship httpx2 and no longer install httpx.
 pytest-cov>=4.1.0  # Code coverage reporting
 pytest-env>=1.1.0  # Environment variable management in tests
 vulture>=2.11  # Dead code detection

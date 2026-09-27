@@ -2093,15 +2093,16 @@ class OpenRouterProvider(AIProvider):
 
     def fetch_model_catalog(self) -> List[Dict[str, Any]]:
         """Fetch models from OpenRouter API with pricing (ADR-800)."""
-        import requests
+        import httpx
 
         entries = []
         try:
             # OpenRouter models endpoint is public but we use auth for higher rate limits
-            resp = requests.get(
+            resp = httpx.get(
                 f"{self.OPENROUTER_BASE_URL}/models",
                 headers={"Authorization": f"Bearer {self.api_key}"},
                 timeout=30,
+                follow_redirects=True,
             )
             resp.raise_for_status()
             data = resp.json()
@@ -2184,7 +2185,7 @@ class OllamaProvider(AIProvider):
             top_p: Nucleus sampling threshold (0.0-1.0)
             thinking_mode: Thinking mode - 'off', 'low', 'medium', 'high' (Ollama 0.12.x+)
         """
-        import requests
+        import httpx
 
         self.base_url = base_url or os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
         # Catalog-driven model resolution (no hardcoded literals — ADR-800/801).
@@ -2196,7 +2197,7 @@ class OllamaProvider(AIProvider):
         self.top_p = top_p
         self.thinking_mode = thinking_mode
         logger.info(f"🔍 OllamaProvider.__init__: thinking_mode={self.thinking_mode}")
-        self.session = requests.Session()
+        self.session = httpx.Client(follow_redirects=True)
 
         # Ollama doesn't provide embeddings - delegate to separate provider
         self.embedding_provider = embedding_provider
@@ -2238,7 +2239,7 @@ class OllamaProvider(AIProvider):
 
         Note: system_prompt is already formatted by llm_extractor.py
         """
-        import requests
+        import httpx
 
         try:
             # Ollama API request (using /api/chat endpoint)
@@ -2374,7 +2375,7 @@ class OllamaProvider(AIProvider):
                 "performance": metrics["performance"]
             }
 
-        except requests.exceptions.ConnectionError:
+        except httpx.ConnectError:
             raise Exception(
                 f"Cannot connect to Ollama at {self.base_url}. "
                 "Ensure Ollama is running:\n"
@@ -2383,7 +2384,7 @@ class OllamaProvider(AIProvider):
                 "  - System: systemctl status ollama\n"
                 "  - Remote: Check base_url configuration"
             )
-        except requests.exceptions.Timeout:
+        except httpx.TimeoutException:
             raise Exception(
                 f"Ollama request timed out after 300s. "
                 f"Model '{self.extraction_model}' may be too large or system is overloaded."
@@ -2408,7 +2409,7 @@ class OllamaProvider(AIProvider):
         model returns no tool_calls, this raises rather than silently
         returning prose.
         """
-        import requests
+        import httpx
 
         if not tools:
             raise ValueError("Ollama call_with_tools requires at least one tool")
@@ -2455,7 +2456,7 @@ class OllamaProvider(AIProvider):
                 return resp
 
             response = _make_request()
-        except requests.exceptions.ConnectionError as e:
+        except httpx.ConnectError as e:
             raise Exception(
                 f"Cannot connect to Ollama at {self.base_url}: {e}"
             ) from e
@@ -2544,7 +2545,7 @@ class OllamaProvider(AIProvider):
 
         Returns dict with 'text' (prose) and 'tokens' (always 0 for local).
         """
-        import requests
+        import httpx
 
         try:
             # Wrap with retry logic for rate limiting
@@ -2601,7 +2602,7 @@ class OllamaProvider(AIProvider):
 
         Requires a vision-capable model like llava:7b, llava:13b, or bakllava.
         """
-        import requests
+        import httpx
         import base64
 
         try:
@@ -2677,7 +2678,7 @@ class OllamaProvider(AIProvider):
 
         For local provider, this checks service availability and model presence.
         """
-        import requests
+        import httpx
 
         try:
             # Check if Ollama is running
@@ -2701,7 +2702,7 @@ class OllamaProvider(AIProvider):
             logger.info(f"✅ Ollama validated at {self.base_url} with model '{self.extraction_model}'")
             return True
 
-        except requests.exceptions.ConnectionError:
+        except httpx.ConnectError:
             logger.error(f"Cannot connect to Ollama at {self.base_url}")
             return False
         except Exception as e:
@@ -2710,7 +2711,7 @@ class OllamaProvider(AIProvider):
 
     def list_available_models(self) -> Dict[str, List[str]]:
         """List available Ollama models. Prefers catalog (ADR-800), falls back to API then hardcoded."""
-        import requests
+        import httpx
 
         catalog = _list_models_from_catalog("ollama")
         if catalog:
@@ -2740,7 +2741,7 @@ class OllamaProvider(AIProvider):
 
     def fetch_model_catalog(self) -> List[Dict[str, Any]]:
         """Fetch installed models from Ollama instance (ADR-800)."""
-        import requests
+        import httpx
 
         entries = []
         try:
@@ -2915,10 +2916,10 @@ def validate_provider_key(provider: str, api_key: str) -> tuple[bool, Optional[s
             return (True, None)
 
         if provider == "openrouter":
-            import requests
+            import httpx
             # OpenRouter's /models is unauthenticated; /key is the real
             # authenticated check (zero token cost, 401 on a bad key).
-            resp = requests.get(
+            resp = httpx.get(
                 f"{OpenRouterProvider.OPENROUTER_BASE_URL}/key",
                 headers={"Authorization": f"Bearer {api_key}"},
                 timeout=10,

@@ -57,14 +57,14 @@ class TestValidateProviderKey:
 
     def test_should_return_false_when_openrouter_returns_401(self):
         resp = MagicMock(status_code=401)
-        with patch("requests.get", return_value=resp):
+        with patch("httpx.get", return_value=resp):
             ok, msg = validate_provider_key("openrouter", "bad")
         assert ok is False
         assert "401" in msg
 
     def test_should_return_true_when_openrouter_key_authenticates(self):
         resp = MagicMock(status_code=200)
-        with patch("requests.get", return_value=resp):
+        with patch("httpx.get", return_value=resp):
             ok, msg = validate_provider_key("openrouter", "good")
         assert ok is True and msg is None
 
