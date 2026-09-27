@@ -40,15 +40,25 @@ def load_active_extraction_config() -> Optional[Dict[str, Any]]:
 
         try:
             with conn.cursor() as cur:
+                # Capabilities come from the model catalog (ADR-800) when the
+                # active model has a row there; the stored flags are only a
+                # fallback for models the catalog doesn't list.
                 cur.execute("""
                     SELECT
-                        id, provider, model_name, supports_vision,
-                        supports_json_mode, max_tokens,
-                        created_at, updated_at, updated_by, active,
-                        base_url, temperature, top_p, gpu_layers, num_threads,
-                        thinking_mode, max_concurrent_requests, max_retries
-                    FROM kg_api.ai_extraction_config
-                    WHERE active = TRUE
+                        c.id, c.provider, c.model_name,
+                        COALESCE(m.supports_vision, c.supports_vision),
+                        COALESCE(m.supports_json_mode, c.supports_json_mode),
+                        c.max_tokens,
+                        c.created_at, c.updated_at, c.updated_by, c.active,
+                        c.base_url, c.temperature, c.top_p, c.gpu_layers, c.num_threads,
+                        c.thinking_mode, c.max_concurrent_requests, c.max_retries,
+                        m.context_length, m.max_completion_tokens
+                    FROM kg_api.ai_extraction_config c
+                    LEFT JOIN kg_api.provider_model_catalog m
+                      ON m.provider = c.provider
+                     AND m.model_id = c.model_name
+                     AND m.category = 'extraction'
+                    WHERE c.active = TRUE
                     LIMIT 1
                 """)
 
@@ -76,7 +86,9 @@ def load_active_extraction_config() -> Optional[Dict[str, Any]]:
                     "num_threads": row[14],
                     "thinking_mode": row[15],
                     "max_concurrent_requests": row[16],
-                    "max_retries": row[17]
+                    "max_retries": row[17],
+                    "model_context_length": row[18],
+                    "model_max_output_tokens": row[19]
                 }
 
                 logger.debug(f"✅ Loaded AI extraction config: {config['provider']} / {config.get('model_name', 'N/A')}")
@@ -330,5 +342,7 @@ def get_extraction_config_summary() -> Dict[str, Any]:
         "num_threads": config.get('num_threads'),
         "thinking_mode": config.get('thinking_mode'),
         "max_concurrent_requests": config.get('max_concurrent_requests'),
-        "max_retries": config.get('max_retries')
+        "max_retries": config.get('max_retries'),
+        "model_context_length": config.get('model_context_length'),
+        "model_max_output_tokens": config.get('model_max_output_tokens')
     }
