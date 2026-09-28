@@ -1,11 +1,26 @@
 ---
-status: Proposed
+contract: adr/v1
+kind: decision
+verb: add
+capability: deploy
+basis:
+  - evidence: API_URL comes from import.meta.env.VITE_API_URL at build time, so each environment needs a rebuild and one bundle cannot serve several domains
+  - standard: OAuth 2.0 PKCE (RFC 7636) for browser-based clients
+  - evidence: Server-rendered OAuth login forms cannot be served from a static CDN
+agent:
+  name: Claude
+  model: unrecorded
+status: proposed
 date: 2025-11-03
 deciders:
   - aaronsb
   - claude
 related:
   - ADR-406
+imported:
+  from: docs/architecture/infrastructure/ADR-112-cdn-serverless-deployment-model.md
+  format: v0
+  status: Proposed
 ---
 
 # ADR-112: CDN and Serverless Deployment Model

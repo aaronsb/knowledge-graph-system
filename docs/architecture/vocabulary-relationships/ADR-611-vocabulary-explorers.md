@@ -1,10 +1,23 @@
 ---
-status: Accepted
+contract: adr/v1
+kind: decision
+verb: add
+capability: web
+basis:
+  - evidence: 100 edge types across 9+ categories and 4,856 relationships; vocabulary insight is available only via CLI (kg vocab list, kg db stats)
+agent:
+  name: Claude
+  model: unrecorded
+status: accepted
 date: 2025-12-10
 deciders:
   - aaronsb
   - claude
 related: []
+imported:
+  from: docs/architecture/vocabulary-relationships/ADR-611-vocabulary-explorers.md
+  format: v0
+  status: Accepted
 ---
 
 # ADR-611: Vocabulary Explorers

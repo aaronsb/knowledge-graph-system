@@ -1,5 +1,16 @@
 ---
-status: Accepted
+contract: adr/v1
+kind: decision
+verb: add
+capability: graph
+basis:
+  - evidence: 'graph_change_counter is a composite count checksum: delete one concept and add one leaves it unchanged, so counter_value to wall-clock is not a function'
+  - evidence: Instances carry no epoch tag (api/app/lib/age_client/ingestion.py:281), so a concept re-evidence stream cannot be ordered
+  - precedent: ADR-114
+agent:
+  name: Claude
+  model: unrecorded
+status: accepted
 date: 2026-05-19
 deciders:
   - aaronsb
@@ -8,6 +19,10 @@ related:
   - ADR-114
   - ADR-200
   - ADR-202
+imported:
+  from: docs/architecture/database-schema/ADR-203-graph-epoch-event-log.md
+  format: v0
+  status: Accepted
 ---
 
 # ADR-203: Graph Epoch Event Log

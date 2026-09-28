@@ -1,10 +1,35 @@
 ---
-status: Accepted
+contract: adr/v1
+kind: decision
+verb: add
+capability: annealing
+basis:
+  - evidence: ontologies are a string property (document) on Source nodes; the flat label layer suffers ontological flatness, boundary rigidity and maintenance burden as the graph grows
+  - evidence: community detection (Girvan-Newman, Louvain modularity) identifies cluster boundaries algorithmically (Girvan & Newman, 2002); ontological emergence (Aguilar et al., 2020)
+  - precedent: ADR-808
+agent:
+  name: Claude
+  model: unrecorded
+status: accepted
 date: 2026-01-29
 deciders:
   - aaronsb
   - claude
-related: [22, 25, 44, 46, 63, 65, 68, 70, 700, 701]
+related:
+  - 22
+  - 25
+  - 44
+  - 46
+  - 63
+  - 65
+  - 68
+  - 70
+  - 700
+  - 701
+imported:
+  from: docs/architecture/database-schema/ADR-200-annealing-ontologies-self-organizing-knowledge-graph-structure.md
+  format: v0
+  status: Accepted
 ---
 
 # ADR-200: Annealing Ontologies — Self-Organizing Knowledge Graph Structure

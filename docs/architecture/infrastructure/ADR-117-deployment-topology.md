@@ -1,10 +1,24 @@
 ---
-status: Draft
+contract: adr/v1
+kind: decision
+verb: add
+capability: deploy
+basis:
+  - evidence: cube, a stable machine on the same subnet with an older Nvidia GPU, can hold long-term data apart from north, the development machine
+  - evidence: The release branch already builds images to GHCR
+agent:
+  name: Claude
+  model: unrecorded
+status: proposed
 date: 2026-01-17
 deciders:
   - aaronsb
   - claude
 related: []
+imported:
+  from: docs/architecture/infrastructure/ADR-117-deployment-topology.md
+  format: v0
+  status: Draft
 ---
 
 # ADR-117: Deployment Topology (Dev/Stable Split)

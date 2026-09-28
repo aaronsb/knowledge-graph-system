@@ -1,5 +1,16 @@
 ---
-status: Accepted
+contract: adr/v1
+kind: decision
+verb: add
+capability: auth
+basis:
+  - evidence: LLM API keys sat in plaintext .env files; rotation required editing .env and restarting services
+  - standard: Fernet (AES-128-CBC + HMAC-SHA256), cryptography.io
+  - standard: OWASP Key Management Cheat Sheet
+agent:
+  name: Claude
+  model: unrecorded
+status: accepted
 date: 2025-10-12
 deciders:
   - Development Team
@@ -7,6 +18,10 @@ related:
   - ADR-403
   - ADR-209
   - ADR-300
+imported:
+  from: docs/architecture/authentication-security/ADR-405-encrypted-api-key-storage.md
+  format: v0
+  status: Accepted
 ---
 
 # ADR-405: Encrypted API Key Storage with Container Secrets

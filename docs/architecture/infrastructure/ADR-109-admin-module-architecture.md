@@ -1,11 +1,25 @@
 ---
-status: Accepted
+contract: adr/v1
+kind: decision
+verb: change
+capability: backup
+basis:
+  - evidence: reset.sh still referenced Neo4j containers after the Apache AGE migration; kg admin reset returned 500 errors despite working
+  - evidence: Script exit codes were non-zero even on success and docker-compose stderr output triggered error detection
+agent:
+  name: Claude
+  model: unrecorded
+status: accepted
 date: 2025-10-09
 deciders:
   - Development Team
 related:
   - ADR-107
   - ADR-208
+imported:
+  from: docs/architecture/infrastructure/ADR-109-admin-module-architecture.md
+  format: v0
+  status: Accepted
 ---
 
 # ADR-109: Admin Module Architecture Pattern

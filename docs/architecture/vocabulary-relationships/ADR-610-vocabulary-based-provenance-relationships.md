@@ -1,5 +1,18 @@
 ---
-status: Accepted
+contract: adr/v1
+kind: decision
+verb: change
+capability:
+  - vocabulary
+  - graph
+basis:
+  - evidence: Concept->Source provenance uses hardcoded APPEARS, EVIDENCED_BY and FROM_SOURCE outside relationship_vocabulary (api/lib/serialization.py:799)
+  - precedent: ADR-811
+  - precedent: ADR-606
+agent:
+  name: Claude
+  model: unrecorded
+status: accepted
 date: 2025-01-15
 deciders:
   - Engineering Team
@@ -8,6 +21,10 @@ related:
   - ADR-607
   - ADR-606
   - ADR-808
+imported:
+  from: docs/architecture/vocabulary-relationships/ADR-610-vocabulary-based-provenance-relationships.md
+  format: v0
+  status: Accepted
 ---
 
 # ADR-610: Vocabulary-Based Provenance Relationships

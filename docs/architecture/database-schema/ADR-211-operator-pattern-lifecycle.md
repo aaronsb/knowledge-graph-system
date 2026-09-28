@@ -1,10 +1,24 @@
 ---
-status: Accepted
+contract: adr/v1
+kind: decision
+verb: add
+capability: deploy
+basis:
+  - evidence: 35+ shell scripts across scripts/services, scripts/setup and scripts/admin with no clear entry point; initialize-platform.sh both edited .env and configured database records
+  - evidence: the failed feature/containerization-strategy branch (6000+ lines) showed bootstrap must run database, migrations, configuration, then API start
+agent:
+  name: Claude
+  model: unrecorded
+status: accepted
 date: 2025-01-07
 deciders:
   - aaronsb
   - claude
 related: []
+imported:
+  from: docs/architecture/database-schema/ADR-211-operator-pattern-lifecycle.md
+  format: v0
+  status: Accepted
 ---
 
 # ADR-211: Operator Pattern for Platform Lifecycle Management

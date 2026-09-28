@@ -1,5 +1,15 @@
 ---
-status: Accepted
+contract: adr/v1
+kind: decision
+verb: add
+capability: ingest
+basis:
+  - evidence: Original documents were discarded after extraction; only chunked Source text and Instance evidence quotes survived, so re-extraction with newer models was impossible
+  - precedent: ADR-305.1
+agent:
+  name: Claude
+  model: unrecorded
+status: accepted
 date: 2025-12-14
 deciders:
   - aaronsb
@@ -7,6 +17,10 @@ deciders:
 related:
   - ADR-115
   - ADR-305
+imported:
+  from: docs/architecture/ingestion-content/ADR-307-source-document-lifecycle.md
+  format: v0
+  status: Accepted
 ---
 
 # ADR-307: Source Document Lifecycle

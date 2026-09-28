@@ -1,5 +1,15 @@
 ---
-status: Proposed
+contract: adr/v1
+kind: decision
+verb: add
+capability: ingest
+basis:
+  - evidence: The graph populates only from document extraction; a human-asserted cross-domain connection (the "hunch problem") has no path in
+  - precedent: ADR-300
+agent:
+  name: Claude
+  model: unrecorded
+status: proposed
 date: 2025-10-17
 deciders:
   - Aaron Bockelie
@@ -9,6 +19,10 @@ related:
   - ADR-208
   - ADR-302
   - ADR-712
+imported:
+  from: docs/architecture/ingestion-content/ADR-303-human-guided-graph-editing.md
+  format: v0
+  status: Proposed
 ---
 
 # ADR-303: Human-Guided Graph Editing

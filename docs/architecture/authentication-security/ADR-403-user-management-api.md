@@ -1,5 +1,14 @@
 ---
-status: Superseded
+contract: adr/v1
+kind: decision
+verb: add
+capability: auth
+basis:
+  - standard: JWT (HS256, python-jose) with bcrypt password hashing (passlib); JWT Best Practices RFC 8725
+agent:
+  name: Claude
+  model: unrecorded
+status: superseded
 date: 2025-10-11
 deciders:
   - aaronsb
@@ -8,6 +17,10 @@ related:
   - ADR-209
   - ADR-406
   - ADR-400
+imported:
+  from: docs/architecture/authentication-security/ADR-403-user-management-api.md
+  format: v0
+  status: Superseded
 ---
 
 # ADR-403: User Management API with Lightweight JWT Authentication

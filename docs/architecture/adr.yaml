@@ -62,7 +62,54 @@ domains:
     description: Documentation, workflow, access models, ADR system
     folder: access-workflow
 
-# Valid ADR statuses
+# The record contract (ADR-304). With `contract: adr/v1`, records are typed:
+# each declares a kind, and a decision names a verb, a capability and its
+# basis. Records under archive/ stay on adr/v0.
+contract: adr/v1
+
+kinds:
+  decision:
+    verb: required
+    requires: [capability, basis, agent]
+    sections: [Summary]
+    edges: { supersedes: decision, amends: decision, extends: decision, basis: [decision, spec, evidence] }
+  spec:
+    verb: forbidden
+    requires: [capability]
+    edges: { supersedes: spec, decided_by: decision }
+  evidence:
+    verb: forbidden
+    requires: [capability]
+    edges: { supersedes: evidence }
+
+# What the platform does, one line each. A record's `capability` names one or
+# more of these; a decision adds, cuts, changes, retires or constrains them.
+capabilities:
+  jobs: The job queue, dispatch, approval, scheduling and progress reporting
+  deploy: Container images, install paths, the appliance, TLS and the operator lifecycle
+  backup: Backup, restore and the portable graph archive
+  storage: Garage object storage and artifact persistence
+  graph: The Apache AGE schema, migrations, the epoch log and graph acceleration
+  annealing: Ontology annealing and the graph's self-organizing structure
+  ingest: Document intake, preprocessing, image ingestion and the source lifecycle
+  extraction: LLM concept extraction, concept matching and deduplication
+  auth: Users, roles, OAuth clients, API keys and endpoint security
+  query: Search, pathfinding, graph programs and the catalog
+  vocabulary: Relationship types, their categorization and consolidation
+  grounding: Grounding, polarity axes, truth convergence and diversity signals
+  providers: AI provider configuration, model catalogs, local inference and rate limits
+  embeddings: Embedding models, profiles and modality spaces
+  cli: The TypeScript CLI and MCP server
+  web: The web workstation, explorers and visualization
+  fuse: The FUSE filesystem
+  process: Decision records, documentation and the development process
+
+# The basis sources a decision may name (ADR-304 §11).
+basis_sources: [operator, evidence, standard, upstream, precedent]
+
+repository: github.com/aaronsb/knowledge-graph-system
+
+# Valid ADR statuses (adr/v0 records)
 statuses:
   - Draft       # Initial creation, not yet proposed
   - Proposed    # Under discussion/review
@@ -73,9 +120,7 @@ statuses:
 
 # Default values for new ADRs
 defaults:
-  deciders:
-    - aaronsb
-    - claude
+  deciders: []
   status: Draft
 
 # Retired number range (pre-domain numbering).
@@ -91,3 +136,13 @@ legacy:
 # Viewer command for `adr view`
 # Use {file} as placeholder for the file path
 viewer: glow {file}
+
+# adr cite skips these: frozen migrations and the checkpoint baseline carry
+# pre-renumbering ADR numbers in their comments, the schema reference is
+# generated from them, and doclint's fixtures carry example numbers.
+cite:
+  exclude:
+    - schema/migrations/archived
+    - schema/00_baseline.sql
+    - docs/reference/schema.md
+    - docs/scripts/doclint.py

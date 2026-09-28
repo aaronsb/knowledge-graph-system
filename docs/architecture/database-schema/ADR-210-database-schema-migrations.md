@@ -1,9 +1,23 @@
 ---
-status: Proposed
+contract: adr/v1
+kind: decision
+verb: add
+capability: graph
+basis:
+  - evidence: the monolithic schema/init.sql had no record of applied changes and no safe path to update an existing database
+  - evidence: adding kg_api.embedding_config for ADR-804 required manual insertion into init.sql and manual SQL on existing databases
+agent:
+  name: Claude
+  model: unrecorded
+status: proposed
 date: 2025-10-20
 deciders:
   - Development Team
 related: []
+imported:
+  from: docs/architecture/database-schema/ADR-210-database-schema-migrations.md
+  format: v0
+  status: Proposed
 ---
 
 # ADR-210: Database Schema Migration Management

@@ -1,11 +1,24 @@
 ---
-status: Accepted
+contract: adr/v1
+kind: decision
+verb: add
+capability: embeddings
+supersedes:
+  - ADR-905
+basis:
+  - evidence: Source nodes carry no text embedding (text_embedding=None in ingestion_worker.py:294); source passages are searchable only by full-text keyword
+agent:
+  name: Claude
+  model: unrecorded
+status: accepted
 date: 2025-11-27
 deciders:
   - System Architect
 related: []
-supersedes:
-  - "ADR-905"
+imported:
+  from: docs/architecture/ai-embeddings/ADR-812-source-text-embeddings.md
+  format: v0
+  status: Accepted
 ---
 
 # ADR-812: Source Text Embeddings for Grounding Truth Retrieval

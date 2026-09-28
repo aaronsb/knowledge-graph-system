@@ -1,5 +1,17 @@
 ---
-status: Draft
+contract: adr/v1
+kind: decision
+verb: change
+capability: providers
+basis:
+  - evidence: saving one field nulled the rest of a provider's row (exclude_none=True upstream), reverting a configured local endpoint to localhost:8080
+  - evidence: a single global active-config row meant saving provider B's settings lost provider A's
+  - evidence: host INPUT firewall drops bridge-network traffic, so a containerised API cannot reach inference servers on host loopback
+  - precedent: ADR-800
+agent:
+  name: Claude
+  model: unrecorded
+status: proposed
 date: 2026-05-19
 deciders:
   - aaronsb
@@ -9,6 +21,10 @@ related:
   - ADR-805
   - ADR-806
   - ADR-810
+imported:
+  from: docs/architecture/ai-embeddings/ADR-801-uniform-provider-configuration-contract.md
+  format: v0
+  status: Draft
 ---
 
 # ADR-801: Uniform Provider Configuration Contract

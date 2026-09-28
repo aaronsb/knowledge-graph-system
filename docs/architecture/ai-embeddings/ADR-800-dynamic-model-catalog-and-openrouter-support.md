@@ -1,7 +1,16 @@
 ---
-status: Accepted
+contract: adr/v1
+kind: decision
+verb: add
+capability: providers
+basis:
+  - evidence: model lists hardcoded in ai_providers.py and pricing driven by TOKEN_COST_* env vars; new or retired models need a code change and redeploy
+  - standard: OpenRouter serves 200+ models through an OpenAI-SDK-compatible API, with per-model pricing in GET /api/v1/models
+agent:
+  name: Claude
+  model: unrecorded
+status: accepted
 date: 2026-03-15
-accepted: 2026-05-19
 deciders:
   - aaronsb
   - claude
@@ -10,6 +19,12 @@ related:
   - ADR-805
   - ADR-806
   - ADR-810
+imported:
+  from: docs/architecture/ai-embeddings/ADR-800-dynamic-model-catalog-and-openrouter-support.md
+  format: v0
+  status: Accepted
+  unmapped:
+    accepted: 2026-05-19
 ---
 
 # ADR-800: Dynamic Model Catalog and OpenRouter Support

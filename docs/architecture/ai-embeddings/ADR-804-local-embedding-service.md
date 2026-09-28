@@ -1,5 +1,16 @@
 ---
-status: Proposed
+contract: adr/v1
+kind: decision
+verb: add
+capability: embeddings
+basis:
+  - evidence: every search query is one OpenAI embedding call (~$0.0001, 100-300ms), and the system is unusable without internet access
+  - evidence: 'research: nomic-embed-text-v1.5 (768-dim) runs in transformers.js since v2.15.0; int8 quantization costs <1% accuracy'
+  - standard: embeddings from different models occupy incompatible vector spaces, so stored and query embeddings must share one model
+agent:
+  name: Claude
+  model: unrecorded
+status: proposed
 date: 2025-10-18
 deciders:
   - System Architecture
@@ -8,6 +19,10 @@ related:
   - ADR-707
   - ADR-208
   - ADR-710
+imported:
+  from: docs/architecture/ai-embeddings/ADR-804-local-embedding-service.md
+  format: v0
+  status: Proposed
 ---
 
 # ADR-804: Local Embedding Service with Hybrid Client/Server Architecture

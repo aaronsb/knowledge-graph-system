@@ -1,10 +1,25 @@
 ---
-status: Draft
+contract: adr/v1
+kind: decision
+verb: add
+capability: jobs
+basis:
+  - evidence: The client polls /jobs/{job_id} every 2 seconds and sees only sparse updates (20%, 90%, 100%) while server logs show per-item progress
+  - standard: Server-Sent Events
+  - precedent: ADR-107
+agent:
+  name: Claude
+  model: unrecorded
+status: proposed
 date: 2025-10-09
 deciders:
   - aaronsb
   - claude
 related: []
+imported:
+  from: docs/architecture/infrastructure/ADR-108-server-sent-events-streaming.md
+  format: v0
+  status: Draft
 ---
 
 # ADR-108: Server-Sent Events for Real-Time Progress Streaming

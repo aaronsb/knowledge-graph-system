@@ -1,11 +1,25 @@
 ---
-status: Proposed
+contract: adr/v1
+kind: decision
+verb: change
+capability: vocabulary
+basis:
+  - evidence: ingestion skips relationships whose type is outside the 30 approved types (ENHANCES, INTEGRATES, CONTRIBUTES_TO and others logged)
+  - precedent: ADR-600
+agent:
+  name: Claude
+  model: unrecorded
+status: proposed
 date: 2025-10-10
 deciders:
   - System Architects
 related:
   - ADR-209
   - ADR-904
+imported:
+  from: docs/architecture/vocabulary-relationships/ADR-601-dynamic-relationship-vocabulary.md
+  format: v0
+  status: Proposed
 ---
 
 # ADR-601: Dynamic Relationship Vocabulary Management

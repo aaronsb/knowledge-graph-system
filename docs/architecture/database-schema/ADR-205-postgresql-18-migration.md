@@ -1,5 +1,19 @@
 ---
-status: Draft
+contract: adr/v1
+kind: decision
+verb: change
+capability:
+  - graph
+  - deploy
+basis:
+  - standard: apache/age ships release_PG18_1.7.0 (PG 18.1 + AGE 1.7.0, amd64/arm64); the image couples the PostgreSQL and AGE versions
+  - standard: PostgreSQL 18 Docker images store the cluster under /var/lib/postgresql/18/docker and refuse to start with data at /var/lib/postgresql/data
+  - standard: Apache AGE graph identity is the backing schema OID, so pg_dump/pg_restore does not round-trip graphs (graph with oid 16987 does not exist)
+  - evidence: 'Gate 1 spike on PG 18 / AGE 1.7: 60 migrations applied, graph_accel builds with pgrx 0.16.1, 882 API tests passed'
+agent:
+  name: Claude
+  model: unrecorded
+status: proposed
 date: 2026-05-20
 deciders:
   - aaronsb
@@ -10,6 +24,10 @@ related:
   - ADR-210
   - ADR-211
   - ADR-201
+imported:
+  from: docs/architecture/database-schema/ADR-205-postgresql-18-migration.md
+  format: v0
+  status: Draft
 ---
 
 # ADR-205: PostgreSQL 18 Migration
