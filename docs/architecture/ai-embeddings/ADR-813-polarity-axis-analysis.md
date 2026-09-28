@@ -1,5 +1,16 @@
 ---
-status: Accepted
+contract: adr/v1
+kind: decision
+verb: add
+capability: grounding
+basis:
+  - evidence: 'experiment/semantic-path-gradients branch: grounding correlates with axis position (r > 0.8 for PREVENTS); analysis runs ~2.36s for 20 concepts'
+  - evidence: 'research: Large Concept Models (Meta, Dec 2024) operate in sentence-embedding space'
+  - precedent: ADR-811
+agent:
+  name: Claude
+  model: unrecorded
+status: accepted
 date: 2025-11-29
 deciders:
   - System Architect
@@ -9,6 +20,10 @@ related:
   - ADR-606
   - ADR-811
   - ADR-812
+imported:
+  from: docs/architecture/ai-embeddings/ADR-813-polarity-axis-analysis.md
+  format: v0
+  status: Accepted
 ---
 
 # ADR-813: Polarity Axis Analysis for Bidirectional Semantic Dimensions

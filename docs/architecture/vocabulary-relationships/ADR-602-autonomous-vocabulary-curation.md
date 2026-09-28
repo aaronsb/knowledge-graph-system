@@ -1,11 +1,27 @@
 ---
-status: Proposed
+contract: adr/v1
+kind: decision
+verb: add
+capability: vocabulary
+basis:
+  - evidence: large ingestion jobs can produce 50+ unique relationship types, each needing manual curator review
+  - evidence: LLM-assisted schema matching identifies semantic equivalence with >85% accuracy (GPT-4 on COMA++)
+  - standard: OWL ontology versioning (owl:versionInfo, owl:priorVersion)
+  - precedent: ADR-600
+agent:
+  name: Claude
+  model: unrecorded
+status: proposed
 date: 2025-10-10
 deciders:
   - System Architects
 related:
   - ADR-601
   - ADR-209
+imported:
+  from: docs/architecture/vocabulary-relationships/ADR-602-autonomous-vocabulary-curation.md
+  format: v0
+  status: Proposed
 ---
 
 # ADR-602: Autonomous Vocabulary Curation and Ontology Management

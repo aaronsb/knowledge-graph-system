@@ -1,5 +1,17 @@
 ---
-status: Accepted
+contract: adr/v1
+kind: decision
+verb: change
+capability:
+  - vocabulary
+  - graph
+basis:
+  - evidence: vocabulary metadata (type, category, confidence, embedding) lives in the relationship_vocabulary SQL table while the knowledge it describes lives in the graph
+  - precedent: ADR-605
+agent:
+  name: Claude
+  model: unrecorded
+status: accepted
 date: 2025-10-27
 deciders:
   - System Architects
@@ -7,6 +19,10 @@ related:
   - ADR-605
   - ADR-603
   - ADR-604
+imported:
+  from: docs/architecture/vocabulary-relationships/ADR-606-vocabulary-metadata-as-graph.md
+  format: v0
+  status: Accepted
 ---
 
 # ADR-606: Vocabulary Metadata as First-Class Graph

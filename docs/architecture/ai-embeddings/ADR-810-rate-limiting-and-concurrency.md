@@ -1,11 +1,26 @@
 ---
-status: Accepted
+contract: adr/v1
+kind: decision
+verb: add
+capability: providers
+basis:
+  - evidence: 4 concurrent ingestion jobs hit 429 errors; SDK default of 2 retries left every worker failing in synchronized retry storms
+  - evidence: 'providers differ in capacity: OpenAI and Anthropic tier rate limits, Ollama one request at a time on a single GPU'
+  - precedent: ADR-805
+agent:
+  name: Claude
+  model: unrecorded
+status: accepted
 date: 2025-10-28
 deciders:
   - Development Team
 related:
   - ADR-805
   - ADR-806
+imported:
+  from: docs/architecture/ai-embeddings/ADR-810-rate-limiting-and-concurrency.md
+  format: v0
+  status: Accepted
 ---
 
 # ADR-810: Rate Limiting and Per-Provider Concurrency Management

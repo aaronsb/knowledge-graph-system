@@ -1,10 +1,24 @@
 ---
-status: Accepted
+contract: adr/v1
+kind: decision
+verb: constrain
+capability: vocabulary
+basis:
+  - evidence: 'consolidation run 2025-10-31: 245 types reduced to 197; 48 types (19.6%) had edge_count = 0; 86 pairs merged'
+  - precedent: ADR-603.1
+agent:
+  name: Claude
+  model: unrecorded
+status: accepted
 date: 2025-10-31
 deciders:
   - aaronsb
   - claude
 related: []
+imported:
+  from: docs/architecture/vocabulary-relationships/ADR-607-vocabulary-expansion-consolidation-cycle.md
+  format: v0
+  status: Accepted
 ---
 
 # ADR-607: Vocabulary Expansion-Consolidation Cycle (The "Dreaming" Pattern)

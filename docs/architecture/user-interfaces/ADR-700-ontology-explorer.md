@@ -1,10 +1,31 @@
 ---
-status: Draft
+contract: adr/v1
+kind: decision
+verb: add
+capability: web
+basis:
+  - evidence: the only web touchpoint for ontologies is OntologyFilterBlock; ontology administration lives only in the CLI (kg ontology list|info|files|rename|delete) and the /ontology/ REST endpoints
+  - evidence: concepts merge across ontologies via semantic similarity during ingestion, and no existing explorer surfaces those cross-ontology bridges
+  - precedent: ADR-200
+  - precedent: ADR-410
+agent:
+  name: Claude
+  model: unrecorded
+status: proposed
 date: 2026-01-29
 deciders:
   - aaronsb
   - claude
-related: [82, 83, 84, 89, 200]
+related:
+  - 82
+  - 83
+  - 84
+  - 89
+  - 200
+imported:
+  from: docs/architecture/user-interfaces/ADR-700-ontology-explorer.md
+  format: v0
+  status: Draft
 ---
 
 # ADR-700: Ontology Explorer

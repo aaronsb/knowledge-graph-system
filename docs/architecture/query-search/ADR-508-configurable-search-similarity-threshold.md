@@ -1,5 +1,18 @@
 ---
-status: Accepted
+contract: adr/v1
+kind: decision
+verb: change
+capability:
+  - query
+  - fuse
+basis:
+  - evidence: nomic-embed-text-v1.5 scores out-of-distribution text at ~0.5 cosine, so a random-character query returns concepts
+  - evidence: 'clients hardcode split defaults: FUSE 0.5, CLI/API 0.7'
+  - precedent: ADR-715
+agent:
+  name: Claude
+  model: unrecorded
+status: accepted
 date: 2026-07-01
 deciders:
   - aaronsb
@@ -7,6 +20,10 @@ deciders:
 related:
   - ADR-804
   - ADR-715.1
+imported:
+  from: docs/architecture/query-search/ADR-508-configurable-search-similarity-threshold.md
+  format: v0
+  status: Accepted
 ---
 
 # ADR-508: Configurable Search Similarity Threshold

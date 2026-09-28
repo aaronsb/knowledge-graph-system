@@ -1,11 +1,25 @@
 ---
-status: Accepted
+contract: adr/v1
+kind: decision
+verb: constrain
+capability: process
+basis:
+  - evidence: 'the flat sequential numbering told nothing about the subsystem: adjacent numbers could touch embeddings and OAuth'
+  - evidence: the catalog reached ~76% pre-domain records, making the first-octet benefit mostly aspirational until the 1-99 range was renumbered
+agent:
+  name: Claude
+  model: unrecorded
+status: accepted
 date: 2026-06-15
 deciders:
   - aaronsb
   - claude
 related:
   - ADR-908
+imported:
+  from: docs/architecture/access-workflow/ADR-900-adr-numbering-domain-system.md
+  format: v0
+  status: Accepted
 ---
 
 # ADR-900: ADR Numbering Domain System

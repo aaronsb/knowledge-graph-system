@@ -1,5 +1,16 @@
 ---
-status: Accepted
+contract: adr/v1
+kind: decision
+verb: change
+capability: vocabulary
+basis:
+  - evidence: 88+ LLM-generated types carry the generic 'llm_generated' category; manual and LLM classification were tried and abandoned
+  - precedent: ADR-808
+  - precedent: ADR-600
+agent:
+  name: Claude
+  model: unrecorded
+status: accepted
 date: 2025-10-26
 deciders:
   - System Architects
@@ -8,6 +19,10 @@ related:
   - ADR-601
   - ADR-600
   - ADR-606
+imported:
+  from: docs/architecture/vocabulary-relationships/ADR-605-probabilistic-vocabulary-categorization.md
+  format: v0
+  status: Accepted
 ---
 
 # ADR-605: Probabilistic Vocabulary Categorization

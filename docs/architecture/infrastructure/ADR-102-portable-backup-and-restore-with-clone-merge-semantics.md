@@ -1,5 +1,17 @@
 ---
-status: Accepted
+contract: adr/v1
+kind: decision
+verb: change
+capability: backup
+basis:
+  - evidence: Export drops created_at_epoch/last_seen_epoch and created_at_event_id, so restored instances land with NULL event IDs
+  - standard: Apache AGE graph identity is OID-coupled, so logical pg_dump/pg_restore does not survive cross-cluster
+  - evidence: restore-database.sh reports success when pg_restore fails (#397); pg_restore --clean aborts on AGE label tables (#398)
+  - precedent: ADR-107
+agent:
+  name: Claude
+  model: unrecorded
+status: accepted
 date: 2026-06-01
 deciders:
   - aaronsb
@@ -11,6 +23,10 @@ related:
   - ADR-203
   - ADR-205
   - ADR-207
+imported:
+  from: docs/architecture/infrastructure/ADR-102-portable-backup-and-restore-with-clone-merge-semantics.md
+  format: v0
+  status: Accepted
 ---
 
 # ADR-102: Portable Backup and Restore with Clone/Merge Semantics

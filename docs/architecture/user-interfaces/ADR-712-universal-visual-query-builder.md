@@ -1,5 +1,16 @@
 ---
-status: Proposed
+contract: adr/v1
+kind: decision
+verb: add
+capability: web
+basis:
+  - evidence: multi-word phrase searches fail at the default similarity threshold without guiding the user to the best match
+  - evidence: search is embedded in individual explorers and cannot express path, neighborhood or pattern queries without writing openCypher
+  - precedent: ADR-710
+agent:
+  name: Claude
+  model: unrecorded
+status: proposed
 date: 2025-10-17
 deciders:
   - Development Team
@@ -7,6 +18,10 @@ related:
   - ADR-710
   - ADR-711
   - ADR-208
+imported:
+  from: docs/architecture/user-interfaces/ADR-712-universal-visual-query-builder.md
+  format: v0
+  status: Proposed
 ---
 
 # ADR-712: Universal Visual Query Builder

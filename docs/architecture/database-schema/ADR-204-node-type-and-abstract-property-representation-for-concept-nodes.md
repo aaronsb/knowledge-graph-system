@@ -1,10 +1,26 @@
 ---
-status: Draft
+contract: adr/v1
+kind: decision
+verb: add
+capability: graph
+basis:
+  - evidence: knowledge nodes are effectively one type (:Concept) with organizational membership as the ontology string; no node-type discriminator or typed facet exists
+  - evidence: the unified engine already partitions nodes into one InstancedMesh per class via Scene.tsx nodeClasses + geometryByClass, so rendering needs no schema change
+  - precedent: ADR-200
+agent:
+  name: Claude
+  model: unrecorded
+status: proposed
 date: 2026-05-18
 deciders:
   - aaronsb
   - claude
-related: [200]
+related:
+  - 200
+imported:
+  from: docs/architecture/database-schema/ADR-204-node-type-and-abstract-property-representation-for-concept-nodes.md
+  format: v0
+  status: Draft
 ---
 
 # ADR-204: Node Type and Abstract Property Representation for Concept Nodes

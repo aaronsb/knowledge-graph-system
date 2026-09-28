@@ -1,5 +1,15 @@
 ---
-status: Proposed
+contract: adr/v1
+kind: decision
+verb: add
+capability: web
+basis:
+  - standard: 'Apache AGE Viewer (github.com/apache/age-viewer): last commit 2024-03-22, 85 open issues, Node 14 (EOL); effectively abandoned'
+  - evidence: Gephi is desktop-only and GPL + CDDL licensed; users had only CLI, MCP and REST, with no visual exploration
+agent:
+  name: Claude
+  model: unrecorded
+status: proposed
 date: 2025-10-16
 deciders:
   - Development Team
@@ -7,6 +17,10 @@ related:
   - ADR-208
   - ADR-709
   - ADR-302
+imported:
+  from: docs/architecture/user-interfaces/ADR-710-graph-visualization-query-workbench.md
+  format: v0
+  status: Proposed
 ---
 
 # ADR-710: Graph Visualization & Interactive Query Explorers

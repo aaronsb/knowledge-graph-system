@@ -1,5 +1,18 @@
 ---
-status: Proposed
+contract: adr/v1
+kind: decision
+verb: constrain
+capability:
+  - graph
+  - jobs
+basis:
+  - evidence: Workers panel showed negative durations (-21584s) because kg_api.jobs.started_at is bare TIMESTAMP, serialized without Z and parsed as local time by the browser (observed 2026-03-02)
+  - evidence: 'audit: 15 bare TIMESTAMP columns across 5 tables versus ~75 TIMESTAMPTZ columns'
+  - precedent: ADR-113
+agent:
+  name: Claude
+  model: unrecorded
+status: proposed
 date: 2026-03-02
 deciders:
   - aaronsb
@@ -8,6 +21,10 @@ related:
   - ADR-210
   - ADR-113
   - ADR-100
+imported:
+  from: docs/architecture/database-schema/ADR-202-timestamp-timezone-normalization.md
+  format: v0
+  status: Proposed
 ---
 
 # ADR-202: Timestamp Timezone Normalization

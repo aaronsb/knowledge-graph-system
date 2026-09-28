@@ -1,7 +1,18 @@
 ---
-status: Proposed
+contract: adr/v1
+kind: decision
+verb: change
+capability: web
+basis:
+  - evidence: three graph-rendering stacks (ForceGraph2D ~1840 LOC, ForceGraph3D ~2052 LOC, EmbeddingScatter3D ~500 LOC) share zero rendering code
+  - evidence: 'ForceGraph3D drops frames at a few hundred nodes: per-node three.js objects, per-edge Line2 geometry, CPU O(N^2) physics on the main thread'
+  - evidence: spike in spike/unified-3d/ served kg data through the atlassian-graph r3f + GPUComputationRenderer pipeline end-to-end; headless and visual verification passed (2026-04-20)
+  - precedent: ADR-710
+agent:
+  name: Claude
+  model: unrecorded
+status: proposed
 date: 2026-04-20
-updated: 2026-05-15
 deciders:
   - aaronsb
   - claude
@@ -10,6 +21,12 @@ related:
   - ADR-711
   - ADR-717
   - ADR-718
+imported:
+  from: docs/architecture/user-interfaces/ADR-702-unified-graph-rendering-engine.md
+  format: v0
+  status: Proposed
+  unmapped:
+    updated: 2026-05-15
 ---
 
 # ADR-702: Unified Graph Rendering Engine

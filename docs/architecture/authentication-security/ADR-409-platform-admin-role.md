@@ -1,11 +1,24 @@
 ---
-status: Superseded
+contract: adr/v1
+kind: decision
+verb: add
+capability: auth
+basis:
+  - evidence: The admin role covered both routine administration (users, job queue) and critical platform operations (API keys, embedding regeneration, backup restore)
+agent:
+  name: Claude
+  model: unrecorded
+status: superseded
 date: 2025-12-09
 deciders:
   - aaronsb
   - claude
 related:
   - ADR-400
+imported:
+  from: docs/architecture/authentication-security/ADR-409-platform-admin-role.md
+  format: v0
+  status: Superseded
 ---
 
 # ADR-409: Platform Admin Role

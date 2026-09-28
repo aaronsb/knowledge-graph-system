@@ -1,7 +1,16 @@
 ---
-status: Accepted
+contract: adr/v1
+kind: decision
+verb: add
+capability: web
+basis:
+  - evidence: polarity axis analysis (ADR-813) needs axes chosen before seeing the data; force-graph positions are arbitrary, not semantic, so no view shows where concepts sit in embedding space
+  - precedent: ADR-813
+agent:
+  name: Claude
+  model: unrecorded
+status: accepted
 date: 2025-12-11
-updated: 2025-12-12
 deciders:
   - Engineering Team
 related:
@@ -9,6 +18,12 @@ related:
   - ADR-503
   - ADR-808
   - ADR-811
+imported:
+  from: docs/architecture/visualization/ADR-717-embedding-landscape-explorer.md
+  format: v0
+  status: Accepted
+  unmapped:
+    updated: 2025-12-12
 ---
 
 # ADR-717: Embedding Landscape Explorer

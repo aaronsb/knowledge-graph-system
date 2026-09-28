@@ -1,5 +1,15 @@
 ---
-status: Accepted
+contract: adr/v1
+kind: decision
+verb: add
+capability: grounding
+basis:
+  - evidence: 'contradiction found 2025-10-24: "System uses Neo4j" vs "System uses Apache AGE + PostgreSQL", both with supporting evidence'
+  - evidence: 'research: Darwin Godel Machine (Zhang et al., 2025, arXiv:2505.22954)'
+agent:
+  name: Claude
+  model: unrecorded
+status: accepted
 date: 2025-10-24
 deciders:
   - aaronsb
@@ -11,6 +21,10 @@ related:
   - ADR-809
   - ADR-604
   - ADR-811
+imported:
+  from: docs/architecture/ai-embeddings/ADR-808-probabilistic-truth-convergence.md
+  format: v0
+  status: Accepted
 ---
 
 # ADR-808: Probabilistic Truth Convergence Through Contradiction Resolution

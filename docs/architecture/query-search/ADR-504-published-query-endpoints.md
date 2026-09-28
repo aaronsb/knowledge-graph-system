@@ -1,11 +1,25 @@
 ---
-status: Proposed
+contract: adr/v1
+kind: decision
+verb: add
+capability: query
+basis:
+  - evidence: Block Builder query flows execute only interactively in the web UI
+  - standard: OAuth 2.0 client credentials grant (RFC 6749)
+agent:
+  name: Claude
+  model: unrecorded
+status: proposed
 date: 2025-11-18
 deciders:
   - Engineering Team
 related:
   - ADR-405
   - ADR-300
+imported:
+  from: docs/architecture/query-search/ADR-504-published-query-endpoints.md
+  format: v0
+  status: Proposed
 ---
 
 # ADR-504: Published Query Endpoints

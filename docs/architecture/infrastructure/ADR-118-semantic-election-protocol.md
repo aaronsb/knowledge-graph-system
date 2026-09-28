@@ -1,5 +1,15 @@
 ---
-status: Proposed
+contract: adr/v1
+kind: decision
+verb: add
+capability: annealing
+basis:
+  - evidence: Hash-based DHT placement destroys semantic locality and XOR distance routing is meaningless for embeddings
+  - precedent: ADR-808
+agent:
+  name: Claude
+  model: unrecorded
+status: proposed
 date: 2026-01-17
 deciders:
   - Engineering Team
@@ -10,6 +20,10 @@ related:
   - ADR-112
   - ADR-811
   - ADR-811
+imported:
+  from: docs/architecture/infrastructure/ADR-118-semantic-election-protocol.md
+  format: v0
+  status: Proposed
 ---
 
 # ADR-118: Semantic Election Protocol for Distributed Concept Placement

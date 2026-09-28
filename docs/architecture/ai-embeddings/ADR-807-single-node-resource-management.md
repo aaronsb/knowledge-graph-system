@@ -1,11 +1,26 @@
 ---
-status: Accepted
+contract: adr/v1
+kind: decision
+verb: add
+capability: providers
+basis:
+  - evidence: 'silent ingestion failures: 22 concepts extracted, then all failed embedding while the extraction model stayed resident in VRAM'
+  - evidence: a 20B extraction model takes ~10-12GB of a 12-24GB GPU, often leaving <500MB for the embedding model
+  - precedent: ADR-806
+agent:
+  name: Claude
+  model: unrecorded
+status: accepted
 date: 2025-10-23
 deciders:
   - System Architects
 related:
   - ADR-804
   - ADR-806
+imported:
+  from: docs/architecture/ai-embeddings/ADR-807-single-node-resource-management.md
+  format: v0
+  status: Accepted
 ---
 
 # ADR-807: Single-Node Resource Management for Local Inference

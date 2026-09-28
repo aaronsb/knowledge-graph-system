@@ -1,11 +1,26 @@
 ---
-status: Proposed
+contract: adr/v1
+kind: decision
+verb: add
+capability: deploy
+basis:
+  - evidence: Standing the platform up requires Docker, Compose, operator.sh, provider configuration and secret-generation literacy
+  - evidence: publish.sh already builds linux/amd64 and linux/arm64 images via docker buildx
+  - evidence: LocalEmbeddingProvider already embeds on-device via sentence-transformers while extraction calls a remote LLM
+agent:
+  name: Claude
+  model: unrecorded
+status: proposed
 date: 2026-06-11
 deciders:
   - aaronsb
   - claude
 related:
   - ADR-804
+imported:
+  from: docs/architecture/infrastructure/ADR-103-distribution-strategy-nomic-first-thin-appliance-with-app-store-tenancy.md
+  format: v0
+  status: Proposed
 ---
 
 # ADR-103: Distribution strategy: nomic-first thin appliance with app-store tenancy

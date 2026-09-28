@@ -1,5 +1,20 @@
 ---
-status: Accepted
+contract: adr/v1
+kind: decision
+verb: constrain
+capability:
+  - graph
+  - grounding
+  - query
+basis:
+  - evidence: three materialized derivations (grounding cache, artifacts, catalog index) read three different version signals; the grounding cache skips the compare on the warm path (#422), artifacts expose no regenerate surface (#233)
+  - standard: Apache AGE Cypher operations bypass PostgreSQL row-level triggers (migration 033), so no trigger-maintained counter can observe graph writes
+  - evidence: 'materialized-view and bounded-staleness literature: incremental view maintenance; Probabilistically Bounded Staleness (PBS)'
+  - precedent: ADR-203
+agent:
+  name: Claude
+  model: unrecorded
+status: accepted
 date: 2026-05-31
 deciders:
   - aaronsb
@@ -13,6 +28,10 @@ related:
   - ADR-115
   - ADR-801
   - ADR-802
+imported:
+  from: docs/architecture/database-schema/ADR-207-derived-state-freshness-contract.md
+  format: v0
+  status: Accepted
 ---
 
 # ADR-207: A Uniform Freshness Contract for Materialized Graph Derivations

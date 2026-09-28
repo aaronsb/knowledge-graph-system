@@ -1,5 +1,14 @@
 ---
-status: Accepted
+contract: adr/v1
+kind: decision
+verb: constrain
+capability: auth
+basis:
+  - evidence: 2026-05-28 endpoint security audit (docs/security/endpoint-security-audit-2026-05-28.md) found six divergences between the auth ADRs and the migrations/code, e.g. public POST /auth/register accepting a client-supplied role
+agent:
+  name: Claude
+  model: unrecorded
+status: accepted
 date: 2026-05-28
 deciders:
   - aaronsb
@@ -13,6 +22,10 @@ related:
   - ADR-407
   - ADR-409
   - ADR-410
+imported:
+  from: docs/architecture/authentication-security/ADR-400-operative-rbac-and-endpoint-security-baseline.md
+  format: v0
+  status: Accepted
 ---
 
 # ADR-400: Operative RBAC and Endpoint Security Baseline

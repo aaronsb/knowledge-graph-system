@@ -1,5 +1,17 @@
 ---
-status: Accepted
+contract: adr/v1
+kind: decision
+verb: change
+capability: process
+basis:
+  - standard: Diátaxis documentation framework (tutorial, how-to, reference, explanation)
+  - evidence: audience-based folder layout (concepts/, using/, operating/) made each feature live in several places, so operator and user pages drifted apart
+  - evidence: consolidation under the taxonomy collapsed 154 hand-written pages to 47 (specs/documentation-consolidation-spec.md)
+  - precedent: ADR-900
+agent:
+  name: Claude
+  model: unrecorded
+status: accepted
 date: 2026-06-15
 deciders:
   - aaronsb
@@ -8,7 +20,10 @@ related:
   - ADR-900
   - ADR-211
   - ADR-117
-amends: 2026-01-18 audience-framework decision (see Amendment below)
+imported:
+  from: docs/architecture/access-workflow/ADR-908-documentation-strategy.md
+  format: v0
+  status: Accepted
 ---
 
 # ADR-908: Documentation Strategy and Audience Framework

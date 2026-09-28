@@ -1,10 +1,24 @@
 ---
-status: Proposed
+contract: adr/v1
+kind: decision
+verb: add
+capability: ingest
+basis:
+  - evidence: 'Serial ingestion of project documentation: ~15% of chunks failed on code-block parse errors and were silently skipped'
+  - standard: Apache AGE Cypher string literals reject multiline text with reserved keywords and escape sequences ("invalid escape sequence at or near")
+agent:
+  name: Claude
+  model: unrecorded
+status: proposed
 date: 2025-10-10
 deciders:
   - aaronsb
   - claude
 related: []
+imported:
+  from: docs/architecture/ingestion-content/ADR-301-markdown-structured-content-preprocessing.md
+  format: v0
+  status: Proposed
 ---
 
 # ADR-301: Markdown Structured Content Preprocessing
