@@ -248,14 +248,23 @@ def _openai_token_usage(response: Any) -> Dict[str, int]:
     }
 
 
-def _anthropic_drops_sampling_params(model_id: str) -> bool:
-    """True if the model rejects temperature/top_p/top_k (Opus 4.7 family).
+# Anthropic models learned at runtime to reject a request shape with a 400.
+# `_anthropic_create` records each model the first time it rejects one, and
+# later requests to that model use the accepted shape from the start.
+_anthropic_no_sampling_models: set = set()
+_anthropic_auto_tool_choice_models: set = set()
 
-    Sending sampling params to one of these models 400s. New family prefixes
-    that adopt the same restriction should be added here so call sites don't
-    drift out of lockstep.
+
+def _anthropic_drops_sampling_params(model_id: str) -> bool:
+    """True if the model rejects temperature/top_p/top_k.
+
+    The Opus 4.7 family is known up front; later models that reject sampling
+    params are learned by `_anthropic_create` on their first 400.
     """
-    return model_id.startswith("claude-opus-4-7")
+    return (
+        model_id.startswith("claude-opus-4-7")
+        or model_id in _anthropic_no_sampling_models
+    )
 
 
 def _anthropic_sampling_kwargs(model_id: str, **params: Any) -> Dict[str, Any]:
@@ -277,6 +286,85 @@ def _anthropic_sampling_kwargs(model_id: str, **params: Any) -> Dict[str, Any]:
         return {}
     body = {k: v for k, v in params.items() if v is not None}
     return {"extra_body": body} if body else {}
+
+
+_SAMPLING_PARAMS = ("temperature", "top_p", "top_k")
+
+
+def _is_sampling_rejection(err: Exception) -> bool:
+    """True when Anthropic rejected a sampling param for the model.
+
+    e.g. 400 invalid_request_error '`temperature` is deprecated for this
+    model'.  @verified 77fc4b678
+    """
+    msg = str(err)
+    return any(f"`{p}`" in msg or f"{p} " in msg for p in _SAMPLING_PARAMS) and (
+        "deprecated" in msg or "not supported" in msg
+    )
+
+
+def _is_forced_tool_choice_rejection(err: Exception) -> bool:
+    """True when Anthropic rejected a forced tool_choice for the model.
+
+    e.g. 400 invalid_request_error 'tool_choice: type "tool" and "any" are
+    not supported for this model'.  @verified 77fc4b678
+    """
+    msg = str(err)
+    return "tool_choice" in msg and "not supported" in msg
+
+
+def _anthropic_create(
+    client: Any, request_kwargs: Dict[str, Any], tool_name: Optional[str] = None
+) -> Any:
+    """Call `messages.create`, adapting the request to what the model accepts.
+
+    Two request shapes are rejected by some Claude models with a 400:
+    sampling params, and a forced tool_choice ("any" or "tool"). On either
+    rejection the model is recorded, the request is reshaped (sampling params
+    dropped; tool_choice set to "auto" with a system instruction to call the
+    tool), and it is retried. Recorded models get the accepted shape on their
+    first attempt. `tool_name` names the tool to instruct for; None means any
+    of the offered tools.  @verified 77fc4b678
+    """
+    model = request_kwargs["model"]
+
+    def drop_sampling() -> None:
+        body = request_kwargs.get("extra_body") or {}
+        for p in _SAMPLING_PARAMS:
+            body.pop(p, None)
+        if not body:
+            request_kwargs.pop("extra_body", None)
+
+    def forced() -> bool:
+        return request_kwargs.get("tool_choice", {}).get("type") in ("any", "tool")
+
+    def auto_tool_choice() -> None:
+        target = f"the {tool_name} tool" if tool_name else "one of the provided tools"
+        request_kwargs["tool_choice"] = {"type": "auto"}
+        request_kwargs["system"] = (
+            f"{request_kwargs.get('system', '')}\n\nRespond only by calling {target}."
+        )
+
+    if model in _anthropic_no_sampling_models:
+        drop_sampling()
+    if forced() and model in _anthropic_auto_tool_choice_models:
+        auto_tool_choice()
+
+    for _ in range(3):
+        try:
+            return client.messages.create(**request_kwargs)
+        except Exception as e:
+            if _is_sampling_rejection(e) and request_kwargs.get("extra_body"):
+                logger.warning(f"{model} rejects sampling params; retrying without them")
+                _anthropic_no_sampling_models.add(model)
+                drop_sampling()
+            elif _is_forced_tool_choice_rejection(e) and forced():
+                logger.warning(f"{model} rejects forced tool_choice; retrying with auto")
+                _anthropic_auto_tool_choice_models.add(model)
+                auto_tool_choice()
+            else:
+                raise
+    return client.messages.create(**request_kwargs)
 
 
 # Module-level cached AGEClient for catalog lookups. Pre-PR, each catalog read
@@ -1412,7 +1500,9 @@ class AnthropicProvider(AIProvider):
         )
 
         try:
-            message = self.client.messages.create(**request_kwargs)
+            message = _anthropic_create(
+                self.client, request_kwargs, EXTRACTION_TOOL_NAME
+            )
 
             if message.stop_reason == "max_tokens":
                 raise Exception(
@@ -1496,7 +1586,10 @@ class AnthropicProvider(AIProvider):
         )
 
         try:
-            message = self.client.messages.create(**request_kwargs)
+            message = _anthropic_create(
+                self.client, request_kwargs,
+                None if native_choice["type"] in ("auto", "any") else tool_choice,
+            )
         except Exception as e:
             raise Exception(f"Anthropic call_with_tools request failed: {e}") from e
 
@@ -1576,7 +1669,7 @@ class AnthropicProvider(AIProvider):
                 _anthropic_sampling_kwargs(translation_model, temperature=0.5)
             )
 
-            message = self.client.messages.create(**request_kwargs)
+            message = _anthropic_create(self.client, request_kwargs)
 
             text_block = next(
                 (b for b in message.content if getattr(b, "type", None) == "text"),
@@ -1663,7 +1756,7 @@ class AnthropicProvider(AIProvider):
                 _anthropic_sampling_kwargs(vision_model, temperature=temperature)
             )
 
-            message = self.client.messages.create(**request_kwargs)
+            message = _anthropic_create(self.client, request_kwargs)
 
             if message.stop_reason == "max_tokens":
                 raise Exception(
