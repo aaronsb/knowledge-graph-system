@@ -10,7 +10,7 @@ Provides REST API access to:
 
 from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from pydantic import BaseModel
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Tuple
 import asyncio
 import logging
 import numpy as np
@@ -75,6 +75,7 @@ def _dedupe_evidence(evidence_list: List[ConceptInstance]) -> List[ConceptInstan
             result.append(e)
     return result
 from api.app.lib.age_client import AGEClient
+from api.app.lib.age_client.ontology import concept_in_ontology
 from api.app.lib.search_config import resolve_search_threshold  # ADR-508
 from api.app.lib.ai_providers import get_provider
 
@@ -249,6 +250,88 @@ def _build_connection_paths(
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/query", tags=["queries"])
+
+
+def _edge_record_to_relationship(record: Dict, **endpoints) -> ConceptRelationship:
+    """Build a ConceptRelationship from an edge row, with ADR-304 provenance
+    and ADR-610 vocabulary epistemic status."""
+    props = record['props'] if record['props'] else {}
+
+    # ADR-304: Convert created_by from int (user ID) to string
+    created_by = props.get('created_by')
+    if created_by is not None:
+        created_by = str(created_by)
+
+    # ADR-610: Extract avg_grounding from epistemic_stats JSON
+    avg_grounding = None
+    vocab_epistemic_stats = record.get('vocab_epistemic_stats')
+    if vocab_epistemic_stats and isinstance(vocab_epistemic_stats, dict):
+        avg_grounding = vocab_epistemic_stats.get('avg_grounding')
+
+    return ConceptRelationship(
+        **endpoints,
+        rel_type=record['rel_type'],
+        confidence=props.get('confidence'),
+        # ADR-304: Edge provenance metadata
+        created_by=created_by,
+        source=props.get('source'),
+        job_id=props.get('job_id'),
+        document_id=props.get('document_id'),
+        created_at=props.get('created_at'),
+        # ADR-610: Vocabulary epistemic status metadata
+        category=record.get('vocab_category'),
+        avg_grounding=avg_grounding,
+        epistemic_status=record.get('vocab_epistemic_status')
+    )
+
+
+_CONCEPT_EDGES_QUERY = """
+    MATCH {edge_pattern}
+    {self_loop_filter}
+    OPTIONAL MATCH (v:VocabType {{name: type(r)}})-[:IN_CATEGORY]->(cat:VocabCategory)
+    RETURN
+        related.concept_id as related_id,
+        related.label as related_label,
+        type(r) as rel_type,
+        properties(r) as props,
+        cat.name as vocab_category,
+        v.epistemic_status as vocab_epistemic_status,
+        v.epistemic_stats as vocab_epistemic_stats
+"""
+
+
+def _fetch_concept_relationships(
+    client, concept_id: str, concept_label: Optional[str]
+) -> Tuple[List[ConceptRelationship], List[ConceptRelationship]]:
+    """Outgoing and incoming relationships of a concept.
+
+    Incoming edges drive grounding_strength (ADR-808), so concept details
+    must show them alongside outgoing ones. A self-loop is listed once, as
+    outgoing. ADR-606: category is read via :IN_CATEGORY (not a property).
+    """
+    params = {"cid": concept_id}
+    outgoing_rows = client._execute_cypher(_CONCEPT_EDGES_QUERY.format(
+        edge_pattern="(c:Concept {concept_id: $cid})-[r]->(related:Concept)",
+        self_loop_filter="",
+    ), params=params) or []
+    incoming_rows = client._execute_cypher(_CONCEPT_EDGES_QUERY.format(
+        edge_pattern="(related:Concept)-[r]->(c:Concept {concept_id: $cid})",
+        self_loop_filter="WHERE related.concept_id <> c.concept_id",
+    ), params=params) or []
+
+    outgoing = [
+        _edge_record_to_relationship(row, to_id=row['related_id'], to_label=row['related_label'])
+        for row in outgoing_rows
+    ]
+    incoming = [
+        _edge_record_to_relationship(
+            row,
+            from_id=row['related_id'], from_label=row['related_label'],
+            to_id=concept_id, to_label=concept_label or concept_id,
+        )
+        for row in incoming_rows
+    ]
+    return outgoing, incoming
 
 
 def get_age_client() -> AGEClient:
@@ -616,13 +699,13 @@ async def search_concepts(
 
                 # Filter by ontology if specified
                 if request.ontology:
-                    ontology_query = client._execute_cypher(
-                        "MATCH (c:Concept {concept_id: $cid}) RETURN c.ontology as ontology",
-                        params={"cid": concept_id},
+                    membership = client._execute_cypher(
+                        "MATCH (c:Concept {concept_id: $cid}) "
+                        f"RETURN {concept_in_ontology('c', '$ontology')} as inside",
+                        params={"cid": concept_id, "ontology": request.ontology},
                         fetch_one=True
                     )
-                    concept_ontology = ontology_query.get('ontology') if ontology_query else None
-                    if concept_ontology != request.ontology:
+                    if not (membership and membership.get('inside')):
                         continue
                 docs_query = client._execute_cypher(
                     "MATCH (c:Concept {concept_id: $cid})-[:APPEARS]->(s:Source) RETURN DISTINCT s.document as doc",
@@ -1143,67 +1226,9 @@ async def get_concept_details(
             for record in instances_raw
         ]
 
-        # Relationships in both directions, with ADR-304 edge provenance metadata
-        # and ADR-610 vocabulary epistemic status. Incoming edges are what drive
-        # grounding_strength (ADR-808), so details must show them too.
-        # ADR-606: Read category via :IN_CATEGORY relationship (not property)
-        def fetch_relationships(edge_pattern: str):
-            return client._execute_cypher(f"""
-                MATCH {edge_pattern}
-                OPTIONAL MATCH (v:VocabType {{name: type(r)}})-[:IN_CATEGORY]->(cat:VocabCategory)
-                RETURN
-                    related.concept_id as related_id,
-                    related.label as related_label,
-                    type(r) as rel_type,
-                    properties(r) as props,
-                    cat.name as vocab_category,
-                    v.epistemic_status as vocab_epistemic_status,
-                    v.epistemic_stats as vocab_epistemic_stats
-            """, params={"cid": concept_id}) or []
-
-        def to_relationship(record, **endpoints) -> ConceptRelationship:
-            props = record['props'] if record['props'] else {}
-
-            # ADR-304: Convert created_by from int (user ID) to string
-            created_by = props.get('created_by')
-            if created_by is not None:
-                created_by = str(created_by)
-
-            # ADR-610: Extract avg_grounding from epistemic_stats JSON
-            avg_grounding = None
-            vocab_epistemic_stats = record.get('vocab_epistemic_stats')
-            if vocab_epistemic_stats and isinstance(vocab_epistemic_stats, dict):
-                avg_grounding = vocab_epistemic_stats.get('avg_grounding')
-
-            return ConceptRelationship(
-                **endpoints,
-                rel_type=record['rel_type'],
-                confidence=props.get('confidence'),
-                # ADR-304: Edge provenance metadata
-                created_by=created_by,
-                source=props.get('source'),
-                job_id=props.get('job_id'),
-                document_id=props.get('document_id'),
-                created_at=props.get('created_at'),
-                # ADR-610: Vocabulary epistemic status metadata
-                category=record.get('vocab_category'),
-                avg_grounding=avg_grounding,
-                epistemic_status=record.get('vocab_epistemic_status')
-            )
-
-        concept_label = concept.get('properties', {}).get('label')
-        relationships = [
-            to_relationship(record, to_id=record['related_id'], to_label=record['related_label'])
-            for record in fetch_relationships("(c:Concept {concept_id: $cid})-[r]->(related:Concept)")
-        ]
-        incoming_relationships = [
-            to_relationship(
-                record,
-                from_id=record['related_id'], from_label=record['related_label'],
-                to_id=concept_id, to_label=concept_label,
-            )
-            for record in fetch_relationships("(related:Concept)-[r]->(c:Concept {concept_id: $cid})")
-        ]
+        relationships, incoming_relationships = _fetch_concept_relationships(
+            client, concept_id, concept.get('properties', {}).get('label')
+        )
 
         # Extract properties from AGE vertex structure: {id, label, properties: {...}}
         props = concept.get('properties', {})

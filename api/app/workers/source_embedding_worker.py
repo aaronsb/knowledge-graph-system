@@ -25,6 +25,7 @@ from api.app.lib.source_chunker import get_chunking_strategy
 from api.app.lib.embedding_config import load_active_embedding_config
 from api.app.services.embedding_worker import get_embedding_worker
 from api.app.lib.age_client import AGEClient
+from api.app.lib.age_client.ontology import concept_in_ontology
 
 logger = logging.getLogger(__name__)
 
@@ -506,9 +507,7 @@ async def get_embedding_status(ontology: Optional[str] = None) -> Dict[str, Any]
     # ====================================================================
     with AGEClient() as age_client:
         ontology_params = {"ontology": ontology} if ontology else None
-        # Concepts carry no ontology property; membership is the canonical
-        # (Concept)-[:APPEARS]->(Source {document}) edge.
-        in_ontology = "EXISTS((c)-[:APPEARS]->(:Source {document: $ontology}))"
+        in_ontology = concept_in_ontology("c", "$ontology")
 
         total_concepts = age_client.facade.count_concepts(
             where=in_ontology if ontology else None,

@@ -23,6 +23,7 @@ from ..models.graph import (
 )
 from ..models.concepts import MatchingMode
 from ..lib.age_client import AGEClient
+from ..lib.age_client.ontology import concept_in_ontology
 from .embedding_worker import get_embedding_worker
 from .audit_service import log_audit, AuditAction, AuditOutcome
 
@@ -431,11 +432,12 @@ class BatchService:
     ) -> Optional[str]:
         """Find matching concept by embedding similarity."""
         escaped_ontology = _escape_cypher_string(ontology)
+        in_ontology = concept_in_ontology("c", f"'{escaped_ontology}'")
         # Use cosine similarity to find matches
         query = f"""
             SELECT * FROM cypher('{self.age_client.graph_name}', $$
                 MATCH (c:Concept)
-                WHERE c.ontology = '{escaped_ontology}'
+                WHERE {in_ontology}
                 RETURN c.concept_id as concept_id, c.embedding as embedding
             $$) as (concept_id agtype, embedding agtype);
         """
@@ -465,10 +467,11 @@ class BatchService:
         """Find concept by label in ontology."""
         escaped_label = _escape_cypher_string(label)
         escaped_ontology = _escape_cypher_string(ontology)
+        in_ontology = concept_in_ontology("c", f"'{escaped_ontology}'")
         query = f"""
             SELECT * FROM cypher('{self.age_client.graph_name}', $$
                 MATCH (c:Concept)
-                WHERE c.label = '{escaped_label}' AND c.ontology = '{escaped_ontology}'
+                WHERE c.label = '{escaped_label}' AND {in_ontology}
                 RETURN c.concept_id as concept_id
             $$) as (concept_id agtype);
         """
