@@ -69,11 +69,9 @@ def validate_api_key(provider: str, api_key: str) -> tuple[bool, str]:
             # Try making a simple API call
             import anthropic
             client = anthropic.Anthropic(api_key=api_key, max_retries=0, timeout=10.0)
-            client.messages.create(
-                model="claude-3-5-sonnet-20241022",
-                max_tokens=1,
-                messages=[{"role": "user", "content": "test"}]
-            )
+            # Model-agnostic, as AnthropicProvider.validate_api_key (ADR-800):
+            # a pinned model ID 404s valid keys once that model is retired.
+            client.models.list(limit=1)
             return True, ""
 
         else:
