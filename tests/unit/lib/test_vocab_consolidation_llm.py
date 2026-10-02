@@ -110,3 +110,30 @@ class TestLlmEvaluateMergeFailure:
         assert decision.failed is False
         assert decision.should_merge is False
         assert decision.reasoning == "directional inverses"
+
+
+def _evaluate_response(response: str):
+    with patch("api.app.lib.pruning_strategies.call_llm_sync", return_value=response):
+        return _evaluate()
+
+
+class TestLlmEvaluateMergeShouldMergeParsing:
+    """#594: should_merge must be parsed, never coerced with bool()."""
+
+    def test_string_false_is_a_rejection_not_a_merge(self):
+        decision = _evaluate_response('{"should_merge": "false", "reasoning": "inverses"}')
+        assert decision.failed is False
+        assert decision.should_merge is False
+
+    def test_string_true_any_case_is_a_merge(self):
+        decision = _evaluate_response(
+            '{"should_merge": " True ", "reasoning": "synonyms", "blended_term": "DESCRIBES"}'
+        )
+        assert decision.failed is False
+        assert decision.should_merge is True
+
+    def test_non_boolean_answer_is_failed(self):
+        for value in ('"yes"', "1", "null", '"maybe"'):
+            decision = _evaluate_response(f'{{"should_merge": {value}, "reasoning": "r"}}')
+            assert decision.failed is True, value
+            assert decision.should_merge is False, value
