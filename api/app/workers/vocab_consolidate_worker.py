@@ -111,6 +111,7 @@ def run_vocab_consolidate_worker(
                 "auto_executed_count": len(results["auto_executed"]),
                 "needs_review_count": len(results["needs_review"]),
                 "rejected_count": len(results["rejected"]),
+                "failed_count": len(results["failed"]),
                 "auto_mode": auto_mode,
                 "dry_run": not auto_mode
             }
