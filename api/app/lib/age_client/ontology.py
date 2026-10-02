@@ -13,10 +13,21 @@ backward compatibility.
 import json
 import logging
 import uuid
+from contextlib import contextmanager
 from datetime import datetime, timezone
-from typing import List, Dict, Optional, Any
+from typing import List, Dict, Optional, Any, Iterator, Tuple
+
+from psycopg2 import errors as psycopg2_errors
 
 logger = logging.getLogger(__name__)
+
+
+class OntologyLockTimeout(Exception):
+    """The per-name ontology create lock was not acquired in time (#597).
+
+    Raised by OntologyMixin.ontology_create_lock() when another session holds
+    the lock past ONTOLOGY_CREATE_LOCK_TIMEOUT_MS.  @verified ded70046d
+    """
 
 
 class OntologyMixin:
@@ -345,79 +356,65 @@ class OntologyMixin:
     # hashtext(name)). Keeps the lock space separate from other advisory locks.
     _ONTOLOGY_CREATE_LOCK_NS = 200
 
-    def ensure_ontology_exists(self, name: str, description: str = "", created_by: Optional[str] = None) -> Dict[str, Any]:
-        """
-        Get or create an Ontology node. Used by ingestion pipeline to ensure
-        the target ontology exists before creating Source nodes.
+    # How long a caller waits for the per-name create lock before giving up.
+    # Bounds the time a stalled holder can pin waiters (and their pooled
+    # connections) instead of letting them block indefinitely (#597).
+    ONTOLOGY_CREATE_LOCK_TIMEOUT_MS = 10_000
 
-        Apache AGE has no uniqueness constraints, so a plain check-then-CREATE
-        lets two concurrent ingestion workers both see "missing" and both
-        CREATE, leaving duplicate Ontology nodes with the same name (#588).
-        The check and the create therefore run on one connection while it
-        holds a per-name PostgreSQL advisory lock, so concurrent callers for
-        the same name serialize and the later one finds the committed node.
-        A session-level lock is used (not xact-level) because _execute_cypher
-        may roll back on AGE label races, which would drop an xact lock.
-        @verified b04c8d20a
+    @contextmanager
+    def ontology_create_lock(self, name: str) -> Iterator[Any]:
+        """
+        Hold the per-name ontology creation lock for the duration of the block.
+
+        Apache AGE has no uniqueness constraints, so every check-then-CREATE
+        of an :Ontology node must run under this lock or two callers can both
+        see "missing" and both CREATE (#588, #597). Yields a dedicated pooled
+        connection that holds a session-level PostgreSQL advisory lock keyed
+        on (namespace, hashtext(name)); the re-check and CREATE must run on
+        that connection and be committed before the block exits so the next
+        waiter's re-check sees the node.
+
+        The wait is bounded by ``SET LOCAL lock_timeout`` (scoped to the
+        acquiring transaction, so it never leaks to the pool or to the
+        statements run under the lock). A session lock is used rather than an
+        xact lock because _execute_cypher may roll back on AGE label races,
+        which would drop an xact lock. A connection that might still hold the
+        lock is closed rather than returned to the pool.
+        @verified ded70046d
 
         Args:
-            name: Ontology name
-            description: Optional description for new ontologies
-            created_by: Username of the creating user (ADR-200 Phase 2)
+            name: Ontology name to serialize creation on
 
-        Returns:
-            Dictionary with ontology node properties
+        Yields:
+            The psycopg2 connection holding the lock
+
+        Raises:
+            OntologyLockTimeout: If the lock is not acquired within
+                ONTOLOGY_CREATE_LOCK_TIMEOUT_MS
         """
-        # Fast path: no lock needed when the node already exists.
-        existing = self.get_ontology_node(name)
-        if existing:
-            return existing
-
-        import uuid
-
         conn = self.pool.getconn()
-        # A connection that might still hold the session lock must not go
-        # back to the pool, or the lock outlives this call.
         discard_conn = True
         try:
-            with conn.cursor() as cur:
-                cur.execute(
-                    "SELECT pg_advisory_lock(%s, hashtext(%s))",
-                    (self._ONTOLOGY_CREATE_LOCK_NS, name),
-                )
-            conn.commit()
             try:
-                # Re-check under the lock: another worker may have created it
-                # while we waited.
-                existing = self.get_ontology_node(name, conn=conn)
-                if existing:
-                    return existing
-
-                creation_epoch = 0
-                try:
-                    with conn.cursor() as cur:
-                        cur.execute(
-                            "SELECT counter FROM graph_metrics WHERE metric_name = 'document_ingestion_counter'"
-                        )
-                        row = cur.fetchone()
-                        if row:
-                            creation_epoch = row[0] or 0
-                except Exception:
-                    conn.rollback()  # Default to 0 if metrics unavailable
-
-                created = self.create_ontology_node(
-                    ontology_id=f"ont_{uuid.uuid4()}",
-                    name=name,
-                    description=description,
-                    lifecycle_state="active",
-                    creation_epoch=creation_epoch,
-                    created_by=created_by,
-                    conn=conn,
-                )
-                # Commit the CREATE before releasing the lock so the next
-                # waiter's re-check sees it.
+                with conn.cursor() as cur:
+                    cur.execute(
+                        "SET LOCAL lock_timeout = %s",
+                        (f"{self.ONTOLOGY_CREATE_LOCK_TIMEOUT_MS}ms",),
+                    )
+                    cur.execute(
+                        "SELECT pg_advisory_lock(%s, hashtext(%s))",
+                        (self._ONTOLOGY_CREATE_LOCK_NS, name),
+                    )
                 conn.commit()
-                return created
+            except psycopg2_errors.LockNotAvailable as e:
+                # Nothing was acquired; the connection is still discarded
+                # (discard_conn stays True) since its transaction aborted.
+                raise OntologyLockTimeout(
+                    f"Timed out after {self.ONTOLOGY_CREATE_LOCK_TIMEOUT_MS}ms "
+                    f"waiting for the create lock on ontology '{name}'"
+                ) from e
+            try:
+                yield conn
             finally:
                 try:
                     conn.rollback()
@@ -432,6 +429,109 @@ class OntologyMixin:
                     logger.warning(f"Failed to release ontology create lock for {name}: {e}")
         finally:
             self.pool.putconn(conn, close=discard_conn)
+
+    def create_ontology_if_absent(
+        self,
+        name: str,
+        description: str = "",
+        embedding: Optional[List[float]] = None,
+        lifecycle_state: str = "active",
+        creation_epoch: Optional[int] = None,
+        created_by: Optional[str] = None,
+        ontology_id: Optional[str] = None,
+    ) -> Tuple[Dict[str, Any], bool]:
+        """
+        Atomically create an Ontology node unless one with that name exists.
+
+        The single locked check-then-CREATE path every caller that creates
+        :Ontology nodes should use (ingestion, POST /ontology, annealing
+        CLEAVE/MERGE/primordial pool). The existence check is repeated under
+        ontology_create_lock() and the CREATE is committed before the lock is
+        released, so concurrent callers for one name yield one node. Callers
+        decide what "already existed" means for them (reuse it, 409, fail).
+        @verified ded70046d
+
+        Args:
+            name: Ontology name
+            description: Description for a newly created node
+            embedding: Optional embedding for a newly created node
+            lifecycle_state: Lifecycle state for a newly created node
+            creation_epoch: Epoch to stamp; None reads the current
+                document_ingestion_counter under the lock (0 if unavailable)
+            created_by: Username or worker that created the node
+            ontology_id: Identifier for a new node; defaults to ont_<uuid4>
+
+        Returns:
+            (node, created): the existing or new node's properties, and True
+            only if this call created it
+
+        Raises:
+            OntologyLockTimeout: If the create lock could not be acquired
+            Exception: If the CREATE fails (the lock is still released)
+        """
+        with self.ontology_create_lock(name) as conn:
+            existing = self.get_ontology_node(name, conn=conn)
+            if existing:
+                return existing, False
+
+            if creation_epoch is None:
+                creation_epoch = 0
+                try:
+                    with conn.cursor() as cur:
+                        cur.execute(
+                            "SELECT counter FROM graph_metrics WHERE metric_name = 'document_ingestion_counter'"
+                        )
+                        row = cur.fetchone()
+                        if row:
+                            creation_epoch = row[0] or 0
+                except Exception:
+                    conn.rollback()  # Default to 0 if metrics unavailable
+
+            created = self.create_ontology_node(
+                ontology_id=ontology_id or f"ont_{uuid.uuid4()}",
+                name=name,
+                description=description,
+                embedding=embedding,
+                lifecycle_state=lifecycle_state,
+                creation_epoch=creation_epoch,
+                created_by=created_by,
+                conn=conn,
+            )
+            # Commit before the lock is released so the next waiter's
+            # re-check sees the node.
+            conn.commit()
+            return created, True
+
+    def ensure_ontology_exists(self, name: str, description: str = "", created_by: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Get or create an Ontology node. Used by ingestion pipeline to ensure
+        the target ontology exists before creating Source nodes.
+
+        Checks without the lock first (the common case is that the node
+        exists), then falls back to create_ontology_if_absent(), which
+        re-checks and creates under the per-name advisory lock (#588).
+        @verified ded70046d
+
+        Args:
+            name: Ontology name
+            description: Optional description for new ontologies
+            created_by: Username of the creating user (ADR-200 Phase 2)
+
+        Returns:
+            Dictionary with ontology node properties
+
+        Raises:
+            OntologyLockTimeout: If the create lock could not be acquired
+        """
+        # Fast path: no lock needed when the node already exists.
+        existing = self.get_ontology_node(name)
+        if existing:
+            return existing
+
+        node, _created = self.create_ontology_if_absent(
+            name, description=description, created_by=created_by
+        )
+        return node
 
     def update_ontology_lifecycle(
         self,

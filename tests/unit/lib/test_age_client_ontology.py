@@ -9,6 +9,7 @@ Tests the new Ontology node CRUD methods added in Phase 1:
 - rename_ontology_node
 - create_scoped_by_edge
 - ensure_ontology_exists
+- create_ontology_if_absent / ontology_create_lock (#597)
 - update_ontology_embedding
 
 All tests mock _execute_cypher since the real method needs PostgreSQL.
@@ -367,25 +368,116 @@ class TestEnsureOntologyExists:
         assert ontology_id.startswith('ont_')
 
     def test_race_condition_returns_winner(self, mock_age_client):
-        """Concurrent create race returns the winner's node instead of failing."""
+        """A node created while we waited for the lock is returned by the
+        under-lock re-check; this call does not CREATE a second one."""
         winner_node = {
             'ontology_id': 'ont_winner',
             'name': 'contested',
             'lifecycle_state': 'active'
         }
-        # First get returns None (not exists), create raises (race loser),
-        # second get returns the winner's node
+        # Unlocked fast-path check misses; the re-check under the advisory
+        # lock (on the lock-holding connection) finds the winner's node.
         mock_age_client.get_ontology_node = MagicMock(
             side_effect=[None, winner_node]
         )
-        mock_age_client.create_ontology_node = MagicMock(
-            side_effect=Exception("unique constraint violation")
-        )
+        mock_age_client.create_ontology_node = MagicMock()
 
         result = mock_age_client.ensure_ontology_exists('contested')
 
         assert result == winner_node
         assert mock_age_client.get_ontology_node.call_count == 2
+        recheck = mock_age_client.get_ontology_node.call_args_list[1]
+        assert recheck.kwargs.get('conn') is not None
+        mock_age_client.create_ontology_node.assert_not_called()
+
+
+@pytest.mark.unit
+class TestCreateOntologyIfAbsent:
+    """create_ontology_if_absent(): the shared locked create path (#597)."""
+
+    def test_returns_existing_without_creating(self, mock_age_client):
+        existing = {'ontology_id': 'ont_x', 'name': 'taken'}
+        mock_age_client.get_ontology_node = MagicMock(return_value=existing)
+        mock_age_client.create_ontology_node = MagicMock()
+
+        node, created = mock_age_client.create_ontology_if_absent('taken')
+
+        assert node == existing
+        assert created is False
+        mock_age_client.create_ontology_node.assert_not_called()
+
+    def test_creates_with_caller_fields(self, mock_age_client):
+        mock_age_client.get_ontology_node = MagicMock(return_value=None)
+        mock_age_client.create_ontology_node = MagicMock(return_value={'name': 'fresh'})
+
+        node, created = mock_age_client.create_ontology_if_absent(
+            'fresh', description='d', embedding=[0.1], creation_epoch=5,
+            created_by='annealing_worker', ontology_id='ont_abc',
+        )
+
+        assert created is True
+        assert node == {'name': 'fresh'}
+        kwargs = mock_age_client.create_ontology_node.call_args.kwargs
+        assert kwargs['ontology_id'] == 'ont_abc'
+        assert kwargs['embedding'] == [0.1]
+        assert kwargs['creation_epoch'] == 5
+        assert kwargs['created_by'] == 'annealing_worker'
+        assert kwargs['conn'] is not None
+
+
+@pytest.mark.unit
+class TestOntologyCreateLock:
+    """ontology_create_lock(): bounded wait and connection hygiene (#597)."""
+
+    @staticmethod
+    def _recording_pool(execute_side_effect=None):
+        conn = MagicMock()
+        cursor = MagicMock()
+        if execute_side_effect is not None:
+            cursor.execute.side_effect = execute_side_effect
+        conn.cursor.return_value.__enter__.return_value = cursor
+        pool = MagicMock()
+        pool.getconn.return_value = conn
+        return pool, conn, cursor
+
+    def test_sets_local_lock_timeout_before_lock(self, mock_age_client):
+        pool, conn, cursor = self._recording_pool()
+        mock_age_client.pool = pool
+
+        with mock_age_client.ontology_create_lock('x'):
+            pass
+
+        sqls = [c.args[0] for c in cursor.execute.call_args_list]
+        assert sqls[0].startswith("SET LOCAL lock_timeout")
+        assert cursor.execute.call_args_list[0].args[1] == (
+            f"{mock_age_client.ONTOLOGY_CREATE_LOCK_TIMEOUT_MS}ms",
+        )
+        assert "pg_advisory_lock" in sqls[1]
+        assert "pg_advisory_unlock" in sqls[-1]
+        # Lock released cleanly -> connection goes back to the pool.
+        pool.putconn.assert_called_once_with(conn, close=False)
+
+    def test_lock_timeout_raises_and_discards_connection(self, mock_age_client):
+        from psycopg2 import errors as pg_errors
+        from api.app.lib.age_client import OntologyLockTimeout
+
+        def execute(sql, params=None):
+            if "pg_advisory_lock" in sql:
+                raise pg_errors.LockNotAvailable("canceling statement due to lock timeout")
+
+        pool, conn, cursor = self._recording_pool(execute)
+        mock_age_client.pool = pool
+        mock_age_client.get_ontology_node = MagicMock(return_value=None)
+        mock_age_client.create_ontology_node = MagicMock()
+
+        with pytest.raises(OntologyLockTimeout, match="slow-one"):
+            mock_age_client.ensure_ontology_exists('slow-one')
+
+        mock_age_client.create_ontology_node.assert_not_called()
+        sqls = [c.args[0] for c in cursor.execute.call_args_list]
+        assert not any("pg_advisory_unlock" in q for q in sqls)
+        # Aborted session is closed, not returned to the pool.
+        pool.putconn.assert_called_once_with(conn, close=True)
 
 
 @pytest.mark.unit
