@@ -23,6 +23,7 @@ from ..models.concepts import (
     CreationMethod,
 )
 from ..lib.age_client import AGEClient
+from ..lib.age_client.ontology import concept_in_ontology
 from .embedding_worker import get_embedding_worker
 
 logger = logging.getLogger(__name__)
@@ -359,7 +360,7 @@ class ConceptService:
         params = {"offset": offset, "limit": limit}
 
         if ontology:
-            where_clauses.append("c.ontology = $ontology")
+            where_clauses.append(concept_in_ontology("c", "$ontology"))
             params["ontology"] = ontology
 
         if label_contains:

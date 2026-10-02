@@ -22,6 +22,25 @@ from psycopg2 import errors as psycopg2_errors
 logger = logging.getLogger(__name__)
 
 
+def concept_in_ontology(concept_var: str = "c", ontology: str = "$ontology") -> str:
+    """Cypher predicate: the concept belongs to the named ontology.
+
+    Two membership models coexist. Extraction-created concepts belong through
+    their sources, (Concept)-[:APPEARS]->(Source)-[:SCOPED_BY]->(Ontology), and
+    carry no ontology property. API- and batch-created concepts carry an
+    `ontology` property. Filtering on either alone silently drops the other.
+
+    Args:
+        concept_var: Cypher variable bound to the concept.
+        ontology: A Cypher expression for the name: a parameter ("$ontology")
+            or an already-escaped quoted literal.
+    """
+    return (
+        f"({concept_var}.ontology = {ontology} OR "
+        f"EXISTS(({concept_var})-[:APPEARS]->(:Source)-[:SCOPED_BY]->(:Ontology {{name: {ontology}}})))"
+    )
+
+
 class OntologyLockTimeout(Exception):
     """The per-name ontology create lock was not acquired in time (#597).
 

@@ -12,6 +12,8 @@ module.exports = {
   roots: ['<rootDir>/src', '<rootDir>/tests'],
   testMatch: ['**/__tests__/**/*.ts', '**/*.test.ts', '**/*.spec.ts'],
   moduleFileExtensions: ['ts', 'js', 'json'],
+  // nodenext sources import siblings as './x.js'; resolve those to the .ts source
+  moduleNameMapper: { '^(\\.{1,2}/.*)\\.js$': '$1' },
   collectCoverageFrom: [
     'src/**/*.ts',
     '!src/**/*.d.ts',

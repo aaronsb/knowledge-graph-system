@@ -5,6 +5,7 @@
 import type {
   SearchResponse,
   ConceptDetailsResponse,
+  ConceptRelationship,
   FindConnectionBySearchResponse,
   RelatedConceptsResponse,
 } from '../../types/index.js';
@@ -141,14 +142,34 @@ export function formatConceptDetails(concept: ConceptDetailsResponse, truncateEv
     }
   });
 
-  if (concept.relationships.length > 0) {
-    output += `\n## Relationships (${concept.relationships.length})\n\n`;
-    concept.relationships.forEach(rel => {
-      const confidence = rel.confidence ? ` (${(rel.confidence * 100).toFixed(0)}%)` : '';
-      output += `${rel.rel_type} -> ${rel.to_label}${confidence}\n`;
+  // Edge confidence plus how the edge was made, so a hand-authored edge
+  // (api_creation) reads differently from an extracted one
+  const edgeMeta = (rel: ConceptRelationship) => {
+    const parts: string[] = [];
+    if (rel.confidence) parts.push(`${(rel.confidence * 100).toFixed(0)}%`);
+    if (rel.source) parts.push(rel.source);
+    return parts.length ? ` (${parts.join(', ')})` : '';
+  };
+
+  const outgoing = concept.relationships;
+  if (outgoing.length > 0) {
+    output += `\n## Outgoing Relationships (${outgoing.length})\n\n`;
+    outgoing.forEach(rel => {
+      output += `${rel.rel_type} -> ${rel.to_label}${edgeMeta(rel)}\n`;
     });
   } else {
     output += '\nNo outgoing relationships\n';
+  }
+
+  // Incoming edges drive grounding_strength (ADR-808); without them the score is unexplainable
+  const incoming = concept.incoming_relationships ?? [];
+  if (incoming.length > 0) {
+    output += `\n## Incoming Relationships (${incoming.length})\n\n`;
+    incoming.forEach(rel => {
+      output += `${rel.from_label} -> ${rel.rel_type}${edgeMeta(rel)}\n`;
+    });
+  } else {
+    output += '\nNo incoming relationships\n';
   }
 
   return output;

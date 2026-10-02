@@ -279,7 +279,11 @@ async function fetchRecentConcepts(limit: number, ontology: string | null): Prom
       if (!/^[a-zA-Z0-9_\-. ()]+$/.test(ontology)) {
         return { summary: `Invalid ontology name: ${ontology}`, concepts: [] };
       }
-      query += ` AND c.ontology = '${ontology}'`;
+      // Same predicate as the API's concept_in_ontology: extraction-created
+      // concepts belong through (Concept)-[:APPEARS]->(Source)-[:SCOPED_BY]->(Ontology);
+      // API- and batch-created concepts carry an ontology property.
+      const name = `'${ontology}'`;
+      query += ` AND (c.ontology = ${name} OR EXISTS((c)-[:APPEARS]->(:Source)-[:SCOPED_BY]->(:Ontology {name: ${name}})))`;
     }
     query += ' RETURN c ORDER BY c.created_at_epoch DESC';
 
@@ -298,12 +302,14 @@ async function fetchRecentConcepts(limit: number, ontology: string | null): Prom
     const concepts = nodes.map((n) => ({
       label: n.label,
       concept_id: n.concept_id,
-      ontology: (n.ontology as string) ?? null,
+      // A concept can belong to several ontologies; only the filter names one
+      ontology: ontology ?? (n.ontology as string) ?? null,
       created_at_epoch: (n.properties?.created_at_epoch as number) ?? 0,
     }));
 
     if (concepts.length === 0) {
-      return { summary: 'No concepts in the knowledge graph yet.', concepts: [] };
+      const scope = ontology ? `ontology "${ontology}"` : 'the knowledge graph';
+      return { summary: `No concepts in ${scope} yet.`, concepts: [] };
     }
 
     const labels = concepts.map((c) => c.label).join(' | ');
@@ -3495,7 +3501,7 @@ Invariant: After every operator, links whose from_id or to_id has no matching no
 \`\`\`json
 {
   "type": "cypher",
-  "query": "MATCH (c:Concept)-[r]->(t:Concept) WHERE c.ontology = 'physics' RETURN c, r, t",
+  "query": "MATCH (c:Concept)-[:APPEARS]->(:Source)-[:SCOPED_BY]->(:Ontology {name: 'physics'}) WITH DISTINCT c MATCH (c)-[r]->(t:Concept) RETURN c, r, t",
   "limit": 20
 }
 \`\`\`
@@ -3506,7 +3512,10 @@ Invariant: After every operator, links whose from_id or to_id has no matching no
 Common Cypher patterns:
   MATCH (c:Concept) RETURN c LIMIT 10                              — fetch concepts
   MATCH (c:Concept)-[r]->(t:Concept) RETURN c, r, t LIMIT 20      — concepts + relationships
-  MATCH (c:Concept) WHERE c.ontology = 'name' RETURN c             — filter by ontology
+  MATCH (c:Concept)-[:APPEARS]->(:Source)-[:SCOPED_BY]->(:Ontology {name: 'name'}) WITH DISTINCT c RETURN c
+                                                                   — filter by ontology: membership runs through the source.
+                                                                     There is no reliable c.ontology property on extracted concepts
+                                                                     (API/batch-created ones carry it; check both if you need them).
   MATCH (c:Concept) WHERE c.concept_id IN ['id1','id2'] RETURN c   — batch by ID
   MATCH p=(a:Concept)-[*1..3]->(b:Concept) RETURN p                — paths (max depth 6)
 
@@ -3611,13 +3620,13 @@ Nodes are keyed by concept_id (string). Links are keyed by (from_id, relationshi
     {
       "op": "+",
       "operation": { "type": "cypher",
-        "query": "MATCH (c:Concept) WHERE c.ontology = 'distributed-systems' RETURN c LIMIT 20" },
+        "query": "MATCH (c:Concept)-[:APPEARS]->(:Source)-[:SCOPED_BY]->(:Ontology {name: 'distributed-systems'}) WITH DISTINCT c RETURN c LIMIT 20" },
       "label": "get ontology concepts"
     },
     {
       "op": "+",
       "operation": { "type": "cypher",
-        "query": "MATCH (c:Concept)-[r]->(t:Concept) WHERE c.ontology = 'distributed-systems' AND t.ontology = 'distributed-systems' RETURN c, r, t" },
+        "query": "MATCH (c:Concept)-[:APPEARS]->(:Source)-[:SCOPED_BY]->(:Ontology {name: 'distributed-systems'}) WITH DISTINCT c MATCH (c)-[r]->(t:Concept) WHERE EXISTS((t)-[:APPEARS]->(:Source)-[:SCOPED_BY]->(:Ontology {name: 'distributed-systems'})) RETURN c, r, t" },
       "label": "intra-ontology relationships"
     }
   ]
@@ -3661,13 +3670,13 @@ Nodes are keyed by concept_id (string). Links are keyed by (from_id, relationshi
     {
       "op": "+",
       "operation": { "type": "cypher",
-        "query": "MATCH (c:Concept) WHERE c.ontology = 'machine-learning' RETURN c" },
+        "query": "MATCH (c:Concept)-[:APPEARS]->(:Source)-[:SCOPED_BY]->(:Ontology {name: 'machine-learning'}) WITH DISTINCT c RETURN c" },
       "label": "load ML concepts"
     },
     {
       "op": "&",
       "operation": { "type": "cypher",
-        "query": "MATCH (c:Concept)-[r]->(t:Concept) WHERE t.ontology = 'statistics' RETURN c" },
+        "query": "MATCH (c:Concept)-[r]->(t:Concept) WHERE EXISTS((t)-[:APPEARS]->(:Source)-[:SCOPED_BY]->(:Ontology {name: 'statistics'})) RETURN c" },
       "label": "keep only ML concepts that relate to statistics"
     }
   ]
