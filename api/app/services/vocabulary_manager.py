@@ -52,6 +52,11 @@ from api.app.lib.pruning_strategies import (
 
 logger = logging.getLogger(__name__)
 
+# Consolidation stops after this many LLM evaluation failures in a row: a run
+# of failures means the provider is down or the key is bad, and every further
+# call would fail the same way (#592).
+MAX_CONSECUTIVE_EVAL_FAILURES = 3
+
 
 @dataclass
 class VocabularyAnalysis:
@@ -727,7 +732,9 @@ class VocabularyManager:
         Returns:
             Dict with 'auto_executed', 'rejected' and 'failed' lists (no
             'needs_review'). 'failed' holds pairs whose LLM evaluation errored:
-            no decision was made, so they are not rejections.
+            no decision was made, so they are not rejections. The run stops
+            after MAX_CONSECUTIVE_EVAL_FAILURES failures in a row: that pattern
+            is a provider outage or a bad key, not a bad pair.
 
         Example:
             >>> results = await manager.aitl_consolidate_vocabulary(
@@ -760,6 +767,7 @@ class VocabularyManager:
 
             # Evaluate top 10 candidates for validation
             max_eval = min(10, len(prioritized))
+            consecutive_failures = 0
             for i, (candidate, score1, score2, priority) in enumerate(prioritized[:max_eval]):
                 logger.info(f"[{i+1}/{max_eval}] Evaluating: {candidate.type1} + {candidate.type2}")
 
@@ -778,7 +786,15 @@ class VocabularyManager:
                         'type2': candidate.type2,
                         'error': decision.reasoning
                     })
+                    consecutive_failures += 1
+                    if consecutive_failures >= MAX_CONSECUTIVE_EVAL_FAILURES:
+                        logger.error(
+                            f"Stopping: {consecutive_failures} consecutive LLM evaluation "
+                            f"failures (last: {decision.reasoning})"
+                        )
+                        break
                     continue
+                consecutive_failures = 0
 
                 if not decision.should_merge:
                     results['rejected'].append({
@@ -813,6 +829,7 @@ class VocabularyManager:
 
         # Track processed pairs during this session to avoid re-presenting rejected candidates
         processed_pairs: set[frozenset[str]] = set()
+        consecutive_failures = 0
 
         while True:
             # Check if we've reached target
@@ -876,7 +893,15 @@ class VocabularyManager:
                 # Mark as processed so a persistent failure can't loop forever
                 processed_pairs.add(pair_key)
                 logger.warning(f"  ! Evaluation failed: {decision.reasoning}")
+                consecutive_failures += 1
+                if consecutive_failures >= MAX_CONSECUTIVE_EVAL_FAILURES:
+                    logger.error(
+                        f"Stopping: {consecutive_failures} consecutive LLM evaluation "
+                        f"failures (last: {decision.reasoning})"
+                    )
+                    break
                 continue
+            consecutive_failures = 0
 
             if not decision.should_merge:
                 results['rejected'].append({
