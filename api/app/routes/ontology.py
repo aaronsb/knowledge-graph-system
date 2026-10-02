@@ -9,6 +9,7 @@ Provides REST API access to:
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Query as QueryParam
+import asyncio
 import logging
 from typing import Any, Dict, List, Optional
 from pydantic import BaseModel
@@ -356,20 +357,17 @@ async def create_ontology(
                 detail=f"Ontology '{request.name}' already exists (has source data)"
             )
 
-        # #402 PR-404 review (finding #6 / advisor): operator-initiated
-        # recreate is positive intent that supersedes a prior tombstone.
-        # Clear it so subsequent ingests don't fail TOMBSTONED forever.
-        _clear_ontology_tombstone(client, request.name)
-
         # Get creation epoch
         creation_epoch = client.get_current_epoch()
 
         # #597: the check above is unlocked; re-check and create under the
         # per-name lock so a concurrent ingest/annealing create of the same
-        # name can't produce a second node.
+        # name can't produce a second node. The lock wait runs off the event
+        # loop: a contended name can block for up to the lock timeout.
         ontology_id = f"ont_{uuid.uuid4()}"
         try:
-            node, created = client.create_ontology_if_absent(
+            node, created = await asyncio.to_thread(
+                client.create_ontology_if_absent,
                 request.name,
                 description=request.description,
                 lifecycle_state="active",
@@ -384,6 +382,13 @@ async def create_ontology(
                 status_code=409,
                 detail=f"Ontology '{request.name}' already exists"
             )
+
+        # #402 PR-404 review (finding #6 / advisor): operator-initiated
+        # recreate is positive intent that supersedes a prior tombstone.
+        # Clear it so subsequent ingests don't fail TOMBSTONED forever. Only
+        # this request's create counts: a request that lost the race gets 409
+        # and leaves the tombstone alone.
+        _clear_ontology_tombstone(client, request.name)
 
         # Generate embedding
         has_embedding = False

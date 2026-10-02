@@ -130,6 +130,14 @@ class TestCreateOntologyRoute:
         client.create_ontology_node.assert_not_called()
         client.create_ontology_if_absent.assert_called_once()
         assert client.create_ontology_if_absent.call_args.args[0] == "Contested"
+        # The winner's create, not this request, decides the tombstone.
+        mock_cursor = (
+            client.pool.getconn.return_value.cursor.return_value.__enter__.return_value
+        )
+        assert not [
+            c for c in mock_cursor.execute.call_args_list
+            if "DELETE FROM kg_api.ontology_tombstones" in str(c)
+        ], "a request that lost the create race must not clear the tombstone"
 
     def test_create_lock_timeout_returns_503(self, api_client, auth_headers_admin):
         """#597: a create lock held past lock_timeout surfaces as 503."""
