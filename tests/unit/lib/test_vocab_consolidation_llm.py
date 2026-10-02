@@ -53,6 +53,26 @@ class TestCallLlmSyncAnthropic:
         assert "temperature" not in kwargs
         assert "extra_body" not in kwargs
 
+    def test_retries_without_sampling_params_when_model_rejects_them(self):
+        from api.app.lib import ai_providers
+
+        class Rejected(Exception):
+            status_code = 400
+
+        provider = _anthropic_provider(model="claude-test-rejects-sampling")
+        message = provider.client.messages.create.return_value
+        provider.client.messages.create.side_effect = [
+            Rejected("`temperature` is deprecated for this model"),
+            message,
+        ]
+        try:
+            result = call_llm_sync(provider, prompt="p", temperature=0.3)
+        finally:
+            ai_providers._anthropic_no_sampling_models.discard("claude-test-rejects-sampling")
+        retry = provider.client.messages.create.call_args_list[1].kwargs
+        assert "extra_body" not in retry
+        assert result == '{"ok": true}'
+
 
 def _evaluate():
     return asyncio.run(llm_evaluate_merge(

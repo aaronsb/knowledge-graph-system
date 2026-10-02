@@ -66,9 +66,9 @@ def call_llm_sync(
 
     elif provider_name == "anthropic":
         # anthropic-sdk v1.0 removed `temperature` from messages.create();
-        # the shared helper routes it via extra_body (or drops it for models
-        # that reject sampling params), same as every other Anthropic call site.
-        from api.app.lib.ai_providers import _anthropic_sampling_kwargs
+        # the shared helpers route it via extra_body and adapt the request to
+        # what the model accepts, same as every other Anthropic call site.
+        from api.app.lib.ai_providers import _anthropic_create, _anthropic_sampling_kwargs
 
         request_kwargs: dict = dict(
             model=ai_provider.extraction_model,
@@ -79,7 +79,7 @@ def call_llm_sync(
         request_kwargs.update(
             _anthropic_sampling_kwargs(ai_provider.extraction_model, temperature=temperature)
         )
-        message = ai_provider.client.messages.create(**request_kwargs)
+        message = _anthropic_create(ai_provider.client, request_kwargs)
         return message.content[0].text.strip()
 
     elif "ollama" in provider_name:
