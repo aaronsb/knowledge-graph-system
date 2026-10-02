@@ -203,9 +203,17 @@ Respond with ONLY the JSON, no other text."""
         if "should_merge" not in result or "reasoning" not in result:
             raise ValueError("LLM response missing required fields")
 
+        # bool("false") is True, so a string answer must be parsed, not coerced.
+        # Anything that isn't a clear yes/no is a failed evaluation.
+        should_merge = result["should_merge"]
+        if isinstance(should_merge, str) and should_merge.strip().lower() in ("true", "false"):
+            should_merge = should_merge.strip().lower() == "true"
+        if not isinstance(should_merge, bool):
+            raise ValueError(f"should_merge is not a boolean: {should_merge!r}")
+
         # Build MergeDecision
         decision = MergeDecision(
-            should_merge=bool(result["should_merge"]),
+            should_merge=should_merge,
             reasoning=result["reasoning"],
             blended_term=result.get("blended_term"),
             blended_description=result.get("blended_description"),
