@@ -506,15 +506,18 @@ async def get_embedding_status(ontology: Optional[str] = None) -> Dict[str, Any]
     # ====================================================================
     with AGEClient() as age_client:
         ontology_params = {"ontology": ontology} if ontology else None
+        # Concepts carry no ontology property; membership is the canonical
+        # (Concept)-[:APPEARS]->(Source {document}) edge.
+        in_ontology = "EXISTS((c)-[:APPEARS]->(:Source {document: $ontology}))"
 
         total_concepts = age_client.facade.count_concepts(
-            where="c.ontology = $ontology" if ontology else None,
+            where=in_ontology if ontology else None,
             params=ontology_params,
         )
 
         embedded_where = "c.embedding IS NOT NULL"
         if ontology:
-            embedded_where += " AND c.ontology = $ontology"
+            embedded_where += f" AND {in_ontology}"
 
         concepts_with_embeddings = age_client.facade.count_concepts(
             where=embedded_where,

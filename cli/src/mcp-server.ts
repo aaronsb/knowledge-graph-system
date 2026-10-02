@@ -279,7 +279,9 @@ async function fetchRecentConcepts(limit: number, ontology: string | null): Prom
       if (!/^[a-zA-Z0-9_\-. ()]+$/.test(ontology)) {
         return { summary: `Invalid ontology name: ${ontology}`, concepts: [] };
       }
-      query += ` AND c.ontology = '${ontology}'`;
+      // Concepts carry no ontology property; membership is the canonical
+      // (Concept)-[:APPEARS]->(Source {document}) edge.
+      query += ` AND EXISTS((c)-[:APPEARS]->(:Source {document: '${ontology}'}))`;
     }
     query += ' RETURN c ORDER BY c.created_at_epoch DESC';
 
@@ -298,12 +300,14 @@ async function fetchRecentConcepts(limit: number, ontology: string | null): Prom
     const concepts = nodes.map((n) => ({
       label: n.label,
       concept_id: n.concept_id,
-      ontology: (n.ontology as string) ?? null,
+      // A concept can belong to several ontologies; only the filter names one
+      ontology: ontology ?? (n.ontology as string) ?? null,
       created_at_epoch: (n.properties?.created_at_epoch as number) ?? 0,
     }));
 
     if (concepts.length === 0) {
-      return { summary: 'No concepts in the knowledge graph yet.', concepts: [] };
+      const scope = ontology ? `ontology "${ontology}"` : 'the knowledge graph';
+      return { summary: `No concepts in ${scope} yet.`, concepts: [] };
     }
 
     const labels = concepts.map((c) => c.label).join(' | ');
@@ -3495,7 +3499,7 @@ Invariant: After every operator, links whose from_id or to_id has no matching no
 \`\`\`json
 {
   "type": "cypher",
-  "query": "MATCH (c:Concept)-[r]->(t:Concept) WHERE c.ontology = 'physics' RETURN c, r, t",
+  "query": "MATCH (c:Concept)-[r]->(t:Concept) WHERE EXISTS((c)-[:APPEARS]->(:Source {document: 'physics'})) RETURN c, r, t",
   "limit": 20
 }
 \`\`\`
@@ -3506,7 +3510,9 @@ Invariant: After every operator, links whose from_id or to_id has no matching no
 Common Cypher patterns:
   MATCH (c:Concept) RETURN c LIMIT 10                              — fetch concepts
   MATCH (c:Concept)-[r]->(t:Concept) RETURN c, r, t LIMIT 20      — concepts + relationships
-  MATCH (c:Concept) WHERE c.ontology = 'name' RETURN c             — filter by ontology
+  MATCH (c:Concept) WHERE EXISTS((c)-[:APPEARS]->(:Source {document: 'name'})) RETURN c
+                                                                   — filter by ontology (concepts have no ontology property;
+                                                                     membership is the APPEARS edge to a Source)
   MATCH (c:Concept) WHERE c.concept_id IN ['id1','id2'] RETURN c   — batch by ID
   MATCH p=(a:Concept)-[*1..3]->(b:Concept) RETURN p                — paths (max depth 6)
 
@@ -3611,13 +3617,13 @@ Nodes are keyed by concept_id (string). Links are keyed by (from_id, relationshi
     {
       "op": "+",
       "operation": { "type": "cypher",
-        "query": "MATCH (c:Concept) WHERE c.ontology = 'distributed-systems' RETURN c LIMIT 20" },
+        "query": "MATCH (c:Concept) WHERE EXISTS((c)-[:APPEARS]->(:Source {document: 'distributed-systems'})) RETURN c LIMIT 20" },
       "label": "get ontology concepts"
     },
     {
       "op": "+",
       "operation": { "type": "cypher",
-        "query": "MATCH (c:Concept)-[r]->(t:Concept) WHERE c.ontology = 'distributed-systems' AND t.ontology = 'distributed-systems' RETURN c, r, t" },
+        "query": "MATCH (c:Concept)-[r]->(t:Concept) WHERE EXISTS((c)-[:APPEARS]->(:Source {document: 'distributed-systems'})) AND EXISTS((t)-[:APPEARS]->(:Source {document: 'distributed-systems'})) RETURN c, r, t" },
       "label": "intra-ontology relationships"
     }
   ]
@@ -3661,13 +3667,13 @@ Nodes are keyed by concept_id (string). Links are keyed by (from_id, relationshi
     {
       "op": "+",
       "operation": { "type": "cypher",
-        "query": "MATCH (c:Concept) WHERE c.ontology = 'machine-learning' RETURN c" },
+        "query": "MATCH (c:Concept) WHERE EXISTS((c)-[:APPEARS]->(:Source {document: 'machine-learning'})) RETURN c" },
       "label": "load ML concepts"
     },
     {
       "op": "&",
       "operation": { "type": "cypher",
-        "query": "MATCH (c:Concept)-[r]->(t:Concept) WHERE t.ontology = 'statistics' RETURN c" },
+        "query": "MATCH (c:Concept)-[r]->(t:Concept) WHERE EXISTS((t)-[:APPEARS]->(:Source {document: 'statistics'})) RETURN c" },
       "label": "keep only ML concepts that relate to statistics"
     }
   ]
