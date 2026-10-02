@@ -142,6 +142,10 @@ export function createConsolidateCommand(): Command {
         if (allFailed) {
           console.log(colors.status.error(`✗ Every evaluation failed (${failed.length}/${evaluated}): no consolidation decisions were made`));
           process.exitCode = 1;
+        } else if (failed.length > 0) {
+          // Some pairs were never decided: report the run as incomplete, not a success.
+          console.log(colors.status.warning(`⚠ ${result.message} (${failed.length}/${evaluated} evaluations failed; those pairs were not decided)`));
+          process.exitCode = 1;
         } else {
           console.log(colors.status.success('✓ ' + result.message));
         }
