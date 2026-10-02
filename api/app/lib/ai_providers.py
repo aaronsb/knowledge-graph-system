@@ -297,6 +297,8 @@ def _is_sampling_rejection(err: Exception) -> bool:
     e.g. 400 invalid_request_error '`temperature` is deprecated for this
     model'.  @verified 77fc4b678
     """
+    if getattr(err, "status_code", None) != 400:
+        return False
     msg = str(err)
     return any(f"`{p}`" in msg or f"{p} " in msg for p in _SAMPLING_PARAMS) and (
         "deprecated" in msg or "not supported" in msg
@@ -309,6 +311,8 @@ def _is_forced_tool_choice_rejection(err: Exception) -> bool:
     e.g. 400 invalid_request_error 'tool_choice: type "tool" and "any" are
     not supported for this model'.  @verified 77fc4b678
     """
+    if getattr(err, "status_code", None) != 400:
+        return False
     msg = str(err)
     return "tool_choice" in msg and "not supported" in msg
 
@@ -336,7 +340,7 @@ def _anthropic_create(
             request_kwargs.pop("extra_body", None)
 
     def forced() -> bool:
-        return request_kwargs.get("tool_choice", {}).get("type") in ("any", "tool")
+        return (request_kwargs.get("tool_choice") or {}).get("type") in ("any", "tool")
 
     def auto_tool_choice() -> None:
         target = f"the {tool_name} tool" if tool_name else "one of the provided tools"
