@@ -64,14 +64,18 @@ class MergeDecision:
         should_merge: True if types should be merged
         blended_term: New unified term name (if should_merge)
         blended_description: Description of blended term (if should_merge)
-        reasoning: Explanation for decision
+        reasoning: Explanation for decision (the error text when failed)
         confidence: LLM confidence in decision (0.0-1.0)
+        failed: True when no decision was made (the LLM call or its response
+            parsing failed). A failed evaluation is not a rejection; callers
+            must report it separately.
     """
     should_merge: bool
     reasoning: str
     confidence: float = 0.8
     blended_term: Optional[str] = None
     blended_description: Optional[str] = None
+    failed: bool = False
 
 
 async def llm_evaluate_merge(
@@ -224,7 +228,8 @@ Respond with ONLY the JSON, no other text."""
         return MergeDecision(
             should_merge=False,
             reasoning=f"LLM response parsing failed: {str(e)}",
-            confidence=0.0
+            confidence=0.0,
+            failed=True
         )
 
     except Exception as e:
@@ -234,7 +239,8 @@ Respond with ONLY the JSON, no other text."""
         return MergeDecision(
             should_merge=False,
             reasoning=f"LLM call failed: {str(e)}",
-            confidence=0.0
+            confidence=0.0,
+            failed=True
         )
 
 

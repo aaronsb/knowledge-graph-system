@@ -77,6 +77,11 @@ export function createConsolidateCommand(): Command {
         }
         console.log(`  ${colors.stats.label('Merged:')} ${coloredCount(result.auto_executed.length)}`);
         console.log(`  ${colors.stats.label('Rejected:')} ${coloredCount(result.rejected.length)}`);
+        // Evaluations that errored made no decision; never count them as rejections
+        const failed: any[] = result.failed ?? [];
+        if (failed.length > 0) {
+          console.log(`  ${colors.stats.label('Failed:')} ${colors.status.error(failed.length.toString())}`);
+        }
         if (result.pruned_count !== undefined && result.pruned_count > 0) {
           console.log(`  ${colors.stats.label('Pruned:')} ${colors.status.success(result.pruned_count.toString())}`);
         }
@@ -120,8 +125,26 @@ export function createConsolidateCommand(): Command {
           });
         }
 
+        // Failed evaluations (LLM call or response parsing errored)
+        if (failed.length > 0) {
+          console.log('\n' + colors.stats.section(`Failed Evaluations (showing first 10 of ${failed.length})`));
+          console.log(separator(80, '─'));
+          failed.slice(0, 10).forEach((failure: any) => {
+            console.log(`\n${colors.status.error('!')} ${failure.type1} + ${failure.type2}`);
+            console.log(`   ${colors.status.error('Error:')} ${failure.error}`);
+          });
+        }
+
+        const evaluated = result.auto_executed.length + result.rejected.length + failed.length;
+        const allFailed = failed.length > 0 && failed.length === evaluated;
+
         console.log('\n' + separator());
-        console.log(colors.status.success('✓ ' + result.message));
+        if (allFailed) {
+          console.log(colors.status.error(`✗ Every evaluation failed (${failed.length}/${evaluated}): no consolidation decisions were made`));
+          process.exitCode = 1;
+        } else {
+          console.log(colors.status.success('✓ ' + result.message));
+        }
         console.log(separator());
       } catch (error: any) {
         console.error(colors.status.error('✗ Failed to consolidate vocabulary'));

@@ -68,6 +68,7 @@ from ..models.vocabulary import (
     MergeResultInfo,
     ReviewInfo,
     RejectionInfo,
+    EvaluationFailureInfo,
 
     # Job dispatch (ADR-701 §1a)
     VocabularyJobRequest,
@@ -551,9 +552,18 @@ async def consolidate_vocabulary(
                 for reject in results['rejected']
             ]
 
+            failed = [
+                EvaluationFailureInfo(
+                    type1=failure['type1'],
+                    type2=failure['type2'],
+                    error=failure['error']
+                )
+                for failure in results['failed']
+            ]
+
             # Build message
             if request.dry_run:
-                message = f"Dry run completed: Evaluated {len(auto_executed) + len(needs_review) + len(rejected)} candidates"
+                message = f"Dry run completed: Evaluated {len(auto_executed) + len(needs_review) + len(rejected) + len(failed)} candidates"
             else:
                 if pruned_count > 0:
                     message = f"Consolidation completed: {size_reduction} types reduced ({initial_size} → {final_size}), including {pruned_count} pruned unused types"
@@ -568,6 +578,7 @@ async def consolidate_vocabulary(
                 auto_executed=auto_executed,
                 needs_review=needs_review,
                 rejected=rejected,
+                failed=failed,
                 pruned=pruned_list,
                 pruned_count=pruned_count,
                 message=message

@@ -422,6 +422,13 @@ class RejectionInfo(BaseModel):
     reasoning: str
 
 
+class EvaluationFailureInfo(BaseModel):
+    """A merge candidate whose LLM evaluation errored (no decision was made)"""
+    type1: str
+    type2: str
+    error: str
+
+
 class ConsolidateVocabularyResponse(BaseModel):
     """Result of AITL vocabulary consolidation"""
     success: bool
@@ -431,6 +438,7 @@ class ConsolidateVocabularyResponse(BaseModel):
     auto_executed: List[MergeResultInfo]
     needs_review: List[ReviewInfo]
     rejected: List[RejectionInfo]
+    failed: List[EvaluationFailureInfo] = Field(default_factory=list)
     pruned: Optional[List[str]] = None  # List of pruned (deleted) unused types
     pruned_count: Optional[int] = None  # Number of types pruned
     message: str

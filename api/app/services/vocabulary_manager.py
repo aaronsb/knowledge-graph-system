@@ -725,7 +725,9 @@ class VocabularyManager:
             dry_run: If True, don't execute merges (default: False)
 
         Returns:
-            Dict with 'auto_executed' and 'rejected' lists (no 'needs_review')
+            Dict with 'auto_executed', 'rejected' and 'failed' lists (no
+            'needs_review'). 'failed' holds pairs whose LLM evaluation errored:
+            no decision was made, so they are not rejections.
 
         Example:
             >>> results = await manager.aitl_consolidate_vocabulary(
@@ -733,13 +735,15 @@ class VocabularyManager:
             ... )
             >>> print(f"Merged: {len(results['auto_executed'])}")
             >>> print(f"Rejected: {len(results['rejected'])}")
+            >>> print(f"Failed: {len(results['failed'])}")
         """
         from api.app.lib.pruning_strategies import llm_evaluate_merge
 
         results = {
             'auto_executed': [],
             'needs_review': [],
-            'rejected': []
+            'rejected': [],
+            'failed': []
         }
 
         # DRY RUN MODE: Just evaluate top candidates for validation (AITL trusts LLM)
@@ -767,6 +771,14 @@ class VocabularyManager:
                     similarity=candidate.similarity,
                     ai_provider=self.ai_provider
                 )
+
+                if decision.failed:
+                    results['failed'].append({
+                        'type1': candidate.type1,
+                        'type2': candidate.type2,
+                        'error': decision.reasoning
+                    })
+                    continue
 
                 if not decision.should_merge:
                     results['rejected'].append({
@@ -855,6 +867,17 @@ class VocabularyManager:
                 type2_epistemic_status=score2.epistemic_status
             )
 
+            if decision.failed:
+                results['failed'].append({
+                    'type1': candidate.type1,
+                    'type2': candidate.type2,
+                    'error': decision.reasoning
+                })
+                # Mark as processed so a persistent failure can't loop forever
+                processed_pairs.add(pair_key)
+                logger.warning(f"  ! Evaluation failed: {decision.reasoning}")
+                continue
+
             if not decision.should_merge:
                 results['rejected'].append({
                     'type1': candidate.type1,
@@ -918,7 +941,8 @@ class VocabularyManager:
         logger.info(
             f"AITL consolidation complete after {iteration} iterations: "
             f"{len(results['auto_executed'])} merged, "
-            f"{len(results['rejected'])} rejected"
+            f"{len(results['rejected'])} rejected, "
+            f"{len(results['failed'])} failed"
         )
 
         return results
