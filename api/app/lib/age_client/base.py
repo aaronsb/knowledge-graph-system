@@ -106,20 +106,27 @@ class BaseMixin:
         self,
         query: str,
         params: Optional[Dict[str, Any]] = None,
-        fetch_one: bool = False
+        fetch_one: bool = False,
+        conn=None
     ) -> List[Dict[str, Any]]:
         """
-        Execute a Cypher query via AGE.
+        Execute a Cypher query via AGE.  @verified b04c8d20a
 
         Args:
             query: Cypher query string
             params: Query parameters (will be interpolated into query)
             fetch_one: If True, return only first result
+            conn: Optional caller-held connection. When given, the query runs
+                on it and the caller owns commit and pool return, so several
+                statements can share one session (e.g. under an advisory lock).
+                When omitted, a pooled connection is used and committed.
 
         Returns:
             List of dictionaries with query results
         """
-        conn = self.pool.getconn()
+        owns_conn = conn is None
+        if owns_conn:
+            conn = self.pool.getconn()
         try:
             self._setup_age(conn)
 
@@ -218,8 +225,9 @@ class BaseMixin:
                     raise
 
         finally:
-            conn.commit()
-            self.pool.putconn(conn)
+            if owns_conn:
+                conn.commit()
+                self.pool.putconn(conn)
 
     def _extract_column_spec(self, query: str) -> str:
         """

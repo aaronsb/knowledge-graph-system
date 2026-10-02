@@ -389,6 +389,97 @@ class TestEnsureOntologyExists:
 
 
 @pytest.mark.unit
+class TestEnsureOntologyExistsConcurrency:
+    """Concurrent ensure_ontology_exists() must not create duplicates (#588).
+
+    AGE has no uniqueness constraints, so two ingestion workers racing on a
+    new ontology name could both see "missing" and both CREATE. The fake
+    connection below maps pg_advisory_lock/unlock onto a real threading.Lock,
+    standing in for PostgreSQL's per-name advisory lock.
+    """
+
+    @staticmethod
+    def _fake_pool(advisory_lock):
+        """Pool whose connections honour advisory lock/unlock statements."""
+        def make_conn():
+            conn = MagicMock()
+            cursor = MagicMock()
+
+            def execute(sql, params=None):
+                if "pg_advisory_lock" in sql:
+                    advisory_lock.acquire()
+                elif "pg_advisory_unlock" in sql:
+                    advisory_lock.release()
+
+            cursor.execute.side_effect = execute
+            cursor.fetchone.return_value = (7,)
+            conn.cursor.return_value.__enter__.return_value = cursor
+            return conn
+
+        pool = MagicMock()
+        pool.getconn.side_effect = lambda *a, **k: make_conn()
+        return pool
+
+    def test_concurrent_callers_create_one_node(self, mock_age_client):
+        """Two workers ensuring the same new ontology create exactly one node."""
+        import threading
+        import time
+
+        store = {}  # name -> list of created nodes (the "graph")
+        store_guard = threading.Lock()
+
+        def get_node(name, conn=None):
+            with store_guard:
+                nodes = store.get(name)
+                return nodes[0] if nodes else None
+
+        def create_node(ontology_id, name, **kwargs):
+            # Widen the race window between check and create.
+            time.sleep(0.05)
+            node = {"ontology_id": ontology_id, "name": name}
+            with store_guard:
+                store.setdefault(name, []).append(node)
+            return node
+
+        mock_age_client.pool = self._fake_pool(threading.Lock())
+        mock_age_client.get_ontology_node = MagicMock(side_effect=get_node)
+        mock_age_client.create_ontology_node = MagicMock(side_effect=create_node)
+
+        start = threading.Barrier(2)
+        results = []
+
+        def worker():
+            start.wait()
+            results.append(mock_age_client.ensure_ontology_exists("operating-models"))
+
+        threads = [threading.Thread(target=worker) for _ in range(2)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join(timeout=5)
+
+        assert len(store["operating-models"]) == 1
+        assert mock_age_client.create_ontology_node.call_count == 1
+        assert results[0]["ontology_id"] == results[1]["ontology_id"]
+
+    def test_lock_released_when_create_fails(self, mock_age_client):
+        """A failed CREATE still releases the advisory lock and re-raises."""
+        import threading
+
+        advisory_lock = threading.Lock()
+        mock_age_client.pool = self._fake_pool(advisory_lock)
+        mock_age_client.get_ontology_node = MagicMock(return_value=None)
+        mock_age_client.create_ontology_node = MagicMock(
+            side_effect=Exception("boom")
+        )
+
+        with pytest.raises(Exception, match="boom"):
+            mock_age_client.ensure_ontology_exists("broken")
+
+        assert not advisory_lock.locked()
+
+
+@pytest.mark.unit
 class TestUpdateOntologyEmbedding:
     """Tests for update_ontology_embedding()."""
 
