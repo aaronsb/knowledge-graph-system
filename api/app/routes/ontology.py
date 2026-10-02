@@ -54,7 +54,7 @@ from ..models.ontology import (
 )
 import json as _json
 from psycopg2.extras import RealDictCursor
-from api.app.lib.age_client import AGEClient
+from api.app.lib.age_client import AGEClient, OntologyLockTimeout
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/ontology", tags=["ontology"])
@@ -326,6 +326,7 @@ async def create_ontology(
 
     Raises:
         409: If an ontology with that name already exists
+        503: If the per-name create lock is not acquired in time (#597)
 
     Example:
         POST /ontology/
@@ -363,15 +364,26 @@ async def create_ontology(
         # Get creation epoch
         creation_epoch = client.get_current_epoch()
 
+        # #597: the check above is unlocked; re-check and create under the
+        # per-name lock so a concurrent ingest/annealing create of the same
+        # name can't produce a second node.
         ontology_id = f"ont_{uuid.uuid4()}"
-        node = client.create_ontology_node(
-            ontology_id=ontology_id,
-            name=request.name,
-            description=request.description,
-            lifecycle_state="active",
-            creation_epoch=creation_epoch,
-            created_by=current_user.username,
-        )
+        try:
+            node, created = client.create_ontology_if_absent(
+                request.name,
+                description=request.description,
+                lifecycle_state="active",
+                creation_epoch=creation_epoch,
+                created_by=current_user.username,
+                ontology_id=ontology_id,
+            )
+        except OntologyLockTimeout as e:
+            raise HTTPException(status_code=503, detail=str(e))
+        if not created:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Ontology '{request.name}' already exists"
+            )
 
         # Generate embedding
         has_embedding = False

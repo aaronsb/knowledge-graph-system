@@ -37,6 +37,9 @@ def mock_client():
     client.pool = MagicMock()
     client.pool.getconn.return_value = mock_conn
 
+    # Locked create helper (#597): (node, created) — created by default.
+    client.create_ontology_if_absent.return_value = ({}, True)
+
     return client
 
 
@@ -197,7 +200,7 @@ class TestExecuteCleaveTargetNew:
             "embedding": [0.1] * 10,
         }
         mock_client.get_ontology_node.return_value = None  # name not taken
-        mock_client.create_ontology_node.return_value = {"name": "domain-x"}
+        mock_client.create_ontology_if_absent.return_value = ({"name": "domain-x"}, True)
         mock_client.create_anchored_by_edge.return_value = True
         mock_client.get_first_order_source_ids.return_value = ["s1", "s2", "s3"]
         mock_client.reassign_sources.return_value = {
@@ -212,7 +215,7 @@ class TestExecuteCleaveTargetNew:
         assert result["target_ontology"] == "domain-x"
         assert result["sources_reassigned"] == 3
         assert result["anchored"] is True
-        mock_client.create_ontology_node.assert_called_once()
+        mock_client.create_ontology_if_absent.assert_called_once()
         mock_client.create_anchored_by_edge.assert_called_once_with(
             "domain-x", "c_anchor"
         )
@@ -228,7 +231,30 @@ class TestExecuteCleaveTargetNew:
 
         assert result["success"] is False
         assert "already exists" in result["error"]
+        mock_client.create_ontology_if_absent.assert_not_called()
+
+    def test_cleave_new_race_lost_under_lock(self, executor, mock_client):
+        """#597: the name is free at phase-1 validation but taken by the time
+        the locked create runs. CLEAVE fails like the pre-check would, before
+        anchoring or reassigning anything."""
+        mock_client.get_concept_node.return_value = {
+            "concept_id": "c_anchor", "label": "Anchor", "embedding": [0.1],
+        }
+        mock_client.get_ontology_node.return_value = None
+        mock_client.get_first_order_source_ids.return_value = ["s1"]
+        mock_client.create_ontology_if_absent.return_value = (
+            {"name": "domain-x"}, False,
+        )
+
+        result = executor.execute_cleave(_cleave_new())
+
+        assert result["success"] is False
+        assert "already exists" in result["error"]
+        mock_client.create_ontology_if_absent.assert_called_once()
+        assert mock_client.create_ontology_if_absent.call_args.args[0] == "domain-x"
         mock_client.create_ontology_node.assert_not_called()
+        mock_client.create_anchored_by_edge.assert_not_called()
+        mock_client.reassign_sources.assert_not_called()
 
     def test_cleave_missing_anchor_id(self, executor):
         """Fails cleanly if proposal has no anchor_concept_id."""
@@ -251,7 +277,7 @@ class TestExecuteCleaveTargetNew:
             "concept_id": "c_anchor", "label": "Solo", "embedding": [0.1],
         }
         mock_client.get_ontology_node.return_value = None
-        mock_client.create_ontology_node.return_value = {"name": "domain-x"}
+        mock_client.create_ontology_if_absent.return_value = ({"name": "domain-x"}, True)
         mock_client.create_anchored_by_edge.return_value = True
         mock_client.get_first_order_source_ids.return_value = []
 
@@ -287,7 +313,7 @@ class TestExecuteCleaveTargetExisting:
         assert result["ontology_created"] is None
         assert result["sources_reassigned"] == 2
         # Crucially: no ontology node creation for existing targets.
-        mock_client.create_ontology_node.assert_not_called()
+        mock_client.create_ontology_if_absent.assert_not_called()
 
     def test_cleave_existing_rejects_missing_target(self, executor, mock_client):
         """target.kind='existing' fails if the target ontology doesn't exist."""
@@ -350,7 +376,7 @@ class TestLegacyPromotionShim:
             "description": "A test concept",
         }
         mock_client.get_ontology_node.return_value = None
-        mock_client.create_ontology_node.return_value = {"name": "New Domain"}
+        mock_client.create_ontology_if_absent.return_value = ({"name": "New Domain"}, True)
         mock_client.create_anchored_by_edge.return_value = True
         mock_client.get_first_order_source_ids.return_value = ["s1"]
         mock_client.reassign_sources.return_value = {
@@ -372,7 +398,7 @@ class TestLegacyPromotionShim:
             "embedding": [0.1], "description": "desc",
         }
         mock_client.get_ontology_node.return_value = None
-        mock_client.create_ontology_node.return_value = {"name": "Fallback Label"}
+        mock_client.create_ontology_if_absent.return_value = ({"name": "Fallback Label"}, True)
         mock_client.create_anchored_by_edge.return_value = True
         mock_client.get_first_order_source_ids.return_value = []
 
@@ -583,7 +609,7 @@ class TestExecuteMerge:
             {"name": "donor-b", "lifecycle_state": "active"},  # donor-b validation
             None,  # target name not yet taken
         ]
-        mock_client.create_ontology_node.return_value = {"name": "merged-domain"}
+        mock_client.create_ontology_if_absent.return_value = ({"name": "merged-domain"}, True)
         # _list_source_ids cypher results for donor-a, donor-b
         mock_client._execute_cypher.side_effect = [
             [{"source_id": "s1"}, {"source_id": "s2"}],  # donor-a sources
@@ -615,7 +641,26 @@ class TestExecuteMerge:
         assert result["donors_dissolved"] == ["donor-a", "donor-b"]
         assert result["sources_reassigned"] == 3
         # The new target node was created.
-        mock_client.create_ontology_node.assert_called_once()
+        mock_client.create_ontology_if_absent.assert_called_once()
+
+    def test_merge_new_target_race_lost_under_lock(self, executor, mock_client):
+        """#597: target taken between validation and the locked create —
+        MERGE fails before dissolving any donor."""
+        mock_client.get_ontology_node.side_effect = [
+            {"name": "donor-a", "lifecycle_state": "active"},
+            {"name": "donor-b", "lifecycle_state": "active"},
+            None,
+        ]
+        mock_client.create_ontology_if_absent.return_value = (
+            {"name": "merged-domain"}, False,
+        )
+
+        result = executor.execute_merge(_merge())
+
+        assert result["success"] is False
+        assert "already exists" in result["error"]
+        mock_client.create_ontology_node.assert_not_called()
+        mock_client.dissolve_ontology.assert_not_called()
 
     def test_merge_into_existing_target(self, executor, mock_client):
         """Existing target: no node creation, just dissolve donors into it."""
@@ -641,7 +686,7 @@ class TestExecuteMerge:
         assert result["success"] is True
         assert result["target_ontology"] == "target-onto"
         assert result["target_kind"] == "existing"
-        mock_client.create_ontology_node.assert_not_called()
+        mock_client.create_ontology_if_absent.assert_not_called()
 
     def test_merge_requires_at_least_two_donors(self, executor):
         proposal = _merge()
@@ -755,7 +800,7 @@ class TestExecuteNoAction:
         assert result["action"] == "no_action"
         assert result["reasoning"] == "ecosystem is healthy"
         # No graph mutation primitives invoked.
-        mock_client.create_ontology_node.assert_not_called()
+        mock_client.create_ontology_if_absent.assert_not_called()
         mock_client.dissolve_ontology.assert_not_called()
         mock_client.reassign_sources.assert_not_called()
 
@@ -801,3 +846,24 @@ class TestExecuteEscalate:
         assert result["confidence"] == 0.45
         assert result["escalation_recorded"] is True
         mock_client.dissolve_ontology.assert_not_called()
+
+
+@pytest.mark.unit
+class TestEnsurePrimordialPool:
+    """The primordial pool create goes through the locked helper (#597)."""
+
+    def test_creates_missing_pool_via_locked_helper(self, executor, mock_client):
+        mock_client.get_ontology_node.return_value = None
+
+        executor._ensure_primordial_pool("primordial")
+
+        mock_client.create_ontology_if_absent.assert_called_once()
+        assert mock_client.create_ontology_if_absent.call_args.args[0] == "primordial"
+        mock_client.create_ontology_node.assert_not_called()
+
+    def test_existing_pool_skips_create(self, executor, mock_client):
+        mock_client.get_ontology_node.return_value = {"name": "primordial"}
+
+        executor._ensure_primordial_pool("primordial")
+
+        mock_client.create_ontology_if_absent.assert_not_called()

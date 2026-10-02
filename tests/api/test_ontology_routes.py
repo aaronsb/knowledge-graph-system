@@ -38,6 +38,8 @@ def mock_age_client(**method_overrides):
     client.get_ontology_node = MagicMock(return_value=None)
     client.list_ontology_nodes = MagicMock(return_value=[])
     client.create_ontology_node = MagicMock(return_value={})
+    # Locked create helper (#597): (node, created).
+    client.create_ontology_if_absent = MagicMock(return_value=({}, True))
     client.update_ontology_embedding = MagicMock(return_value=True)
     client._execute_cypher = MagicMock(return_value=None)
 
@@ -67,12 +69,12 @@ class TestCreateOntologyRoute:
     def test_create_returns_201(self, api_client, auth_headers_admin):
         """Creating an ontology returns 201 with node properties."""
         client = mock_age_client(
-            create_ontology_node={
+            create_ontology_if_absent=({
                 'ontology_id': 'ont_new',
                 'name': 'Test Domain',
                 'lifecycle_state': 'active',
                 'creation_epoch': 42,
-            }
+            }, True)
         )
 
         with patch('api.app.routes.ontology.get_age_client', return_value=client):
@@ -108,6 +110,44 @@ class TestCreateOntologyRoute:
         assert response.status_code == 409
         assert "already exists" in response.json()["detail"]
 
+    def test_create_race_lost_under_lock_returns_409(self, api_client, auth_headers_admin):
+        """#597: a node created between the unlocked check and the locked
+        re-check (e.g. by a concurrent ingest) still yields 409, not a
+        duplicate node."""
+        client = mock_age_client(
+            create_ontology_if_absent=({'ontology_id': 'ont_winner', 'name': 'Contested'}, False)
+        )
+
+        with patch('api.app.routes.ontology.get_age_client', return_value=client):
+            response = api_client.post(
+                "/ontology/",
+                json={"name": "Contested"},
+                headers=auth_headers_admin,
+            )
+
+        assert response.status_code == 409
+        assert "already exists" in response.json()["detail"]
+        client.create_ontology_node.assert_not_called()
+        client.create_ontology_if_absent.assert_called_once()
+        assert client.create_ontology_if_absent.call_args.args[0] == "Contested"
+
+    def test_create_lock_timeout_returns_503(self, api_client, auth_headers_admin):
+        """#597: a create lock held past lock_timeout surfaces as 503."""
+        from api.app.lib.age_client import OntologyLockTimeout
+
+        client = mock_age_client()
+        client.create_ontology_if_absent.side_effect = OntologyLockTimeout("timed out")
+
+        with patch('api.app.routes.ontology.get_age_client', return_value=client):
+            response = api_client.post(
+                "/ontology/",
+                json={"name": "Stalled"},
+                headers=auth_headers_admin,
+            )
+
+        assert response.status_code == 503
+        assert "timed out" in response.json()["detail"]
+
     def test_create_requires_auth(self, api_client):
         """Creating an ontology requires authentication."""
         response = api_client.post(
@@ -132,12 +172,12 @@ class TestCreateOntologyRoute:
         must clear the tombstone so subsequent ingests don't fail
         TOMBSTONED indefinitely."""
         client = mock_age_client(
-            create_ontology_node={
+            create_ontology_if_absent=({
                 'ontology_id': 'ont_revived',
                 'name': 'Phoenix Domain',
                 'lifecycle_state': 'active',
                 'creation_epoch': 100,
-            }
+            }, True)
         )
 
         with patch('api.app.routes.ontology.get_age_client', return_value=client):

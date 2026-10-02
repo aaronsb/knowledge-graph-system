@@ -18,7 +18,7 @@ from .base import BaseMixin
 from .ingestion import IngestionMixin
 from .query import QueryMixin
 from .grounding import GroundingMixin
-from .ontology import OntologyMixin
+from .ontology import OntologyMixin, OntologyLockTimeout
 from .ontology_scoring import OntologyScoringMixin
 from .ontology_edges import OntologyEdgesMixin
 from .rehydration import RehydrationMixin
@@ -56,4 +56,4 @@ class AGEClient(
     pass
 
 
-__all__ = ["AGEClient"]
+__all__ = ["AGEClient", "OntologyLockTimeout"]
