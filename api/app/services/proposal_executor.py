@@ -8,7 +8,7 @@ ESCALATE). The two structural verbs read their parameters from the proposal's
 (anchor_concept_id, target_ontology, etc.) for backward compatibility.
 
 Primitives this module composes:
-- create_ontology_node()        → CLEAVE: create new ontology
+- create_ontology_if_absent()   → CLEAVE/MERGE: create new ontology (locked, #597)
 - create_anchored_by_edge()     → CLEAVE: link ontology to founding concept
 - get_first_order_source_ids()  → CLEAVE: find sources to reassign
 - reassign_sources()            → CLEAVE: move sources to new/existing ontology
@@ -218,14 +218,21 @@ class ProposalExecutor:
                 or f"Domain anchored by concept '{concept.get('label', '')}'."
             )
             ontology_id = f"ont_{uuid.uuid4().hex[:12]}"
-            create_result = self.client.create_ontology_node(
-                ontology_id=ontology_id,
-                name=target_name,
+            # #597: re-check and create under the per-name lock; the
+            # phase-1 check above is unlocked and may be stale by now.
+            create_result, created = self.client.create_ontology_if_absent(
+                target_name,
                 description=description,
                 embedding=embedding,
                 lifecycle_state="active",
                 created_by="annealing_worker",
+                ontology_id=ontology_id,
             )
+            if not created:
+                return {
+                    "success": False,
+                    "error": f"Ontology '{target_name}' already exists",
+                }
             if not create_result:
                 return {
                     "success": False,
@@ -540,14 +547,15 @@ class ProposalExecutor:
         try:
             if not self.client.get_ontology_node(name):
                 pool_id = f"ont_{uuid.uuid4().hex[:12]}"
-                self.client.create_ontology_node(
-                    ontology_id=pool_id,
-                    name=name,
+                _, created = self.client.create_ontology_if_absent(
+                    name,
                     description="Default pool for unroutable sources",
                     lifecycle_state="active",
                     created_by="annealing_worker",
+                    ontology_id=pool_id,
                 )
-                logger.info(f"Auto-created primordial pool '{name}'")
+                if created:
+                    logger.info(f"Auto-created primordial pool '{name}'")
         except Exception as e:
             logger.warning(
                 f"Failed to ensure primordial pool '{name}' exists: {e}"
@@ -636,13 +644,19 @@ class ProposalExecutor:
                 target.get("new_description")
                 or f"Merged from {', '.join(donors)}"
             )
-            create_result = self.client.create_ontology_node(
-                ontology_id=ontology_id,
-                name=target_name,
+            # #597: re-check and create under the per-name lock.
+            create_result, created = self.client.create_ontology_if_absent(
+                target_name,
                 description=description,
                 lifecycle_state="active",
                 created_by="annealing_worker",
+                ontology_id=ontology_id,
             )
+            if not created:
+                return {
+                    "success": False,
+                    "error": f"MERGE target ontology '{target_name}' already exists",
+                }
             if not create_result:
                 return {
                     "success": False,

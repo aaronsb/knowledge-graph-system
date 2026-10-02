@@ -9,6 +9,7 @@ Provides REST API access to:
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Query as QueryParam
+import asyncio
 import logging
 from typing import Any, Dict, List, Optional
 from pydantic import BaseModel
@@ -54,7 +55,7 @@ from ..models.ontology import (
 )
 import json as _json
 from psycopg2.extras import RealDictCursor
-from api.app.lib.age_client import AGEClient
+from api.app.lib.age_client import AGEClient, OntologyLockTimeout
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/ontology", tags=["ontology"])
@@ -326,6 +327,7 @@ async def create_ontology(
 
     Raises:
         409: If an ontology with that name already exists
+        503: If the per-name create lock is not acquired in time (#597)
 
     Example:
         POST /ontology/
@@ -355,23 +357,38 @@ async def create_ontology(
                 detail=f"Ontology '{request.name}' already exists (has source data)"
             )
 
-        # #402 PR-404 review (finding #6 / advisor): operator-initiated
-        # recreate is positive intent that supersedes a prior tombstone.
-        # Clear it so subsequent ingests don't fail TOMBSTONED forever.
-        _clear_ontology_tombstone(client, request.name)
-
         # Get creation epoch
         creation_epoch = client.get_current_epoch()
 
+        # #597: the check above is unlocked; re-check and create under the
+        # per-name lock so a concurrent ingest/annealing create of the same
+        # name can't produce a second node. The lock wait runs off the event
+        # loop: a contended name can block for up to the lock timeout.
         ontology_id = f"ont_{uuid.uuid4()}"
-        node = client.create_ontology_node(
-            ontology_id=ontology_id,
-            name=request.name,
-            description=request.description,
-            lifecycle_state="active",
-            creation_epoch=creation_epoch,
-            created_by=current_user.username,
-        )
+        try:
+            node, created = await asyncio.to_thread(
+                client.create_ontology_if_absent,
+                request.name,
+                description=request.description,
+                lifecycle_state="active",
+                creation_epoch=creation_epoch,
+                created_by=current_user.username,
+                ontology_id=ontology_id,
+            )
+        except OntologyLockTimeout as e:
+            raise HTTPException(status_code=503, detail=str(e))
+        if not created:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Ontology '{request.name}' already exists"
+            )
+
+        # #402 PR-404 review (finding #6 / advisor): operator-initiated
+        # recreate is positive intent that supersedes a prior tombstone.
+        # Clear it so subsequent ingests don't fail TOMBSTONED forever. Only
+        # this request's create counts: a request that lost the race gets 409
+        # and leaves the tombstone alone.
+        _clear_ontology_tombstone(client, request.name)
 
         # Generate embedding
         has_embedding = False
