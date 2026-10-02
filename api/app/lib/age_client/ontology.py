@@ -126,7 +126,8 @@ class OntologyMixin:
         search_terms: Optional[List[str]] = None,
         lifecycle_state: str = "active",
         creation_epoch: int = 0,
-        created_by: Optional[str] = None
+        created_by: Optional[str] = None,
+        conn=None
     ) -> Dict[str, Any]:
         """
         Create an Ontology node in the graph.
@@ -140,6 +141,7 @@ class OntologyMixin:
             lifecycle_state: 'active' | 'pinned' | 'frozen'
             creation_epoch: Global epoch when created
             created_by: Username of the creating user (ADR-200 Phase 2)
+            conn: Optional caller-held connection (see _execute_cypher)
 
         Returns:
             Dictionary with created node properties
@@ -174,7 +176,8 @@ class OntologyMixin:
                     "creation_epoch": creation_epoch,
                     "created_by": created_by
                 },
-                fetch_one=True
+                fetch_one=True,
+                conn=conn
             )
             if results:
                 agtype_result = results.get('o')
@@ -184,12 +187,13 @@ class OntologyMixin:
         except Exception as e:
             raise Exception(f"Failed to create Ontology node {name}: {e}")
 
-    def get_ontology_node(self, name: str) -> Optional[Dict[str, Any]]:
+    def get_ontology_node(self, name: str, conn=None) -> Optional[Dict[str, Any]]:
         """
         Get an Ontology node by name.
 
         Args:
             name: Ontology name
+            conn: Optional caller-held connection (see _execute_cypher)
 
         Returns:
             Dictionary with node properties, or None if not found
@@ -203,7 +207,8 @@ class OntologyMixin:
             result = self._execute_cypher(
                 query,
                 params={"name": name},
-                fetch_one=True
+                fetch_one=True,
+                conn=conn
             )
             if result:
                 agtype_result = result.get('o')
@@ -336,10 +341,24 @@ class OntologyMixin:
             logger.warning(f"Failed to create SCOPED_BY edge {source_id} -> {ontology_name}: {e}")
             return False
 
+    # Advisory-lock namespace for ontology creation (two-key form: namespace,
+    # hashtext(name)). Keeps the lock space separate from other advisory locks.
+    _ONTOLOGY_CREATE_LOCK_NS = 200
+
     def ensure_ontology_exists(self, name: str, description: str = "", created_by: Optional[str] = None) -> Dict[str, Any]:
         """
         Get or create an Ontology node. Used by ingestion pipeline to ensure
         the target ontology exists before creating Source nodes.
+
+        Apache AGE has no uniqueness constraints, so a plain check-then-CREATE
+        lets two concurrent ingestion workers both see "missing" and both
+        CREATE, leaving duplicate Ontology nodes with the same name (#588).
+        The check and the create therefore run on one connection while it
+        holds a per-name PostgreSQL advisory lock, so concurrent callers for
+        the same name serialize and the later one finds the committed node.
+        A session-level lock is used (not xact-level) because _execute_cypher
+        may roll back on AGE label races, which would drop an xact lock.
+        @verified b04c8d20a
 
         Args:
             name: Ontology name
@@ -349,48 +368,70 @@ class OntologyMixin:
         Returns:
             Dictionary with ontology node properties
         """
+        # Fast path: no lock needed when the node already exists.
         existing = self.get_ontology_node(name)
         if existing:
             return existing
 
         import uuid
-        ontology_id = f"ont_{uuid.uuid4()}"
 
-        # Get current epoch from graph_metrics
-        creation_epoch = 0
+        conn = self.pool.getconn()
+        # A connection that might still hold the session lock must not go
+        # back to the pool, or the lock outlives this call.
+        discard_conn = True
         try:
-            conn = self.pool.getconn()
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT pg_advisory_lock(%s, hashtext(%s))",
+                    (self._ONTOLOGY_CREATE_LOCK_NS, name),
+                )
+            conn.commit()
             try:
-                self._setup_age(conn)
-                with conn.cursor() as cur:
-                    cur.execute(
-                        "SELECT counter FROM graph_metrics WHERE metric_name = 'document_ingestion_counter'"
-                    )
-                    row = cur.fetchone()
-                    if row:
-                        creation_epoch = row[0] or 0
-            finally:
-                conn.commit()
-                self.pool.putconn(conn)
-        except Exception:
-            pass  # Default to 0 if metrics unavailable
+                # Re-check under the lock: another worker may have created it
+                # while we waited.
+                existing = self.get_ontology_node(name, conn=conn)
+                if existing:
+                    return existing
 
-        try:
-            return self.create_ontology_node(
-                ontology_id=ontology_id,
-                name=name,
-                description=description,
-                lifecycle_state="active",
-                creation_epoch=creation_epoch,
-                created_by=created_by
-            )
-        except Exception:
-            # Race condition: another worker created it between our check and create.
-            # Re-fetch the winner's node (same pattern as vocabulary sync races).
-            existing = self.get_ontology_node(name)
-            if existing:
-                return existing
-            raise  # Re-raise if it's a genuine failure, not a race
+                creation_epoch = 0
+                try:
+                    with conn.cursor() as cur:
+                        cur.execute(
+                            "SELECT counter FROM graph_metrics WHERE metric_name = 'document_ingestion_counter'"
+                        )
+                        row = cur.fetchone()
+                        if row:
+                            creation_epoch = row[0] or 0
+                except Exception:
+                    conn.rollback()  # Default to 0 if metrics unavailable
+
+                created = self.create_ontology_node(
+                    ontology_id=f"ont_{uuid.uuid4()}",
+                    name=name,
+                    description=description,
+                    lifecycle_state="active",
+                    creation_epoch=creation_epoch,
+                    created_by=created_by,
+                    conn=conn,
+                )
+                # Commit the CREATE before releasing the lock so the next
+                # waiter's re-check sees it.
+                conn.commit()
+                return created
+            finally:
+                try:
+                    conn.rollback()
+                    with conn.cursor() as cur:
+                        cur.execute(
+                            "SELECT pg_advisory_unlock(%s, hashtext(%s))",
+                            (self._ONTOLOGY_CREATE_LOCK_NS, name),
+                        )
+                    conn.commit()
+                    discard_conn = False
+                except Exception as e:
+                    logger.warning(f"Failed to release ontology create lock for {name}: {e}")
+        finally:
+            self.pool.putconn(conn, close=discard_conn)
 
     def update_ontology_lifecycle(
         self,
