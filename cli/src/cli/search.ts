@@ -379,6 +379,18 @@ const showCommand = setCommandHelp(
           } else {
             console.log('\n' + colors.status.warning('⚠ No outgoing relationships'));
           }
+
+          // Incoming edges drive grounding (ADR-808); show them so the score is explainable
+          const incoming = concept.incoming_relationships ?? [];
+          if (incoming.length > 0) {
+            console.log('\n' + colors.ui.header(`Incoming Relationships (${incoming.length})`));
+            console.log(separator(80, '─'));
+            incoming.forEach(rel => {
+              const relColor = getRelationshipColor(rel.rel_type);
+              const confidence = rel.confidence ? ` ${colors.status.dim(`[${(rel.confidence * 100).toFixed(0)}%]`)}` : '';
+              console.log(`  ${colors.concept.label(rel.from_label ?? '')} ${colors.concept.id(`(${rel.from_id})`)} ${colors.path.arrow('→')} ${relColor(rel.rel_type)} ${colors.path.arrow('→')}${confidence}`);
+            });
+          }
           console.log();
         } catch (error: any) {
           console.error(colors.status.error('✗ Failed to get concept details'));

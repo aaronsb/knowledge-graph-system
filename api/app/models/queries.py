@@ -100,7 +100,11 @@ class ConceptRelationship(BaseModel):
     """Semantic relationship connecting two concepts.
 
     Relationship types include: IMPLIES, SUPPORTS, CONTRADICTS, RESULTS_FROM, ENABLES, etc.
+    from_id/from_label are set on incoming relationships, where the edge
+    points from another concept into the concept being described.
     """
+    from_id: Optional[str] = Field(None, description="Source concept ID (incoming relationships only)")
+    from_label: Optional[str] = Field(None, description="Source concept label (incoming relationships only)")
     to_id: str = Field(..., description="Target concept ID")
     to_label: str = Field(..., description="Target concept label")
     rel_type: str = Field(..., description="Relationship type (e.g., IMPLIES, SUPPORTS)")
@@ -164,6 +168,7 @@ class ConceptDetailsResponse(BaseModel):
     documents: List[str] = Field(..., description="Documents where concept appears")
     instances: List[ConceptInstance] = Field(..., description="Evidence instances (quotes from text)")
     relationships: List[ConceptRelationship] = Field(..., description="Outgoing relationships to other concepts")
+    incoming_relationships: List[ConceptRelationship] = Field(default_factory=list, description="Incoming relationships from other concepts (these drive grounding_strength, ADR-808)")
     grounding_strength: Optional[float] = Field(None, description="Grounding strength (-1.0 to 1.0) based on incoming relationship semantics (ADR-808)")
     # Epistemic confidence (grounding × confidence two-dimensional model)
     confidence_level: Optional[str] = Field(None, description="Epistemic confidence: 'confident', 'tentative', 'insufficient' - determines grounding reliability")

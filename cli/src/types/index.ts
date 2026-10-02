@@ -230,10 +230,13 @@ export interface ConceptInstance {
 }
 
 export interface ConceptRelationship {
+  from_id?: string;    // Set on incoming relationships (edge points into the described concept)
+  from_label?: string;
   to_id: string;
   to_label: string;
   rel_type: string;
   confidence?: number;
+  source?: string;     // ADR-304: llm_extraction, api_creation, human_curated, ...
 }
 
 export interface ConceptDetailsResponse {
@@ -244,6 +247,7 @@ export interface ConceptDetailsResponse {
   documents: string[];
   instances: ConceptInstance[];
   relationships: ConceptRelationship[];
+  incoming_relationships?: ConceptRelationship[]; // Edges from other concepts; these drive grounding
   grounding_strength?: number; // ADR-808: Grounding strength (-1.0 to 1.0)
   // Epistemic confidence (grounding × confidence two-dimensional model)
   confidence_level?: string; // 'confident', 'tentative', 'insufficient'

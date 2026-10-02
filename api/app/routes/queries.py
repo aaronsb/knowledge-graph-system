@@ -1143,23 +1143,25 @@ async def get_concept_details(
             for record in instances_raw
         ]
 
-        # Get relationships with ADR-304 edge provenance metadata and ADR-610 vocabulary epistemic status
+        # Relationships in both directions, with ADR-304 edge provenance metadata
+        # and ADR-610 vocabulary epistemic status. Incoming edges are what drive
+        # grounding_strength (ADR-808), so details must show them too.
         # ADR-606: Read category via :IN_CATEGORY relationship (not property)
-        relationships_result = client._execute_cypher("""
-            MATCH (c:Concept {concept_id: $cid})-[r]->(related:Concept)
-            OPTIONAL MATCH (v:VocabType {name: type(r)})-[:IN_CATEGORY]->(cat:VocabCategory)
-            RETURN
-                related.concept_id as to_id,
-                related.label as to_label,
-                type(r) as rel_type,
-                properties(r) as props,
-                cat.name as vocab_category,
-                v.epistemic_status as vocab_epistemic_status,
-                v.epistemic_stats as vocab_epistemic_stats
-        """, params={"cid": concept_id})
+        def fetch_relationships(edge_pattern: str):
+            return client._execute_cypher(f"""
+                MATCH {edge_pattern}
+                OPTIONAL MATCH (v:VocabType {{name: type(r)}})-[:IN_CATEGORY]->(cat:VocabCategory)
+                RETURN
+                    related.concept_id as related_id,
+                    related.label as related_label,
+                    type(r) as rel_type,
+                    properties(r) as props,
+                    cat.name as vocab_category,
+                    v.epistemic_status as vocab_epistemic_status,
+                    v.epistemic_stats as vocab_epistemic_stats
+            """, params={"cid": concept_id}) or []
 
-        relationships = []
-        for record in (relationships_result or []):
+        def to_relationship(record, **endpoints) -> ConceptRelationship:
             props = record['props'] if record['props'] else {}
 
             # ADR-304: Convert created_by from int (user ID) to string
@@ -1173,9 +1175,8 @@ async def get_concept_details(
             if vocab_epistemic_stats and isinstance(vocab_epistemic_stats, dict):
                 avg_grounding = vocab_epistemic_stats.get('avg_grounding')
 
-            relationships.append(ConceptRelationship(
-                to_id=record['to_id'],
-                to_label=record['to_label'],
+            return ConceptRelationship(
+                **endpoints,
                 rel_type=record['rel_type'],
                 confidence=props.get('confidence'),
                 # ADR-304: Edge provenance metadata
@@ -1188,8 +1189,21 @@ async def get_concept_details(
                 category=record.get('vocab_category'),
                 avg_grounding=avg_grounding,
                 epistemic_status=record.get('vocab_epistemic_status')
-            ))
+            )
 
+        concept_label = concept.get('properties', {}).get('label')
+        relationships = [
+            to_relationship(record, to_id=record['related_id'], to_label=record['related_label'])
+            for record in fetch_relationships("(c:Concept {concept_id: $cid})-[r]->(related:Concept)")
+        ]
+        incoming_relationships = [
+            to_relationship(
+                record,
+                from_id=record['related_id'], from_label=record['related_label'],
+                to_id=concept_id, to_label=concept_label,
+            )
+            for record in fetch_relationships("(related:Concept)-[r]->(c:Concept {concept_id: $cid})")
+        ]
 
         # Extract properties from AGE vertex structure: {id, label, properties: {...}}
         props = concept.get('properties', {})
@@ -1284,6 +1298,7 @@ async def get_concept_details(
             documents=documents,
             instances=instances,
             relationships=relationships,
+            incoming_relationships=incoming_relationships,
             grounding_strength=grounding_strength,
             confidence_level=confidence_level,
             confidence_score=confidence_score,
