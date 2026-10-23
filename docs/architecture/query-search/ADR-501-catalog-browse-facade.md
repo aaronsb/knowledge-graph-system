@@ -1,10 +1,34 @@
 ---
-status: Accepted
+contract: adr/v1
+kind: decision
+verb: add
+capability: query
+basis:
+  - evidence: CLI, MCP, web and FUSE each construct their own listing queries with no shared catalog contract
+  - evidence: the annealing worker (api/app/workers/annealing_worker.py) reorganizes ontologies autonomously, so the hierarchy changes on its own
+  - precedent: ADR-200
+  - precedent: ADR-715
+agent:
+  name: Claude
+  model: unrecorded
+status: accepted
 date: 2026-05-30
 deciders:
   - aaronsb
   - claude
-related: [500, 700, 084, 085, 069, 200, 201, 233]
+related:
+  - 500
+  - 700
+  - 084
+  - 085
+  - 069
+  - 200
+  - 201
+  - 233
+imported:
+  from: docs/architecture/query-search/ADR-501-catalog-browse-facade.md
+  format: v0
+  status: Accepted
 ---
 
 # ADR-501: Catalog Browse Facade

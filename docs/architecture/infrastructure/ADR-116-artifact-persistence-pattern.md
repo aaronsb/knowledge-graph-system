@@ -1,5 +1,16 @@
 ---
-status: Accepted
+contract: adr/v1
+kind: decision
+verb: add
+capability: storage
+basis:
+  - evidence: A polarity axis analysis (~189 seconds observed) is lost on page refresh, and long computations exceed the 30-second HTTP timeout
+  - precedent: ADR-114
+  - precedent: ADR-410
+agent:
+  name: Claude
+  model: unrecorded
+status: accepted
 date: 2025-12-17
 deciders:
   - aaronsb
@@ -8,6 +19,10 @@ related:
   - ADR-114
   - ADR-410
   - ADR-300
+imported:
+  from: docs/architecture/infrastructure/ADR-116-artifact-persistence-pattern.md
+  format: v0
+  status: Accepted
 ---
 
 # ADR-116: Artifact Persistence Pattern

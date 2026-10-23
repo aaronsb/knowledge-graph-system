@@ -1,5 +1,15 @@
 ---
-status: Draft
+contract: adr/v1
+kind: decision
+verb: add
+capability: deploy
+basis:
+  - evidence: The runbook told VirtualBox/qemu users to hand-build a cidata ISO with xorriso; without a seed the box boots on DHCP with HTTP and no guided setup
+  - standard: cloud-init NoCloud datasource (vfat volume labeled cidata holding user-data and meta-data)
+agent:
+  name: Claude
+  model: unrecorded
+status: proposed
 date: 2026-06-16
 deciders:
   - aaronsb
@@ -9,6 +19,10 @@ related:
   - ADR-104
   - ADR-105
   - ADR-117
+imported:
+  from: docs/architecture/infrastructure/ADR-119-appliance-configuration-delivery-and-first-boot-orchestration.md
+  format: v0
+  status: Draft
 ---
 
 # ADR-119: appliance configuration delivery and first-boot orchestration

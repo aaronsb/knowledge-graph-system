@@ -1,11 +1,26 @@
 ---
-status: Accepted
+contract: adr/v1
+kind: decision
+verb: change
+capability: annealing
+basis:
+  - evidence: 'annealing proposals 35, 36 and 37 failed identically across three cycles: the LLM intended a merge into existing ontology atlassian-api-bitbucket-cloud but proposal_type offers only promotion/demotion'
+  - evidence: kg_api.annealing_proposals (migration 046) encodes the whole decision space as proposal_type in {promotion, demotion}
+  - precedent: ADR-200
+agent:
+  name: Claude
+  model: unrecorded
+status: accepted
 date: 2026-05-22
 deciders:
   - aaronsb
   - claude
 related:
   - ADR-200
+imported:
+  from: docs/architecture/database-schema/ADR-206-closed-vocabulary-annealing-actions-with-tiered-escalation-and-epistemic-ledger.md
+  format: v0
+  status: Accepted
 ---
 
 # ADR-206: Closed-Vocabulary Annealing Actions with Tiered Escalation and Epistemic Ledger

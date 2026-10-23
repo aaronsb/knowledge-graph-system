@@ -1,5 +1,16 @@
 ---
-status: Accepted
+contract: adr/v1
+kind: decision
+verb: change
+capability: embeddings
+basis:
+  - evidence: visual_embedding is exposed only as a has_visual_embedding flag (routes/sources.py); no vector_search compares it to concept text embeddings
+  - evidence: migration 055 chk_image_dimensions_match forces text_dimensions = image_dimensions, forbidding otherwise-valid profiles
+  - precedent: ADR-802
+agent:
+  name: Claude
+  model: unrecorded
+status: accepted
 date: 2026-05-31
 deciders:
   - aaronsb
@@ -11,6 +22,10 @@ related:
   - ADR-305
   - ADR-804
   - ADR-809
+imported:
+  from: docs/architecture/ai-embeddings/ADR-803-modality-embedding-architecture-universal-text-space-and-independent-per-modality-embedders.md
+  format: v0
+  status: Accepted
 ---
 
 # ADR-803: Modality Embedding Architecture — Universal Text Space and Independent Per-Modality Embedders

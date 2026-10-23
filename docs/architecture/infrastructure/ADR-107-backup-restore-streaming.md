@@ -1,5 +1,15 @@
 ---
-status: Accepted
+contract: adr/v1
+kind: decision
+verb: change
+capability: backup
+basis:
+  - evidence: Backups were created in ./backups on the API server and restore sent a server-side filename, so users held no local copies
+  - evidence: Restoring older backups fails after synonyms moved from jsonb to varchar[] (type mismatch)
+agent:
+  name: Claude
+  model: unrecorded
+status: accepted
 date: 2025-10-08
 deciders:
   - System Architecture
@@ -7,6 +17,10 @@ related:
   - ADR-106
   - ADR-707
   - ADR-102
+imported:
+  from: docs/architecture/infrastructure/ADR-107-backup-restore-streaming.md
+  format: v0
+  status: Accepted
 ---
 
 # ADR-107: Backup/Restore Streaming Architecture

@@ -1,5 +1,18 @@
 ---
-status: Proposed
+contract: adr/v1
+kind: decision
+verb: change
+capability:
+  - vocabulary
+  - grounding
+basis:
+  - evidence: 'production data 2025-10-25: SUPPORTS (38 edges) alongside LLM-created SUPPORTED_BY and ENHANCES; synonyms split grounding weight across types'
+  - precedent: ADR-808
+  - precedent: ADR-603.1
+agent:
+  name: Claude
+  model: unrecorded
+status: proposed
 date: 2025-10-25
 deciders:
   - aaronsb
@@ -8,6 +21,10 @@ related:
   - ADR-603
   - ADR-808
   - ADR-809
+imported:
+  from: docs/architecture/vocabulary-relationships/ADR-604-grounding-aware-vocabulary-management.md
+  format: v0
+  status: Proposed
 ---
 
 # ADR-604: Grounding-Aware Vocabulary Management

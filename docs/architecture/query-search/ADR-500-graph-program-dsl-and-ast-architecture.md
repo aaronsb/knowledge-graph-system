@@ -1,5 +1,15 @@
 ---
-status: Accepted
+contract: adr/v1
+kind: decision
+verb: add
+capability: query
+basis:
+  - evidence: the { op, cypher }[] IR has only + and -; smart blocks compile to Cypher comment markers and validation is client-side only
+  - precedent: ADR-116
+agent:
+  name: Claude
+  model: unrecorded
+status: accepted
 date: 2026-02-03
 deciders:
   - aaronsb
@@ -8,6 +18,10 @@ related:
   - ADR-116
   - ADR-606
   - ADR-504
+imported:
+  from: docs/architecture/query-search/ADR-500-graph-program-dsl-and-ast-architecture.md
+  format: v0
+  status: Accepted
 ---
 
 # ADR-500: Graph Program DSL and AST Architecture

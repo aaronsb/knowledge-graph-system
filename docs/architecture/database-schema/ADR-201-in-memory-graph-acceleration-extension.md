@@ -1,12 +1,27 @@
 ---
-status: Accepted
+contract: adr/v1
+kind: decision
+verb: add
+capability: graph
+basis:
+  - evidence: 'AGE neighborhood traversal for a degree-36 hub: 11,460ms at depth 4, 92,474ms at depth 5, hangs at depth 6; Postgres tuning (work_mem, shared_buffers, parallel workers) did not resolve it'
+  - standard: Apache AGE translates Cypher path matches into nested SQL joins; a depth-6 query is a 12-table join with O(degree^depth) intermediate rows
+  - evidence: graph serving layers in production (Meta TAO, LinkedIn LIquid, Microsoft A1, Twitter FlockDB) pair a relational source of truth with an in-memory graph read path
+agent:
+  name: Claude
+  model: unrecorded
+status: accepted
 date: 2026-01-31
 deciders:
   - aaronsb
   - claude
 related:
-  - ADR-208  # openCypher compatibility
-  - ADR-606  # Query safety & GraphQueryFacade
+  - ADR-208
+  - ADR-606
+imported:
+  from: docs/architecture/database-schema/ADR-201-in-memory-graph-acceleration-extension.md
+  format: v0
+  status: Accepted
 ---
 
 # ADR-201: In-Memory Graph Acceleration Extension

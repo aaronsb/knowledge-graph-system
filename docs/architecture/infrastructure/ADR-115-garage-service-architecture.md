@@ -1,5 +1,15 @@
 ---
-status: Proposed
+contract: adr/v1
+kind: decision
+verb: change
+capability: storage
+basis:
+  - evidence: GarageClient has grown to 732 lines covering image storage, projection storage, credential management and S3 client initialization
+  - precedent: ADR-114
+agent:
+  name: Claude
+  model: unrecorded
+status: proposed
 date: 2025-12-14
 deciders:
   - aaronsb
@@ -8,6 +18,10 @@ related:
   - ADR-305
   - ADR-114
   - ADR-307
+imported:
+  from: docs/architecture/infrastructure/ADR-115-garage-service-architecture.md
+  format: v0
+  status: Proposed
 ---
 
 # ADR-115: Garage Service Architecture

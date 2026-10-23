@@ -1,5 +1,16 @@
 ---
-status: Accepted
+contract: adr/v1
+kind: decision
+verb: change
+capability: providers
+basis:
+  - evidence: '#378: ingestion_worker.py defaults vision_provider to "openai" regardless of the configured or active provider'
+  - evidence: '#379: vision_providers.py duplicates the ai_providers.py hierarchy (VisionProvider ABC, per-provider classes, separate factory)'
+  - precedent: ADR-800
+agent:
+  name: Claude
+  model: unrecorded
+status: accepted
 date: 2026-05-30
 deciders:
   - aaronsb
@@ -10,6 +21,10 @@ related:
   - ADR-804
   - ADR-809
   - ADR-805
+imported:
+  from: docs/architecture/ai-embeddings/ADR-802-unify-vision-providers-under-the-uniform-provider-contract.md
+  format: v0
+  status: Accepted
 ---
 
 # ADR-802: Unify Vision Providers Under the Uniform Provider Contract

@@ -1,5 +1,19 @@
 ---
-status: Draft
+contract: adr/v1
+kind: decision
+verb: change
+capability:
+  - deploy
+  - auth
+basis:
+  - evidence: 'install.sh generate_secrets() duplicates operator/lib/init-secrets.sh; the #502 weak POSTGRES_PASSWORD fix landed in init-secrets.sh only'
+  - evidence: Every install path pre-creates an admin via configure.py admin; there is no unclaimed state
+  - evidence: WordPress install.php creates the admin for whoever reaches it first; pfSense sources the setup secret from the console
+  - precedent: ADR-211
+agent:
+  name: Claude
+  model: unrecorded
+status: proposed
 date: 2026-06-13
 deciders:
   - aaronsb
@@ -14,6 +28,10 @@ related:
   - ADR-409
   - ADR-406
   - ADR-405
+imported:
+  from: docs/architecture/infrastructure/ADR-104-unified-provisioning-architecture-install-path-convergence-and-first-run-claim-protocol.md
+  format: v0
+  status: Draft
 ---
 
 # ADR-104: Unified provisioning architecture: install-path convergence and first-run claim protocol

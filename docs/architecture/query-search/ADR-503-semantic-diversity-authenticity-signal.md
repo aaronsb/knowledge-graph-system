@@ -1,10 +1,24 @@
 ---
-status: Accepted
+contract: adr/v1
+kind: decision
+verb: add
+capability: grounding
+basis:
+  - evidence: 'Space Travel ontology: Apollo 11 had 33 related concepts at 37.7% diversity; the moon-landing hoax had 3 at 23.2%, unchanged after ingesting 10 more hoax claims'
+  - precedent: ADR-808
+agent:
+  name: Claude
+  model: unrecorded
+status: accepted
 date: 2025-11-08
 deciders:
   - aaronsb
   - claude
 related: []
+imported:
+  from: docs/architecture/query-search/ADR-503-semantic-diversity-authenticity-signal.md
+  format: v0
+  status: Accepted
 ---
 
 # ADR-503: Semantic Diversity as Authenticity Signal

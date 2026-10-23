@@ -1,5 +1,16 @@
 ---
-status: Accepted
+contract: adr/v1
+kind: decision
+verb: change
+capability: jobs
+basis:
+  - evidence: 'Two dispatch paths: system jobs fill all 4 ThreadPoolExecutor slots (t-SNE runs 30-120+ s), queueing parallel ingestion; in-memory queue and serial chain are lost on API restart'
+  - evidence: Each worker's AGEClient opens a ThreadedConnectionPool(1, 20), so PostgreSQL can see 80+ competing connections
+  - precedent: ADR-300
+agent:
+  name: Claude
+  model: unrecorded
+status: accepted
 date: 2026-03-01
 deciders:
   - aaronsb
@@ -8,6 +19,10 @@ related:
   - ADR-300
   - ADR-404
   - ADR-111
+imported:
+  from: docs/architecture/infrastructure/ADR-100-database-driven-job-dispatch.md
+  format: v0
+  status: Accepted
 ---
 
 # ADR-100: Database-Driven Job Dispatch

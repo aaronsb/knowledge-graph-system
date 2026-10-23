@@ -1,11 +1,27 @@
 ---
-status: Accepted
+contract: adr/v1
+kind: decision
+verb: constrain
+capability:
+  - cli
+  - backup
+basis:
+  - evidence: a single cli.py mixed query and administrative operations, shell scripts duplicated Python logic, and no shared library existed
+  - evidence: backup/restore did not preserve vector embeddings, risking $50-100 of re-ingestion API cost for large document sets
+agent:
+  name: Claude
+  model: unrecorded
+status: accepted
 date: 2025-10-08
 deciders:
   - Development Team
 related:
   - ADR-106
   - ADR-208
+imported:
+  from: docs/architecture/user-interfaces/ADR-706-cli-admin-separation.md
+  format: v0
+  status: Accepted
 ---
 
 # ADR-706: CLI and Admin Tooling Separation

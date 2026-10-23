@@ -1,5 +1,16 @@
 ---
-status: Accepted
+contract: adr/v1
+kind: decision
+verb: add
+capability: deploy
+basis:
+  - evidence: 'Issue #405: operator.sh init offers AMD ROCm, but ingestion fails with ''Embedding model not loaded'' while the log claims an API fallback'
+  - standard: The default PyPI torch wheel bundles a CUDA runtime; ROCm PyTorch is a separate +rocmYY wheel from download.pytorch.org/whl/rocmYY
+  - evidence: The standalone install path (docker-compose.ghcr.yml) pulls kg-api:latest and never builds, so the ROCm Dockerfile paths never execute
+agent:
+  name: Claude
+  model: unrecorded
+status: accepted
 date: 2026-05-24
 deciders:
   - aaronsb
@@ -8,6 +19,10 @@ related:
   - ADR-804
   - ADR-117
   - ADR-100
+imported:
+  from: docs/architecture/infrastructure/ADR-101-rocm-image-variant-and-install-time-selection.md
+  format: v0
+  status: Accepted
 ---
 
 # ADR-101: ROCm Image Variant and Install-Time Selection

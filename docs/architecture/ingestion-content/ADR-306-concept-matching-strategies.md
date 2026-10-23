@@ -1,10 +1,25 @@
 ---
-status: Draft
+contract: adr/v1
+kind: decision
+verb: change
+capability: extraction
+basis:
+  - evidence: 'Concept matching used hardcoded threshold 0.85 / top_k 5 with an O(n) numpy scan: at 10k+ concepts ~50 s/chunk, ~1 s/chunk estimated with pgvector'
+  - precedent: ADR-805
+  - precedent: ADR-505
+agent:
+  name: Claude
+  model: unrecorded
+status: proposed
 date: 2025-12-04
 deciders:
   - aaronsb
   - claude
 related: []
+imported:
+  from: docs/architecture/ingestion-content/ADR-306-concept-matching-strategies.md
+  format: v0
+  status: Draft
 ---
 
 # ADR-306: Concept Matching Strategies and Configuration

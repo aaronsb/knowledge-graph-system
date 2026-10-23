@@ -1,5 +1,17 @@
 ---
-status: Proposed
+contract: adr/v1
+kind: decision
+verb: change
+capability: embeddings
+basis:
+  - standard: 'nomic-ai/nomic-bert-2048 remote code is broken on transformers 5.x (issue #565): n_inner 2048.0 rejected, get_extended_attention_mask removed'
+  - evidence: 'verified 2026-09-18 (transformers 5.17.0, sentence-transformers 6.1.0): modernbert-embed-base 768-dim 8192 tokens and siglip2-base-patch16-256 load without remote code'
+  - standard: SigLIP 2 text tower is limited to 64 tokens, too short for the universal text embedder
+  - precedent: ADR-803
+agent:
+  name: Claude
+  model: unrecorded
+status: proposed
 date: 2026-09-18
 deciders:
   - aaronsb
@@ -8,6 +20,10 @@ related:
   - ADR-103
   - ADR-803
   - ADR-804
+imported:
+  from: docs/architecture/ai-embeddings/ADR-814-siglip-2-as-the-default-local-embedding-profile.md
+  format: v0
+  status: Proposed
 ---
 
 # ADR-814: SigLIP 2 as the default local embedding profile

@@ -1,5 +1,16 @@
 ---
-status: Accepted
+contract: adr/v1
+kind: decision
+verb: add
+capability: providers
+basis:
+  - evidence: cloud-only extraction sends document chunks to third-party APIs, blocks air-gapped deployment, and costs scale linearly with volume
+  - evidence: extraction needs ~2000-4500 tokens per chunk, with a relationship-type list of 30-90 entries in the prompt
+  - precedent: ADR-805
+agent:
+  name: Claude
+  model: unrecorded
+status: accepted
 date: 2025-10-22
 deciders:
   - System Architects
@@ -7,6 +18,10 @@ related:
   - ADR-804
   - ADR-805
   - ADR-601
+imported:
+  from: docs/architecture/ai-embeddings/ADR-806-local-extraction-inference.md
+  format: v0
+  status: Accepted
 ---
 
 # ADR-806: Local LLM Inference for Concept Extraction

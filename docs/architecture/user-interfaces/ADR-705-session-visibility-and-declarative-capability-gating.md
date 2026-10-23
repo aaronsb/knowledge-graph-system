@@ -1,5 +1,16 @@
 ---
-status: Accepted
+contract: adr/v1
+kind: decision
+verb: add
+capability: web
+basis:
+  - evidence: web/src/api/client.ts:65-76 has a request interceptor only; a token expiring mid-session yields raw per-call errors while the app still believes it is authenticated
+  - evidence: 'isAuthenticated: false collapses never-logged-in and expired; routes are unguarded and only HomeWorkspace and AdminDashboard hand-roll auth checks'
+  - precedent: ADR-400
+agent:
+  name: Claude
+  model: unrecorded
+status: accepted
 date: 2026-05-31
 deciders:
   - aaronsb
@@ -8,6 +19,10 @@ related:
   - ADR-714
   - ADR-400
   - ADR-704
+imported:
+  from: docs/architecture/user-interfaces/ADR-705-session-visibility-and-declarative-capability-gating.md
+  format: v0
+  status: Accepted
 ---
 
 # ADR-705: Session Visibility and Declarative Capability Gating

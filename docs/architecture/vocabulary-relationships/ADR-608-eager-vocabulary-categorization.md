@@ -1,5 +1,16 @@
 ---
-status: Accepted
+contract: adr/v1
+kind: decision
+verb: change
+capability: vocabulary
+basis:
+  - evidence: new edge types stay 'llm_generated' until a manual kg vocab refresh-categories, although the type embedding is already generated during ingestion
+  - precedent: ADR-605
+  - precedent: ADR-607
+agent:
+  name: Claude
+  model: unrecorded
+status: accepted
 date: 2025-11-01
 deciders:
   - aaronsb
@@ -7,6 +18,10 @@ deciders:
 related:
   - ADR-607
   - ADR-605
+imported:
+  from: docs/architecture/vocabulary-relationships/ADR-608-eager-vocabulary-categorization.md
+  format: v0
+  status: Accepted
 ---
 
 # ADR-608: Eager Vocabulary Categorization

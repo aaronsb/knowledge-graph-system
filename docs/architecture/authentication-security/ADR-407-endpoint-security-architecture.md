@@ -1,10 +1,24 @@
 ---
-status: Superseded
+contract: adr/v1
+kind: decision
+verb: constrain
+capability: auth
+basis:
+  - evidence: '2025-01-05 API authentication audit: 112 endpoints, only 6 (5%) properly authenticated, 52 (46%) lacking required auth'
+  - standard: FastAPI Full-Stack Template per-endpoint dependency injection pattern
+agent:
+  name: Claude
+  model: unrecorded
+status: superseded
 date: 2025-01-05
 deciders:
   - Engineering Team
 related:
   - ADR-400
+imported:
+  from: docs/architecture/authentication-security/ADR-407-endpoint-security-architecture.md
+  format: v0
+  status: Superseded
 ---
 
 # ADR-407: API Endpoint Security Architecture

@@ -1,10 +1,33 @@
 ---
-status: Draft
+contract: adr/v1
+kind: decision
+verb: add
+capability: web
+basis:
+  - evidence: since migration 053 (commit 03ceef5b, 2026-02-08) annealing_options.automation_level defaults to autonomous, auto-approving every proposal each cycle
+  - evidence: the web workstation has no ontology lifecycle surface, and the CLI has no automation-policy controls (automation_level, auto_execute_min_score, ecological pressure, integrity check)
+  - precedent: ADR-200
+agent:
+  name: Claude
+  model: unrecorded
+status: proposed
 date: 2026-05-19
 deciders:
   - aaronsb
   - claude
-related: [28, 46, 82, 200, 203, 204, 700, 701]
+related:
+  - 28
+  - 46
+  - 82
+  - 200
+  - 203
+  - 204
+  - 700
+  - 701
+imported:
+  from: docs/architecture/user-interfaces/ADR-703-ontology-lifecycle-administration-interface.md
+  format: v0
+  status: Draft
 ---
 
 # ADR-703: Ontology Lifecycle Administration Interface

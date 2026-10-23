@@ -1,5 +1,15 @@
 ---
-status: Accepted
+contract: adr/v1
+kind: decision
+verb: constrain
+capability: process
+basis:
+  - evidence: is_token_expired() (api/app/lib/oauth_utils.py:253) compared naive datetime.utcnow() with aware PostgreSQL timestamps, returning 500 on POST /auth/oauth/token
+  - standard: psycopg2 returns TIMESTAMP WITH TIME ZONE columns as timezone-aware datetimes; datetime.utcnow() is naive
+agent:
+  name: Claude
+  model: unrecorded
+status: accepted
 date: 2025-11-03
 deciders:
   - aaronsb
@@ -7,6 +17,10 @@ deciders:
 related:
   - ADR-406
   - ADR-112
+imported:
+  from: docs/architecture/infrastructure/ADR-113-timezone-aware-datetime-utilities.md
+  format: v0
+  status: Accepted
 ---
 
 # ADR-113: Timezone-Aware Datetime Utilities

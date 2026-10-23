@@ -1,10 +1,24 @@
 ---
-status: Accepted
+contract: adr/v1
+kind: decision
+verb: change
+capability: query
+basis:
+  - evidence: polarity axis analysis at max_hops=2 takes 180-261 seconds (api/lib/polarity_axis.py)
+  - standard: 'Apache AGE: ag_catalog.cypher() is an opaque function call, so PostgreSQL parallel query never activates'
+agent:
+  name: Claude
+  model: unrecorded
+status: accepted
 date: 2025-12-01
 deciders:
   - aaronsb
   - claude
 related: []
+imported:
+  from: docs/architecture/query-search/ADR-505-parallel-graph-queries.md
+  format: v0
+  status: Accepted
 ---
 
 # ADR-505: Parallel Graph Query Optimization

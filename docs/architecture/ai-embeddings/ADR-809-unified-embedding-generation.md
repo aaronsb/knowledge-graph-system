@@ -1,5 +1,15 @@
 ---
-status: Proposed
+contract: adr/v1
+kind: decision
+verb: add
+capability: embeddings
+basis:
+  - evidence: '2025-10-25 query of kg_api.relationship_vocabulary: 0 of 30 builtin types had embeddings, 34 of 34 LLM-generated types did'
+  - evidence: embedding generation split across llm_extractor.py and vocabulary_manager.py, with no path for builtin types or model migration
+agent:
+  name: Claude
+  model: unrecorded
+status: proposed
 date: 2025-10-25
 deciders:
   - aaronsb
@@ -9,6 +19,10 @@ related:
   - ADR-604
   - ADR-804
   - ADR-603
+imported:
+  from: docs/architecture/ai-embeddings/ADR-809-unified-embedding-generation.md
+  format: v0
+  status: Proposed
 ---
 
 # ADR-809: Unified Embedding Generation System

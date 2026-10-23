@@ -1,5 +1,15 @@
 ---
-status: Draft
+contract: adr/v1
+kind: decision
+verb: add
+capability: deploy
+basis:
+  - evidence: kg-console.sh offers ten options, of which only one (c, Cockpit CIDRs) changes configuration
+  - evidence: A provision.env seed attached on SATA is invisible to the cloud kernel (no AHCI driver), so the box boots on defaults with the config silently ignored
+agent:
+  name: Claude
+  model: unrecorded
+status: proposed
 date: 2026-08-12
 deciders:
   - aaronsb
@@ -10,6 +20,10 @@ related:
   - ADR-105
   - ADR-119
   - ADR-211
+imported:
+  from: docs/architecture/infrastructure/ADR-120-post-boot-configuration-surfaces-and-the-config-plane-ownership-split.md
+  format: v0
+  status: Draft
 ---
 
 # ADR-120: Post-boot configuration surfaces and the config-plane ownership split

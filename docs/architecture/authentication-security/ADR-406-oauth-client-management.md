@@ -1,10 +1,24 @@
 ---
-status: Accepted
+contract: adr/v1
+kind: decision
+verb: change
+capability: auth
+basis:
+  - standard: OAuth 2.0 RFC 6749, PKCE RFC 7636, Device Authorization Grant RFC 8628, Token Revocation RFC 7009
+  - evidence: JWT password flow exposed credentials to the browser, gave the CLI no refresh (re-login after 60 minutes), and left the MCP server sharing the user's JWT or API key
+agent:
+  name: Claude
+  model: unrecorded
+status: accepted
 date: 2025-11-01
 deciders:
   - aaronsb
   - claude
 related: []
+imported:
+  from: docs/architecture/authentication-security/ADR-406-oauth-client-management.md
+  format: v0
+  status: Accepted
 ---
 
 # ADR-406: OAuth 2.0 Client Management for Multi-Client Authentication

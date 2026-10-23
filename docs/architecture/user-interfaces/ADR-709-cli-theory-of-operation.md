@@ -1,10 +1,24 @@
 ---
-status: Proposed
+contract: adr/v1
+kind: decision
+verb: constrain
+capability: cli
+basis:
+  - evidence: kg commands grew with inconsistent hierarchies, arbitrary aliases (db, resource, role, perm) and no design philosophy
+  - standard: Unix/BusyBox verb conventions (ls, rm, stat, cat)
+agent:
+  name: Claude
+  model: unrecorded
+status: proposed
 date: 2025-10-12
 deciders:
   - aaronsb
   - claude
 related: []
+imported:
+  from: docs/architecture/user-interfaces/ADR-709-cli-theory-of-operation.md
+  format: v0
+  status: Proposed
 ---
 
 # ADR-709: CLI Theory of Operation - Hybrid Unix/Domain-Specific Design

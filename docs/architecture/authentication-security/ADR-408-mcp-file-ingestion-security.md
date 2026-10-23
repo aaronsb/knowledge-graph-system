@@ -1,9 +1,25 @@
 ---
-status: Draft
+contract: adr/v1
+kind: decision
+verb: constrain
+capability:
+  - cli
+  - ingest
+basis:
+  - standard: OWASP Path Traversal
+  - standard: 'Claude Desktop MCP agents have read-only tool access: they call tools but cannot edit configuration files'
+agent:
+  name: Claude
+  model: unrecorded
+status: proposed
 date: 2025-11-08
 deciders:
   - System Architect
 related: []
+imported:
+  from: docs/architecture/authentication-security/ADR-408-mcp-file-ingestion-security.md
+  format: v0
+  status: Draft
 ---
 
 # ADR-408: MCP File Ingestion Security Model

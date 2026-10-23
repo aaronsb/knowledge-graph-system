@@ -1,5 +1,17 @@
 ---
-status: Draft
+contract: adr/v1
+kind: decision
+verb: add
+capability: web
+basis:
+  - evidence: 'owner-or-admin checks are scattered: verify_resource_ownership() (api/app/routes/grants.py:34), JobPermissionChecker, resource_grants/has_access() (migration 034), and repeated inline owner_id checks'
+  - evidence: user settings (default ontology, ingest defaults) are localStorage-only in usePreferencesStore, per-browser, with no management surface
+  - precedent: ADR-116
+  - precedent: ADR-705
+agent:
+  name: Claude
+  model: unrecorded
+status: proposed
 date: 2026-05-31
 deciders:
   - aaronsb
@@ -13,6 +25,10 @@ related:
   - ADR-116
   - ADR-400
   - ADR-705
+imported:
+  from: docs/architecture/user-interfaces/ADR-704-unified-user-scoped-resource-dispensing.md
+  format: v0
+  status: Draft
 ---
 
 # ADR-704: Unified User-Scoped Resource Dispensing

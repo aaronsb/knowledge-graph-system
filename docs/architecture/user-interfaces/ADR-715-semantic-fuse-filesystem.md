@@ -1,5 +1,15 @@
 ---
-status: Accepted
+contract: adr/v1
+kind: decision
+verb: add
+capability: fuse
+basis:
+  - evidence: external peer review found FUSE operations map onto existing services (ls -> QueryService.build_search_query, writes -> the async ingestion pipeline) with no new core logic
+  - standard: FUSE (Filesystem in Userspace) via pyfuse3
+agent:
+  name: Claude
+  model: unrecorded
+status: accepted
 date: 2025-11-28
 deciders:
   - aaronsb
@@ -8,6 +18,10 @@ related:
   - ADR-112
   - ADR-606
   - ADR-406
+imported:
+  from: docs/architecture/user-interfaces/ADR-715-semantic-fuse-filesystem.md
+  format: v0
+  status: Accepted
 ---
 
 # ADR-715: Semantic FUSE Filesystem

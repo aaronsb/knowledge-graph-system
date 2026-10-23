@@ -1,5 +1,16 @@
 ---
-status: Proposed
+contract: adr/v1
+kind: decision
+verb: add
+capability: jobs
+basis:
+  - evidence: All jobs are triggered manually via CLI or API; category refresh and vocabulary consolidation need scheduled runs
+  - evidence: The existing job_queue.py already handles enqueue, workers, progress, checkpoint/resume and approval; only timing is missing
+  - precedent: ADR-300
+agent:
+  name: Claude
+  model: unrecorded
+status: proposed
 date: 2025-10-28
 deciders:
   - Development Team
@@ -7,6 +18,10 @@ related:
   - ADR-106
   - ADR-300
   - ADR-810
+imported:
+  from: docs/architecture/infrastructure/ADR-111-scheduled-jobs-system.md
+  format: v0
+  status: Proposed
 ---
 
 # ADR-111: Scheduled Jobs System

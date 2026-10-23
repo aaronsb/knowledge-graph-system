@@ -1,5 +1,15 @@
 ---
-status: Proposed
+contract: adr/v1
+kind: decision
+verb: add
+capability: vocabulary
+basis:
+  - evidence: 'extraction comparison (ADR-806 testing): GPT-OSS 20B produced ''identity ENABLED_BY Language'' with reversed direction; the prompt describes from/to as graph topology'
+  - standard: OWL owl:inverseOf inverse properties
+agent:
+  name: Claude
+  model: unrecorded
+status: proposed
 date: 2025-10-27
 deciders:
   - System Architects
@@ -8,6 +18,10 @@ related:
   - ADR-606
   - ADR-600
   - ADR-601
+imported:
+  from: docs/architecture/vocabulary-relationships/ADR-609-llm-determined-relationship-direction.md
+  format: v0
+  status: Proposed
 ---
 
 # ADR-609: LLM-Determined Relationship Direction Semantics

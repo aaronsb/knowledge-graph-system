@@ -1,11 +1,24 @@
 ---
-status: Accepted
+contract: adr/v1
+kind: decision
+verb: constrain
+capability: cli
+basis:
+  - evidence: CLI tables applied ANSI colors before truncation, corrupting escape sequences and breaking width calculations, and each command re-implemented its own table logic
+agent:
+  name: Claude
+  model: unrecorded
+status: accepted
 date: 2025-10-09
 deciders:
   - Development Team
 related:
   - ADR-707
   - ADR-108
+imported:
+  from: docs/architecture/user-interfaces/ADR-708-type-based-table-formatting.md
+  format: v0
+  status: Accepted
 ---
 
 # ADR-708: Type-Based Table Formatting System

@@ -1,5 +1,17 @@
 ---
-status: Draft
+contract: adr/v1
+kind: decision
+verb: constrain
+capability:
+  - auth
+  - process
+basis:
+  - evidence: '2026-06-09 consistency audit (docs/security/security-consistency-audit-2026-06-09.md): lint_queries.py runs with || true (.github/workflows/lint.yml:25), ~2,000 lines of auth tests never run in CI, 155 str(e) leaks in route files'
+  - precedent: ADR-400
+agent:
+  name: Claude
+  model: unrecorded
+status: proposed
 date: 2026-06-09
 deciders:
   - aaronsb
@@ -8,6 +20,10 @@ related:
   - ADR-400
   - ADR-606
   - ADR-407
+imported:
+  from: docs/architecture/authentication-security/ADR-401-deterministic-security-enforcement-baseline.md
+  format: v0
+  status: Draft
 ---
 
 # ADR-401: Deterministic Security Enforcement Baseline

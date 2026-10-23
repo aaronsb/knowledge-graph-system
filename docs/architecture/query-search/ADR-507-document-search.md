@@ -1,10 +1,23 @@
 ---
-status: Proposed
+contract: adr/v1
+kind: decision
+verb: add
+capability: query
+basis:
+  - evidence: POST /query/sources/search returns chunks; nothing ranks the original documents linked via (:DocumentMeta)-[:HAS_SOURCE]->(:Source)
+agent:
+  name: Claude
+  model: unrecorded
+status: proposed
 date: 2026-01-03
 deciders:
   - aaronsb
   - claude
 related: []
+imported:
+  from: docs/architecture/query-search/ADR-507-document-search.md
+  format: v0
+  status: Proposed
 ---
 
 # ADR-507: Document-Level Search

@@ -1,10 +1,24 @@
 ---
-status: Proposed
+contract: adr/v1
+kind: decision
+verb: change
+capability: query
+basis:
+  - evidence: exhaustive -[*1..N]- path enumeration in build_shortest_path_query times out beyond 4-5 hops on a ~100,000-node graph
+  - standard: Apache AGE 1.5.0 has no shortestPath() (apache/age#2162) and variable-length paths degrade exponentially (apache/age#195)
+agent:
+  name: Claude
+  model: unrecorded
+status: proposed
 date: 2025-12-09
 deciders:
   - System Architecture
 related:
   - ADR-208
+imported:
+  from: docs/architecture/query-search/ADR-506-pathfinding-optimization.md
+  format: v0
+  status: Proposed
 ---
 
 # ADR-506: Pathfinding Optimization for Apache AGE

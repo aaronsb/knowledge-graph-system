@@ -1,11 +1,24 @@
 ---
-status: Accepted
+contract: adr/v1
+kind: decision
+verb: change
+capability: vocabulary
+basis:
+  - evidence: 'LLMs extract valid types outside the 5-type schema, e.g. ''Invalid relationship type: CONTRASTS'' drops the relationship'
+agent:
+  name: Claude
+  model: unrecorded
+status: accepted
 date: 2025-10-09
 deciders:
   - Development Team
 related:
   - ADR-904
   - ADR-208
+imported:
+  from: docs/architecture/vocabulary-relationships/ADR-600-semantic-relationship-taxonomy.md
+  format: v0
+  status: Accepted
 ---
 
 # ADR-600: Semantically Sparse 30-Type Relationship Taxonomy

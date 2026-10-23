@@ -1,5 +1,16 @@
 ---
-status: Accepted
+contract: adr/v1
+kind: decision
+verb: add
+capability: deploy
+basis:
+  - evidence: All cert logic lives in install.sh SECTION 9 (~460 lines); operator.sh recert dispatches to operator/lib/recert.sh, which does not exist (operator.sh:906)
+  - standard: Traefik (MIT) with lego supplies ACME HTTP-01, TLS-ALPN-01 and DNS-01 (~100 providers incl. porkbun) plus automatic renewal
+  - standard: ACME certificate issuance (HTTP-01, TLS-ALPN-01, DNS-01 challenges)
+agent:
+  name: Claude
+  model: unrecorded
+status: accepted
 date: 2026-06-14
 deciders:
   - aaronsb
@@ -12,6 +23,10 @@ related:
   - ADR-406
   - ADR-208
   - ADR-115
+imported:
+  from: docs/architecture/infrastructure/ADR-105-scenario-driven-tls-via-in-vm-traefik-router.md
+  format: v0
+  status: Accepted
 ---
 
 # ADR-105: Scenario-driven TLS via an in-VM Traefik router

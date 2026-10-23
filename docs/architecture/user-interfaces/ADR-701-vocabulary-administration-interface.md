@@ -1,10 +1,40 @@
 ---
-status: Draft
+contract: adr/v1
+kind: decision
+verb: add
+capability: web
+basis:
+  - evidence: the web workstation has no vocabulary administration surface; vocabulary management runs through kg vocab (20 subcommands) or ~20 REST endpoints
+  - evidence: manual vocabulary triggers (POST /vocabulary/consolidate, /refresh-categories, /epistemic-status/measure, /generate-embeddings) execute synchronously inside the request, while annealing enqueues a job
+  - precedent: ADR-703
+  - precedent: ADR-100
+agent:
+  name: Claude
+  model: unrecorded
+status: proposed
 date: 2026-01-29
 deciders:
   - aaronsb
   - claude
-related: [22, 25, 26, 32, 46, 47, 52, 53, 65, 77, 100, 200, 206, 703]
+related:
+  - 22
+  - 25
+  - 26
+  - 32
+  - 46
+  - 47
+  - 52
+  - 53
+  - 65
+  - 77
+  - 100
+  - 200
+  - 206
+  - 703
+imported:
+  from: docs/architecture/user-interfaces/ADR-701-vocabulary-administration-interface.md
+  format: v0
+  status: Draft
 ---
 
 # ADR-701: Vocabulary Administration Interface

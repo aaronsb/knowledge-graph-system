@@ -1,11 +1,24 @@
 ---
-status: Superseded
+contract: adr/v1
+kind: decision
+verb: change
+capability: auth
+basis:
+  - evidence: Roles were hardcoded (read_only, contributor, curator, admin) with static permissions seeded in kg_auth.role_permissions; new resource types required schema changes
+agent:
+  name: Claude
+  model: unrecorded
+status: superseded
 date: 2025-10-11
 deciders:
   - aaronsb
   - claude
 related:
   - ADR-400
+imported:
+  from: docs/architecture/authentication-security/ADR-404-dynamic-rbac-system.md
+  format: v0
+  status: Superseded
 ---
 
 # ADR-404: Dynamic Role-Based Access Control (RBAC) System

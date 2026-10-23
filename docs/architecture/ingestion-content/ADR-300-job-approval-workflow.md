@@ -1,10 +1,23 @@
 ---
-status: Accepted
+contract: adr/v1
+kind: decision
+verb: add
+capability: jobs
+basis:
+  - evidence: 'Submit went straight to processing: no cost transparency before LLM calls and no way to review or cancel; pre-analysis (word count, chunk and cost estimates) existed only in scripts/ingest.sh'
+agent:
+  name: Claude
+  model: unrecorded
+status: accepted
 date: 2025-10-07
 deciders:
   - aaronsb
   - claude
 related: []
+imported:
+  from: docs/architecture/ingestion-content/ADR-300-job-approval-workflow.md
+  format: v0
+  status: Accepted
 ---
 
 # ADR-300: Job Approval Workflow with Pre-Ingestion Analysis

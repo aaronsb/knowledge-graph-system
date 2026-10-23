@@ -1,5 +1,16 @@
 ---
-status: Accepted
+contract: adr/v1
+kind: decision
+verb: add
+capability: storage
+basis:
+  - evidence: Projections take 1-30 seconds to compute and the /tmp/kg_projections/ cache is lost on container restart
+  - standard: 'Garage has no native S3 object versioning (Garage issue #166)'
+  - precedent: ADR-808
+agent:
+  name: Claude
+  model: unrecorded
+status: accepted
 date: 2025-12-13
 deciders:
   - aaronsb
@@ -7,6 +18,10 @@ deciders:
 related:
   - ADR-305
   - ADR-717
+imported:
+  from: docs/architecture/infrastructure/ADR-114-projection-artifact-storage.md
+  format: v0
+  status: Accepted
 ---
 
 # ADR-114: Projection Artifact Storage in Garage

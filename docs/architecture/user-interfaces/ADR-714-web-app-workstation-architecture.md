@@ -1,5 +1,16 @@
 ---
-status: Proposed
+contract: adr/v1
+kind: decision
+verb: change
+capability: web
+basis:
+  - evidence: ingestion, job-queue visibility, OAuth configuration and published-flow management have no web interface; they live in the CLI, MCP or operator container
+  - precedent: ADR-710
+  - precedent: ADR-504
+agent:
+  name: Claude
+  model: unrecorded
+status: proposed
 date: 2025-11-18
 deciders:
   - Engineering Team
@@ -7,6 +18,10 @@ related:
   - ADR-710
   - ADR-713
   - ADR-504
+imported:
+  from: docs/architecture/user-interfaces/ADR-714-web-app-workstation-architecture.md
+  format: v0
+  status: Proposed
 ---
 
 # ADR-714: Web Application Workstation Architecture

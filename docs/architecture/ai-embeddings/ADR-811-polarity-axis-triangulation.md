@@ -1,11 +1,26 @@
 ---
-status: Accepted
+contract: adr/v1
+kind: decision
+verb: change
+capability: grounding
+basis:
+  - evidence: SUPPORTS and CONTRADICTS are 81% similar in embedding space
+  - evidence: binary classification produced only -1.0, 0.0 or +1.0 grounding (e.g. Ford Truck -1.000)
+  - precedent: ADR-808
+agent:
+  name: Claude
+  model: unrecorded
+status: accepted
 date: 2025-11-04
 deciders:
   - Engineering Team
 related:
   - ADR-808
   - ADR-809
+imported:
+  from: docs/architecture/ai-embeddings/ADR-811-polarity-axis-triangulation.md
+  format: v0
+  status: Accepted
 ---
 
 # ADR-811: Polarity Axis Triangulation for Grounding Calculation

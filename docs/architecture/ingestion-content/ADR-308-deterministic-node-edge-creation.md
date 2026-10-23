@@ -1,10 +1,23 @@
 ---
-status: Accepted
+contract: adr/v1
+kind: decision
+verb: add
+capability: graph
+basis:
+  - evidence: The graph populated exclusively through the ingest pipeline; manual curation, agent-driven creation, bulk and foreign-graph import had no path to create nodes and edges
+agent:
+  name: Claude
+  model: unrecorded
+status: accepted
 date: 2026-01-25
 deciders:
   - aaronsb
   - claude
 related: []
+imported:
+  from: docs/architecture/ingestion-content/ADR-308-deterministic-node-edge-creation.md
+  format: v0
+  status: Accepted
 ---
 
 # ADR-308: Deterministic Node and Edge Creation

@@ -1,11 +1,25 @@
 ---
-status: Accepted
+contract: adr/v1
+kind: decision
+verb: change
+capability: providers
+basis:
+  - evidence: provider and model set by AI_PROVIDER and *_EXTRACTION_MODEL in .env; switching requires an API restart
+  - precedent: ADR-405
+agent:
+  name: Claude
+  model: unrecorded
+status: accepted
 date: 2025-10-21
 deciders:
   - Development Team
 related:
   - ADR-405
   - ADR-804
+imported:
+  from: docs/architecture/ai-embeddings/ADR-805-ai-extraction-config.md
+  format: v0
+  status: Accepted
 ---
 
 # ADR-805: AI Extraction Provider Configuration

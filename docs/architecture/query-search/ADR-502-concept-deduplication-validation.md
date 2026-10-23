@@ -1,5 +1,14 @@
 ---
-status: Accepted
+contract: adr/v1
+kind: decision
+verb: constrain
+capability: extraction
+basis:
+  - evidence: concept dedup reuses an existing concept at 80% cosine similarity, with no systematic check that matching holds as the graph grows
+agent:
+  name: Claude
+  model: unrecorded
+status: accepted
 date: 2025-10-12
 deciders:
   - aaronsb
@@ -7,6 +16,10 @@ deciders:
 related:
   - ADR-208
   - ADR-209
+imported:
+  from: docs/architecture/query-search/ADR-502-concept-deduplication-validation.md
+  format: v0
+  status: Accepted
 ---
 
 # ADR-502: Concept Deduplication Quality Validation

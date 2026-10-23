@@ -1,5 +1,15 @@
 ---
-status: Accepted
+contract: adr/v1
+kind: decision
+verb: add
+capability: auth
+basis:
+  - evidence: No ownership for ontologies or computed artifacts (projections, polarity analyses); graph_change_counter (migration 033) already tracks graph change for artifact freshness
+  - precedent: ADR-114
+agent:
+  name: Claude
+  model: unrecorded
+status: accepted
 date: 2025-12-17
 deciders:
   - aaronsb
@@ -7,6 +17,10 @@ deciders:
 related:
   - ADR-404
   - ADR-114
+imported:
+  from: docs/architecture/authentication-security/ADR-410-user-scoping-artifact-ownership.md
+  format: v0
+  status: Accepted
 ---
 
 # ADR-410: User Scoping and Artifact Ownership Model

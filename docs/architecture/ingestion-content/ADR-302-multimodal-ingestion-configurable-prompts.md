@@ -1,5 +1,14 @@
 ---
-status: Proposed
+contract: adr/v1
+kind: decision
+verb: add
+capability: ingest
+basis:
+  - evidence: Ingestion accepted text only (no .png/.jpg/image PDFs), and extraction used a single hardcoded prompt in llm_extractor.py
+agent:
+  name: Claude
+  model: unrecorded
+status: proposed
 date: 2025-10-16
 deciders:
   - Development Team
@@ -7,6 +16,10 @@ related:
   - ADR-300
   - ADR-107
   - ADR-301
+imported:
+  from: docs/architecture/ingestion-content/ADR-302-multimodal-ingestion-configurable-prompts.md
+  format: v0
+  status: Proposed
 ---
 
 # ADR-302: Multimodal Image Ingestion with Configurable Prompt System

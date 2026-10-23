@@ -1,5 +1,17 @@
 ---
-status: Proposed
+contract: adr/v1
+kind: decision
+verb: change
+capability:
+  - graph
+  - jobs
+basis:
+  - evidence: listing recent jobs waited 3 to 6 seconds while the SQLite jobs.db was locked by active job writes
+  - evidence: all tables sat in the default public schema, mixing LLM-created graph data, 30-day job records, credentials and high-churn metrics under one access and backup policy
+agent:
+  name: Claude
+  model: unrecorded
+status: proposed
 date: 2025-10-10
 deciders:
   - aaronsb
@@ -7,6 +19,10 @@ deciders:
 related:
   - ADR-208
   - ADR-300
+imported:
+  from: docs/architecture/database-schema/ADR-209-multi-schema-postgresql-architecture.md
+  format: v0
+  status: Proposed
 ---
 
 # ADR-209: Multi-Schema PostgreSQL Architecture

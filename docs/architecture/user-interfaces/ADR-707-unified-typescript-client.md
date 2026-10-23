@@ -1,9 +1,23 @@
 ---
-status: Accepted
+contract: adr/v1
+kind: decision
+verb: add
+capability: cli
+basis:
+  - evidence: separate CLI and MCP codebases would duplicate API client logic, type definitions, error handling and configuration
+  - standard: Model Context Protocol; Anthropic MCP SDK packages (@modelcontextprotocol/server-*) use a single TypeScript codebase with runtime mode detection
+agent:
+  name: Claude
+  model: unrecorded
+status: accepted
 date: 2025-10-06
 deciders:
   - Development Team
 related: []
+imported:
+  from: docs/architecture/user-interfaces/ADR-707-unified-typescript-client.md
+  format: v0
+  status: Accepted
 ---
 
 # ADR-707: Unified TypeScript Client (CLI + MCP Server)
